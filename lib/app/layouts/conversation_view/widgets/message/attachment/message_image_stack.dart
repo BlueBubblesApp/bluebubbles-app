@@ -59,13 +59,9 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
 
   static const _fanSlotDx = <double>[0, 7, 12, 16, 20];
   static const _fanSlotDy = <double>[0, 4, 9, 14, 20];
-  static const _fanSlotAngle = <double>[0, 0.08, 0.175, 0.3, 0.425];
+  static const _fanSlotAngle = <double>[0, 0.06, 0.13, 0.225, 0.32];
   static const _fanSlotScale = <double>[1.0, 0.9, 0.8, 0.7, 0.6];
-
-  static const _pastSlotDx = <double>[10, 14, 18];
-  static const _pastSlotDy = <double>[5, 11, 17];
-  static const _pastSlotAngle = <double>[0.1, 0.19, 0.28];
-  static const _pastSlotScale = <double>[0.82, 0.72, 0.62];
+  /// Fade for past (mirrored) cards; fan slots themselves stay fully opaque.
   static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
 
   static const double _scrollAdvanceThreshold = 50.0;
@@ -118,23 +114,22 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     final baseCardWidth = collectionCardWidth(context);
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
-    final fanCanvasWidth = baseCardWidth + 56;
-    final fanCanvasHeight = baseCardHeight;
-    // fanDirection.right = from-me: fan opens to the right behind the front card.
-    // fanDirection.left = received: fan opens to the left (mirrored).
-    // The deepest fan card stays inside the author-side edge (no bleed past the screen).
-    final bool authorOnRight = widget.fanDirection == GalleryFanDirection.right;
-    final direction = authorOnRight ? 1.0 : -1.0;
+    // Fan geometry is always the same as from-me (opens to the right). fanDirection
+    // only controls whether the stack is right- or left-aligned in the bubble row.
+    final bool alignEnd = widget.fanDirection == GalleryFanDirection.right;
     final stackLabel = CollectionMediaGridPage.titleForAttachments(_attachments);
 
+    // Stable fan room for this collection (not remaining future at the current index).
     final double maxFanDx;
     if (widget.infiniteScroll) {
       maxFanDx = _fanSlotDx.last;
     } else {
-      final futureCount = _attachments.length - _currentIndex - 1;
-      final visibleFuture = min(futureCount, _visibleFanSlots - 1);
-      maxFanDx = visibleFuture > 0 ? _fanSlotDx[visibleFuture] : 0.0;
+      final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
+      maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
     }
+    // Front card is left-anchored; fan room sits on the right. Past cards overflow left.
+    final fanCanvasWidth = baseCardWidth + maxFanDx;
+    final fanCanvasHeight = baseCardHeight;
 
     final stackChildren = <Widget>[];
 
@@ -155,21 +150,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       );
     }
 
-    // Incoming iOS only: beside the front card, behind cards so swipes paint over it,
-    // above the advance tap fill so it stays tappable when uncovered.
-    if (!authorOnRight && CollectionDownloadButton.isSupported) {
-      stackChildren.add(
-        Positioned(
-          right: (fanCanvasWidth - baseCardWidth - maxFanDx) -
-              CollectionDownloadButton.size -
-              CollectionDownloadButton.gap,
-          top: 0,
-          bottom: 0,
-          child: Center(child: CollectionDownloadButton(attachments: _attachments)),
-        ),
-      );
-    }
-
     if (widget.infiniteScroll) {
       stackChildren.addAll(List.generate(_attachments.length, (i) {
         final attachmentIndex = (_currentIndex + i) % _attachments.length;
@@ -180,9 +160,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          authorOnRight: authorOnRight,
-          direction: direction,
-          maxFanDx: maxFanDx,
           isCurrent: i == 0,
         );
       }).reversed);
@@ -194,16 +171,14 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
 
       for (int p = visiblePast; p >= 1; p--) {
         final attachmentIndex = _currentIndex - p;
-        final slot = (p - 1).clamp(0, _maxPastCards - 1);
         stackChildren.add(_buildPastCard(
           attachmentIndex: attachmentIndex,
           attachment: _attachments[attachmentIndex],
           messageState: MessageStateScope.of(context),
-          slotIndex: slot,
+          // Same fan slot indices (1..) mirrored across the front card.
+          slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          authorOnRight: authorOnRight,
-          direction: direction,
         ));
       }
 
@@ -216,9 +191,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          authorOnRight: authorOnRight,
-          direction: direction,
-          maxFanDx: maxFanDx,
           isCurrent: false,
         ));
       }
@@ -230,16 +202,92 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
-        authorOnRight: authorOnRight,
-        direction: direction,
-        maxFanDx: maxFanDx,
         isCurrent: true,
       ));
     }
 
-    // Swipe: dragging toward the fan (author edge) advances forward.
-    final fanFlip = authorOnRight ? 1 : -1;
+    final stackColumn = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Padding(
+          // Align label with the left-anchored front card.
+          padding: alignEnd ? EdgeInsets.only(right: maxFanDx) : EdgeInsets.zero,
+          child: MouseRegion(
+            onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
+            onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
+            child: GestureDetector(
+              onTap: () => _openCollectionGrid(context, stackLabel),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: -6,
+                    right: -6,
+                    top: -2,
+                    bottom: -2,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      decoration: BoxDecoration(
+                        color: _labelHovered
+                            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.grid_view_rounded,
+                        size: 10,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        stackLabel,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: fanCanvasWidth,
+          height: fanCanvasHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: stackChildren,
+          ),
+        ),
+      ],
+    );
 
+    // Incoming iOS: download control to the right of the stack (matches collage).
+    final Widget stackBody;
+    if (!alignEnd && CollectionDownloadButton.isSupported) {
+      stackBody = Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          stackColumn,
+          const SizedBox(width: CollectionDownloadButton.gap),
+          CollectionDownloadButton(attachments: _attachments),
+        ],
+      );
+    } else {
+      stackBody = stackColumn;
+    }
+
+    // Swipe direction matches on both sides: left = forward, right = back.
     return Listener(
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
@@ -267,8 +315,9 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           if (!widget.infiniteScroll) {
             final atStart = _currentIndex == 0;
             final atEnd = _currentIndex == _attachments.length - 1;
-            final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
-            final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
+            // Right = back (blocked at start), left = forward (blocked at end).
+            final blockedPositive = atStart;
+            final blockedNegative = atEnd;
 
             final draggingIntoBlockedEnd =
                 (blockedPositive && details.delta.dx > 0) || (blockedNegative && details.delta.dx < 0);
@@ -304,9 +353,10 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
             return;
           }
 
+          // Left drag / velocity → forward; right → back (same for sent and received).
           final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
           setState(() {
-            _advance(rawSign * fanFlip);
+            _advance(rawSign);
             _dragDx = 0;
           });
         },
@@ -317,70 +367,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
             _dragDx = 0;
           });
         },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: authorOnRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Padding(
-              // Match the front card's inset from the author edge (maxFanDx).
-              padding: authorOnRight ? EdgeInsets.only(right: maxFanDx) : EdgeInsets.only(left: maxFanDx),
-              child: MouseRegion(
-                onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
-                onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
-                child: GestureDetector(
-                  onTap: () => _openCollectionGrid(context, stackLabel),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        left: -6,
-                        right: -6,
-                        top: -2,
-                        bottom: -2,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                            color: _labelHovered
-                                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.grid_view_rounded,
-                            size: 10,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            stackLabel,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            SizedBox(
-              width: fanCanvasWidth,
-              height: fanCanvasHeight,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: stackChildren,
-              ),
-            ),
-          ],
-        ),
+        child: stackBody,
       ),
     );
   }
@@ -392,24 +379,21 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required bool authorOnRight,
-    required double direction,
-    required double maxFanDx,
     required bool isCurrent,
   }) {
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
     final overflowDepth =
         slotIndex >= _visibleFanSlots ? ((slotIndex - (_visibleFanSlots - 1)).clamp(0, 6) * 0.7) : 0.0;
-    final angle = slot == 0 ? 0.0 : direction * _fanSlotAngle[slot];
+    // Fan always opens to the right of the left-anchored front card.
+    final angle = slot == 0 ? 0.0 : _fanSlotAngle[slot];
     final dy = _fanSlotDy[slot] + overflowDepth;
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
-    // Anchor the deepest visible full-size slot flush with the author-side edge.
     // Scale-center each card on its slot so smaller cards don't poke out further
     // than the original fan spread.
     final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
-    final fromAuthorEdge = maxFanDx - slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
@@ -418,14 +402,13 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: authorOnRight ? null : fromAuthorEdge + dragOffset,
-      right: authorOnRight ? fromAuthorEdge - dragOffset : null,
+      left: fromLeft + dragOffset,
       child: SizedBox(
         width: cardWidth,
         height: cardHeight,
         child: Transform.rotate(
           angle: angle.toDouble() + dragRotate,
-          alignment: authorOnRight ? Alignment.bottomLeft : Alignment.bottomRight,
+          alignment: Alignment.bottomLeft,
           child: IgnorePointer(
             ignoring: !isCurrent,
             child: CollectionAttachmentCard(
@@ -451,26 +434,24 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required bool authorOnRight,
-    required double direction,
   }) {
-    final slot = slotIndex.clamp(0, _maxPastCards - 1);
-    final angle = -direction * _pastSlotAngle[slot];
-    final scale = _pastSlotScale[slot];
-    final dy = _pastSlotDy[slot];
-    final opacity = _pastSlotOpacity[slot];
+    final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
+    // True mirror of fan geometry on the left of the front card (may overflow).
+    final angle = -_fanSlotAngle[slot];
+    final scale = _fanSlotScale[slot];
+    final dy = _fanSlotDy[slot];
+    final opacity = _pastSlotOpacity[(slot - 1).clamp(0, _pastSlotOpacity.length - 1)];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
-    // Past cards tip toward the center, opposite the fan.
-    final fromCenterSide = _pastSlotDx[slot] + ((baseCardWidth - cardWidth) / 2);
+    final slotDx = _fanSlotDx[slot];
+    final fromLeft = -slotDx + ((baseCardWidth - cardWidth) / 2);
 
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: authorOnRight ? fromCenterSide : null,
-      right: authorOnRight ? null : fromCenterSide,
+      left: fromLeft,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
         opacity: opacity,
@@ -479,7 +460,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           height: cardHeight,
           child: Transform.rotate(
             angle: angle.toDouble(),
-            alignment: authorOnRight ? Alignment.bottomRight : Alignment.bottomLeft,
+            alignment: Alignment.bottomRight,
             child: IgnorePointer(
               ignoring: true,
               child: CollectionAttachmentCard(
