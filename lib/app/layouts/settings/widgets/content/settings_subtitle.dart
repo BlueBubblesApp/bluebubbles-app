@@ -7,16 +7,21 @@ class SettingsSubtitle extends StatelessWidget {
     this.subtitle,
     this.unlimitedSpace = false,
     this.bottomPadding = true,
+    this.topPadding = 0,
   });
 
   final String? subtitle;
   final bool unlimitedSpace;
   final bool bottomPadding;
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: !bottomPadding ? EdgeInsets.zero : const EdgeInsets.only(bottom: 10.0),
+      padding: EdgeInsets.only(
+        top: topPadding,
+        bottom: bottomPadding ? 10.0 : 0,
+      ),
       child: ListTile(
         title: subtitle != null
             ? Text(

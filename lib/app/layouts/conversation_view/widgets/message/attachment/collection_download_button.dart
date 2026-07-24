@@ -16,7 +16,7 @@ class CollectionDownloadButton extends StatelessWidget {
   static const double size = 34.0;
   static const double gap = 30.0;
 
-  /// Collage/stack only exist on iOS today; keep the control skin-gated anyway.
+  /// Available whenever collage/stack is shown; keep skin-gated for iOS styling.
   static bool get isSupported => SettingsSvc.settings.skin.value == Skins.iOS;
 
   final List<Attachment> attachments;

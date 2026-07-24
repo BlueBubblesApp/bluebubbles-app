@@ -47,13 +47,12 @@ class MessagePartContent extends StatelessWidget {
 
     // Messages with attachments
     if (messagePart.attachments.isNotEmpty) {
-      final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (messagePart.isMediaGallery) {
-        if (iOS) {
-          final fanDirection =
-              message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
-          // 2–3 items: vertical collage; 4+: swipeable fan stack
-          if (messagePart.attachments.length <= 3) {
+        final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
+        final fanDirection =
+            message.isFromMe == true ? GalleryFanDirection.right : GalleryFanDirection.left;
+        switch (layout) {
+          case MediaCollectionLayout.collage:
             return MessageImageCollage(
               messagePart: messagePart,
               cvController: cvController,
@@ -61,21 +60,24 @@ class MessagePartContent extends StatelessWidget {
               fanDirection: fanDirection,
               canSwipeToReply: canSwipeToReply,
             );
-          }
-          return MessageImageStack(
-            messagePart: messagePart,
-            cvController: cvController,
-            isInReply: false,
-            fanDirection: fanDirection,
-            isEditing: isEditing,
-            currentIndexNotifier: galleryCurrentIndexNotifier,
-          );
+          case MediaCollectionLayout.stack:
+            return MessageImageStack(
+              messagePart: messagePart,
+              cvController: cvController,
+              isInReply: false,
+              fanDirection: fanDirection,
+              isEditing: isEditing,
+              currentIndexNotifier: galleryCurrentIndexNotifier,
+            );
+          case MediaCollectionLayout.grid:
+          case MediaCollectionLayout.skinDefault:
+            // skinDefault is resolved before the switch; treat as grid fallback.
+            return MessageImageGrid(
+              messagePart: messagePart,
+              cvController: cvController,
+              isEditing: isEditing,
+            );
         }
-        return MessageImageGrid(
-          messagePart: messagePart,
-          cvController: cvController,
-          isEditing: isEditing,
-        );
       }
       return AttachmentHolder(
         message: messagePart,

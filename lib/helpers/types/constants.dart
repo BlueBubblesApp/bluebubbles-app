@@ -123,6 +123,17 @@ enum Skins {
   Samsung,
 }
 
+/// Multi-attachment bubble layout preference (Media Settings).
+///
+/// [skinDefault] preserves the historical skin-based choice; the other values
+/// force a specific layout regardless of skin.
+enum MediaCollectionLayout {
+  skinDefault,
+  collage,
+  stack,
+  grid,
+}
+
 enum SwipeDirection {
   LEFT,
   RIGHT,

@@ -191,6 +191,69 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(
+                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Multi-Attachment Layout"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    const SettingsSubtitle(
+                      subtitle: "Choose how multiple images and videos are arranged in conversations",
+                      topPadding: 8,
+                      bottomPadding: false,
+                    ),
+                    // iOS SettingsOptions is a segmented control only — use a compact
+                    // label instead of SettingsTile (avoids ListTile vertical padding).
+                    if (iOS)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Text("2–3 Items", style: context.theme.textTheme.bodyLarge),
+                      ),
+                    Obx(() => SettingsOptions<MediaCollectionLayout>(
+                          initial: SettingsSvc.settings.mediaCollectionLayoutSmall.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            SettingsSvc.settings.mediaCollectionLayoutSmall.value = val;
+                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutSmall');
+                          },
+                          options: MediaCollectionLayout.values,
+                          textProcessing: (val) => switch (val) {
+                            MediaCollectionLayout.skinDefault => "Default",
+                            MediaCollectionLayout.collage => "Collage",
+                            MediaCollectionLayout.stack => "Stack",
+                            MediaCollectionLayout.grid => "Grid",
+                          },
+                          capitalize: false,
+                          title: "2–3 Items",
+                          secondaryColor: headerColor,
+                          materialPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        )),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    if (iOS)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Text("4+ Items", style: context.theme.textTheme.bodyLarge),
+                      ),
+                    Obx(() => SettingsOptions<MediaCollectionLayout>(
+                          initial: SettingsSvc.settings.mediaCollectionLayoutLarge.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            SettingsSvc.settings.mediaCollectionLayoutLarge.value = val;
+                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutLarge');
+                          },
+                          options: MediaCollectionLayout.values,
+                          textProcessing: (val) => switch (val) {
+                            MediaCollectionLayout.skinDefault => "Default",
+                            MediaCollectionLayout.collage => "Collage",
+                            MediaCollectionLayout.stack => "Stack",
+                            MediaCollectionLayout.grid => "Grid",
+                          },
+                          capitalize: false,
+                          title: "4+ Items",
+                          secondaryColor: headerColor,
+                          materialPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        )),
+                  ],
+                ),
+                SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Video Mute Behavior"),
                 SettingsSection(
                   backgroundColor: tileColor,

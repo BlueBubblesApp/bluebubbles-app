@@ -10,9 +10,9 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | `collection_attachment_card.dart` | Per-card popup, tapback, and swipe-to-reply wrapper for media collections |
 | `collection_download_button.dart` | Incoming-only circular download control shared by collage/stack |
 | `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
-| `message_image_collage.dart` | 2–3 item vertical overlapping collage (iOS skin) |
-| `message_image_stack.dart` | 4+ item swipeable fan stack (iOS skin) |
-| `message_image_grid.dart` | Multi-attachment grid layout (Material / Samsung skins) |
+| `message_image_collage.dart` | Vertical overlapping collage (any count ≥ 2) |
+| `message_image_stack.dart` | Swipeable fan stack (any count ≥ 2) |
+| `message_image_grid.dart` | Google Messages–style multi-attachment grid |
 | `image_viewer.dart` | Images with tap-to-fullscreen gesture |
 | `video_player.dart` | Video playback with custom controls |
 | `audio_player.dart` | Audio playback with progress bar |
@@ -29,18 +29,21 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 **Fullscreen**: Tap on `ImageViewer` or `VideoPlayer` pushes `FullscreenMedia` via `NavigationSvc`. See `lib/app/layouts/fullscreen_media/CLAUDE.md`.
 
-**Media collections**: Multi-attachment image/video parts (`isMediaGallery`) are formed in `MessageHolder._collapseImageGalleryParts` (all skins) and route by skin:
+**Media collections**: Multi-attachment image/video parts (`isMediaGallery`) are formed in `MessageHolder._collapseImageGalleryParts` (all skins). Routing uses `resolveMediaCollectionLayout(count)` from Media Settings (**Multi-Attachment Layout**):
 
-- **iOS**: `MessageImageCollage` (2–3) or `MessageImageStack` (4+ fan).
-- **Material / Samsung**: `MessageImageGrid` - Google Messages–style grid card
+- Prefs: `mediaCollectionLayoutSmall` (2–3 items) and `mediaCollectionLayoutLarge` (4+), each `skinDefault` | `collage` | `stack` | `grid`
+- `skinDefault` preserves historical behavior: iOS → Collage (2–3) / Stack (4+); Material/Samsung → Grid
+- Explicit values force that layout regardless of skin
+
+Widgets: `MessageImageCollage`, `MessageImageStack`, `MessageImageGrid`
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level.
 
-**iOS collage / stack card sizing**:
+**Collage / stack / grid card sizing**:
 
-- **Collage (2–3):** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Media cover-fills via `fillCard` so load does not resize cards.
-- **Stack (4+):** Shared portrait **3:4** frame for every fan/past slot; media cover-fills via `fillCard`.
-- **Material grid:** Predetermined cell geometry with `inGridCell` (same cover-fill path; no card shadow).
+- **Collage:** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Media cover-fills via `fillCard` so load does not resize cards.
+- **Stack:** Shared portrait **3:4** frame for every fan/past slot; media cover-fills via `fillCard`.
+- **Grid:** Predetermined cell geometry with `inGridCell` (same cover-fill path; no card shadow).
 
 The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage`. Fullscreen viewers opened from a collection (`galleryAttachments`) also show a grid button that opens the same page.
 

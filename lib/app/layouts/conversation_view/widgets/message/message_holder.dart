@@ -508,18 +508,22 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          // Outer swipe: off for iOS collage (per-card) and Material/Samsung
-                                                                          // grids (no attachmentGuid). iOS stack (4+) keeps it.
-                                                                          !(e.isMediaGallery &&
-                                                                              (!iOS || e.attachments.length <= 3)),
+                                                                          // Outer swipe: on for stack only. Collage uses per-card
+                                                                          // swipe; grid has no attachmentGuid for outer swipe.
+                                                                          (!e.isMediaGallery ||
+                                                                              resolveMediaCollectionLayout(
+                                                                                    e.attachments.length) ==
+                                                                                  MediaCollectionLayout.stack),
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
                                                                           final isGallery = e.isMediaGallery;
-                                                                          final isStack =
-                                                                              iOS && isGallery && e.attachments.length > 3;
+                                                                          final isStack = isGallery &&
+                                                                              resolveMediaCollectionLayout(
+                                                                                    e.attachments.length) ==
+                                                                                  MediaCollectionLayout.stack;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
@@ -610,8 +614,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                       !e.isUnsent &&
                                                       !widget.isReplyThread &&
                                                       index < replyOffsets.length &&
-                                                      !(e.isMediaGallery &&
-                                                          (!iOS || e.attachments.length <= 3)))
+                                                      (!e.isMediaGallery ||
+                                                          resolveMediaCollectionLayout(e.attachments.length) ==
+                                                              MediaCollectionLayout.stack))
                                                     Obx(() => SlideToReply(
                                                         width: replyOffsets[index].value.abs(),
                                                         isFromMe: message.isFromMe!)),

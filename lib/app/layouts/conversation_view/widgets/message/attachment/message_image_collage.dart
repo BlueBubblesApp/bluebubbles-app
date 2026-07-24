@@ -7,7 +7,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-/// Vertical overlapping collage for 2–3 media attachments (iOS skin).
+/// Vertical overlapping collage for media attachment collections.
 ///
 /// Even indexes sit flush to the author side; odd indexes get a horizontal stagger.
 /// Lower cards overlap the ones above them. Each card is a [CollectionAttachmentCard]

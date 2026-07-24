@@ -23,6 +23,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
     this.useCupertino = true,
     this.clampWidth = true,
     this.leading,
+    this.materialPadding = const EdgeInsets.all(16.0),
   });
   final String title;
   final void Function(T?) onChanged;
@@ -38,6 +39,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   final bool useCupertino;
   final bool clampWidth;
   final SettingsLeadingIcon? leading;
+  final EdgeInsets materialPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +74,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
       color: Colors.transparent,
       width: double.infinity,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: materialPadding,
         child: Wrap(
           alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -85,25 +87,33 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 5.0, right: 10.0),
                 child: leading,
               ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.theme.textTheme.bodyLarge,
-                ),
-                (subtitle != null)
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 3.0),
-                        child: Text(
-                          subtitle ?? "",
-                          style: context.theme.textTheme.bodySmall!
-                              .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-            ]),
+            ConstrainedBox(
+              // Keep title/subtitle on the left so long subtitles wrap instead of
+              // pushing the dropdown onto a second Wrap line.
+              constraints: BoxConstraints(
+                maxWidth: NavigationSvc.width(context) * (leading != null ? 0.45 : 0.5),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: context.theme.textTheme.bodyLarge,
+                  ),
+                  (subtitle != null)
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 3.0),
+                          child: Text(
+                            subtitle ?? "",
+                            style: context.theme.textTheme.bodySmall!
+                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ],
+              ),
+            ),
             Builder(
               builder: (context) {
                 final widget = Container(
