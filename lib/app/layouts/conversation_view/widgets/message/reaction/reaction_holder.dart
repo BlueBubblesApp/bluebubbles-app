@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:defer_pointer/defer_pointer.dart';
@@ -67,9 +68,11 @@ class ReactionHolder extends StatefulWidget {
   const ReactionHolder({
     super.key,
     required this.reactions,
+    this.tailType = ReactionTailType.standard,
   });
 
   final Iterable<Message> reactions;
+  final ReactionTailType tailType;
 
   @override
   State<ReactionHolder> createState() => _ReactionHolderState();
@@ -121,7 +124,7 @@ class _ReactionHolderState extends State<ReactionHolder> {
 
     final isFromMe = MessageStateScope.of(context).isFromMe.value;
     return SizedBox(
-      height: 35,
+      height: widget.tailType == ReactionTailType.inside ? 40 : 35,
       width: 35,
       child: Stack(
         clipBehavior: Clip.none,
@@ -156,6 +159,7 @@ class _ReactionHolderState extends State<ReactionHolder> {
                     child: ReactionWidget(
                       reaction: e,
                       reactions: _cachedReactions,
+                      tailType: widget.tailType,
                     ),
                   ),
                 ),

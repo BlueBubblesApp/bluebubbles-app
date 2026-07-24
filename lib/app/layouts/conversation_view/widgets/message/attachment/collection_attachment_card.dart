@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/swipe_to_reply_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -18,10 +19,12 @@ class CollectionAttachmentReactions extends StatelessWidget {
     super.key,
     required this.collectionPart,
     required this.attachmentIndex,
+    this.tailType = ReactionTailType.standard,
   });
 
   final MessagePart collectionPart;
   final int attachmentIndex;
+  final ReactionTailType tailType;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
         right: isFromMe ? null : -20,
         child: ReactionHolder(
           reactions: reactions,
+          tailType: tailType,
         ),
       );
     });
@@ -65,6 +69,7 @@ class CollectionAttachmentCard extends StatefulWidget {
     this.cardWidth,
     this.cardHeight,
     this.hideReactions = false,
+    this.reactionTailType = ReactionTailType.standard,
   });
 
   final MessageState controller;
@@ -84,6 +89,8 @@ class CollectionAttachmentCard extends StatefulWidget {
   final double? cardWidth;
   final double? cardHeight;
   final bool hideReactions;
+  /// Thought-bubble tail style for per-card tapbacks (stack uses [ReactionTailType.inside]).
+  final ReactionTailType reactionTailType;
 
   @override
   State<CollectionAttachmentCard> createState() => _CollectionAttachmentCardState();
@@ -135,6 +142,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
           CollectionAttachmentReactions(
             collectionPart: widget.collectionPart,
             attachmentIndex: widget.attachmentIndex,
+            tailType: widget.reactionTailType,
           ),
       ],
     );

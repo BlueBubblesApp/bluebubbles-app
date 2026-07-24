@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -420,6 +421,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       isEditing: widget.isEditing,
       enableGestures: isCurrent,
       fillCard: true,
+      reactionTailType: ReactionTailType.inside,
     );
 
     return AnimatedPositioned(
@@ -504,6 +506,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
                 isEditing: widget.isEditing,
                 enableGestures: false,
                 fillCard: true,
+                reactionTailType: ReactionTailType.inside,
               ),
             ),
           ),

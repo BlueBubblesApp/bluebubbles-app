@@ -22,6 +22,7 @@ class ReactionWidget extends StatefulWidget {
     this.reactions,
     this.chatGuid,
     this.tailDirection,
+    this.tailType = ReactionTailType.standard,
   });
 
   final Message reaction;
@@ -37,6 +38,9 @@ class ReactionWidget extends StatefulWidget {
   /// the fallback would produce the wrong arc orientation.
   /// Bubble coloring is always driven by the reaction's own [isFromMe] field.
   final ReactionTailDirection? tailDirection;
+
+  /// Outward (`standard`) or inward (`inside`) thought-bubble tail.
+  final ReactionTailType tailType;
 
   @override
   ReactionWidgetState createState() => ReactionWidgetState();
@@ -94,6 +98,10 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   }
 
   static const double iosSize = 35;
+  /// Inside tails extend ~5px past [iosSize] on y (fill + border).
+  static const double iosClipHeight = 40;
+
+  double get _clipHeight => widget.tailType == ReactionTailType.inside ? iosClipHeight : iosSize;
 
   @override
   Widget build(BuildContext context) {
@@ -208,16 +216,22 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
             left: messageIsFromMe ? 0 : -1,
             right: !messageIsFromMe ? 0 : -1,
             child: ClipPath(
-              clipper: ReactionBorderClipper(tailDirection: _effectiveTailDirection),
+              clipper: ReactionBorderClipper(
+                tailDirection: _effectiveTailDirection,
+                tailType: widget.tailType,
+              ),
               child: Container(
                 width: iosSize + 2,
-                height: iosSize + 2,
+                height: _clipHeight + 2,
                 color: context.theme.colorScheme.surface,
               ),
             ),
           ),
           ClipPath(
-              clipper: ReactionClipper(tailDirection: _effectiveTailDirection),
+              clipper: ReactionClipper(
+                tailDirection: _effectiveTailDirection,
+                tailType: widget.tailType,
+              ),
               child: Obx(() {
                 // reactionController is null when no MessageState exists for the reaction (typical).
                 // Fall back to checking the GUID prefix so temp reactions always show as pending.
@@ -225,7 +239,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                     (reaction.guid?.startsWith('temp') == true && reaction.error == 0);
                 return Container(
                     width: iosSize,
-                    height: iosSize,
+                    height: _clipHeight,
                     color: reactionIsFromMe
                         ? context.theme.colorScheme.primary.darkenAmount(isSending ? 0.2 : 0)
                         : ((context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
@@ -383,19 +397,25 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
             left: !tailIsRight ? 0 : -1,
             right: tailIsRight ? 0 : -1,
             child: ClipPath(
-              clipper: ReactionBorderClipper(tailDirection: tailDirection),
+              clipper: ReactionBorderClipper(
+                tailDirection: tailDirection,
+                tailType: widget.tailType,
+              ),
               child: Container(
                 width: iosSize + 2,
-                height: iosSize + 2,
+                height: _clipHeight + 2,
                 color: context.theme.colorScheme.surface,
               ),
             ),
           ),
           ClipPath(
-            clipper: ReactionClipper(tailDirection: tailDirection),
+            clipper: ReactionClipper(
+              tailDirection: tailDirection,
+              tailType: widget.tailType,
+            ),
             child: Container(
               width: iosSize,
-              height: iosSize,
+              height: _clipHeight,
               color: isFromMe
                   ? context.theme.colorScheme.primary
                   : ((context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
