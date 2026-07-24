@@ -119,11 +119,14 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       return;
     }
 
+    VideoPlayerController? tempController;
     try {
       videoPreview = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      if (!mounted) return;
       dynamic _file = File(file.path!);
-      final tempController = VideoPlayerController.file(_file);
+      tempController = VideoPlayerController.file(_file);
       await tempController.initialize();
+      if (!mounted) return;
       duration = tempController.value.duration;
     } catch (_) {
       // If an error occurs, set the thumbnail to the cached no preview image
@@ -134,9 +137,13 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         attachment.metadata!['thumbnail_status'] = 'error';
         await attachment.saveAsync(null);
       }
+    } finally {
+      await tempController?.dispose();
     }
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
