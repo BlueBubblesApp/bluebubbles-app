@@ -103,6 +103,16 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     widget.currentIndexNotifier?.value = _currentIndex;
   }
 
+  void _jumpTo(int index) {
+    if (_attachments.length <= 1) return;
+    final next = widget.infiniteScroll
+        ? index % _attachments.length
+        : index.clamp(0, _attachments.length - 1);
+    if (next == _currentIndex) return;
+    _currentIndex = next;
+    widget.currentIndexNotifier?.value = _currentIndex;
+  }
+
   double _computeBaseCardHeight(double baseCardWidth) {
     if (widget.isInReply) return 120.0;
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
@@ -401,6 +411,17 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
+    final card = CollectionAttachmentCard(
+      controller: messageState,
+      cvController: widget.cvController,
+      collectionPart: widget.messagePart,
+      attachmentIndex: attachmentIndex,
+      collectionAttachments: _attachments,
+      isEditing: widget.isEditing,
+      enableGestures: isCurrent,
+      fillCard: true,
+    );
+
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
       duration: const Duration(milliseconds: 180),
@@ -413,19 +434,19 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         child: Transform.rotate(
           angle: angle.toDouble() + dragRotate,
           alignment: Alignment.bottomLeft,
-          child: IgnorePointer(
-            ignoring: !isCurrent,
-            child: CollectionAttachmentCard(
-              controller: messageState,
-              cvController: widget.cvController,
-              collectionPart: widget.messagePart,
-              attachmentIndex: attachmentIndex,
-              collectionAttachments: _attachments,
-              isEditing: widget.isEditing,
-              enableGestures: isCurrent,
-              fillCard: true,
-            ),
-          ),
+          child: isCurrent
+              ? card
+              : GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _jumpTo(attachmentIndex);
+                      _dragDx = 0;
+                    });
+                  },
+                  child: card,
+                ),
         ),
       ),
     );
@@ -465,8 +486,15 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           child: Transform.rotate(
             angle: angle.toDouble(),
             alignment: Alignment.bottomRight,
-            child: IgnorePointer(
-              ignoring: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _jumpTo(attachmentIndex);
+                  _dragDx = 0;
+                });
+              },
               child: CollectionAttachmentCard(
                 controller: messageState,
                 cvController: widget.cvController,
