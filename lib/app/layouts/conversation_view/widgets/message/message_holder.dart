@@ -132,7 +132,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
     widget.cvController.lastFocusedNode.requestFocus();
   }
 
-  List<MessagePart> _collapseImageGalleryParts(List<MessagePart> parts) {
+  List<MessagePart> _collapseMediaCollectionParts(List<MessagePart> parts) {
     final collapsed = <MessagePart>[];
     int i = 0;
     while (i < parts.length) {
@@ -219,7 +219,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
         final rawMessageParts = widget.isReplyThread && widget.replyPart != null
             ? [controller.parts[widget.replyPart!]]
             : controller.parts.toList();
-        final messageParts = _collapseImageGalleryParts(rawMessageParts);
+        final messageParts = _collapseMediaCollectionParts(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
         // always safe to access, even when parts are added after initState.
@@ -334,7 +334,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                               color: context.theme.colorScheme.surfaceContainerHighest,
                                               isFromMe: message.isFromMe!,
                                             ),
-                                            child: e.isMediaGallery &&
+                                            child: e.isMediaCollection &&
                                                     resolveMediaCollectionLayout(e.attachments.length) ==
                                                         MediaCollectionLayout.stack
                                                 ? SizedBox(height: message.isFromMe! ? 8 : 0)
@@ -346,7 +346,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                   ),
                                           ),
                                         )
-                                      : e.isMediaGallery &&
+                                      : e.isMediaCollection &&
                                               resolveMediaCollectionLayout(e.attachments.length) ==
                                                   MediaCollectionLayout.stack
                                           ? SizedBox(
@@ -509,12 +509,12 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    enableGestures: !e.isMediaGallery,
+                                                                    enableGestures: !e.isMediaCollection,
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
                                                                           // Collections own horizontal gestures; outer reply is for bubbles.
-                                                                          !e.isMediaGallery,
+                                                                          !e.isMediaCollection,
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
@@ -556,7 +556,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                                 }),
                                                                             ],
                                                                           );
-                                                                          if (e.isMediaGallery) return inner;
+                                                                          if (e.isMediaCollection) return inner;
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,
@@ -581,7 +581,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                   ),
                                                                 ),
                                                                 // Bubble-level tapbacks; collections use CollectionAttachmentCard instead.
-                                                                if (!e.isMediaGallery)
+                                                                if (!e.isMediaCollection)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
                                                                     part: e,
@@ -607,7 +607,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                       !e.isUnsent &&
                                                       !widget.isReplyThread &&
                                                       index < replyOffsets.length &&
-                                                      !e.isMediaGallery)
+                                                      !e.isMediaCollection)
                                                     Obx(() => SlideToReply(
                                                         width: replyOffsets[index].value.abs(),
                                                         isFromMe: message.isFromMe!)),

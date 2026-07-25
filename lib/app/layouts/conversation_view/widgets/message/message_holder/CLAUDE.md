@@ -44,7 +44,7 @@ DeliveredIndicator                ← bottom-right (sent/delivered/read)
 - `showSender` — true if group chat, different sender from previous message, and within 30-min window
 - `canSwipeToReply` — requires Private API enabled + Big Sur sync; false for temp/error messages
 - `replyTo` — fetches reply target from `MessagesService.struct`
-- `messageParts` — `List<MessagePart>` from `MessageState.parts`, passed through `_collapseImageGalleryParts` for multi-attachment galleries
+- `messageParts` — `List<MessagePart>` from `MessageState.parts`, passed through `_collapseMediaCollectionParts` for multi-attachment collections
 
 ## Reactivity
 

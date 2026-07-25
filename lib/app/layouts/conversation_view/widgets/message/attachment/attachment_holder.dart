@@ -259,7 +259,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         downloadController: download,
         isInReply: isInReply,
         isiOS: isiOS,
-        isInGallery: inCollection,
+        isInCollection: inCollection,
       );
     }
 

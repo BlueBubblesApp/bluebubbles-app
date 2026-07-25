@@ -24,7 +24,7 @@ if (message.hasApplePayloadData || message.isInteractive)
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
 else if (messagePart.attachments.isNotEmpty)
-  if (messagePart.isMediaGallery)
+  if (messagePart.isMediaCollection)
     resolveMediaCollectionLayout(count) →
       collage → CollectionGroupCollage
       stack   → CollectionGroupStack

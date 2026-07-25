@@ -46,35 +46,35 @@ class MessagePartContent extends StatelessWidget {
 
     // Messages with attachments
     if (messagePart.attachments.isNotEmpty) {
-      if (messagePart.isMediaGallery) {
+      if (messagePart.isMediaCollection) {
         final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
-        final Widget gallery;
+        final Widget collection;
         switch (layout) {
           case MediaCollectionLayout.collage:
-            gallery = CollectionGroupCollage(
+            collection = CollectionGroupCollage(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
               canSwipeToReply: canSwipeToReply,
             );
           case MediaCollectionLayout.stack:
-            gallery = CollectionGroupStack(
+            collection = CollectionGroupStack(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
             );
           case MediaCollectionLayout.grid:
           case MediaCollectionLayout.skinDefault:
-            gallery = CollectionGroupGrid(
+            collection = CollectionGroupGrid(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
             );
         }
-        // Galleries skip TailClipper; restore the author-edge inset bubbles get from it.
+        // Collections skip TailClipper; restore the author-edge inset bubbles get from it.
         return Padding(
           padding: collectionAuthorEdgeInsets(isFromMe: message.isFromMe == true),
-          child: gallery,
+          child: collection,
         );
       }
       return AttachmentHolder(

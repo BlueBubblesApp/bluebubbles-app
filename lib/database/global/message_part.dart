@@ -50,9 +50,9 @@ class MessagePart {
   List<MessagePart> edits;
   int part;
 
-  /// For gallery parts created by collapsing consecutive media-only parts,
+  /// For collection parts created by collapsing consecutive media-only parts,
   /// maps each attachment (by index) to its original messagePart index.
-  /// Null for non-gallery parts or single-source-part galleries.
+  /// Null for non-collection parts or single-source-part collections.
   List<int>? attachmentPartIndices;
 
   /// Returns the associated-message part index for the attachment at [index].
@@ -76,7 +76,7 @@ class MessagePart {
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 
   /// True when this part contains only images or videos with no text or subject.
-  /// Used to determine whether adjacent parts can be collapsed into a gallery.
+  /// Used to determine whether adjacent parts can be collapsed into a collection.
   bool get isMediaOnlyPart =>
       attachments.isNotEmpty &&
       text == null &&
@@ -84,7 +84,7 @@ class MessagePart {
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
   /// Multi-item image/video group routed to collage/stack/grid instead of [AttachmentHolder].
-  bool get isMediaGallery =>
+  bool get isMediaCollection =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }
 

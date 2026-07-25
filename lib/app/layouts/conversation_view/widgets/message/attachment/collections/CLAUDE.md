@@ -1,6 +1,6 @@
 # attachment/collections/ — Media Collection Layouts
 
-Multi-attachment image/video parts (`isMediaGallery`) formed in `MessageHolder._collapseImageGalleryParts`. Routed via `resolveMediaCollectionLayout(count)` from Media Settings (**Multi-Attachment Layout**).
+Multi-attachment image/video parts (`isMediaCollection`) formed in `MessageHolder._collapseMediaCollectionParts`. Routed via `resolveMediaCollectionLayout(count)` from Media Settings (**Multi-Attachment Layout**).
 
 ## Files
 
@@ -29,7 +29,7 @@ Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroup
 - **Stack:** Shared portrait **3:4** frame for every fan/past slot; same `fixedCard` cover-fill.
 - **Grid:** Predetermined cell geometry with `AttachmentFrameMode.gridCell` (same cover-fill path; parent clips; no card shadow).
 
-Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level.
+Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all collection parts; tapbacks are card-local, not bubble-level.
 
 The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage`. Fullscreen viewers opened from a collection (`galleryAttachments`) also show a grid button that opens the same page.
 

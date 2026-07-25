@@ -107,7 +107,7 @@ class ReactionSpacing extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .cast<Message>()
           .toList();
-      // Gallery parts: includesAssociatedPart covers attachmentPartIndices, so this
+      // Collection parts: includesAssociatedPart covers attachmentPartIndices, so this
       // already reserves space for tapbacks on any collapsed original part index.
       if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty) {
         return const SizedBox(height: 12.5);

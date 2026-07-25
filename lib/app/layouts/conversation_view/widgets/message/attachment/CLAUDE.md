@@ -25,7 +25,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 **Fullscreen**: Tap on `ImageViewer` or `VideoPlayer` pushes `FullscreenMedia` via `NavigationSvc`. See `lib/app/layouts/fullscreen_media/CLAUDE.md`.
 
-**Media collections**: `isMediaGallery` parts route via `resolveMediaCollectionLayout()` to collage/stack/grid — see `collections/CLAUDE.md`.
+**Media collections**: `isMediaCollection` parts route via `resolveMediaCollectionLayout()` to collage/stack/grid — see `collections/CLAUDE.md`.
 
 ## Adding a New Attachment Type
 

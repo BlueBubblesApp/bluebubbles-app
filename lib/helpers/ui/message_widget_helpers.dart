@@ -270,7 +270,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   return textSpans;
 }
 
-/// Resolves the effective multi-attachment layout for a media gallery.
+/// Resolves the effective multi-attachment layout for a media collection.
 ///
 /// [MediaCollectionLayout.skinDefault] maps to the historical skin-based choice
 /// (iOS: collage for 2–3 / stack for 4+; Material/Samsung: grid). Explicit
