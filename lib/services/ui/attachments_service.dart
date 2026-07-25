@@ -613,14 +613,11 @@ class AttachmentsService extends GetxService {
           }
 
           // Check if dimensions need to be swapped based on orientation
-          // Rotations of 90° or 270° require swapping width/height for display
+          // Only rotations of 90° or 270° require swapping width/height for display.
+          // "Horizontal (normal)" (orientation 1) and "Mirrored horizontal" (orientation 2)
+          // involve no rotation (or only a flip) and must NOT be swapped.
           bool needsSwap = orientationStr != null &&
-              (orientationStr.contains('90') ||
-                  orientationStr.contains('270') ||
-                  orientationStr.toLowerCase().contains('rotated 90') ||
-                  orientationStr.toLowerCase().contains('rotated 270') ||
-                  orientationStr.toLowerCase().contains('horizontal (normal)') ||
-                  orientationStr.toLowerCase().contains('mirrored horizontal'));
+              (orientationStr.contains('90') || orientationStr.contains('270'));
 
           if (exifWidth != null && exifHeight != null) {
             if (needsSwap) {
