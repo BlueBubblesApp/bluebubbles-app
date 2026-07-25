@@ -155,9 +155,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                         onAttachmentsLoaded: onAttachmentsLoaded,
                       ),
                     ),
-                    if (chat.handles.length > 2 &&
-                        SettingsSvc.settings.enablePrivateAPI.value &&
-                        SettingsSvc.serverDetails.supportsGroupChatManagement)
+                    if (chat.handles.length > 2 && BackendSvc.canLeaveChat)
                       SliverToBoxAdapter(
                         child: Builder(builder: (context) {
                           return ListTile(
@@ -206,9 +204,9 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                                           ),
                                         );
                                       });
-                                  final response = await HttpSvc.chat.leave(chat.guid);
+                                  final success = await BackendSvc.leaveChat(chat);
                                   if (!context.mounted) return;
-                                  if (response.statusCode == 200) {
+                                  if (success) {
                                     Navigator.of(context, rootNavigator: true).pop();
                                     showSnackbar("Notice", "Left chat successfully!");
                                   } else {

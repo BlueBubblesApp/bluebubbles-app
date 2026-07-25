@@ -69,10 +69,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
       return;
     }
 
-    if (usePrivateApi &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.serverDetails.isMinBigSur &&
-        SettingsSvc.serverDetails.supportsGroupChatManagement) {
+    if (usePrivateApi && BackendSvc.canManageGroupChat) {
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -93,8 +90,8 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
               ),
             );
           });
-      final response = await HttpSvc.chat.setIcon(chat.guid, result);
-      if (response.statusCode == 200) {
+      final success = await BackendSvc.setChatIcon(chat, result);
+      if (success) {
         await ChatsSvc.setChatCustomAvatarPath(chat, result);
         Navigator.of(context, rootNavigator: true).pop();
         showSnackbar("Notice", "Updated group photo successfully!");
@@ -121,12 +118,9 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
     if (papi == null) return;
     final usePrivateApi = papi;
 
-    if (usePrivateApi &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.serverDetails.isMinBigSur &&
-        SettingsSvc.serverDetails.supportsGroupChatManagement) {
-      final response = await HttpSvc.chat.removeIcon(chat.guid);
-      if (response.statusCode == 200) {
+    if (usePrivateApi && BackendSvc.canManageGroupChat) {
+      final success = await BackendSvc.deleteChatIcon(chat);
+      if (success) {
         await ChatsSvc.setChatCustomAvatarPath(chat, null);
         showSnackbar("Notice", "Deleted group photo successfully!");
       } else {

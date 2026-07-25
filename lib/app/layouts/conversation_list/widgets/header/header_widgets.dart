@@ -340,7 +340,7 @@ class _MaterialAvatarMenuState extends State<MaterialAvatarMenu> with SingleTick
                                 label: 'Unknown Senders',
                                 onTap: () => _hideMenu().then((_) => goToUnknownSenders(navContext)),
                               ),
-                            if (SettingsSvc.serverDetails.isMinCatalina)
+                            if (BackendSvc.supportsFindMy)
                               _MenuItemRow(
                                 icon: Icons.location_on_outlined,
                                 label: 'Find My',
@@ -530,7 +530,7 @@ class CupertinoOverflowMenu extends StatelessWidget {
             icon: CupertinoIcons.person_crop_circle_badge_xmark,
             onTap: () => goToUnknownSenders(context),
           ),
-        if (SettingsSvc.serverDetails.isMinCatalina)
+        if (BackendSvc.supportsFindMy)
           PullDownMenuItem(
             itemTheme: itemTheme,
             title: 'Find My',

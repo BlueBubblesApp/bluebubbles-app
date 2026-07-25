@@ -137,6 +137,12 @@ class StartupTasks {
     Logger.info("Registering HttpService...");
     GetIt.I.registerSingleton<HttpService>(HttpService());
     await HttpSvc.init();
+
+    // The backend sits on top of HttpService, so it registers alongside it —
+    // every startup path that can talk to a server also has a backend.
+    Logger.info("Registering BackendService...");
+    GetIt.I.registerSingleton<BackendService>(BlueBubblesBackend());
+    await BackendSvc.init();
   }
 
   static Future<void> _waitForInterop({

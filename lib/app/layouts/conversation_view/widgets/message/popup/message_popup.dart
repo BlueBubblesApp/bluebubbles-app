@@ -587,10 +587,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_message_actions.createContact(_buildActionContext(DetailsMenuAction.CreateContact)),
           action: DetailsMenuAction.CreateContact,
         ),
-      if (SettingsSvc.serverDetails.isMinVentura &&
-          message.isFromMe! &&
-          !widget.controller.isSending.value &&
-          SettingsSvc.serverDetails.supportsEditAndUnsend)
+      if (BackendSvc.canEditUnsend && message.isFromMe! && !widget.controller.isSending.value)
         DetailsMenuActionWidget(
           onTap: () => popup_message_actions.unsend(_buildActionContext(DetailsMenuAction.UndoSend)),
           customTitle: canUnsend ? 'Undo Send' : 'Undo Send (too old)',
@@ -602,10 +599,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_message_actions.cancelSend(_buildActionContext(DetailsMenuAction.CancelSend)),
           action: DetailsMenuAction.CancelSend,
         ),
-      if (SettingsSvc.serverDetails.isMinVentura &&
+      if (BackendSvc.canEditUnsend &&
           message.isFromMe! &&
           !widget.controller.isSending.value &&
-          SettingsSvc.serverDetails.supportsEditAndUnsend &&
           (part.text?.isNotEmpty ?? false))
         DetailsMenuActionWidget(
           onTap: () => popup_message_actions.edit(_buildActionContext(DetailsMenuAction.Edit)),

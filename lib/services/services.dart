@@ -20,6 +20,8 @@ export 'backend_ui_interop/event_dispatcher.dart';
 export 'backend_ui_interop/intents.dart';
 export 'network/firebase/cloud_messaging_service.dart';
 export 'network/firebase/firebase_database_service.dart';
+export 'network/backend_service.dart';
+export 'network/bluebubbles_backend.dart';
 export 'network/downloads_service.dart';
 export 'network/http_service.dart';
 export 'network/socket_service.dart';

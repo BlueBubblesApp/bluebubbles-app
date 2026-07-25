@@ -3,7 +3,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/backend/interfaces/send_message_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
@@ -463,14 +462,14 @@ class OutgoingMessageHandler {
   Future<void> _sendWithRace({
     required String tempGuid,
     required Chat chat,
-    required Future<Map<String, dynamic>> Function() httpCall,
-    required Future<void> Function(Map<String, dynamic> data) onSuccess,
+    required Future<Message> Function() send,
+    required Future<void> Function(Message confirmed) onSuccess,
     required Future<void> Function(Object error, StackTrace stack) onError,
   }) {
     final race = Completer<void>();
     registerSendProgressTracker(tempGuid, chat, race);
 
-    httpCall().then((data) async {
+    send().then((data) async {
       completeSendProgressIfExists(tempGuid, Origin.outgoingMessageHandler);
       try {
         await onSuccess(data);
@@ -713,26 +712,6 @@ class OutgoingMessageHandler {
 
   // ── Send methods ─────────────────────────────────────────────────────────
 
-  /// Returns `'private-api'` if [m] must be sent via the Private API,
-  /// `'apple-script'` otherwise.
-  ///
-  /// Private API is required when:
-  /// - the user has it globally enabled AND the per-type setting is on, OR
-  /// - the message uses a feature only pAPI supports (subject, thread
-  ///   originator, or expressive effect).
-  String _resolveMethod(Message m, {bool forAttachment = false}) {
-    final papiEnabled = SettingsSvc.settings.enablePrivateAPI.value;
-    final papiSend =
-        forAttachment ? SettingsSvc.settings.privateAPIAttachmentSend.value : SettingsSvc.settings.privateAPISend.value;
-    if ((papiEnabled && papiSend) ||
-        (m.subject?.isNotEmpty ?? false) ||
-        m.threadOriginatorGuid != null ||
-        m.expressiveSendStyleId != null) {
-      return 'private-api';
-    }
-    return 'apple-script';
-  }
-
   /// Sends a text message (or a reaction/tapback) to [c].
   Future<void> sendMessage(Chat c, Message m, Message? selected, String? r) {
     ChatsSvc.updateChat(c);
@@ -748,25 +727,7 @@ class OutgoingMessageHandler {
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => r == null
-          ? SendMessageInterface.sendTextMessage(
-              chatGuid: c.guid,
-              tempGuid: tempGuid,
-              message: m.text!,
-              method: _resolveMethod(m),
-              selectedMessageGuid: m.threadOriginatorGuid,
-              effectId: m.expressiveSendStyleId,
-              subject: m.subject,
-              partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-              ddScan: !SettingsSvc.serverDetails.isMinSonoma && m.text!.hasUrl,
-            )
-          : SendMessageInterface.sendTapback(
-              chatGuid: c.guid,
-              selectedMessageText: selected!.text ?? '',
-              selectedMessageGuid: selected.guid!,
-              reaction: r,
-              partIndex: m.associatedMessagePart,
-            ),
+      send: () => r == null ? BackendSvc.sendText(c, m) : BackendSvc.sendTapback(c, m, selected!, r),
       onSuccess: (data) => _finalizeOutgoingSuccess(
         c, tempGuid, data,
         // Reactions live in the parent's associatedMessages list, not as
@@ -820,27 +781,11 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
-    final parts = m.attributedBody.first.runs
-        .map((e) => {
-              'text': m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
-              'mention': e.attributes!.mention,
-              'partIndex': e.attributes!.messagePart,
-            })
-        .toList();
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => SendMessageInterface.sendMultipartMessage(
-        chatGuid: c.guid,
-        tempGuid: tempGuid,
-        parts: parts,
-        subject: m.subject,
-        selectedMessageGuid: m.threadOriginatorGuid,
-        effectId: m.expressiveSendStyleId,
-        partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-        ddScan: !SettingsSvc.serverDetails.isMinSonoma && parts.any((e) => e['text'].toString().hasUrl),
-      ),
+      send: () => BackendSvc.sendMultipart(c, m),
       onSuccess: (data) => _finalizeOutgoingSuccess(c, tempGuid, data),
       onError: (error, stack) => _finalizeOutgoingFailure(
         c,
@@ -880,27 +825,19 @@ class OutgoingMessageHandler {
       return;
     }
 
+    // Captured by the send/onSuccess closures below so the confirmed attachments
+    // survive the hop between them without racing other in-flight sends.
+    List<Attachment> responseAttachments = const [];
+
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => SendMessageInterface.sendAttachmentMessage(
-        chatGuid: c.guid,
-        tempGuid: attachment.guid!,
-        filePath: attachment.path,
-        fileName: attachment.transferName!,
-        fileSize: attachment.totalBytes ?? 0,
-        method: _resolveMethod(m, forAttachment: true),
-        selectedMessageGuid: m.threadOriginatorGuid,
-        effectId: m.expressiveSendStyleId,
-        partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-        isAudioMessage: isAudioMessage,
-      ),
-      onSuccess: (Map<String, dynamic> data) async {
-        final newMessage = Message.fromMap(data['data']);
-        final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
-            .whereType<Map>()
-            .map((e) => Attachment.fromMap(e.cast<String, Object>()))
-            .toList();
+      send: () async {
+        final result = await BackendSvc.sendAttachment(c, m, attachment, isAudioMessage: isAudioMessage);
+        responseAttachments = result.attachments;
+        return result.message;
+      },
+      onSuccess: (Message newMessage) async {
         // Swap attachment GUIDs first, then swap the message GUID.
         for (final a in responseAttachments) {
           try {
@@ -958,10 +895,9 @@ class OutgoingMessageHandler {
   Future<void> _finalizeOutgoingSuccess(
     Chat c,
     String tempGuid,
-    Map<String, dynamic> data, {
+    Message serverMessage, {
     Future<void> Function(Message confirmed)? onExtra,
   }) async {
-    final serverMessage = Message.fromMap(data['data']);
     await _matchMessageWithExisting(c, tempGuid, serverMessage);
     await onExtra?.call(serverMessage);
   }

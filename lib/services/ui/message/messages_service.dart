@@ -1344,15 +1344,8 @@ class MessagesService extends GetxController {
     }
 
     try {
-      final response = await HttpSvc.message.edit(
-        messageGuid,
-        newText,
-        "Edited to: '$newText'",
-        partIndex: partIndex,
-      );
-      // response is always HTTP 200 here — returnSuccessOrError converts
-      // non-200 into Future.error, which is caught below.
-      final updatedMessage = Message.fromMap(response.data['data']);
+      // Errors are surfaced as exceptions and caught below.
+      final updatedMessage = await BackendSvc.edit(message, newText, partIndex);
       IncomingMsgHandler.handle(IncomingPayload(
         type: MessageEventType.updatedMessage,
         source: MessageSource.apiResponse,
@@ -1426,8 +1419,7 @@ class MessagesService extends GetxController {
     }
 
     try {
-      final response = await HttpSvc.message.unsend(messageGuid, partIndex: partIndex);
-      final updatedMessage = Message.fromMap(response.data['data']);
+      final updatedMessage = await BackendSvc.unsend(message, partIndex);
       // Await the handler — it processes on an async FIFO queue, so firing and
       // forgetting would let the buildMessageParts below run against a message
       // whose messageSummaryInfo hasn't been updated yet, wiping the optimistic

@@ -46,8 +46,7 @@ class KeyboardShortcutHandler {
     if (ev.logicalKey == LogicalKeyboardKey.arrowUp) {
       if (messageTextController.text.isEmpty &&
           SettingsSvc.settings.editLastSentMessageOnUpArrow.value &&
-          SettingsSvc.serverDetails.isMinVentura &&
-          SettingsSvc.serverDetails.supportsEditAndUnsend) {
+          BackendSvc.canEditUnsend) {
         final chat = controller.chat;
         final service = maybeFindMessagesSvc(chat.guid);
         final message = service?.mostRecentSent;

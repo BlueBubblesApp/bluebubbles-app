@@ -147,8 +147,8 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
   void addSelected(SelectedContact c) async {
     selectedContacts.add(c);
     try {
-      final response = await HttpSvc.handle.handleiMessageState(c.address);
-      c.serviceType.value = response.data["data"]["available"] == true ? ChatServiceType.iMessage : ChatServiceType.sms;
+      final available = await BackendSvc.handleiMessageState(c.address);
+      c.serviceType.value = available == true ? ChatServiceType.iMessage : ChatServiceType.sms;
     } catch (e, s) {
       Logger.warn("Failed to check iMessage availability for contact", error: e, trace: s, tag: 'ChatCreator');
     }

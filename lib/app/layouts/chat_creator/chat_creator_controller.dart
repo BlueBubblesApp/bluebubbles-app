@@ -236,8 +236,7 @@ class ChatCreatorController extends StatefulController {
 
   Future<void> _fetchIMessageState(SelectedContact contact) async {
     try {
-      final response = await HttpSvc.handle.handleiMessageState(contact.address);
-      final available = response.data['data']['available'] as bool?;
+      final available = await BackendSvc.handleiMessageState(contact.address);
       contact.serviceType.value = available == true
           ? ChatServiceType.iMessage
           : available == false
