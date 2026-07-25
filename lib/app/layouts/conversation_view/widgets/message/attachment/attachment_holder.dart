@@ -48,6 +48,19 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
   Worker? _refreshWorker;
+
+  /// Collage / stack card corner radius (and popup card shadow clip).
+  /// iOS keeps the historical 20; Material / Samsung match [MessageImageGrid].
+  double get _cardBorderRadius {
+    switch (SettingsSvc.settings.skin.value) {
+      case Skins.Samsung:
+        return 25.0;
+      case Skins.Material:
+        return 16.0;
+      case Skins.iOS:
+        return 20.0;
+    }
+  }
   late final String _chatGuid;
   MessagePart get part => widget.message;
   Message get message => controller.message;
@@ -376,7 +389,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                             child: DecoratedBox(
                               decoration: widget.showCardShadow
                                   ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(_cardBorderRadius),
                                       boxShadow: [
                                         BoxShadow(
                                           color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
@@ -407,10 +420,11 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         // Clips the Ink background to rounded corners and places the shadow around the
         // full card rather than the smaller content widget. Grid cells clip in the parent.
         if (shouldExpandAndClipForGallery || widget.fillCard) {
+          final cardRadius = BorderRadius.circular(_cardBorderRadius);
           content = DecoratedBox(
             decoration: widget.showCardShadow
                 ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: cardRadius,
                     boxShadow: [
                       BoxShadow(
                         color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
@@ -421,7 +435,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                   )
                 : const BoxDecoration(),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: cardRadius,
               child: content,
             ),
           );
