@@ -368,8 +368,10 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Get params without sensitive info
-    final params = err.requestOptions.queryParameters;
+    // Get params without sensitive info. Must be a copy — queryParameters is the
+    // live map on the request, so removing from it in place strips the auth key
+    // off the request itself.
+    final params = Map<String, dynamic>.from(err.requestOptions.queryParameters);
     params.remove("guid");
     params.remove("password");
 

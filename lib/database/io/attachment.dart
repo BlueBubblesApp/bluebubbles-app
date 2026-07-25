@@ -231,15 +231,23 @@ class Attachment {
 
   String get directory => "$baseDirectory/$guid";
 
+  /// SECURITY: flattens a server-supplied [transferName] to one inert path segment,
+  /// so `../../..` can't escape [directory]. Narrow on purpose — legitimate names
+  /// (including `my..file.txt`) are unchanged, so existing files still resolve.
+  static String sanitizeFileName(String name, {String replacement = '_'}) {
+    final flattened = name.replaceAll('/', replacement);
+    if (flattened.isEmpty || flattened == '.' || flattened == '..') return 'attachment';
+    return flattened;
+  }
+
   String get path {
+    final safeName = sanitizeFileName("$transferName");
     switch (Platform.operatingSystem) {
       case "windows":
-        return "$directory/${"$transferName".replaceAll(RegExp(r'[<>:"/\|?*]'), "_")}";
-      case "linux":
-      case "macos":
-        return "$directory/${"$transferName".replaceAll(RegExp(r'/'), "_")}";
+        // `\` is also a separator here, and the rest are illegal in a filename.
+        return "$directory/${safeName.replaceAll(RegExp(r'[<>:"\\|?*]'), "_")}";
       default:
-        return "$directory/$transferName";
+        return "$directory/$safeName";
     }
   }
 
