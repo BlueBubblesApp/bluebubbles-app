@@ -35,6 +35,7 @@ enum DetailsMenuAction {
   SelectMultiple,
   MessageInfo,
   CancelSend,
+  RefreshPreview,
 }
 
 class PlatformSupport {
@@ -72,6 +73,7 @@ const Map<DetailsMenuAction, PlatformSupport> _actionPlatformSupport = {
   DetailsMenuAction.SelectMultiple: PlatformSupport(true, true, true, true),
   DetailsMenuAction.MessageInfo: PlatformSupport(true, true, true, true),
   DetailsMenuAction.CancelSend: PlatformSupport(true, true, true, true),
+  DetailsMenuAction.RefreshPreview: PlatformSupport(true, true, true, true),
 };
 
 const Map<DetailsMenuAction, (IconData, IconData)> _actionToIcon = {
@@ -100,6 +102,7 @@ const Map<DetailsMenuAction, (IconData, IconData)> _actionToIcon = {
   DetailsMenuAction.SelectMultiple: (CupertinoIcons.checkmark_square, Icons.check_box_outlined),
   DetailsMenuAction.MessageInfo: (CupertinoIcons.info, Icons.info),
   DetailsMenuAction.CancelSend: (CupertinoIcons.xmark_circle, Icons.cancel_outlined),
+  DetailsMenuAction.RefreshPreview: (CupertinoIcons.arrow_clockwise, Icons.refresh),
 };
 
 const Map<DetailsMenuAction, String> _actionToText = {
@@ -128,6 +131,7 @@ const Map<DetailsMenuAction, String> _actionToText = {
   DetailsMenuAction.SelectMultiple: "Select Multiple",
   DetailsMenuAction.MessageInfo: "Message Info",
   DetailsMenuAction.CancelSend: "Cancel Send",
+  DetailsMenuAction.RefreshPreview: "Refresh Preview",
 };
 
 class _DetailsMenuActionUtils {

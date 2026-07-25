@@ -566,6 +566,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       child: GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onHorizontalDragUpdate: (details) {
+            if (controller.isGalleryDragging) return;
             if (SettingsSvc.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
               controller.timestampOffset.value += details.delta.dx * 0.3;
             }

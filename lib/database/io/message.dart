@@ -522,6 +522,8 @@ class Message {
 
   bool get isInteractive => balloonBundleId != null && !isLegacyUrlPreview;
 
+  bool get isPhotoSlideshow => balloonBundleId?.split(":").last == 'com.apple.mobileslideshow.PhotosMessagesApp';
+
   String get interactiveText {
     String text = "";
 

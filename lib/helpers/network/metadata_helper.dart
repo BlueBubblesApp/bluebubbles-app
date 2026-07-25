@@ -6,6 +6,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as parser;
@@ -31,19 +32,25 @@ class MetadataHelper {
 
   static final Map<String, Completer<Metadata?>> _metaCache = {};
 
-  static Future<Metadata?> fetchMetadata(Message message) async {
+  /// Fetches OG metadata for [message]. By default the URL is parsed from
+  /// [message.text] (standard link-preview flow); pass [urlOverride] to fetch
+  /// metadata for a different URL instead (e.g. a share link embedded in a
+  /// message's payload data rather than its text), keying the dedup cache off
+  /// that URL instead of the message GUID.
+  static Future<Metadata?> fetchMetadata(Message message, {String? urlOverride}) async {
     Metadata? data;
+    final cacheKey = urlOverride ?? message.guid!;
     // If we have a cached item for this already, return that future
-    if (_metaCache.containsKey(message.guid)) {
-      return _metaCache[message.guid]!.future;
+    if (_metaCache.containsKey(cacheKey)) {
+      return _metaCache[cacheKey]!.future;
     }
 
     // Create a new completer for this request
     Completer<Metadata?> completer = Completer();
-    _metaCache[message.guid!] = completer;
+    _metaCache[cacheKey] = completer;
 
     // Get the URL
-    String url = message.url!;
+    String url = urlOverride ?? message.url!;
     if (!url.startsWith("http")) {
       url = "https://$url";
     }
@@ -107,6 +114,44 @@ class MetadataHelper {
     return completer.future;
   }
 
+  /// Resolves [imageUrl] to a local disk-cached file path shared across
+  /// messages (content-addressed by MD5 hash, see [FilesystemService.saveUrlPreviewImage]).
+  /// If [message.metadata]`[metadataKey]` already points to a file on disk, that
+  /// path is returned immediately with `fromDisk: true`. Otherwise the image is
+  /// downloaded via [HttpSvc], cached to disk, and the resulting hash is
+  /// persisted back onto [message.metadata]. Returns `null` on failure.
+  static Future<(String path, bool fromDisk)?> resolveCachedImage(
+    Message message,
+    String metadataKey,
+    String imageUrl,
+  ) async {
+    if (kIsWeb) return null;
+
+    final storedMd5 = message.metadata?[metadataKey] as String?;
+    if (storedMd5 != null) {
+      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
+      if (await File(cachedPath).exists()) {
+        return (cachedPath, true);
+      }
+    }
+
+    try {
+      final response = await HttpSvc.dio.get<List<int>>(
+        imageUrl,
+        options: Options(responseType: ResponseType.bytes, followRedirects: true, maxRedirects: 10),
+      );
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) return null;
+      final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
+      message.metadata = {...?message.metadata, metadataKey: hash};
+      if (message.id != null) message.save();
+      return (FilesystemSvc.urlPreviewImagePath(hash), false);
+    } catch (ex, stack) {
+      Logger.warn('Failed to cache preview image', error: ex, trace: stack, tag: 'MetadataHelper');
+      return null;
+    }
+  }
+
   static Future<Metadata> getLocationMetadata(Position locationData) async {
     String metaUrl =
         "https://maps.apple.com/?ll=${locationData.latitude},${locationData.longitude}&q=${locationData.latitude},${locationData.longitude}";
@@ -138,11 +183,15 @@ class MetadataHelper {
 
     try {
       final response = await HttpSvc.dio.get(url,
-          options: Options(headers: {
-            // pretend to be a social media crawler
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0 Google (+https://developers.google.com/+/web/snippet/)"
-          }));
+          options: Options(
+            followRedirects: true,
+            maxRedirects: 2,
+            headers: {
+              // pretend to be a social media crawler
+              "User-Agent":
+                  "Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0 Google (+https://developers.google.com/+/web/snippet/)"
+            },
+          ));
       if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
         meta.image = url;
       }

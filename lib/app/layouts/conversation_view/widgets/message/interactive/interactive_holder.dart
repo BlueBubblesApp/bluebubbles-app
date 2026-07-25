@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/apple_pay.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/embedded_media.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/photo_slideshow.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/supported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
@@ -133,9 +134,13 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                                       return UrlPreview(data: urlData);
                                     } else {
                                       final data = payloadData!.appData!.first;
+                                      if (message.isPhotoSlideshow) {
+                                        return PhotoSlideshow(
+                                          data: data,
+                                        );
+                                      }
                                       switch (message.interactiveText) {
                                         case "YouTube":
-                                        case "Photos":
                                         case "OpenTable":
                                         case "iMessage Poll":
                                         case "Shazam":
