@@ -12,13 +12,28 @@ import 'package:dio/dio.dart';
 /// server version gates, macOS version gates, and the private-api/apple-script
 /// transport choice. Nothing above this class needs to know any of it.
 class BlueBubblesBackend implements BackendService {
+  /// [serverDetails] and [privateApiEnabled] default to reading the live
+  /// [SettingsService]. They are injectable so the capability getters — which
+  /// are pure functions of those two inputs — can be exercised without standing
+  /// up GetIt, the database, or a server connection.
+  BlueBubblesBackend({
+    ServerDetails Function()? serverDetails,
+    bool Function()? privateApiEnabled,
+  })  : _serverDetailsOf = serverDetails ?? (() => SettingsSvc.serverDetails),
+        _privateApiEnabledOf = privateApiEnabled ?? (() => SettingsSvc.settings.enablePrivateAPI.value);
+
+  final ServerDetails Function() _serverDetailsOf;
+  final bool Function() _privateApiEnabledOf;
+
   @override
   Future<void> init() async {}
 
   @override
   HttpService? get remoteService => HttpSvc;
 
-  ServerDetails get _server => SettingsSvc.serverDetails;
+  ServerDetails get _server => _serverDetailsOf();
+
+  bool get _privateApi => _privateApiEnabledOf();
 
   // ── Capabilities ───────────────────────────────────────────────────────────
 
@@ -32,14 +47,13 @@ class BlueBubblesBackend implements BackendService {
   bool get canSendSubject => _server.supportsSubjectLines;
 
   @override
-  bool get canLeaveChat => SettingsSvc.settings.enablePrivateAPI.value && _server.supportsGroupChatManagement;
+  bool get canLeaveChat => _privateApi && _server.supportsGroupChatManagement;
 
   @override
   bool get canCreateGroupChats => SettingsSvc.canCreateGroupChatSync();
 
   @override
-  bool get canManageGroupChat =>
-      SettingsSvc.settings.enablePrivateAPI.value && _server.isMinBigSur && _server.supportsGroupChatManagement;
+  bool get canManageGroupChat => _privateApi && _server.isMinBigSur && _server.supportsGroupChatManagement;
 
   @override
   bool get canCancelUploads => true;
@@ -54,7 +68,7 @@ class BlueBubblesBackend implements BackendService {
   bool get supportsSmsForwarding => true;
 
   @override
-  bool get supportsRichSend => SettingsSvc.settings.enablePrivateAPI.value;
+  bool get supportsRichSend => _privateApi;
 
   /// Sonoma and newer generate link previews server-side, so the client only
   /// has to scan for URLs on older servers.
