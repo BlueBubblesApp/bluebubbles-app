@@ -145,12 +145,14 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
 
       final groupedAttachments = <Attachment>[...current.attachments];
       final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
+      int lastPart = current.part;
       int j = i + 1;
       while (j < parts.length) {
         final next = parts[j];
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
+        lastPart = next.part;
         j++;
       }
 
@@ -161,7 +163,10 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
             : groupedPartIndices;
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
-          part: current.part,
+          // Use the last grouped raw part index (not the first) so downstream
+          // "is this the last part of the message" checks (e.g. avatar, tail)
+          // still resolve correctly against controller.parts.length.
+          part: lastPart,
           shouldRedact: current.shouldRedact,
           mentions: const [],
           edits: const [],
