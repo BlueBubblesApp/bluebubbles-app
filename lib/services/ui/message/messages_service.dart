@@ -9,7 +9,6 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:bluebubbles/models/models.dart' show AttachmentUploadProgress, MessageReceiptInfo;
 import 'package:flutter/foundation.dart';
@@ -99,12 +98,21 @@ class MessagesService extends GetxController {
 
   // ========== End Delivered Indicator Tracking ==========
 
-  Message? get mostRecentSent => (struct.messages.where((e) => e.isFromMe!).toList()..sort(Message.sort)).firstOrNull;
+  Message? get mostRecentSent => _newest(struct.messagesView.where((e) => e.isFromMe!));
 
-  Message? get mostRecent => (struct.messages.toList()..sort(Message.sort)).firstOrNull;
+  Message? get mostRecent => _newest(struct.messagesView);
 
-  Message? get mostRecentReceived =>
-      (struct.messages.where((e) => !e.isFromMe!).toList()..sort(Message.sort)).firstOrNull;
+  Message? get mostRecentReceived => _newest(struct.messagesView.where((e) => !e.isFromMe!));
+
+  /// The newest message in [candidates] under [Message.sort] — a linear scan, since
+  /// sorting the whole list to take the head is O(n log n) for an O(n) question.
+  static Message? _newest(Iterable<Message> candidates) {
+    Message? best;
+    for (final m in candidates) {
+      if (best == null || Message.sort(m, best) < 0) best = m;
+    }
+    return best;
+  }
 
   // ========== MessageState Management ==========
 
@@ -1029,7 +1037,7 @@ class MessagesService extends GetxController {
   void _recomputeDeliveredIndicator() {
     Message? best;
     DateTime? bestDate;
-    for (final m in struct.messages.where((e) => e.isFromMe == true)) {
+    for (final m in struct.messagesView.where((e) => e.isFromMe == true)) {
       if ((m.dateDelivered == null && !m.isDelivered) || m.dateRead != null) continue;
       final effectiveDate = m.dateDelivered ?? m.dateCreated;
       if (best == null || (effectiveDate != null && (bestDate == null || effectiveDate.isAfter(bestDate)))) {
@@ -1063,19 +1071,31 @@ class MessagesService extends GetxController {
     messageStates[_lastDeliveredInfo!.guid]?.updateShowDeliveredIndicatorInternal(shouldShow);
   }
 
+  /// Whether [a] would come before [b] under a descending [Message.sort] — i.e.
+  /// [a] is the newer message. Used as an O(1) tie-breaker by
+  /// [_recomputeDeliveredIndicators] so it can find the indicator owners in a
+  /// single linear pass instead of sorting the whole list first.
+  static bool _sortsBefore(Message a, Message b) => Message.sort(a, b) < 0;
+
   /// Full two-tier recompute across all loaded outgoing messages.
   ///
   /// Used on initial load ([loadChunk] / [loadSearchChunk]) and on [removeMessage]
   /// when the removed message may have been an indicator owner.  Prefer
   /// [_updateIndicatorsForMessage] for add/update events.
   void _recomputeDeliveredIndicators() {
-    final outgoing = struct.messages.where((e) => e.isFromMe == true).toList()..sort(Message.sort);
+    // Both tiers are order-independent max-scans, so this deliberately does not
+    // sort. _sortsBefore supplies the tie-break the sort order used to provide.
+    final outgoing = struct.messagesView.where((e) => e.isFromMe == true);
 
     // ---- Read tier: find message with newest dateRead ----
     Message? newLastRead;
     for (final m in outgoing) {
       if (m.dateRead == null) continue;
-      if (newLastRead == null || m.dateRead!.isAfter(newLastRead.dateRead!)) newLastRead = m;
+      if (newLastRead == null ||
+          m.dateRead!.isAfter(newLastRead.dateRead!) ||
+          (m.dateRead! == newLastRead.dateRead! && _sortsBefore(m, newLastRead))) {
+        newLastRead = m;
+      }
     }
     if (newLastRead?.guid != _lastReadInfo?.guid) {
       messageStates[_lastReadInfo?.guid]?.updateShowReadIndicatorInternal(false);
@@ -1094,7 +1114,10 @@ class MessagesService extends GetxController {
       if ((m.dateDelivered == null && !m.isDelivered) || m.dateRead != null) continue;
       final effectiveDate = m.dateDelivered ?? m.dateCreated;
       if (newLastDelivered == null ||
-          (effectiveDate != null && (newLastDeliveredDate == null || effectiveDate.isAfter(newLastDeliveredDate)))) {
+          (effectiveDate != null &&
+              (newLastDeliveredDate == null ||
+                  effectiveDate.isAfter(newLastDeliveredDate) ||
+                  (effectiveDate == newLastDeliveredDate && _sortsBefore(m, newLastDelivered))))) {
         newLastDelivered = m;
         newLastDeliveredDate = effectiveDate;
       }
@@ -1557,12 +1580,20 @@ class MessagesService extends GetxController {
             }
           }
         } else {
-          final reactions = syncResult.messages.where((e) => e.associatedMessageGuid != null);
-          for (Message m in reactions) {
-            final associatedMessage =
-                syncResult.messages.firstWhereOrNull((element) => element.guid == m.associatedMessageGuid);
-            associatedMessage?.hasReactions = true;
-            associatedMessage?.associatedMessages.add(m);
+          // Index the batch by guid once, then link each reaction to its target
+          // in O(1). Re-scanning the whole batch per reaction made this
+          // O(reactions x messages) over a sync chunk.
+          final byGuid = <String, Message>{
+            for (final m in syncResult.messages)
+              if (m.guid != null) m.guid!: m,
+          };
+          for (final m in syncResult.messages) {
+            final associatedGuid = m.associatedMessageGuid;
+            if (associatedGuid == null) continue;
+            final associatedMessage = byGuid[associatedGuid];
+            if (associatedMessage == null) continue;
+            associatedMessage.hasReactions = true;
+            associatedMessage.associatedMessages.add(m);
           }
           _messages = syncResult.messages;
         }
@@ -1597,7 +1628,7 @@ class MessagesService extends GetxController {
 
     // this indicates an audio message was kept by the recipient
     // run this every time more messages are loaded just in case
-    for (Message m in struct.messages.where((e) => e.itemType == 5 && e.subject != null)) {
+    for (Message m in struct.messagesView.where((e) => e.itemType == 5 && e.subject != null)) {
       final otherMessage = struct.getMessage(m.subject!);
       if (otherMessage != null) {
         final otherMwc = getMessageStateIfExists(m.subject!) ?? getOrCreateState(otherMessage);

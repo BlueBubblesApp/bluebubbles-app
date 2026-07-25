@@ -116,11 +116,20 @@ class SearchQueryHelper {
     }
 
     final chatGuids = itemChats.map((e) => e.guid).toList();
-    final dbChats = Database.chats.query(Chat_.guid.oneOf(chatGuids)).build().find();
+    final dbChatQuery = Database.chats.query(Chat_.guid.oneOf(chatGuids)).build();
+    final List<Chat> dbChats;
+    try {
+      dbChats = dbChatQuery.find();
+    } finally {
+      dbChatQuery.close();
+    }
+
+    // Indexed by guid so each result is a hash lookup, not a scan.
+    final dbChatsByGuid = {for (final c in dbChats) c.guid: c};
 
     final items = <SearchResultItem>[];
     for (int i = 0; i < itemChats.length; i++) {
-      final chat = dbChats.firstWhereOrNull((e) => e.guid == itemChats[i].guid) ?? itemChats[i];
+      final chat = dbChatsByGuid[itemChats[i].guid] ?? itemChats[i];
       items.add(SearchResultItem(chat: chat, message: itemMessages[i]));
     }
     return items;

@@ -142,7 +142,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) =>
-              ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
+              ReactionTypes.all.contains(e.associatedMessageType?.replaceAll("-", "")) &&
               (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
