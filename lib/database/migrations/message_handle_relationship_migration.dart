@@ -120,9 +120,22 @@ class MessageHandleRelationshipMigration {
       Logger.info("Verifying Message-Handle relationships...", tag: "DB-Migration");
 
       final totalMessages = Database.messages.count();
-      final messagesWithRelations = Database.messages.query(Message_.handleRelation.notNull()).build().count();
 
-      final messagesFromMe = Database.messages.query(Message_.isFromMe.equals(true)).build().count();
+      final withRelationsQuery = Database.messages.query(Message_.handleRelation.notNull()).build();
+      final int messagesWithRelations;
+      try {
+        messagesWithRelations = withRelationsQuery.count();
+      } finally {
+        withRelationsQuery.close();
+      }
+
+      final fromMeQuery = Database.messages.query(Message_.isFromMe.equals(true)).build();
+      final int messagesFromMe;
+      try {
+        messagesFromMe = fromMeQuery.count();
+      } finally {
+        fromMeQuery.close();
+      }
 
       final expectedWithRelations = totalMessages - messagesFromMe;
 

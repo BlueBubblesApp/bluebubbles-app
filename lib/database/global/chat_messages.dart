@@ -9,7 +9,14 @@ class ChatMessages {
 
   bool get isEmpty => _messages.isEmpty;
   bool get isNotEmpty => _messages.isNotEmpty;
+
+  /// A fresh copy — safe to sort and mutate. Prefer [messagesView] if you only
+  /// need to read, to skip the per-access allocation.
   List<Message> get messages => _messages.values.toList();
+
+  /// Lazy read-only view, no copy. Don't hold it across an [addMessages] /
+  /// [removeMessage] call — it will throw on concurrent modification.
+  Iterable<Message> get messagesView => _messages.values;
   List<Message> get reactions => _reactions.values.toList();
   List<Attachment> get attachments => _attachments.values.toList();
   List<Message> threads(String originatorGuid, int originatorPart, {bool returnOriginator = true}) =>

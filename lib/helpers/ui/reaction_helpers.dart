@@ -15,16 +15,28 @@ class ReactionTypes {
   // ignore: non_constant_identifier_names
   static const String QUESTION = "question";
 
-  static List<String> toList() {
-    return [
-      LOVE,
-      LIKE,
-      DISLIKE,
-      LAUGH,
-      EMPHASIZE,
-      QUESTION,
-    ];
-  }
+  /// Every reaction type. Use this for membership checks — it's O(1) and
+  /// allocation-free, which matters on the per-message render path.
+  static const Set<String> all = {
+    LOVE,
+    LIKE,
+    DISLIKE,
+    LAUGH,
+    EMPHASIZE,
+    QUESTION,
+  };
+
+  /// Display order, for the reaction picker. Use [all] to test membership.
+  static const List<String> ordered = [
+    LOVE,
+    LIKE,
+    DISLIKE,
+    LAUGH,
+    EMPHASIZE,
+    QUESTION,
+  ];
+
+  static List<String> toList() => ordered;
 
   static final Map<String, String> reactionToVerb = {
     LOVE: "loved",

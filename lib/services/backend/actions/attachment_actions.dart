@@ -79,10 +79,16 @@ class AttachmentActions {
       queryDescriptor: queryDescriptor,
     );
 
+    // Indexed by guid so the loop below is O(1) per attachment, not O(batch^2).
+    final existingByGuid = <String, Attachment>{
+      for (final e in existingAttachments)
+        if (e.guid != null) e.guid!: e,
+    };
+
     return Database.runInTransaction(TxMode.write, () {
       /// map existing attachment IDs and preserve message relationships
       for (Attachment a in attachments) {
-        final existing = existingAttachments.firstWhereOrNull((e) => e.guid == a.guid);
+        final existing = existingByGuid[a.guid];
         if (existing != null) {
           a.id = existing.id;
 

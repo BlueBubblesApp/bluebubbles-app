@@ -3,6 +3,18 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 class CustomGroupActions {
+  /// Resolve [chatGuids] to their [Chat] rows in a single query — one query per
+  /// guid is an N+1, and each one needs closing.
+  static List<Chat> _findChatsByGuid(Iterable<String> chatGuids) {
+    if (chatGuids.isEmpty) return const [];
+    final query = Database.chats.query(Chat_.guid.oneOf(chatGuids.toList())).build();
+    try {
+      return query.find();
+    } finally {
+      query.close();
+    }
+  }
+
   static Future<int> create(dynamic data) async {
     final name = data['name'] as String;
     // Dedupe so a repeated guid in the input can't create duplicate rows in
@@ -10,11 +22,7 @@ class CustomGroupActions {
     final chatGuids = (data['chatGuids'] as List).cast<String>().toSet();
     return Database.runInTransaction(TxMode.write, () {
       final group = CustomGroup(name: name);
-      final matchedChats = chatGuids
-          .map((guid) => Database.chats.query(Chat_.guid.equals(guid)).build().findFirst())
-          .whereType<Chat>()
-          .toList();
-      group.chats.addAll(matchedChats);
+      group.chats.addAll(_findChatsByGuid(chatGuids));
       try {
         return Database.customGroups.put(group);
       } on UniqueViolationException catch (_) {
@@ -46,10 +54,7 @@ class CustomGroupActions {
     final chatGuids = (data['chatGuids'] as List).cast<String>().toSet();
     return Database.runInTransaction(TxMode.write, () {
       final group = Database.customGroups.get(id)!;
-      final matchedChats = chatGuids
-          .map((guid) => Database.chats.query(Chat_.guid.equals(guid)).build().findFirst())
-          .whereType<Chat>()
-          .toList();
+      final matchedChats = _findChatsByGuid(chatGuids);
       group.chats.clear();
       group.chats.addAll(matchedChats);
       group.chats.applyToDb();

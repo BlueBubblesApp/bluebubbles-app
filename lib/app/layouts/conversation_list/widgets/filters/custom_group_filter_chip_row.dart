@@ -29,16 +29,22 @@ class CustomGroupFilterChipRow extends StatelessWidget {
       // read each ChatState's hasUnreadMessage below so it rebuilds when any
       // chat's read status changes.
       ChatsSvc.chatListVersion.value;
-      final unreadStates = ChatsSvc.chatStates.values.where((s) => s.hasUnreadMessage.value).toList();
-      final unreadCounts = <int, int>{
-        // Membership is read from `group.chats` (the group's own ToMany,
-        // refreshed whenever CustomGroupsSvc reloads) rather than
-        // `s.chat.customGroups` — that backlink is lazily cached per Chat
-        // instance and goes stale as soon as membership changes elsewhere
-        // (e.g. the conversation peek view's "Add to Custom Group" action).
-        for (final group in groups)
-          group.id!: unreadStates.where((s) => group.chats.any((c) => c.guid == s.chat.guid)).length,
-      };
+      // Membership must come from `group.chats`, not `s.chat.customGroups` — that
+      // backlink is cached per Chat and goes stale when membership changes elsewhere.
+      // Inverted into a guid -> group-ids index for a single pass.
+      final groupIdsByChatGuid = <String, List<int>>{};
+      for (final group in groups) {
+        for (final c in group.chats) {
+          (groupIdsByChatGuid[c.guid] ??= []).add(group.id!);
+        }
+      }
+      final unreadCounts = <int, int>{for (final group in groups) group.id!: 0};
+      for (final state in ChatsSvc.chatStates.values) {
+        if (!state.hasUnreadMessage.value) continue;
+        for (final groupId in groupIdsByChatGuid[state.chat.guid] ?? const <int>[]) {
+          unreadCounts[groupId] = unreadCounts[groupId]! + 1;
+        }
+      }
 
       return SizedBox(
         // Extra top room so the overlapping badge isn't clipped.
