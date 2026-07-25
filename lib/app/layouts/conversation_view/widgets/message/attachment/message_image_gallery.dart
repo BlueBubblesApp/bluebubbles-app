@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -76,12 +77,14 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   final Map<String, Size> _imageSizes = {};
   int? _activeDragPointer;
   VelocityTracker? _velocityTracker;
+  ConversationViewController? _cvController;
 
   List<Attachment> get _attachments => widget.attachments;
 
   @override
   void initState() {
     super.initState();
+    _cvController = MessageStateScope.readStateOnce(context).cvController;
     _loadImageSizes();
   }
 
@@ -357,6 +360,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         _activeDragPointer = event.pointer;
         _velocityTracker = VelocityTracker.withKind(event.kind);
         _velocityTracker!.addPosition(event.timeStamp, event.position);
+        // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
+        // GestureDetector ancestor in MessagesView) doesn't also react to the
+        // same pointer — see conversation_view_controller.dart's field doc.
+        _cvController?.isGalleryDragging = true;
       },
       onPointerMove: (event) {
         if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
@@ -394,6 +401,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         if (_activeDragPointer != event.pointer) return;
         _activeDragPointer = null;
         _hapticGivenForCurrentEnd = false;
+        _cvController?.isGalleryDragging = false;
         final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
         _velocityTracker = null;
         if (_attachments.length <= 1) return;
@@ -417,6 +425,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         _activeDragPointer = null;
         _velocityTracker = null;
         _hapticGivenForCurrentEnd = false;
+        _cvController?.isGalleryDragging = false;
         if (_attachments.length <= 1) return;
         setState(() {
           _dragDx = 0;
