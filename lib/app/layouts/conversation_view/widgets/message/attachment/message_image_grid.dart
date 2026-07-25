@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -133,6 +134,9 @@ class MessageImageGrid extends StatelessWidget {
         cellBuilder: (index, width, height, _) => CollectionAttachmentReactions(
           collectionPart: messagePart,
           attachmentIndex: index,
+          tailType: SettingsSvc.settings.skin.value == Skins.iOS
+              ? ReactionTailType.inside
+              : ReactionTailType.standard,
         ),
         moreCount: moreCount,
       ),
