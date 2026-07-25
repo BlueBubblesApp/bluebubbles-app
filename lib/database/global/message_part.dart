@@ -14,6 +14,7 @@ class MessagePart {
     required this.part,
     this.shouldRedact = false,
     this.attachmentPartIndices,
+    this.firstPartIndex,
   }) {
     if (attachments.isEmpty) attachments = [];
     if (mentions.isEmpty) mentions = [];
@@ -54,6 +55,14 @@ class MessagePart {
   /// maps each attachment (by index) to its original messagePart index.
   /// Null for non-collection parts or single-source-part collections.
   List<int>? attachmentPartIndices;
+
+  /// First raw message-part index covered by a collapsed media collection.
+  /// Null for non-collection parts. Collections set [part] to the *last* raw
+  /// index (avatar/tail checks) and this to the *first* (leading-part UI).
+  int? firstPartIndex;
+
+  /// Whether this bubble is the leading content of the message (raw part 0).
+  bool get isLeadingMessagePart => (firstPartIndex ?? part) == 0;
 
   /// Returns the associated-message part index for the attachment at [index].
   /// For single-part collections, indices are attachment ordinals (0, 1, 2…) used

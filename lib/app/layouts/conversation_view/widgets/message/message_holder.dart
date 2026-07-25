@@ -167,6 +167,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
           // "is this the last part of the message" checks (e.g. avatar, tail)
           // still resolve correctly against controller.parts.length.
           part: lastPart,
+          // Preserve the first raw index for leading-part UI (subject chrome, etc.).
+          firstPartIndex: current.part,
           shouldRedact: current.shouldRedact,
           mentions: const [],
           edits: const [],
@@ -462,7 +464,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                         if ((message.hasApplePayloadData ||
                                                                 message.isLegacyUrlPreview ||
                                                                 message.isInteractive ||
-                                                                (e.part == 0 &&
+                                                                (e.isLeadingMessagePart &&
                                                                     isNullOrEmpty(e.text) &&
                                                                     e.attachments.isNotEmpty)) &&
                                                             !isNullOrEmpty(message.subject))
@@ -474,10 +476,11 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                 showTail: false,
                                                                 connectLower: iOS
                                                                     ? false
-                                                                    : (e.part != 0 &&
+                                                                    : (!e.isLeadingMessagePart &&
                                                                             e.part != controller.parts.length - 1) ||
-                                                                        (e.part == 0 && controller.parts.length > 1),
-                                                                connectUpper: iOS ? false : e.part != 0,
+                                                                        (e.isLeadingMessagePart &&
+                                                                            controller.parts.length > 1),
+                                                                connectUpper: iOS ? false : !e.isLeadingMessagePart,
                                                               ),
                                                               child: TextBubble(
                                                                 message: MessagePart(
