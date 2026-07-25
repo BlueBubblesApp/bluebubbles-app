@@ -9,15 +9,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-/// Vertical overlapping collage for media attachment collections.
-///
-/// Even indexes sit flush to the author side; odd indexes get a horizontal stagger.
-/// Cards alternate a slight ±0.75° tilt (odd right, even left). Lower cards overlap the
-/// ones above them. Each card is a [CollectionAttachmentCard] with its own popup
-/// gestures, per-attachment tapbacks, and swipe-to-reply.
-///
-/// Card frames use each attachment's natural aspect ratio (mixed portrait/landscape
-/// allowed). Media cover-fills the locked frame so load no longer resizes cards.
+/// Vertical overlapping collage for multi-attachment media collections.
 class MessageImageCollage extends StatelessWidget {
   const MessageImageCollage({
     super.key,
@@ -36,7 +28,6 @@ class MessageImageCollage extends StatelessWidget {
 
   static const double _horizontalStagger = 28.0;
   static const double _verticalOverlap = 32.0;
-  /// Odd indexes tilt right, even indexes tilt left.
   static const double _cardTiltRad = 0.75 * math.pi / 180;
 
   List<Attachment> get _attachments => messagePart.attachments;
@@ -77,11 +68,8 @@ class MessageImageCollage extends StatelessWidget {
           for (int i = 0; i < _attachments.length; i++)
             Positioned(
               top: tops[i],
-              // Even indexes flush to author; odd indexes shift toward center.
-              // Pin to the author edge only (left for received, right for sent) so
-              // swipe-to-reply can grow the SlideToReply chevron toward center
-              // beside the fixed card SizedBox (Clip.none paints it outside).
-              // Left-pinning from-me cards pushed them off the author edge instead.
+              // Pin to the author edge so swipe-to-reply can grow the chevron toward
+              // center beside the card (Clip.none). 
               left: fromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
               right: fromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
               child: _buildCard(messageState, i, cardWidth, heights[i]),

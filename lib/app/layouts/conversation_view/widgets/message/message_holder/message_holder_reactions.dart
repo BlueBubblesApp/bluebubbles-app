@@ -9,12 +9,7 @@ import 'package:get/get.dart';
 
 /// Isolated widget for reaction display
 /// Only rebuilds when MessageState.associatedMessages changes
-///
-/// Not used for media-collection parts — those attach a reaction per
-/// attachment on [CollectionAttachmentCard] instead, since a collection can
-/// bundle several originally-separate message parts (see
-/// MessageHolder._collapseImageGalleryParts) and a tapback is only ever
-/// associated with one of them.
+/// Media collections use [CollectionAttachmentCard] tapbacks instead.
 class ReactionObserver extends StatelessWidget {
   const ReactionObserver({
     super.key,

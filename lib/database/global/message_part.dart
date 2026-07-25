@@ -62,7 +62,6 @@ class MessagePart {
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 
   /// Whether a reaction/sticker with [associatedMessagePart] belongs on this bubble.
-  /// Gallery parts include every original index in [attachmentPartIndices].
   bool includesAssociatedPart(int? associatedMessagePart) {
     final index = associatedMessagePart ?? 0;
     final indices = attachmentPartIndices;
@@ -84,8 +83,7 @@ class MessagePart {
       subject == null &&
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
-  /// True when this part's attachments form a multi-item media group (>1 images/videos).
-  /// Used to route the part to [MessageImageCollage]/[MessageImageStack]/[MessageImageGrid] instead of [AttachmentHolder].
+  /// Multi-item image/video group routed to collage/stack/grid instead of [AttachmentHolder].
   bool get isMediaGallery =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }

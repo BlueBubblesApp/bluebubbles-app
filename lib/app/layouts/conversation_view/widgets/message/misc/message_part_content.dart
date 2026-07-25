@@ -72,14 +72,13 @@ class MessagePartContent extends StatelessWidget {
             );
           case MediaCollectionLayout.grid:
           case MediaCollectionLayout.skinDefault:
-            // skinDefault is resolved before the switch; treat as grid fallback.
             gallery = MessageImageGrid(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
             );
         }
-        // Galleries skip TailClipper; restore the same author-edge inset as bubbles.
+        // Galleries skip TailClipper; restore the author-edge inset bubbles get from it.
         return Padding(
           padding: collectionAuthorEdgeInsets(isFromMe: isFromMe),
           child: gallery,

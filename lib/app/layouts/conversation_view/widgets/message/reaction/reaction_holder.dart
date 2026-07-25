@@ -125,8 +125,7 @@ class _ReactionHolderState extends State<ReactionHolder> {
     }
 
     final isFromMe = MessageStateScope.of(context).isFromMe.value;
-    // When an explicit tail direction is set, stack along that edge instead of
-    // the message author's side (e.g. collection grid always trailing).
+    // Explicit tailDirection stacks along that edge (e.g. collection grid trailing).
     final stackFromEnd = widget.tailDirection != null
         ? widget.tailDirection == ReactionTailDirection.left
         : isFromMe;

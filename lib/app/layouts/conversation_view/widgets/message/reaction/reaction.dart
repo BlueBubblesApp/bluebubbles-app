@@ -39,7 +39,6 @@ class ReactionWidget extends StatefulWidget {
   /// Bubble coloring is always driven by the reaction's own [isFromMe] field.
   final ReactionTailDirection? tailDirection;
 
-  /// Outward (`standard`) or inward (`inside`) thought-bubble tail.
   final ReactionTailType tailType;
 
   @override
@@ -86,8 +85,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   ReactionTailDirection get _effectiveTailDirection =>
       widget.tailDirection ?? (messageIsFromMe ? ReactionTailDirection.left : ReactionTailDirection.right);
 
-  /// Layout/alignment for the reaction disc — follows the effective tail so an
-  /// explicit [widget.tailDirection] keeps icon + clip consistent.
+  /// Layout follows [_effectiveTailDirection] so icon + clip stay consistent.
   bool get _alignToEnd => _effectiveTailDirection == ReactionTailDirection.left;
 
   /// Guard against associatedMessageType being null.
@@ -102,7 +100,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   }
 
   static const double iosSize = 35;
-  /// Inside tails extend ~5px past [iosSize] on y (fill + border).
+  /// Inside tails extend ~5px past [iosSize] on y.
   static const double iosClipHeight = 40;
 
   double get _clipHeight => widget.tailType == ReactionTailType.inside ? iosClipHeight : iosSize;

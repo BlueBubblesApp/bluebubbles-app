@@ -11,16 +11,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-/// Grid layout for multi-attachment media collections (Material / Samsung skins).
-///
-/// Google Messages–style collage inside a single rounded card with gap-separated
-/// cells. Per-attachment tapbacks render in a sibling overlay layer so they can
-/// overflow the card (matching iOS collage behavior). Up to five attachments are
-/// shown; the fifth cell may show a "+N" overlay.
-///
-/// Layouts: 2 side-by-side squares; 3 with a prominent top row; 4 as a 2×2;
-/// 5+ with a prominent top row and a 3-column bottom row (2nd item spans two
-/// columns; remaining items are 1:1 squares stacked in the third column).
+/// Google Messages–style grid for multi-attachment media collections.
 class MessageImageGrid extends StatelessWidget {
   const MessageImageGrid({
     super.key,
@@ -35,11 +26,9 @@ class MessageImageGrid extends StatelessWidget {
 
   static const double _gap = 2.0;
   static const double _topRowAspect = 4 / 3;
-  /// Bottom-row height as a fraction of grid width (3-item layout only).
   static const double _bottomRowHeightRatio = 0.45;
   static const double _iosCardRadius = 8.0;
   static const double _materialCardRadius = 16.0;
-  /// Matches Samsung settings section cards ([SettingsSection]).
   static const double _samsungCardRadius = 25.0;
 
   List<Attachment> get _attachments => messagePart.attachments;
@@ -142,7 +131,6 @@ class MessageImageGrid extends StatelessWidget {
       ),
     );
 
-    // Author-edge inset is applied by MessagePartContent (shared with collage/stack).
     final grid = Stack(
       clipBehavior: Clip.none,
       children: [
@@ -151,7 +139,6 @@ class MessageImageGrid extends StatelessWidget {
       ],
     );
 
-    // Incoming iOS: download control to the right of the grid (matches collage/stack).
     final fromMe = messageState.isFromMe.value;
     if (fromMe || !CollectionDownloadButton.isSupported) return grid;
 

@@ -71,7 +71,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   static const _fanSlotDy = <double>[0, 4, 9, 14, 20];
   static const _fanSlotAngle = <double>[0, 0.06, 0.13, 0.225, 0.32];
   static const _fanSlotScale = <double>[1.0, 0.9, 0.8, 0.7, 0.6];
-  /// Fade for past (mirrored) cards; fan slots themselves stay fully opaque.
   static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
 
   static const double _scrollAdvanceThreshold = 50.0;
@@ -138,8 +137,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     final baseCardWidth = collectionCardWidth(context);
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
-    // Fan geometry is always the same as from-me (opens to the right). fanDirection
-    // only controls whether the stack is right- or left-aligned in the bubble row.
+    // Fan opens right; fanDirection only controls left/right alignment in the row.
     final bool alignEnd = widget.fanDirection == GalleryFanDirection.right;
     final stackLabel = CollectionMediaGridPage.titleForAttachments(_attachments);
 
@@ -151,7 +149,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
       maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
     }
-    // Front card is left-anchored; fan room sits on the right. Past cards overflow left.
     final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
 
@@ -199,7 +196,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
           attachmentIndex: attachmentIndex,
           attachment: _attachments[attachmentIndex],
           messageState: MessageStateScope.of(context),
-          // Same fan slot indices (1..) mirrored across the front card.
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -279,8 +275,8 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
             ),
           ),
         ),
-        // Reserve room for per-card tapbacks (top: -14) so they don't cover the label.
-        // Empty messageParts so we only key off reactionsForPart (not whole-message reactions).
+        // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
+        // minHeight reserves room for per-card tapbacks (top: -14) above the label.
         ReactionSpacing(
           messageParts: const [],
           part: widget.messagePart,
@@ -299,9 +295,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       ],
     );
 
-    // Incoming iOS: download control to the right of the stack (matches collage).
-    // Stack (not Row) so the button paints behind fan cards — drag/swipe overflow
-    // into the gap would otherwise sit under the later Row sibling.
     final Widget stackBody;
     if (!alignEnd && CollectionDownloadButton.isSupported) {
       stackBody = SizedBox(
@@ -326,17 +319,10 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
       stackBody = stackColumn;
     }
 
-    // Swipe direction matches on both sides: left = forward, right = back.
-    // Fan motion uses raw pointer tracking (Listener) so it never has to win a
-    // gesture-arena contest against a card's own recognizers — e.g. VideoPlayer
-    // registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
-    // holding the arena open was swallowing fast horizontal swipes over video
-    // attachments while images (no onDoubleTap) were unaffected.
-    //
-    // Listener alone never enters the arena, so MessagesView's timestamp swipe
-    // (onHorizontalDrag*) would still win and pull timestamps out from the right.
-    // RawGestureDetector + [_EagerHorizontalDragRecognizer] claims the arena once
-    // motion is clearly horizontal; fan tracking stays on the Listener.
+    // Fan motion uses Listener (never enters the gesture arena) so it isn't
+    // swallowed by card recognizers (e.g. VideoPlayer onDoubleTap). RawGestureDetector
+    // + [_EagerHorizontalDragRecognizer] still claims clear horizontal drags so
+    // MessagesView's timestamp swipe doesn't win instead.
     final listener = Listener(
       behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
@@ -371,7 +357,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         if (!widget.infiniteScroll) {
           final atStart = _currentIndex == 0;
           final atEnd = _currentIndex == _attachments.length - 1;
-          // Right = back (blocked at start), left = forward (blocked at end).
           final blockedPositive = atStart;
           final blockedNegative = atEnd;
 
@@ -440,8 +425,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
         _EagerHorizontalDragRecognizer: GestureRecognizerFactoryWithHandlers<_EagerHorizontalDragRecognizer>(
           () => _EagerHorizontalDragRecognizer(debugOwner: this),
           (_EagerHorizontalDragRecognizer instance) {
-            // Non-null callbacks register the recognizer in the arena. Fan motion
-            // stays on [Listener]; these are intentionally no-ops.
+            // Non-null callbacks register the recognizer; fan motion stays on Listener.
             instance
               ..onStart = (_) {}
               ..onUpdate = (_) {}
@@ -466,14 +450,12 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
     final overflowDepth =
         slotIndex >= _visibleFanSlots ? ((slotIndex - (_visibleFanSlots - 1)).clamp(0, 6) * 0.7) : 0.0;
-    // Fan always opens to the right of the left-anchored front card.
     final angle = slot == 0 ? 0.0 : _fanSlotAngle[slot];
     final dy = _fanSlotDy[slot] + overflowDepth;
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
-    // Scale-center each card on its slot so smaller cards don't poke out further
-    // than the original fan spread.
+    // Scale-center so smaller cards don't poke out past the fan spread.
     final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
     final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
@@ -530,7 +512,6 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
     required double baseCardHeight,
   }) {
     final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
-    // True mirror of fan geometry on the left of the front card (may overflow).
     final angle = -_fanSlotAngle[slot];
     final scale = _fanSlotScale[slot];
     final dy = _fanSlotDy[slot];
@@ -583,17 +564,11 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   }
 }
 
-/// Claims the gesture arena for clear horizontal drags so ancestor recognizers
-/// (notably MessagesView's timestamp swipe) lose, without owning fan motion.
-///
-/// Accepts as soon as movement is horizontally dominant and past a small
-/// threshold — earlier than the default drag touch-slop path — so we win before
-/// competing recognizers settle. Pure taps (no horizontal intent) are left alone
-/// so card / label taps still work.
+/// Claims clear horizontal drags so MessagesView's timestamp swipe loses, without
+/// owning fan motion. Accepts earlier than default touch-slop; leaves pure taps alone.
 class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
   _EagerHorizontalDragRecognizer({super.debugOwner});
 
-  /// Below default touch slop (~18) so we beat MessagesView's horizontal drag.
   static const double _eagerAcceptDistance = 8.0;
 
   Offset? _initialPosition;

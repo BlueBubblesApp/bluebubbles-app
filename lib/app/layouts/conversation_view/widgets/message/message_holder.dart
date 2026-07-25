@@ -164,8 +164,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
       }
 
       if (groupedAttachments.length > 1) {
-        // Single source part: iMessage uses attachment ordinals (0, 1, 2…) as
-        // associatedMessagePart for per-attachment tapbacks.
+        // Single-part collections: tapbacks use attachment ordinals as associatedMessagePart for per-attachment tapbacks.
         final partIndices = j == i + 1
             ? List.generate(groupedAttachments.length, (k) => k)
             : groupedPartIndices;
@@ -523,8 +522,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          // Collections own horizontal gestures (fan /
-                                                                          // per-card swipe); outer reply is for bubbles only.
+                                                                          // Collections own horizontal gestures; outer reply is for bubbles.
                                                                           !e.isMediaGallery,
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
@@ -600,9 +598,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                // Reactions sit in the inner Stack (relative to the bubble,
-                                                                // not stickers). Media collections show tapbacks per
-                                                                // attachment on CollectionAttachmentCard instead.
+                                                                // Bubble-level tapbacks; collections use CollectionAttachmentCard instead.
                                                                 if (!e.isMediaGallery)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,

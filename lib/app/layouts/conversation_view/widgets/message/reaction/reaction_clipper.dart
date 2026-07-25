@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Controls which side the reaction bubble's "tail" arcs point toward.
 enum ReactionTailDirection { left, right }
 
-/// Normal outward tail vs inward (for multi-attachment stack cards).
+/// Outward vs inward tail (inward used on stack cards).
 enum ReactionTailType { standard, inside }
 
 class ReactionClipper extends CustomClipper<Path> {

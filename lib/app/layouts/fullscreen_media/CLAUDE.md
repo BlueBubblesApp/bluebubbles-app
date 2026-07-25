@@ -30,7 +30,7 @@ Both dispatch on the attachment's mime type and render `FullscreenImage` or `Ful
 - `showInteractions` gates which action buttons are relevant (download/reply/share/etc.), not whether the overlay can be shown/hidden
 - Video player is disposed when the route is popped
 - Shares/saves to gallery are triggered from within the action bar
-- When opened from a message media collection (`galleryAttachments`), a grid button opens `CollectionMediaGridPage` for that collection (iOS app bar; Material/Samsung overlay)
+- Collection viewers (`galleryAttachments`) can open `CollectionMediaGridPage`
 
 ## Related
 - Attachment models: `lib/database/io/attachment.dart`

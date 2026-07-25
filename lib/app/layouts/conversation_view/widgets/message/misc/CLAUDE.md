@@ -23,15 +23,10 @@ if (message.hasApplePayloadData || message.isInteractive)
   → InteractiveHolder          // Apple Pay, Game Pigeon, URL preview, maps
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
+else if (messagePart.isMediaGallery)
+  → collage / stack / grid via resolveMediaCollectionLayout()
 else if (messagePart.attachments.isNotEmpty)
-  if (messagePart.isMediaGallery)
-    resolveMediaCollectionLayout(count) →
-      collage → MessageImageCollage
-      stack   → MessageImageStack
-      grid    → MessageImageGrid
-    // skinDefault → iOS: collage (2–3) / stack (4+); else grid
-  else
-    → AttachmentHolder         // single image, video, audio, sticker, file
+  → AttachmentHolder           // single image, video, audio, sticker, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
@@ -46,13 +41,9 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 
 ## Swipe-to-Reply
 
-`SwipeToReplyWrapper` wraps message content and detects swipe-right gestures. On threshold:
-1. Animates `slide_to_reply.dart` indicator via the shared `replyOffset` `RxDouble`
-2. Sets `cvController.replyToMessage` with `MessageReplyContext` (optional `attachmentGuid` for per-attachment replies)
+`SwipeToReplyWrapper` detects swipe-right, animates `slide_to_reply.dart` via `replyOffset`, and sets `cvController.replyToMessage` (`MessageReplyContext`, optional `attachmentGuid`).
 
-Bubble-level: wraps the entire bubble Stack in `MessageHolder` (disabled for all media collections — they own horizontal gestures).
-
-Per-card: `CollectionAttachmentCard` with `enableSwipeToReply: true` (collage only) wraps each card independently and passes `attachmentGuid` so the composer preview shows the swiped image. Stack and grid do not use per-card swipe-to-reply.
+Disabled at bubble level for media collections; collage cards swipe per-attachment, stack/grid do not.
 
 ## Bubble Effects
 

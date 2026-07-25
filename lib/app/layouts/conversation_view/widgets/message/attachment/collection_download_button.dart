@@ -4,9 +4,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Circular outlined download control for incoming iOS media collections.
-///
-/// Saves all [attachments] that are already available on disk via [AttachmentsSvc.saveToDisk].
+/// Circular download control for incoming iOS media collections.
 class CollectionDownloadButton extends StatelessWidget {
   const CollectionDownloadButton({
     super.key,
@@ -16,7 +14,6 @@ class CollectionDownloadButton extends StatelessWidget {
   static const double size = 34.0;
   static const double gap = 30.0;
 
-  /// Available whenever collage/stack/grid is shown; keep skin-gated for iOS styling.
   static bool get isSupported => SettingsSvc.settings.skin.value == Skins.iOS;
 
   final List<Attachment> attachments;

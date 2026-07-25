@@ -27,9 +27,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
   final int attachmentIndex;
   final ReactionTailType tailType;
 
-  /// When true, always pin to the top-trailing corner (and use a matching
-  /// [ReactionTailDirection]). Used by the collection grid page.
-  /// Also implied when [tailType] is [ReactionTailType.inside] (stack fan).
+  /// Pin to the top-trailing corner (collection grid). Also implied for [ReactionTailType.inside].
   final bool alignTrailing;
 
   @override
@@ -55,7 +53,6 @@ class CollectionAttachmentReactions extends StatelessWidget {
         child: ReactionHolder(
           reactions: reactions,
           tailType: tailType,
-          // From-me defaults to a left-pointing tail; switch to right when trailing.
           tailDirection: forceTrailing ? ReactionTailDirection.right : null,
         ),
       );
@@ -63,7 +60,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
   }
 }
 
-/// Per-card wrapper for media collection attachments: popup gestures + tapbacks.
+/// Per-card popup, tapbacks, and optional swipe-to-reply for media collections.
 class CollectionAttachmentCard extends StatefulWidget {
   const CollectionAttachmentCard({
     super.key,
@@ -96,12 +93,10 @@ class CollectionAttachmentCard extends StatefulWidget {
   final bool inGridCell;
   /// Cover-fill a fixed collage/stack card frame (keeps [showCardShadow]).
   final bool fillCard;
-  /// Explicit frame when [fillCard] is true. Required for collage swipe-to-reply
-  /// so the reply chevron can sit beside the card instead of inside a tight Positioned.
+  /// Explicit frame when [fillCard] is true (lets swipe-to-reply sit beside the card).
   final double? cardWidth;
   final double? cardHeight;
   final bool hideReactions;
-  /// Thought-bubble tail style for per-card tapbacks (stack uses [ReactionTailType.inside]).
   final ReactionTailType reactionTailType;
 
   @override
@@ -129,7 +124,6 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
       widget.fillCard && widget.cardWidth != null && widget.cardHeight != null;
 
   Widget _buildCardContent(MessagePart scopedPart) {
-    // fillCard/inGridCell: expand so SizedBox.expand in AttachmentHolder gets tight bounds.
     final fill = widget.fillCard || widget.inGridCell;
     Widget content = Stack(
       fit: fill ? StackFit.expand : StackFit.loose,
@@ -180,7 +174,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
 
     return Obx(() {
       final isFromMe = widget.controller.isFromMe.value;
-      
+
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [

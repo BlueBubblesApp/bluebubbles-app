@@ -27,8 +27,7 @@ class MediaGridSection extends StatefulWidget {
   final ValueChanged<MediaFilter>? onMediaFilterChanged;
   final bool showSenderAvatar;
 
-  /// Optional overlay per cell (e.g. collection tapbacks). When set, cell corners
-  /// are clipped on the thumbnail only so overlays can overflow the grid tile.
+  /// Optional per-cell overlay (e.g. collection tapbacks); clips thumbnail only so overlays can overflow.
   final Widget Function(BuildContext context, int index, Attachment attachment)? cellOverlayBuilder;
 
   const MediaGridSection({
@@ -114,9 +113,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
       attachment: attachment,
       showSenderAvatar: widget.showSenderAvatar,
       chat: widget.chat,
-      // Swipe through the filtered grid set (collection page or chat media).
       galleryAttachments: _filteredMedia,
-      // Already in a grid — don't offer opening another one from fullscreen.
       showCollectionGridButton: false,
     );
     if (hasOverlay) {

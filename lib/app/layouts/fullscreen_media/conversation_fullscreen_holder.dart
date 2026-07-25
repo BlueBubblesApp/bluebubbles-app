@@ -45,8 +45,7 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
 
-  /// When false, hides the button that opens [CollectionMediaGridPage]
-  /// (e.g. fullscreen was already opened from that grid).
+  /// Hide the collection-grid button when fullscreen was already opened from that grid.
   final bool showCollectionGridButton;
 
   @override

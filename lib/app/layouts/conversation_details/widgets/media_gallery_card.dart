@@ -29,15 +29,9 @@ class MediaGalleryCard extends StatefulWidget {
   });
   final Attachment attachment;
   final bool showSenderAvatar;
-
-  /// Chat context for fullscreen title / reply / collection grid button.
   final Chat? chat;
-
-  /// When set, fullscreen paging is limited to this list (e.g. a message collection
-  /// or the media currently shown in the grid) instead of all chat images.
+  /// Limits fullscreen paging to this list instead of all chat images.
   final List<Attachment>? galleryAttachments;
-
-  /// Forwarded to [ConversationFullscreenHolder]; false when already opened from a grid.
   final bool showCollectionGridButton;
 
   @override

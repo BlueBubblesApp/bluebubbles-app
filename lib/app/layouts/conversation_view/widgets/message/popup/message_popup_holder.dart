@@ -37,8 +37,7 @@ class MessagePopupHolder extends StatefulWidget {
   /// When set, [openPopup] scopes the popup to just the selected attachment.
   final ValueNotifier<int>? galleryCurrentIndex;
 
-  /// When false, skips the long-press / right-click / double-tap detector so a
-  /// descendant [MessagePopupHolder] (e.g. per-card collage) can own gestures.
+  /// When false, a descendant [MessagePopupHolder] (e.g. per-card collage) owns gestures.
   final bool enableGestures;
 
   @override

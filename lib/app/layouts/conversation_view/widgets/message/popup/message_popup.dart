@@ -183,7 +183,6 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     // iOS: Padding(all: 5) + SizedBox(35) per icon; Material/Samsung: similar emoji cell.
     const double iconSlot = 45;
     final iconsPerRow = narrowScreen ? 3 : ReactionTypes.toList().length;
-    // Container horizontal padding (EdgeInsets.all(5)).
     return iconsPerRow * iconSlot + 10;
   }
 

@@ -14,9 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
-/// Full-page selectable grid of attachments from a single message media collection.
+/// Full-page selectable grid for a message media collection.
 ///
-/// Reuses [MediaGridSection] (same grid + selection UX as conversation details).
+/// Reuses [MediaGridSection]
 class CollectionMediaGridPage extends StatefulWidget {
   const CollectionMediaGridPage({
     super.key,

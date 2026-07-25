@@ -34,9 +34,7 @@ class AttachmentHolder extends StatefulWidget {
   final MessagePart message;
   final bool transparentBackground;
   final bool showCardShadow;
-  /// When true, the attachment fills a square grid cell with no per-cell rounding or shadow.
   final bool inGridCell;
-  /// When true, media cover-fills a fixed collage/stack card frame (keeps card shadow).
   final bool fillCard;
   final List<Attachment>? galleryAttachments;
 
@@ -49,8 +47,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   MessageState get controller => _ms;
   Worker? _refreshWorker;
 
-  /// Collage / stack card corner radius (and popup card shadow clip).
-  /// iOS keeps the historical 20; Material / Samsung match [MessageImageGrid].
+  /// iOS 20; Material/Samsung match [MessageImageGrid] (16 / 25).
   double get _cardBorderRadius {
     switch (SettingsSvc.settings.skin.value) {
       case Skins.Samsung:
@@ -333,9 +330,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
               child: shouldFillCell
                   ? LayoutBuilder(
                       builder: (context, constraints) {
-                        // Popover (and other unbounded parents) only constrain maxWidth.
-                        // SizedBox.expand + fillCell cover requires tight bounds — fall
-                        // back to natural sizing so long-press popover still layouts.
+                        // Popover parents often lack a tight height; fall back to natural size.
                         final canExpand = constraints.hasBoundedWidth &&
                             constraints.hasBoundedHeight &&
                             constraints.maxWidth.isFinite &&
@@ -416,9 +411,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
-        // Gallery non-preview / fillCard: shadow + rounded clip at the card boundary.
-        // Clips the Ink background to rounded corners and places the shadow around the
-        // full card rather than the smaller content widget. Grid cells clip in the parent.
+        // Shadow + rounded clip at the card boundary (grid cells clip in the parent).
         if (shouldExpandAndClipForGallery || widget.fillCard) {
           final cardRadius = BorderRadius.circular(_cardBorderRadius);
           content = DecoratedBox(
