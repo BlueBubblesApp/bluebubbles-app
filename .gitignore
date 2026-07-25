@@ -29,7 +29,9 @@ mise.toml
 .pub-cache/
 .pub/
 /build/
-pubspeck.lock
+# android/.gitignore covers /.gradle but not /build; /build/ above is root-anchored
+# so it doesn't reach android/build either.
+/android/build/
 
 # Web related
 

@@ -303,16 +303,18 @@ class AttachmentsService extends GetxService {
           if (!isDocument) {
             try {
               if (file.path == null && file.bytes != null) {
+                // albumPath is used verbatim when it names a public media dir
+                // (the default, "Pictures"), otherwise nested under one.
                 await SaverGallery.saveImage(file.bytes!,
                     quality: 100,
                     fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                    albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                     skipIfExists: false);
               } else {
                 await SaverGallery.saveFile(
                     filePath: file.path!,
                     fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                    albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                     skipIfExists: false);
               }
               return showSnackbar('Success', 'Saved attachment to gallery!');
