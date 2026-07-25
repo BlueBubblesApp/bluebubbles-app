@@ -205,6 +205,9 @@ class ChatsService {
             .map((c) => c.guid)
             .toSet();
         chats = chats.where((e) => matchingGuids.contains(e.guid)).toList();
+      } else if (filters.showUngroupedOnly) {
+        final groupedGuids = CustomGroupsSvc.groups.expand((g) => g.chats).map((c) => c.guid).toSet();
+        chats = chats.where((e) => !groupedGuids.contains(e.guid)).toList();
       }
     }
 
