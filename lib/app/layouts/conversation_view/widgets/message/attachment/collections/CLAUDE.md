@@ -6,12 +6,12 @@ Multi-attachment image/video parts (`isMediaGallery`) formed in `MessageHolder._
 
 | File | Purpose |
 |------|---------|
-| `collection_layout_metrics.dart` | Shared sizing: `GalleryFanDirection`, `collectionCardWidth`, author-edge insets |
+| `collection_layout_metrics.dart` | Shared sizing: `collectionCardWidth`, author-edge insets |
 | `collection_group_collage.dart` | Vertical overlapping collage (any count ≥ 2) |
 | `collection_group_stack.dart` | Swipeable fan stack (any count ≥ 2) |
 | `collection_group_grid.dart` | Google Messages–style multi-attachment grid |
 | `collection_attachment_card.dart` | Per-card popup, tapbacks, and swipe-to-reply wrapper |
-| `collection_download_button.dart` | Incoming-only circular download control (collage/stack/grid) |
+| `collection_download_button.dart` | Incoming-only circular download control; collage/stack/grid place it via `CollectionDownloadButton.wrap` |
 | `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
 
 ## Layout routing
@@ -25,9 +25,9 @@ Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroup
 
 ## Card sizing
 
-- **Collage:** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Media cover-fills via `fillCard` so load does not resize cards.
-- **Stack:** Shared portrait **3:4** frame for every fan/past slot; media cover-fills via `fillCard`.
-- **Grid:** Predetermined cell geometry with `inGridCell` (same cover-fill path; no card shadow).
+- **Collage:** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Uses `AttachmentFrameMode.fixedCard` so media cover-fills without resizing cards on load.
+- **Stack:** Shared portrait **3:4** frame for every fan/past slot; same `fixedCard` cover-fill.
+- **Grid:** Predetermined cell geometry with `AttachmentFrameMode.gridCell` (same cover-fill path; parent clips; no card shadow).
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all gallery parts; tapbacks are card-local, not bubble-level.
 

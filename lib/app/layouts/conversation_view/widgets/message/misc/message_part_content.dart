@@ -19,14 +19,12 @@ class MessagePartContent extends StatelessWidget {
     required this.messagePart,
     required this.cvController,
     this.isEditing = false,
-    this.galleryCurrentIndexNotifier,
     this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
   final bool isEditing;
-  final ValueNotifier<int>? galleryCurrentIndexNotifier;
   final bool canSwipeToReply;
 
   @override
@@ -50,8 +48,6 @@ class MessagePartContent extends StatelessWidget {
     if (messagePart.attachments.isNotEmpty) {
       if (messagePart.isMediaGallery) {
         final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
-        final isFromMe = message.isFromMe == true;
-        final fanDirection = isFromMe ? GalleryFanDirection.right : GalleryFanDirection.left;
         final Widget gallery;
         switch (layout) {
           case MediaCollectionLayout.collage:
@@ -59,17 +55,13 @@ class MessagePartContent extends StatelessWidget {
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
-              fanDirection: fanDirection,
               canSwipeToReply: canSwipeToReply,
             );
           case MediaCollectionLayout.stack:
             gallery = CollectionGroupStack(
               messagePart: messagePart,
               cvController: cvController,
-              isInReply: false,
-              fanDirection: fanDirection,
               isEditing: isEditing,
-              currentIndexNotifier: galleryCurrentIndexNotifier,
             );
           case MediaCollectionLayout.grid:
           case MediaCollectionLayout.skinDefault:
@@ -81,7 +73,7 @@ class MessagePartContent extends StatelessWidget {
         }
         // Galleries skip TailClipper; restore the author-edge inset bubbles get from it.
         return Padding(
-          padding: collectionAuthorEdgeInsets(isFromMe: isFromMe),
+          padding: collectionAuthorEdgeInsets(isFromMe: message.isFromMe == true),
           child: gallery,
         );
       }

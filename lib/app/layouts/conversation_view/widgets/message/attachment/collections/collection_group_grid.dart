@@ -75,7 +75,7 @@ class CollectionGroupGrid extends StatelessWidget {
             attachmentIndex: index,
             collectionAttachments: _attachments,
             isEditing: isEditing,
-            inGridCell: true,
+            frameMode: AttachmentFrameMode.gridCell,
             hideReactions: true,
           ),
         ),
@@ -139,27 +139,12 @@ class CollectionGroupGrid extends StatelessWidget {
       ],
     );
 
-    final fromMe = messageState.isFromMe.value;
-    if (fromMe || !CollectionDownloadButton.isSupported) return grid;
-
-    return SizedBox(
-      width: gridWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
-      height: gridHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: gridWidth + CollectionDownloadButton.gap,
-            top: 0,
-            bottom: 0,
-            child: Align(
-              alignment: Alignment.center,
-              child: CollectionDownloadButton(attachments: _attachments),
-            ),
-          ),
-          grid,
-        ],
-      ),
+    return CollectionDownloadButton.wrap(
+      isFromMe: messageState.isFromMe.value,
+      contentWidth: gridWidth,
+      contentHeight: gridHeight,
+      attachments: _attachments,
+      child: grid,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
@@ -15,14 +16,12 @@ class CollectionGroupCollage extends StatelessWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    required this.fanDirection,
     this.isEditing = false,
     this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final GalleryFanDirection fanDirection;
   final bool isEditing;
   final bool canSwipeToReply;
 
@@ -44,9 +43,8 @@ class CollectionGroupCollage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
+    final isFromMe = messageState.isFromMe.value;
     final cardWidth = collectionCardWidth(context);
-    // Matches MessagePartContent: from-me → right, received → left.
-    final fromMe = fanDirection == GalleryFanDirection.right;
 
     final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth)];
     final tops = <double>[];
@@ -69,35 +67,21 @@ class CollectionGroupCollage extends StatelessWidget {
             Positioned(
               top: tops[i],
               // Pin to the author edge so swipe-to-reply can grow the chevron toward
-              // center beside the card (Clip.none). 
-              left: fromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
-              right: fromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
+              // center beside the card (Clip.none).
+              left: isFromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
+              right: isFromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
               child: _buildCard(messageState, i, cardWidth, heights[i]),
             ),
         ],
       ),
     );
 
-    if (fromMe || !CollectionDownloadButton.isSupported) return collage;
-
-    return SizedBox(
-      width: totalWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
-      height: totalHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: totalWidth + CollectionDownloadButton.gap,
-            top: 0,
-            bottom: 0,
-            child: Align(
-              alignment: Alignment.center,
-              child: CollectionDownloadButton(attachments: _attachments),
-            ),
-          ),
-          collage,
-        ],
-      ),
+    return CollectionDownloadButton.wrap(
+      isFromMe: isFromMe,
+      contentWidth: totalWidth,
+      contentHeight: totalHeight,
+      attachments: _attachments,
+      child: collage,
     );
   }
 
@@ -113,7 +97,7 @@ class CollectionGroupCollage extends StatelessWidget {
         isEditing: isEditing,
         canSwipeToReply: canSwipeToReply,
         enableSwipeToReply: true,
-        fillCard: true,
+        frameMode: AttachmentFrameMode.fixedCard,
         cardWidth: cardWidth,
         cardHeight: cardHeight,
       ),

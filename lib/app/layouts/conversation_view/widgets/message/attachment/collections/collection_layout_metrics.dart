@@ -3,11 +3,6 @@ import 'dart:math';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-enum GalleryFanDirection {
-  left,
-  right,
-}
-
 /// Shared width for iOS collage and stack collection cards.
 double collectionCardWidth(BuildContext context) =>
     min(NavigationSvc.width(context) * 0.42, 220.0);

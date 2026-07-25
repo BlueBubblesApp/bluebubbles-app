@@ -99,15 +99,6 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
   List<RxDouble> replyOffsets = [];
   List<GlobalKey> keys = [];
   final RxBool tapped = false.obs;
-  final Map<int, ValueNotifier<int>> _galleryIndices = {};
-
-  @override
-  void dispose() {
-    for (final notifier in _galleryIndices.values) {
-      notifier.dispose();
-    }
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -529,11 +520,6 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
-                                                                          final isGallery = e.isMediaGallery;
-                                                                          final isStack = isGallery &&
-                                                                              resolveMediaCollectionLayout(
-                                                                                    e.attachments.length) ==
-                                                                                  MediaCollectionLayout.stack;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
@@ -543,10 +529,6 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                                 isEditing: isEditing(e.part),
                                                                                 canSwipeToReply:
                                                                                     canSwipeToReply && !isEditing(e.part),
-                                                                                galleryCurrentIndexNotifier: isStack
-                                                                                    ? _galleryIndices.putIfAbsent(
-                                                                                        e.part, () => ValueNotifier(0))
-                                                                                    : null,
                                                                               ),
                                                                               if (message.isFromMe!)
                                                                                 Obx(() {
@@ -574,7 +556,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                                 }),
                                                                             ],
                                                                           );
-                                                                          if (isGallery) return inner;
+                                                                          if (e.isMediaGallery) return inner;
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,

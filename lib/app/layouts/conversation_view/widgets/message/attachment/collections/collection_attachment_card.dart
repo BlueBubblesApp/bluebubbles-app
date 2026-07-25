@@ -8,7 +8,6 @@ import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -69,31 +68,35 @@ class CollectionAttachmentCard extends StatefulWidget {
     required this.collectionPart,
     required this.attachmentIndex,
     required this.collectionAttachments,
+    required this.frameMode,
     this.isEditing = false,
     this.enableGestures = true,
     this.canSwipeToReply = false,
     this.enableSwipeToReply = false,
-    this.inGridCell = false,
-    this.fillCard = false,
     this.cardWidth,
     this.cardHeight,
     this.hideReactions = false,
     this.reactionTailType = ReactionTailType.standard,
-  });
+  }) : assert(
+          frameMode == AttachmentFrameMode.fixedCard || frameMode == AttachmentFrameMode.gridCell,
+          'CollectionAttachmentCard only supports fixedCard or gridCell',
+        );
 
   final MessageState controller;
   final ConversationViewController cvController;
   final MessagePart collectionPart;
   final int attachmentIndex;
   final List<Attachment> collectionAttachments;
+
+  /// [AttachmentFrameMode.fixedCard] (collage/stack) or [AttachmentFrameMode.gridCell].
+  final AttachmentFrameMode frameMode;
   final bool isEditing;
   final bool enableGestures;
   final bool canSwipeToReply;
   final bool enableSwipeToReply;
-  final bool inGridCell;
-  /// Cover-fill a fixed collage/stack card frame (keeps [showCardShadow]).
-  final bool fillCard;
-  /// Explicit frame when [fillCard] is true (lets swipe-to-reply sit beside the card).
+
+  /// Explicit frame when [frameMode] is [AttachmentFrameMode.fixedCard]
+  /// (lets swipe-to-reply sit beside the card).
   final double? cardWidth;
   final double? cardHeight;
   final bool hideReactions;
@@ -121,12 +124,13 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
       widget.enableSwipeToReply && widget.canSwipeToReply && !widget.isEditing;
 
   bool get _hasExplicitCardSize =>
-      widget.fillCard && widget.cardWidth != null && widget.cardHeight != null;
+      widget.frameMode == AttachmentFrameMode.fixedCard &&
+      widget.cardWidth != null &&
+      widget.cardHeight != null;
 
   Widget _buildCardContent(MessagePart scopedPart) {
-    final fill = widget.fillCard || widget.inGridCell;
     Widget content = Stack(
-      fit: fill ? StackFit.expand : StackFit.loose,
+      fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
         MessagePopupHolder(
@@ -137,10 +141,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
           enableGestures: widget.enableGestures,
           child: AttachmentHolder(
             message: scopedPart,
-            transparentBackground: true,
-            showCardShadow: !widget.inGridCell,
-            inGridCell: widget.inGridCell,
-            fillCard: widget.fillCard,
+            frameMode: widget.frameMode,
             galleryAttachments: widget.collectionAttachments,
           ),
         ),

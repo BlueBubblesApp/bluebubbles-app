@@ -16,6 +16,37 @@ class CollectionDownloadButton extends StatelessWidget {
 
   static bool get isSupported => SettingsSvc.settings.skin.value == Skins.iOS;
 
+  /// Places [child] beside the download control for incoming iOS collections.
+  /// Returns [child] unchanged when from-me or skin unsupported.
+  static Widget wrap({
+    required bool isFromMe,
+    required double contentWidth,
+    required List<Attachment> attachments,
+    required Widget child,
+    double? contentHeight,
+  }) {
+    if (isFromMe || !isSupported) return child;
+    return SizedBox(
+      width: contentWidth + gap + size,
+      height: contentHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: contentWidth + gap,
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: CollectionDownloadButton(attachments: attachments),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+
   final List<Attachment> attachments;
 
   void _downloadAttachments() {

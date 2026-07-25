@@ -134,6 +134,18 @@ enum MediaCollectionLayout {
   grid,
 }
 
+/// How [AttachmentHolder] sizes and decorates its content inside a message bubble.
+enum AttachmentFrameMode {
+  /// Standalone bubble attachment — natural size within max constraints.
+  natural,
+
+  /// Collage / stack card — cover-fills a fixed frame; clips and shadows itself.
+  fixedCard,
+
+  /// Grid cell — cover-fills parent cell geometry; parent clips; no card shadow.
+  gridCell,
+}
+
 enum SwipeDirection {
   LEFT,
   RIGHT,

@@ -21,20 +21,14 @@ class CollectionGroupStack extends StatefulWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    required this.isInReply,
-    required this.fanDirection,
     this.isEditing = false,
     this.infiniteScroll = false,
-    this.currentIndexNotifier,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isInReply;
-  final GalleryFanDirection fanDirection;
   final bool isEditing;
   final bool infiniteScroll;
-  final ValueNotifier<int>? currentIndexNotifier;
 
   List<Attachment> get attachments => messagePart.attachments;
 
@@ -87,7 +81,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     } else {
       _currentIndex = (_currentIndex + direction).clamp(0, _attachments.length - 1);
     }
-    widget.currentIndexNotifier?.value = _currentIndex;
   }
 
   void _jumpTo(int index) {
@@ -97,11 +90,9 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         : index.clamp(0, _attachments.length - 1);
     if (next == _currentIndex) return;
     _currentIndex = next;
-    widget.currentIndexNotifier?.value = _currentIndex;
   }
 
   double _computeBaseCardHeight(double baseCardWidth) {
-    if (widget.isInReply) return 120.0;
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
@@ -121,8 +112,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     final baseCardWidth = collectionCardWidth(context);
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
-    // Fan opens right; fanDirection only controls left/right alignment in the row.
-    final bool alignEnd = widget.fanDirection == GalleryFanDirection.right;
+    final isFromMe = MessageStateScope.of(context).isFromMe.value;
     final stackLabel = CollectionMediaGridPage.titleForAttachments(_attachments);
 
     // Stable fan room for this collection (not remaining future at the current index).
@@ -212,7 +202,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
     final stackColumn = Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         MouseRegion(
           onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
@@ -279,29 +269,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       ],
     );
 
-    final Widget stackBody;
-    if (!alignEnd && CollectionDownloadButton.isSupported) {
-      stackBody = SizedBox(
-        width: fanCanvasWidth + CollectionDownloadButton.gap + CollectionDownloadButton.size,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: fanCanvasWidth + CollectionDownloadButton.gap,
-              top: 0,
-              bottom: 0,
-              child: Align(
-                alignment: Alignment.center,
-                child: CollectionDownloadButton(attachments: _attachments),
-              ),
-            ),
-            stackColumn,
-          ],
-        ),
-      );
-    } else {
-      stackBody = stackColumn;
-    }
+    final stackBody = CollectionDownloadButton.wrap(
+      isFromMe: isFromMe,
+      contentWidth: fanCanvasWidth,
+      attachments: _attachments,
+      child: stackColumn,
+    );
 
     // Fan motion uses Listener (never enters the gesture arena) so it isn't
     // swallowed by card recognizers (e.g. VideoPlayer onDoubleTap). RawGestureDetector
@@ -453,7 +426,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       collectionAttachments: _attachments,
       isEditing: widget.isEditing,
       enableGestures: isCurrent,
-      fillCard: true,
+      frameMode: AttachmentFrameMode.fixedCard,
       reactionTailType: ReactionTailType.inside,
     );
 
@@ -537,7 +510,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 collectionAttachments: _attachments,
                 isEditing: widget.isEditing,
                 enableGestures: false,
-                fillCard: true,
+                frameMode: AttachmentFrameMode.fixedCard,
                 reactionTailType: ReactionTailType.inside,
               ),
             ),
