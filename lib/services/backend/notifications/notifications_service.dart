@@ -159,6 +159,18 @@ class NotificationsService {
     );
   }
 
+  /// Android Contacts row ID for the sender, used to grant a per-contact DND
+  /// exception for starred/favorite contacts (see ContactNotificationHelper.kt).
+  /// Returns null when the sender has no linked native contact.
+  String? _nativeContactIdForHandle(Handle? handle) {
+    if (handle == null) return null;
+    final contact = handle.contactsV2.where((c) => c.isNative).firstOrNull ?? handle.contactsV2.firstOrNull;
+    if (contact == null) return null;
+    final id = contact.nativeContactId;
+    if (id.isEmpty || int.tryParse(id) == null) return null;
+    return id;
+  }
+
   Future<void> createNotification(Chat chat, Message message) async {
     if (GetIt.I.isRegistered<LifecycleService>()) {
       await GetIt.I.isReady<LifecycleService>();
@@ -210,6 +222,17 @@ class NotificationsService {
             message.associatedMessageGuid == null;
         final String reactionType = SettingsSvc.settings.notificationReactionActionType.value;
 
+        final bool dndFavoritesOverride = SettingsSvc.settings.dndFavoritesOverride.value;
+        String? nativeContactId;
+        if (dndFavoritesOverride) {
+          try {
+            nativeContactId = _nativeContactIdForHandle(message.handleRelation.target);
+          } catch (e, s) {
+            Logger.warn('DND contact lookup failed; posting notification without contact link',
+                tag: 'NotificationsService', error: e, trace: s);
+          }
+        }
+
         await GetIt.I.isReady<MethodChannelService>();
         await MethodChannelSvc.actions.createIncomingMessageNotification(
           channelId: NEW_MESSAGE_CHANNEL,
@@ -220,6 +243,8 @@ class NotificationsService {
           chatIcon: isGroup ? chatIcon : contactIcon,
           contactName: contactName,
           contactAvatar: contactIcon,
+          nativeContactId: nativeContactId,
+          dndFavoritesOverride: dndFavoritesOverride,
           messageGuid: message.guid!,
           messageText: text,
           messageDate: message.dateCreated!.millisecondsSinceEpoch,
