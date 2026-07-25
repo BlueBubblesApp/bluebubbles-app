@@ -128,94 +128,74 @@ class ChatsService {
     bool? excludePinned,
     ChatListFilters? filters,
   }) {
-    var chats = allChats;
+    // One fused pass — this runs inside the conversation list's Obx, and chaining
+    // `.where(...).toList()` copies the whole list per dimension.
+    //
+    // Do not reorder these conditions. `&&` short-circuits, so the order decides
+    // which observables get read, and reading one is what subscribes the Obx to it.
+    // Reordering changes the subscription set — the symptom is a chat list that
+    // stops updating for some chats.
+    final filterUnknownSenders = SettingsSvc.settings.filterUnknownSenders.value;
+    // null = dimension off, false = on and wanting known senders. Resolved here so
+    // the predicate doesn't need a null-assert.
+    final unknownFilter = filterUnknownSenders ? showUnknown : null;
 
-    // Apply archived filter
-    if (showArchived != null) {
-      if (showArchived) {
-        chats = chats.where((e) => e.isArchived ?? false).toList();
-      } else {
-        chats = chats.where((e) => !(e.isArchived ?? false)).toList();
-      }
+    // Resolved once, not per chat. Must come from CustomGroupsSvc.groups, not
+    // `e.customGroups` — that backlink is cached per Chat instance and goes stale
+    // when membership changes elsewhere.
+    Set<String>? customGroupChatGuids;
+    if (filters != null && filters.customGroupIds.isNotEmpty) {
+      customGroupChatGuids = CustomGroupsSvc.groups
+          .where((g) => filters.customGroupIds.contains(g.id))
+          .expand((g) => g.chats)
+          .map((c) => c.guid)
+          .toSet();
     }
 
-    // Apply unknown senders filter
-    if (showUnknown != null && SettingsSvc.settings.filterUnknownSenders.value) {
-      if (showUnknown) {
-        chats = chats.where((e) => !e.isGroup && e.handles.firstOrNull?.contactsV2.isEmpty != false).toList();
-      } else {
-        chats = chats
-            .where((e) => e.isGroup || (!e.isGroup && e.handles.firstOrNull?.contactsV2.isNotEmpty == true))
-            .toList();
-      }
-    }
+    bool hasKnownSender(Chat e) => e.isGroup || e.handles.firstOrNull?.contactsV2.isNotEmpty == true;
+    bool hasUnknownSender(Chat e) => !e.isGroup && e.handles.firstOrNull?.contactsV2.isEmpty != false;
 
-    // Apply conversation-list filter dimensions (chip selections) — these combine with AND semantics.
-    if (filters != null) {
-      if (filters.readFilter == ChatReadFilter.unread) {
+    return allChats.where((e) {
+      if (showArchived != null && showArchived != (e.isArchived ?? false)) return false;
+
+      if (unknownFilter != null && (unknownFilter ? !hasUnknownSender(e) : !hasKnownSender(e))) return false;
+
+      if (filters != null) {
         // Read from ChatState rather than the Chat model directly — markAllAsRead()
         // updates ChatState.hasUnreadMessage instantly but writes the underlying
         // Chat.hasUnreadMessage field asynchronously via a background DB/HTTP call,
         // so the model field can briefly lag behind the reactive state.
-        chats = chats.where((e) => getChatState(e.guid)?.hasUnreadMessage.value ?? (e.hasUnreadMessage ?? false)).toList();
-      }
-
-      // The legacy "Filter Unknown Senders" setting already siphons unknown-sender
-      // chats into their own separate list (see the showUnknown block above and
-      // Chat.shouldMuteNotification) — when it's on, it takes precedence over this
-      // chip so the two mechanisms can't fight and produce a confusing empty list.
-      if (!SettingsSvc.settings.filterUnknownSenders.value) {
-        if (filters.senderFilter == ChatSenderFilter.known) {
-          chats = chats
-              .where((e) => e.isGroup || (!e.isGroup && e.handles.firstOrNull?.contactsV2.isNotEmpty == true))
-              .toList();
-        } else if (filters.senderFilter == ChatSenderFilter.unknown) {
-          chats = chats.where((e) => !e.isGroup && e.handles.firstOrNull?.contactsV2.isEmpty != false).toList();
+        if (filters.readFilter == ChatReadFilter.unread &&
+            !(getChatState(e.guid)?.hasUnreadMessage.value ?? (e.hasUnreadMessage ?? false))) {
+          return false;
         }
+
+        // The legacy "Filter Unknown Senders" setting already siphons unknown-sender
+        // chats into their own separate list (see the showUnknown branch above and
+        // Chat.shouldMuteNotification) — when it's on, it takes precedence over this
+        // chip so the two mechanisms can't fight and produce a confusing empty list.
+        if (!filterUnknownSenders) {
+          if (filters.senderFilter == ChatSenderFilter.known && !hasKnownSender(e)) return false;
+          if (filters.senderFilter == ChatSenderFilter.unknown && !hasUnknownSender(e)) return false;
+        }
+
+        if (filters.typeFilter == ChatTypeFilter.group && !e.isGroup) return false;
+        if (filters.typeFilter == ChatTypeFilter.direct && e.isGroup) return false;
+
+        if (filters.muteFilter == ChatMuteFilter.muted && e.muteType == null) return false;
+        if (filters.muteFilter == ChatMuteFilter.unmuted && e.muteType != null) return false;
+
+        if (filters.serviceFilter == ChatServiceFilter.iMessage && !e.isIMessage) return false;
+        if (filters.serviceFilter == ChatServiceFilter.other && e.isIMessage) return false;
+
+        if (customGroupChatGuids != null && !customGroupChatGuids.contains(e.guid)) return false;
       }
 
-      if (filters.typeFilter == ChatTypeFilter.group) {
-        chats = chats.where((e) => e.isGroup).toList();
-      } else if (filters.typeFilter == ChatTypeFilter.direct) {
-        chats = chats.where((e) => !e.isGroup).toList();
-      }
+      if (pinnedOnly == true && !(e.isPinned ?? false)) return false;
+      if (pinnedOnly != true && excludePinned == true && (e.isPinned ?? false)) return false;
 
-      if (filters.muteFilter == ChatMuteFilter.muted) {
-        chats = chats.where((e) => e.muteType != null).toList();
-      } else if (filters.muteFilter == ChatMuteFilter.unmuted) {
-        chats = chats.where((e) => e.muteType == null).toList();
-      }
-
-      if (filters.serviceFilter == ChatServiceFilter.iMessage) {
-        chats = chats.where((e) => e.isIMessage).toList();
-      } else if (filters.serviceFilter == ChatServiceFilter.other) {
-        chats = chats.where((e) => !e.isIMessage).toList();
-      }
-
-      if (filters.customGroupIds.isNotEmpty) {
-        // Sourced from CustomGroupsSvc.groups (refreshed on every
-        // 'custom-groups-updated' event) rather than `e.customGroups` —
-        // that backlink ToMany is lazily loaded and cached per Chat instance
-        // (e.g. by CustomGroupFilterChipRow's unread-count badges), so it
-        // goes stale as soon as a chat is added to/removed from a group and
-        // never picks up the change without this.
-        final matchingGuids = CustomGroupsSvc.groups
-            .where((g) => filters.customGroupIds.contains(g.id))
-            .expand((g) => g.chats)
-            .map((c) => c.guid)
-            .toSet();
-        chats = chats.where((e) => matchingGuids.contains(e.guid)).toList();
-      }
-    }
-
-    // Apply pinned filter
-    if (pinnedOnly == true) {
-      chats = chats.where((e) => e.isPinned ?? false).toList();
-    } else if (excludePinned == true) {
-      chats = chats.where((e) => !(e.isPinned ?? false)).toList();
-    }
-
-    return chats;
+      return true;
+    }).toList();
   }
 
   /// Get only group chats

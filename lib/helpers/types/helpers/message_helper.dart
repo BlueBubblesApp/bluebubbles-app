@@ -11,7 +11,7 @@ class MessageHelper {
     List<Message> normalized = [];
 
     for (Message message in associatedMessages.reversed.toList()) {
-      if (!ReactionTypes.toList().contains(message.associatedMessageType)) {
+      if (!ReactionTypes.all.contains(message.associatedMessageType)) {
         normalized.add(message);
       } else if (guids.remove(message.guid)) {
         normalized.add(message);

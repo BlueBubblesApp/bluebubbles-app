@@ -7,7 +7,6 @@ import 'package:bluebubbles/database/migrations/chat_latest_message_migration.da
 import 'package:bluebubbles/database/migrations/message_handle_relationship_migration.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:io/io.dart';
@@ -195,10 +194,16 @@ class Database {
           final messages = Database.messages.getAll();
           if (messages.isNotEmpty) {
             final handles = Database.handles.getAll();
+            // Indexed by id — scanning handles per message makes this migration
+            // all-messages x all-handles, which is minutes on a large database.
+            final originalRowIdByHandleId = {
+              for (final h in handles)
+                if (h.id != null) h.id!: h.originalROWID,
+            };
             Logger.info("Replacing handleIds for messages...", tag: "DB-Migration");
             for (Message m in messages) {
               if (m.isFromMe! || m.handleId == 0 || m.handleId == null) continue;
-              m.handleId = handles.firstWhereOrNull((e) => e.id == m.handleId)?.originalROWID ?? m.handleId;
+              m.handleId = originalRowIdByHandleId[m.handleId] ?? m.handleId;
             }
             Logger.info("Final save...", tag: "DB-Migration");
             Database.messages.putMany(messages);
@@ -234,14 +239,26 @@ class Database {
 
         case 5:
           // Find the Bright White theme and reset it back to the default (new colors)
-          final brightWhite = Database.themes.query(ThemeStruct_.name.equals("Bright White")).build().findFirst();
+          final brightWhiteQuery = Database.themes.query(ThemeStruct_.name.equals("Bright White")).build();
+          final ThemeStruct? brightWhite;
+          try {
+            brightWhite = brightWhiteQuery.findFirst();
+          } finally {
+            brightWhiteQuery.close();
+          }
           if (brightWhite != null) {
             brightWhite.data = ThemesService.whiteLightTheme;
             Database.themes.put(brightWhite, mode: PutMode.update);
           }
 
           // Find the OLED theme and reset it back to the default (new colors)
-          final oled = Database.themes.query(ThemeStruct_.name.equals("OLED Dark")).build().findFirst();
+          final oledQuery = Database.themes.query(ThemeStruct_.name.equals("OLED Dark")).build();
+          final ThemeStruct? oled;
+          try {
+            oled = oledQuery.findFirst();
+          } finally {
+            oledQuery.close();
+          }
           if (oled != null) {
             oled.data = ThemesService.oledDarkTheme;
             Database.themes.put(oled, mode: PutMode.update);

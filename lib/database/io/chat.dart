@@ -310,7 +310,7 @@ class Chat {
 
     /// If reaction and notify reactions off, then don't notify, otherwise notify
     return !SettingsSvc.settings.notifyReactions.value &&
-        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+        ReactionTypes.all.contains(message?.associatedMessageType ?? "");
   }
 
   /// Toggle unread status - pure DB operation
@@ -498,16 +498,14 @@ class Chat {
         ..offset = offset;
       final messages = query.find();
       query.close();
-      for (int i = 0; i < messages.length; i++) {
-        Message message = messages[i];
-        if (chat.handles.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
-          Handle? handle = chat.handles.firstWhereOrNull((e) => e.originalROWID == message.handleId) ??
-              message.handleRelation.target;
-          if (handle == null) {
-            messages.remove(message);
-            i--;
-          }
-        }
+      // Drop incoming messages whose sender isn't a participant. Indexed so the
+      // per-message lookup is O(1), and pruned with removeWhere in one pass.
+      if (chat.handles.isNotEmpty) {
+        final participantRowIds = chat.handles.map((e) => e.originalROWID).whereType<int>().toSet();
+        messages.removeWhere((message) {
+          if (message.isFromMe! || message.handleId == null || message.handleId == 0) return false;
+          return !participantRowIds.contains(message.handleId) && message.handleRelation.target == null;
+        });
       }
       // fetch attachments and reactions if requested
       if (getDetails) {

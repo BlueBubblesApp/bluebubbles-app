@@ -23,11 +23,16 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
 }
 
 void showBookmarksThread(ConversationViewController cvController, BuildContext context) async {
-  final _messages = (Database.messages.query(Message_.isBookmarked.equals(true))
+  final bookmarksQuery = (Database.messages.query(Message_.isBookmarked.equals(true))
         ..link(Message_.chat, Chat_.guid.equals(cvController.chat.guid))
         ..order(Message_.dateCreated, flags: Order.descending))
-      .build()
-      .find();
+      .build();
+  final List<Message> _messages;
+  try {
+    _messages = bookmarksQuery.find();
+  } finally {
+    bookmarksQuery.close();
+  }
   if (_messages.isEmpty) {
     return showSnackbar("Error", "There are no bookmarked messages in this chat!");
   }

@@ -453,11 +453,12 @@ class ChatActions {
 
       if (existingChats.isEmpty) return <int>[];
 
-      // Pull the latest message for all of the chats
-      List<int> chatIds = existingChats.map((e) => e.id!).toList();
+      // Pull the latest message for all of the chats. Iterate the chats directly;
+      // mapping to IDs and searching back per ID is O(chats^2).
       List<Chat> updatedChats = [];
 
-      for (int chatId in chatIds) {
+      for (final current in existingChats) {
+        final chatId = current.id!;
         // Fetch latest message for the chat
         final latestMsgQuery = (messageBox.query(Message_.dateCreated.notNull())
               ..link(Message_.chat, Chat_.id.equals(chatId))
@@ -474,8 +475,6 @@ class ChatActions {
           latestMessage.handle = handleQuery.findFirst();
           handleQuery.close();
         }
-
-        Chat current = existingChats.firstWhere((element) => element.id == chatId);
 
         // Try and update the last message info
         bool didUpdate = _tryUpdateLastMessage(current, latestMessage, toggleUnread);
