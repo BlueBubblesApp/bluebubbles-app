@@ -1,7 +1,8 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_collage.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_grid.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_collage.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_stack.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
@@ -54,7 +55,7 @@ class MessagePartContent extends StatelessWidget {
         final Widget gallery;
         switch (layout) {
           case MediaCollectionLayout.collage:
-            gallery = MessageImageCollage(
+            gallery = CollectionGroupCollage(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
@@ -62,7 +63,7 @@ class MessagePartContent extends StatelessWidget {
               canSwipeToReply: canSwipeToReply,
             );
           case MediaCollectionLayout.stack:
-            gallery = MessageImageStack(
+            gallery = CollectionGroupStack(
               messagePart: messagePart,
               cvController: cvController,
               isInReply: false,
@@ -72,7 +73,7 @@ class MessagePartContent extends StatelessWidget {
             );
           case MediaCollectionLayout.grid:
           case MediaCollectionLayout.skinDefault:
-            gallery = MessageImageGrid(
+            gallery = CollectionGroupGrid(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,

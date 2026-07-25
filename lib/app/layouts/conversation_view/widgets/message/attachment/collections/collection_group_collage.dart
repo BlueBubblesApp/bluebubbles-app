@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_stack.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -10,8 +10,8 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 /// Vertical overlapping collage for multi-attachment media collections.
-class MessageImageCollage extends StatelessWidget {
-  const MessageImageCollage({
+class CollectionGroupCollage extends StatelessWidget {
+  const CollectionGroupCollage({
     super.key,
     required this.messagePart,
     required this.cvController,

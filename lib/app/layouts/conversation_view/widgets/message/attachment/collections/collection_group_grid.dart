@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -12,8 +12,8 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 /// Google Messages–style grid for multi-attachment media collections.
-class MessageImageGrid extends StatelessWidget {
-  const MessageImageGrid({
+class CollectionGroupGrid extends StatelessWidget {
+  const CollectionGroupGrid({
     super.key,
     required this.messagePart,
     required this.cvController,

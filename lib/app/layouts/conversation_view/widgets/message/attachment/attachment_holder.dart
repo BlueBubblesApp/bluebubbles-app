@@ -47,7 +47,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   MessageState get controller => _ms;
   Worker? _refreshWorker;
 
-  /// iOS 20; Material/Samsung match [MessageImageGrid] (16 / 25).
+  /// iOS 20; Material/Samsung match [CollectionGroupGrid] (16 / 25).
   double get _cardBorderRadius {
     switch (SettingsSvc.settings.skin.value) {
       case Skins.Samsung:
@@ -316,7 +316,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final transparentCard = hasPreview &&
             ((widget.transparentBackground && !widget.inGridCell) || isPass || attachment.mimeStart == "image");
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
-        // to fill the SizedBox dimensions set by MessageImageStack and have their
+        // to fill the SizedBox dimensions set by CollectionGroupStack and have their
         // background clipped to rounded corners. fillCard uses the expand path below.
         final shouldExpandAndClipForGallery =
             widget.transparentBackground && !hasPreview && !widget.inGridCell && !widget.fillCard;

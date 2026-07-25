@@ -7,12 +7,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | File | Purpose |
 |------|---------|
 | `attachment_holder.dart` | **Entry point** — MIME type dispatcher; manages download state |
-| `collection_attachment_card.dart` | Per-card popup / tapback / swipe wrapper for media collections |
-| `collection_download_button.dart` | Incoming download control for collage/stack/grid |
-| `collection_media_grid_page.dart` | Full-page grid for a message collection |
-| `message_image_collage.dart` | Vertical overlapping collage layout |
-| `message_image_stack.dart` | Swipeable fan stack |
-| `message_image_grid.dart` | Multi-attachment grid layout |
+| `collections/` | Multi-attachment collage / stack / grid → `collections/CLAUDE.md` |
 | `image_viewer.dart` | Images with tap-to-fullscreen gesture |
 | `video_player.dart` | Video playback with custom controls |
 | `audio_player.dart` | Audio playback with progress bar |
@@ -20,6 +15,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | `sticker_holder.dart` | Sticker rendering (full-size emoji-like overlays) |
 | `other_file.dart` | Generic file display for docs, archives, APKs, etc. |
 | `live_photo_mixin.dart` | Mixin for handling Live Photo metadata |
+| `parts/` | Per-transfer-state renderers → `parts/CLAUDE.md` |
 
 ## Key Patterns
 
@@ -29,7 +25,7 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 
 **Fullscreen**: Tap on `ImageViewer` or `VideoPlayer` pushes `FullscreenMedia` via `NavigationSvc`. See `lib/app/layouts/fullscreen_media/CLAUDE.md`.
 
-**Media collections**: `isMediaGallery` parts route via `resolveMediaCollectionLayout()` to collage/stack/grid (see file table).
+**Media collections**: `isMediaGallery` parts route via `resolveMediaCollectionLayout()` to collage/stack/grid — see `collections/CLAUDE.md`.
 
 ## Adding a New Attachment Type
 

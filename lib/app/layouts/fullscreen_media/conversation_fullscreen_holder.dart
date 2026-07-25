@@ -1,5 +1,5 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;

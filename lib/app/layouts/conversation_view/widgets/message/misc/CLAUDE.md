@@ -23,15 +23,20 @@ if (message.hasApplePayloadData || message.isInteractive)
   → InteractiveHolder          // Apple Pay, Game Pigeon, URL preview, maps
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
-else if (messagePart.isMediaGallery)
-  → collage / stack / grid via resolveMediaCollectionLayout()
 else if (messagePart.attachments.isNotEmpty)
-  → AttachmentHolder           // single image, video, audio, sticker, file
+  if (messagePart.isMediaGallery)
+    resolveMediaCollectionLayout(count) →
+      collage → CollectionGroupCollage
+      stack   → CollectionGroupStack
+      grid    → CollectionGroupGrid
+    // skinDefault → iOS: collage (2–3) / stack (4+); else grid
+  else
+    → AttachmentHolder         // single image, video, audio, sticker, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
 
-Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`.
+Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`. Layout prefs live in Media Settings (**Multi-Attachment Layout**). See `attachment/collections/CLAUDE.md`.
 
 ## Adding a New Message Part Type
 

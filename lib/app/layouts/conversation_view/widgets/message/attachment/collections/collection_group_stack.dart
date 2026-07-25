@@ -1,8 +1,9 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_attachment_card.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -15,25 +16,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-enum GalleryFanDirection {
-  left,
-  right,
-}
-
-/// Shared width for iOS collage and stack collection cards.
-double collectionCardWidth(BuildContext context) =>
-    min(NavigationSvc.width(context) * 0.42, 220.0);
-
-/// Author-side inset matching single attachments / [TailClipper] (galleries skip the clipper).
-const double collectionEdgeInset = 10.0;
-
-EdgeInsets collectionAuthorEdgeInsets({required bool isFromMe}) => EdgeInsets.only(
-      left: isFromMe ? 0 : collectionEdgeInset,
-      right: isFromMe ? collectionEdgeInset : 0,
-    );
-
-class MessageImageStack extends StatefulWidget {
-  const MessageImageStack({
+class CollectionGroupStack extends StatefulWidget {
+  const CollectionGroupStack({
     super.key,
     required this.messagePart,
     required this.cvController,
@@ -55,10 +39,10 @@ class MessageImageStack extends StatefulWidget {
   List<Attachment> get attachments => messagePart.attachments;
 
   @override
-  State<MessageImageStack> createState() => _MessageImageStackState();
+  State<CollectionGroupStack> createState() => _CollectionGroupStackState();
 }
 
-class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers {
+class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeHelpers {
   static const int _visibleFanSlots = 5;
   static const int _maxPastCards = 3;
   static const double _swipeCommitThreshold = 70;
@@ -86,7 +70,7 @@ class _MessageImageStackState extends State<MessageImageStack> with ThemeHelpers
   List<Attachment> get _attachments => widget.attachments;
 
   @override
-  void didUpdateWidget(covariant MessageImageStack oldWidget) {
+  void didUpdateWidget(covariant CollectionGroupStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
     final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
