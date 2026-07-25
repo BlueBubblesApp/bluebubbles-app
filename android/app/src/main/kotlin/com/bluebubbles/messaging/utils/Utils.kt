@@ -18,13 +18,15 @@ object Utils {
         // Start by scaling the inner image to 72x72dp
         var width = bitmap.width
         var height = bitmap.height
-        val aspectRatio = width / height
-        if (aspectRatio > 1) {
+        // Float division — integer division truncates to 0 for portrait images,
+        // which then causes a divide-by-zero when computing the other dimension.
+        val aspectRatio = width.toFloat() / height.toFloat()
+        if (aspectRatio > 1f) {
             width = (72 * Resources.getSystem().displayMetrics.density).toInt()
-            height = width / aspectRatio
+            height = (width / aspectRatio).toInt()
         } else {
             height = (72 * Resources.getSystem().displayMetrics.density).toInt()
-            width = height / aspectRatio
+            width = (height * aspectRatio).toInt()
         }
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
         // Add transparent padding to achieve 108x108dp
