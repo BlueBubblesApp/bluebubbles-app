@@ -178,10 +178,44 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     Navigator.of(context).pop(returnVal);
   }
 
+  /// Estimated tapback picker width from the reaction-row layout in [build].
+  double _estimateTapbackPickerWidth({required bool narrowScreen}) {
+    // iOS: Padding(all: 5) + SizedBox(35) per icon; Material/Samsung: similar emoji cell.
+    const double iconSlot = 45;
+    final iconsPerRow = narrowScreen ? 3 : ReactionTypes.toList().length;
+    // Container horizontal padding (EdgeInsets.all(5)).
+    return iconsPerRow * iconSlot + 10;
+  }
+
+  /// Incoming overlay X so tapback / details stay on-screen; may shift the iOS preview.
+  ({double clampedOverlayLeft, double clampedChildLeft}) _clampedHorizontalLayout({
+    required double screenWidth,
+    required bool narrowScreen,
+  }) {
+    const margin = 15.0;
+    final preferredOverlayLeft = widget.childPosition.dx + 10;
+    final pickerWidth = _estimateTapbackPickerWidth(narrowScreen: narrowScreen);
+    final detailsMenuWidth = iOS
+        ? min(max(screenWidth * 3 / 5, 200), screenWidth * 4 / 5)
+        : 0.0;
+    final overlayWidth = max(pickerWidth, detailsMenuWidth);
+    final maxLeft = max(margin, screenWidth - overlayWidth - margin);
+    final clampedOverlayLeft = preferredOverlayLeft.clamp(margin, maxLeft).toDouble();
+    final shift = preferredOverlayLeft - clampedOverlayLeft;
+    final clampedChildLeft = max(margin, widget.childPosition.dx - shift);
+    return (clampedOverlayLeft: clampedOverlayLeft, clampedChildLeft: clampedChildLeft);
+  }
+
   @override
   Widget build(BuildContext context) {
     double narrowWidth = message.isFromMe! || !SettingsSvc.settings.alwaysShowAvatars.value ? 330 : 360;
     bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
+    final screenWidth = NavigationSvc.width(widthContext);
+    final clampedLayout = message.isFromMe!
+        ? null
+        : _clampedHorizontalLayout(screenWidth: screenWidth, narrowScreen: narrowScreen);
+    final clampedOverlayLeft = clampedLayout?.clampedOverlayLeft;
+    final clampedChildLeft = clampedLayout?.clampedChildLeft ?? widget.childPosition.dx;
 
     return Theme(
       data: context.theme.copyWith(
@@ -258,7 +292,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                     AnimatedPositioned(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutBack,
-                      left: widget.childPosition.dx,
+                      left: clampedChildLeft,
                       bottom: messageOffset,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0.8, end: 1),
@@ -308,7 +342,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                               : context.height - materialOffset)
                           .clamp(0, context.height - (narrowScreen ? 200 : 125)),
                       right: message.isFromMe! ? 15 : null,
-                      left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
+                      left: clampedOverlayLeft,
                       child: AnimatedSize(
                         curve: Curves.easeInOut,
                         alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
@@ -420,7 +454,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                   if (iOS)
                     Positioned(
                       right: message.isFromMe! ? 15 : null,
-                      left: !message.isFromMe! ? widget.childPosition.dx + 10 : null,
+                      left: clampedOverlayLeft,
                       bottom: 30,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0.8, end: 1),
