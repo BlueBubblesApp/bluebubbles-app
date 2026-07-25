@@ -8,6 +8,21 @@ Detailed coding standards live in `.claude/rules/`:
 - `services.md` — service access, event dispatch, method channels, navigation
 - `git.md` — commit message format
 
+## Engineering Standards (enforced)
+
+`ENGINEERING-STANDARDS.md` is the performance and code-quality bar. Unlike the
+rule files above, its rules are **executable**: `test/contracts/` enforces them
+and runs in CI on every PR. Read §6 for what's locked at zero vs. ratcheted, and
+§8 for what is deliberately *not* enforced (notably: no runtime perf measurement,
+no behavioral tests).
+
+```bash
+dart test test/contracts              # the gate
+dart run tool/contracts_report.dart   # the worklist
+```
+
+Before optimizing anything, read §0 — especially §0.3, "validate the ruler."
+
 ## Architecture & Design Decisions
 - `docs/ARCHITECTURE.md` — how the system's major subsystems work and interact
 - `docs/DECISIONS.md` — why key design choices were made (isolate pattern, GetIt vs GetX, ChatState, etc.)
@@ -33,7 +48,17 @@ After editing `@Entity` classes in `lib/database/io/`:
 - Line length: 120 chars
 
 ## Testing
-No automated test suite. Verify changes by running the target platform.
+
+- `dart test test/contracts` — the contract suite (source sweeps enforcing
+  `ENGINEERING-STANDARDS.md`). Runs in ~1s. **Must pass before every commit.**
+- **No unit, widget, or integration tests yet.** The contracts never execute
+  application code, so behavioral changes still have to be verified by running
+  the target platform. See standards §8.2 for the first targets worth testing.
 
 ## Branches
-Branch off `master`; PRs target `master`. No CI/CD.
+Branch off `master`; PRs target `master`.
+
+CI (`.github/workflows/`): `pr-check.yml` runs `flutter analyze`
+(`--no-fatal-infos` — there is a legacy baseline of ~302 info-level lints, so
+only new warnings/errors fail), the contract suite, and an unsigned Windows +
+Linux compile. `desktop-builds.yml` handles signing/packaging on tags.

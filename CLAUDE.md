@@ -13,6 +13,7 @@ iOS exists but is secondary; the server component runs on macOS only.
 ## Claude workflow → `.claude/CLAUDE.md`
 ## Architecture → `docs/ARCHITECTURE.md`
 ## Design decisions → `docs/DECISIONS.md`
+## Engineering standards (enforced by `test/contracts/`) → `ENGINEERING-STANDARDS.md`
 
 ## Key Conventions
 - State: GetIt for services (`GetIt.I<T>()`), GetX `Rx*` for reactive UI state only

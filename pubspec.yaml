@@ -227,6 +227,13 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   peanut: ^6.0.0
   objectbox_generator: any
+  # Runs the executable contract tests in test/contracts/ that enforce
+  # ENGINEERING-STANDARDS.md. See test/contracts/README.md.
+  test: ^1.25.0
+  # The structural contracts (query-in-loop, scan-in-loop) walk a real Dart AST
+  # rather than pattern-matching text — a regex window can't tell a loop body
+  # from a callback body and fires on correct code.
+  analyzer: ^8.4.0
 
 flutter_icons:
   android: true

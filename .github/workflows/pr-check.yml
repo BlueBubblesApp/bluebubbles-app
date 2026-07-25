@@ -75,6 +75,13 @@ jobs:
       - name: Analyze
         run: fvm flutter analyze --no-pub --no-fatal-infos
 
+      # Executable enforcement for ENGINEERING-STANDARDS.md. Pure-Dart source
+      # sweeps (no Flutter asset bundle, no device) so the whole suite runs in
+      # about a second. `dart test`, not `flutter test`: these tests import only
+      # dart:io + analyzer, and flutter test would need the .env asset bundle.
+      - name: Contract tests
+        run: fvm dart test test/contracts --reporter=expanded
+
   build-windows:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
