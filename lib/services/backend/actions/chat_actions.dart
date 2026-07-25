@@ -713,6 +713,9 @@ class ChatActions {
 
   static Future<List<int>> getMessagesAsync(dynamic data) async {
     final chatId = data['chatId'] as int;
+    // chatStyle == 43 means iMessage group chat; a more reliable group indicator
+    // than participants.length when the local participant list is stale.
+    final chatStyle = data['chatStyle'] as int? ?? 0;
     final participantsData = (data['participantsData'] as List).cast<Map<String, dynamic>>();
     final offset = data['offset'] as int? ?? 0;
     final limit = data['limit'] as int? ?? 25;
@@ -758,15 +761,22 @@ class ChatActions {
         afterQuery.close();
       }
 
-      // Handle matching - filter out messages that don't match participant requirements
-      for (int i = 0; i < messages.length; i++) {
-        Message message = messages[i];
-        if (participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
-          Handle? handle =
-              participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
-          if (handle == null && message.originalROWID != null) {
-            messages.remove(message);
-            i--;
+      // 1:1 only: drop messages whose sender doesn't match the sole participant.
+      // Group messages are already chat-linked; filtering them here hides valid
+      // messages when the local participant list is stale (the "infinite spinner" /
+      // missing group messages bug). chatStyle == 43 is iMessage group; keep the
+      // participant-count check as a fallback for SMS groups (style != 43).
+      final isGroupChat = chatStyle == 43 || participants.length > 1;
+      if (!isGroupChat) {
+        for (int i = 0; i < messages.length; i++) {
+          Message message = messages[i];
+          if (participants.isNotEmpty && !message.isFromMe! && message.handleId != null && message.handleId != 0) {
+            final Handle? handle =
+                participants.firstWhereOrNull((e) => e.originalROWID == message.handleId) ?? message.getHandle();
+            if (handle == null && message.originalROWID != null) {
+              messages.remove(message);
+              i--;
+            }
           }
         }
       }
