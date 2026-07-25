@@ -25,7 +25,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
@@ -109,6 +109,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           part.attachments.isNotEmpty &&
           part.attachments.where((element) => AttachmentsSvc.getContent(element) is PlatformFile).isNotEmpty) ||
       isEmbeddedMedia;
+
+  bool get showRefreshPreview =>
+      message.isLegacyUrlPreview || message.payloadData?.type == PayloadType.url || message.isPhotoSlideshow;
 
   bool get canOpenInImageViewer =>
       kIsDesktop && !kIsWeb && part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
@@ -645,6 +648,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
         onTap: () => popup_message_actions.messageInfo(_buildActionContext(DetailsMenuAction.MessageInfo)),
         action: DetailsMenuAction.MessageInfo,
       ),
+      if (showRefreshPreview)
+        DetailsMenuActionWidget(
+          onTap: () => popup_media_actions.refreshPreview(_buildActionContext(DetailsMenuAction.RefreshPreview)),
+          action: DetailsMenuAction.RefreshPreview,
+        ),
     ].sorted((a, b) => SettingsSvc.settings.detailsMenuActions
         .indexOf(a.action)
         .compareTo(SettingsSvc.settings.detailsMenuActions.indexOf(b.action)));

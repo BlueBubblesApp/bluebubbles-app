@@ -269,6 +269,19 @@ void redownload(MessagePopupActionContext ctx) {
   ctx.popDetails();
 }
 
+/// Clears any cached web-loaded preview state (URL previews, Photos app
+/// previews, etc) for this message and signals its interactive widget to
+/// re-fetch. Generic across preview types - the widget itself (via
+/// [MessageState.previewRefreshKey]) owns how it re-fetches its own content.
+void refreshPreview(MessagePopupActionContext ctx) {
+  if (ctx.message.metadata != null) {
+    ctx.message.metadata = null;
+    ctx.message.save();
+  }
+  ctx.messageState.previewRefreshKey.value++;
+  ctx.popDetails();
+}
+
 void sharePart(MessagePopupActionContext ctx) {
   if (ctx.part.attachments.isNotEmpty && !ctx.message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
     Share.files(ctx.part.attachments.map((a) => a.path).nonNulls.toList());
