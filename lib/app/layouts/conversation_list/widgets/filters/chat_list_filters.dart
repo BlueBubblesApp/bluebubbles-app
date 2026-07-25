@@ -33,6 +33,11 @@ class ChatListFilters {
   /// dimension (a chat matches if it belongs to any selected group).
   final Set<int> customGroupIds;
 
+  /// When true, shows only chats that don't belong to any custom group.
+  /// Mutually exclusive with [customGroupIds] in practice — callers clear
+  /// one when setting the other.
+  final bool showUngroupedOnly;
+
   const ChatListFilters({
     this.readFilter = ChatReadFilter.all,
     this.senderFilter = ChatSenderFilter.all,
@@ -40,6 +45,7 @@ class ChatListFilters {
     this.muteFilter = ChatMuteFilter.all,
     this.serviceFilter = ChatServiceFilter.all,
     this.customGroupIds = const {},
+    this.showUngroupedOnly = false,
   });
 
   static const _keyRead = 'read';
@@ -48,6 +54,7 @@ class ChatListFilters {
   static const _keyMute = 'mute';
   static const _keyService = 'service';
   static const _keyCustomGroupIds = 'customGroupIds';
+  static const _keyShowUngrouped = 'showUngrouped';
 
   /// Decodes a [Settings.savedChatFilters]-style map (dimension name -> enum
   /// name). Unknown/missing keys fall back to [ChatListFilters]'s defaults —
@@ -61,6 +68,7 @@ class ChatListFilters {
       serviceFilter: chatServiceFilterFromName(map[_keyService] ?? ''),
       customGroupIds:
           (map[_keyCustomGroupIds] ?? '').split(',').where((s) => s.isNotEmpty).map(int.parse).toSet(),
+      showUngroupedOnly: map[_keyShowUngrouped] == '1',
     );
   }
 
@@ -72,6 +80,7 @@ class ChatListFilters {
         _keyMute: muteFilter.name,
         _keyService: serviceFilter.name,
         _keyCustomGroupIds: customGroupIds.join(','),
+        _keyShowUngrouped: showUngroupedOnly ? '1' : '0',
       };
 
   bool get hasActiveFilter =>
@@ -80,7 +89,8 @@ class ChatListFilters {
       typeFilter != ChatTypeFilter.all ||
       muteFilter != ChatMuteFilter.all ||
       serviceFilter != ChatServiceFilter.all ||
-      customGroupIds.isNotEmpty;
+      customGroupIds.isNotEmpty ||
+      showUngroupedOnly;
 
   ChatListFilters copyWith({
     ChatReadFilter? readFilter,
@@ -89,6 +99,7 @@ class ChatListFilters {
     ChatMuteFilter? muteFilter,
     ChatServiceFilter? serviceFilter,
     Set<int>? customGroupIds,
+    bool? showUngroupedOnly,
   }) {
     return ChatListFilters(
       readFilter: readFilter ?? this.readFilter,
@@ -97,6 +108,7 @@ class ChatListFilters {
       muteFilter: muteFilter ?? this.muteFilter,
       serviceFilter: serviceFilter ?? this.serviceFilter,
       customGroupIds: customGroupIds ?? this.customGroupIds,
+      showUngroupedOnly: showUngroupedOnly ?? this.showUngroupedOnly,
     );
   }
 
@@ -108,6 +120,7 @@ class ChatListFilters {
       other.typeFilter == typeFilter &&
       other.muteFilter == muteFilter &&
       other.serviceFilter == serviceFilter &&
+      other.showUngroupedOnly == showUngroupedOnly &&
       const SetEquality<int>().equals(other.customGroupIds, customGroupIds);
 
   @override
@@ -117,6 +130,7 @@ class ChatListFilters {
         typeFilter,
         muteFilter,
         serviceFilter,
+        showUngroupedOnly,
         Object.hashAllUnordered(customGroupIds),
       );
 }
