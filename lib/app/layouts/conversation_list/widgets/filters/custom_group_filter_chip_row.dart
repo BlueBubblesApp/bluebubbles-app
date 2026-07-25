@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/components/bb_chip.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -174,7 +175,7 @@ class _UngroupedChip extends StatelessWidget {
           child: SizedBox(
             width: _size,
             height: _size,
-            child: Icon(Icons.inbox_outlined, size: 18, color: iconColor),
+            child: Icon(CupertinoIcons.chat_bubble, size: 18, color: iconColor),
           ),
         ),
       ),
