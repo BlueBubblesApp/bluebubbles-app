@@ -29,6 +29,7 @@ class MediaGalleryCard extends StatefulWidget {
 
 class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepAliveClientMixin, ThemeHelpers {
   Uint8List? videoPreview;
+  bool videoPreviewFailed = false;
   Duration? duration;
   late dynamic content;
 
@@ -97,8 +98,10 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (videoPreview != null || file.path == null) return;
+    if (videoPreview != null || videoPreviewFailed || file.path == null) return;
     if (attachment.metadata?['thumbnail_status'] == 'error') {
+      videoPreviewFailed = true;
+      if (mounted) setState(() {});
       return;
     }
 
@@ -109,8 +112,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       await tempController.initialize();
       duration = tempController.value.duration;
     } catch (_) {
-      // If an error occurs, set the thumbnail to the cached no preview image
-      videoPreview = FilesystemSvc.noVideoPreviewIcon;
+      videoPreviewFailed = true;
 
       if (attachment.metadata?['thumbnail_status'] != 'error') {
         attachment.metadata ??= {};
@@ -119,7 +121,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       }
     }
 
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -329,6 +331,12 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                 duration: duration,
                 showSenderAvatar: widget.showSenderAvatar);
             addPadding = false;
+          } else if (videoPreviewFailed) {
+            child = Text(
+              "Preview Unavailable",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            );
           } else {
             child = const Text(
               "Loading video preview...",

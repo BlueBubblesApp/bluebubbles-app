@@ -233,6 +233,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   final RxDouble aspectRatio = 1.0.obs;
   final RxBool firstFrameReady = false.obs;
   Uint8List? thumbnail;
+  bool thumbnailFailed = false;
 
   @override
   void initState() {
@@ -284,7 +285,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   /// mismatch there causes a visible resize when playback starts.
   void _seedAspectRatioFromThumbnail() {
     final bytes = thumbnail;
-    if (bytes == null || identical(bytes, FilesystemSvc.noVideoPreviewIcon)) return;
+    if (bytes == null || thumbnailFailed) return;
     if (firstFrameReady.value) return; // the decoded video's rect is authoritative
     try {
       final size = isg.ImageSizeGetter.getSizeResult(isg.MemoryInput(bytes)).size;
@@ -372,19 +373,16 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     hasListener = true;
   }
 
-  bool get _isNoPreviewThumbnail => identical(thumbnail, FilesystemSvc.noVideoPreviewIcon);
-
   /// Renders the current [thumbnail] bytes, or a plain themed background when
-  /// they're just the cached "no preview" fallback icon rather than a real
-  /// frame — the corresponding [MediaCornerBadge] communicates the "no
-  /// preview" state instead of drawing that raw fallback image.
+  /// thumbnail generation failed — the corresponding [MediaCornerBadge]
+  /// communicates the "no preview" state instead of drawing a fallback image.
   Widget _buildThumbnailImage(
     BuildContext context, {
     required BoxFit fit,
     FilterQuality filterQuality = FilterQuality.low,
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
   }) {
-    if (_isNoPreviewThumbnail) {
+    if (thumbnailFailed) {
       return Container(color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3));
     }
     return Image.memory(thumbnail!, fit: fit, filterQuality: filterQuality, gaplessPlayback: true, frameBuilder: frameBuilder);
@@ -396,7 +394,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     try {
       // If we already errored, use fallback immediately
       if (attachment.metadata?['thumbnail_status'] == 'error') {
-        thumbnail = FilesystemSvc.noVideoPreviewIcon;
+        thumbnailFailed = true;
         if (mounted) setState(() {});
         return;
       }
@@ -406,8 +404,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       _seedAspectRatioFromThumbnail();
       if (mounted) setState(() {});
     } catch (ex) {
-      // If an error occurs, set the thumbnail to the cached no preview image
-      thumbnail = FilesystemSvc.noVideoPreviewIcon;
+      thumbnailFailed = true;
 
       // Only save error status to DB if not already set
       if (attachment.metadata?['thumbnail_status'] != 'error') {
@@ -508,7 +505,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   controller: videoController,
                   isFromMe: widget.isFromMe),
               if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
-              if (!kIsDesktop && !kIsWeb && _isNoPreviewThumbnail)
+              if (!kIsDesktop && !kIsWeb && thumbnailFailed)
                 MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe),
             ],
           ),
@@ -537,7 +534,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           },
           // All mobile states (placeholder → thumbnail → playing) share the same
           // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
-          child: thumbnail == null && !kIsDesktop && !kIsWeb
+          child: thumbnail == null && !thumbnailFailed && !kIsDesktop && !kIsWeb
               ? Obx(() => _boundedAspectRatio(
                     ratio: aspectRatio.value,
                     child: Center(
@@ -548,7 +545,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                       ),
                     ),
                   ))
-              : thumbnail == null
+              : thumbnail == null && !thumbnailFailed
                   ? Padding(
                       padding: const EdgeInsets.all(15.0),
                       child: Row(
@@ -606,7 +603,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                                       ),
                               ),
                             ),
-                            if (_isNoPreviewThumbnail) MediaCornerBadge(label: "Preview Unavailable", alignLeft: isFromMe),
+                            if (thumbnailFailed) MediaCornerBadge(label: "Preview Unavailable", alignLeft: isFromMe),
                             PlayPauseButton(
                               showPlayPauseOverlay: showPlayPauseOverlay,
                               controller: videoController,
