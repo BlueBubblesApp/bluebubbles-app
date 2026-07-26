@@ -503,7 +503,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   muted: muted,
                   controller: videoController,
                   isFromMe: widget.isFromMe),
-              if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
+              if (kIsDesktop)
+                FullscreenButton(
+                  attachment: attachment,
+                  isFromMe: widget.isFromMe,
+                  muted: muted,
+                  videoController: videoController,
+                  galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
+                ),
             ],
           ),
         ),
@@ -622,13 +630,22 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
 }
 
 class FullscreenButton extends StatelessWidget {
-  const FullscreenButton(
-      {super.key, required this.attachment, required this.isFromMe, this.videoController, this.muted});
+  const FullscreenButton({
+    super.key,
+    required this.attachment,
+    required this.isFromMe,
+    this.videoController,
+    this.muted,
+    this.galleryAttachments,
+    this.collectionController,
+  });
 
   final Attachment attachment;
   final bool isFromMe;
   final VideoController? videoController;
   final RxBool? muted;
+  final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
@@ -646,11 +663,14 @@ class FullscreenButton extends StatelessWidget {
               await Navigator.of(Get.context!).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (context) => ConversationFullscreenHolder(
-                      currentChat: currentChat,
-                      attachment: attachment,
-                      showInteractions: true,
-                      videoController: videoController,
-                      mute: muted),
+                    currentChat: currentChat,
+                    attachment: attachment,
+                    showInteractions: true,
+                    videoController: videoController,
+                    mute: muted,
+                    galleryAttachments: galleryAttachments,
+                    collectionController: collectionController,
+                  ),
                 ),
               );
             },
