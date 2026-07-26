@@ -64,6 +64,14 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   List<Attachment> get _attachments => widget.attachments;
 
   @override
+  void dispose() {
+    _activeDragPointer = null;
+    _velocityTracker = null;
+    _hapticGivenForCurrentEnd = false;
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(covariant CollectionGroupStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
@@ -138,10 +146,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             behavior: HitTestBehavior.opaque,
             onTap: () {
               HapticFeedback.lightImpact();
-              setState(() {
-                _advance(1);
-                _dragDx = 0;
-              });
+              if (mounted) {
+                setState(() {
+                  _advance(1);
+                  _dragDx = 0;
+                });
+              }
             },
           ),
         ),
@@ -292,6 +302,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
           GestureBinding.instance.pointerSignalResolver.register(event, (event) {
+            if (!mounted) return;
             final scrollEvent = event as PointerScrollEvent;
             _scrollAccumulator += scrollEvent.scrollDelta.dy;
             if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
@@ -331,20 +342,24 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               HapticFeedback.lightImpact();
               _hapticGivenForCurrentEnd = true;
             }
-            setState(() {
-              _dragDx += event.delta.dx * 0.3;
-              if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-              if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-            });
+            if (mounted) {
+              setState(() {
+                _dragDx += event.delta.dx * 0.3;
+                if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+                if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+              });
+            }
             return;
           } else {
             _hapticGivenForCurrentEnd = false;
           }
         }
-        setState(() {
-          _dragDx += event.delta.dx;
-          _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-        });
+        if (mounted) {
+          setState(() {
+            _dragDx += event.delta.dx;
+            _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+          });
+        }
       },
       onPointerUp: (event) {
         if (_activeDragPointer != event.pointer) return;
@@ -355,18 +370,22 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         if (_attachments.length <= 1) return;
         final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
         if (!commit) {
-          setState(() {
-            _dragDx = 0;
-          });
+          if (mounted) {
+            setState(() {
+              _dragDx = 0;
+            });
+          }
           return;
         }
 
         // Left drag / velocity → forward; right → back (same for sent and received).
         final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-        setState(() {
-          _advance(rawSign);
-          _dragDx = 0;
-        });
+        if (mounted) {
+          setState(() {
+            _advance(rawSign);
+            _dragDx = 0;
+          });
+        }
       },
       onPointerCancel: (event) {
         if (_activeDragPointer != event.pointer) return;
@@ -374,9 +393,11 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         _velocityTracker = null;
         _hapticGivenForCurrentEnd = false;
         if (_attachments.length <= 1) return;
-        setState(() {
-          _dragDx = 0;
-        });
+        if (mounted) {
+          setState(() {
+            _dragDx = 0;
+          });
+        }
       },
       child: stackBody,
     );
@@ -457,10 +478,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    setState(() {
-                      _jumpTo(attachmentIndex);
-                      _dragDx = 0;
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _jumpTo(attachmentIndex);
+                        _dragDx = 0;
+                      });
+                    }
                   },
                   child: card,
                 ),
@@ -507,10 +530,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               behavior: HitTestBehavior.opaque,
               onTap: () {
                 HapticFeedback.lightImpact();
-                setState(() {
-                  _jumpTo(attachmentIndex);
-                  _dragDx = 0;
-                });
+                if (mounted) {
+                  setState(() {
+                    _jumpTo(attachmentIndex);
+                    _dragDx = 0;
+                  });
+                }
               },
               child: CollectionAttachmentCard(
                 controller: messageState,
