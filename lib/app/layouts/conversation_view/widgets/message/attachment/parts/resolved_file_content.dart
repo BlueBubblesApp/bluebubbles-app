@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
@@ -29,6 +30,7 @@ class ResolvedFileContent extends StatelessWidget {
     this.forceAllCornersRounded = false,
     this.fillCell = false,
     this.galleryAttachments,
+    this.collectionController,
   });
 
   final PlatformFile file;
@@ -40,6 +42,7 @@ class ResolvedFileContent extends StatelessWidget {
   final bool forceAllCornersRounded;
   final bool fillCell;
   final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +82,7 @@ class ResolvedFileContent extends StatelessWidget {
           attachment: attachment,
           showInteractions: true,
           galleryAttachments: galleryAttachments,
+          collectionController: collectionController,
         ),
         closedBuilder: (context, openContainer) => GestureDetector(
           onTap: () {
@@ -119,6 +123,7 @@ class ResolvedFileContent extends StatelessWidget {
         controller: cvController,
         isFromMe: message.isFromMe!,
         galleryAttachments: galleryAttachments,
+        collectionController: collectionController,
       );
       if (fillCell) {
         return SizedBox.expand(child: video);

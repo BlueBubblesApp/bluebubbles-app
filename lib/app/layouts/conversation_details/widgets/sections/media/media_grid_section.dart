@@ -114,7 +114,6 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
       showSenderAvatar: widget.showSenderAvatar,
       chat: widget.chat,
       galleryAttachments: _filteredMedia,
-      showCollectionGridButton: false,
     );
     if (hasOverlay) {
       thumbnail = ClipRRect(borderRadius: tileRadius, child: thumbnail);

@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -97,11 +97,13 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   }
 
   void _openCollectionGrid(BuildContext context, String title) {
-    CollectionMediaGridPage.open(
-      context,
+    _collectionController(context).openGrid(context, title: title);
+  }
+
+  CollectionMediaController _collectionController(BuildContext context) {
+    return CollectionMediaController(
       chat: widget.cvController.chat,
       media: _attachments,
-      title: title,
       messageState: MessageStateScope.of(context),
       collectionPart: widget.messagePart,
     );
@@ -111,9 +113,10 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget build(BuildContext context) {
     final baseCardWidth = collectionCardWidth(context);
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
+    final collectionController = _collectionController(context);
 
     final isFromMe = MessageStateScope.of(context).isFromMe.value;
-    final stackLabel = CollectionMediaGridPage.titleForAttachments(_attachments);
+    final stackLabel = collectionController.title;
 
     // Stable fan room for this collection (not remaining future at the current index).
     final double maxFanDx;
@@ -152,6 +155,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           attachmentIndex: attachmentIndex,
           attachment: _attachments[attachmentIndex],
           messageState: MessageStateScope.of(context),
+          collectionController: collectionController,
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -170,6 +174,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           attachmentIndex: attachmentIndex,
           attachment: _attachments[attachmentIndex],
           messageState: MessageStateScope.of(context),
+          collectionController: collectionController,
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -182,6 +187,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           attachmentIndex: attachmentIndex,
           attachment: _attachments[attachmentIndex],
           messageState: MessageStateScope.of(context),
+          collectionController: collectionController,
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -193,6 +199,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         attachmentIndex: _currentIndex,
         attachment: _attachments[_currentIndex],
         messageState: MessageStateScope.of(context),
+        collectionController: collectionController,
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
@@ -399,6 +406,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int attachmentIndex,
     required Attachment attachment,
     required MessageState messageState,
+    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -424,6 +432,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       collectionPart: widget.messagePart,
       attachmentIndex: attachmentIndex,
       collectionAttachments: _attachments,
+      collectionController: collectionController,
       isEditing: widget.isEditing,
       enableGestures: isCurrent,
       frameMode: AttachmentFrameMode.fixedCard,
@@ -464,6 +473,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int attachmentIndex,
     required Attachment attachment,
     required MessageState messageState,
+    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -508,6 +518,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 collectionPart: widget.messagePart,
                 attachmentIndex: attachmentIndex,
                 collectionAttachments: _attachments,
+                collectionController: collectionController,
                 isEditing: widget.isEditing,
                 enableGestures: false,
                 frameMode: AttachmentFrameMode.fixedCard,

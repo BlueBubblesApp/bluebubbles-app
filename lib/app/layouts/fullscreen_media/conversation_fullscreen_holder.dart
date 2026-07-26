@@ -1,5 +1,5 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;
@@ -30,7 +30,7 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.replyMessage,
       this.replyPartIndex,
       this.galleryAttachments,
-      this.showCollectionGridButton = true});
+      this.collectionController});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -45,8 +45,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
 
-  /// Hide the collection-grid button when fullscreen was already opened from that grid.
-  final bool showCollectionGridButton;
+  /// When set, the collection-grid button becomes available.
+  final CollectionMediaController? collectionController;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -84,18 +84,10 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
-  bool get _hasCollectionGrid =>
-      widget.showCollectionGridButton &&
-      widget.galleryAttachments != null &&
-      widget.galleryAttachments!.length > 1 &&
-      widget.currentChat != null;
+  bool get _hasCollectionGrid => widget.collectionController != null;
 
   void _openCollectionGrid() {
-    CollectionMediaGridPage.open(
-      context,
-      chat: widget.currentChat!,
-      media: widget.galleryAttachments!,
-    );
+    widget.collectionController!.openGrid(context);
   }
 
   @override

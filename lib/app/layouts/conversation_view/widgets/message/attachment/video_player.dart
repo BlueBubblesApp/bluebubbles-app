@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
@@ -48,6 +49,7 @@ class VideoPlayer extends StatefulWidget {
   final Attachment attachment;
   final bool isFromMe;
   final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   const VideoPlayer(
       {super.key,
@@ -55,7 +57,8 @@ class VideoPlayer extends StatefulWidget {
       required this.attachment,
       required this.controller,
       required this.isFromMe,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.collectionController});
 
   final ConversationViewController? controller;
 
@@ -430,6 +433,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                           videoController: videoController,
                           mute: muted,
                           galleryAttachments: widget.galleryAttachments,
+                          collectionController: widget.collectionController,
                         ),
                       ),
                     );
@@ -448,6 +452,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         mute: muted,
                         videoController: videoController,
                         galleryAttachments: widget.galleryAttachments,
+                        collectionController: widget.collectionController,
                       ),
                     ),
                   );
@@ -510,6 +515,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   mute: muted,
                   videoController: videoController,
                   galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
                 ),
               ),
             );

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/swipe_to_reply_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
@@ -69,6 +70,7 @@ class CollectionAttachmentCard extends StatefulWidget {
     required this.attachmentIndex,
     required this.collectionAttachments,
     required this.frameMode,
+    this.collectionController,
     this.isEditing = false,
     this.enableGestures = true,
     this.canSwipeToReply = false,
@@ -87,6 +89,7 @@ class CollectionAttachmentCard extends StatefulWidget {
   final MessagePart collectionPart;
   final int attachmentIndex;
   final List<Attachment> collectionAttachments;
+  final CollectionMediaController? collectionController;
 
   /// [AttachmentFrameMode.fixedCard] (collage/stack) or [AttachmentFrameMode.gridCell].
   final AttachmentFrameMode frameMode;
@@ -143,6 +146,7 @@ class _CollectionAttachmentCardState extends State<CollectionAttachmentCard> {
             message: scopedPart,
             frameMode: widget.frameMode,
             galleryAttachments: widget.collectionAttachments,
+            collectionController: widget.collectionController,
           ),
         ),
         if (!widget.hideReactions)

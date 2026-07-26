@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_grid_page.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -50,6 +50,12 @@ class CollectionGroupGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
+    final collectionController = CollectionMediaController(
+      chat: cvController.chat,
+      media: _attachments,
+      messageState: messageState,
+      collectionPart: messagePart,
+    );
     final count = _attachments.length;
     final cardRadius = _cardRadius;
     final gridWidth = NavigationSvc.width(context) * MessageState.maxBubbleSizeFactor;
@@ -74,6 +80,7 @@ class CollectionGroupGrid extends StatelessWidget {
             collectionPart: messagePart,
             attachmentIndex: index,
             collectionAttachments: _attachments,
+            collectionController: collectionController,
             isEditing: isEditing,
             frameMode: AttachmentFrameMode.gridCell,
             hideReactions: true,
@@ -85,13 +92,7 @@ class CollectionGroupGrid extends StatelessWidget {
             borderRadius: _cellBorderRadius(count, index, cardRadius),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => CollectionMediaGridPage.open(
-                context,
-                chat: cvController.chat,
-                media: _attachments,
-                messageState: messageState,
-                collectionPart: messagePart,
-              ),
+              onTap: () => collectionController.openGrid(context),
               child: ColoredBox(
                 color: Colors.black54,
                 child: Center(

@@ -12,6 +12,7 @@ Multi-attachment image/video parts (`isMediaCollection`) formed in `MessageHolde
 | `collection_group_grid.dart` | Google Messages–style multi-attachment grid |
 | `collection_attachment_card.dart` | Per-card popup, tapbacks, and swipe-to-reply wrapper |
 | `collection_download_button.dart` | Incoming-only circular download control; collage/stack/grid place it via `CollectionDownloadButton.wrap` |
+| `collection_media_controller.dart` | Owns opening `CollectionMediaGridPage` with reaction context; passed into fullscreen viewers only from collection cards |
 | `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
 
 ## Layout routing
@@ -30,8 +31,6 @@ Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroup
 - **Grid:** Predetermined cell geometry with `AttachmentFrameMode.gridCell` (same cover-fill path; parent clips; no card shadow).
 
 Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all collection parts; tapbacks are card-local, not bubble-level.
-
-The stack "**X Items**" label and grid "**+N**" overlay open `CollectionMediaGridPage`. Fullscreen viewers opened from a collection (`galleryAttachments`) also show a grid button that opens the same page.
 
 ## Related
 

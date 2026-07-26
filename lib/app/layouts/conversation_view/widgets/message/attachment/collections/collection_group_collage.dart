@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -45,6 +46,12 @@ class CollectionGroupCollage extends StatelessWidget {
     final messageState = MessageStateScope.of(context);
     final isFromMe = messageState.isFromMe.value;
     final cardWidth = collectionCardWidth(context);
+    final collectionController = CollectionMediaController(
+      chat: cvController.chat,
+      media: _attachments,
+      messageState: messageState,
+      collectionPart: messagePart,
+    );
 
     final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth)];
     final tops = <double>[];
@@ -70,7 +77,7 @@ class CollectionGroupCollage extends StatelessWidget {
               // center beside the card (Clip.none).
               left: isFromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
               right: isFromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
-              child: _buildCard(messageState, i, cardWidth, heights[i]),
+              child: _buildCard(messageState, collectionController, i, cardWidth, heights[i]),
             ),
         ],
       ),
@@ -85,7 +92,13 @@ class CollectionGroupCollage extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(MessageState messageState, int index, double cardWidth, double cardHeight) {
+  Widget _buildCard(
+    MessageState messageState,
+    CollectionMediaController collectionController,
+    int index,
+    double cardWidth,
+    double cardHeight,
+  ) {
     return Transform.rotate(
       angle: index.isOdd ? _cardTiltRad : -_cardTiltRad,
       child: CollectionAttachmentCard(
@@ -94,6 +107,7 @@ class CollectionGroupCollage extends StatelessWidget {
         collectionPart: messagePart,
         attachmentIndex: index,
         collectionAttachments: _attachments,
+        collectionController: collectionController,
         isEditing: isEditing,
         canSwipeToReply: canSwipeToReply,
         enableSwipeToReply: true,

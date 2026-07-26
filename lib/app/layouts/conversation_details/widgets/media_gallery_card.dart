@@ -5,6 +5,7 @@ import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -25,14 +26,15 @@ class MediaGalleryCard extends StatefulWidget {
     this.showSenderAvatar = true,
     this.chat,
     this.galleryAttachments,
-    this.showCollectionGridButton = true,
+    this.collectionController,
   });
   final Attachment attachment;
   final bool showSenderAvatar;
   final Chat? chat;
   /// Limits fullscreen paging to this list instead of all chat images.
   final List<Attachment>? galleryAttachments;
-  final bool showCollectionGridButton;
+  /// When set, fullscreen shows a collection-grid button (omit when opened from a grid).
+  final CollectionMediaController? collectionController;
 
   @override
   State<MediaGalleryCard> createState() => _MediaGalleryCardState();
@@ -176,7 +178,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                           file: file,
                           chat: widget.chat,
                           galleryAttachments: widget.galleryAttachments,
-                          showCollectionGridButton: widget.showCollectionGridButton,
+                          collectionController: widget.collectionController,
                         )
                       : (attachment.mimeType?.startsWith("video") ?? false)
                           ? ImageDisplay(
@@ -184,7 +186,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                               image: videoPreview ?? Uint8List(0),
                               chat: widget.chat,
                               galleryAttachments: widget.galleryAttachments,
-                              showCollectionGridButton: widget.showCollectionGridButton,
+                              collectionController: widget.collectionController,
                             )
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
@@ -355,7 +357,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             showSenderAvatar: widget.showSenderAvatar,
             chat: widget.chat,
             galleryAttachments: widget.galleryAttachments,
-            showCollectionGridButton: widget.showCollectionGridButton,
+            collectionController: widget.collectionController,
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
@@ -367,7 +369,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               showSenderAvatar: widget.showSenderAvatar,
               chat: widget.chat,
               galleryAttachments: widget.galleryAttachments,
-              showCollectionGridButton: widget.showCollectionGridButton,
+              collectionController: widget.collectionController,
             );
             addPadding = false;
           } else {
@@ -414,7 +416,7 @@ class ImageDisplay extends StatefulWidget {
     this.showSenderAvatar = true,
     this.chat,
     this.galleryAttachments,
-    this.showCollectionGridButton = true,
+    this.collectionController,
   });
 
   final Attachment attachment;
@@ -424,7 +426,7 @@ class ImageDisplay extends StatefulWidget {
   final bool showSenderAvatar;
   final Chat? chat;
   final List<Attachment>? galleryAttachments;
-  final bool showCollectionGridButton;
+  final CollectionMediaController? collectionController;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -449,7 +451,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
           attachment: attachment,
           showInteractions: true,
           galleryAttachments: widget.galleryAttachments,
-          showCollectionGridButton: widget.showCollectionGridButton,
+          collectionController: widget.collectionController,
         );
       },
       closedBuilder: (_, openContainer) {

@@ -1,9 +1,9 @@
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
-import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -23,15 +23,13 @@ class CollectionMediaGridPage extends StatefulWidget {
     required this.chat,
     required this.media,
     required this.title,
-    this.messageState,
-    this.collectionPart,
+    this.collectionController,
   });
 
   final Chat chat;
   final List<Attachment> media;
   final String title;
-  final MessageState? messageState;
-  final MessagePart? collectionPart;
+  final CollectionMediaController? collectionController;
 
   static String titleForAttachments(List<Attachment> attachments) {
     final photoCount = attachments.where((a) => a.mimeStart == 'image').length;
@@ -44,20 +42,16 @@ class CollectionMediaGridPage extends StatefulWidget {
 
   static void open(
     BuildContext context, {
-    required Chat chat,
-    required List<Attachment> media,
+    required CollectionMediaController collectionController,
     String? title,
-    MessageState? messageState,
-    MessagePart? collectionPart,
   }) {
     NavigationSvc.push(
       context,
       CollectionMediaGridPage(
-        chat: chat,
-        media: media,
-        title: title ?? titleForAttachments(media),
-        messageState: messageState,
-        collectionPart: collectionPart,
+        chat: collectionController.chat,
+        media: collectionController.media,
+        title: title ?? collectionController.title,
+        collectionController: collectionController,
       ),
     );
   }
@@ -109,8 +103,8 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
             ? ThemesService.isGeneratedMaterialThemeName(themeName)
             : ThemeSvc.isMaterialYouActive(context);
 
-        final collectionPart = widget.collectionPart;
-        final showReactions = widget.messageState != null && collectionPart != null;
+        final collectionController = widget.collectionController;
+        final showReactions = collectionController != null;
 
         Widget scaffold = Theme(
           data: baseTheme.copyWith(
@@ -168,7 +162,7 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                   showSenderAvatar: false,
                   cellOverlayBuilder: showReactions
                       ? (context, index, _) => CollectionAttachmentReactions(
-                            collectionPart: collectionPart,
+                            collectionPart: collectionController.collectionPart,
                             attachmentIndex: index,
                             alignTrailing: true,
                             tailType: ReactionTailType.inside,
@@ -185,7 +179,7 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
           // ReactionHolder uses DeferPointer; needs a handler outside MessageHolder.
           scaffold = DeferredPointerHandler(
             child: MessageStateScope(
-              messageState: widget.messageState!,
+              messageState: collectionController.messageState,
               child: scaffold,
             ),
           );
