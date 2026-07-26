@@ -157,10 +157,6 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
       }
 
       if (groupedAttachments.length > 1) {
-        // Single-part collections: tapbacks use attachment ordinals as associatedMessagePart for per-attachment tapbacks.
-        final partIndices = j == i + 1
-            ? List.generate(groupedAttachments.length, (k) => k)
-            : groupedPartIndices;
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
           // Use the last grouped raw part index (not the first) so downstream
@@ -173,7 +169,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
           mentions: const [],
           edits: const [],
           isUnsent: current.isUnsent,
-          attachmentPartIndices: partIndices,
+          // A single-source collection falls back to [part]. Multi-source
+          // collections preserve each attachment's real source part.
+          attachmentPartIndices: j == i + 1 ? null : groupedPartIndices,
         ));
       } else {
         collapsed.add(current);

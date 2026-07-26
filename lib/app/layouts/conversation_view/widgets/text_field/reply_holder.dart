@@ -29,7 +29,7 @@ class _ReplyHolderState extends State<ReplyHolder> with ThemeHelpers {
       final partIndex = widget.controller.replyToMessage?.partIndex ?? 0;
       final attachmentGuid = widget.controller.replyToMessage?.attachmentGuid;
       final chatGuid = message?.chat.target?.guid ?? ChatStateScope.maybeChatOf(context)?.guid;
-      // partIndex is a message-part id (or single-source attachment ordinal), not a list index.
+      // partIndex is a message-part id, not a list index.
       MessagePart? matched;
       if (message?.guid != null && chatGuid != null) {
         final state = maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(message!.guid!);

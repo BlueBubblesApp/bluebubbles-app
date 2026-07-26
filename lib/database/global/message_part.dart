@@ -64,13 +64,11 @@ class MessagePart {
   /// Whether this bubble is the leading content of the message (raw part 0).
   bool get isLeadingMessagePart => (firstPartIndex ?? part) == 0;
 
-  /// Returns the associated-message part index for the attachment at [index].
-  /// For single-part collections, indices are attachment ordinals (0, 1, 2…) used
-  /// as [associatedMessagePart] targets for per-attachment tapbacks.
-  /// Falls back to [part] if [attachmentPartIndices] is not set.
+  /// Returns the real source message-part index for the attachment at [index].
+  /// Falls back to [part] for non-collection and single-source collection parts.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 
-  /// Whether a reaction/sticker with [associatedMessagePart] belongs on this bubble.
+  /// Whether a reaction/sticker targeting a real message-part index belongs on this bubble.
   bool includesAssociatedPart(int? associatedMessagePart) {
     final index = associatedMessagePart ?? 0;
     final indices = attachmentPartIndices;
