@@ -222,10 +222,11 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
         // ignore: unused_local_variable
         final _rxGuard = (controller.isSending.value, controller.hasError.value, controller.parts.length);
 
-        // Read controller.parts reactively so Obx rebuilds when parts change
-        final rawMessageParts = widget.isReplyThread && widget.replyPart != null
-            ? [controller.parts[widget.replyPart!]]
-            : controller.parts.toList();
+        // Read controller.parts reactively so Obx rebuilds when parts change.
+        // replyPart is a message-part id, not a list index.
+        final matchedPart =
+            widget.isReplyThread && widget.replyPart != null ? controller.partById(widget.replyPart!) : null;
+        final rawMessageParts = matchedPart != null ? [matchedPart] : controller.parts.toList();
         final messageParts = _collapseMediaCollectionParts(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
@@ -523,7 +524,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                           !isEditing(e.part) &&
                                                                           // Collections own horizontal gestures; outer reply is for bubbles.
                                                                           !e.isMediaCollection,
-                                                                      partIndex: index,
+                                                                      partIndex: e.part,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(

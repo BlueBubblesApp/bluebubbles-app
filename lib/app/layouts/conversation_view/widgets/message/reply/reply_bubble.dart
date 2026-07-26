@@ -32,7 +32,11 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
 
-  MessagePart get part => controller.parts[widget.part];
+  MessagePart get part {
+    // widget.part is a message-part id, not a list index.
+    return controller.partById(widget.part) ??
+        (controller.parts.isNotEmpty ? controller.parts.first : MessagePart(part: widget.part));
+  }
   Message get message => controller.message;
 
   @override

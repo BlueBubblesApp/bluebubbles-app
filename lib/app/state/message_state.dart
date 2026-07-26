@@ -115,6 +115,12 @@ class MessageState extends StatefulController {
   /// Populated by [buildMessageParts] in [onInit] and on content changes.
   final RxList<MessagePart> parts = <MessagePart>[].obs;
 
+  /// Finds a part by its message-part id ([MessagePart.part]), not list index.
+  MessagePart? partById(int partId) {
+    final idx = parts.indexWhere((p) => p.part == partId);
+    return idx >= 0 ? parts[idx] : null;
+  }
+
   /// Reactive state for the handle that sent this message.
   /// Null for outgoing messages or when no handle is attached.
   /// Drives sender name and bubble color without boilerplate [ever()] calls.

@@ -26,22 +26,31 @@ class _ReplyHolderState extends State<ReplyHolder> with ThemeHelpers {
   Widget build(BuildContext context) {
     return Obx(() {
       final message = widget.controller.replyToMessage?.message;
-      final part = widget.controller.replyToMessage?.partIndex ?? 0;
+      final partIndex = widget.controller.replyToMessage?.partIndex ?? 0;
       final attachmentGuid = widget.controller.replyToMessage?.attachmentGuid;
       final chatGuid = message?.chat.target?.guid ?? ChatStateScope.maybeChatOf(context)?.guid;
-      final resolvedReply = message?.guid == null || chatGuid == null
-          ? message
-          : (maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(message!.guid!)?.parts[part] ?? message);
-      final reply = resolvedReply is MessagePart && attachmentGuid != null
+      // partIndex is a message-part id (or single-source attachment ordinal), not a list index.
+      MessagePart? matched;
+      if (message?.guid != null && chatGuid != null) {
+        final state = maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(message!.guid!);
+        if (state != null) {
+          if (attachmentGuid != null) {
+            matched = state.parts.firstWhereOrNull((p) => p.attachments.any((a) => a.guid == attachmentGuid));
+          }
+          matched ??= state.partById(partIndex);
+        }
+      }
+      final resolvedReply = matched ?? message;
+      final reply = matched != null && attachmentGuid != null
           ? MessagePart(
-              part: resolvedReply.part,
-              text: resolvedReply.text,
-              subject: resolvedReply.subject,
-              attachments: resolvedReply.attachments.where((a) => a.guid == attachmentGuid).toList(),
-              mentions: resolvedReply.mentions,
-              edits: resolvedReply.edits,
-              isUnsent: resolvedReply.isUnsent,
-              shouldRedact: resolvedReply.shouldRedact,
+              part: matched.part,
+              text: matched.text,
+              subject: matched.subject,
+              attachments: matched.attachments.where((a) => a.guid == attachmentGuid).toList(),
+              mentions: matched.mentions,
+              edits: matched.edits,
+              isUnsent: matched.isUnsent,
+              shouldRedact: matched.shouldRedact,
             )
           : resolvedReply;
       final date = widget.controller.scheduledDate.value;
