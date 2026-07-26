@@ -422,7 +422,13 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                           message.threadOriginatorGuid != null &&
                                                           olderMessage != null) ||
                                                       (index == messageParts.length - 1 &&
-                                                          service.struct.threads(message.guid!, index).isNotEmpty &&
+                                                          service.struct
+                                                              .threadsForParts(
+                                                                message.guid!,
+                                                                e.attachmentPartIndices ?? [e.part],
+                                                                returnOriginator: false,
+                                                              )
+                                                              .isNotEmpty &&
                                                           newerMessage != null))
                                               ? ReplyLineDecoration(
                                                   isFromMe: message.isFromMe!,
@@ -508,7 +514,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                               children: [
                                                                 // actual message content
                                                                 BubbleEffects(
-                                                                  part: index,
+                                                                  part: e.part,
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
                                                                       e.part == controller.parts.length - 1,
