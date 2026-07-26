@@ -63,6 +63,12 @@ class ChatStatsController extends GetxController {
   /// doesn't match the current [timeframe], the cached fetch is stale.
   StatsTimeframe? _byParticipantTimeframe;
 
+  /// The chat's absolute earliest message — resolved once (it's independent
+  /// of [timeframe], so there's nothing to invalidate) and reused across
+  /// every Overview recompute rather than re-querying it each time.
+  int? _firstTrackedMessageMillis;
+  bool _firstTrackedMessageMillisResolved = false;
+
   /// Page-level window re-scoping every section to a span ending now. Changing
   /// it invalidates the fetch and every already-computed section — see
   /// [setTimeframe].
@@ -76,6 +82,42 @@ class ChatStatsController extends GetxController {
   /// [timeframe], which is the page-level window and the only windowing
   /// control now (the Activity tab used to have its own; removed as redundant).
   final Rx<StatsBucketSize> bucketSize = StatsBucketSize.day.obs;
+
+  /// Page-level "compare against" target — `null` means "whole group".
+  /// Engagement/Activity widgets already carry a full per-participant
+  /// breakdown and simply re-read this value (no recompute); Content is the
+  /// only section pre-aggregated at query time, so switching this triggers a
+  /// scoped recompute there — see [setComparisonParticipant].
+  final Rxn<int> comparisonParticipantId = Rxn<int>();
+
+  /// Small per-target cache for [ContentStats], keyed on
+  /// `'$_cacheEntryKey:$comparisonParticipantId'` — separate from
+  /// [ChatStatsCache] (which every other section shares) since only Content
+  /// depends on [comparisonParticipantId], and folding it into the shared
+  /// cache key would needlessly fragment sections that don't care about it.
+  final Map<String, ContentStats> _contentByComparison = {};
+
+  /// Whether Content has ever been computed at least once for this chat's
+  /// session (i.e. the user already tapped "Analyze Content"). Stays true
+  /// even while `stats.value?.content` is momentarily `null` mid-recompute
+  /// (e.g. `setTimeframe` resets `stats.value` before looping through
+  /// `ensureSection` for every previously-loaded stage) — the Content tab
+  /// uses this to show a loading state instead of re-prompting to opt in
+  /// again during that gap. Deliberately not an `Rx` — every caller reads it
+  /// inside a builder that's already reacting to `stats.value`/`progress`,
+  /// so it only needs to be current at read time, not independently tracked.
+  bool get hasAnalyzedContent => _contentByComparison.isNotEmpty;
+
+  /// Switches the comparison target and, if Content was already computed,
+  /// recomputes it scoped to the new target — reusing a cached result if
+  /// this target's already been viewed under the current cache key.
+  Future<void> setComparisonParticipant(int? id) async {
+    if (comparisonParticipantId.value == id) return;
+    comparisonParticipantId.value = id;
+    if (stats.value?.content != null) {
+      await ensureSection(StatsStage.computingContent, force: true);
+    }
+  }
 
   /// `(count, latestMillis)` at last resolution — the cache key. Resolved once
   /// in [init] and reused by every section so a reopen doesn't re-hit the DB
@@ -161,7 +203,9 @@ class ChatStatsController extends GetxController {
           final engagement = await _computeEngagement();
           stats.value = _base().copyWith(engagement: engagement);
         case StatsStage.computingContent:
-          final content = await _computeContent();
+          final contentCacheKey = '$_cacheEntryKey:${comparisonParticipantId.value}';
+          final content = (force ? null : _contentByComparison[contentCacheKey]) ?? await _computeContent();
+          _contentByComparison[contentCacheKey] = content;
           stats.value = _base().copyWith(content: content);
         default:
           break;
@@ -202,11 +246,16 @@ class ChatStatsController extends GetxController {
     final sinceMillis = _byParticipantTimeframe!.cutoffMillis();
     final attachments = await runAsync(() => ChatStatsQueries.attachmentMessageCount(chat, sinceMillis: sinceMillis));
     final unattributed = await runAsync(() => ChatStatsQueries.unattributedCount(chat, sinceMillis: sinceMillis));
+    if (!_firstTrackedMessageMillisResolved) {
+      _firstTrackedMessageMillis = await runAsync(() => ChatStatsQueries.firstMessageMillis(chat));
+      _firstTrackedMessageMillisResolved = true;
+    }
 
     return _isolateOverview(
       byParticipant: byParticipant,
       attachments: attachments,
       unattributedCount: unattributed,
+      firstTrackedMessageMillis: _firstTrackedMessageMillis,
     );
   }
 
@@ -253,10 +302,13 @@ class ChatStatsController extends GetxController {
   }
 
   Future<ContentStats> _computeContent() async {
+    final comparisonId = comparisonParticipantId.value;
     final coverage = await runAsync(() => ChatStatsQueries.textCoverage(chat));
     final cap = tier == StatsDetailTier.large ? kContentMessageCapLarge : kContentMessageCap;
     final myTexts = await runAsync(() => ChatStatsQueries.recentTexts(chat, fromMe: true, limit: cap));
-    final theirTexts = await runAsync(() => ChatStatsQueries.recentTexts(chat, fromMe: false, limit: cap));
+    final theirTexts = await runAsync(
+      () => ChatStatsQueries.recentTexts(chat, fromMe: false, limit: cap, participantId: comparisonId),
+    );
     final windowed = myTexts.length >= cap || theirTexts.length >= cap;
     // Scoped to the page-level timeframe (unlike the rest of Content, which
     // reads full history) — the longest/shortest leaderboards should honor
@@ -273,6 +325,14 @@ class ChatStatsController extends GetxController {
     final effectIds = await runAsync(() => ChatStatsQueries.expressiveSendStyleIds(chat));
     final edited = await runAsync(() => ChatStatsQueries.editedCount(chat));
     final unsent = await runAsync(() => ChatStatsQueries.unsentCount(chat));
+    final editedMine = await runAsync(() => ChatStatsQueries.editedCount(chat, fromMe: true));
+    final editedTheirs =
+        await runAsync(() => ChatStatsQueries.editedCount(chat, fromMe: false, participantId: comparisonId));
+    final unsentMine = await runAsync(() => ChatStatsQueries.unsentCount(chat, fromMe: true));
+    final unsentTheirs =
+        await runAsync(() => ChatStatsQueries.unsentCount(chat, fromMe: false, participantId: comparisonId));
+    final sentMine = await runAsync(() => ChatStatsQueries.sentCount(chat));
+    final receivedTheirs = await runAsync(() => ChatStatsQueries.receivedCount(chat, participantId: comparisonId));
     final audio = await runAsync(() => ChatStatsQueries.audioStats(chat));
 
     return _isolateContent(
@@ -284,11 +344,18 @@ class ChatStatsController extends GetxController {
       expressiveSendStyleIds: effectIds,
       editedCount: edited,
       unsentCount: unsent,
+      editedCountMine: editedMine,
+      editedCountTheirs: editedTheirs,
+      unsentCountMine: unsentMine,
+      unsentCountTheirs: unsentTheirs,
+      sentCountMine: sentMine,
+      receivedCountTheirs: receivedTheirs,
       audioSent: audio.sent,
       audioReceived: audio.received,
       audioPlayedRatio: audio.playedOfReceived,
       textCoverage: coverage,
       windowed: windowed,
+      comparisonParticipantId: comparisonId,
     );
   }
 
@@ -373,11 +440,13 @@ class ChatStatsController extends GetxController {
     required Map<int, List<int>> byParticipant,
     required int attachments,
     required int unattributedCount,
+    int? firstTrackedMessageMillis,
   }) {
     return Isolate.run(() => computeOverview(
           byParticipant: byParticipant,
           attachments: attachments,
           unattributedCount: unattributedCount,
+          firstTrackedMessageMillis: firstTrackedMessageMillis,
         ));
   }
 
@@ -401,16 +470,23 @@ class ChatStatsController extends GetxController {
     required List<String> myTexts,
     required List<String> theirTexts,
     required Map<int, List<int>> lengthsByParticipant,
-    required List<({String type, bool fromMe})> reactions,
+    required List<({String type, int participantId})> reactions,
     required List<String> attachmentMimeTypes,
     required List<String> expressiveSendStyleIds,
     required int editedCount,
     required int unsentCount,
+    required int editedCountMine,
+    required int editedCountTheirs,
+    required int unsentCountMine,
+    required int unsentCountTheirs,
+    required int sentCountMine,
+    required int receivedCountTheirs,
     required int audioSent,
     required int audioReceived,
     required double? audioPlayedRatio,
     required double textCoverage,
     required bool windowed,
+    int? comparisonParticipantId,
   }) {
     return Isolate.run(() => computeContent(
           myTexts: myTexts,
@@ -421,11 +497,18 @@ class ChatStatsController extends GetxController {
           expressiveSendStyleIds: expressiveSendStyleIds,
           editedCount: editedCount,
           unsentCount: unsentCount,
+          editedCountMine: editedCountMine,
+          editedCountTheirs: editedCountTheirs,
+          unsentCountMine: unsentCountMine,
+          unsentCountTheirs: unsentCountTheirs,
+          sentCountMine: sentCountMine,
+          receivedCountTheirs: receivedCountTheirs,
           audioSent: audioSent,
           audioReceived: audioReceived,
           audioPlayedRatio: audioPlayedRatio,
           textCoverage: textCoverage,
           windowed: windowed,
+          comparisonParticipantId: comparisonParticipantId,
         ));
   }
 

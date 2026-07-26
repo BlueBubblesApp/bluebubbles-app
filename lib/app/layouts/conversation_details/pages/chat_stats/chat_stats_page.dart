@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/ta
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/tabs/chat_stats_engagement_tab.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/tabs/chat_stats_overview_tab.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/tabs/chat_stats_activity_tab.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/comparison_selector.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -61,6 +62,12 @@ class _ChatStatsPageState extends State<ChatStatsPage> with SingleTickerProvider
         _ => StatsStage.computingOverview,
       };
 
+  /// Only Engagement (2) and Content (3) have widgets whose "You vs
+  /// Group/Them" framing the selector actually controls — Overview and
+  /// Activity don't read `comparisonParticipantId` at all, so showing it
+  /// there would just be a dead control.
+  bool get _showComparisonSelector => tabController.index == 2 || tabController.index == 3;
+
   @override
   Widget build(BuildContext context) {
     return BBScaffold(
@@ -92,15 +99,22 @@ class _ChatStatsPageState extends State<ChatStatsPage> with SingleTickerProvider
             onPressed: () => controller.ensureSection(_visibleStage, force: true),
           ),
         ],
-        bottom: TabBar(
-          controller: tabController,
-          isScrollable: true,
-          tabs: _tabLabels.map((e) => Tab(text: e)).toList(),
-        ),
+        bottom: _ChatStatsTabBar(controller: tabController, labels: _tabLabels),
       ),
       body: Column(
         children: [
           _TimeframeSelector(controller: controller),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) => SizeTransition(
+              sizeFactor: animation,
+              alignment: Alignment.topCenter,
+              child: FadeTransition(opacity: animation, child: child),
+            ),
+            child: _showComparisonSelector
+                ? ComparisonSelector(key: const ValueKey('comparison-selector'), controller: controller)
+                : const SizedBox.shrink(key: ValueKey('comparison-selector-hidden')),
+          ),
           _ProgressBar(controller: controller),
           Expanded(
             child: TabBarView(
@@ -198,5 +212,125 @@ class _ProgressBar extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+/// Custom tab bar laying tabs out with `spaceBetween` logic — "Overview" sits
+/// flush left, "Content" flush right, and the remaining tabs are spaced evenly
+/// between them — rather than [TabBar]'s scrollable-cluster or equal-width
+/// layouts, neither of which can pin the first/last tab to the row's edges.
+class _ChatStatsTabBar extends StatefulWidget implements PreferredSizeWidget {
+  const _ChatStatsTabBar({required this.controller, required this.labels});
+
+  final TabController controller;
+  final List<String> labels;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(46.0);
+
+  @override
+  State<_ChatStatsTabBar> createState() => _ChatStatsTabBarState();
+}
+
+class _ChatStatsTabBarState extends State<_ChatStatsTabBar> {
+  late final List<GlobalKey> _keys = List.generate(widget.labels.length, (_) => GlobalKey());
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.animation!.addListener(_onAnimate);
+    // Tab positions aren't known until the first layout pass completes.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.animation?.removeListener(_onAnimate);
+    super.dispose();
+  }
+
+  void _onAnimate() {
+    if (mounted) setState(() {});
+  }
+
+  Rect? _rectFor(int index) {
+    final itemContext = _keys[index].currentContext;
+    final itemBox = itemContext?.findRenderObject() as RenderBox?;
+    final stackBox = context.findRenderObject() as RenderBox?;
+    if (itemBox == null || stackBox == null || !itemBox.attached) return null;
+    return itemBox.localToGlobal(Offset.zero, ancestor: stackBox) & itemBox.size;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animValue = widget.controller.animation?.value ?? widget.controller.index.toDouble();
+    final lower = animValue.floor().clamp(0, widget.labels.length - 1);
+    final upper = animValue.ceil().clamp(0, widget.labels.length - 1);
+    final lowerRect = _rectFor(lower);
+    final upperRect = _rectFor(upper);
+    final indicatorRect =
+        lowerRect != null && upperRect != null ? Rect.lerp(lowerRect, upperRect, animValue - lower) : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.theme.colorScheme.outlineVariant.withValues(alpha: 0.25)),
+        ),
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (int i = 0; i < widget.labels.length; i++)
+                  _ChatStatsTabItem(
+                    key: _keys[i],
+                    label: widget.labels[i],
+                    selected: widget.controller.index == i,
+                    onTap: () => widget.controller.animateTo(i),
+                  ),
+              ],
+            ),
+          ),
+          if (indicatorRect != null)
+            Positioned(
+              left: indicatorRect.left,
+              top: indicatorRect.bottom - 2.0,
+              width: indicatorRect.width,
+              child: Container(height: 2.0, color: context.theme.colorScheme.primary),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatStatsTabItem extends StatelessWidget {
+  const _ChatStatsTabItem({super.key, required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Text(
+          label,
+          style: context.theme.textTheme.titleSmall?.copyWith(
+            color: color,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
   }
 }

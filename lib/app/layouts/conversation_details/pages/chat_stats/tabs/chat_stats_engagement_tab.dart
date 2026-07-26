@@ -13,6 +13,7 @@ import 'package:bluebubbles/services/ui/chat/chat_stats/chat_stats_models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 /// The conversation-engagement tab — response times, openers/enders,
 /// double-texting, balance drift, longest silence, and (1:1 only) left on
@@ -164,8 +165,20 @@ class _ResponseTimeSection extends StatelessWidget {
 
   bool get isGroup => controller.isGroup;
 
+  // Local Obx around just the comparison-target read (matching the pattern
+  // `_VolumeSection` already uses for `bucketSize` in the Activity tab) —
+  // switching the page-level selector rebuilds only this section, not the
+  // whole tab.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Obx(() => _build(context));
+
+  Widget _build(BuildContext context) {
+    // Read unconditionally, before any early return below — otherwise the
+    // "not enough data" branch builds without ever touching an observable,
+    // which is exactly what trips GetX's "improper use of a GetX" warning
+    // (an Obx whose builder registered no dependency on that pass).
+    final comparisonId = controller.comparisonParticipantId.value;
+
     final mine = engagement.responseTimes[kMeParticipantId] ?? ResponseTimeStats.empty;
     final hasEnoughData = engagement.responseTimes.values.any((v) => v.sampleCount >= kMinResponseSamples);
 
@@ -194,7 +207,7 @@ class _ResponseTimeSection extends StatelessWidget {
             StatTile(
               value: mine.p90Millis == null ? "—" : formatEngagementDuration(mine.p90Millis!),
               label: "Your p90",
-              caption: "90% of replies are faster than this",
+              caption: "90% of replies are faster",
             ),
             if (theirId != null) ...[
               StatTile(
@@ -208,7 +221,7 @@ class _ResponseTimeSection extends StatelessWidget {
                     ? "—"
                     : formatEngagementDuration(engagement.responseTimes[theirId]!.p90Millis!),
                 label: "${controller.participants[theirId]?.displayName ?? 'Their'} p90",
-                caption: "90% of replies are faster than this",
+                caption: "90% of replies are faster",
               ),
             ],
           ]),
@@ -220,7 +233,7 @@ class _ResponseTimeSection extends StatelessWidget {
             StatTile(
               value: mine.p90Millis == null ? "—" : formatEngagementDuration(mine.p90Millis!),
               label: "Your p90",
-              caption: "90% of replies are faster than this",
+              caption: "90% of replies are faster",
             ),
           ]),
           const SizedBox(height: 16.0),
@@ -229,7 +242,14 @@ class _ResponseTimeSection extends StatelessWidget {
             style: context.theme.textTheme.bodySmall?.copyWith(color: context.theme.colorScheme.outline),
           ),
           const SizedBox(height: 8.0),
-          _histogram(context, mine, _groupAggregate(), "You", "Group", showYAxis: true),
+          _histogram(
+            context,
+            mine,
+            comparisonId != null ? engagement.responseTimes[comparisonId] : _groupAggregate(),
+            "You",
+            comparisonId != null ? (controller.participants[comparisonId]?.displayName ?? "Them") : "Group",
+            showYAxis: true,
+          ),
           const SizedBox(height: 16.0),
           _RankedDurationList(
             title: "Fastest to Reply",
@@ -317,8 +337,17 @@ class _DoubleTextSection extends StatelessWidget {
   final EngagementStats engagement;
   final int? theirId;
 
+  // See `_ResponseTimeSection`'s matching comment — a local `Obx` so
+  // switching the comparison target only rebuilds this section.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Obx(() => _build(context));
+
+  Widget _build(BuildContext context) {
+    // See `_ResponseTimeSection`'s matching comment — read before the
+    // `!controller.isGroup` early return so a 1:1 chat's Obx still registers
+    // a dependency on this pass.
+    final comparisonId = controller.comparisonParticipantId.value;
+
     if (!controller.isGroup) {
       return StatTileGrid(tiles: [
         StatTile(value: "${engagement.doubleTexts[kMeParticipantId] ?? 0}", label: "You"),
@@ -328,6 +357,17 @@ class _DoubleTextSection extends StatelessWidget {
         ),
       ]);
     }
+
+    if (comparisonId != null) {
+      return StatTileGrid(tiles: [
+        StatTile(value: "${engagement.doubleTexts[kMeParticipantId] ?? 0}", label: "You"),
+        StatTile(
+          value: "${engagement.doubleTexts[comparisonId] ?? 0}",
+          label: controller.participants[comparisonId]?.displayName ?? "Them",
+        ),
+      ]);
+    }
+
     return _RankedDurationList(
       title: null,
       controller: controller,
@@ -344,8 +384,17 @@ class _BalanceDriftSection extends StatelessWidget {
   final ChatStatsController controller;
   final EngagementStats engagement;
 
+  // See `_ResponseTimeSection`'s matching comment — a local `Obx` so
+  // switching the comparison target only rebuilds this section.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Obx(() => _build(context));
+
+  Widget _build(BuildContext context) {
+    // See `_ResponseTimeSection`'s matching comment — read before the
+    // `points.length < 4` early return so a chat without enough drift data
+    // yet still registers a dependency on this pass.
+    final comparisonId = controller.comparisonParticipantId.value;
+
     final points = engagement.balanceDrift;
     if (points.length < 4) return const SizedBox.shrink();
 
@@ -354,11 +403,19 @@ class _BalanceDriftSection extends StatelessWidget {
       ids.addAll(bucket.byParticipant.keys);
     }
 
-    if (!controller.isGroup) {
-      final theirId = ids.firstWhereOrNull((id) => id != kMeParticipantId);
-      final values = [
-        for (final b in points) b.total == 0 ? 50.0 : (b.byParticipant[kMeParticipantId] ?? 0) / b.total * 100,
-      ];
+    if (!controller.isGroup || comparisonId != null) {
+      // Group + a specific comparison target: share is computed against just
+      // "you + them", not the whole group's total, so the chart reflects a
+      // true two-person balance rather than being diluted by everyone else.
+      final theirId = controller.isGroup ? comparisonId : ids.firstWhereOrNull((id) => id != kMeParticipantId);
+      double pairShare(TimeBucket b) {
+        final mineCount = b.byParticipant[kMeParticipantId] ?? 0;
+        final theirCount = theirId == null ? 0 : (b.byParticipant[theirId] ?? 0);
+        final pairTotal = mineCount + theirCount;
+        return pairTotal == 0 ? 50.0 : mineCount / pairTotal * 100;
+      }
+
+      final values = [for (final b in points) pairShare(b)];
       final secondaryColor =
           theirId == null ? context.theme.colorScheme.outline : participantColor(context, theirId, controller.participants);
       return Column(
@@ -371,15 +428,23 @@ class _BalanceDriftSection extends StatelessWidget {
             style: context.theme.textTheme.bodySmall?.copyWith(color: context.theme.colorScheme.outline),
           ),
           const SizedBox(height: 10.0),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12.0),
-            child: StatLineChart(
-              series: [ChartSeries(label: "You", color: context.theme.colorScheme.primary, values: values)],
-              mode: LineChartMode.referenceSplit,
-              minY: 0,
-              maxY: 100,
-              referenceY: 50,
-              secondaryColor: secondaryColor,
+          Padding(
+            // The first/last x-axis labels center on points sitting right at
+            // the chart's edge — without this, the ClipRRect below hard-clips
+            // them instead of just letting them render tight to the edge.
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.0),
+              child: StatLineChart(
+                series: [ChartSeries(label: "You", color: context.theme.colorScheme.primary, values: values)],
+                mode: LineChartMode.referenceSplit,
+                minY: 0,
+                maxY: 100,
+                referenceY: 50,
+                secondaryColor: secondaryColor,
+                showYAxis: true,
+                xLabelBuilder: (i) => _driftBucketLabel(i, points),
+              ),
             ),
           ),
           const SizedBox(height: 8.0),
@@ -424,14 +489,20 @@ class _BalanceDriftSection extends StatelessWidget {
       children: [
         Text("Balance Drift", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12.0),
-          child: StatLineChart(
-            series: series,
-            mode: LineChartMode.stackedArea,
-            minY: 0,
-            maxY: 100,
-            referenceY: 100 / (orderedIds.isEmpty ? 1 : orderedIds.length),
+        Padding(
+          // See the 1:1 branch's matching comment above.
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: StatLineChart(
+              series: series,
+              mode: LineChartMode.stackedArea,
+              minY: 0,
+              maxY: 100,
+              referenceY: 100 / (orderedIds.isEmpty ? 1 : orderedIds.length),
+              showYAxis: true,
+              xLabelBuilder: (i) => _driftBucketLabel(i, points),
+            ),
           ),
         ),
         const SizedBox(height: 8.0),
@@ -441,6 +512,16 @@ class _BalanceDriftSection extends StatelessWidget {
   }
 }
 
+/// Sparse bottom-axis label for the Balance Drift chart — `points` are
+/// already week/month buckets (see `EngagementStats.balanceDrift`), so this
+/// just formats a handful of them evenly across the series, matching the
+/// step-based approach `_VolumeSection`/`Sparkline` already use elsewhere.
+String? _driftBucketLabel(int i, List<TimeBucket> points) {
+  if (i < 0 || i >= points.length) return null;
+  final step = (points.length / 5).ceil().clamp(1, points.length);
+  if (i % step != 0) return null;
+  return DateFormat.Md().format(DateTime.fromMillisecondsSinceEpoch(points[i].startMillis));
+}
 
 /// Ranked list of per-participant values with avatars — reads better than an
 /// N-way chart for "fastest to reply" / double-text counts in a group.

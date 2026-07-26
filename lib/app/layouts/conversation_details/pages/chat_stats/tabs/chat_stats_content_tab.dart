@@ -41,7 +41,15 @@ class _ChatStatsContentTabState extends State<ChatStatsContentTab> with Automati
       final content = widget.controller.stats.value?.content;
       final progress = widget.controller.progress.value;
       final error = widget.controller.error.value;
-      final isLoading = progress.stage == StatsStage.computingContent;
+      // Not just `progress.stage == StatsStage.computingContent`: a
+      // page-level timeframe change resets `stats.value` (and so `content`)
+      // for every previously-loaded stage up front, then recomputes them one
+      // at a time — Content's turn in that sequence might not have started
+      // yet, so `progress` could still read another stage while `content` is
+      // already null. Once Content's been analyzed at least once this
+      // session, any gap like that should read as "reloading", not "opt in
+      // again".
+      final isLoading = progress.stage == StatsStage.computingContent || widget.controller.hasAnalyzedContent;
 
       if (content == null && error != null) {
         return _ErrorState(onRetry: () => widget.controller.ensureSection(StatsStage.computingContent, force: true));
@@ -110,6 +118,17 @@ class _ContentBody extends StatelessWidget {
   final ChatStatsController controller;
   final ContentStats content;
 
+  /// The current comparison target's display label — "Group"/"Them" when
+  /// comparing against everyone, or the selected participant's name.
+  /// Content is only ever recomputed (via `setComparisonParticipant`) when
+  /// this selection actually changes, so `content` itself and this label
+  /// always land in the same rebuild — no separate `Obx` needed here.
+  String get _comparisonLabel {
+    final id = controller.comparisonParticipantId.value;
+    if (id == null) return controller.isGroup ? "Group" : "Them";
+    return controller.participants[id]?.displayName ?? "Them";
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -126,7 +145,7 @@ class _ContentBody extends StatelessWidget {
         ],
         StatTileGrid(tiles: [
           StatTile(value: content.avgLengthMine.toStringAsFixed(0), label: "Your Avg Length", caption: "characters"),
-          StatTile(value: content.avgLengthTheirs.toStringAsFixed(0), label: "Their Avg Length", caption: "characters"),
+          StatTile(value: content.avgLengthTheirs.toStringAsFixed(0), label: "$_comparisonLabel Avg Length", caption: "characters"),
           StatTile(value: "${content.editedCount}", label: "Edited"),
           StatTile(value: "${content.unsentCount}", label: "Unsent"),
         ]),
@@ -147,7 +166,7 @@ class _ContentBody extends StatelessWidget {
         const SizedBox(height: 28.0),
         Text("Top Emoji", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
-        _EmojiSection(content: content, isGroup: controller.isGroup),
+        _EmojiSection(content: content, comparisonLabel: _comparisonLabel),
         const SizedBox(height: 28.0),
         Text("Top Words", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
@@ -155,7 +174,7 @@ class _ContentBody extends StatelessWidget {
         const SizedBox(height: 28.0),
         Text("Reactions by Type", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
-        _ReactionsSection(content: content, isGroup: controller.isGroup),
+        _ReactionsSection(content: content, comparisonLabel: _comparisonLabel),
         const SizedBox(height: 28.0),
         Text("Attachment Mix", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
@@ -166,6 +185,16 @@ class _ContentBody extends StatelessWidget {
           const SizedBox(height: 10.0),
           _EffectsSection(content: content),
         ],
+        if (content.topSwearWords.isNotEmpty) ...[
+          const SizedBox(height: 28.0),
+          Text("Colorful Language", style: context.theme.textTheme.titleMedium),
+          const SizedBox(height: 10.0),
+          _SwearWordsSection(content: content, comparisonLabel: _comparisonLabel),
+        ],
+        const SizedBox(height: 28.0),
+        Text("Second Thoughts", style: context.theme.textTheme.titleMedium),
+        const SizedBox(height: 10.0),
+        _CorrectionRateSection(content: content, comparisonLabel: _comparisonLabel),
         const SizedBox(height: 28.0),
         Text("Audio Messages", style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
@@ -185,7 +214,7 @@ class _ContentBody extends StatelessWidget {
           spacing: 14.0,
           children: [
             _swatch(context, mineColor, "You"),
-            _swatch(context, theirsColor, controller.isGroup ? "Group" : "Them"),
+            _swatch(context, theirsColor, _comparisonLabel),
           ],
         ),
         const SizedBox(height: 8.0),
@@ -372,10 +401,10 @@ class _CoverageCaption extends StatelessWidget {
 }
 
 class _EmojiSection extends StatelessWidget {
-  const _EmojiSection({required this.content, required this.isGroup});
+  const _EmojiSection({required this.content, required this.comparisonLabel});
 
   final ContentStats content;
-  final bool isGroup;
+  final String comparisonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +421,7 @@ class _EmojiSection extends StatelessWidget {
           spacing: 14.0,
           children: [
             _swatch(context, mineColor, "You"),
-            _swatch(context, theirsColor, isGroup ? "Group" : "Them"),
+            _swatch(context, theirsColor, comparisonLabel),
           ],
         ),
         const SizedBox(height: 8.0),
@@ -437,10 +466,10 @@ class _WordsSection extends StatelessWidget {
 }
 
 class _ReactionsSection extends StatelessWidget {
-  const _ReactionsSection({required this.content, required this.isGroup});
+  const _ReactionsSection({required this.content, required this.comparisonLabel});
 
   final ContentStats content;
-  final bool isGroup;
+  final String comparisonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +486,7 @@ class _ReactionsSection extends StatelessWidget {
           spacing: 14.0,
           children: [
             _swatch(context, givenColor, "You"),
-            _swatch(context, receivedColor, isGroup ? "Group" : "Them"),
+            _swatch(context, receivedColor, comparisonLabel),
           ],
         ),
         const SizedBox(height: 8.0),
@@ -532,6 +561,76 @@ class _EffectsSection extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// Mine-vs-theirs bar chart over the curated curse-word vocabulary — reuses
+/// the same paired-bar shape as [_EmojiSection] and [_ReactionsSection].
+class _SwearWordsSection extends StatelessWidget {
+  const _SwearWordsSection({required this.content, required this.comparisonLabel});
+
+  final ContentStats content;
+  final String comparisonLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = content.topSwearWords.take(10).toList();
+    final mineColor = context.theme.colorScheme.primary;
+    final theirsColor = context.theme.colorScheme.outline;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 14.0,
+          children: [
+            _swatch(context, mineColor, "You"),
+            _swatch(context, theirsColor, comparisonLabel),
+          ],
+        ),
+        const SizedBox(height: 8.0),
+        StatBarChart(
+          showYAxis: true,
+          groups: [
+            for (final w in top)
+              BarGroupSpec(
+                label: w.word,
+                bars: [
+                  BarValueSpec(value: w.mineCount.toDouble(), color: mineColor),
+                  BarValueSpec(value: w.theirsCount.toDouble(), color: theirsColor),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Share of each side's messages that were later edited or unsent — a
+/// derived rate (not a raw count, unlike the Edited/Unsent tiles above) so
+/// it stays comparable between two people who send very different volumes.
+class _CorrectionRateSection extends StatelessWidget {
+  const _CorrectionRateSection({required this.content, required this.comparisonLabel});
+
+  final ContentStats content;
+  final String comparisonLabel;
+
+  String _format(double? rate) => rate == null ? "—" : "${(rate * 100).toStringAsFixed(1)}%";
+
+  @override
+  Widget build(BuildContext context) {
+    return StatTileGrid(tiles: [
+      StatTile(
+        value: _format(content.correctionRateMine),
+        label: "Your Correction Rate",
+        caption: "edited or unsent",
+      ),
+      StatTile(
+        value: _format(content.correctionRateTheirs),
+        label: "$comparisonLabel Correction Rate",
+        caption: "edited or unsent",
+      ),
+    ]);
   }
 }
 

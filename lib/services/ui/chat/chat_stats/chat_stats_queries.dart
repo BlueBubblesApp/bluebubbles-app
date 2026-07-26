@@ -138,35 +138,70 @@ class ChatStatsQueries {
 
   static int totalMessages(Chat chat) => count(chat, realMessages());
   static int sentCount(Chat chat) => count(chat, realMessages().and(Message_.isFromMe.equals(true)));
-  static int receivedCount(Chat chat) =>
-      count(chat, realMessages().and(Message_.isFromMe.equals(false)));
+
+  /// [participantId], when given, narrows incoming messages down to just
+  /// that one handle — mirrors [recentTexts]' comparison-target scoping so
+  /// the Correction Rate denominator matches whichever "theirs" numbers are
+  /// on screen.
+  static int receivedCount(Chat chat, {int? participantId}) {
+    final qb = _forChat(chat, realMessages().and(Message_.isFromMe.equals(false)));
+    if (participantId != null) qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+    final q = qb.build();
+    try {
+      return q.count();
+    } finally {
+      q.close();
+    }
+  }
+
   static int attachmentMessageCount(Chat chat, {int? sinceMillis}) =>
       count(chat, realMessages(sinceMillis: sinceMillis).and(Message_.hasAttachments.equals(true)));
-  static int editedCount(Chat chat) => count(chat, realMessages().and(Message_.dateEdited.notNull()));
+
+  /// [fromMe]/[participantId] narrow this to one side of the conversation —
+  /// `participantId` only applies when `fromMe: false`, matching
+  /// [recentTexts]'s comparison-target scoping.
+  static int editedCount(Chat chat, {bool? fromMe, int? participantId}) {
+    var cond = realMessages().and(Message_.dateEdited.notNull());
+    if (fromMe != null) cond = cond.and(Message_.isFromMe.equals(fromMe));
+    final qb = _forChat(chat, cond);
+    if (fromMe == false && participantId != null) {
+      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+    }
+    final q = qb.build();
+    try {
+      return q.count();
+    } finally {
+      q.close();
+    }
+  }
 
   /// Reaction rows. Deliberately does NOT use [realMessages] — it inverts the
   /// reaction filter instead. Types arrive raw; a `-` prefix means *removed*.
   /// Normalization is the computer's job.
-  static List<({String type, bool fromMe})> reactions(Chat chat) {
-    List<String> types(bool fromMe) {
-      final q = _forChat(
-        chat,
-        Message_.dateDeleted
-            .isNull()
-            .and(Message_.associatedMessageType.notNull())
-            .and(Message_.isFromMe.equals(fromMe)),
-      ).build();
-      try {
-        return q.property(Message_.associatedMessageType).find();
-      } finally {
-        q.close();
-      }
+  ///
+  /// [participantId] carries the reactor's id — [kMeParticipantId] for
+  /// outgoing rows, [_senderId] (local `Handle.id`) for incoming ones — so
+  /// callers can filter received reactions down to a single comparison
+  /// target instead of always treating "received" as "from anyone but me".
+  /// Hydrates entities (rather than the cheaper `PropertyQuery` the old
+  /// implementation used) because the sender relation isn't exposed as a
+  /// plain queryable column, matching [reactionMatrixData]'s approach.
+  static List<({String type, int participantId})> reactions(Chat chat) {
+    final q = _forChat(
+      chat,
+      Message_.dateDeleted.isNull().and(Message_.associatedMessageType.notNull()),
+    ).build();
+    try {
+      return q
+          .find()
+          .map((m) => (
+                type: m.associatedMessageType!,
+                participantId: m.isFromMe == true ? kMeParticipantId : _senderId(m),
+              ))
+          .toList();
+    } finally {
+      q.close();
     }
-
-    return [
-      ...types(true).map((t) => (type: t, fromMe: true)),
-      ...types(false).map((t) => (type: t, fromMe: false)),
-    ];
   }
 
   /// Attachment mime types — feeds the attachment-mix donut.
@@ -212,9 +247,17 @@ class ChatStatsQueries {
   /// `PropertyQuery`'s ordering isn't guaranteed to follow the query's
   /// `order()` — capping requires hydrating entities so the "most recent N"
   /// guarantee actually holds.
-  static List<String> recentTexts(Chat chat, {required bool fromMe, int? limit}) {
-    final qb = _forChat(chat, realMessages().and(Message_.isFromMe.equals(fromMe)).and(Message_.text.notNull()))
-      ..order(Message_.dateCreated, flags: Order.descending);
+  ///
+  /// [participantId], when given alongside `fromMe: false`, narrows the
+  /// incoming side to just that one handle — this is how the Content tab's
+  /// comparison-target selector scopes "theirs" down to a single group
+  /// member instead of everyone but me.
+  static List<String> recentTexts(Chat chat, {required bool fromMe, int? limit, int? participantId}) {
+    final cond = realMessages().and(Message_.isFromMe.equals(fromMe)).and(Message_.text.notNull());
+    final qb = _forChat(chat, cond)..order(Message_.dateCreated, flags: Order.descending);
+    if (!fromMe && participantId != null) {
+      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+    }
     final q = qb.build();
     try {
       if (limit != null) q.limit = limit;
@@ -283,9 +326,16 @@ class ChatStatsQueries {
   /// Edited messages whose `messageSummaryInfo` reports at least one
   /// retracted part — i.e. actually unsent, not just edited. Small subset
   /// (bounded by [editedCount]), so hydrating entities to read the nested
-  /// JSON field is cheap.
-  static int unsentCount(Chat chat) {
-    final q = _forChat(chat, realMessages().and(Message_.dateEdited.notNull())).build();
+  /// JSON field is cheap. [fromMe]/[participantId] scope this the same way
+  /// as [editedCount].
+  static int unsentCount(Chat chat, {bool? fromMe, int? participantId}) {
+    var cond = realMessages().and(Message_.dateEdited.notNull());
+    if (fromMe != null) cond = cond.and(Message_.isFromMe.equals(fromMe));
+    final qb = _forChat(chat, cond);
+    if (fromMe == false && participantId != null) {
+      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+    }
+    final q = qb.build();
     try {
       return q.find().where((m) => m.retractedParts.isNotEmpty).length;
     } finally {
@@ -387,6 +437,20 @@ class ChatStatsQueries {
     }
 
     return (reactionRows: reactionRows, guidToSender: guidToSender);
+  }
+
+  /// Absolute earliest "real" message in the chat. Unlike everything else in
+  /// this file, deliberately ignores the page-level [StatsTimeframe] window —
+  /// "the first message we've tracked" should reflect the chat's full
+  /// history, not whatever span happens to be selected.
+  static int? firstMessageMillis(Chat chat) {
+    final q = (_forChat(chat, realMessages())..order(Message_.dateCreated)).build();
+    try {
+      q.limit = 1;
+      return q.find().firstOrNull?.dateCreated?.millisecondsSinceEpoch;
+    } finally {
+      q.close();
+    }
   }
 
   /// Cache key input — changes whenever the chat gains or loses messages.

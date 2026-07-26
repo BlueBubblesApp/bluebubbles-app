@@ -196,6 +196,9 @@ class _VolumeSection extends StatelessWidget {
 
   Widget _build(BuildContext context) {
     final bucketSize = controller.bucketSize.value;
+    // Tracked alongside `bucketSize` in this same local `Obx` — selecting a
+    // comparison target only rebuilds this chart, not the whole Activity tab.
+    final comparisonId = controller.comparisonParticipantId.value;
 
     // The window itself comes from the page-level timeframe selector —
     // `activity.dailySeries` is already scoped to it (see `ChatStatsQueries`'s
@@ -215,7 +218,7 @@ class _VolumeSection extends StatelessWidget {
             _Chip(label: "Day", selected: bucketSize == StatsBucketSize.day, onTap: () => onBucketChanged(StatsBucketSize.day)),
             _Chip(label: "Week", selected: bucketSize == StatsBucketSize.week, onTap: () => onBucketChanged(StatsBucketSize.week)),
             _Chip(label: "Month", selected: bucketSize == StatsBucketSize.month, onTap: () => onBucketChanged(StatsBucketSize.month)),
-            if (controller.isGroup) ...[
+            if (controller.isGroup && comparisonId == null) ...[
               const SizedBox(width: 12.0),
               _Chip(label: "Total only", selected: totalOnly, onTap: () => onTotalOnlyChanged(!totalOnly)),
             ],
@@ -227,8 +230,8 @@ class _VolumeSection extends StatelessWidget {
         else
           StatLineChart(
             height: 200.0,
-            series: _buildSeries(context, buckets),
-            mode: controller.isGroup && !totalOnly ? LineChartMode.stackedArea : LineChartMode.lines,
+            series: _buildSeries(context, buckets, comparisonId),
+            mode: controller.isGroup && comparisonId == null && !totalOnly ? LineChartMode.stackedArea : LineChartMode.lines,
             showYAxis: true,
             xLabelBuilder: (i) {
               if (i < 0 || i >= buckets.length) return null;
@@ -241,7 +244,7 @@ class _VolumeSection extends StatelessWidget {
     );
   }
 
-  List<ChartSeries> _buildSeries(BuildContext context, List<TimeBucket> buckets) {
+  List<ChartSeries> _buildSeries(BuildContext context, List<TimeBucket> buckets, int? comparisonId) {
     if (!controller.isGroup) {
       final theirId = controller.participants.keys.firstWhereOrNull((id) => id != kMeParticipantId);
       return [
@@ -256,6 +259,24 @@ class _VolumeSection extends StatelessWidget {
               ? context.theme.colorScheme.outline
               : participantColor(context, theirId, controller.participants),
           values: [for (final b in buckets) b.received.toDouble()],
+        ),
+      ];
+    }
+
+    if (comparisonId != null) {
+      // A specific group member is selected: show the same two-series shape
+      // as a 1:1 chat, scoped to just "you" and that person — not diluted by
+      // the rest of the group.
+      return [
+        ChartSeries(
+          label: "You",
+          color: context.theme.colorScheme.primary,
+          values: [for (final b in buckets) (b.byParticipant[kMeParticipantId] ?? 0).toDouble()],
+        ),
+        ChartSeries(
+          label: controller.participants[comparisonId]?.displayName ?? "Them",
+          color: participantColor(context, comparisonId, controller.participants),
+          values: [for (final b in buckets) (b.byParticipant[comparisonId] ?? 0).toDouble()],
         ),
       ];
     }
