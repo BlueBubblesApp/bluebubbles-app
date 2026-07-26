@@ -124,6 +124,7 @@ class ResolvedFileContent extends StatelessWidget {
         isFromMe: message.isFromMe!,
         galleryAttachments: galleryAttachments,
         collectionController: collectionController,
+        fillCell: fillCell,
       );
       if (fillCell) {
         return SizedBox.expand(child: video);

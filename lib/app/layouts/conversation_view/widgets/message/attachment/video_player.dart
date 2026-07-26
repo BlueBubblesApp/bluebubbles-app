@@ -50,6 +50,7 @@ class VideoPlayer extends StatefulWidget {
   final bool isFromMe;
   final List<Attachment>? galleryAttachments;
   final CollectionMediaController? collectionController;
+  final bool fillCell;
 
   const VideoPlayer(
       {super.key,
@@ -58,7 +59,8 @@ class VideoPlayer extends StatefulWidget {
       required this.controller,
       required this.isFromMe,
       this.galleryAttachments,
-      this.collectionController});
+      this.collectionController,
+      this.fillCell = false});
 
   final ConversationViewController? controller;
 
@@ -406,6 +408,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     }
   }
 
+  /// Expand into a tight collection cell, or size to aspect ratio for bubble videos.
+  Widget _sizeMedia(Widget child) {
+    if (widget.fillCell) return SizedBox.expand(child: child);
+    return Obx(() => _boundedAspectRatio(
+          ratio: aspectRatio.value,
+          child: child,
+        ));
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -465,28 +476,27 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Obx(() => _boundedAspectRatio(
-                    ratio: aspectRatio.value,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Video(
-                          controller: videoController!,
-                          controls: null,
-                          fit: BoxFit.cover,
-                        ),
-                        // Keep the thumbnail painted over the black surface until the first frame decodes
-                        if (!kIsDesktop && !kIsWeb && thumbnail != null)
-                          Obx(() => IgnorePointer(
-                                child: AnimatedOpacity(
-                                  opacity: firstFrameReady.value ? 0 : 1,
-                                  duration: const Duration(milliseconds: 150),
-                                  child: Image.memory(thumbnail!, fit: BoxFit.cover, gaplessPlayback: true),
-                                ),
-                              )),
-                      ],
+              _sizeMedia(
+                Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Video(
+                      controller: videoController!,
+                      controls: null,
+                      fit: BoxFit.cover,
                     ),
-                  )),
+                    // Keep the thumbnail painted over the black surface until the first frame decodes
+                    if (!kIsDesktop && !kIsWeb && thumbnail != null)
+                      Obx(() => IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: firstFrameReady.value ? 0 : 1,
+                              duration: const Duration(milliseconds: 150),
+                              child: Image.memory(thumbnail!, fit: BoxFit.cover, gaplessPlayback: true),
+                            ),
+                          )),
+                  ],
+                ),
+              ),
               PlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: videoController),
               MuteButton(
                   showPlayPauseOverlay: showPlayPauseOverlay,
@@ -521,18 +531,17 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
             );
           },
           // All mobile states (placeholder → thumbnail → playing) share the same
-          // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
+          // geometry so state changes never resize the box
           child: thumbnail == null && !kIsDesktop && !kIsWeb
-              ? Obx(() => _boundedAspectRatio(
-                    ratio: aspectRatio.value,
-                    child: Center(
-                      child: PlayPauseButton(
-                        showPlayPauseOverlay: showPlayPauseOverlay,
-                        controller: videoController,
-                        customOnTap: _playInline,
-                      ),
+              ? _sizeMedia(
+                  Center(
+                    child: PlayPauseButton(
+                      showPlayPauseOverlay: showPlayPauseOverlay,
+                      controller: videoController,
+                      customOnTap: _playInline,
                     ),
-                  ))
+                  ),
+                )
               : thumbnail == null
                   ? Padding(
                       padding: const EdgeInsets.all(15.0),
@@ -572,40 +581,39 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         ],
                       ),
                     )
-                  : Obx(() => _boundedAspectRatio(
-                        ratio: aspectRatio.value,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Positioned.fill(
-                              child: Image.memory(
-                                thumbnail!,
-                                // prevents the image widget from "refreshing" when the provider changes
-                                gaplessPlayback: true,
-                                filterQuality: FilterQuality.medium,
-                                fit: BoxFit.cover,
-                                frameBuilder: (context, child, frame, wasSyncLoaded) => wasSyncLoaded
-                                    ? child
-                                    : AnimatedOpacity(
-                                        opacity: frame == null ? 0 : 1,
-                                        duration: const Duration(milliseconds: 150),
-                                        child: child,
-                                      ),
-                              ),
+                  : _sizeMedia(
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: Image.memory(
+                              thumbnail!,
+                              // prevents the image widget from "refreshing" when the provider changes
+                              gaplessPlayback: true,
+                              filterQuality: FilterQuality.medium,
+                              fit: BoxFit.cover,
+                              frameBuilder: (context, child, frame, wasSyncLoaded) => wasSyncLoaded
+                                  ? child
+                                  : AnimatedOpacity(
+                                      opacity: frame == null ? 0 : 1,
+                                      duration: const Duration(milliseconds: 150),
+                                      child: child,
+                                    ),
                             ),
-                            PlayPauseButton(
+                          ),
+                          PlayPauseButton(
+                            showPlayPauseOverlay: showPlayPauseOverlay,
+                            controller: videoController,
+                            customOnTap: _playInline,
+                          ),
+                          MuteButton(
                               showPlayPauseOverlay: showPlayPauseOverlay,
+                              muted: muted,
                               controller: videoController,
-                              customOnTap: _playInline,
-                            ),
-                            MuteButton(
-                                showPlayPauseOverlay: showPlayPauseOverlay,
-                                muted: muted,
-                                controller: videoController,
-                                isFromMe: isFromMe),
-                          ],
-                        ),
-                      ))),
+                              isFromMe: isFromMe),
+                        ],
+                      ),
+                    )),
     );
   }
 
