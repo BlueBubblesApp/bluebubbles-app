@@ -87,6 +87,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   String? currentlySelectedReaction = "init";
   final GlobalKey _childKey = GlobalKey();
   double? _measuredChildHeight;
+  double? _measuredChildWidth;
 
   ConversationViewController get cvController => widget.cvController;
 
@@ -138,7 +139,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final measuredHeight = _childKey.currentContext?.size?.height;
+      final measuredSize = _childKey.currentContext?.size;
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) =>
@@ -152,12 +153,17 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       }
       setState(() {
         if (iOS) {
-          if (measuredHeight != null) {
-            _measuredChildHeight = measuredHeight;
-            final remainingHeight = max(Get.height - Get.statusBarHeight - 135 - measuredHeight, itemHeight);
+          if (measuredSize != null) {
+            _measuredChildHeight = measuredSize.height;
+            _measuredChildWidth = measuredSize.width;
+            final remainingHeight = max(Get.height - Get.statusBarHeight - 135 - measuredSize.height, itemHeight);
             numberToShow = min(remainingHeight ~/ itemHeight, 5);
           }
-          messageOffset = itemHeight * numberToShow + 40;
+          // Lift above the details menu, but keep the preview below the status bar.
+          final previewHeight = _measuredChildHeight ?? widget.size.height;
+          final menuClearance = itemHeight * numberToShow + 40;
+          final maxBottom = Get.height - Get.statusBarHeight - 8 - previewHeight;
+          messageOffset = min(menuClearance, max(40.0, maxBottom));
         }
       });
     });
@@ -166,9 +172,13 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   void _remeasureChild() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final h = _childKey.currentContext?.size?.height;
-      if (h != null && h != _measuredChildHeight) {
-        setState(() => _measuredChildHeight = h);
+      final size = _childKey.currentContext?.size;
+      if (size == null) return;
+      if (size.height != _measuredChildHeight || size.width != _measuredChildWidth) {
+        setState(() {
+          _measuredChildHeight = size.height;
+          _measuredChildWidth = size.width;
+        });
       }
     });
   }
@@ -205,16 +215,39 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     return (clampedOverlayLeft: clampedOverlayLeft, clampedChildLeft: clampedChildLeft);
   }
 
+  /// Keep a left-anchored (received) preview fully on-screen when it grows past the cell width.
+  double _clampReceivedPreviewLeft({
+    required double screenWidth,
+    required double preferredLeft,
+  }) {
+    const margin = 15.0;
+    final previewWidth = _measuredChildWidth ?? max(widget.size.width, screenWidth * 0.5);
+    final maxLeft = max(margin, screenWidth - previewWidth - margin);
+    return preferredLeft.clamp(margin, maxLeft).toDouble();
+  }
+
   @override
   Widget build(BuildContext context) {
     double narrowWidth = message.isFromMe! || !SettingsSvc.settings.alwaysShowAvatars.value ? 330 : 360;
     bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
     final screenWidth = NavigationSvc.width(widthContext);
-    final clampedLayout = message.isFromMe!
+    final isFromMe = message.isFromMe!;
+    final clampedLayout = isFromMe
         ? null
         : _clampedHorizontalLayout(screenWidth: screenWidth, narrowScreen: narrowScreen);
     final clampedOverlayLeft = clampedLayout?.clampedOverlayLeft;
-    final clampedChildLeft = clampedLayout?.clampedChildLeft ?? widget.childPosition.dx;
+    // From-me: pin the preview's right edge to the cell's right edge so growth stays on-screen.
+    // Received: left-anchor, then clamp using measured/estimated preview width.
+    const margin = 15.0;
+    final double? previewRight = isFromMe
+        ? max(margin, screenWidth - widget.childPosition.dx - widget.size.width)
+        : null;
+    final double? previewLeft = isFromMe
+        ? null
+        : _clampReceivedPreviewLeft(
+            screenWidth: screenWidth,
+            preferredLeft: clampedLayout?.clampedChildLeft ?? widget.childPosition.dx,
+          );
 
     return Theme(
       data: context.theme.copyWith(
@@ -291,7 +324,8 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                     AnimatedPositioned(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutBack,
-                      left: clampedChildLeft,
+                      left: previewLeft,
+                      right: previewRight,
                       bottom: messageOffset,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0.8, end: 1),
@@ -305,7 +339,12 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                           child: SizeChangedLayoutNotifier(
                             child: ConstrainedBox(
                               key: _childKey,
-                              constraints: BoxConstraints(maxWidth: widget.size.width),
+                              constraints: BoxConstraints(
+                                maxWidth: max(
+                                  widget.size.width,
+                                  NavigationSvc.width(widthContext) * 0.5,
+                                ),
+                              ),
                               child: MessageStateScope(
                                 messageState: widget.controller,
                                 child: widget.child,
@@ -316,7 +355,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                         builder: (context, size, child) {
                           return Transform.scale(
                             scale: size.clamp(1, double.infinity),
-                            alignment: message.isFromMe! ? Alignment.centerRight : Alignment.centerLeft,
+                            alignment: isFromMe ? Alignment.centerRight : Alignment.centerLeft,
                             child: child,
                           );
                         },

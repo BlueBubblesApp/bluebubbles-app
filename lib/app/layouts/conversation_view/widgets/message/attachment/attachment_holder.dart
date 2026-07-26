@@ -7,6 +7,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/not_loaded_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/downloading_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/resolved_file_content.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
@@ -45,6 +46,15 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
   Worker? _refreshWorker;
+
+  /// Grid cells in the message popup present as standalone (natural) size.
+  AttachmentFrameMode get _effectiveFrameMode {
+    final inPopup = PopupScope.maybeOf(context) != null;
+    if (inPopup && widget.frameMode == AttachmentFrameMode.gridCell) {
+      return AttachmentFrameMode.natural;
+    }
+    return widget.frameMode;
+  }
 
   /// iOS 20; Material/Samsung match [CollectionGroupGrid] (16 / 25).
   double get _cardBorderRadius {
@@ -186,7 +196,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     }
     // Collection cards constrain height via an outer SizedBox. DownloadingContent /
     // NotLoadedContent handle their own internal padding, so extra padding here overflows.
-    if (widget.frameMode != AttachmentFrameMode.natural) {
+    if (_effectiveFrameMode != AttachmentFrameMode.natural) {
       return EdgeInsets.zero;
     }
     return const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(sideInsets);
@@ -200,8 +210,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     required bool isiOS,
     bool? fillCellOverride,
   }) {
-    final inCollection = widget.frameMode != AttachmentFrameMode.natural;
+    final inCollection = _effectiveFrameMode != AttachmentFrameMode.natural;
     final fillCell = fillCellOverride ?? inCollection;
+    // Popup has no bubble tail — round every corner. Collections already do.
+    final forceAllCornersRounded = inCollection || PopupScope.maybeOf(context) != null;
 
     // Redacted mode always shows placeholder regardless of download status.
     if (hideAttachments) {
@@ -224,7 +236,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isiOS: isiOS,
           cvController: controller.cvController,
           isInReply: isInReply,
-          forceAllCornersRounded: inCollection,
+          forceAllCornersRounded: forceAllCornersRounded,
           fillCell: fillCell,
           galleryAttachments: widget.galleryAttachments,
           collectionController: widget.collectionController,
@@ -242,7 +254,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         isiOS: isiOS,
         cvController: controller.cvController,
         isInReply: isInReply,
-        forceAllCornersRounded: inCollection,
+        forceAllCornersRounded: forceAllCornersRounded,
         fillCell: fillCell,
         galleryAttachments: widget.galleryAttachments,
         collectionController: widget.collectionController,
@@ -314,13 +326,19 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final frameMode = widget.frameMode;
+        final frameMode = _effectiveFrameMode;
         final inCollection = frameMode != AttachmentFrameMode.natural;
         final isFixedCard = frameMode == AttachmentFrameMode.fixedCard;
+        final inPopup = PopupScope.maybeOf(context) != null;
         // fixedCard previews (and images / pkpasses) use a transparent ink so the
         // media shows through; grid cells keep a solid tile unless the MIME is image.
+        // Popup videos also need transparency — otherwise the square Ink peeks past
+        // the ClipRRect corners.
         final transparentCard = hasPreview &&
-            (isFixedCard || isPass || attachment.mimeStart == "image");
+            (isFixedCard ||
+                isPass ||
+                attachment.mimeStart == "image" ||
+                (inPopup && attachment.mimeStart == "video"));
         Widget content = Material(
           color: Colors.transparent,
           child: InkWell(

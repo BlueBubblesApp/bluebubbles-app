@@ -208,7 +208,7 @@ class PopupScope extends InheritedWidget {
 
   static PopupScope of(BuildContext context) {
     final PopupScope? result = maybeOf(context);
-    assert(result != null, 'No ReplyScope found in context');
+    assert(result != null, 'No PopupScope found in context');
     return result!;
   }
 
