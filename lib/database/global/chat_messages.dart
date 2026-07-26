@@ -23,11 +23,6 @@ class ChatMessages {
 
   /// Returns replies whose [Message.normalizedThreadPart] matches any value in
   /// [originatorParts], plus the originator when [returnOriginator] is true.
-  ///
-  /// A collection bubble can represent several raw message parts. Querying
-  /// [threads] with only the collection's final part omits replies to earlier
-  /// attachments; this method matches the full set of part ids so the reply
-  /// line, count, and thread popup include every attachment's replies.
   List<Message> threadsForParts(
     String originatorGuid,
     Iterable<int> originatorParts, {
