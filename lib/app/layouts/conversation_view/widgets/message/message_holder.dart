@@ -221,10 +221,21 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
         final _rxGuard = (controller.isSending.value, controller.hasError.value, controller.parts.length);
 
         // Read controller.parts reactively so Obx rebuilds when parts change.
-        // replyPart is a message-part id, not a list index.
-        final matchedPart =
-            widget.isReplyThread && widget.replyPart != null ? controller.partById(widget.replyPart!) : null;
-        final rawMessageParts = matchedPart != null ? [matchedPart] : controller.parts.toList();
+        // replyPart is a message-part id, not a list index. A miss must not fall
+        // through to the full parts list — that would show the whole message.
+        final targetingPart = widget.isReplyThread && widget.replyPart != null;
+        final matchedPart = targetingPart ? controller.partById(widget.replyPart!) : null;
+        final rawMessageParts = targetingPart
+            ? [
+                if (matchedPart != null)
+                  matchedPart
+                else
+                  MessagePart(
+                    part: widget.replyPart!,
+                    text: "This message is no longer available",
+                  ),
+              ]
+            : controller.parts.toList();
         final messageParts = _collapseMediaCollectionParts(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
