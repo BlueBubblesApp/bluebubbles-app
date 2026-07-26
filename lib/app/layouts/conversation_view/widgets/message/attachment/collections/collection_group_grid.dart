@@ -124,6 +124,7 @@ class CollectionGroupGrid extends StatelessWidget {
         cellBuilder: (index, width, height, _) => CollectionAttachmentReactions(
           collectionPart: messagePart,
           attachmentIndex: index,
+          alignTrailing: true,
           tailType: SettingsSvc.settings.skin.value == Skins.iOS
               ? ReactionTailType.inside
               : ReactionTailType.standard,
