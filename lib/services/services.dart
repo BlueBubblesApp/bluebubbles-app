@@ -38,3 +38,6 @@ export 'ui/contact_service_v2.dart';
 export 'ui/typing_indicator_service.dart';
 export 'ui/unifiedpush.dart';
 export 'isolates/isolate_event.dart';
+
+// Deprecated pre-rename accessors, kept so downstream code keeps compiling.
+export 'legacy_accessors.dart';
