@@ -15,6 +15,15 @@ class BBChip extends StatelessWidget {
   final ValueChanged<bool>? onSelected;
   final Color? checkmarkColor;
 
+  /// Background when [selected] is true. Defaults to the theme's chip default
+  /// (a subtle tint) — pass an explicit color for a more prominent highlight.
+  final Color? selectedColor;
+
+  /// Background when [selected] is false. Defaults to the theme's chip default.
+  final Color? backgroundColor;
+
+  final TextStyle? labelStyle;
+
   const BBChip({
     super.key,
     required this.label,
@@ -27,6 +36,9 @@ class BBChip extends StatelessWidget {
     this.selected = false,
     this.onSelected,
     this.checkmarkColor,
+    this.selectedColor,
+    this.backgroundColor,
+    this.labelStyle,
   });
 
   @override
@@ -34,16 +46,23 @@ class BBChip extends StatelessWidget {
     final chip = RawChip(
       tapEnabled: tapEnabled,
       deleteIcon: onDeleted != null ? const Icon(Icons.close, size: 16) : null,
-      side: BorderSide(color: context.theme.colorScheme.outline.withValues(alpha: 0.1)),
+      side: BorderSide(
+        color: selected
+            ? (selectedColor ?? context.theme.colorScheme.primary)
+            : context.theme.colorScheme.outline.withValues(alpha: 0.1),
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       avatar: avatar,
       label: label,
+      labelStyle: labelStyle,
       onDeleted: onDeleted,
       onPressed: onPressed,
       showCheckmark: showCheckmark,
       selected: selected,
       onSelected: onSelected,
       checkmarkColor: checkmarkColor,
+      selectedColor: selectedColor,
+      backgroundColor: backgroundColor,
     );
 
     if (onLongPress == null) return chip;

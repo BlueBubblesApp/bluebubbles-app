@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/chat_sync_dialog.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/chat_stats_page.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
@@ -196,6 +197,18 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                       ),
                     );
                   },
+                ),
+              if (!kIsWeb) const SettingsDivider(),
+              if (!kIsWeb)
+                SettingsTile(
+                  title: "Chat Stats",
+                  subtitle: "See your texting patterns, response times, and activity for this chat",
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right: 15.0),
+                    child: Icon(iOS ? CupertinoIcons.chart_bar_alt_fill : Icons.insights),
+                  ),
+                  isThreeLine: true,
+                  onTap: () => NavigationSvc.push(context, ChatStatsPage(chat: chat)),
                 ),
               const SettingsDivider(),
               if (iOS)
