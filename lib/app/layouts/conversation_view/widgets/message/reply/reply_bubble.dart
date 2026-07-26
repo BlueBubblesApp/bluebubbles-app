@@ -32,17 +32,20 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
 
-  MessagePart get part {
-    // widget.part is a message-part id, not a list index.
-    return controller.partById(widget.part) ??
-        (controller.parts.isNotEmpty ? controller.parts.first : MessagePart(part: widget.part));
-  }
+  /// Resolves [widget.part] as a message-part id. Null when the part is missing —
+  /// never substitutes another part.
+  MessagePart? get part => controller.partById(widget.part);
   Message get message => controller.message;
 
   @override
   void initState() {
     super.initState();
     _ms = MessageStateScope.readStateOnce(context);
+  }
+
+  void _openReplyThread(BuildContext context, String chatGuid, MessagePart? part) {
+    if (part == null) return;
+    showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
   }
 
   Color getBubbleColor() {
@@ -64,6 +67,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   Widget build(BuildContext context) {
     final chatGuid = widget.cvController.chat.guid;
     final hasBackground = ChatStateScope.maybeOf(context)?.customBackgroundPath.value?.isNotEmpty == true;
+    final resolvedPart = part;
     if (!iOS) {
       final messageText = controller.text.value;
       String text = Message(text: messageText, subject: controller.subject.value).getNotificationText();
@@ -75,9 +79,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
             minHeight: 30,
           ),
           child: GestureDetector(
-            onTap: () {
-              showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
-            },
+            onTap: () => _openReplyThread(context, chatGuid, resolvedPart),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
               decoration: hasBackground
@@ -122,9 +124,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
             child: MouseRegion(
               cursor: MouseCursor.defer,
               child: GestureDetector(
-                onTap: () {
-                  showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
-                },
+                onTap: () => _openReplyThread(context, chatGuid, resolvedPart),
                 behavior: HitTestBehavior.opaque,
                 child: IgnorePointer(
                   child: Row(
@@ -145,7 +145,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                           connectUpper: false,
                           connectLower: false,
                         ),
-                        child: controller.partById(widget.part) == null
+                        child: resolvedPart == null
                             ? Container(
                                 color: hasBackground
                                     ? context.theme.colorScheme.errorContainer.withValues(alpha: 0.4)
@@ -178,11 +178,11 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                     constraints: const BoxConstraints(maxHeight: 100),
                                     child: ReplyScope(
                                       child: InteractiveHolder(
-                                        message: part,
+                                        message: resolvedPart,
                                       ),
                                     ),
                                   )
-                                : part.attachments.isEmpty
+                                : resolvedPart.attachments.isEmpty
                                     ? Container(
                                         color: hasBackground
                                             ? (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor())
@@ -209,7 +209,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                             child: FutureBuilder<List<InlineSpan>>(
                                                 future: buildEnrichedMessageSpans(
                                                   context,
-                                                  part,
+                                                  resolvedPart,
                                                   message,
                                                   colorOverride: (message.isFromMe!
                                                           ? context.theme.colorScheme.primary
@@ -218,7 +218,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                                 ),
                                                 initialData: buildMessageSpans(
                                                   context,
-                                                  part,
+                                                  resolvedPart,
                                                   message,
                                                   colorOverride: (message.isFromMe!
                                                           ? context.theme.colorScheme.primary
@@ -242,7 +242,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                         constraints: const BoxConstraints(maxHeight: 100),
                                         child: ReplyScope(
                                           child: AttachmentHolder(
-                                            message: part,
+                                            message: resolvedPart,
                                           ),
                                         ),
                                       ),
