@@ -288,7 +288,6 @@ flutter:
     - assets/images/person.png
     - assets/images/person64.png
     - assets/images/transparent.png
-    - assets/images/no-video-preview.png
     - assets/images/unplayable-video.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
