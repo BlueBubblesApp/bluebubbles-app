@@ -20,6 +20,8 @@ const List<SyncTimeRangeOption> defaultSyncTimeRangeOptions = [
   SyncTimeRangeOption(label: "1 Month", duration: Duration(days: 30)),
   SyncTimeRangeOption(label: "6 Months", duration: Duration(days: 182)),
   SyncTimeRangeOption(label: "1 Year", duration: Duration(days: 365)),
+  SyncTimeRangeOption(label: "3 Years", duration: Duration(days: 365 * 3)),
+  SyncTimeRangeOption(label: "All Time", duration: Duration(days: 365 * 100)),
 ];
 
 /// Shows a dialog for selecting a time range to sync messages.

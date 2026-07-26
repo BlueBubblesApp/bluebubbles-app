@@ -192,7 +192,7 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
                 right: 8,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: context.theme.colorScheme.surface.withValues(alpha: 0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(40),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

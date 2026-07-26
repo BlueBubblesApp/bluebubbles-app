@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -12,6 +13,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:pull_down_button/pull_down_button.dart';
 import 'package:universal_io/io.dart';
 
 class ContactTile extends StatelessWidget {
@@ -187,80 +189,7 @@ class ContactTile extends StatelessWidget {
             handle: handle,
             borderThickness: 0.1,
           ),
-          trailing: kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && !hasPhones)
-              ? Container(width: 2)
-              : FittedBox(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      if ((contact == null && isEmail) || hasEmails)
-                        ButtonTheme(
-                          minWidth: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              shape: const CircleBorder(),
-                              backgroundColor: SettingsSvc.settings.skin.value != Skins.iOS
-                                  ? null
-                                  : context.theme.colorScheme.secondary,
-                            ),
-                            onLongPress: () =>
-                                showAddressPicker(contact, handle, context, isEmail: true, isLongPressed: true),
-                            onPressed: () => showAddressPicker(contact, handle, isEmail: true, context),
-                            child: Icon(
-                                SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
-                                color: SettingsSvc.settings.skin.value != Skins.iOS
-                                    ? context.theme.colorScheme.onSurface
-                                    : context.theme.colorScheme.onSecondary,
-                                size: SettingsSvc.settings.skin.value != Skins.iOS ? 25 : 20),
-                          ),
-                        ),
-                      if (((contact == null && !isEmail) || hasPhones) && !kIsWeb && !kIsDesktop)
-                        ButtonTheme(
-                          minWidth: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              shape: const CircleBorder(),
-                              backgroundColor: SettingsSvc.settings.skin.value != Skins.iOS
-                                  ? null
-                                  : context.theme.colorScheme.secondary,
-                            ),
-                            onLongPress: () => showAddressPicker(contact, handle, context, isLongPressed: true),
-                            onPressed: () => showAddressPicker(contact, handle, context),
-                            child: Icon(
-                                SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.phone : Icons.call,
-                                color: SettingsSvc.settings.skin.value != Skins.iOS
-                                    ? context.theme.colorScheme.onSurface
-                                    : context.theme.colorScheme.onSecondary,
-                                size: SettingsSvc.settings.skin.value != Skins.iOS ? 25 : 20),
-                          ),
-                        ),
-                      if (((contact == null && !isEmail) || hasPhones) && !kIsWeb && !kIsDesktop)
-                        ButtonTheme(
-                          minWidth: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              shape: const CircleBorder(),
-                              backgroundColor: SettingsSvc.settings.skin.value != Skins.iOS
-                                  ? null
-                                  : context.theme.colorScheme.secondary,
-                            ),
-                            onLongPress: () =>
-                                showAddressPicker(contact, handle, context, isLongPressed: true, video: true),
-                            onPressed: () => showAddressPicker(contact, handle, context, video: true),
-                            child: Icon(
-                                SettingsSvc.settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.video_camera
-                                    : Icons.video_call_outlined,
-                                color: SettingsSvc.settings.skin.value != Skins.iOS
-                                    ? context.theme.colorScheme.onSurface
-                                    : context.theme.colorScheme.onSecondary,
-                                size: SettingsSvc.settings.skin.value != Skins.iOS ? 25 : 20),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+          trailing: _buildTrailing(context, contact: contact, isEmail: isEmail),
         ),
       );
 
@@ -282,5 +211,151 @@ class ContactTile extends StatelessWidget {
             )
           : child;
     });
+  }
+
+  Widget _buildTrailing(BuildContext context, {required ContactV2? contact, required bool isEmail}) {
+    if (kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && !hasPhones)) {
+      return Container(width: 2);
+    }
+
+    final bool showEmail = (contact == null && isEmail) || hasEmails;
+    final bool showPhone = ((contact == null && !isEmail) || hasPhones) && !kIsWeb && !kIsDesktop;
+    final bool showVideo = showPhone;
+
+    if (!showEmail && !showPhone && !showVideo) {
+      return Container(width: 2);
+    }
+
+    if (SettingsSvc.settings.skin.value == Skins.iOS) {
+      return _buildCupertinoMenu(
+        context,
+        contact: contact,
+        showEmail: showEmail,
+        showPhone: showPhone,
+        showVideo: showVideo,
+      );
+    }
+
+    return _buildMaterialMenu(
+      context,
+      contact: contact,
+      showEmail: showEmail,
+      showPhone: showPhone,
+      showVideo: showVideo,
+    );
+  }
+
+  Widget _buildCupertinoMenu(
+    BuildContext context, {
+    required ContactV2? contact,
+    required bool showEmail,
+    required bool showPhone,
+    required bool showVideo,
+  }) {
+    final itemTheme = PullDownMenuItemTheme(
+      textStyle: TextStyle(
+        color: context.theme.colorScheme.onSurface,
+      ),
+      onHoverTextColor: context.theme.colorScheme.onSurface,
+      onHoverBackgroundColor: context.theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+    );
+
+    return PullDownButton(
+      routeTheme: PullDownMenuRouteTheme(
+        backgroundColor: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
+      ),
+      itemBuilder: (context) => [
+        if (showEmail)
+          PullDownMenuItem(
+            itemTheme: itemTheme,
+            title: 'Email',
+            icon: CupertinoIcons.mail,
+            onTap: () => showAddressPicker(contact, handle, isEmail: true, context),
+          ),
+        if (showPhone)
+          PullDownMenuItem(
+            itemTheme: itemTheme,
+            title: 'Call',
+            icon: CupertinoIcons.phone,
+            onTap: () => showAddressPicker(contact, handle, context),
+          ),
+        if (showVideo)
+          PullDownMenuItem(
+            itemTheme: itemTheme,
+            title: 'FaceTime',
+            icon: CupertinoIcons.video_camera,
+            onTap: () => showAddressPicker(contact, handle, context, video: true),
+          ),
+      ],
+      buttonBuilder: (context, showMenu) => ClipOval(
+        child: Material(
+          color: context.theme.colorScheme.secondary,
+          child: SizedBox(
+            width: 30,
+            height: 30,
+            child: InkWell(
+              onTap: showMenu,
+              child: Icon(
+                CupertinoIcons.ellipsis,
+                color: context.theme.colorScheme.onSecondary,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaterialMenu(
+    BuildContext context, {
+    required ContactV2? contact,
+    required bool showEmail,
+    required bool showPhone,
+    required bool showVideo,
+  }) {
+    return AnimatedDropdownMenu(
+      trigger: (context, showMenu) => ClipOval(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: showMenu,
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: Icon(
+                Icons.more_vert,
+                color: context.theme.colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      ),
+      menuBuilder: (overlayContext, hideMenu) => DropdownMenuCard(
+        width: 180,
+        children: [
+          if (showEmail)
+            MenuItemRow(
+              icon: Icons.email_outlined,
+              label: 'Email',
+              onTap: () => hideMenu().then((_) => showAddressPicker(contact, handle, isEmail: true, overlayContext)),
+            ),
+          if (showPhone)
+            MenuItemRow(
+              icon: Icons.call_outlined,
+              label: 'Call',
+              onTap: () => hideMenu().then((_) => showAddressPicker(contact, handle, overlayContext)),
+            ),
+          if (showVideo)
+            MenuItemRow(
+              icon: Icons.video_call_outlined,
+              label: 'Video',
+              onTap: () => hideMenu().then((_) => showAddressPicker(contact, handle, overlayContext, video: true)),
+            ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
   }
 }
