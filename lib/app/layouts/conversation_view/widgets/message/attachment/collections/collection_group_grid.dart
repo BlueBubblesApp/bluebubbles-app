@@ -121,14 +121,20 @@ class CollectionGroupGrid extends StatelessWidget {
         count: count,
         gridWidth: gridWidth,
         showGapDividers: false,
-        cellBuilder: (index, width, height, _) => CollectionAttachmentReactions(
-          collectionPart: messagePart,
-          attachmentIndex: index,
-          alignTrailing: true,
-          tailType: SettingsSvc.settings.skin.value == Skins.iOS
-              ? ReactionTailType.inside
-              : ReactionTailType.standard,
-        ),
+        cellBuilder: (index, width, height, cellMoreCount) {
+          // Overflow "+N" cell is a see-more control, not attachment 4 — hide its tapbacks.
+          if (cellMoreCount != null && cellMoreCount > 0) {
+            return const SizedBox.shrink();
+          }
+          return CollectionAttachmentReactions(
+            collectionPart: messagePart,
+            attachmentIndex: index,
+            alignTrailing: true,
+            tailType: SettingsSvc.settings.skin.value == Skins.iOS
+                ? ReactionTailType.inside
+                : ReactionTailType.standard,
+          );
+        },
         moreCount: moreCount,
       ),
     );
