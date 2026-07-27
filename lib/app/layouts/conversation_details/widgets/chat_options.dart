@@ -211,18 +211,17 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                   onTap: () => NavigationSvc.push(context, ChatStatsPage(chat: chat)),
                 ),
               const SettingsDivider(),
-              if (iOS)
-                SettingsTile(
-                    title: "View Bookmarks",
-                    subtitle: "See your bookmarked messages",
-                    backgroundColor: tileColor,
-                    trailing: Padding(
-                      padding: const EdgeInsets.only(right: 15.0),
-                      child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
-                    ),
-                    onTap: () async {
-                      showBookmarksThread(cvc(widget.chat), context);
-                    }),
+              SettingsTile(
+                  title: "View Bookmarks",
+                  subtitle: "See your bookmarked messages",
+                  backgroundColor: tileColor,
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right: 15.0),
+                    child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
+                  ),
+                  onTap: () async {
+                    showBookmarksThread(cvc(widget.chat), context);
+                  }),
               const SettingsDivider(),
               SettingsTile(
                   title: "Fetch Chat Details",
@@ -647,10 +646,57 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                   onTap: () => _showCancelConfirmation(context),
                 );
               }),
+              if (chat.handles.length > 2 &&
+                  SettingsSvc.settings.enablePrivateAPI.value &&
+                  SettingsSvc.serverDetails.supportsGroupChatManagement)
+                const SettingsDivider(),
+              if (chat.handles.length > 2 &&
+                  SettingsSvc.settings.enablePrivateAPI.value &&
+                  SettingsSvc.serverDetails.supportsGroupChatManagement)
+                SettingsTile(
+                  title: "Leave Chat",
+                  subtitle: "You will no longer receive messages from this group",
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right: 15.0),
+                    child: Icon(
+                      iOS ? CupertinoIcons.arrow_right_square : Icons.logout,
+                      color: context.theme.colorScheme.error,
+                    ),
+                  ),
+                  onTap: () => _leaveChat(context),
+                ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _leaveChat(BuildContext context) async {
+    await showAreYouSure(
+      context,
+      title: "Leave Chat?",
+      content: const Text(
+          "Are you sure you want to leave this chat? You will no longer receive messages from this group."),
+      yesText: "Leave",
+      yesColor: context.theme.colorScheme.error,
+      onNo: () => Navigator.of(context, rootNavigator: true).pop(),
+      onYes: () async {
+        Navigator.of(context, rootNavigator: true).pop();
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const BBProgressDialog(title: "Leaving chat..."),
+        );
+        final response = await HttpSvc.chat.leave(chat.guid);
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        if (response.statusCode == 200) {
+          showSnackbar("Notice", "Left chat successfully!");
+        } else {
+          showSnackbar("Error", "Failed to leave chat!");
+        }
+      },
     );
   }
 

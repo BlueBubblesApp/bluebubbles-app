@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_attachments.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/attachment_section_header.dart';
@@ -20,6 +21,7 @@ class MediaGridSection extends StatefulWidget {
   final RxList<String> selected;
   final bool isLoading;
   final bool fullPage;
+  final bool expressive;
   final int? crossAxisCount;
   final MediaFilter mediaFilter;
   final MediaSenderFilter senderFilter;
@@ -33,6 +35,7 @@ class MediaGridSection extends StatefulWidget {
     required this.selected,
     required this.isLoading,
     this.fullPage = false,
+    this.expressive = false,
     this.crossAxisCount,
     this.mediaFilter = MediaFilter.all,
     this.senderFilter = const MediaSenderFilter.any(),
@@ -88,6 +91,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   int get _gridCrossAxisCount {
     if (widget.crossAxisCount != null) return widget.crossAxisCount!;
+    if (widget.expressive) return expressiveMediaCrossAxisCount(NavigationSvc.width(context));
     return max(2, NavigationSvc.width(context) ~/ 200);
   }
 
@@ -100,60 +104,65 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   Widget _buildGridItem(BuildContext context, int index) {
     final attachment = _filteredMedia[index];
-    return Obx(() => AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: EdgeInsets.all(
-            widget.selected.contains(attachment.guid) ? 10 : 0,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: GestureDetector(
-            onTap: widget.selected.isNotEmpty
-                ? () {
-                    if (widget.selected.contains(attachment.guid)) {
-                      widget.selected.remove(attachment.guid!);
-                    } else {
-                      widget.selected.add(attachment.guid!);
-                    }
+    return Obx(() {
+      final isSelected = widget.selected.contains(attachment.guid);
+      const legacyMotion = M3EMotionSpec(Duration(milliseconds: 250), Curves.linear);
+      final motion = widget.expressive ? M3EMotion.spatialFast : legacyMotion;
+      return AnimatedContainer(
+        duration: motion.duration,
+        curve: motion.curve,
+        margin: EdgeInsets.all(isSelected ? 10 : 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.expressive && isSelected ? M3EShapes.md : 20),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: GestureDetector(
+          onTap: widget.selected.isNotEmpty
+              ? () {
+                  if (widget.selected.contains(attachment.guid)) {
+                    widget.selected.remove(attachment.guid!);
+                  } else {
+                    widget.selected.add(attachment.guid!);
                   }
-                : null,
-            onLongPress: () {
-              if (widget.selected.contains(attachment.guid)) {
-                widget.selected.remove(attachment.guid!);
-              } else {
-                widget.selected.add(attachment.guid!);
-              }
-            },
-            child: AbsorbPointer(
-              absorbing: widget.selected.isNotEmpty,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  MediaGalleryCard(
-                    attachment: attachment,
-                  ),
-                  if (widget.selected.contains(attachment.guid))
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.theme.colorScheme.primary,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: Icon(
-                          iOS ? CupertinoIcons.check_mark : Icons.check,
-                          color: context.theme.colorScheme.onPrimary,
-                          size: 18,
-                        ),
+                }
+              : null,
+          onLongPress: () {
+            if (widget.selected.contains(attachment.guid)) {
+              widget.selected.remove(attachment.guid!);
+            } else {
+              widget.selected.add(attachment.guid!);
+            }
+          },
+          child: AbsorbPointer(
+            absorbing: widget.selected.isNotEmpty,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                MediaGalleryCard(
+                  attachment: attachment,
+                  expressive: widget.expressive,
+                ),
+                if (isSelected)
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context.theme.colorScheme.primary,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Icon(
+                        iOS ? CupertinoIcons.check_mark : Icons.check,
+                        color: context.theme.colorScheme.onPrimary,
+                        size: 18,
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
-        ));
+        ),
+      );
+    });
   }
 
   @override
@@ -162,11 +171,16 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
+    final hideWhenEmpty = widget.expressive && !widget.fullPage && !widget.isLoading && _filteredMedia.isEmpty;
+
     final slivers = <Widget>[
       if (!widget.fullPage)
         SliverToBoxAdapter(
           child: AttachmentSectionHeader(
-            title: AttachmentSectionType.media.sectionLabel,
+            title: widget.expressive
+                ? AttachmentSectionType.media.expressiveSectionLabel
+                : AttachmentSectionType.media.sectionLabel,
+            expressive: widget.expressive,
             onShowMore: () {
               widget.selected.clear();
               ConversationAttachments.open(
@@ -192,6 +206,14 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
             child: Center(child: buildProgressIndicator(context, size: 24)),
           ),
         )
+      else if (hideWhenEmpty)
+        SliverToBoxAdapter(
+          child: AnimatedSize(
+            duration: M3EMotion.spatialFast.duration,
+            curve: M3EMotion.spatialFast.curve,
+            child: const SizedBox.shrink(),
+          ),
+        )
       else if (_filteredMedia.isEmpty)
         SliverToBoxAdapter(
           child: Padding(
@@ -211,6 +233,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
               padding: attachmentSectionListPadding(
                 fullPage: widget.fullPage,
                 iOS: SettingsSvc.settings.skin.value == Skins.iOS,
+                expressive: widget.expressive,
                 top: widget.fullPage ? 10 : 0,
               ),
               sliver: SliverGrid(

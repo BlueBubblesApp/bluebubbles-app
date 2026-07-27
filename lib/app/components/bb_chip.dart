@@ -24,6 +24,9 @@ class BBChip extends StatelessWidget {
 
   final TextStyle? labelStyle;
 
+  /// Corner radius override — defaults to `BorderRadius.circular(20)`.
+  final BorderRadius? borderRadius;
+
   const BBChip({
     super.key,
     required this.label,
@@ -39,6 +42,7 @@ class BBChip extends StatelessWidget {
     this.selectedColor,
     this.backgroundColor,
     this.labelStyle,
+    this.borderRadius,
   });
 
   @override
@@ -51,7 +55,7 @@ class BBChip extends StatelessWidget {
             ? (selectedColor ?? context.theme.colorScheme.primary)
             : context.theme.colorScheme.outline.withValues(alpha: 0.1),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: borderRadius ?? BorderRadius.circular(20)),
       avatar: avatar,
       label: label,
       labelStyle: labelStyle,

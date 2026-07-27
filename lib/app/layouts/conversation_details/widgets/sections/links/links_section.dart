@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_attachments.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/attachment_section_header.dart';
@@ -20,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 class LinksSection extends StatefulWidget {
   final Chat chat;
   final bool fullPage;
+  final bool expressive;
   final MediaSenderFilter senderFilter;
   final DateTime? sinceDate;
 
@@ -27,6 +29,7 @@ class LinksSection extends StatefulWidget {
     super.key,
     required this.chat,
     this.fullPage = false,
+    this.expressive = false,
     this.senderFilter = const MediaSenderFilter.any(),
     this.sinceDate,
   });
@@ -130,12 +133,15 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
     if (_displayedLinks[index].payloadData?.urlData?.firstOrNull == null) {
       return const Text("Failed to load link!");
     }
+    final radius = widget.expressive ? M3EShapes.lg : 20.0;
     return Material(
-      color: context.theme.colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(20),
+      color: widget.expressive
+          ? context.tileColor.themeLightenOrDarken(context, 6)
+          : context.theme.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(radius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(radius),
         onTap: () async {
           final data = _displayedLinks[index].payloadData!.urlData!.first;
           if ((data.url ?? data.originalUrl) == null) return;
@@ -159,12 +165,17 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
+    final hideWhenEmpty = widget.expressive && !widget.fullPage && !_isLoading && _displayedLinks.isEmpty;
+
     return SliverMainAxisGroup(
       slivers: [
         if (!widget.fullPage)
           SliverToBoxAdapter(
             child: AttachmentSectionHeader(
-              title: AttachmentSectionType.links.sectionLabel,
+              title: widget.expressive
+                  ? AttachmentSectionType.links.expressiveSectionLabel
+                  : AttachmentSectionType.links.sectionLabel,
+              expressive: widget.expressive,
               onShowMore: () => ConversationAttachments.open(
                 context,
                 chat: widget.chat,
@@ -189,6 +200,14 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
               child: Center(child: buildProgressIndicator(context, size: 24)),
             ),
           )
+        else if (hideWhenEmpty)
+          SliverToBoxAdapter(
+            child: AnimatedSize(
+              duration: M3EMotion.spatialFast.duration,
+              curve: M3EMotion.spatialFast.curve,
+              child: const SizedBox.shrink(),
+            ),
+          )
         else if (_displayedLinks.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
@@ -208,6 +227,7 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
                 padding: attachmentSectionListPadding(
                   fullPage: widget.fullPage,
                   iOS: SettingsSvc.settings.skin.value == Skins.iOS,
+                  expressive: widget.expressive,
                   top: widget.fullPage ? 10 : 0,
                 ),
                 sliver: SliverToBoxAdapter(

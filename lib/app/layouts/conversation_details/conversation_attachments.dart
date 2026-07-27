@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/attachments_loader.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/filters/media_filters_sheet.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/documents/documents_section.dart';
@@ -12,7 +13,6 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
 class ConversationAttachments extends StatefulWidget {
@@ -123,49 +123,19 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
     return ChatStateScope(
       chatState: chatState,
       child: Obx(() {
-        final isDark = ThemeSvc.inDarkMode(context);
-        chatState.themeVersion.value;
-        final themeName = isDark ? chatState.customThemeDark.value : chatState.customThemeLight.value;
-        final baseTheme = ThemeStruct.resolveByName(themeName, isDark ? Brightness.dark : Brightness.light).data;
-
-        final hasWindowEffect = SettingsSvc.settings.windowEffect.value != WindowEffect.disabled;
-        final reverseMapping = SettingsSvc.settings.skin.value == Skins.Material && isDark;
-        final rawHeaderColor = (isDark ? baseTheme.colorScheme.surface : baseTheme.colorScheme.surfaceContainerHighest)
-            .withAlpha(hasWindowEffect ? 20 : 255);
-        final rawTileColor = (isDark ? baseTheme.colorScheme.surfaceContainerHighest : baseTheme.colorScheme.surface)
-            .withAlpha(hasWindowEffect ? 100 : 255);
-        final scaffoldHeaderColor = reverseMapping ? rawTileColor : rawHeaderColor;
-        final scaffoldTileColor = reverseMapping ? rawHeaderColor : rawTileColor;
-
-        final bubbleColors = baseTheme.extensions[BubbleColors] as BubbleColors?;
-        final bubbleColor = widget.chat.isIMessage
-            ? bubbleColors?.iMessageBubbleColor ?? baseTheme.colorScheme.iMessageBubble
-            : bubbleColors?.smsBubbleColor ?? baseTheme.colorScheme.smsBubble;
-        final onBubbleColor = widget.chat.isIMessage
-            ? bubbleColors?.oniMessageBubbleColor ?? baseTheme.colorScheme.oniMessageBubble
-            : bubbleColors?.onSmsBubbleColor ?? baseTheme.colorScheme.onSmsBubble;
-        final useGeneratedThemeSurface = themeName != null
-            ? ThemesService.isGeneratedMaterialThemeName(themeName)
-            : ThemeSvc.isMaterialYouActive(context);
+        final chatDetailTheme = ChatDetailTheme.resolve(context, widget.chat);
 
         return Theme(
-          data: baseTheme.copyWith(
-            primaryColor: bubbleColor,
-            colorScheme: baseTheme.colorScheme.copyWith(
-              primary: bubbleColor,
-              onPrimary: onBubbleColor,
-              surface: useGeneratedThemeSurface ? null : bubbleColors?.receivedBubbleColor,
-              onSurface: useGeneratedThemeSurface ? null : bubbleColors?.onReceivedBubbleColor,
-            ),
-          ),
+          data: chatDetailTheme.theme,
           child: Obx(() => SettingsScaffold(
-                headerColor: scaffoldHeaderColor,
+                headerColor: chatDetailTheme.headerColor,
                 title: widget.section.pageTitle,
-                tileColor: scaffoldTileColor,
+                tileColor: chatDetailTheme.tileColor,
                 initialHeader: null,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
-                actions: _buildAppBarActions(context, scaffoldTileColor),
+                expressive: SettingsSvc.settings.skin.value != Skins.iOS,
+                actions: _buildAppBarActions(context, chatDetailTheme.tileColor),
                 bodySlivers: [
                   if (isLoadingAttachments)
                     SliverToBoxAdapter(
@@ -184,6 +154,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
   }
 
   List<Widget> _buildSectionSlivers() {
+    final expressive = SettingsSvc.settings.skin.value != Skins.iOS;
     switch (widget.section) {
       case AttachmentSectionType.media:
         return [
@@ -193,6 +164,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             selected: selected,
             isLoading: isLoadingAttachments,
             fullPage: true,
+            expressive: expressive,
             crossAxisCount: 3,
             mediaFilter: _filters.mediaFilter,
             senderFilter: _filters.senderFilter,
@@ -205,6 +177,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
           LinksSection(
             chat: widget.chat,
             fullPage: true,
+            expressive: expressive,
             senderFilter: _filters.senderFilter,
             sinceDate: _filters.sinceDate,
           ),
@@ -216,6 +189,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             locations: locations,
             isLoading: isLoadingAttachments,
             fullPage: true,
+            expressive: expressive,
             filters: _filters,
           ),
         ];
@@ -226,6 +200,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             docs: docs,
             isLoading: isLoadingAttachments,
             fullPage: true,
+            expressive: expressive,
             filters: _filters,
           ),
         ];
@@ -246,6 +221,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.media,
+              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
           Obx(() {
@@ -288,6 +264,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.none,
+              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];
@@ -303,6 +280,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.files,
+              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];
@@ -318,6 +296,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.none,
+              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];

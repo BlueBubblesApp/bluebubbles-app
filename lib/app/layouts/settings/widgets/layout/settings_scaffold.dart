@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e_motion.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
@@ -22,6 +23,8 @@ class SettingsScaffold extends StatelessWidget {
   final Widget? stickySuffix;
   final Widget? fab;
   final Widget? leading;
+  final bool expressive;
+  final bool minimalAppBar;
 
   SettingsScaffold({
     super.key,
@@ -37,7 +40,17 @@ class SettingsScaffold extends StatelessWidget {
     this.stickySuffix,
     this.fab,
     this.leading,
+    this.expressive = false,
+    this.minimalAppBar = false,
   });
+
+  bool get _expressiveMaterial => expressive && SettingsSvc.settings.skin.value == Skins.Material;
+
+  /// Expressive Material with no title bar at all — just a bare back button above the
+  /// content, mirroring Android Contacts' profile page rather than a titled `SliverAppBar`.
+  bool get _minimalMaterial => _expressiveMaterial && minimalAppBar;
+
+  bool get _expressiveSamsung => expressive && SettingsSvc.settings.skin.value == Skins.Samsung;
 
   bool get extend => actions.isNotEmpty && kIsDesktop;
 
@@ -48,7 +61,7 @@ class SettingsScaffold extends StatelessWidget {
 
     final widgetTree = BBScaffold(
       backgroundColor: SettingsSvc.settings.skin.value == Skins.Material ? tileColor : headerColor,
-      appBar: SettingsSvc.settings.skin.value == Skins.Samsung
+      appBar: SettingsSvc.settings.skin.value == Skins.Samsung || _expressiveMaterial
           ? null
           : BBAppBar(
               titleText: title,
@@ -59,6 +72,7 @@ class SettingsScaffold extends StatelessWidget {
             ),
       floatingActionButton: fab,
       extendBodyBehindAppBar: false,
+      safeAreaTop: _minimalMaterial,
       body: NotificationListener<ScrollEndNotification>(
         onNotification: (_) {
           if (SettingsSvc.settings.skin.value != Skins.Samsung || kIsWeb || kIsDesktop) return false;
@@ -68,8 +82,10 @@ class SettingsScaffold extends StatelessWidget {
               controller.offset != controller.position.maxScrollExtent) {
             final double snapOffset = controller.offset / scrollDistance > 0.5 ? scrollDistance : 0;
 
-            Future.microtask(() =>
-                controller.animateTo(snapOffset, duration: const Duration(milliseconds: 200), curve: Curves.linear));
+            Future.microtask(() => controller.animateTo(
+                snapOffset,
+                duration: _expressiveSamsung ? M3EMotion.spatialDefault.duration : const Duration(milliseconds: 200),
+                curve: _expressiveSamsung ? M3EMotion.spatialDefault.curve : Curves.linear));
           }
           return false;
         },
@@ -88,6 +104,30 @@ class SettingsScaffold extends StatelessWidget {
                       shrinkWrap: true,
                       physics: ThemeSwitcher.getScrollPhysics(),
                       slivers: <Widget>[
+                        if (_minimalMaterial)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 4),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: leading ?? buildBackButton(context),
+                              ),
+                            ),
+                          ),
+                        if (_expressiveMaterial && !minimalAppBar)
+                          SliverAppBar.large(
+                            title: Text(
+                              title,
+                              style: context.theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            leading: leading ?? buildBackButton(context),
+                            actions: actions,
+                            backgroundColor: headerColor,
+                            surfaceTintColor: context.theme.colorScheme.surfaceTint,
+                            scrolledUnderElevation: 3,
+                            pinned: true,
+                            automaticallyImplyLeading: false,
+                          ),
                         if (SettingsSvc.settings.skin.value == Skins.Samsung)
                           SliverAppBar(
                             backgroundColor: headerColor,
@@ -109,18 +149,22 @@ class SettingsScaffold extends StatelessWidget {
                                     FadeTransition(
                                       opacity: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
                                         parent: animation,
-                                        curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
+                                        curve: Interval(0.3, 1.0,
+                                            curve: _expressiveSamsung ? M3EMotion.spatialDefault.curve : Curves.easeIn),
                                       )),
                                       child: Center(
                                           child: Text(title,
-                                              style: context.theme.textTheme.displaySmall!
-                                                  .copyWith(color: context.theme.colorScheme.onSurface),
+                                              style: context.theme.textTheme.displaySmall!.copyWith(
+                                                  color: context.theme.colorScheme.onSurface,
+                                                  fontWeight: _expressiveSamsung ? FontWeight.w700 : null),
                                               textAlign: TextAlign.center)),
                                     ),
                                     FadeTransition(
                                       opacity: Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
                                         parent: animation,
-                                        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+                                        curve: Interval(0.0, 0.7,
+                                            curve:
+                                                _expressiveSamsung ? M3EMotion.spatialDefault.curve : Curves.easeOut),
                                       )),
                                       child: Align(
                                         alignment: Alignment.bottomLeft,

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e_section.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -10,12 +11,14 @@ class SettingsSection extends StatelessWidget {
   // group searchable settings into a rounded rectangle
   final List<SearchableSettingItem>? searchableSettingsItems;
   final Color backgroundColor;
+  final bool expressive;
 
   const SettingsSection({
     super.key,
     this.children,
     required this.backgroundColor,
     this.searchableSettingsItems,
+    this.expressive = false,
   });
 
   @override
@@ -39,6 +42,16 @@ class SettingsSection extends StatelessWidget {
     // If no children, hide section
     if (displayedChildren.isEmpty) {
       return const SizedBox.shrink();
+    }
+
+    if (expressive && SettingsSvc.settings.skin.value != Skins.iOS) {
+      // Strip interleaved SettingsDividers - they're SizedBox.shrink() off-iOS but would
+      // still occupy an index and corrupt M3EShapes.grouped()'s corner sequence.
+      final m3eChildren = displayedChildren.where((child) => child is! SettingsDivider).toList(growable: false);
+      return M3ESection(
+        backgroundColor: backgroundColor,
+        children: m3eChildren,
+      );
     }
 
     // Always return section container

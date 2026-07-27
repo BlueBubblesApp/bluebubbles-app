@@ -13,7 +13,8 @@ enum AttachmentSectionType {
 const int kAttachmentPreviewLimit = 6;
 
 /// Horizontal inset for attachment section list/grid content.
-int attachmentSectionHorizontalPadding({required bool fullPage, required bool iOS}) {
+int attachmentSectionHorizontalPadding({required bool fullPage, required bool iOS, bool expressive = false}) {
+  if (expressive) return 16;
   if (fullPage) return iOS ? 12 : 8;
   return iOS ? 20 : 10;
 }
@@ -21,11 +22,20 @@ int attachmentSectionHorizontalPadding({required bool fullPage, required bool iO
 EdgeInsets attachmentSectionListPadding({
   required bool fullPage,
   required bool iOS,
+  bool expressive = false,
   double top = 0,
   double bottom = 10,
 }) {
-  final inset = attachmentSectionHorizontalPadding(fullPage: fullPage, iOS: iOS).toDouble();
+  final inset = attachmentSectionHorizontalPadding(fullPage: fullPage, iOS: iOS, expressive: expressive).toDouble();
   return EdgeInsets.only(left: inset, right: inset, top: top, bottom: bottom);
+}
+
+/// Media grid column count by Material window size class (compact / medium / expanded),
+/// used by the expressive attachment sections instead of `max(2, width ~/ 200)`.
+int expressiveMediaCrossAxisCount(double width) {
+  if (width < 600) return 2;
+  if (width < 840) return 3;
+  return 4;
 }
 
 enum MediaFilter {
@@ -304,6 +314,20 @@ extension AttachmentSectionTypeLabels on AttachmentSectionType {
         return "Locations";
       case AttachmentSectionType.documents:
         return "Other Files";
+    }
+  }
+
+  /// Sentence case label for expressive (Material/Samsung) section headers.
+  String get expressiveSectionLabel {
+    switch (this) {
+      case AttachmentSectionType.media:
+        return "Photos & videos";
+      case AttachmentSectionType.links:
+        return "Links";
+      case AttachmentSectionType.locations:
+        return "Locations";
+      case AttachmentSectionType.documents:
+        return "Files";
     }
   }
 }
