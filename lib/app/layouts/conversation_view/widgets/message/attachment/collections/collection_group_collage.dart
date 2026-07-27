@@ -73,11 +73,9 @@ class CollectionGroupCollage extends StatelessWidget {
           for (int i = 0; i < _attachments.length; i++)
             Positioned(
               top: tops[i],
-              // Pin to the author edge so swipe-to-reply can grow the chevron toward
-              // center beside the card (Clip.none).
-              left: isFromMe ? null : (i.isOdd ? _horizontalStagger : 0.0),
-              right: isFromMe ? (i.isOdd ? _horizontalStagger : 0.0) : null,
-              child: _buildCard(messageState, collectionController, i, cardWidth, heights[i]),
+              left: isFromMe ? null : (i.isEven ? _horizontalStagger : 0.0),
+              right: isFromMe ? (i.isEven ? _horizontalStagger : 0.0) : null,
+              child: _buildCard(messageState, collectionController, i, cardWidth, heights[i], isFromMe),
             ),
         ],
       ),
@@ -98,9 +96,11 @@ class CollectionGroupCollage extends StatelessWidget {
     int index,
     double cardWidth,
     double cardHeight,
+    bool isFromMe,
   ) {
+    // Odd cards tilt toward the screen edge (left for fromOther, right for fromMe).
     return Transform.rotate(
-      angle: index.isOdd ? _cardTiltRad : -_cardTiltRad,
+      angle: (index.isOdd == isFromMe ? 1 : -1) * _cardTiltRad,
       child: CollectionAttachmentCard(
         controller: messageState,
         cvController: cvController,
