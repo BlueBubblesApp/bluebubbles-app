@@ -87,10 +87,8 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                       width: 1.5,
                     ),
               child: Ink(
-                color: iOS
-                    ? ((context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
-                        context.theme.colorScheme.surfaceContainerHighest)
-                    : null,
+                color: (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
+                    context.theme.colorScheme.surfaceContainerHighest,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: NavigationSvc.width(context) * (NavigationSvc.isTabletMode(context) ? 0.5 : 0.6),
