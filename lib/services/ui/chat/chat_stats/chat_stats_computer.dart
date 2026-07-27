@@ -43,6 +43,7 @@ OverviewStats computeOverview({
   required Map<int, List<int>> byParticipant,
   required int attachments,
   required int unattributedCount,
+  int? firstTrackedMessageMillis,
 }) {
   int total = 0;
   final leaderboard = <ParticipantCount>[];
@@ -131,6 +132,7 @@ OverviewStats computeOverview({
     leaderboard: leaderboard,
     firstMessageMillis: firstMillis,
     lastMessageMillis: lastMillis,
+    firstTrackedMessageMillis: firstTrackedMessageMillis,
   );
 }
 
@@ -481,7 +483,15 @@ const _kStopwords = {
   // constantly but tells you nothing about what a chat is actually about.
   'gonna', 'wanna', 'gotta', 'kinda', 'sorta', 'idk', 'omg', 'lmao', 'tbh', 'ngl', 'smh', 'btw', 'imo', 'rn',
   'dont', 'didnt', 'wasnt', 'cant', 'wont', 'isnt', 'arent', 'doesnt', 'couldnt', 'wouldnt', 'shouldnt', 'hasnt',
-  'havent', 'thats', 'whats', 'lets', 'ive', 'im', 'ill', 'youre', 'theyre',
+  'havent', 'thats', 'whats', 'lets', 'ive', 'im', 'ill', 'youre', 'theyre', 'did', 'too', 'also', 'even',
+  // Months
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+  // Days of the week
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  // Numeric
+  'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth',
+  // Common wordle-like words that are often used in chats where people share their daily scores
+  'wordle', 'worldle', 'maptap', 'connections', 'spotle', 'flagle', 'sportdle', 'quordle', 'musicle', 'brandle',
 };
 
 final _wordPattern = RegExp(r"[a-zA-Z']+");
@@ -492,6 +502,29 @@ Map<String, int> _countWords(Iterable<String> texts) {
     for (final match in _wordPattern.allMatches(text.toLowerCase())) {
       final w = match.group(0)!;
       if (w.length < 3 || _kStopwords.contains(w)) continue;
+      counts.update(w, (v) => v + 1, ifAbsent: () => 1);
+    }
+  }
+  return counts;
+}
+
+/// Curated curse-word vocabulary for the "Colorful Language" bar chart.
+/// Deliberately small and common-word-only — this isn't meant to be
+/// exhaustive, just enough to catch the words people actually swear with.
+/// Matched against whole tokens from [_wordPattern], so plurals/inflections
+/// not listed here (e.g. "shits") simply won't match; that's fine for a fun
+/// stat, not a moderation tool.
+const _kSwearWords = {
+  'fuck', 'fucking', 'fucked', 'fucker', 'fuckin', 'motherfucker', 'shit', 'shitty', 'shitting', 'bullshit',
+  'ass', 'asshole', 'damn', 'goddamn', 'hell', 'bitch', 'bastard', 'crap', 'piss', 'pissed', 'dick', 'bloody',
+};
+
+Map<String, int> _countVocabulary(Iterable<String> texts, Set<String> vocabulary) {
+  final counts = <String, int>{};
+  for (final text in texts) {
+    for (final match in _wordPattern.allMatches(text.toLowerCase())) {
+      final w = match.group(0)!;
+      if (!vocabulary.contains(w)) continue;
       counts.update(w, (v) => v + 1, ifAbsent: () => 1);
     }
   }
@@ -542,9 +575,16 @@ List<ParticipantLengthStats> _computeLengthLeaderboard(Map<int, List<int>> lengt
 ///
 /// A reaction added then removed produces two rows; the net (adds minus
 /// removals) is what's reported per type, never a negative count.
+///
+/// [comparisonParticipantId], when given, narrows "received" to reactions
+/// from just that one participant — rows from anyone else are dropped
+/// entirely rather than folded in, so the Content tab's comparison-target
+/// selector shows a true one-on-one breakdown. `null` keeps today's
+/// behavior of treating every non-me reactor as "received".
 ({Map<String, int> given, Map<String, int> received, int takenBack}) _normalizeReactions(
-  List<({String type, bool fromMe})> reactions,
-) {
+  List<({String type, int participantId})> reactions, {
+  int? comparisonParticipantId,
+}) {
   final addedGiven = <String, int>{};
   final addedReceived = <String, int>{};
   final removedGiven = <String, int>{};
@@ -554,7 +594,11 @@ List<ParticipantLengthStats> _computeLengthLeaderboard(Map<int, List<int>> lengt
     final isRemoval = r.type.startsWith('-');
     final normalized = r.type.replaceAll('-', '');
     if (!ReactionTypes.toList().contains(normalized)) continue; // stickers, etc.
-    final bucket = r.fromMe ? (isRemoval ? removedGiven : addedGiven) : (isRemoval ? removedReceived : addedReceived);
+    final fromMe = r.participantId == kMeParticipantId;
+    if (!fromMe && comparisonParticipantId != null && r.participantId != comparisonParticipantId) {
+      continue; // reacted by someone other than the selected comparison target
+    }
+    final bucket = fromMe ? (isRemoval ? removedGiven : addedGiven) : (isRemoval ? removedReceived : addedReceived);
     bucket.update(normalized, (v) => v + 1, ifAbsent: () => 1);
   }
 
@@ -576,16 +620,23 @@ ContentStats computeContent({
   required List<String> myTexts,
   required List<String> theirTexts,
   required Map<int, List<int>> lengthsByParticipant,
-  required List<({String type, bool fromMe})> reactions,
+  required List<({String type, int participantId})> reactions,
   required List<String> attachmentMimeTypes,
   required List<String> expressiveSendStyleIds,
   required int editedCount,
   required int unsentCount,
+  required int editedCountMine,
+  required int editedCountTheirs,
+  required int unsentCountMine,
+  required int unsentCountTheirs,
+  required int sentCountMine,
+  required int receivedCountTheirs,
   required int audioSent,
   required int audioReceived,
   required double? audioPlayedRatio,
   required double textCoverage,
   required bool windowed,
+  int? comparisonParticipantId,
 }) {
   final mineLength = _lengthStats(myTexts);
   final theirsLength = _lengthStats(theirTexts);
@@ -604,7 +655,7 @@ ContentStats computeContent({
       .toList()
     ..sort((a, b) => b.count.compareTo(a.count));
 
-  final reactionSummary = _normalizeReactions(reactions);
+  final reactionSummary = _normalizeReactions(reactions, comparisonParticipantId: comparisonParticipantId);
 
   final mimeCounts = <String, int>{};
   for (final m in attachmentMimeTypes) {
@@ -616,6 +667,12 @@ ContentStats computeContent({
   for (final id in expressiveSendStyleIds) {
     effectCounts.update(id, (v) => v + 1, ifAbsent: () => 1);
   }
+
+  final swearMine = _countVocabulary(myTexts, _kSwearWords);
+  final swearTheirs = _countVocabulary(theirTexts, _kSwearWords);
+  final swearKeys = {...swearMine.keys, ...swearTheirs.keys};
+  final topSwearWords = swearKeys.map((w) => SwearCount(w, swearMine[w] ?? 0, swearTheirs[w] ?? 0)).toList()
+    ..sort((a, b) => b.total.compareTo(a.total));
 
   return ContentStats(
     textCoverage: textCoverage,
@@ -635,9 +692,16 @@ ContentStats computeContent({
     effectIdCounts: effectCounts,
     editedCount: editedCount,
     unsentCount: unsentCount,
+    editedCountMine: editedCountMine,
+    editedCountTheirs: editedCountTheirs,
+    unsentCountMine: unsentCountMine,
+    unsentCountTheirs: unsentCountTheirs,
+    sentCountMine: sentCountMine,
+    receivedCountTheirs: receivedCountTheirs,
     audioSent: audioSent,
     audioReceived: audioReceived,
     audioPlayedRatio: audioPlayedRatio,
+    topSwearWords: topSwearWords.take(10).toList(),
   );
 }
 

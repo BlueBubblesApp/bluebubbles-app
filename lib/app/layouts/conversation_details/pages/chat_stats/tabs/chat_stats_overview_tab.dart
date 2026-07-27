@@ -90,18 +90,34 @@ class _OverviewContent extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 36.0),
       children: [
+        if (overview.firstTrackedMessageMillis != null) ...[
+          Text(
+            // Locale-aware month/day/year — respects the device's region
+            // rather than a hardcoded US-style format.
+            "The first message we have tracked for this chat was on "
+            "${DateFormat.yMMMd().format(DateTime.fromMillisecondsSinceEpoch(overview.firstTrackedMessageMillis!))}.",
+            style: context.theme.textTheme.bodySmall?.copyWith(color: context.theme.colorScheme.outline),
+          ),
+          const SizedBox(height: 16.0),
+        ],
         Text(controller.timeframe.value.longLabel, style: context.theme.textTheme.titleMedium),
         const SizedBox(height: 10.0),
         activity == null
             ? const SectionSkeleton(height: 60.0)
-            : Sparkline(
-                buckets: dailySeries,
-                xLabelBuilder: (i) {
-                  if (i < 0 || i >= dailySeries.length) return null;
-                  final step = (dailySeries.length / 5).ceil().clamp(1, dailySeries.length);
-                  if (i % step != 0) return null;
-                  return DateFormat.Md().format(DateTime.fromMillisecondsSinceEpoch(dailySeries[i].startMillis));
-                },
+            : Padding(
+                // The first/last x-axis labels center on points sitting right at
+                // the chart's edge, so without this they render half outside the
+                // page's own 12.0 content padding and get clipped.
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Sparkline(
+                  buckets: dailySeries,
+                  xLabelBuilder: (i) {
+                    if (i < 0 || i >= dailySeries.length) return null;
+                    final step = (dailySeries.length / 5).ceil().clamp(1, dailySeries.length);
+                    if (i % step != 0) return null;
+                    return DateFormat.Md().format(DateTime.fromMillisecondsSinceEpoch(dailySeries[i].startMillis));
+                  },
+                ),
               ),
         const SizedBox(height: 24.0),
         StatTileGrid(tiles: [

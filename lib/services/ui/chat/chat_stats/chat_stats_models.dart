@@ -7,6 +7,14 @@ const int kMeParticipantId = -1;
 /// it never gets attributed to "me" or collapses into a real participant.
 const int kUnattributedParticipantId = -3;
 
+/// Sentinel value for the "Whole Group" option in the comparison-target
+/// selector (`ComparisonSelector`). Only used at the selector's dialog
+/// boundary — `showBBListSelector` returns `null` for both "dismissed with no
+/// selection" and "selected a `null` option", so `null` can't itself be a
+/// choosable option value. `ChatStatsController.comparisonParticipantId`
+/// still uses `null` internally to mean "whole group".
+const int kWholeGroupComparisonId = -4;
+
 /// The silence that separates one conversation "session" from the next. Used
 /// for session segmentation, openers/enders, and response-time outlier filtering.
 const int kSessionGapMillis = 6 * 60 * 60 * 1000; // 6 hours
@@ -161,9 +169,16 @@ class OverviewStats {
   final List<ParticipantCount> leaderboard;
 
   /// Retained for series bounds and the "busiest day" lookup — not shown as a
-  /// "talking since" tile.
+  /// "talking since" tile. Scoped to the page-level [StatsTimeframe] window
+  /// like the rest of [OverviewStats] — do not use this for a "first message
+  /// ever" display; see [firstTrackedMessageMillis] for that.
   final int? firstMessageMillis;
   final int? lastMessageMillis;
+
+  /// Absolute earliest "real" message across the chat's full history —
+  /// unlike [firstMessageMillis], never scoped to the selected timeframe.
+  /// Backs the Overview tab's "first message we've tracked" note.
+  final int? firstTrackedMessageMillis;
 
   const OverviewStats({
     required this.total,
@@ -177,6 +192,7 @@ class OverviewStats {
     required this.leaderboard,
     this.firstMessageMillis,
     this.lastMessageMillis,
+    this.firstTrackedMessageMillis,
   });
 }
 
@@ -315,6 +331,17 @@ class WordCount {
   const WordCount(this.word, this.count);
 }
 
+/// One curse word's mine/theirs split — feeds the "Colorful Language" bar
+/// chart. Mirrors [EmojiCount]'s shape since both are a mine-vs-theirs
+/// frequency count rendered the same way.
+class SwearCount {
+  final String word;
+  final int mineCount;
+  final int theirsCount;
+  const SwearCount(this.word, this.mineCount, this.theirsCount);
+  int get total => mineCount + theirsCount;
+}
+
 /// Minimum texted-message samples before a participant's average length is
 /// meaningful enough to rank — keeps one-off messages from a rarely-active
 /// participant from dominating the longest/shortest leaderboards.
@@ -371,9 +398,36 @@ class ContentStats {
   final int editedCount;
   final int unsentCount;
 
+  /// [editedCount]/[unsentCount] split by side — feeds the Correction Rate
+  /// tiles. Mine is scoped to the local user; theirs honors the same
+  /// comparison-target selector as the rest of Content.
+  final int editedCountMine;
+  final int editedCountTheirs;
+  final int unsentCountMine;
+  final int unsentCountTheirs;
+
+  /// Total sent/received message counts (not just texted ones) — the
+  /// denominators for [correctionRateMine]/[correctionRateTheirs]. `theirs`
+  /// honors the comparison-target selector, matching [editedCountTheirs].
+  final int sentCountMine;
+  final int receivedCountTheirs;
+
   final int audioSent;
   final int audioReceived;
   final double? audioPlayedRatio; // null when nothing was received
+
+  /// Descending by total (mine + theirs). Curated curse-word vocabulary —
+  /// see `_kSwearWords` in the computer.
+  final List<SwearCount> topSwearWords;
+
+  /// Share of my sent messages later edited or unsent. `null` when I haven't
+  /// sent anything in this window.
+  double? get correctionRateMine => sentCountMine == 0 ? null : (editedCountMine + unsentCountMine) / sentCountMine;
+
+  /// Share of the comparison target's received messages later edited or
+  /// unsent. `null` when nothing was received from them in this window.
+  double? get correctionRateTheirs =>
+      receivedCountTheirs == 0 ? null : (editedCountTheirs + unsentCountTheirs) / receivedCountTheirs;
 
   const ContentStats({
     required this.textCoverage,
@@ -393,8 +447,15 @@ class ContentStats {
     required this.effectIdCounts,
     required this.editedCount,
     required this.unsentCount,
+    required this.editedCountMine,
+    required this.editedCountTheirs,
+    required this.unsentCountMine,
+    required this.unsentCountTheirs,
+    required this.sentCountMine,
+    required this.receivedCountTheirs,
     required this.audioSent,
     required this.audioReceived,
+    required this.topSwearWords,
     this.audioPlayedRatio,
   });
 }
