@@ -348,6 +348,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.keyboard,
                           materialIcon: Icons.keyboard,
+                          containerColor: Colors.teal,
                         ),
                       ),
                     const SettingsDivider(),
@@ -457,6 +458,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info,
+                        containerColor: Colors.blue,
                       ),
                     ),
                   ],

@@ -18,3 +18,8 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 - `circle_progress_bar.dart` — circular progress indicator
 - `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`
+
+## Material 3 Expressive (`m3e/`)
+Opt-in Material-3-Expressive primitives (shape scale, motion tokens, tonal section containment,
+list tile, tonal button, button group) used by the **Material and Samsung** skins only — leaf-level,
+skin-agnostic building blocks. Import via barrel: `package:bluebubbles/app/components/m3e/m3e.dart`.

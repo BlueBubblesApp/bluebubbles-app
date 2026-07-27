@@ -113,9 +113,6 @@ class BubbleText extends ThemeExtension<BubbleText> {
 /// Mixin to provide settings widgets with easy access to the commonly used
 /// theming values
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
-  // Samsung theme should always use the background color as the "header" color
-  bool get reverseMapping => SettingsSvc.settings.skin.value == Skins.Material && ThemeSvc.inDarkMode(context);
-
   /// iOS skin [ListTile] subtitle [TextStyle]s
   TextStyle get iosSubtitle => context.theme.textTheme.labelLarge!.copyWith(
       color: ThemeSvc.inDarkMode(context)
@@ -131,21 +128,17 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   TextStyle get materialSubtitle => context.theme.textTheme.labelLarge!
       .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
 
-  Color get _headerColor => (ThemeSvc.inDarkMode(context)
+  /// Header / background color on settings pages
+  Color get headerColor => (ThemeSvc.inDarkMode(context)
           ? context.theme.colorScheme.surface
           : context.theme.colorScheme.surfaceContainerHighest)
       .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 20 : 255);
 
-  Color get _tileColor => (ThemeSvc.inDarkMode(context)
+  /// Tile / foreground color on settings pages
+  Color get tileColor => (ThemeSvc.inDarkMode(context)
           ? context.theme.colorScheme.surfaceContainerHighest
           : context.theme.colorScheme.surface)
       .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 100 : 255);
-
-  /// Header / background color on settings pages
-  Color get headerColor => reverseMapping ? _tileColor : _headerColor;
-
-  /// Tile / foreground color on settings pages
-  Color get tileColor => reverseMapping ? _headerColor : _tileColor;
 
   /// Whether or not to use tablet mode
   bool get showAltLayout =>
@@ -185,11 +178,9 @@ extension BuildContextThemeHelpers on BuildContext {
       (ThemeSvc.inDarkMode(this) ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.surface)
           .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 100 : 255);
 
-  bool get _reverseMapping => SettingsSvc.settings.skin.value == Skins.Material && ThemeSvc.inDarkMode(this);
+  Color get headerColor => _headerColor;
 
-  Color get headerColor => _reverseMapping ? _tileColor : _headerColor;
-
-  Color get tileColor => _reverseMapping ? _headerColor : _tileColor;
+  Color get tileColor => _tileColor;
 }
 
 extension ColorSchemeHelpers on ColorScheme {

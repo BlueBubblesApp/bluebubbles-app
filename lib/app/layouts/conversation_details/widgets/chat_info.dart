@@ -1,18 +1,15 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/change_name.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/widgets/contact_tile.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/material/chat_photo_actions.dart' as photo_actions;
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 class ChatInfo extends StatefulWidget {
   const ChatInfo({super.key, required this.chat});
@@ -25,118 +22,6 @@ class ChatInfo extends StatefulWidget {
 
 class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
   Chat get chat => widget.chat;
-
-  Future<bool?> showMethodDialog(String title) async {
-    return await showBBDialog<bool>(
-      context: context,
-      title: title,
-      content: SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage
-          ? Text(
-              "Local - Changes only apply to this device.\nPrivate API - Changes will apply to everyone's devices.",
-              style: context.theme.textTheme.bodyLarge,
-            )
-          : null,
-      actions: [
-        BBDialogAction(
-          text: "Local",
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
-        ),
-        BBDialogAction(
-          text: "Private API",
-          isDefault: true,
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
-        ),
-      ],
-    );
-  }
-
-  void updatePhoto() async {
-    bool? papi = false;
-    if (SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup) {
-      papi = await showMethodDialog("Group Icon Update Method");
-    }
-    if (papi == null) return;
-    final usePrivateApi = papi;
-    final String? result = await Navigator.of(context).push(
-      ThemeSwitcher.buildPageRoute(
-        builder: (context) => AvatarCrop(chat: chat),
-      ),
-    );
-    if (result == null) return;
-
-    if (!usePrivateApi) {
-      await ChatsSvc.setChatCustomAvatarPath(chat, result);
-      return;
-    }
-
-    if (usePrivateApi &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.serverDetails.isMinBigSur &&
-        SettingsSvc.serverDetails.supportsGroupChatManagement) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-              title: Text(
-                "Updating group photo...",
-                style: context.theme.textTheme.titleLarge,
-              ),
-              content: SizedBox(
-                height: 70,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                  ),
-                ),
-              ),
-            );
-          });
-      final response = await HttpSvc.chat.setIcon(chat.guid, result);
-      if (response.statusCode == 200) {
-        await ChatsSvc.setChatCustomAvatarPath(chat, result);
-        Navigator.of(context, rootNavigator: true).pop();
-        showSnackbar("Notice", "Updated group photo successfully!");
-      } else {
-        try {
-          await File(result).delete();
-        } catch (_) {}
-        Navigator.of(context, rootNavigator: true).pop();
-        showSnackbar("Error", "Failed to update group photo!");
-      }
-    } else if (usePrivateApi) {
-      try {
-        await File(result).delete();
-      } catch (_) {}
-      showSnackbar("Error", "Failed to update group photo!");
-    }
-  }
-
-  void deletePhoto() async {
-    bool? papi = false;
-    if (SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage && chat.isGroup) {
-      papi = await showMethodDialog("Group Icon Deletion Method");
-    }
-    if (papi == null) return;
-    final usePrivateApi = papi;
-
-    if (usePrivateApi &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.serverDetails.isMinBigSur &&
-        SettingsSvc.serverDetails.supportsGroupChatManagement) {
-      final response = await HttpSvc.chat.removeIcon(chat.guid);
-      if (response.statusCode == 200) {
-        await ChatsSvc.setChatCustomAvatarPath(chat, null);
-        showSnackbar("Notice", "Deleted group photo successfully!");
-      } else {
-        showSnackbar("Error", "Failed to delete group photo!");
-      }
-      return;
-    }
-
-    await ChatsSvc.setChatCustomAvatarPath(chat, null);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +45,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
                 GestureDetector(
                   onTap: chat.isGroup
                       ? () async {
-                          updatePhoto();
+                          photo_actions.updatePhoto(context, chat);
                         }
                       : null,
                   child: ContactAvatarGroupWidget(
@@ -175,7 +60,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
                         child: DeferPointer(
                           child: InkWell(
                             onTap: () async {
-                              deletePhoto();
+                              photo_actions.deletePhoto(context, chat);
                             },
                             child: Container(
                               width: 30,
@@ -241,85 +126,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
               }),
             ),
           ),
-        if (chat.isGroup && !iOS)
-          Padding(
-            padding: const EdgeInsets.only(left: 15.0, bottom: 5.0),
-            child: Text("GROUP NAME AND PHOTO",
-                style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
-          ),
-        if (chat.isGroup && !iOS)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 5.0),
-            child: Material(
-              color: Colors.transparent,
-              child: ListTile(
-                mouseCursor: MouseCursor.defer,
-                onTap: () async {
-                  bool? papi = false;
-                  if (SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage) {
-                    papi = await showMethodDialog("Group Name Update Method");
-                  }
-                  if (papi == null) return;
-                  if (!papi) {
-                    showChangeName(chat, "local", context);
-                  } else {
-                    showChangeName(chat, "private-api", context);
-                  }
-                },
-                title: Obx(() => RichText(
-                      text: TextSpan(
-                        style: context.theme.textTheme.bodyLarge,
-                        children: MessageHelper.buildEmojiText(
-                          chatState?.title.value ?? chat.getTitle(),
-                          context.theme.textTheme.bodyLarge!,
-                        ),
-                      ),
-                    )),
-                trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onSurface),
-              ),
-            ),
-          ),
-        if (chat.isGroup && !iOS)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 5.0),
-            child: Material(
-              color: Colors.transparent,
-              child: ListTile(
-                mouseCursor: MouseCursor.defer,
-                onTap: () async {
-                  updatePhoto();
-                },
-                title: Text("Update group photo", style: context.theme.textTheme.bodyLarge!),
-                trailing: Icon(Icons.edit_outlined, color: context.theme.colorScheme.onSurface),
-              ),
-            ),
-          ),
-        if (chat.isGroup && !iOS)
-          Obx(() => chat.customAvatarPath != null
-              ? Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      mouseCursor: MouseCursor.defer,
-                      onTap: () async {
-                        deletePhoto();
-                      },
-                      title: Text("Remove group photo",
-                          style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.error)),
-                      trailing: Icon(Icons.close, color: context.theme.colorScheme.error),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink()),
-        if (!chat.isGroup && !iOS)
-          ContactTile(
-            key: Key(chat.handles.first.address),
-            handle: chat.handles.first,
-            chat: chat,
-            canBeRemoved: false,
-          ),
-        if (chat.isGroup && iOS)
+        if (chat.isGroup)
           Center(
             child: TextButton(
               child: Text(
@@ -330,7 +137,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
               onPressed: () async {
                 bool? papi = false;
                 if (SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage) {
-                  papi = await showMethodDialog("Group Name Update Method");
+                  papi = await photo_actions.showMethodDialog(context, chat, "Group Name Update Method");
                 }
                 if (papi == null) return;
                 if (!papi) {

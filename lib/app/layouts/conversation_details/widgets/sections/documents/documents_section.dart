@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/conversation_attachments.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/attachment_section_header.dart';
@@ -101,12 +102,14 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
+    final hideWhenEmpty = !widget.fullPage && !widget.isLoading && _displayedDocs.isEmpty;
+
     return SliverMainAxisGroup(
       slivers: [
         if (!widget.fullPage)
           SliverToBoxAdapter(
             child: AttachmentSectionHeader(
-              title: AttachmentSectionType.documents.sectionLabel,
+              title: AttachmentSectionType.documents.expressiveSectionLabel,
               onShowMore: () => ConversationAttachments.open(
                 context,
                 chat: widget.chat,
@@ -132,6 +135,14 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
               child: Center(child: buildProgressIndicator(context, size: 24)),
             ),
           )
+        else if (hideWhenEmpty)
+          SliverToBoxAdapter(
+            child: AnimatedSize(
+              duration: M3EMotion.spatialFast.duration,
+              curve: M3EMotion.spatialFast.curve,
+              child: const SizedBox.shrink(),
+            ),
+          )
         else if (_displayedDocs.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
@@ -148,10 +159,7 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
           )
         else ...[
           Obx(() => SliverPadding(
-                padding: attachmentSectionListPadding(
-                  fullPage: widget.fullPage,
-                  iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-                ),
+                padding: attachmentSectionListPadding(),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: _gridCrossAxisCount,

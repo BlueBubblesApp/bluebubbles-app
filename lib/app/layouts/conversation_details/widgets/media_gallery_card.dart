@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
@@ -31,7 +32,13 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   Uint8List? videoPreview;
   bool videoPreviewFailed = false;
   Duration? duration;
+  bool _pressed = false;
   late dynamic content;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
 
   Attachment get attachment => widget.attachment;
 
@@ -321,7 +328,12 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       } else if (content is PlatformFile) {
         final file = content as PlatformFile;
         if (attachment.mimeType?.startsWith("image") ?? false) {
-          child = ImageDisplay(attachment: attachment, file: file, showSenderAvatar: widget.showSenderAvatar);
+          child = ImageDisplay(
+            attachment: attachment,
+            file: file,
+            showSenderAvatar: widget.showSenderAvatar,
+            onPressChanged: _setPressed,
+          );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
           if (videoPreview != null) {
@@ -329,7 +341,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                 attachment: attachment,
                 image: videoPreview!,
                 duration: duration,
-                showSenderAvatar: widget.showSenderAvatar);
+                showSenderAvatar: widget.showSenderAvatar,
+                onPressChanged: _setPressed);
             addPadding = false;
           } else if (videoPreviewFailed) {
             child = Text(
@@ -354,15 +367,17 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         child = const SizedBox.shrink();
       }
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+      return AnimatedContainer(
+        duration: M3EMotion.spatialFast.duration,
+        curve: M3EMotion.spatialFast.curve,
         clipBehavior: Clip.antiAlias,
-        child: Container(
-          alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_pressed ? M3EShapes.md : M3EShapes.lg),
           color: context.theme.colorScheme.surfaceContainerHighest,
-          padding: addPadding ? const EdgeInsets.all(10) : null,
-          child: child,
         ),
+        alignment: Alignment.center,
+        padding: addPadding ? const EdgeInsets.all(10) : null,
+        child: child,
       );
     }); // end Obx
   }
@@ -379,6 +394,7 @@ class ImageDisplay extends StatefulWidget {
     this.image,
     this.duration,
     this.showSenderAvatar = true,
+    this.onPressChanged,
   });
 
   final Attachment attachment;
@@ -386,6 +402,7 @@ class ImageDisplay extends StatefulWidget {
   final Uint8List? image;
   final Duration? duration;
   final bool showSenderAvatar;
+  final ValueChanged<bool>? onPressChanged;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -404,6 +421,8 @@ class _ImageDisplayState extends State<ImageDisplay> {
     final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
 
     return OpenContainer(
+      transitionDuration: Durations.medium4,
+      closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
         return ConversationFullscreenHolder(
           attachment: attachment,
@@ -418,6 +437,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
               onTap: () {
                 openContainer();
               },
+              onHighlightChanged: widget.onPressChanged,
               child: SizedBox(
                 width: cardSize,
                 height: cardSize,
@@ -447,8 +467,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                       ),
                     if (widget.showSenderAvatar &&
                         !(attachment.message.target?.isFromMe ?? true) &&
-                        attachment.message.target?.handleRelation.hasValue == true &&
-                        SettingsSvc.settings.skin.value == Skins.iOS)
+                        attachment.message.target?.handleRelation.hasValue == true)
                       Positioned(
                         top: 10,
                         right: 10,

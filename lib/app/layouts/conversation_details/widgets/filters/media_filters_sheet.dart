@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/bb_chip.dart';
+import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -21,6 +22,7 @@ void showAttachmentFiltersSheet(
   AttachmentFiltersTypeSection typeSection = AttachmentFiltersTypeSection.media,
 }) {
   HapticFeedback.lightImpact();
+  const chipRadius = M3EShapes.radiusLg;
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -96,6 +98,7 @@ void showAttachmentFiltersSheet(
                         children: [
                           if (showFromYou)
                             BBChip(
+                              borderRadius: chipRadius,
                               showCheckmark: true,
                               selected: currentFilters.senderFilter.kind == MediaSenderFilterKind.fromYou,
                               checkmarkColor: primaryColor,
@@ -118,6 +121,7 @@ void showAttachmentFiltersSheet(
                             ),
                           if (showFromOthers)
                             BBChip(
+                              borderRadius: chipRadius,
                               showCheckmark: true,
                               selected: currentFilters.senderFilter.kind == MediaSenderFilterKind.fromOthers,
                               checkmarkColor: primaryColor,
@@ -137,6 +141,7 @@ void showAttachmentFiltersSheet(
                                   handle: handle,
                                   labelStyle: labelStyle,
                                   primaryColor: primaryColor,
+                                  borderRadius: chipRadius,
                                   selected: currentFilters.senderFilter.kind == MediaSenderFilterKind.participant &&
                                       currentFilters.senderFilter.participant?.address == handle.address,
                                   onSelected: (selected) {
@@ -166,6 +171,7 @@ void showAttachmentFiltersSheet(
                           children: [
                             if (currentFilters.mediaFilter != MediaFilter.videos)
                               BBChip(
+                                borderRadius: chipRadius,
                                 showCheckmark: true,
                                 selected: currentFilters.mediaFilter == MediaFilter.images,
                                 checkmarkColor: primaryColor,
@@ -176,6 +182,7 @@ void showAttachmentFiltersSheet(
                               ),
                             if (currentFilters.mediaFilter != MediaFilter.images)
                               BBChip(
+                                borderRadius: chipRadius,
                                 showCheckmark: true,
                                 selected: currentFilters.mediaFilter == MediaFilter.videos,
                                 checkmarkColor: primaryColor,
@@ -205,6 +212,7 @@ void showAttachmentFiltersSheet(
                             if (currentFilters.fileTypeFilter != FileTypeFilter.audio &&
                                 currentFilters.fileTypeFilter != FileTypeFilter.other)
                               BBChip(
+                                borderRadius: chipRadius,
                                 showCheckmark: true,
                                 selected: currentFilters.fileTypeFilter == FileTypeFilter.documents,
                                 checkmarkColor: primaryColor,
@@ -216,6 +224,7 @@ void showAttachmentFiltersSheet(
                             if (currentFilters.fileTypeFilter != FileTypeFilter.documents &&
                                 currentFilters.fileTypeFilter != FileTypeFilter.other)
                               BBChip(
+                                borderRadius: chipRadius,
                                 showCheckmark: true,
                                 selected: currentFilters.fileTypeFilter == FileTypeFilter.audio,
                                 checkmarkColor: primaryColor,
@@ -227,6 +236,7 @@ void showAttachmentFiltersSheet(
                             if (currentFilters.fileTypeFilter != FileTypeFilter.documents &&
                                 currentFilters.fileTypeFilter != FileTypeFilter.audio)
                               BBChip(
+                                borderRadius: chipRadius,
                                 showCheckmark: true,
                                 selected: currentFilters.fileTypeFilter == FileTypeFilter.other,
                                 checkmarkColor: primaryColor,
@@ -253,6 +263,7 @@ void showAttachmentFiltersSheet(
                         runSpacing: 0,
                         children: [
                           BBChip(
+                            borderRadius: chipRadius,
                             avatar: CircleAvatar(
                               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                               child: Icon(
@@ -338,6 +349,7 @@ class _ParticipantSenderChip extends StatelessWidget {
   final Color primaryColor;
   final bool selected;
   final ValueChanged<bool> onSelected;
+  final BorderRadius? borderRadius;
 
   const _ParticipantSenderChip({
     required this.handle,
@@ -345,6 +357,7 @@ class _ParticipantSenderChip extends StatelessWidget {
     required this.primaryColor,
     required this.selected,
     required this.onSelected,
+    this.borderRadius,
   });
 
   @override
@@ -354,6 +367,7 @@ class _ParticipantSenderChip extends StatelessWidget {
     return Obx(() {
       final displayName = handleState.displayName.value ?? handle.address;
       return BBChip(
+        borderRadius: borderRadius,
         showCheckmark: true,
         selected: selected,
         checkmarkColor: primaryColor,
@@ -398,10 +412,7 @@ class AttachmentFiltersButton extends StatelessWidget {
     final color = iconColor ?? Theme.of(context).colorScheme.primary;
 
     return Obx(() {
-      final horizontalPadding = attachmentSectionHorizontalPadding(
-        fullPage: true,
-        iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-      ).toDouble();
+      final horizontalPadding = attachmentSectionHorizontalPadding().toDouble();
       final rightMargin = (horizontalPadding - _iconTrailingInset).clamp(0.0, double.infinity);
 
       return Padding(

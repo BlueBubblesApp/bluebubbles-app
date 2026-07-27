@@ -11,41 +11,36 @@ import 'package:get/get.dart';
 class RedactedModeTile extends StatelessWidget {
   final Color tileColor;
 
-  const RedactedModeTile({
-    super.key,
-    required this.tileColor,
-  });
+  const RedactedModeTile({super.key, required this.tileColor});
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => SettingsTile(
-          backgroundColor: tileColor,
-          title: "Redacted Mode",
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                SettingsSvc.settings.redactedMode.value ? "Enabled" : "Disabled",
-                style: context.theme.textTheme.bodyMedium!.apply(
-                  color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
-                ),
+    return Obx(
+      () => SettingsTile(
+        backgroundColor: tileColor,
+        title: "Redacted Mode",
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              SettingsSvc.settings.redactedMode.value ? "Enabled" : "Disabled",
+              style: context.theme.textTheme.bodyMedium!.apply(
+                color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
               ),
-              const SizedBox(width: 5),
-              const NextButton(),
-            ],
-          ),
-          onTap: () async {
-            NavigationSvc.pushAndRemoveSettingsUntil(
-              context,
-              const RedactedModePanel(),
-              (Route route) => route.isFirst,
-            );
-          },
-          leading: SettingsLeadingIcon(
-            iosIcon: CupertinoIcons.wand_stars,
-            materialIcon: Icons.auto_fix_high,
-            containerColor: SettingsSvc.settings.redactedMode.value ? Colors.green : Colors.redAccent,
-          ),
-        ));
+            ),
+            const SizedBox(width: 5),
+            const NextButton(),
+          ],
+        ),
+        onTap: () async {
+          NavigationSvc.pushAndRemoveSettingsUntil(context, const RedactedModePanel(), (Route route) => route.isFirst);
+        },
+        leading: SettingsLeadingIcon(
+          iosIcon: CupertinoIcons.wand_stars,
+          materialIcon: Icons.auto_fix_high,
+          containerColor: SettingsSvc.settings.redactedMode.value ? Colors.green : Colors.red[700],
+        ),
+      ),
+    );
   }
 }

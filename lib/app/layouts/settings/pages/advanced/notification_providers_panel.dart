@@ -32,23 +32,13 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
               delegate: SliverChildListDelegate(<Widget>[
             SettingsSection(backgroundColor: tileColor, children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 8, left: 15, top: 15, right: 15),
+                padding: const EdgeInsets.only(bottom: 15, left: 15, top: 15, right: 15),
                 child: RichText(
                   text: TextSpan(
                     children: [
                       const TextSpan(
                           text:
                               "Notification Providers are what allow you to receive notifications from your server. "),
-                    ],
-                    style: context.theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 15, left: 15, top: 0, right: 15),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
                       const TextSpan(
                           text:
                               "By default, Google Firebase (FCM) will be used, however, you have the option to use other methods. "),
