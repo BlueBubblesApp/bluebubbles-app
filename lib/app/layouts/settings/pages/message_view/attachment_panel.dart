@@ -208,10 +208,6 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SettingsSubtitle(
-                          subtitle: "Set where videos start playing muted",
-                          bottomPadding: false,
-                        ),
                         Obx(() => SettingsSwitch(
                               onChanged: (bool val) async {
                                 SettingsSvc.settings.startVideosMuted.value = val;
@@ -219,6 +215,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                               },
                               initialVal: SettingsSvc.settings.startVideosMuted.value,
                               title: "Mute in Attachment Preview",
+                              subtitle: "Videos start muted in the message view",
                               backgroundColor: tileColor,
                             )),
                         const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
@@ -229,6 +226,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                               },
                               initialVal: SettingsSvc.settings.startVideosMutedFullscreen.value,
                               title: "Mute in Fullscreen Player",
+                              subtitle: "Videos start muted in the fullscreen viewer",
                               backgroundColor: tileColor,
                             )),
                       ],

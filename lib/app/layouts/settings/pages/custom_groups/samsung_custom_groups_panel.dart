@@ -1,10 +1,10 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/create_group_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_group_options_menu.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_groups_controller.dart';
-import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
-import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,7 @@ class SamsungCustomGroupsPanel extends StatefulWidget {
   State<SamsungCustomGroupsPanel> createState() => _SamsungCustomGroupsPanelState();
 }
 
-class _SamsungCustomGroupsPanelState extends State<SamsungCustomGroupsPanel> {
+class _SamsungCustomGroupsPanelState extends State<SamsungCustomGroupsPanel> with ThemeHelpers {
   final CustomGroupsController controller = Get.find<CustomGroupsController>();
 
   Future<void> _onCreate() async {
@@ -106,88 +106,143 @@ class _SamsungCustomGroupsPanelState extends State<SamsungCustomGroupsPanel> {
     return confirmed;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BBScaffold(
-      extendBodyBehindAppBar: false,
-      appBar: BBAppBar(
-        titleText: "Custom Groups",
-        leading: buildBackButton(context),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onCreate,
-        child: const Icon(Icons.add),
-      ),
-      body: Obx(() {
-        if (controller.loading.value) return Center(child: buildProgressIndicator(context));
-        if (controller.groups.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("You have no custom groups", style: context.theme.textTheme.labelLarge),
-                TextButton(onPressed: _onCreate, child: const Text("Create one")),
-              ],
-            ),
-          );
-        }
-        return ReorderableListView.builder(
-          buildDefaultDragHandles: false,
-          onReorder: _onReorder,
-          itemCount: controller.groups.length,
-          itemBuilder: (context, index) {
-            final group = controller.groups[index];
-            return Dismissible(
-              key: ValueKey(group.id),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20),
-                color: context.theme.colorScheme.errorContainer,
-                child: Icon(Icons.delete_outline, color: context.theme.colorScheme.onErrorContainer),
+  Widget _buildGroupCard(CustomGroup group, int index) {
+    return Padding(
+      key: ValueKey(group.id),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Dismissible(
+        key: ValueKey('dismissible-${group.id}'),
+        direction: DismissDirection.endToStart,
+        background: ClipRRect(
+          borderRadius: BorderRadius.circular(M3EShapes.lg),
+          child: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            color: context.theme.colorScheme.errorContainer,
+            child: Icon(Icons.delete_outline, color: context.theme.colorScheme.onErrorContainer),
+          ),
+        ),
+        confirmDismiss: (_) => _confirmDelete(group),
+        onDismissed: (_) => controller.deleteGroup(group),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(M3EShapes.lg),
+          child: Container(
+            color: tileColor,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+              minVerticalPadding: 14,
+              leading: ContactAvatarGroupWidget(
+                handles: _groupHandles(group),
+                size: 40,
+                editable: false,
               ),
-              confirmDismiss: (_) => _confirmDelete(group),
-              onDismissed: (_) => controller.deleteGroup(group),
-              child: ListTile(
-                leading: ContactAvatarGroupWidget(
-                  handles: _groupHandles(group),
-                  size: 40,
-                  editable: false,
-                ),
-                title: Text(group.name),
-                subtitle: Text("${group.chats.length} chats"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!group.showUnreadBadge)
-                      Tooltip(
-                        message: "Unread badge hidden",
-                        child: Icon(
-                          Icons.notifications_off_outlined,
-                          size: 18,
-                          color: context.theme.colorScheme.outline,
-                        ),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.more_vert),
-                      tooltip: "More options",
-                      onPressed: () => _onOptions(group),
-                    ),
-                    ReorderableDragStartListener(
-                      index: index,
+              title: Text(group.name),
+              subtitle: Text("${group.chats.length} chats"),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!group.showUnreadBadge)
+                    Tooltip(
+                      message: "Unread badge hidden",
                       child: Icon(
-                        Icons.drag_handle,
+                        Icons.notifications_off_outlined,
+                        size: 18,
                         color: context.theme.colorScheme.outline,
                       ),
                     ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: "More options",
+                    onPressed: () => _onOptions(group),
+                  ),
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Icon(
+                      Icons.drag_handle,
+                      color: context.theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+              onTap: () => _onEditChats(group),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsScaffold(
+      expressive: true,
+      title: "Custom Groups",
+      initialHeader: null,
+      iosSubtitle: iosSubtitle,
+      materialSubtitle: materialSubtitle,
+      tileColor: tileColor,
+      headerColor: headerColor,
+      fab: FloatingActionButton(
+        onPressed: _onCreate,
+        child: const Icon(Icons.add),
+      ),
+      bodySlivers: [
+        Obx(() {
+          if (controller.loading.value) {
+            return SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: buildProgressIndicator(context)),
+            );
+          }
+          if (controller.groups.isEmpty) {
+            return SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("You have no custom groups", style: context.theme.textTheme.labelLarge),
+                    TextButton(onPressed: _onCreate, child: const Text("Create one")),
                   ],
                 ),
-                onTap: () => _onEditChats(group),
               ),
             );
-          },
-        );
-      }),
+          }
+          return SliverToBoxAdapter(
+            child: ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              onReorder: _onReorder,
+              itemCount: controller.groups.length,
+              itemBuilder: (context, index) {
+                final group = controller.groups[index];
+                return _buildGroupCard(group, index);
+              },
+              // The default proxyDecorator paints an opaque, square Material surface
+              // across the full (margin-included) item bounds while dragging, hiding
+              // our rounded card. Keep it transparent with a matching border radius
+              // so the card keeps its shape and the drop shadow is rounded too.
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, _) {
+                    final t = Curves.easeInOut.transform(animation.value);
+                    return Material(
+                      color: Colors.transparent,
+                      elevation: t * 6,
+                      shadowColor: Colors.black54,
+                      borderRadius: BorderRadius.circular(M3EShapes.lg),
+                      child: child,
+                    );
+                  },
+                  child: child,
+                );
+              },
+            ),
+          );
+        }),
+      ],
     );
   }
 }

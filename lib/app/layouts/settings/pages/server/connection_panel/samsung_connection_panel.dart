@@ -28,7 +28,7 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
     final color = resolveStatusColor(controller, item.key);
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.all(6),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: context.theme.colorScheme.outline.withValues(alpha: 0.15)),
@@ -91,7 +91,7 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
     final value = resolveValue(controller, item.key);
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: context.theme.colorScheme.outline.withValues(alpha: 0.15)),
@@ -151,7 +151,10 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                   ),
                 ),
               ),
-              Center(child: _buildStatusGrid()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _buildStatusGrid(),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 8, 6),
                 child: Row(
@@ -190,9 +193,14 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                   ],
                 ),
               ),
-              ...ConnectionPanelHelpersMixin.kInfoItems.map((item) {
-                return Obx(() => _buildInfoRow(item));
-              }),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: ConnectionPanelHelpersMixin.kInfoItems.map((item) {
+                    return Obx(() => _buildInfoRow(item));
+                  }).toList(),
+                ),
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
@@ -204,14 +212,13 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                   ),
                 ),
               ),
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                  child: SettingsSection(
-                    backgroundColor: tileColor,
-                    children: [
-                      buildViewStatsSection(context, controller, tileColor),
-                    ],
-                  )),
+              SettingsSection(
+                expressive: true,
+                backgroundColor: tileColor,
+                children: [
+                  buildViewStatsSection(context, controller, tileColor),
+                ],
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Text(
@@ -222,18 +229,15 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: buildConnectionSyncSection(
-                  context,
-                  controller,
-                  tileColor,
-                  headerColor,
-                  iosSubtitle,
-                  materialSubtitle,
-                  () => _manager,
-                  (m) => _manager = m,
-                ),
+              buildConnectionSyncSection(
+                context,
+                controller,
+                tileColor,
+                headerColor,
+                iosSubtitle,
+                materialSubtitle,
+                () => _manager,
+                (m) => _manager = m,
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -245,16 +249,13 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: buildServerActionsSection(
-                  context,
-                  controller,
-                  tileColor,
-                  headerColor,
-                  iosSubtitle,
-                  materialSubtitle,
-                ),
+              buildServerActionsSection(
+                context,
+                controller,
+                tileColor,
+                headerColor,
+                iosSubtitle,
+                materialSubtitle,
               ),
               const SizedBox(height: 12),
             ],
