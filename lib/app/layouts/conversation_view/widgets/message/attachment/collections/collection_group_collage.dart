@@ -10,6 +10,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Vertical overlapping collage for multi-attachment media collections.
 class CollectionGroupCollage extends StatelessWidget {
@@ -32,19 +33,19 @@ class CollectionGroupCollage extends StatelessWidget {
 
   List<Attachment> get _attachments => messagePart.attachments;
 
-  double _estimateHeight(Attachment attachment, double cardWidth) {
-    final w = attachment.displayWidth;
-    final h = attachment.displayHeight;
-    if (w != null && w > 0 && h != null && h > 0) {
-      return (h / w) * cardWidth;
-    }
-    return cardWidth;
+  /// Landscape → 4:3; portrait / square / unknown → 3:4.
+  double _estimateHeight(Attachment attachment, double cardWidth, MessageState messageState) {
+    final guid = attachment.guid;
+    final state = guid != null ? messageState.getAttachmentState(guid) : null;
+    final w = state?.width.value ?? attachment.displayWidth;
+    final h = state?.height.value ?? attachment.displayHeight;
+    final isLandscape = w != null && h != null && w > 0 && h > 0 && w > h;
+    return isLandscape ? cardWidth * 3 / 4 : cardWidth * 4 / 3;
   }
 
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
-    final isFromMe = messageState.isFromMe.value;
     final cardWidth = collectionCardWidth(context);
     final collectionController = CollectionMediaController(
       chat: cvController.chat,
@@ -53,41 +54,44 @@ class CollectionGroupCollage extends StatelessWidget {
       collectionPart: messagePart,
     );
 
-    final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth)];
-    final tops = <double>[];
-    double y = 0;
-    for (int i = 0; i < heights.length; i++) {
-      tops.add(y);
-      y += heights[i];
-      if (i < heights.length - 1) y -= _verticalOverlap;
-    }
-    final totalHeight = tops.isEmpty ? 0.0 : tops.last + heights.last;
-    final totalWidth = cardWidth + _horizontalStagger;
+    return Obx(() {
+      final isFromMe = messageState.isFromMe.value;
+      final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth, messageState)];
+      final tops = <double>[];
+      double y = 0;
+      for (int i = 0; i < heights.length; i++) {
+        tops.add(y);
+        y += heights[i];
+        if (i < heights.length - 1) y -= _verticalOverlap;
+      }
+      final totalHeight = tops.isEmpty ? 0.0 : tops.last + heights.last;
+      final totalWidth = cardWidth + _horizontalStagger;
 
-    final collage = SizedBox(
-      width: totalWidth,
-      height: totalHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (int i = 0; i < _attachments.length; i++)
-            Positioned(
-              top: tops[i],
-              left: isFromMe ? null : (i.isEven ? _horizontalStagger : 0.0),
-              right: isFromMe ? (i.isEven ? _horizontalStagger : 0.0) : null,
-              child: _buildCard(messageState, collectionController, i, cardWidth, heights[i], isFromMe),
-            ),
-        ],
-      ),
-    );
+      final collage = SizedBox(
+        width: totalWidth,
+        height: totalHeight,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (int i = 0; i < _attachments.length; i++)
+              Positioned(
+                top: tops[i],
+                left: isFromMe ? null : (i.isEven ? _horizontalStagger : 0.0),
+                right: isFromMe ? (i.isEven ? _horizontalStagger : 0.0) : null,
+                child: _buildCard(messageState, collectionController, i, cardWidth, heights[i], isFromMe),
+              ),
+          ],
+        ),
+      );
 
-    return CollectionDownloadButton.wrap(
-      isFromMe: isFromMe,
-      contentWidth: totalWidth,
-      contentHeight: totalHeight,
-      attachments: _attachments,
-      child: collage,
-    );
+      return CollectionDownloadButton.wrap(
+        isFromMe: isFromMe,
+        contentWidth: totalWidth,
+        contentHeight: totalHeight,
+        attachments: _attachments,
+        child: collage,
+      );
+    });
   }
 
   Widget _buildCard(

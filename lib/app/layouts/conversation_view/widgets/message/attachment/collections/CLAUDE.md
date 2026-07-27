@@ -26,7 +26,7 @@ Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroup
 
 ## Card sizing
 
-- **Collage:** Locked per-card frames from each attachment’s `displayWidth`/`displayHeight` (mixed portrait/landscape OK). Uses `AttachmentFrameMode.fixedCard` so media cover-fills without resizing cards on load.
+- **Collage:** Per-card frames bucketed by orientation — landscape **4:3**, portrait/square/unknown **3:4** — reacting to `AttachmentState` dimensions. Uses `AttachmentFrameMode.fixedCard` so media cover-fills the frame.
 - **Stack:** Shared portrait **3:4** frame for every fan/past slot; same `fixedCard` cover-fill.
 - **Grid:** Predetermined cell geometry with `AttachmentFrameMode.gridCell` (same cover-fill path; parent clips; no card shadow).
 
