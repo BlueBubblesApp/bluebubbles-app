@@ -16,7 +16,7 @@ class TaskerPanel extends StatefulWidget {
 class _TaskerPanelState extends State<TaskerPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
         title: "Tasker Integration",
         initialHeader: "Integration Details",
         iosSubtitle: iosSubtitle,
@@ -27,7 +27,7 @@ class _TaskerPanelState extends State<TaskerPanel> with ThemeHelpers {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
                     const Padding(
@@ -50,15 +50,17 @@ class _TaskerPanelState extends State<TaskerPanel> with ThemeHelpers {
                             mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
+                        expressive: true,
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info_outline,
+                        containerColor: Colors.grey,
                       ),
                     ),
                   ],
                 ),
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Integration Settings"),
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(

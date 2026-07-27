@@ -11,6 +11,7 @@ class ReactionTypePicker extends StatefulWidget {
   final List<String> reactions;
   final Function(String?) onChanged;
   final Color secondaryColor;
+  final bool useModernMenu;
 
   const ReactionTypePicker({
     super.key,
@@ -19,6 +20,7 @@ class ReactionTypePicker extends StatefulWidget {
     required this.reactions,
     required this.onChanged,
     required this.secondaryColor,
+    this.useModernMenu = false,
   });
 
   @override
@@ -73,6 +75,7 @@ class _ReactionTypePickerState extends State<ReactionTypePicker> {
         widget.onChanged(val);
       },
       secondaryColor: widget.secondaryColor,
+      useModernMenu: widget.useModernMenu,
     );
   }
 }

@@ -51,7 +51,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => SettingsScaffold(
+      () => SettingsScaffold(expressive: true, 
         title: "Theming & Styles",
         initialHeader: "Appearance",
         iosSubtitle: iosSubtitle,
@@ -62,7 +62,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
                     SettingsOptions<AdaptiveThemeMode>(
@@ -77,6 +77,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                       textProcessing: (val) => val.toString().split(".").last,
                       title: "App Theme",
                       secondaryColor: headerColor,
+                      useModernMenu: true,
                     ),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
@@ -95,30 +96,35 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                         },
                       ),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    Container(
-                      padding: const EdgeInsets.only(left: 15, top: 10),
-                      child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(left: 15, top: 10),
+                          child: Text("Avatar Scale Factor", style: context.theme.textTheme.bodyLarge),
+                        ),
+                        Obx(() => SettingsSlider(
+                            startingVal: SettingsSvc.settings.avatarScale.value.toDouble(),
+                            update: (double val) {
+                              SettingsSvc.settings.avatarScale.value = val;
+                            },
+                            onChangeEnd: (double val) async {
+                              await SettingsSvc.settings.saveOneAsync('avatarScale');
+                            },
+                            formatValue: ((double val) => val.toPrecision(2).toString()),
+                            backgroundColor: tileColor,
+                            min: 0.8,
+                            max: 1.2,
+                            divisions: 4)),
+                      ],
                     ),
-                    Obx(() => SettingsSlider(
-                        startingVal: SettingsSvc.settings.avatarScale.value.toDouble(),
-                        update: (double val) {
-                          SettingsSvc.settings.avatarScale.value = val;
-                        },
-                        onChangeEnd: (double val) async {
-                          await SettingsSvc.settings.saveOneAsync('avatarScale');
-                        },
-                        formatValue: ((double val) => val.toPrecision(2).toString()),
-                        backgroundColor: tileColor,
-                        min: 0.8,
-                        max: 1.2,
-                        divisions: 4)),
                   ],
                 ),
                 SettingsHeader(
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Skin${kIsDesktop ? "" : " and Layout"}"),
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsOptions<Skins>(
@@ -136,6 +142,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           capitalize: false,
                           title: "App Skin",
                           secondaryColor: headerColor,
+                          useModernMenu: true,
                         )),
                     if (!kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop)
@@ -154,29 +161,33 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           )),
                     if (!kIsWeb && !kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(() => SettingsSwitch(
-                            onChanged: (bool val) async {
-                              SettingsSvc.settings.immersiveMode.value = val;
-                              await SettingsSvc.settings.saveOneAsync('immersiveMode');
-                              if (val) {
-                                SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                              } else {
-                                SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-                                    overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-                              }
-                              EventDispatcherSvc.emit('theme-update', null);
-                            },
-                            initialVal: SettingsSvc.settings.immersiveMode.value,
-                            title: "Immersive Mode",
-                            backgroundColor: tileColor,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(() => SettingsSwitch(
+                                onChanged: (bool val) async {
+                                  SettingsSvc.settings.immersiveMode.value = val;
+                                  await SettingsSvc.settings.saveOneAsync('immersiveMode');
+                                  if (val) {
+                                    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                                  } else {
+                                    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+                                        overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                                  }
+                                  EventDispatcherSvc.emit('theme-update', null);
+                                },
+                                initialVal: SettingsSvc.settings.immersiveMode.value,
+                                title: "Immersive Mode",
+                                backgroundColor: tileColor,
+                                subtitle:
+                                    "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                                isThreeLine: true,
+                              )),
+                          const SettingsSubtitle(
                             subtitle:
-                                "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
-                            isThreeLine: true,
-                          )),
-                    if (!kIsWeb && !kIsDesktop)
-                      const SettingsSubtitle(
-                        subtitle:
-                            "Note: This option may cause slight choppiness in some animations due to an Android limitation.",
+                                "Note: This option may cause slight choppiness in some animations due to an Android limitation.",
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -187,7 +198,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     text: "Window Effect",
                   ),
                 if (kIsDesktop && Platform.isWindows)
-                  SettingsSection(backgroundColor: tileColor, children: [
+                  SettingsSection(expressive: true, backgroundColor: tileColor, children: [
                     Obx(
                       () => SettingsOptions<WindowEffect>(
                         initial: SettingsSvc.settings.windowEffect.value,
@@ -218,6 +229,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             "${WindowEffects.descriptions[SettingsSvc.settings.windowEffect.value]}\n\nOperating System Version: ${Platform.operatingSystemVersion}\nBuild number: ${parsedWindowsVersion()}${parsedWindowsVersion() < 22000 && SettingsSvc.settings.windowEffect.value == WindowEffect.acrylic ? "\n\n⚠️ This effect causes window movement lag on Windows 10" : ""}",
                         secondaryColor: headerColor,
                         capitalize: true,
+                        useModernMenu: true,
                       ),
                     ),
                     if (SettingsSvc.settings.skin.value == Skins.iOS)
@@ -302,7 +314,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }),
                   ]),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Colors"),
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
                     if (kIsDesktop)
@@ -358,55 +370,59 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     if (!kIsWeb && !kIsDesktop && ThemeSvc.monetPalette != null)
                       const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb && !kIsDesktop)
-                      Obx(
-                        () => SettingsSwitch(
-                          onChanged: (bool val) async {
-                            if (val) {
-                              await MethodChannelSvc.actions.requestNotificationListenerPermission();
-                              try {
-                                await MethodChannelSvc.actions.startNotificationListener();
-                                var allThemes = ThemeStruct.getThemes();
-                                var currentLight = ThemeStruct.getLightTheme();
-                                var currentDark = ThemeStruct.getDarkTheme();
-                                await PrefsSvc.theme.setPreviousThemes(
-                                  lightTheme: currentLight.name,
-                                  darkTheme: currentDark.name,
-                                );
-                                await ThemeSvc.changeTheme(context,
-                                    light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
-                                    dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
-                                SettingsSvc.settings.colorsFromMedia.value = val;
-                                await SettingsSvc.settings.saveOneAsync('colorsFromMedia');
-                              } catch (e, s) {
-                                Logger.error("Failed to start notification listener for music theme",
-                                    error: e, trace: s);
-                                showSnackbar("Error",
-                                    "Something went wrong, please ensure you granted the permission correctly!");
-                              }
-                            } else {
-                              var allThemes = ThemeStruct.getThemes();
-                              final lightName = PrefsSvc.theme.getPreviousLightTheme();
-                              final darkName = PrefsSvc.theme.getPreviousDarkTheme();
-                              var previousLight = allThemes.firstWhere((e) => e.name == lightName);
-                              var previousDark = allThemes.firstWhere((e) => e.name == darkName);
-                              await PrefsSvc.theme.clearPreviousLightTheme();
-                              await PrefsSvc.theme.clearPreviousDarkTheme();
-                              await ThemeSvc.changeTheme(context, light: previousLight, dark: previousDark);
-                              SettingsSvc.settings.colorsFromMedia.value = val;
-                              await SettingsSvc.settings.saveOneAsync('colorsFromMedia');
-                            }
-                          },
-                          initialVal: SettingsSvc.settings.colorsFromMedia.value,
-                          title: "Colors from Media",
-                          backgroundColor: tileColor,
-                          subtitle: "Pull app colors from currently playing media",
-                        ),
-                      ),
-                    if (!kIsWeb && !kIsDesktop)
-                      const SettingsSubtitle(
-                        unlimitedSpace: true,
-                        subtitle:
-                            "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(
+                            () => SettingsSwitch(
+                              onChanged: (bool val) async {
+                                if (val) {
+                                  await MethodChannelSvc.actions.requestNotificationListenerPermission();
+                                  try {
+                                    await MethodChannelSvc.actions.startNotificationListener();
+                                    var allThemes = ThemeStruct.getThemes();
+                                    var currentLight = ThemeStruct.getLightTheme();
+                                    var currentDark = ThemeStruct.getDarkTheme();
+                                    await PrefsSvc.theme.setPreviousThemes(
+                                      lightTheme: currentLight.name,
+                                      darkTheme: currentDark.name,
+                                    );
+                                    await ThemeSvc.changeTheme(context,
+                                        light: allThemes.firstWhere((element) => element.name == "Music Theme ☀"),
+                                        dark: allThemes.firstWhere((element) => element.name == "Music Theme 🌙"));
+                                    SettingsSvc.settings.colorsFromMedia.value = val;
+                                    await SettingsSvc.settings.saveOneAsync('colorsFromMedia');
+                                  } catch (e, s) {
+                                    Logger.error("Failed to start notification listener for music theme",
+                                        error: e, trace: s);
+                                    showSnackbar("Error",
+                                        "Something went wrong, please ensure you granted the permission correctly!");
+                                  }
+                                } else {
+                                  var allThemes = ThemeStruct.getThemes();
+                                  final lightName = PrefsSvc.theme.getPreviousLightTheme();
+                                  final darkName = PrefsSvc.theme.getPreviousDarkTheme();
+                                  var previousLight = allThemes.firstWhere((e) => e.name == lightName);
+                                  var previousDark = allThemes.firstWhere((e) => e.name == darkName);
+                                  await PrefsSvc.theme.clearPreviousLightTheme();
+                                  await PrefsSvc.theme.clearPreviousDarkTheme();
+                                  await ThemeSvc.changeTheme(context, light: previousLight, dark: previousDark);
+                                  SettingsSvc.settings.colorsFromMedia.value = val;
+                                  await SettingsSvc.settings.saveOneAsync('colorsFromMedia');
+                                }
+                              },
+                              initialVal: SettingsSvc.settings.colorsFromMedia.value,
+                              title: "Colors from Media",
+                              backgroundColor: tileColor,
+                              subtitle: "Pull app colors from currently playing media",
+                            ),
+                          ),
+                          const SettingsSubtitle(
+                            unlimitedSpace: true,
+                            subtitle:
+                                "Note: Requires full notification access. Enabling this option will set a custom Music Theme as the selected theme. Media art with mostly blacks or whites may not produce any change in theming.",
+                          ),
+                        ],
                       ),
                     if (!kIsWeb && !kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() {
@@ -477,7 +493,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 if (!kIsWeb && !kIsDesktop)
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
-                      return SettingsSection(
+                      return SettingsSection(expressive: true, 
                         backgroundColor: tileColor,
                         children: [
                           Obx(() => SettingsOptions<int>(
@@ -493,6 +509,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 textProcessing: (val) => val == 0 ? "Auto" : "$val Hz",
                                 title: "Display",
                                 secondaryColor: headerColor,
+                                useModernMenu: true,
                               )),
                         ],
                       );
@@ -501,12 +518,11 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }
                   }),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Text and Font"),
-                SettingsSection(
+                Obx(() => SettingsSection(expressive: true,
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() {
-                      if (!FilesystemSvc.fontExistsOnDisk.value) {
-                        return SettingsTile(
+                    if (!FilesystemSvc.fontExistsOnDisk.value)
+                        SettingsTile(
                           onTap: () async {
                             if (kIsWeb) {
                               try {
@@ -600,14 +616,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               ? "Upload Font File"
                               : "Download${HttpSvc.downloadingFont.value ? "ing" : ""} iOS Emoji Font${HttpSvc.downloadingFont.value ? " (${HttpSvc.fontDownloadProgress.value != null && HttpSvc.fontDownloadTotalSize.value != null ? (HttpSvc.fontDownloadProgress.value! * HttpSvc.fontDownloadTotalSize.value!).getFriendlySize(withSuffix: false) : ""} / ${(HttpSvc.fontDownloadTotalSize.value ?? 0).toDouble().getFriendlySize()}) (${((HttpSvc.fontDownloadProgress.value ?? 0) * 100).floor()}%)" : ""}",
                           subtitle: kIsWeb ? "Upload your ttf emoji file into BlueBubbles" : null,
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
-                    Obx(() {
-                      if (FilesystemSvc.fontExistsOnDisk.value) {
-                        return SettingsTile(
+                        ),
+                    if (FilesystemSvc.fontExistsOnDisk.value)
+                        SettingsTile(
                           onTap: () async {
                             if (kIsWeb) {
                               final txn = FilesystemSvc.webDb.transaction("BBStore", idbModeReadWrite);
@@ -622,13 +633,9 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                             showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                           },
                           title: "Delete ${kIsWeb ? "" : "iOS "}Emoji Font",
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
+                        ),
                   ],
-                ),
+                )),
               ],
             ),
           ),

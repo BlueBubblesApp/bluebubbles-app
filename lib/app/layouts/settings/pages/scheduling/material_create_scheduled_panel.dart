@@ -69,7 +69,7 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
     return Obx(() {
       final error = validationError;
 
-      return SettingsScaffold(
+      return SettingsScaffold(expressive: true, 
         title: widget.existing != null ? "Edit Message" : "New Message",
         initialHeader: "Message Info",
         iosSubtitle: iosSubtitle,
@@ -87,12 +87,13 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
           SliverList(
             delegate: SliverChildListDelegate([
               // Message Info section
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   SettingsTile(
                     title: "Chat",
                     leading: SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: CupertinoIcons.chat_bubble_2_fill,
                       materialIcon: CupertinoIcons.chat_bubble_2_fill,
                       containerColor: context.theme.colorScheme.primary,
@@ -151,7 +152,7 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
                 materialSubtitle: materialSubtitle,
                 text: "Schedule",
               ),
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   // Schedule type — Material 3 SegmentedButton
@@ -255,6 +256,7 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
                   SettingsTile(
                     title: "Date & Time",
                     leading: const SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: Icons.calendar_month_outlined,
                       materialIcon: Icons.calendar_month_outlined,
                       containerColor: Colors.orange,
@@ -272,7 +274,7 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
                 materialSubtitle: materialSubtitle,
                 text: "Summary",
               ),
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => Padding(

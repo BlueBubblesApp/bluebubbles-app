@@ -231,7 +231,7 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
       title: "Text Field Buttons",
       initialHeader: "Preview",
       iosSubtitle: iosSubtitle,
@@ -252,7 +252,7 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
       bodySlivers: [
         SliverList(
           delegate: SliverChildListDelegate([
-            SettingsSection(
+            SettingsSection(expressive: true, 
               // Transparent so the tile can be painted around the preview instead of
               // behind it — see _tiled() and the rails below
               backgroundColor: Colors.transparent,

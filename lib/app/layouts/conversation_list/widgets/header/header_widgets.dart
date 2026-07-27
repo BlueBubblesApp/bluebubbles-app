@@ -166,6 +166,7 @@ class MaterialAvatarMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedDropdownMenu(
+      menuWidth: 240,
       trigger: (context, showMenu) => GestureDetector(
         onTap: showMenu,
         child: Container(

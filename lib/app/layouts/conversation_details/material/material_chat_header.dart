@@ -61,6 +61,7 @@ class ExpressiveChatHeader extends StatelessWidget {
                     bottom: -4,
                     child: DeferPointer(
                       child: AnimatedDropdownMenu(
+                        menuWidth: 200,
                         trigger: (context, showMenu) => InkWell(
                           onTap: showMenu,
                           customBorder: const CircleBorder(),

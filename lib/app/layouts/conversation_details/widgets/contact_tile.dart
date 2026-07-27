@@ -315,6 +315,7 @@ class ContactTile extends StatelessWidget {
     required bool showVideo,
   }) {
     return AnimatedDropdownMenu(
+      menuWidth: 180,
       trigger: (context, showMenu) => ClipOval(
         child: Material(
           color: Colors.transparent,

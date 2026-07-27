@@ -13,16 +13,10 @@ import 'package:universal_io/io.dart';
 /// Only rebuilds when socket.state changes
 class ConnectionServerTile extends StatelessWidget {
   final Color tileColor;
-  final bool samsung;
-  final bool iOS;
-  final bool material;
 
   const ConnectionServerTile({
     super.key,
     required this.tileColor,
-    required this.samsung,
-    required this.iOS,
-    required this.material,
   });
 
   @override
@@ -63,49 +57,11 @@ class ConnectionServerTile extends StatelessWidget {
             showToast("Server address copied to clipboard");
           }
         },
-        leading: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Material(
-              shape: samsung
-                  ? SquircleBorder(
-                      side: BorderSide(
-                        color: getIndicatorColor(SocketSvc.state.value),
-                        width: 3.0,
-                      ),
-                    )
-                  : null,
-              color: SettingsSvc.settings.skin.value != Skins.Material
-                  ? getIndicatorColor(SocketSvc.state.value)
-                  : Colors.transparent,
-              borderRadius: iOS ? BorderRadius.circular(6) : null,
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      iOS ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
-                      color: SettingsSvc.settings.skin.value != Skins.Material ? Colors.white : Colors.grey,
-                      size: SettingsSvc.settings.skin.value != Skins.Material ? 21 : 28,
-                    ),
-                    if (material)
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: getSocketStateIndicatorIcon(
-                            SocketSvc.state.value,
-                            size: 12,
-                            showAlpha: false,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        leading: SettingsLeadingIcon(
+          iosIcon: CupertinoIcons.antenna_radiowaves_left_right,
+          materialIcon: Icons.router,
+          containerColor: getIndicatorColor(SocketSvc.state.value),
+          expressive: true,
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

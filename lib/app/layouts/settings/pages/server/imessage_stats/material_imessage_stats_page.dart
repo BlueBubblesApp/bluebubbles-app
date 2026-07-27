@@ -209,7 +209,7 @@ class _MaterialIMessageStatsPageState
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
       title: "iMessage Stats",
       initialHeader: null,
       iosSubtitle: iosSubtitle,

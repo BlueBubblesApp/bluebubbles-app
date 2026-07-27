@@ -113,7 +113,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
       headerColor: headerColor,
       title: "iMessage Profile",
       tileColor: tileColor,
@@ -314,12 +314,14 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "iCloud Account Info"),
               Skeletonizer(
                   enabled: accountInfo.isEmpty,
-                  child: SettingsSection(
+                  child: SettingsSection(expressive: true, 
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
                         bool redact = SettingsSvc.settings.redactedMode.value;
-                        return Padding(
+                        return SizedBox(
+                          width: double.infinity,
+                          child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                           child: AnimatedOpacity(
                             duration: const Duration(milliseconds: 300),
@@ -379,6 +381,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
                               },
                             ),
                           ),
+                          ),
                         );
                       }),
                       if (accountInfo['active_alias'] != null)
@@ -413,20 +416,25 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "iMessage Contact Card"),
               if (!isNullOrEmpty(accountContact['name']))
-                SettingsSection(
+                SettingsSection(expressive: true, 
                   backgroundColor: tileColor,
                   children: [
-                    SettingsTile(
-                      leading: !isNullOrEmpty(accountContact['avatar'])
-                          ? CircleAvatar(
-                              backgroundImage: MemoryImage(base64Decode(accountContact['avatar'].toString())),
-                              radius: 20,
-                            )
-                          : const CircleAvatar(),
-                      title: accountContact['name'],
-                      subtitle: "Your sharable iMessage contact card",
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SettingsTile(
+                          leading: !isNullOrEmpty(accountContact['avatar'])
+                              ? CircleAvatar(
+                                  backgroundImage: MemoryImage(base64Decode(accountContact['avatar'].toString())),
+                                  radius: 20,
+                                )
+                              : const CircleAvatar(),
+                          title: accountContact['name'],
+                          subtitle: "Your sharable iMessage contact card",
+                        ),
+                        const SettingsSubtitle(subtitle: "Visit iMessage settings on your Mac to update."),
+                      ],
                     ),
-                    const SettingsSubtitle(subtitle: "Visit iMessage settings on your Mac to update.")
                   ],
                 ),
             ],

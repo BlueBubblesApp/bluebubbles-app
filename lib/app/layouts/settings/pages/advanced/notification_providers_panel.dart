@@ -20,7 +20,7 @@ class NotificationProvidersPanel extends StatefulWidget {
 class _NotificationProvidersState extends State<NotificationProvidersPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
         title: "Notification Providers",
         initialHeader: "Overview",
         iosSubtitle: iosSubtitle,
@@ -30,25 +30,15 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
         bodySlivers: [
           SliverList(
               delegate: SliverChildListDelegate(<Widget>[
-            SettingsSection(backgroundColor: tileColor, children: [
+            SettingsSection(expressive: true, backgroundColor: tileColor, children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: 8, left: 15, top: 15, right: 15),
+                padding: const EdgeInsets.only(bottom: 15, left: 15, top: 15, right: 15),
                 child: RichText(
                   text: TextSpan(
                     children: [
                       const TextSpan(
                           text:
                               "Notification Providers are what allow you to receive notifications from your server. "),
-                    ],
-                    style: context.theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 15, left: 15, top: 0, right: 15),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
                       const TextSpan(
                           text:
                               "By default, Google Firebase (FCM) will be used, however, you have the option to use other methods. "),
@@ -63,7 +53,7 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
               ),
             ]),
             SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Providers"),
-            SettingsSection(
+            SettingsSection(expressive: true, 
               backgroundColor: tileColor,
               children: [
                 SettingsTile(
@@ -128,6 +118,7 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
                         isThreeLine: true,
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
+                            expressive: true,
                             iosIcon: CupertinoIcons.bolt_badge_a_fill,
                             materialIcon: Icons.bolt,
                             containerColor: Colors.blueAccent),
@@ -143,6 +134,7 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
                       );
                     },
                     leading: const SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: CupertinoIcons.bell_circle,
                       materialIcon: Icons.circle_notifications_outlined,
                       containerColor: Colors.purpleAccent,

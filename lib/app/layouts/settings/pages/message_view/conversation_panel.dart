@@ -54,7 +54,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
       title: "Conversations",
       initialHeader: "Customization",
       iosSubtitle: iosSubtitle,
@@ -65,7 +65,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
@@ -153,33 +153,37 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                     ),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
-                    SettingsTile(
-                      title: "Sync Group Chat Icons",
-                      trailing: Obx(() => gettingIcons.value == null
-                          ? const SizedBox.shrink()
-                          : gettingIcons.value == true
-                              ? Container(
-                                  constraints: const BoxConstraints(
-                                    maxHeight: 20,
-                                    maxWidth: 20,
-                                  ),
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                  ))
-                              : Icon(Icons.check, color: context.theme.colorScheme.outline)),
-                      onTap: () async {
-                        gettingIcons.value = true;
-                        for (Chat c in ChatsSvc.groupChats) {
-                          await Chat.getIcon(c, force: true);
-                        }
-                        gettingIcons.value = false;
-                      },
-                      subtitle: "Get iMessage group chat icons from the server",
-                    ),
-                  if (!kIsWeb)
-                    const SettingsSubtitle(
-                      subtitle: "Note: Overrides any custom avatars set for group chats.",
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SettingsTile(
+                          title: "Sync Group Chat Icons",
+                          trailing: Obx(() => gettingIcons.value == null
+                              ? const SizedBox.shrink()
+                              : gettingIcons.value == true
+                                  ? Container(
+                                      constraints: const BoxConstraints(
+                                        maxHeight: 20,
+                                        maxWidth: 20,
+                                      ),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                        valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
+                                      ))
+                                  : Icon(Icons.check, color: context.theme.colorScheme.outline)),
+                          onTap: () async {
+                            gettingIcons.value = true;
+                            for (Chat c in ChatsSvc.groupChats) {
+                              await Chat.getIcon(c, force: true);
+                            }
+                            gettingIcons.value = false;
+                          },
+                          subtitle: "Get iMessage group chat icons from the server",
+                        ),
+                        const SettingsSubtitle(
+                          subtitle: "Note: Overrides any custom avatars set for group chats.",
+                        ),
+                      ],
                     ),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
@@ -216,7 +220,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                 ),
               if (!kIsWeb)
                 Obx(
-                  () => SettingsSection(
+                  () => SettingsSection(expressive: true, 
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
@@ -366,18 +370,23 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                               ),
                       ),
                       const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                      const SettingsTile(
-                        title: "Send/Receive Sound Volume",
-                        subtitle: "Controls the volume of the send and receive sounds",
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SettingsTile(
+                            title: "Send/Receive Sound Volume",
+                            subtitle: "Controls the volume of the send and receive sounds",
+                          ),
+                          Obx(() => SettingsSlider(
+                                startingVal: SettingsSvc.settings.soundVolume.value.toDouble(),
+                                min: 0,
+                                max: 100,
+                                divisions: 100,
+                                formatValue: (val) => "${val.toInt()}",
+                                update: (val) => SettingsSvc.settings.soundVolume.value = val.toInt(),
+                              )),
+                        ],
                       ),
-                      Obx(() => SettingsSlider(
-                            startingVal: SettingsSvc.settings.soundVolume.value.toDouble(),
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            formatValue: (val) => "${val.toInt()}",
-                            update: (val) => SettingsSvc.settings.soundVolume.value = val.toInt(),
-                          )),
                     ],
                   ),
                 ),
@@ -386,7 +395,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                 materialSubtitle: materialSubtitle,
                 text: "Gestures",
               ),
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   if (!kIsWeb && !kIsDesktop)

@@ -68,7 +68,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
         title: "Private API Features",
         initialHeader: "Private API",
         iosSubtitle: iosSubtitle,
@@ -80,7 +80,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
             delegate: SliverChildListDelegate(
               <Widget>[
                 Obx(
-                  () => SettingsSection(
+                  () => SettingsSection(expressive: true, 
                     backgroundColor: tileColor,
                     children: [
                       if (!SettingsSvc.settings.enablePrivateAPI.value ||
@@ -137,8 +137,10 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                 mode: LaunchMode.externalApplication);
                           },
                           leading: const SettingsLeadingIcon(
+                            expressive: true,
                             iosIcon: CupertinoIcons.checkmark_shield,
                             materialIcon: Icons.privacy_tip,
+                            containerColor: Colors.blue,
                           ),
                         ),
                       if (SettingsSvc.settings.serverPrivateAPI.value != true) const SettingsDivider(),
@@ -165,7 +167,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       SettingsHeader(
                           iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Private API Settings"),
-                      SettingsSection(
+                      SettingsSection(expressive: true, 
                         backgroundColor: tileColor,
                         children: [
                           SettingsSwitch(
@@ -178,6 +180,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             subtitle: "Sends typing indicators to other iMessage users",
                             backgroundColor: tileColor,
                             leading: const SettingsLeadingIcon(
+                              expressive: true,
                               iosIcon: CupertinoIcons.keyboard_chevron_compact_down,
                               materialIcon: Icons.keyboard_alt_outlined,
                               containerColor: Colors.green,
@@ -207,6 +210,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                           backgroundColor: tileColor,
                                           isThreeLine: true,
                                           leading: const SettingsLeadingIcon(
+                                            expressive: true,
                                             iosIcon: CupertinoIcons.rectangle_fill_badge_checkmark,
                                             materialIcon: Icons.playlist_add_check,
                                             containerColor: Colors.blueAccent,
@@ -232,6 +236,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
                                   leading: const SettingsLeadingIcon(
+                                    expressive: true,
                                     iosIcon: CupertinoIcons.check_mark_circled,
                                     materialIcon: Icons.check_circle_outline,
                                     containerColor: Colors.orange,
@@ -259,6 +264,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                             backgroundColor: tileColor,
                             isThreeLine: true,
                             leading: const SettingsLeadingIcon(
+                              expressive: true,
                               iosIcon: CupertinoIcons.rays,
                               materialIcon: Icons.touch_app_outlined,
                               containerColor: Colors.purple,
@@ -278,6 +284,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                       await SettingsSvc.settings.saveOneAsync('quickTapbackType');
                                     },
                                     secondaryColor: headerColor,
+                                    useModernMenu: true,
                                   )),
                             ),
                           ),
@@ -298,6 +305,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   subtitle: "Press the Up Arrow to begin editing the last message you sent",
                                   backgroundColor: tileColor,
                                   leading: const SettingsLeadingIcon(
+                                    expressive: true,
                                     iosIcon: CupertinoIcons.arrow_up_square,
                                     materialIcon: Icons.arrow_circle_up,
                                     containerColor: Colors.redAccent,
@@ -323,6 +331,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
                                   leading: const SettingsLeadingIcon(
+                                    expressive: true,
                                     iosIcon: CupertinoIcons.textformat,
                                     materialIcon: Icons.text_format_rounded,
                                     containerColor: Colors.blueAccent,
@@ -348,6 +357,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
                                   leading: const SettingsLeadingIcon(
+                                    expressive: true,
                                     iosIcon: CupertinoIcons.bubble_right,
                                     materialIcon: Icons.chat_bubble_outline,
                                     containerColor: Colors.green,
@@ -373,6 +383,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   backgroundColor: tileColor,
                                   isThreeLine: true,
                                   leading: const SettingsLeadingIcon(
+                                    expressive: true,
                                     iosIcon: CupertinoIcons.paperclip,
                                     materialIcon: Icons.attach_file_outlined,
                                     containerColor: Colors.teal,

@@ -5,16 +5,21 @@ import 'package:get/get.dart';
 
 /// A small anchored popup menu with a scale/fade entrance animation, used for
 /// the Material/Samsung skin's dropdown-style menus (main conversation list
-/// header avatar menu, contact tile actions, etc). Renders via an
-/// [OverlayEntry] positioned relative to [trigger] using a [LayerLink].
+/// header avatar menu, contact tile actions, settings dropdowns, etc).
+/// Renders via an [OverlayEntry] positioned relative to [trigger] using a
+/// [LayerLink].
+///
+/// Anchor side (left/right) and vertical direction (above/below) are picked
+/// dynamically each time the menu opens, based on how much screen space
+/// surrounds the trigger — so a trigger near the left edge or bottom of the
+/// screen still gets a fully on-screen menu instead of clipping.
 class AnimatedDropdownMenu extends StatefulWidget {
   const AnimatedDropdownMenu({
     super.key,
     required this.trigger,
     required this.menuBuilder,
-    this.anchor = Alignment.bottomRight,
-    this.followerAnchor = Alignment.topRight,
-    this.offset = const Offset(0, 8),
+    required this.menuWidth,
+    this.gap = 8,
   });
 
   /// Builds the tappable trigger widget. Call [showMenu] to open the popup.
@@ -24,9 +29,13 @@ class AnimatedDropdownMenu extends StatefulWidget {
   /// item is tapped).
   final Widget Function(BuildContext context, Future<void> Function() hideMenu) menuBuilder;
 
-  final Alignment anchor;
-  final Alignment followerAnchor;
-  final Offset offset;
+  /// Width of the card built by [menuBuilder] — pass the same value given to
+  /// the inner [DropdownMenuCard.width]. Used to decide which side of the
+  /// trigger the menu has room to grow toward.
+  final double menuWidth;
+
+  /// Gap kept between the trigger and the menu.
+  final double gap;
 
   @override
   State<AnimatedDropdownMenu> createState() => _AnimatedDropdownMenuState();
@@ -44,6 +53,10 @@ class _AnimatedDropdownMenuState extends State<AnimatedDropdownMenu> with Single
   late final Animation<double> _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
   OverlayEntry? _overlayEntry;
 
+  Alignment _targetAnchor = Alignment.bottomRight;
+  Alignment _followerAnchor = Alignment.topRight;
+  Offset _offset = const Offset(0, 8);
+
   @override
   void dispose() {
     _overlayEntry?.remove();
@@ -52,11 +65,37 @@ class _AnimatedDropdownMenuState extends State<AnimatedDropdownMenu> with Single
     super.dispose();
   }
 
+  /// Picks which corner of the trigger the menu grows from, based on the
+  /// space actually available around the trigger on-screen.
+  void _computeAnchors() {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+
+    final triggerSize = renderBox.size;
+    final triggerTopLeft = renderBox.localToGlobal(Offset.zero);
+    final screenSize = MediaQuery.sizeOf(context);
+
+    // Growing left from the trigger's right edge is the default look — flip
+    // to growing right from the trigger's left edge if that would clip.
+    final spaceToGrowLeft = triggerTopLeft.dx + triggerSize.width;
+    final growLeft = spaceToGrowLeft >= widget.menuWidth;
+
+    // Prefer opening below; flip above when there's more room there.
+    final spaceBelow = screenSize.height - (triggerTopLeft.dy + triggerSize.height);
+    final spaceAbove = triggerTopLeft.dy;
+    final openBelow = spaceBelow >= spaceAbove;
+
+    _targetAnchor = Alignment(growLeft ? 1.0 : -1.0, openBelow ? 1.0 : -1.0);
+    _followerAnchor = Alignment(growLeft ? 1.0 : -1.0, openBelow ? -1.0 : 1.0);
+    _offset = Offset(0, openBelow ? widget.gap : -widget.gap);
+  }
+
   void _showMenu() {
     if (_overlayEntry != null) {
       _hideMenu();
       return;
     }
+    _computeAnchors();
     _overlayEntry = _buildOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
     _animationController.forward();
@@ -82,12 +121,12 @@ class _AnimatedDropdownMenuState extends State<AnimatedDropdownMenu> with Single
             ),
             CompositedTransformFollower(
               link: _layerLink,
-              targetAnchor: widget.anchor,
-              followerAnchor: widget.followerAnchor,
-              offset: widget.offset,
+              targetAnchor: _targetAnchor,
+              followerAnchor: _followerAnchor,
+              offset: _offset,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                alignment: widget.followerAnchor,
+                alignment: _followerAnchor,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: widget.menuBuilder(overlayContext, _hideMenu),

@@ -89,6 +89,7 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                   allowResize: true,
                   left: SettingsScaffold(
                     title: "Settings",
+                    expressive: true,
                     initialHeader: kIsWeb ? "Server & Message Management" : null,
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
@@ -177,6 +178,7 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                                     // If any children match → rebuild section with only matching children
                                     sectionWidgets.add(SettingsSection(
                                       backgroundColor: item.backgroundColor,
+                                      expressive: true,
                                       searchableSettingsItems: matchingItems,
                                       children: null, // Only show matching searchable children
                                     ));

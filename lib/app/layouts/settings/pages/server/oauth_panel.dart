@@ -107,7 +107,7 @@ class _OauthPanelState extends State<OauthPanel> with ThemeHelpers {
   Widget build(BuildContext context) {
     Size buttonSize = Size(NavigationSvc.width(context) * 2 / 3, 36);
 
-    return Obx(() => SettingsScaffold(
+    return Obx(() => SettingsScaffold(expressive: true, 
           title: 'Sign-In With Google',
           initialHeader: '',
           iosSubtitle: null,

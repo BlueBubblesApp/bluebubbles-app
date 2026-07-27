@@ -84,43 +84,35 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
     return Column(mainAxisSize: MainAxisSize.min, children: rows);
   }
 
-  Widget _buildInfoRow(InfoItemConfig item) {
+  Widget _buildInfoTile(InfoItemConfig item) {
     final value = resolveValue(controller, item.key);
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: tileColor,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: item.containerColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(item.materialIcon, color: Colors.white, size: 20),
-        ),
-        title: Text(item.label, style: context.theme.textTheme.bodyMedium),
-        trailing: Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.textTheme.bodyMedium!.copyWith(
-            color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        onTap: item.onTap != null ? () => item.onTap!(context, controller) : null,
+    return SettingsTile(
+      backgroundColor: tileColor,
+      minVerticalPadding: 20,
+      leading: SettingsLeadingIcon(
+        iosIcon: item.iosIcon,
+        materialIcon: item.materialIcon,
+        containerColor: item.containerColor,
+        expressive: true,
       ),
+      title: item.label,
+      trailing: Text(
+        value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.theme.textTheme.bodyMedium!.copyWith(
+          color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: item.onTap != null ? () => item.onTap!(context, controller) : null,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final qrAction = buildQrCodeAction(context);
-    return SettingsScaffold(
+    return SettingsScaffold(expressive: true, 
       title: "Server Management",
       initialHeader: null,
       iosSubtitle: iosSubtitle,
@@ -170,15 +162,21 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
                   ],
                 ),
               ),
-              ...ConnectionPanelHelpersMixin.kInfoItems.map((item) {
-                return Obx(() => _buildInfoRow(item));
-              }),
+              SettingsSection(expressive: true,
+                backgroundColor: tileColor,
+                children: [
+                  for (int i = 0; i < ConnectionPanelHelpersMixin.kInfoItems.length; i++) ...[
+                    Obx(() => _buildInfoTile(ConnectionPanelHelpersMixin.kInfoItems[i])),
+                    if (i < ConnectionPanelHelpersMixin.kInfoItems.length - 1) const SettingsDivider(),
+                  ],
+                ],
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 12, 15, 4),
                 child: Text("Statistics & Analytics", style: materialSubtitle),
               ),
-              SettingsSection(
+              SettingsSection(expressive: true, 
                 backgroundColor: tileColor,
                 children: [
                   buildViewStatsSection(context, controller, tileColor),

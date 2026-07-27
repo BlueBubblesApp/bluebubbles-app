@@ -60,7 +60,9 @@ class SettingsScaffold extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {});
 
     final widgetTree = BBScaffold(
-      backgroundColor: SettingsSvc.settings.skin.value == Skins.Material ? tileColor : headerColor,
+      backgroundColor: SettingsSvc.settings.skin.value == Skins.Material
+          ? (_expressiveMaterial ? headerColor : tileColor)
+          : headerColor,
       appBar: SettingsSvc.settings.skin.value == Skins.Samsung || _expressiveMaterial
           ? null
           : BBAppBar(
@@ -217,7 +219,9 @@ class SettingsScaffold extends StatelessWidget {
                             child: Container(
                                 height: 50,
                                 alignment: Alignment.bottomLeft,
-                                color: SettingsSvc.settings.skin.value == Skins.iOS ? headerColor : tileColor,
+                                color: SettingsSvc.settings.skin.value == Skins.iOS || _expressiveMaterial
+                                    ? headerColor
+                                    : tileColor,
                                 child: Padding(
                                   padding: EdgeInsets.only(
                                       bottom: 8.0, left: SettingsSvc.settings.skin.value == Skins.iOS ? 30 : 15),

@@ -44,8 +44,10 @@ class ThemeManagementSection extends StatelessWidget {
                       title: "Rename",
                       subtitle: "Change the name of \"${controller.activeTheme.name}\"",
                       leading: const SettingsLeadingIcon(
+                        expressive: true,
                         iosIcon: Icons.edit_outlined,
                         materialIcon: Icons.edit_outlined,
+                        containerColor: Colors.teal,
                       ),
                       trailing: const NextButton(),
                       onTap: () => _showRenameDialog(context),
@@ -56,8 +58,10 @@ class ThemeManagementSection extends StatelessWidget {
                     title: "Export Theme",
                     subtitle: "Share this theme as a JSON file",
                     leading: const SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: Icons.share_outlined,
                       materialIcon: Icons.share_outlined,
+                      containerColor: Colors.green,
                     ),
                     onTap: () => _exportTheme(context),
                   ),
@@ -66,8 +70,10 @@ class ThemeManagementSection extends StatelessWidget {
                     title: "Generate from Seed Color",
                     subtitle: "Build a full color palette from a single color",
                     leading: const SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: Icons.colorize_outlined,
                       materialIcon: Icons.colorize_outlined,
+                      containerColor: Colors.purple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => _generateFromSeed(context) : null,
@@ -77,8 +83,10 @@ class ThemeManagementSection extends StatelessWidget {
                     title: "Generate from Image",
                     subtitle: "Build a color palette from a PNG or JPEG",
                     leading: const SettingsLeadingIcon(
+                      expressive: true,
                       iosIcon: Icons.image_outlined,
                       materialIcon: Icons.image_outlined,
+                      containerColor: Colors.deepPurple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => controller.generateFromImage(context) : null,
@@ -89,6 +97,7 @@ class ThemeManagementSection extends StatelessWidget {
                       title: "Toggle Gradient Background",
                       subtitle: "Animated gradient in the message view",
                       leading: SettingsLeadingIcon(
+                        expressive: true,
                         iosIcon: Icons.gradient_outlined,
                         materialIcon: Icons.gradient_outlined,
                         containerColor: controller.activeTheme.gradientBg ? context.theme.colorScheme.primary : null,
@@ -119,6 +128,7 @@ class ThemeManagementSection extends StatelessWidget {
                       title: "Reset Colors to Default",
                       subtitle: "Overwrite all colors with the built-in defaults",
                       leading: SettingsLeadingIcon(
+                        expressive: true,
                         iosIcon: Icons.restart_alt,
                         materialIcon: Icons.restart_alt,
                         containerColor: context.theme.colorScheme.error,
@@ -137,6 +147,7 @@ class ThemeManagementSection extends StatelessWidget {
                       title: "Delete Theme",
                       subtitle: "Permanently remove \"${controller.activeTheme.name}\"",
                       leading: SettingsLeadingIcon(
+                        expressive: true,
                         iosIcon: Icons.delete_outline,
                         materialIcon: Icons.delete_outline,
                         containerColor: context.theme.colorScheme.error,
