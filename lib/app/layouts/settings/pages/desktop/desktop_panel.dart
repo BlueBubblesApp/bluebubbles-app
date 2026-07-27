@@ -41,7 +41,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
         ? (SettingsSvc.settings.showReplyField.value ? 4 : 5).obs
         : SettingsSvc.settings.actionList.length.obs;
 
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
       title: "Desktop Settings",
       initialHeader: "Window Behavior",
       iosSubtitle: iosSubtitle,
@@ -52,7 +52,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
@@ -66,7 +66,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         subtitle: "Automatically open the desktop app on startup.",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.rocket,
                           materialIcon: Icons.rocket_launch_outlined,
                           containerColor: Colors.blue,
@@ -76,7 +75,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                       show: SettingsSvc.settings.launchAtStartup.value,
                       child: SettingsTile(
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.doc,
                           materialIcon: Icons.description_outlined,
                           containerColor: Colors.green,
@@ -112,7 +110,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                                   "Automatically open the desktop app on startup, but minimized to the system tray",
                               backgroundColor: tileColor,
                               leading: const SettingsLeadingIcon(
-                                expressive: true,
                                 iosIcon: CupertinoIcons.eye_slash,
                                 materialIcon: Icons.hide_image_outlined,
                                 containerColor: Colors.deepPurple,
@@ -135,7 +132,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         return const SettingsTile(
                           title: "TitleBar Style",
                           leading: SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.macwindow,
                             materialIcon: Icons.tab_outlined,
                             containerColor: Colors.orange,
@@ -164,7 +160,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                               "Select the titlebar style. Native uses system window decorations and looks best on GNOME. Custom is necessary on non-GNOME systems and required for 'Minimize to Tray' to work correctly. Hidden removes all titlebar elements.",
                           secondaryColor: headerColor,
                           leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.macwindow,
                             materialIcon: Icons.tab_outlined,
                             containerColor: Colors.orange,
@@ -194,7 +189,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         subtitle: "When enabled, clicking the minimize button will minimize the app to the system tray",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.tray_arrow_down,
                           materialIcon: Icons.expand_circle_down_outlined,
                           containerColor: Colors.indigo,
@@ -226,7 +220,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         subtitle: "When enabled, clicking the close button will minimize the app to the system tray",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.tray_arrow_down_fill,
                           materialIcon: Icons.expand_circle_down,
                           containerColor: Colors.green,
@@ -235,7 +228,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                 ],
               ),
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Notifications"),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   if (Platform.isWindows)
@@ -250,7 +243,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                       subtitle: "Enable badge on taskbar icon for new messages",
                       backgroundColor: tileColor,
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.app_badge,
                         materialIcon: Icons.mark_chat_unread_outlined,
                         containerColor: Colors.teal,
@@ -266,7 +258,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         subtitle: "Enable desktop notifications for new messages",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.bell,
                           materialIcon: Icons.notifications_outlined,
                           containerColor: Colors.red,
@@ -276,7 +267,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         show: SettingsSvc.settings.desktopNotifications.value,
                         child: SettingsTile(
                           leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.folder,
                             materialIcon: Icons.folder_outlined,
                             containerColor: Colors.purple,
@@ -344,7 +334,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                           SettingsSvc.settings.desktopNotificationSoundPath.value != null,
                       child: const SettingsTile(
                         leading: SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.volume_up,
                           materialIcon: Icons.volume_up_outlined,
                           containerColor: Colors.cyan,
@@ -382,7 +371,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                               "Click actions to toggle them. Drag actions to move them. ${Platform.isWindows ? "You can select up to 5 actions." : "The number of actions actually visible varies by distribution."} Tapback actions require Private API to be enabled.",
                           isThreeLine: true,
                           leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.bolt,
                             materialIcon: Icons.bolt_outlined,
                             containerColor: Colors.brown,
@@ -410,7 +398,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                                           await SettingsSvc.settings.saveOneAsync('showReplyField');
                                         },
                                         leading: const SettingsLeadingIcon(
-                                          expressive: true,
                                           iosIcon: CupertinoIcons.arrowshape_turn_up_left,
                                           materialIcon: Icons.reply_outlined,
                                           containerColor: Colors.orange,

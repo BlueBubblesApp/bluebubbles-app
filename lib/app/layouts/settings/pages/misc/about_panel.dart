@@ -26,7 +26,7 @@ class AboutPanel extends StatefulWidget {
 class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "About & Links",
         initialHeader: "Links",
         iosSubtitle: iosSubtitle,
@@ -37,7 +37,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
@@ -48,7 +48,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                               mode: LaunchMode.externalApplication);
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.globe,
                           materialIcon: Icons.language,
                           containerColor: Colors.green,
@@ -63,7 +62,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                               mode: LaunchMode.externalApplication);
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.doc_append,
                           materialIcon: Icons.document_scanner,
                           containerColor: Colors.blueAccent,
@@ -78,7 +76,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                               mode: LaunchMode.externalApplication);
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
                           materialIcon: Icons.code,
                           containerColor: Colors.orange,
@@ -94,7 +91,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                               mode: LaunchMode.externalApplication);
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.triangle_righthalf_fill,
                           materialIcon: Icons.bug_report,
                           containerColor: Colors.redAccent,
@@ -103,7 +99,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Info"),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
@@ -153,7 +149,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                       },
                       subtitle: "See what's new in the latest version",
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.doc_plaintext,
                         materialIcon: Icons.article,
                         containerColor: Colors.blueAccent,
@@ -202,7 +197,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                       },
                       subtitle: "Meet the developers behind BlueBubbles",
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.person_alt,
                         materialIcon: Icons.person,
                         containerColor: Colors.green,
@@ -352,7 +346,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                           );
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.keyboard,
                           materialIcon: Icons.keyboard,
                           containerColor: Colors.teal,
@@ -463,7 +456,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                         );
                       },
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info,
                         containerColor: Colors.blue,

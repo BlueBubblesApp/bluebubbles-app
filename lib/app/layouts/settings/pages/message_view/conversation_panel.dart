@@ -54,7 +54,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
       title: "Conversations",
       initialHeader: "Customization",
       iosSubtitle: iosSubtitle,
@@ -65,7 +65,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
@@ -220,7 +220,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                 ),
               if (!kIsWeb)
                 Obx(
-                  () => SettingsSection(expressive: true, 
+                  () => SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
@@ -395,7 +395,7 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                 materialSubtitle: materialSubtitle,
                 text: "Gestures",
               ),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   if (!kIsWeb && !kIsDesktop)

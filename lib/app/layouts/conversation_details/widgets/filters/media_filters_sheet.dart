@@ -20,10 +20,9 @@ void showAttachmentFiltersSheet(
   required AttachmentFiltersState filters,
   required AttachmentFiltersChanged onChanged,
   AttachmentFiltersTypeSection typeSection = AttachmentFiltersTypeSection.media,
-  bool expressive = false,
 }) {
   HapticFeedback.lightImpact();
-  final chipRadius = expressive ? M3EShapes.radiusLg : null;
+  const chipRadius = M3EShapes.radiusLg;
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -413,10 +412,7 @@ class AttachmentFiltersButton extends StatelessWidget {
     final color = iconColor ?? Theme.of(context).colorScheme.primary;
 
     return Obx(() {
-      final horizontalPadding = attachmentSectionHorizontalPadding(
-        fullPage: true,
-        iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-      ).toDouble();
+      final horizontalPadding = attachmentSectionHorizontalPadding().toDouble();
       final rightMargin = (horizontalPadding - _iconTrailingInset).clamp(0.0, double.infinity);
 
       return Padding(

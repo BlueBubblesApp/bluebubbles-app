@@ -17,7 +17,7 @@ class CustomAvatarPanel extends StatefulWidget {
 class _CustomAvatarPanelState extends State<CustomAvatarPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Custom Avatars",
         initialHeader: null,
         iosSubtitle: null,

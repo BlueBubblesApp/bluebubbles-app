@@ -296,7 +296,6 @@ mixin ConnectionPanelHelpersMixin {
       subtitle: "Get an overview of your iMessage usage and statistics",
       backgroundColor: tileColor,
       leading: const SettingsLeadingIcon(
-        expressive: true,
         iosIcon: CupertinoIcons.chart_bar_square,
         materialIcon: Icons.stacked_bar_chart,
         containerColor: Colors.green,
@@ -331,7 +330,6 @@ mixin ConnectionPanelHelpersMixin {
       children: [
         SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Connection & Sync"),
         Obx(() => SettingsSection(
-          expressive: true,
           backgroundColor: tileColor,
           children: [
             SettingsTile(
@@ -340,7 +338,6 @@ mixin ConnectionPanelHelpersMixin {
                   kIsWeb || kIsDesktop ? "Click for manual entry" : "Tap to scan QR code\nLong press for manual entry",
               isThreeLine: kIsWeb || kIsDesktop ? false : true,
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.gear,
                 materialIcon: Icons.room_preferences,
                 containerColor: Colors.blueAccent,
@@ -404,7 +401,6 @@ mixin ConnectionPanelHelpersMixin {
                       : "Disconnected, cannot sync",
                   backgroundColor: tileColor,
                   leading: SettingsLeadingIcon(
-                    expressive: true,
                     iosIcon: CupertinoIcons.arrow_2_circlepath,
                     materialIcon: Icons.sync,
                     containerColor: Colors.yellow[700],
@@ -442,7 +438,6 @@ mixin ConnectionPanelHelpersMixin {
             if (!kIsWeb) const SettingsDivider(),
             SettingsTile(
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.pencil,
                 materialIcon: Icons.edit,
                 containerColor: Colors.teal,
@@ -467,7 +462,6 @@ mixin ConnectionPanelHelpersMixin {
                       await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
                     },
                     leading: const SettingsLeadingIcon(
-                      expressive: true,
                       iosIcon: CupertinoIcons.person_2,
                       materialIcon: Icons.people,
                       containerColor: Colors.green,
@@ -532,7 +526,6 @@ mixin ConnectionPanelHelpersMixin {
             const SettingsDivider(),
             SettingsTile(
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.refresh,
                 materialIcon: Icons.refresh,
                 containerColor: Colors.blueAccent,
@@ -557,7 +550,6 @@ mixin ConnectionPanelHelpersMixin {
                         : "Look up localhost address for a faster direct connection",
                     backgroundColor: tileColor,
                     leading: const SettingsLeadingIcon(
-                      expressive: true,
                       iosIcon: CupertinoIcons.wifi,
                       materialIcon: Icons.wifi,
                       containerColor: Colors.green,
@@ -619,7 +611,6 @@ mixin ConnectionPanelHelpersMixin {
                   NetworkTasks.detectLocalhost(createSnackbar: true);
                 },
                 leading: SettingsLeadingIcon(
-                  expressive: true,
                   iosIcon: CupertinoIcons.globe,
                   materialIcon: Icons.network_check_outlined,
                   containerColor: Colors.blue,
@@ -645,7 +636,6 @@ mixin ConnectionPanelHelpersMixin {
       children: [
         SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Server Actions"),
         SettingsSection(
-          expressive: true,
           backgroundColor: tileColor,
           children: [
             Obx(() => SettingsTile(
@@ -656,7 +646,6 @@ mixin ConnectionPanelHelpersMixin {
                           : "Disconnected, cannot fetch logs"),
                   backgroundColor: tileColor,
                   leading: SettingsLeadingIcon(
-                    expressive: true,
                     iosIcon: CupertinoIcons.doc_plaintext,
                     materialIcon: Icons.article,
                     containerColor: Colors.lightBlue,
@@ -704,7 +693,6 @@ mixin ConnectionPanelHelpersMixin {
                           : "Disconnected, cannot restart",
                   backgroundColor: tileColor,
                   leading: const SettingsLeadingIcon(
-                    expressive: true,
                     iosIcon: CupertinoIcons.chat_bubble,
                     materialIcon: Icons.sms,
                     containerColor: Colors.blueAccent,
@@ -751,7 +739,6 @@ mixin ConnectionPanelHelpersMixin {
                                     : "Disconnected, cannot restart",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.exclamationmark_shield,
                           materialIcon: Icons.gpp_maybe,
                           containerColor: Colors.orange,
@@ -798,7 +785,6 @@ mixin ConnectionPanelHelpersMixin {
                   subtitle:
                       controller.isRestarting.value ? "Restart in progress..." : "This will briefly disconnect you",
                   leading: const SettingsLeadingIcon(
-                    expressive: true,
                     iosIcon: CupertinoIcons.desktopcomputer,
                     materialIcon: Icons.dvr,
                     containerColor: Colors.redAccent,
@@ -854,7 +840,6 @@ mixin ConnectionPanelHelpersMixin {
                             : "Disconnected, cannot check for updates",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.desktopcomputer,
                           materialIcon: Icons.dvr,
                           containerColor: Colors.green,

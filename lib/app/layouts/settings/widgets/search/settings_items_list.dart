@@ -64,7 +64,6 @@ List<Widget> buildSettingItemList({
           : SettingsSvc.settings.userName.value,
       child: SettingsSection(
         backgroundColor: tileColor,
-        expressive: true,
         children: [
           SettingsTile(
             backgroundColor: tileColor,
@@ -119,7 +118,6 @@ List<Widget> buildSettingItemList({
       // Helps search
       child: SettingsSection(
         backgroundColor: tileColor,
-        expressive: true,
         children: [
           // Optimized reactive tile for connection state
           ConnectionServerTile(tileColor: tileColor),
@@ -141,7 +139,6 @@ List<Widget> buildSettingItemList({
                 },
                 trailing: const NextButton(),
                 leading: const SettingsLeadingIcon(
-                  expressive: true,
                   iosIcon: CupertinoIcons.calendar,
                   materialIcon: Icons.schedule_send_outlined,
                   containerColor: Colors.teal,
@@ -162,7 +159,6 @@ List<Widget> buildSettingItemList({
                 },
                 trailing: const NextButton(),
                 leading: const SettingsLeadingIcon(
-                  expressive: true,
                   iosIcon: CupertinoIcons.alarm_fill,
                   materialIcon: Icons.alarm,
                   containerColor: Colors.indigo,
@@ -197,7 +193,6 @@ List<Widget> buildSettingItemList({
       },
       child: SettingsSection(
         backgroundColor: tileColor,
-        expressive: true,
         children: [
           SettingsTile(
             backgroundColor: tileColor,
@@ -219,7 +214,6 @@ List<Widget> buildSettingItemList({
               ],
             ),
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.paintbrush_fill,
               materialIcon: Icons.palette,
               containerColor: Colors.purple,
@@ -234,7 +228,6 @@ List<Widget> buildSettingItemList({
     ),
     SettingsSection(
       backgroundColor: tileColor,
-      expressive: true,
       searchableSettingsItems: [
         // Media Settings Tile
         SearchableSettingItem(
@@ -262,7 +255,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const AttachmentPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.photo_fill,
               materialIcon: Icons.attachment,
               iconSize: 18,
@@ -295,7 +287,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const NotificationPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.bell_fill,
               materialIcon: Icons.notifications_on,
               containerColor: Colors.deepOrange,
@@ -337,7 +328,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const ChatListPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.square_list_fill,
               materialIcon: Icons.list,
               containerColor: Colors.blue,
@@ -380,7 +370,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const ConversationPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.chat_bubble_fill,
               materialIcon: Icons.sms,
               containerColor: Colors.green,
@@ -403,7 +392,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const CustomGroupsPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.folder_fill,
               materialIcon: Icons.folder_outlined,
               containerColor: Colors.orange,
@@ -438,7 +426,6 @@ List<Widget> buildSettingItemList({
                 ns.pushAndRemoveSettingsUntil(context, const DesktopPanel(), (Route route) => route.isFirst);
               },
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.desktopcomputer,
                 materialIcon: Icons.desktop_windows,
                 containerColor: Colors.blueGrey,
@@ -476,7 +463,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const MiscPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.ellipsis_circle_fill,
               materialIcon: Icons.more_vert,
               containerColor: Colors.brown,
@@ -492,7 +478,6 @@ List<Widget> buildSettingItemList({
     ),
     SettingsSection(
       backgroundColor: tileColor,
-      expressive: true,
       searchableSettingsItems: [
         // Private API Features Tile
         SearchableSettingItem(
@@ -548,7 +533,6 @@ List<Widget> buildSettingItemList({
                 ns.pushAndRemoveSettingsUntil(context, const TaskerPanel(), (Route route) => route.isFirst);
               },
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.bolt_fill,
                 materialIcon: Icons.electric_bolt_outlined,
                 containerColor: Colors.grey,
@@ -573,7 +557,6 @@ List<Widget> buildSettingItemList({
               );
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.bell,
               materialIcon: Icons.notifications,
               containerColor: Colors.cyan,
@@ -606,7 +589,6 @@ List<Widget> buildSettingItemList({
               ns.pushAndRemoveSettingsUntil(context, const TroubleshootPanel(), (Route route) => route.isFirst);
             },
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.wrench_fill,
               materialIcon: Icons.adb,
               containerColor: Colors.lightBlue,
@@ -624,7 +606,6 @@ List<Widget> buildSettingItemList({
     ),
     SettingsSection(
       backgroundColor: tileColor,
-      expressive: true,
       searchableSettingsItems: [
         SearchableSettingItem(
           title: "Backup & Restore",
@@ -646,7 +627,6 @@ List<Widget> buildSettingItemList({
             },
             trailing: const NextButton(),
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.cloud_upload_fill,
               materialIcon: Icons.backup,
               containerColor: Colors.blueGrey,
@@ -668,7 +648,6 @@ List<Widget> buildSettingItemList({
                 uploadingContacts: uploadingContacts,
               ),
               leading: const SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.group_solid,
                 materialIcon: Icons.contacts,
                 containerColor: Colors.green,
@@ -685,7 +664,6 @@ List<Widget> buildSettingItemList({
             subtitle: "Rate us on the ${Platform.isAndroid ? 'Play Store' : 'Microsoft Store'}",
             onTap: SettingsItemsActions.openStoreReview,
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.star_fill,
               materialIcon: Icons.star,
               containerColor: Colors.blue,
@@ -702,7 +680,6 @@ List<Widget> buildSettingItemList({
               subtitle: "Support the BlueBubbles team",
               onTap: SettingsItemsActions.openDonationPage,
               leading: SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.money_dollar_circle,
                 materialIcon: Icons.attach_money,
                 containerColor: Colors.green,
@@ -718,7 +695,6 @@ List<Widget> buildSettingItemList({
             subtitle: "Chat with other users and the developers",
             onTap: SettingsItemsActions.openDiscord,
             leading: SettingsLeadingIcon(
-              expressive: true,
               iosIcon: Icons.discord,
               materialIcon: Icons.discord,
               containerColor: HexColor('#7785CC'),
@@ -750,7 +726,6 @@ List<Widget> buildSettingItemList({
             },
             trailing: const NextButton(),
             leading: const SettingsLeadingIcon(
-              expressive: true,
               iosIcon: CupertinoIcons.info_circle_fill,
               materialIcon: Icons.info,
               containerColor: Colors.blue,
@@ -786,7 +761,6 @@ List<Widget> buildSettingItemList({
                 );
               },
               leading: SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.trash_slash_fill,
                 materialIcon: Icons.delete_forever_outlined,
                 containerColor: Colors.red[700],
@@ -840,7 +814,6 @@ List<Widget> buildSettingItemList({
                 );
               },
               leading: SettingsLeadingIcon(
-                expressive: true,
                 iosIcon: CupertinoIcons.refresh_circled_solid,
                 materialIcon: Icons.refresh_rounded,
                 containerColor: Colors.red[700],

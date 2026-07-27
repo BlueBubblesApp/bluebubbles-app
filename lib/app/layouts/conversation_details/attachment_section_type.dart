@@ -13,20 +13,10 @@ enum AttachmentSectionType {
 const int kAttachmentPreviewLimit = 6;
 
 /// Horizontal inset for attachment section list/grid content.
-int attachmentSectionHorizontalPadding({required bool fullPage, required bool iOS, bool expressive = false}) {
-  if (expressive) return 16;
-  if (fullPage) return iOS ? 12 : 8;
-  return iOS ? 20 : 10;
-}
+int attachmentSectionHorizontalPadding() => 16;
 
-EdgeInsets attachmentSectionListPadding({
-  required bool fullPage,
-  required bool iOS,
-  bool expressive = false,
-  double top = 0,
-  double bottom = 10,
-}) {
-  final inset = attachmentSectionHorizontalPadding(fullPage: fullPage, iOS: iOS, expressive: expressive).toDouble();
+EdgeInsets attachmentSectionListPadding({double top = 0, double bottom = 10}) {
+  final inset = attachmentSectionHorizontalPadding().toDouble();
   return EdgeInsets.only(left: inset, right: inset, top: top, bottom: bottom);
 }
 

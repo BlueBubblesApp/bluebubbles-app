@@ -11,14 +11,12 @@ class SettingsSection extends StatelessWidget {
   // group searchable settings into a rounded rectangle
   final List<SearchableSettingItem>? searchableSettingsItems;
   final Color backgroundColor;
-  final bool expressive;
 
   const SettingsSection({
     super.key,
     this.children,
     required this.backgroundColor,
     this.searchableSettingsItems,
-    this.expressive = false,
   });
 
   @override
@@ -44,7 +42,7 @@ class SettingsSection extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    if (expressive && SettingsSvc.settings.skin.value != Skins.iOS) {
+    if (SettingsSvc.settings.skin.value != Skins.iOS) {
       // Strip interleaved SettingsDividers - they're SizedBox.shrink() off-iOS but would
       // still occupy an index and corrupt M3EShapes.grouped()'s corner sequence.
       final m3eChildren = displayedChildren.where((child) => child is! SettingsDivider).toList(growable: false);

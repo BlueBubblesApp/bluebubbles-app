@@ -113,7 +113,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
       headerColor: headerColor,
       title: "iMessage Profile",
       tileColor: tileColor,
@@ -314,7 +314,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "iCloud Account Info"),
               Skeletonizer(
                   enabled: accountInfo.isEmpty,
-                  child: SettingsSection(expressive: true, 
+                  child: SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
@@ -416,7 +416,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "iMessage Contact Card"),
               if (!isNullOrEmpty(accountContact['name']))
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Column(

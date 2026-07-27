@@ -21,7 +21,6 @@ class LocationsSection extends StatefulWidget {
   final List<Attachment> locations;
   final bool isLoading;
   final bool fullPage;
-  final bool expressive;
   final AttachmentFiltersState filters;
 
   const LocationsSection({
@@ -30,7 +29,6 @@ class LocationsSection extends StatefulWidget {
     required this.locations,
     this.isLoading = false,
     this.fullPage = false,
-    this.expressive = false,
     this.filters = const AttachmentFiltersState(),
   });
 
@@ -80,11 +78,9 @@ class _LocationsSectionState extends State<LocationsSection> {
     if (AttachmentsSvc.getContent(_displayedLocations[index]) is! PlatformFile) {
       return const Text("Failed to load location!");
     }
-    final radius = widget.expressive ? M3EShapes.lg : 20.0;
+    const radius = M3EShapes.lg;
     return Material(
-      color: widget.expressive
-          ? context.tileColor.themeLightenOrDarken(context, 6)
-          : context.theme.colorScheme.surfaceContainerHighest,
+      color: context.tileColor.themeLightenOrDarken(context, 6),
       borderRadius: BorderRadius.circular(radius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -119,17 +115,14 @@ class _LocationsSectionState extends State<LocationsSection> {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final hideWhenEmpty = widget.expressive && !widget.fullPage && !widget.isLoading && _displayedLocations.isEmpty;
+    final hideWhenEmpty = !widget.fullPage && !widget.isLoading && _displayedLocations.isEmpty;
 
     return SliverMainAxisGroup(
       slivers: [
         if (!widget.fullPage)
           SliverToBoxAdapter(
             child: AttachmentSectionHeader(
-              title: widget.expressive
-                  ? AttachmentSectionType.locations.expressiveSectionLabel
-                  : AttachmentSectionType.locations.sectionLabel,
-              expressive: widget.expressive,
+              title: AttachmentSectionType.locations.expressiveSectionLabel,
               onShowMore: () => ConversationAttachments.open(
                 context,
                 chat: widget.chat,
@@ -170,9 +163,6 @@ class _LocationsSectionState extends State<LocationsSection> {
         else ...[
           Obx(() => SliverPadding(
                 padding: attachmentSectionListPadding(
-                  fullPage: widget.fullPage,
-                  iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-                  expressive: widget.expressive,
                   top: widget.fullPage ? 10 : 0,
                 ),
                 sliver: SliverToBoxAdapter(

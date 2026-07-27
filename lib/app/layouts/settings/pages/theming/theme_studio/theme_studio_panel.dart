@@ -466,7 +466,7 @@ class _ThemeStudioPanelState extends CustomState<ThemeStudioPanel, void, ThemeSt
       },
       child: Obx(() {
         final hasPending = controller.pendingChanges.value;
-        return SettingsScaffold(expressive: true, 
+        return SettingsScaffold(
           title: "Theme Studio",
           initialHeader: null,
           iosSubtitle: iosSubtitle,

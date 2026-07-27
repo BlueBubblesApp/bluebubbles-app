@@ -20,10 +20,9 @@ import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class MediaGalleryCard extends StatefulWidget {
-  const MediaGalleryCard({super.key, required this.attachment, this.showSenderAvatar = true, this.expressive = false});
+  const MediaGalleryCard({super.key, required this.attachment, this.showSenderAvatar = true});
   final Attachment attachment;
   final bool showSenderAvatar;
-  final bool expressive;
 
   @override
   State<MediaGalleryCard> createState() => _MediaGalleryCardState();
@@ -333,7 +332,6 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             attachment: attachment,
             file: file,
             showSenderAvatar: widget.showSenderAvatar,
-            expressive: widget.expressive,
             onPressChanged: _setPressed,
           );
           addPadding = false;
@@ -344,7 +342,6 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                 image: videoPreview!,
                 duration: duration,
                 showSenderAvatar: widget.showSenderAvatar,
-                expressive: widget.expressive,
                 onPressChanged: _setPressed);
             addPadding = false;
           } else if (videoPreviewFailed) {
@@ -368,19 +365,6 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         }
       } else {
         child = const SizedBox.shrink();
-      }
-
-      if (!widget.expressive) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            alignment: Alignment.center,
-            color: context.theme.colorScheme.surfaceContainerHighest,
-            padding: addPadding ? const EdgeInsets.all(10) : null,
-            child: child,
-          ),
-        );
       }
 
       return AnimatedContainer(
@@ -410,7 +394,6 @@ class ImageDisplay extends StatefulWidget {
     this.image,
     this.duration,
     this.showSenderAvatar = true,
-    this.expressive = false,
     this.onPressChanged,
   });
 
@@ -419,7 +402,6 @@ class ImageDisplay extends StatefulWidget {
   final Uint8List? image;
   final Duration? duration;
   final bool showSenderAvatar;
-  final bool expressive;
   final ValueChanged<bool>? onPressChanged;
 
   @override
@@ -439,10 +421,8 @@ class _ImageDisplayState extends State<ImageDisplay> {
     final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
 
     return OpenContainer(
-      transitionDuration: widget.expressive ? Durations.medium4 : const Duration(milliseconds: 300),
-      closedShape: widget.expressive
-          ? const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg)))
-          : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4.0))),
+      transitionDuration: Durations.medium4,
+      closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
         return ConversationFullscreenHolder(
           attachment: attachment,
@@ -487,8 +467,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                       ),
                     if (widget.showSenderAvatar &&
                         !(attachment.message.target?.isFromMe ?? true) &&
-                        attachment.message.target?.handleRelation.hasValue == true &&
-                        (SettingsSvc.settings.skin.value == Skins.iOS || widget.expressive))
+                        attachment.message.target?.handleRelation.hasValue == true)
                       Positioned(
                         top: 10,
                         right: 10,

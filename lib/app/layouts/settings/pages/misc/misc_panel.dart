@@ -22,7 +22,7 @@ class MiscPanel extends StatefulWidget {
 class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
       title: "Advanced",
       initialHeader: (!kIsWeb && !kIsDesktop) || SettingsSvc.canAuthenticate ? "Security" : "Speed & Responsiveness",
       iosSubtitle: iosSubtitle,
@@ -34,7 +34,7 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
           delegate: SliverChildListDelegate(
             <Widget>[
               if (!kIsWeb && !(kIsDesktop && !Platform.isWindows))
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     if (SettingsSvc.canAuthenticate)
@@ -62,7 +62,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                             subtitle: "Secure app with ${kIsDesktop ? "Windows Security" : "a fingerprint or pin"}",
                             backgroundColor: tileColor,
                             leading: SettingsLeadingIcon(
-                                expressive: true,
                                 iosIcon: CupertinoIcons.lock_fill,
                                 materialIcon: Icons.lock,
                                 containerColor:
@@ -158,7 +157,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                             isThreeLine: true,
                             backgroundColor: tileColor,
                             leading: const SettingsLeadingIcon(
-                                expressive: true,
                                 iosIcon: CupertinoIcons.keyboard,
                                 materialIcon: Icons.keyboard,
                                 containerColor: Colors.teal),
@@ -168,7 +166,7 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
               if (!kIsWeb && !kIsDesktop || SettingsSvc.canAuthenticate)
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Speed & Responsiveness"),
-              Obx(() => SettingsSection(expressive: true,
+              Obx(() => SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   SettingsSwitch(
@@ -182,7 +180,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                     isThreeLine: true,
                     backgroundColor: tileColor,
                     leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.speedometer,
                         materialIcon: Icons.speed_outlined,
                         containerColor: Colors.green),
@@ -200,7 +197,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                       isThreeLine: true,
                       backgroundColor: tileColor,
                       leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.pause_circle,
                           materialIcon: Icons.motion_photos_pause_outlined,
                           containerColor: Colors.blue),
@@ -212,7 +208,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                       subtitle: "Controls how fast scrolling occurs",
                       isThreeLine: true,
                       leading: SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.arrow_up_down_square,
                           materialIcon: Icons.mouse_outlined,
                           containerColor: Colors.orange),
@@ -234,7 +229,7 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                 ],
               )),
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Networking"),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   Column(
@@ -245,7 +240,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                             subtitle:
                                 "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
                             leading: const SettingsLeadingIcon(
-                                expressive: true,
                                 iosIcon: CupertinoIcons.stopwatch,
                                 materialIcon: Icons.timer,
                                 containerColor: Colors.red),
@@ -299,7 +293,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                         backgroundColor: tileColor,
                         isThreeLine: true,
                         leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.hand_raised,
                             materialIcon: Icons.back_hand_outlined,
                             containerColor: Colors.orange),
@@ -311,7 +304,7 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                 materialSubtitle: materialSubtitle,
                 text: "Other",
               ),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   Obx(() => SettingsSwitch(
@@ -324,7 +317,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                         subtitle: "Replace emoticons like :), :D, etc. with their corresponding emojis",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.smiley,
                             materialIcon: Icons.emoji_emotions_outlined,
                             containerColor: Colors.indigo),
@@ -340,7 +332,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                           title: "Enable Spellcheck",
                           backgroundColor: tileColor,
                           leading: const SettingsLeadingIcon(
-                              expressive: true,
                               iosIcon: CupertinoIcons.textformat_abc_dottedunderline,
                               materialIcon: Icons.spellcheck_outlined,
                               containerColor: Colors.cyan),
@@ -375,7 +366,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                             "Adds a delay before sending a message to prevent accidental sends. During this time, you can cancel the message.",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.timer, materialIcon: Icons.timer, containerColor: Colors.green),
                       )),
                   Obx(() {
@@ -407,7 +397,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                         title: "Use 24 Hour Format for Times",
                         backgroundColor: tileColor,
                         leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.clock,
                             materialIcon: Icons.access_time,
                             containerColor: Colors.blue),
@@ -429,7 +418,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                           title: "Allow Upside-Down Rotation",
                           backgroundColor: tileColor,
                           leading: const SettingsLeadingIcon(
-                              expressive: true,
                               iosIcon: CupertinoIcons.rotate_right,
                               materialIcon: Icons.screen_rotation,
                               containerColor: Colors.orange),
@@ -442,7 +430,6 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         isThreeLine: true,
                         leading: SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.person_2,
                             materialIcon: Icons.people,
                             containerColor: Colors.purple),

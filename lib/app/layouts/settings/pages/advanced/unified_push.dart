@@ -26,7 +26,7 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Unified Push",
         initialHeader: "Overview",
         iosSubtitle: iosSubtitle,
@@ -36,7 +36,7 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
         bodySlivers: [
           SliverList(
               delegate: SliverChildListDelegate(<Widget>[
-            SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+            SettingsSection(backgroundColor: tileColor, children: [
               Padding(
                 padding: const EdgeInsets.only(bottom: 8, left: 15, top: 15, right: 15),
                 child: RichText(
@@ -56,7 +56,7 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
               ),
             ]),
             SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Recommendation"),
-            SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+            SettingsSection(backgroundColor: tileColor, children: [
               Padding(
                 padding: const EdgeInsets.only(bottom: 8, left: 15, top: 15, right: 15),
                 child: RichText(
@@ -89,7 +89,6 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
                       mode: LaunchMode.externalApplication);
                 },
                 leading: const SettingsLeadingIcon(
-                  expressive: true,
                   iosIcon: CupertinoIcons.arrow_up_right,
                   materialIcon: Icons.arrow_outward,
                   containerColor: Colors.blueAccent,
@@ -97,7 +96,7 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
               ),
             ]),
             SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Unified Push"),
-            SettingsSection(expressive: true, 
+            SettingsSection(
               backgroundColor: tileColor,
               children: [
                 Obx(() {
@@ -108,7 +107,6 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
                       title: "Enable Unified Push",
                       backgroundColor: tileColor,
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.bell_circle,
                         materialIcon: Icons.circle_notifications_outlined,
                         containerColor: Colors.purpleAccent,
@@ -123,7 +121,7 @@ class _UnifiedPushPanelState extends CustomState<UnifiedPushPanel, void, Unified
                 child: Column(children: [
                   SettingsHeader(
                       iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Unified Push Settings"),
-                  SettingsSection(expressive: true, 
+                  SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Padding(

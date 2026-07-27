@@ -50,7 +50,7 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
                     padding: EdgeInsets.only(bottom: 8.0, left: iOS ? 30 : 15),
                     child: Text("Notifications".psCapitalize, style: iOS ? iosSubtitle : materialSubtitle),
                   )),
-            Obx(() => SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+            Obx(() => SettingsSection(backgroundColor: tileColor, children: [
               if (!kIsWeb)
                 SettingsSwitch(
                   onChanged: (bool val) async {
@@ -115,7 +115,6 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
                   title: "Whitelisted Phrases",
                   subtitle: SettingsSvc.settings.globalTextDetection.value,
                   leading: const SettingsLeadingIcon(
-                    expressive: true,
                     iosIcon: CupertinoIcons.pencil,
                     materialIcon: Icons.edit_outlined,
                     containerColor: Colors.teal,
@@ -134,7 +133,6 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
             ])),
             SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Advanced"),
             SettingsSection(
-              expressive: true,
               backgroundColor: tileColor,
               children: [
                 Obx(() => SettingsSwitch(

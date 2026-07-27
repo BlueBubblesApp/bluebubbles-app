@@ -40,7 +40,6 @@ class PrivateAPITile extends StatelessWidget {
           NavigationSvc.pushAndRemoveSettingsUntil(context, PrivateAPIPanel(), (Route route) => route.isFirst);
         },
         leading: SettingsLeadingIcon(
-          expressive: true,
           iosIcon: CupertinoIcons.exclamationmark_shield_fill,
           materialIcon: Icons.gpp_maybe,
           containerColor: SettingsSvc.settings.enablePrivateAPI.value

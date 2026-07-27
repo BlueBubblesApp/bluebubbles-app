@@ -134,7 +134,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
                 initialHeader: null,
                 iosSubtitle: iosSubtitle,
                 materialSubtitle: materialSubtitle,
-                expressive: SettingsSvc.settings.skin.value != Skins.iOS,
                 actions: _buildAppBarActions(context, chatDetailTheme.tileColor),
                 bodySlivers: [
                   if (isLoadingAttachments)
@@ -154,7 +153,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
   }
 
   List<Widget> _buildSectionSlivers() {
-    final expressive = SettingsSvc.settings.skin.value != Skins.iOS;
     switch (widget.section) {
       case AttachmentSectionType.media:
         return [
@@ -164,7 +162,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             selected: selected,
             isLoading: isLoadingAttachments,
             fullPage: true,
-            expressive: expressive,
             crossAxisCount: 3,
             mediaFilter: _filters.mediaFilter,
             senderFilter: _filters.senderFilter,
@@ -177,7 +174,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
           LinksSection(
             chat: widget.chat,
             fullPage: true,
-            expressive: expressive,
             senderFilter: _filters.senderFilter,
             sinceDate: _filters.sinceDate,
           ),
@@ -189,7 +185,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             locations: locations,
             isLoading: isLoadingAttachments,
             fullPage: true,
-            expressive: expressive,
             filters: _filters,
           ),
         ];
@@ -200,7 +195,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             docs: docs,
             isLoading: isLoadingAttachments,
             fullPage: true,
-            expressive: expressive,
             filters: _filters,
           ),
         ];
@@ -221,7 +215,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.media,
-              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
           Obx(() {
@@ -264,7 +257,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.none,
-              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];
@@ -280,7 +272,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.files,
-              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];
@@ -296,7 +287,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
               filters: _filters,
               onChanged: _onFiltersChanged,
               typeSection: AttachmentFiltersTypeSection.none,
-              expressive: SettingsSvc.settings.skin.value != Skins.iOS,
             ),
           ),
         ];

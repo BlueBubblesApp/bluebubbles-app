@@ -175,7 +175,6 @@ class _SamsungCustomGroupsPanelState extends State<SamsungCustomGroupsPanel> wit
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
-      expressive: true,
       title: "Custom Groups",
       initialHeader: null,
       iosSubtitle: iosSubtitle,

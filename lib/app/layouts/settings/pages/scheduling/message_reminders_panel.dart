@@ -41,7 +41,7 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Message Reminders",
         initialHeader: null,
         iosSubtitle: iosSubtitle,
@@ -69,7 +69,7 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
                     ),
                   ),
                 ),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   Material(

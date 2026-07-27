@@ -16,7 +16,7 @@ class AttachmentPanel extends StatefulWidget {
 class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Attachments & Media",
         initialHeader: "Download & Save",
         iosSubtitle: iosSubtitle,
@@ -27,7 +27,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -202,7 +202,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                 ),
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Video Mute Behavior"),
-                SettingsSection(expressive: true,
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Column(
@@ -237,7 +237,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                   SettingsHeader(
                       iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Attachment Viewer"),
                 if (!kIsWeb)
-                  Obx(() => SettingsSection(expressive: true,
+                  Obx(() => SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       if (iOS)

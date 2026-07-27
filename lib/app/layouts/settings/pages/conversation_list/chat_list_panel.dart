@@ -20,7 +20,7 @@ class ChatListPanel extends StatefulWidget {
 class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Chat List",
         initialHeader: "Indicators",
         iosSubtitle: iosSubtitle,
@@ -31,7 +31,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -62,7 +62,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Filtering"),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -106,7 +106,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Appearance"),
-                Obx(() => SettingsSection(expressive: true,
+                Obx(() => SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -418,7 +418,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                 if (!kIsWeb && !kIsDesktop && !iOS)
                   SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Swipe Actions"),
                 if (!kIsWeb && !kIsDesktop && !iOS)
-                  Obx(() => SettingsSection(expressive: true,
+                  Obx(() => SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsSwitch(
@@ -472,7 +472,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                     ],
                   )),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Misc"),
-                Obx(() => SettingsSection(expressive: true, 
+                Obx(() => SettingsSection(
                       backgroundColor: tileColor,
                       children: [
                         if (SettingsSvc.settings.skin.value == Skins.iOS)

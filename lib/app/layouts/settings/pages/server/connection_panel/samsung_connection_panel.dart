@@ -213,7 +213,6 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                 ),
               ),
               SettingsSection(
-                expressive: true,
                 backgroundColor: tileColor,
                 children: [
                   buildViewStatsSection(context, controller, tileColor),

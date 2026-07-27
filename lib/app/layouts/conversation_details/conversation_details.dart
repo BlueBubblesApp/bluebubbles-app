@@ -80,7 +80,6 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                   initialHeader: null,
                   iosSubtitle: iosSubtitle,
                   materialSubtitle: materialSubtitle,
-                  expressive: SettingsSvc.settings.skin.value != Skins.iOS,
                   minimalAppBar: true,
                   actions: [
                     Obx(() {
@@ -143,20 +142,17 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       media: media,
                       selected: selected,
                       isLoading: isLoadingAttachments,
-                      expressive: SettingsSvc.settings.skin.value != Skins.iOS,
                     ),
-                    LinksSection(chat: chat, expressive: SettingsSvc.settings.skin.value != Skins.iOS),
+                    LinksSection(chat: chat),
                     LocationsSection(
                       chat: chat,
                       locations: locations,
                       isLoading: isLoadingAttachments,
-                      expressive: SettingsSvc.settings.skin.value != Skins.iOS,
                     ),
                     DocumentsSection(
                       chat: chat,
                       docs: docs,
                       isLoading: isLoadingAttachments,
-                      expressive: SettingsSvc.settings.skin.value != Skins.iOS,
                     ),
                     const SliverPadding(
                       padding: EdgeInsets.only(top: 50),

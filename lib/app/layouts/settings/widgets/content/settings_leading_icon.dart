@@ -11,7 +11,6 @@ class SettingsLeadingIcon extends StatelessWidget {
   final double? boxSize;
   final double? iconSize;
   final double? iconSizeMaterial;
-  final bool expressive;
 
   const SettingsLeadingIcon({
     super.key,
@@ -21,7 +20,6 @@ class SettingsLeadingIcon extends StatelessWidget {
     this.iconSize,
     this.iconSizeMaterial,
     this.containerColor,
-    this.expressive = false,
   });
 
   @override
@@ -30,7 +28,7 @@ class SettingsLeadingIcon extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Obx(() {
-          if (expressive && SettingsSvc.settings.skin.value == Skins.Material) {
+          if (SettingsSvc.settings.skin.value == Skins.Material) {
             final accent = containerColor ?? context.theme.colorScheme.primary;
             return Container(
               width: boxSize ?? 40,

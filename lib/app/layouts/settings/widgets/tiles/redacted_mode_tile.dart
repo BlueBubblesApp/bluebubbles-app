@@ -36,7 +36,6 @@ class RedactedModeTile extends StatelessWidget {
           NavigationSvc.pushAndRemoveSettingsUntil(context, const RedactedModePanel(), (Route route) => route.isFirst);
         },
         leading: SettingsLeadingIcon(
-          expressive: true,
           iosIcon: CupertinoIcons.wand_stars,
           materialIcon: Icons.auto_fix_high,
           containerColor: SettingsSvc.settings.redactedMode.value ? Colors.green : Colors.red[700],

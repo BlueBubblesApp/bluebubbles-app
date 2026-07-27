@@ -93,7 +93,6 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
         iosIcon: item.iosIcon,
         materialIcon: item.materialIcon,
         containerColor: item.containerColor,
-        expressive: true,
       ),
       title: item.label,
       trailing: Text(
@@ -112,7 +111,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
   @override
   Widget build(BuildContext context) {
     final qrAction = buildQrCodeAction(context);
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
       title: "Server Management",
       initialHeader: null,
       iosSubtitle: iosSubtitle,
@@ -162,7 +161,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
                   ],
                 ),
               ),
-              SettingsSection(expressive: true,
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   for (int i = 0; i < ConnectionPanelHelpersMixin.kInfoItems.length; i++) ...[
@@ -176,7 +175,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
                 padding: const EdgeInsets.fromLTRB(15, 12, 15, 4),
                 child: Text("Statistics & Analytics", style: materialSubtitle),
               ),
-              SettingsSection(expressive: true, 
+              SettingsSection(
                 backgroundColor: tileColor,
                 children: [
                   buildViewStatsSection(context, controller, tileColor),

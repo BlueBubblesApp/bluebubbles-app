@@ -47,7 +47,7 @@ class CustomAvatarColorPanel extends CustomStateful<CustomAvatarColorPanelContro
 class _CustomAvatarColorPanelState extends CustomState<CustomAvatarColorPanel, void, CustomAvatarColorPanelController> {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Custom Avatar Colors",
         initialHeader: null,
         iosSubtitle: null,

@@ -21,7 +21,6 @@ import 'package:url_launcher/url_launcher.dart';
 class LinksSection extends StatefulWidget {
   final Chat chat;
   final bool fullPage;
-  final bool expressive;
   final MediaSenderFilter senderFilter;
   final DateTime? sinceDate;
 
@@ -29,7 +28,6 @@ class LinksSection extends StatefulWidget {
     super.key,
     required this.chat,
     this.fullPage = false,
-    this.expressive = false,
     this.senderFilter = const MediaSenderFilter.any(),
     this.sinceDate,
   });
@@ -133,11 +131,9 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
     if (_displayedLinks[index].payloadData?.urlData?.firstOrNull == null) {
       return const Text("Failed to load link!");
     }
-    final radius = widget.expressive ? M3EShapes.lg : 20.0;
+    const radius = M3EShapes.lg;
     return Material(
-      color: widget.expressive
-          ? context.tileColor.themeLightenOrDarken(context, 6)
-          : context.theme.colorScheme.surfaceContainerHighest,
+      color: context.tileColor.themeLightenOrDarken(context, 6),
       borderRadius: BorderRadius.circular(radius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -165,17 +161,14 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final hideWhenEmpty = widget.expressive && !widget.fullPage && !_isLoading && _displayedLinks.isEmpty;
+    final hideWhenEmpty = !widget.fullPage && !_isLoading && _displayedLinks.isEmpty;
 
     return SliverMainAxisGroup(
       slivers: [
         if (!widget.fullPage)
           SliverToBoxAdapter(
             child: AttachmentSectionHeader(
-              title: widget.expressive
-                  ? AttachmentSectionType.links.expressiveSectionLabel
-                  : AttachmentSectionType.links.sectionLabel,
-              expressive: widget.expressive,
+              title: AttachmentSectionType.links.expressiveSectionLabel,
               onShowMore: () => ConversationAttachments.open(
                 context,
                 chat: widget.chat,
@@ -225,9 +218,6 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
         else ...[
           Obx(() => SliverPadding(
                 padding: attachmentSectionListPadding(
-                  fullPage: widget.fullPage,
-                  iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-                  expressive: widget.expressive,
                   top: widget.fullPage ? 10 : 0,
                 ),
                 sliver: SliverToBoxAdapter(

@@ -51,7 +51,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => SettingsScaffold(expressive: true, 
+      () => SettingsScaffold(
         title: "Theming & Styles",
         initialHeader: "Appearance",
         iosSubtitle: iosSubtitle,
@@ -62,7 +62,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     SettingsOptions<AdaptiveThemeMode>(
@@ -124,7 +124,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     iosSubtitle: iosSubtitle,
                     materialSubtitle: materialSubtitle,
                     text: "Skin${kIsDesktop ? "" : " and Layout"}"),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsOptions<Skins>(
@@ -198,7 +198,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     text: "Window Effect",
                   ),
                 if (kIsDesktop && Platform.isWindows)
-                  SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+                  SettingsSection(backgroundColor: tileColor, children: [
                     Obx(
                       () => SettingsOptions<WindowEffect>(
                         initial: SettingsSvc.settings.windowEffect.value,
@@ -314,7 +314,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }),
                   ]),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Colors"),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     if (kIsDesktop)
@@ -493,7 +493,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                 if (!kIsWeb && !kIsDesktop)
                   Obx(() {
                     if (controller.refreshRates.length > 2) {
-                      return SettingsSection(expressive: true, 
+                      return SettingsSection(
                         backgroundColor: tileColor,
                         children: [
                           Obx(() => SettingsOptions<int>(
@@ -518,7 +518,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                     }
                   }),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Text and Font"),
-                Obx(() => SettingsSection(expressive: true,
+                Obx(() => SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     if (!FilesystemSvc.fontExistsOnDisk.value)

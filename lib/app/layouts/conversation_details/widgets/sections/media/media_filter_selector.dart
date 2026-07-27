@@ -23,10 +23,7 @@ class MediaFilterSelector extends StatelessWidget {
     final theme = Theme.of(context);
     return Obx(() {
       SettingsSvc.settings.skin.value;
-      final horizontal = attachmentSectionHorizontalPadding(
-        fullPage: true,
-        iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-      );
+      final horizontal = attachmentSectionHorizontalPadding();
       return Padding(
         padding: EdgeInsets.fromLTRB(horizontal.toDouble(), 12, horizontal.toDouble(), 4),
         child: _isIOS

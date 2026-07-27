@@ -23,7 +23,6 @@ class SettingsScaffold extends StatelessWidget {
   final Widget? stickySuffix;
   final Widget? fab;
   final Widget? leading;
-  final bool expressive;
   final bool minimalAppBar;
 
   SettingsScaffold({
@@ -40,17 +39,16 @@ class SettingsScaffold extends StatelessWidget {
     this.stickySuffix,
     this.fab,
     this.leading,
-    this.expressive = false,
     this.minimalAppBar = false,
   });
 
-  bool get _expressiveMaterial => expressive && SettingsSvc.settings.skin.value == Skins.Material;
+  bool get _expressiveMaterial => SettingsSvc.settings.skin.value == Skins.Material;
 
   /// Expressive Material with no title bar at all — just a bare back button above the
   /// content, mirroring Android Contacts' profile page rather than a titled `SliverAppBar`.
   bool get _minimalMaterial => _expressiveMaterial && minimalAppBar;
 
-  bool get _expressiveSamsung => expressive && SettingsSvc.settings.skin.value == Skins.Samsung;
+  bool get _expressiveSamsung => SettingsSvc.settings.skin.value == Skins.Samsung;
 
   bool get extend => actions.isNotEmpty && kIsDesktop;
 

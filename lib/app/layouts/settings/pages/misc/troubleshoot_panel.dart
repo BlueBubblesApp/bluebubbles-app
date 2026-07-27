@@ -71,7 +71,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
   @override
   Widget build(BuildContext context) {
     bool isWebOrDesktop = kIsWeb || kIsDesktop;
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Developer Tools",
         initialHeader: (isWebOrDesktop) ? "Contacts" : "Logging",
         iosSubtitle: iosSubtitle,
@@ -83,7 +83,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
             delegate: SliverChildListDelegate(
               <Widget>[
                 if (isWebOrDesktop)
-                  SettingsSection(expressive: true, 
+                  SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       SettingsTile(
@@ -130,7 +130,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                           });
                         },
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.group,
                           materialIcon: Icons.contacts,
                           containerColor: Colors.green,
@@ -143,13 +142,12 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                   ),
                 if (isWebOrDesktop)
                   SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Logging"),
-                SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+                SettingsSection(backgroundColor: tileColor, children: [
                   const LogLevelSelector(),
                   SettingsTile(
                     title: "View Latest Log",
                     subtitle: "View the latest log file. Useful for debugging issues, in app.",
                     leading: const SettingsLeadingIcon(
-                      expressive: true,
                       iosIcon: CupertinoIcons.doc_append,
                       materialIcon: Icons.document_scanner_rounded,
                       containerColor: Colors.blueAccent,
@@ -167,7 +165,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     Obx(
                       () => SettingsTile(
                           leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.share_up,
                             materialIcon: Icons.share,
                             containerColor: Colors.green,
@@ -213,7 +210,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                   if (kIsDesktop)
                     SettingsTile(
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.doc,
                           materialIcon: Icons.file_open,
                           containerColor: Colors.blueGrey,
@@ -230,7 +226,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                   const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   SettingsTile(
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.trash,
                         materialIcon: Icons.delete,
                         containerColor: Colors.redAccent,
@@ -246,7 +241,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                   if (kIsDesktop)
                     SettingsTile(
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.folder,
                         materialIcon: Icons.folder,
                         containerColor: Colors.purple,
@@ -259,7 +253,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                 if (Platform.isAndroid)
                   SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Optimizations"),
                 if (Platform.isAndroid)
-                  SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+                  SettingsSection(backgroundColor: tileColor, children: [
                     SettingsTile(
                         onTap: () async {
                           if (optimizationsDisabled.value) {
@@ -274,7 +268,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                           }
                         },
                         leading: Obx(() => SettingsLeadingIcon(
-                              expressive: true,
                               iosIcon: CupertinoIcons.battery_25,
                               materialIcon: Icons.battery_5_bar,
                               containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
@@ -287,11 +280,10 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             : Icon(Icons.check, color: context.theme.colorScheme.outline))),
                   ]),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Troubleshooting"),
-                SettingsSection(expressive: true, backgroundColor: tileColor, children: [
+                SettingsSection(backgroundColor: tileColor, children: [
                   SettingsTile(
                     onTap: () => NavigationSvc.pushSettings(context, const SoftDeletedChatsPanel()),
                     leading: const SettingsLeadingIcon(
-                      expressive: true,
                       iosIcon: CupertinoIcons.trash_slash,
                       materialIcon: Icons.restore_from_trash,
                       containerColor: Colors.orangeAccent,
@@ -343,7 +335,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                         );
                       },
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.chat_bubble_2,
                         materialIcon: Icons.delete_forever,
                         containerColor: Colors.redAccent,
@@ -424,7 +415,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                         );
                       },
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.trash,
                         materialIcon: Icons.delete_forever,
                         containerColor: Colors.redAccent,

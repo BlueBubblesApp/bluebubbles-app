@@ -20,7 +20,6 @@ class DocumentsSection extends StatefulWidget {
   final List<Attachment> docs;
   final bool isLoading;
   final bool fullPage;
-  final bool expressive;
   final int? crossAxisCount;
   final AttachmentFiltersState filters;
 
@@ -30,7 +29,6 @@ class DocumentsSection extends StatefulWidget {
     required this.docs,
     this.isLoading = false,
     this.fullPage = false,
-    this.expressive = false,
     this.crossAxisCount,
     this.filters = const AttachmentFiltersState(),
   });
@@ -104,17 +102,14 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final hideWhenEmpty = widget.expressive && !widget.fullPage && !widget.isLoading && _displayedDocs.isEmpty;
+    final hideWhenEmpty = !widget.fullPage && !widget.isLoading && _displayedDocs.isEmpty;
 
     return SliverMainAxisGroup(
       slivers: [
         if (!widget.fullPage)
           SliverToBoxAdapter(
             child: AttachmentSectionHeader(
-              title: widget.expressive
-                  ? AttachmentSectionType.documents.expressiveSectionLabel
-                  : AttachmentSectionType.documents.sectionLabel,
-              expressive: widget.expressive,
+              title: AttachmentSectionType.documents.expressiveSectionLabel,
               onShowMore: () => ConversationAttachments.open(
                 context,
                 chat: widget.chat,
@@ -164,11 +159,7 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
           )
         else ...[
           Obx(() => SliverPadding(
-                padding: attachmentSectionListPadding(
-                  fullPage: widget.fullPage,
-                  iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-                  expressive: widget.expressive,
-                ),
+                padding: attachmentSectionListPadding(),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: _gridCrossAxisCount,
@@ -177,8 +168,7 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
                     childAspectRatio: 1.75,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, int index) =>
-                        MediaGalleryCard(attachment: _displayedDocs[index], expressive: widget.expressive),
+                    (context, int index) => MediaGalleryCard(attachment: _displayedDocs[index]),
                     childCount: _visibleCount,
                   ),
                 ),

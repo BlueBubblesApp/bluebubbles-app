@@ -21,7 +21,6 @@ class MediaGridSection extends StatefulWidget {
   final RxList<String> selected;
   final bool isLoading;
   final bool fullPage;
-  final bool expressive;
   final int? crossAxisCount;
   final MediaFilter mediaFilter;
   final MediaSenderFilter senderFilter;
@@ -35,7 +34,6 @@ class MediaGridSection extends StatefulWidget {
     required this.selected,
     required this.isLoading,
     this.fullPage = false,
-    this.expressive = false,
     this.crossAxisCount,
     this.mediaFilter = MediaFilter.all,
     this.senderFilter = const MediaSenderFilter.any(),
@@ -91,8 +89,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   int get _gridCrossAxisCount {
     if (widget.crossAxisCount != null) return widget.crossAxisCount!;
-    if (widget.expressive) return expressiveMediaCrossAxisCount(NavigationSvc.width(context));
-    return max(2, NavigationSvc.width(context) ~/ 200);
+    return expressiveMediaCrossAxisCount(NavigationSvc.width(context));
   }
 
   void _loadMore() {
@@ -106,14 +103,13 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
     final attachment = _filteredMedia[index];
     return Obx(() {
       final isSelected = widget.selected.contains(attachment.guid);
-      const legacyMotion = M3EMotionSpec(Duration(milliseconds: 250), Curves.linear);
-      final motion = widget.expressive ? M3EMotion.spatialFast : legacyMotion;
+      const motion = M3EMotion.spatialFast;
       return AnimatedContainer(
         duration: motion.duration,
         curve: motion.curve,
         margin: EdgeInsets.all(isSelected ? 10 : 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.expressive && isSelected ? M3EShapes.md : 20),
+          borderRadius: BorderRadius.circular(isSelected ? M3EShapes.md : 20),
         ),
         clipBehavior: Clip.antiAlias,
         child: GestureDetector(
@@ -140,7 +136,6 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
               children: [
                 MediaGalleryCard(
                   attachment: attachment,
-                  expressive: widget.expressive,
                 ),
                 if (isSelected)
                   Container(
@@ -171,16 +166,13 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final hideWhenEmpty = widget.expressive && !widget.fullPage && !widget.isLoading && _filteredMedia.isEmpty;
+    final hideWhenEmpty = !widget.fullPage && !widget.isLoading && _filteredMedia.isEmpty;
 
     final slivers = <Widget>[
       if (!widget.fullPage)
         SliverToBoxAdapter(
           child: AttachmentSectionHeader(
-            title: widget.expressive
-                ? AttachmentSectionType.media.expressiveSectionLabel
-                : AttachmentSectionType.media.sectionLabel,
-            expressive: widget.expressive,
+            title: AttachmentSectionType.media.expressiveSectionLabel,
             onShowMore: () {
               widget.selected.clear();
               ConversationAttachments.open(
@@ -231,9 +223,6 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
       else ...[
         Obx(() => SliverPadding(
               padding: attachmentSectionListPadding(
-                fullPage: widget.fullPage,
-                iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-                expressive: widget.expressive,
                 top: widget.fullPage ? 10 : 0,
               ),
               sliver: SliverGrid(

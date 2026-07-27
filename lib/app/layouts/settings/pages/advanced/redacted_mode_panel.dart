@@ -61,7 +61,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with ThemeHelpers
 
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Redacted Mode",
         initialHeader: "Redacted Mode",
         iosSubtitle: iosSubtitle,
@@ -72,7 +72,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with ThemeHelpers
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     const Padding(
@@ -196,7 +196,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with ThemeHelpers
                     );
                   }),
                 ),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -217,7 +217,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with ThemeHelpers
                         children: [
                           SettingsHeader(
                               iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Customization"),
-                          SettingsSection(expressive: true, 
+                          SettingsSection(
                             backgroundColor: tileColor,
                             children: [
                               SettingsSwitch(

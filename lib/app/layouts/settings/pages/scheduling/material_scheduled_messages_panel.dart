@@ -146,7 +146,6 @@ class _MaterialScheduledMessagesPanelState extends State<MaterialScheduledMessag
       mouseCursor: MouseCursor.defer,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: SettingsLeadingIcon(
-        expressive: true,
         iosIcon: icon,
         materialIcon: icon,
         containerColor: iconColor,
@@ -213,7 +212,7 @@ class _MaterialScheduledMessagesPanelState extends State<MaterialScheduledMessag
     required String Function(ScheduledMessage) subtitleBuilder,
     required bool isCompleted,
   }) {
-    return SettingsSection(expressive: true, 
+    return SettingsSection(
       backgroundColor: tileColor,
       children: [
         Material(
@@ -255,7 +254,7 @@ class _MaterialScheduledMessagesPanelState extends State<MaterialScheduledMessag
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      return SettingsScaffold(expressive: true, 
+      return SettingsScaffold(
         title: "Scheduled Messages",
         initialHeader: null,
         iosSubtitle: iosSubtitle,

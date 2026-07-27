@@ -23,7 +23,7 @@ class FirebasePanel extends StatefulWidget {
 class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
-    return SettingsScaffold(expressive: true, 
+    return SettingsScaffold(
         title: "Google Firebase",
         initialHeader: "Overview",
         iosSubtitle: iosSubtitle,
@@ -34,7 +34,7 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
           SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Padding(
@@ -66,7 +66,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                             mode: LaunchMode.externalApplication);
                       },
                       leading: const SettingsLeadingIcon(
-                        expressive: true,
                         iosIcon: CupertinoIcons.arrow_up_right,
                         materialIcon: Icons.arrow_outward_outlined,
                         containerColor: Colors.blueAccent,
@@ -85,7 +84,7 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                   final fcmRegistered =
                       SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
 
-                  return SettingsSection(expressive: true,
+                  return SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     SettingsTile(
@@ -99,7 +98,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                           )
                         ]),
                         leading: SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.settings,
                           materialIcon: Icons.settings,
                           containerColor: statusOk ? Colors.green : Colors.redAccent,
@@ -120,7 +118,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                               )
                             : const SizedBox.shrink()),
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.cloud_download,
                           materialIcon: Icons.download,
                           containerColor: Colors.blue,
@@ -249,7 +246,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                               )
                             : const SizedBox.shrink()),
                         leading: const SettingsLeadingIcon(
-                          expressive: true,
                           iosIcon: CupertinoIcons.device_phone_portrait,
                           materialIcon: Icons.devices,
                           containerColor: Colors.blueGrey,
@@ -273,7 +269,7 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                   return SettingsHeader(
                       iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Project Details");
                 }),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() {
@@ -303,7 +299,7 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                   return SettingsHeader(
                       iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Danger Zone");
                 }),
-                SettingsSection(expressive: true, 
+                SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() {
@@ -322,7 +318,6 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                             )
                           ]),
                           leading: const SettingsLeadingIcon(
-                            expressive: true,
                             iosIcon: CupertinoIcons.trash,
                             materialIcon: Icons.delete,
                             containerColor: Colors.redAccent,
