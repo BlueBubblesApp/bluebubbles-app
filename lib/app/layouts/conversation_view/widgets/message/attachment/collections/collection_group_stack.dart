@@ -59,6 +59,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   bool _hapticGivenForCurrentEnd = false;
   bool _labelHovered = false;
   int? _activeDragPointer;
+  Offset? _dragStartPosition;
   VelocityTracker? _velocityTracker;
 
   List<Attachment> get _attachments => widget.attachments;
@@ -66,6 +67,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   @override
   void dispose() {
     _activeDragPointer = null;
+    _dragStartPosition = null;
     _velocityTracker = null;
     _hapticGivenForCurrentEnd = false;
     super.dispose();
@@ -296,7 +298,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     // Fan motion uses Listener (never enters the gesture arena) so it isn't
     // swallowed by card recognizers (e.g. VideoPlayer onDoubleTap). RawGestureDetector
     // + [_EagerHorizontalDragRecognizer] still claims clear horizontal drags so
-    // MessagesView's timestamp swipe doesn't win instead.
+    // MessagesView's timestamp swipe doesn't win instead. Vertical motion is ignored
+    // so conversation list scroll wins.
     final listener = Listener(
       behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
@@ -323,11 +326,28 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       onPointerDown: (event) {
         if (_attachments.length <= 1) return;
         _activeDragPointer = event.pointer;
+        _dragStartPosition = event.position;
         _velocityTracker = VelocityTracker.withKind(event.kind);
         _velocityTracker!.addPosition(event.timeStamp, event.position);
       },
       onPointerMove: (event) {
         if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
+        final start = _dragStartPosition;
+        if (start != null) {
+          final total = event.position - start;
+          if (total.dy.abs() >= total.dx.abs() && total.distance >= 8.0) {
+            _activeDragPointer = null;
+            _dragStartPosition = null;
+            _velocityTracker = null;
+            _hapticGivenForCurrentEnd = false;
+            if (mounted && _dragDx != 0) {
+              setState(() {
+                _dragDx = 0;
+              });
+            }
+            return;
+          }
+        }
         _velocityTracker?.addPosition(event.timeStamp, event.position);
         if (!widget.infiniteScroll) {
           final atStart = _currentIndex == 0;
@@ -364,6 +384,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       onPointerUp: (event) {
         if (_activeDragPointer != event.pointer) return;
         _activeDragPointer = null;
+        _dragStartPosition = null;
         _hapticGivenForCurrentEnd = false;
         final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
         _velocityTracker = null;
@@ -390,6 +411,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       onPointerCancel: (event) {
         if (_activeDragPointer != event.pointer) return;
         _activeDragPointer = null;
+        _dragStartPosition = null;
         _velocityTracker = null;
         _hapticGivenForCurrentEnd = false;
         if (_attachments.length <= 1) return;
@@ -558,7 +580,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 }
 
 /// Claims clear horizontal drags so MessagesView's timestamp swipe loses, without
-/// owning fan motion. Accepts earlier than default touch-slop; leaves pure taps alone.
+/// owning fan motion. Accepts earlier than default touch-slop; rejects vertical early
+/// so conversation scroll wins; leaves pure taps alone.
 class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
   _EagerHorizontalDragRecognizer({super.debugOwner});
 
@@ -578,7 +601,10 @@ class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
   void handleEvent(PointerEvent event) {
     if (!_claimed && event is PointerMoveEvent && _initialPosition != null) {
       final delta = event.position - _initialPosition!;
-      if (delta.dx.abs() > delta.dy.abs() && delta.dx.abs() >= _eagerAcceptDistance) {
+      if (delta.dy.abs() > delta.dx.abs() && delta.dy.abs() >= _eagerAcceptDistance) {
+        _claimed = true;
+        resolve(GestureDisposition.rejected);
+      } else if (delta.dx.abs() > delta.dy.abs() && delta.dx.abs() >= _eagerAcceptDistance) {
         _claimed = true;
         resolve(GestureDisposition.accepted);
       }
