@@ -37,15 +37,19 @@ Future<DateTimeRange?> showSyncTimeRangeDialog(
 }) {
   final effectiveOptions = options ?? defaultSyncTimeRangeOptions;
   final now = DateTime.now().toUtc();
+  final epoch = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
   return showBBListSelector<DateTimeRange>(
     context: context,
     title: "How far back?",
     options: effectiveOptions
-        .map((option) => BBListSelectorOption(
-              label: option.label,
-              value: DateTimeRange(start: now.subtract(option.duration), end: now),
-            ))
+        .map((option) {
+          final start = now.subtract(option.duration);
+          return BBListSelectorOption(
+            label: option.label,
+            value: DateTimeRange(start: start.isBefore(epoch) ? epoch : start, end: now),
+          );
+        })
         .toList(),
   );
 }
