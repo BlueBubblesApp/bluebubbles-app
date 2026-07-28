@@ -52,7 +52,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
   }
 
   void onAttachmentsLoaded(
-      List<Attachment> loadedMedia, List<Attachment> loadedDocs, List<Attachment> loadedLocations) {
+    List<Attachment> loadedMedia,
+    List<Attachment> loadedDocs,
+    List<Attachment> loadedLocations,
+  ) {
     if (mounted) {
       setState(() {
         media = loadedMedia;
@@ -72,93 +75,75 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
         final chatDetailTheme = ChatDetailTheme.resolve(context, chat);
 
         return Theme(
-            data: chatDetailTheme.theme,
-            child: Obx(() => SettingsScaffold(
-                  headerColor: chatDetailTheme.headerColor,
-                  title: "Details",
-                  tileColor: chatDetailTheme.tileColor,
-                  initialHeader: null,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  minimalAppBar: true,
-                  actions: [
-                    Obx(() {
-                      if (selected.isNotEmpty) {
-                        return IconButton(
-                          icon: Icon(iOS ? CupertinoIcons.xmark : Icons.close,
-                              color: context.theme.colorScheme.onSurface),
-                          onPressed: () {
-                            selected.clear();
-                          },
-                        );
-                      } else {
-                        return const SizedBox.shrink();
+          data: chatDetailTheme.theme,
+          child: SettingsScaffold(
+            headerColor: chatDetailTheme.headerColor,
+            title: "Details",
+            tileColor: chatDetailTheme.tileColor,
+            initialHeader: null,
+            iosSubtitle: iosSubtitle,
+            materialSubtitle: materialSubtitle,
+            minimalAppBar: true,
+            actions: [
+              Obx(() {
+                if (selected.isNotEmpty) {
+                  return IconButton(
+                    icon: Icon(iOS ? CupertinoIcons.xmark : Icons.close, color: context.theme.colorScheme.onSurface),
+                    onPressed: () {
+                      selected.clear();
+                    },
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              }),
+              Obx(() {
+                if (selected.isNotEmpty) {
+                  return IconButton(
+                    icon: Icon(
+                      iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                      color: context.theme.colorScheme.onSurface,
+                    ),
+                    onPressed: () {
+                      final attachments = media.where((e) => selected.contains(e.guid!));
+                      for (Attachment a in attachments) {
+                        final file = AttachmentsSvc.getContent(a, autoDownload: false);
+                        if (file is PlatformFile) {
+                          AttachmentsSvc.saveToDisk(file);
+                        }
                       }
-                    }),
-                    Obx(() {
-                      if (selected.isNotEmpty) {
-                        return IconButton(
-                          icon: Icon(iOS ? CupertinoIcons.cloud_download : Icons.file_download,
-                              color: context.theme.colorScheme.onSurface),
-                          onPressed: () {
-                            final attachments = media.where((e) => selected.contains(e.guid!));
-                            for (Attachment a in attachments) {
-                              final file = AttachmentsSvc.getContent(a, autoDownload: false);
-                              if (file is PlatformFile) {
-                                AttachmentsSvc.saveToDisk(file);
-                              }
-                            }
-                          },
-                        );
-                      } else {
-                        return const SizedBox.shrink();
-                      }
-                    }),
-                  ],
-                  bodySlivers: [
-                    SliverToBoxAdapter(
-                      child: SettingsSvc.settings.skin.value == Skins.iOS
-                          ? ChatInfo(chat: chat)
-                          : ExpressiveChatHeader(chat: chat),
-                    ),
-                    SettingsSvc.settings.skin.value == Skins.iOS
-                        ? ParticipantsList(chat: chat)
-                        : ExpressiveParticipantsSection(chat: chat),
-                    // Hidden widget that loads attachments in the background
-                    SliverToBoxAdapter(
-                      child: AttachmentsLoader(
-                        chat: chat,
-                        onAttachmentsLoaded: onAttachmentsLoaded,
-                      ),
-                    ),
-                    const SliverPadding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    SettingsSvc.settings.skin.value == Skins.iOS
-                        ? ChatOptions(chat: chat)
-                        : ExpressiveChatOptions(chat: chat),
-                    MediaGridSection(
-                      chat: chat,
-                      media: media,
-                      selected: selected,
-                      isLoading: isLoadingAttachments,
-                    ),
-                    LinksSection(chat: chat),
-                    LocationsSection(
-                      chat: chat,
-                      locations: locations,
-                      isLoading: isLoadingAttachments,
-                    ),
-                    DocumentsSection(
-                      chat: chat,
-                      docs: docs,
-                      isLoading: isLoadingAttachments,
-                    ),
-                    const SliverPadding(
-                      padding: EdgeInsets.only(top: 50),
-                    ),
-                  ],
-                )));
+                    },
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              }),
+            ],
+            bodySlivers: [
+              SliverToBoxAdapter(
+                child: SettingsSvc.settings.skin.value == Skins.iOS
+                    ? ChatInfo(chat: chat)
+                    : ExpressiveChatHeader(chat: chat),
+              ),
+              SettingsSvc.settings.skin.value == Skins.iOS
+                  ? ParticipantsList(chat: chat)
+                  : ExpressiveParticipantsSection(chat: chat),
+              // Hidden widget that loads attachments in the background
+              SliverToBoxAdapter(
+                child: AttachmentsLoader(chat: chat, onAttachmentsLoaded: onAttachmentsLoaded),
+              ),
+              const SliverPadding(padding: EdgeInsets.symmetric(vertical: 10)),
+              SettingsSvc.settings.skin.value == Skins.iOS
+                  ? ChatOptions(chat: chat)
+                  : ExpressiveChatOptions(chat: chat),
+              MediaGridSection(chat: chat, media: media, selected: selected, isLoading: isLoadingAttachments),
+              LinksSection(chat: chat),
+              LocationsSection(chat: chat, locations: locations, isLoading: isLoadingAttachments),
+              DocumentsSection(chat: chat, docs: docs, isLoading: isLoadingAttachments),
+              const SliverPadding(padding: EdgeInsets.only(top: 50)),
+            ],
+          ),
+        );
       }),
     );
   }

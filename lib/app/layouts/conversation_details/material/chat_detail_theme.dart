@@ -1,11 +1,10 @@
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 
-/// Resolves the per-chat theme, scaffold header/tile colours, and the bubble-colour `primary`
-/// override used by the conversation details + attachments pages.
+/// Resolves the per-chat theme and scaffold header/tile colours used by the conversation
+/// details + attachments pages.
 ///
 /// Must be called from inside the `Obx` that already wraps this on both call sites — it reads
 /// `chatState.themeVersion` / `customThemeDark` / `customThemeLight` reactively.
@@ -29,37 +28,19 @@ class ChatDetailTheme {
 
     // Compute scaffold colors from baseTheme before copyWith modifies colorScheme.surface.
     final hasWindowEffect = SettingsSvc.settings.windowEffect.value != WindowEffect.disabled;
-    final reverseMapping = SettingsSvc.settings.skin.value == Skins.Material && isDark;
-    final rawHeaderColor = (isDark ? baseTheme.colorScheme.surface : baseTheme.colorScheme.surfaceContainerHighest)
-        .withAlpha(hasWindowEffect ? 20 : 255);
-    final rawTileColor = (isDark ? baseTheme.colorScheme.surfaceContainerHighest : baseTheme.colorScheme.surface)
-        .withAlpha(hasWindowEffect ? 100 : 255);
-    final scaffoldHeaderColor = reverseMapping ? rawTileColor : rawHeaderColor;
-    final scaffoldTileColor = reverseMapping ? rawHeaderColor : rawTileColor;
+    final scaffoldHeaderColor =
+        (isDark ? baseTheme.colorScheme.surface : baseTheme.colorScheme.surfaceContainerHighest)
+            .withAlpha(hasWindowEffect ? 20 : 255);
+    final scaffoldTileColor =
+        (isDark ? baseTheme.colorScheme.surfaceContainerHighest : baseTheme.colorScheme.surface)
+            .withAlpha(hasWindowEffect ? 100 : 255);
 
-    final bubbleColors = baseTheme.extensions[BubbleColors] as BubbleColors?;
-    final bubbleColor = chat.isIMessage
-        ? bubbleColors?.iMessageBubbleColor ?? baseTheme.colorScheme.iMessageBubble
-        : bubbleColors?.smsBubbleColor ?? baseTheme.colorScheme.smsBubble;
-    final onBubbleColor = chat.isIMessage
-        ? bubbleColors?.oniMessageBubbleColor ?? baseTheme.colorScheme.oniMessageBubble
-        : bubbleColors?.onSmsBubbleColor ?? baseTheme.colorScheme.onSmsBubble;
-    final useGeneratedThemeSurface = themeName != null
-        ? ThemesService.isGeneratedMaterialThemeName(themeName)
-        : ThemeSvc.isMaterialYouActive(context);
-
-    final resolvedTheme = baseTheme.copyWith(
-      primaryColor: bubbleColor,
-      colorScheme: baseTheme.colorScheme.copyWith(
-        primary: bubbleColor,
-        onPrimary: onBubbleColor,
-        surface: useGeneratedThemeSurface ? null : bubbleColors?.receivedBubbleColor,
-        onSurface: useGeneratedThemeSurface ? null : bubbleColors?.onReceivedBubbleColor,
-      ),
-    );
-
+    // Use the chat's selected theme as-is — no bubble-color accent override. Bubble colors are
+    // tuned for contrast against the bubble itself, not against the tonal surfaces buttons, icons,
+    // and text sit on throughout this page, and using them as `primary` reads as low-contrast/muddy
+    // (e.g. "Show more" text, the "Add people" tonal icon) especially in dark mode.
     return ChatDetailTheme(
-      theme: resolvedTheme,
+      theme: baseTheme,
       headerColor: scaffoldHeaderColor,
       tileColor: scaffoldTileColor,
     );

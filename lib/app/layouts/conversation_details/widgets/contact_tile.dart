@@ -21,13 +21,11 @@ class ContactTile extends StatelessWidget {
   final Chat chat;
   final bool canBeRemoved;
 
-  ContactV2? get contact => handle.contactsV2.firstOrNull;
-
-  bool get hasPhones {
+  bool _hasPhones(ContactV2? contact) {
     return contact?.addresses.any((addr) => !addr.contains('@')) ?? false;
   }
 
-  bool get hasEmails {
+  bool _hasEmails(ContactV2? contact) {
     return contact?.addresses.any((addr) => addr.contains('@')) ?? false;
   }
 
@@ -84,6 +82,7 @@ class ContactTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final handleState = HandleSvc.getOrCreateHandleState(handle);
+    final contact = handle.contactsV2.firstOrNull;
     return Obx(() {
       final String displayName = handleState.displayName.value ?? handle.address;
       final String address = handleState.formattedAddress.value ?? handle.address;
@@ -178,7 +177,7 @@ class ContactTile extends StatelessWidget {
               ),
             ),
           ),
-          subtitle: handle.contactsV2.isEmpty
+          subtitle: contact == null
               ? null
               : Text(
                   address,
@@ -214,6 +213,9 @@ class ContactTile extends StatelessWidget {
   }
 
   Widget _buildTrailing(BuildContext context, {required ContactV2? contact, required bool isEmail}) {
+    final bool hasPhones = _hasPhones(contact);
+    final bool hasEmails = _hasEmails(contact);
+
     if (kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && !hasPhones)) {
       return Container(width: 2);
     }
@@ -289,7 +291,7 @@ class ContactTile extends StatelessWidget {
       ],
       buttonBuilder: (context, showMenu) => ClipOval(
         child: Material(
-          color: context.theme.colorScheme.secondary,
+          color: context.theme.colorScheme.primary.withValues(alpha: 0.15),
           child: SizedBox(
             width: 30,
             height: 30,
@@ -297,7 +299,7 @@ class ContactTile extends StatelessWidget {
               onTap: showMenu,
               child: Icon(
                 CupertinoIcons.ellipsis,
-                color: context.theme.colorScheme.onSecondary,
+                color: context.theme.colorScheme.primary,
                 size: 18,
               ),
             ),

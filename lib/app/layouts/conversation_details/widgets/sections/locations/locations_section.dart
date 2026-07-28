@@ -161,22 +161,22 @@ class _LocationsSectionState extends State<LocationsSection> {
             ),
           )
         else ...[
-          Obx(() => SliverPadding(
-                padding: attachmentSectionListPadding(
-                  top: widget.fullPage ? 10 : 0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: MasonryGridView.count(
-                    crossAxisCount: max(2, NavigationSvc.width(context) ~/ 200),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) => _buildLocationTile(context, index),
-                    itemCount: _visibleCount,
-                  ),
-                ),
-              )),
+          SliverPadding(
+            padding: attachmentSectionListPadding(
+              top: widget.fullPage ? 10 : 0,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: MasonryGridView.count(
+                crossAxisCount: max(2, NavigationSvc.width(context) ~/ 200),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) => _buildLocationTile(context, index),
+                itemCount: _visibleCount,
+              ),
+            ),
+          ),
           if (widget.fullPage && _displayCount < _displayedLocations.length)
             SliverToBoxAdapter(
               child: Builder(

@@ -216,22 +216,22 @@ class _LinksSectionState extends State<LinksSection> with ThemeHelpers {
             ),
           )
         else ...[
-          Obx(() => SliverPadding(
-                padding: attachmentSectionListPadding(
-                  top: widget.fullPage ? 10 : 0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: MasonryGridView.count(
-                    crossAxisCount: max(2, NavigationSvc.width(context) ~/ 200),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) => _buildLinkTile(context, index),
-                    itemCount: _visibleCount,
-                  ),
-                ),
-              )),
+          SliverPadding(
+            padding: attachmentSectionListPadding(
+              top: widget.fullPage ? 10 : 0,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: MasonryGridView.count(
+                crossAxisCount: max(2, NavigationSvc.width(context) ~/ 200),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) => _buildLinkTile(context, index),
+                itemCount: _visibleCount,
+              ),
+            ),
+          ),
           if (widget.fullPage && _displayCount < _displayedLinks.length)
             SliverToBoxAdapter(
               child: Builder(

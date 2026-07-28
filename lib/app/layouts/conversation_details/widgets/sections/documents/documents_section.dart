@@ -158,21 +158,21 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
             ),
           )
         else ...[
-          Obx(() => SliverPadding(
-                padding: attachmentSectionListPadding(),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _gridCrossAxisCount,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.75,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, int index) => MediaGalleryCard(attachment: _displayedDocs[index]),
-                    childCount: _visibleCount,
-                  ),
-                ),
-              )),
+          SliverPadding(
+            padding: attachmentSectionListPadding(),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _gridCrossAxisCount,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.75,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, int index) => MediaGalleryCard(attachment: _displayedDocs[index]),
+                childCount: _visibleCount,
+              ),
+            ),
+          ),
           if (widget.fullPage && _displayCount < _displayedDocs.length)
             SliverToBoxAdapter(
               child: Builder(

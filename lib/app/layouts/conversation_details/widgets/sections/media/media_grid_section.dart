@@ -221,22 +221,22 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
           ),
         )
       else ...[
-        Obx(() => SliverPadding(
-              padding: attachmentSectionListPadding(
-                top: widget.fullPage ? 10 : 0,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _gridCrossAxisCount,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, int index) => _buildGridItem(context, index),
-                  childCount: _visibleCount,
-                ),
-              ),
-            )),
+        SliverPadding(
+          padding: attachmentSectionListPadding(
+            top: widget.fullPage ? 10 : 0,
+          ),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _gridCrossAxisCount,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, int index) => _buildGridItem(context, index),
+              childCount: _visibleCount,
+            ),
+          ),
+        ),
         if (widget.fullPage && _displayCount < _filteredMedia.length)
           SliverToBoxAdapter(
             child: Builder(

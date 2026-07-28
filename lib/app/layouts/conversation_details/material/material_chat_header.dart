@@ -71,11 +71,11 @@ class ExpressiveChatHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               border: Border.all(color: colorScheme.surface, width: 2),
                               shape: BoxShape.circle,
-                              color: colorScheme.primaryContainer,
+                              color: colorScheme.primary.withValues(alpha: 0.15),
                             ),
                             child: Icon(
                               Icons.edit,
-                              color: colorScheme.onPrimaryContainer,
+                              color: colorScheme.primary,
                               size: 16,
                             ),
                           ),
@@ -93,7 +93,7 @@ class ExpressiveChatHeader extends StatelessWidget {
                                 ? MenuItemRow(
                                     icon: Icons.close,
                                     label: "Remove photo",
-                                    iconColor: colorScheme.error,
+                                    iconColor: colorScheme.primary,
                                     onTap: () =>
                                         hideMenu().then((_) => photo_actions.deletePhoto(overlayContext, chat)),
                                   )
