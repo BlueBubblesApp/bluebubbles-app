@@ -10,6 +10,7 @@ import 'package:bluebubbles/services/backend/actions/image_actions.dart';
 import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/services/backend/actions/prefs_actions.dart';
 import 'package:bluebubbles/services/backend/actions/server_actions.dart';
+import 'package:bluebubbles/services/backend/actions/storage_actions.dart';
 import 'package:bluebubbles/services/backend/actions/sync_actions.dart';
 import 'package:bluebubbles/services/backend/actions/test_actions.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
@@ -126,5 +127,10 @@ class IsolateActons {
     IsolateRequestType.setCustomGroupShowUnreadBadge: CustomGroupActions.setShowUnreadBadge,
     IsolateRequestType.deleteCustomGroup: CustomGroupActions.delete,
     IsolateRequestType.reorderCustomGroups: CustomGroupActions.reorder,
+
+    // Storage analyzer
+    IsolateRequestType.analyzeStorage: (data) async => StorageActions.analyze(data as Map<String, dynamic>),
+    IsolateRequestType.deleteStorageAttachments: (data) async =>
+        StorageActions.deleteAttachments(data as Map<String, dynamic>),
   };
 }

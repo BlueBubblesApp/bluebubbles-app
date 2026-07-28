@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/ch
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/storage/storage_analyzer_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theme_studio/theme_studio_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -396,6 +397,20 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           ),
           isThreeLine: true,
           onTap: () => NavigationSvc.push(context, ChatStatsPage(chat: chat)),
+        ),
+      ),
+      _OptionRow(
+        enabled: !kIsWeb,
+        build: (context) => SettingsTile(
+          title: "Storage",
+          subtitle: "See attachment storage usage for this chat and free up space",
+          backgroundColor: tileColor,
+          trailing: Padding(
+            padding: const EdgeInsets.only(right: 15.0),
+            child: Icon(iOS ? CupertinoIcons.chart_pie : Icons.pie_chart_outline),
+          ),
+          isThreeLine: true,
+          onTap: () => NavigationSvc.push(context, StorageAnalyzerPanel(initialChat: chat)),
         ),
       ),
       _OptionRow(

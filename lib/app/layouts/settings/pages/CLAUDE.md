@@ -14,12 +14,14 @@ One subdirectory per settings category. Each contains one or more `*_panel.dart`
 | `profile/` | Profile / account info panel | 1 |
 | `scheduling/` | Scheduled messages & reminders (tri-platform) | 11 |
 | `server/` | Server connection, backup/restore, OAuth, iMessage stats | 6 + 2 subdirs |
+| `storage/` | Storage Analyzer — attachment storage usage & cleanup | 4 + 1 subdir |
 | `system/` | System notification settings | 1 |
 | `theming/` | Theming panel + advanced, avatar, background, theme studio | 5 + 4 subdirs |
 
 ## Detailed Subdirectories → own CLAUDE.md
 - `scheduling/` → `CLAUDE.md` inside
 - `server/` → `CLAUDE.md` inside
+- `storage/` → `CLAUDE.md` inside
 - `theming/` → `CLAUDE.md` inside
 - `advanced/` → `CLAUDE.md` inside
 - `misc/` → `CLAUDE.md` inside

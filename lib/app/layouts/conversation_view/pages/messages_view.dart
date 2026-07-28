@@ -98,7 +98,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
     _eventSubscription = EventDispatcherSvc.stream.listen((e) async {
       if (!mounted) return;
-      if (e.type == "refresh-messagebloc" && e.data == chat.guid) {
+      if ((e.type == "refresh-messagebloc" && e.data == chat.guid) || e.type == "storage-attachments-purged") {
         // Clear state items
         noMoreMessages = false;
         _messages = [];

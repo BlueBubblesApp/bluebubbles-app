@@ -1,12 +1,12 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/chat_stats_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/charts/bar_chart.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/charts/donut_chart.dart';
+import 'package:bluebubbles/app/components/charts/donut_chart.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/charts/line_chart.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/legend_grid.dart';
+import 'package:bluebubbles/app/components/charts/legend_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/participant_bar.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/section_skeleton.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/stat_tile.dart';
+import 'package:bluebubbles/app/components/charts/section_skeleton.dart';
+import 'package:bluebubbles/app/components/charts/stat_tile.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/ui/chat/chat_stats/chat_stats_models.dart';

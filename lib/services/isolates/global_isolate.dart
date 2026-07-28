@@ -735,6 +735,10 @@ enum IsolateRequestType {
   setCustomGroupShowUnreadBadge,
   deleteCustomGroup,
   reorderCustomGroups,
+
+  // Storage analyzer actions
+  analyzeStorage,
+  deleteStorageAttachments,
 }
 
 /// Internal class to track pending requests

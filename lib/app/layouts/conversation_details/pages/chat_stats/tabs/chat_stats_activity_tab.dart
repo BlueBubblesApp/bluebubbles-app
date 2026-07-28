@@ -3,8 +3,8 @@ import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/wi
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/charts/line_chart.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/heatmap_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/participant_bar.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/section_skeleton.dart';
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/stat_tile.dart';
+import 'package:bluebubbles/app/components/charts/section_skeleton.dart';
+import 'package:bluebubbles/app/components/charts/stat_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/ui/chat/chat_stats/chat_stats_computer.dart';
