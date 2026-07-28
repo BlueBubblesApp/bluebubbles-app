@@ -550,21 +550,26 @@ class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
 
   Offset? _initialPosition;
   bool _claimed = false;
+  bool _rejected = false;
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
     _initialPosition = event.position;
     _claimed = false;
+    _rejected = false;
   }
 
   @override
   void handleEvent(PointerEvent event) {
+    if (_rejected) return;
     if (!_claimed && event is PointerMoveEvent && _initialPosition != null) {
       final delta = event.position - _initialPosition!;
       if (delta.dy.abs() > delta.dx.abs() && delta.dy.abs() >= _eagerAcceptDistance) {
         _claimed = true;
+        _rejected = true;
         resolve(GestureDisposition.rejected);
+        return;
       } else if (delta.dx.abs() > delta.dy.abs() && delta.dx.abs() >= _eagerAcceptDistance) {
         _claimed = true;
         resolve(GestureDisposition.accepted);
@@ -577,6 +582,7 @@ class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
   void didStopTrackingLastPointer(int pointer) {
     _initialPosition = null;
     _claimed = false;
+    _rejected = false;
     super.didStopTrackingLastPointer(pointer);
   }
 
@@ -584,6 +590,7 @@ class _EagerHorizontalDragRecognizer extends HorizontalDragGestureRecognizer {
   void dispose() {
     _initialPosition = null;
     _claimed = false;
+    _rejected = false;
     super.dispose();
   }
 }
