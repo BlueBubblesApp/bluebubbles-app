@@ -1084,7 +1084,7 @@ class ChatsService {
     final chatGuids = chatStates.keys.toList();
 
     Database.resetMessagingData();
-    await _deleteMessagingFiles();
+    await FilesystemSvc.deleteCacheDirectories();
 
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
@@ -1100,24 +1100,6 @@ class ChatsService {
     // database, sets loadedFirstChatBatch=true and re-initializes DB watchers
     // (same codepath FullSyncManager.complete() uses after a full resync).
     await init(force: true);
-  }
-
-  /// Deletes on-disk messaging data: attachments (originals/thumbnails/live-photo
-  /// .mov), per-chat avatars, per-chat custom backgrounds, per-message balloon
-  /// bundle directories, cached URL preview images, and cached contact avatars.
-  Future<void> _deleteMessagingFiles() async {
-    final paths = [
-      FilesystemSvc.attachmentsPath,
-      FilesystemSvc.avatarsPath,
-      FilesystemSvc.customBackgroundsPath,
-      FilesystemSvc.messagesPath,
-      FilesystemSvc.urlPreviewsPath,
-      FilesystemSvc.contactAvatarsPath,
-    ];
-    for (final path in paths) {
-      final dir = Directory(path);
-      if (await dir.exists()) await dir.delete(recursive: true);
-    }
   }
 
   /// Soft delete a chat with full UI cleanup and service state management

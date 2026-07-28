@@ -319,6 +319,13 @@ class Database {
     return store.runInTransaction(mode, fn);
   }
 
+  /// Wipes every ObjectBox box that's actually populated, including theme entries.
+  /// Used for a full app reset — for a messaging-only wipe that preserves
+  /// settings/themes/fcmData, use [resetMessagingData].
+  ///
+  /// Note: scheduled messages are not stored locally — they live server-side and
+  /// are fetched via the API (see `ScheduledMessagesMixin`), so there's nothing to
+  /// clear here for them.
   static void reset() {
     Database.attachments.removeAll();
     Database.chats.removeAll();
@@ -327,6 +334,7 @@ class Database {
     Database.handles.removeAll();
     Database.messages.removeAll();
     Database.themes.removeAll();
+    Database.themeEntries.removeAll();
     Database.customGroups.removeAll();
   }
 

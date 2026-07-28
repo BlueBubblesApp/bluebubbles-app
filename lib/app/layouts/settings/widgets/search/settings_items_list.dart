@@ -1,5 +1,3 @@
-import 'package:bluebubbles/utils/logger/logger.dart';
-
 import '../../pages/misc/misc_panel.dart';
 import '../../pages/scheduling/message_reminders_panel.dart';
 import '../../pages/scheduling/scheduled_messages_panel.dart';
@@ -28,8 +26,6 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dar
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_items_actions.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
-import 'package:bluebubbles/database/database.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -775,28 +771,7 @@ List<Widget> buildSettingItemList({
                     BBDialogAction(
                       text: "Yes",
                       isDefault: true,
-                      onPressed: () async {
-                        FilesystemSvc.deleteDB();
-                        SocketSvc.forgetConnection();
-                        SettingsSvc.settings = Settings();
-                        await SettingsSvc.settings.saveAsync();
-
-                        await PrefsSvc.admin.clearAll();
-                        await PrefsSvc.theme.setSelectedThemes(darkTheme: "OLED Dark", lightTheme: "Bright White");
-                        Database.themes.putMany(ThemesService.defaultThemes);
-
-                        await FCMData.deleteFcmData();
-
-                        try {
-                          if (FirebaseSvc.token != null) {
-                            await MethodChannelSvc.actions.firebaseDeleteToken();
-                          }
-                        } catch (e, s) {
-                          Logger.error("Failed to delete Firebase FCM token", error: e, trace: s);
-                        }
-
-                        exit(0);
-                      },
+                      onPressed: () => SettingsItemsActions.resetApp(),
                     ),
                   ],
                 );
