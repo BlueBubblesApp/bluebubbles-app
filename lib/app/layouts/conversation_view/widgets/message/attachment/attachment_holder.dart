@@ -399,19 +399,21 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
-        // Collage/stack: shadow + rounded clip at the card boundary. Grid cells clip in the parent.
+        // Collage/stack: iOS card shadow + rounded clip at the card boundary. Grid cells clip in the parent.
         if (isFixedCard) {
           final cardRadius = BorderRadius.circular(_cardBorderRadius);
           content = DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: cardRadius,
-              boxShadow: [
-                BoxShadow(
-                  color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
+              boxShadow: isiOS
+                  ? [
+                      BoxShadow(
+                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : null,
             ),
             child: ClipRRect(
               borderRadius: cardRadius,

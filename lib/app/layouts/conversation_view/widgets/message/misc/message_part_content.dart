@@ -2,7 +2,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_collage.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_stack.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
@@ -14,6 +13,9 @@ import 'package:flutter/material.dart';
 /// Renders the appropriate content widget based on message type
 /// Extracted from MessageHolder to reduce nesting and improve readability
 class MessagePartContent extends StatelessWidget {
+  /// Author-side inset matching single attachments / [TailClipper].
+  static const double _collectionEdgeInset = 10.0;
+
   const MessagePartContent({
     super.key,
     required this.messagePart,
@@ -72,8 +74,12 @@ class MessagePartContent extends StatelessWidget {
             );
         }
         // Collections skip TailClipper; restore the author-edge inset bubbles get from it.
+        final isFromMe = message.isFromMe == true;
         return Padding(
-          padding: collectionAuthorEdgeInsets(isFromMe: message.isFromMe == true),
+          padding: EdgeInsets.only(
+            left: isFromMe ? 0 : _collectionEdgeInset,
+            right: isFromMe ? _collectionEdgeInset : 0,
+          ),
           child: collection,
         );
       }

@@ -12,7 +12,7 @@ class CollectionDownloadButton extends StatelessWidget {
   });
 
   static const double size = 34.0;
-  static const double gap = 30.0;
+  static const double gap = 24.0;
 
   static bool get isSupported => SettingsSvc.settings.skin.value == Skins.iOS;
 

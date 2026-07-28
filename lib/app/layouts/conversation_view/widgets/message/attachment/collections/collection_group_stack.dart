@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -42,6 +42,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   static const double _swipeCommitThreshold = 70;
   static const double _maxDragDx = 140;
   static const double _maxWiggleDx = 20.0;
+  static const double _maxStackSizeFactor = 0.42;
+  static const double _maxStackWidth = 220.0;
   /// Portrait card aspect (width:height = 3:4).
   static const double _portraitAspect = 3 / 4;
 
@@ -57,7 +59,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   double _dragDx = 0;
   double _scrollAccumulator = 0;
   bool _hapticGivenForCurrentEnd = false;
-  bool _labelHovered = false;
   int? _activeDragPointer;
   Offset? _dragStartPosition;
   VelocityTracker? _velocityTracker;
@@ -106,10 +107,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
-  void _openCollectionGrid(BuildContext context, String title) {
-    _collectionController(context).openGrid(context, title: title);
-  }
-
   CollectionMediaController _collectionController(BuildContext context) {
     return CollectionMediaController(
       chat: widget.cvController.chat,
@@ -121,12 +118,16 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
   @override
   Widget build(BuildContext context) {
-    final baseCardWidth = collectionCardWidth(context);
+    // Calculated against screen width; maxStackWidth caps size on larger screens.
+    final baseCardWidth = min(
+      NavigationSvc.width(context) * _maxStackSizeFactor,
+      _maxStackWidth,
+    );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
     final collectionController = _collectionController(context);
 
     final isFromMe = MessageStateScope.of(context).isFromMe.value;
-    final stackLabel = collectionController.title;
+    final isIOS = SettingsSvc.settings.skin.value == Skins.iOS;
 
     // Stable fan room for this collection (not remaining future at the current index).
     final double maxFanDx;
@@ -223,51 +224,11 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        MouseRegion(
-          onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
-          onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
-          child: GestureDetector(
-            onTap: () => _openCollectionGrid(context, stackLabel),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  left: -6,
-                  right: -6,
-                  top: -2,
-                  bottom: -2,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    decoration: BoxDecoration(
-                      color: _labelHovered
-                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.grid_view_rounded,
-                      size: 10,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      stackLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        if (isIOS)
+          CollectionTitle(
+            label: collectionController.title,
+            onTap: () => collectionController.openGrid(context),
           ),
-        ),
         // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
         // minHeight reserves room for per-card tapbacks (top: -14) above the label.
         ReactionSpacing(

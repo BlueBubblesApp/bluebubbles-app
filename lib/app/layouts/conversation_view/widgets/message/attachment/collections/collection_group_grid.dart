@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -25,22 +27,21 @@ class CollectionGroupGrid extends StatelessWidget {
   final bool isEditing;
 
   static const double _gap = 2.0;
+  static const double _maxGridSizeFactor = 0.62;
+  static const double _maxGridWidth = 280.0;
   static const double _topRowAspect = 4 / 3;
   static const double _bottomRowHeightRatio = 0.45;
-  static const double _iosCardRadius = 8.0;
-  static const double _materialCardRadius = 16.0;
-  static const double _samsungCardRadius = 25.0;
 
   List<Attachment> get _attachments => messagePart.attachments;
 
   double get _cardRadius {
     switch (SettingsSvc.settings.skin.value) {
       case Skins.Samsung:
-        return _samsungCardRadius;
+        return 25.0;
       case Skins.iOS:
-        return _iosCardRadius;
+        return 8.0;
       case Skins.Material:
-        return _materialCardRadius;
+        return 16.0;
     }
   }
 
@@ -50,6 +51,8 @@ class CollectionGroupGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
+    final isIOS = SettingsSvc.settings.skin.value == Skins.iOS;
+    final isFromMe = messageState.isFromMe.value;
     final collectionController = CollectionMediaController(
       chat: cvController.chat,
       media: _attachments,
@@ -58,7 +61,11 @@ class CollectionGroupGrid extends StatelessWidget {
     );
     final count = _attachments.length;
     final cardRadius = _cardRadius;
-    final gridWidth = NavigationSvc.width(context) * MessageState.maxBubbleSizeFactor;
+    // Calculated against screen width; maxGridWidth caps size on larger screens.
+    final gridWidth = min(
+      NavigationSvc.width(context) * _maxGridSizeFactor,
+      _maxGridWidth,
+    );
     final gridHeight = _gridHeight(count, gridWidth);
     final moreCount = count > 5 ? count - 5 : null;
 
@@ -71,7 +78,6 @@ class CollectionGroupGrid extends StatelessWidget {
         context,
         count: count,
         gridWidth: gridWidth,
-        showGapDividers: true,
         cellBuilder: (index, width, height, cellMoreCount) => ClipRRect(
           borderRadius: _cellBorderRadius(count, index, cardRadius),
           child: CollectionAttachmentCard(
@@ -98,10 +104,12 @@ class CollectionGroupGrid extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '+$cellMoreCount',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: SettingsSvc.settings.skin.value == Skins.Material
+                          ? FontWeight.w500
+                          : FontWeight.w300,
                     ),
                   ),
                 ),
@@ -120,7 +128,6 @@ class CollectionGroupGrid extends StatelessWidget {
         context,
         count: count,
         gridWidth: gridWidth,
-        showGapDividers: false,
         cellBuilder: (index, width, height, cellMoreCount) {
           // Overflow "+N" cell is a see-more control, not attachment 4 — hide its tapbacks.
           if (cellMoreCount != null && cellMoreCount > 0) {
@@ -147,17 +154,40 @@ class CollectionGroupGrid extends StatelessWidget {
       ],
     );
 
-    return CollectionDownloadButton.wrap(
-      isFromMe: messageState.isFromMe.value,
+    final gridBody = CollectionDownloadButton.wrap(
+      isFromMe: isFromMe,
       contentWidth: gridWidth,
       contentHeight: gridHeight,
       attachments: _attachments,
       child: grid,
     );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        if (isIOS) ...[
+          CollectionTitle(
+            label: collectionController.title,
+            onTap: () => collectionController.openGrid(context),
+          ),
+          // Reserves room for per-cell tapbacks (top: -14) between the label and grid.
+          ReactionSpacing(
+            messageParts: const [],
+            part: messagePart,
+            reactionsForPart: (part, reactions) =>
+                reactions.where((s) => part.includesAssociatedPart(s.associatedMessagePart)),
+            minHeightWhenNoReactions: 4,
+          ),
+          const SizedBox(height: 4),
+        ],
+        gridBody,
+      ],
+    );
   }
 
   double _gridHeight(int count, double gridWidth) {
-    if (count == 2) return (gridWidth - _gap) / 2;
+    if (count == 2) return gridWidth;
     if (count == 3) {
       return gridWidth / _topRowAspect + _gap + gridWidth * _bottomRowHeightRatio;
     }
@@ -175,20 +205,12 @@ class CollectionGroupGrid extends StatelessWidget {
     BuildContext context, {
     required int count,
     required double gridWidth,
-    required bool showGapDividers,
     required Widget Function(int index, double width, double height, int? moreCount) cellBuilder,
     Widget? Function(int index, double width, double height, int? moreCount)? moreOverlayBuilder,
     int? moreCount,
   }) {
     Widget gap({bool horizontal = false}) {
-      if (!showGapDividers) {
-        return horizontal ? const SizedBox(width: _gap) : const SizedBox(height: _gap, width: double.infinity);
-      }
-      final color = Theme.of(context).colorScheme.outline.withValues(alpha: 0.18);
-      if (horizontal) {
-        return ColoredBox(color: color, child: const SizedBox(width: _gap));
-      }
-      return ColoredBox(color: color, child: const SizedBox(height: _gap, width: double.infinity));
+      return horizontal ? const SizedBox(width: _gap) : const SizedBox(height: _gap, width: double.infinity);
     }
 
     Widget buildCell(int index, double width, double height, {int? cellMoreCount}) {
@@ -209,7 +231,7 @@ class CollectionGroupGrid extends StatelessWidget {
 
     if (count == 2) {
       final cellWidth = (gridWidth - _gap) / 2;
-      final cellHeight = cellWidth;
+      final cellHeight = gridWidth;
       return Row(
         children: [
           buildCell(0, cellWidth, cellHeight),

@@ -6,7 +6,7 @@ Multi-attachment image/video parts (`isMediaCollection`) formed in `MessageHolde
 
 | File | Purpose |
 |------|---------|
-| `collection_layout_metrics.dart` | Shared sizing: `collectionCardWidth`, author-edge insets |
+| `collection_title.dart` | iOS-only tappable "X Photos" / "X Items" header; shared by stack and grid |
 | `collection_group_collage.dart` | Vertical overlapping collage (any count ≥ 2) |
 | `collection_group_stack.dart` | Swipeable fan stack (any count ≥ 2) |
 | `collection_group_grid.dart` | Google Messages–style multi-attachment grid |
@@ -25,6 +25,8 @@ Prefs: `mediaCollectionLayoutSmall` (2–3 items) and `mediaCollectionLayoutLarg
 Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroupStack` / `CollectionGroupGrid`.
 
 ## Card sizing
+
+Each layout owns its width constants (`max*SizeFactor` × screen width, capped by `max*Width` on larger screens). Author-edge inset for all collections lives in `MessagePartContent`.
 
 - **Collage:** Per-card frames bucketed by orientation — landscape **4:3**, portrait/square/unknown **3:4** — reacting to `AttachmentState` dimensions. Uses `AttachmentFrameMode.fixedCard` so media cover-fills the frame.
 - **Stack:** Shared portrait **3:4** frame for every fan/past slot; same `fixedCard` cover-fill.

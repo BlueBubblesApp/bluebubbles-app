@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_layout_metrics.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -27,9 +26,11 @@ class CollectionGroupCollage extends StatelessWidget {
   final bool isEditing;
   final bool canSwipeToReply;
 
-  static const double _horizontalStagger = 28.0;
-  static const double _verticalOverlap = 32.0;
+  static const double _horizontalStagger = 32.0;
+  static const double _verticalOverlap = 20.0;
   static const double _cardTiltRad = 0.75 * math.pi / 180;
+  static const double _maxCollageSizeFactor = 0.42;
+  static const double _maxCollageWidth = 220.0;
 
   List<Attachment> get _attachments => messagePart.attachments;
 
@@ -46,7 +47,12 @@ class CollectionGroupCollage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
-    final cardWidth = collectionCardWidth(context);
+    final isIOS = SettingsSvc.settings.skin.value == Skins.iOS;
+    // Calculated against screen width; maxCollageWidth caps size on larger screens.
+    final cardWidth = math.min(
+      NavigationSvc.width(context) * _maxCollageSizeFactor,
+      _maxCollageWidth,
+    );
     final collectionController = CollectionMediaController(
       chat: cvController.chat,
       media: _attachments,
@@ -78,7 +84,7 @@ class CollectionGroupCollage extends StatelessWidget {
                 top: tops[i],
                 left: isFromMe ? null : (i.isEven ? _horizontalStagger : 0.0),
                 right: isFromMe ? (i.isEven ? _horizontalStagger : 0.0) : null,
-                child: _buildCard(messageState, collectionController, i, cardWidth, heights[i], isFromMe),
+                child: _buildCard(messageState, collectionController, i, cardWidth, heights[i], isFromMe, isIOS),
               ),
           ],
         ),
@@ -101,24 +107,29 @@ class CollectionGroupCollage extends StatelessWidget {
     double cardWidth,
     double cardHeight,
     bool isFromMe,
+    bool isIOS,
   ) {
+    final card = CollectionAttachmentCard(
+      controller: messageState,
+      cvController: cvController,
+      collectionPart: messagePart,
+      attachmentIndex: index,
+      collectionAttachments: _attachments,
+      collectionController: collectionController,
+      isEditing: isEditing,
+      canSwipeToReply: canSwipeToReply,
+      enableSwipeToReply: true,
+      frameMode: AttachmentFrameMode.fixedCard,
+      cardWidth: cardWidth,
+      cardHeight: cardHeight,
+    );
+
+    if (!isIOS) return card;
+
     // Odd cards tilt toward the screen edge (left for fromOther, right for fromMe).
     return Transform.rotate(
       angle: (index.isOdd == isFromMe ? 1 : -1) * _cardTiltRad,
-      child: CollectionAttachmentCard(
-        controller: messageState,
-        cvController: cvController,
-        collectionPart: messagePart,
-        attachmentIndex: index,
-        collectionAttachments: _attachments,
-        collectionController: collectionController,
-        isEditing: isEditing,
-        canSwipeToReply: canSwipeToReply,
-        enableSwipeToReply: true,
-        frameMode: AttachmentFrameMode.fixedCard,
-        cardWidth: cardWidth,
-        cardHeight: cardHeight,
-      ),
+      child: card,
     );
   }
 }
