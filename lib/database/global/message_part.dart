@@ -82,12 +82,12 @@ class MessagePart {
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 
-  /// True when this part contains only images or videos with no text or subject.
+  /// True when this part contains only images or videos with no body text.
+  /// Subject is allowed — it is display metadata, not a collapse barrier.
   /// Used to determine whether adjacent parts can be collapsed into a collection.
   bool get isMediaOnlyPart =>
       attachments.isNotEmpty &&
       text == null &&
-      subject == null &&
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
   /// Multi-item image/video group routed to collage/stack/grid instead of [AttachmentHolder].

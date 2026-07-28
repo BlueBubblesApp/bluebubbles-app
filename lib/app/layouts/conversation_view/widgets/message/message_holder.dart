@@ -499,8 +499,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                 connectUpper: iOS ? false : !e.isLeadingMessagePart,
                                                               ),
                                                               child: TextBubble(
+                                                                subjectOnly: true,
                                                                 message: MessagePart(
-                                                                  subject: e.subject,
+                                                                  subject: message.subject,
                                                                   part: e.part,
                                                                 ),
                                                               ),
