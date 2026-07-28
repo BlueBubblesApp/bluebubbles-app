@@ -378,13 +378,32 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
 
     // Update the list without animation (bulk load)
+    final previousMessages = _messages;
     _messages = newMessagesFromService;
     _messages.sort(Message.sort);
     fetching = false;
 
-    // Batch loading: recreate the list key to force rebuild without animation
-    _listKey = GlobalKey<SliverAnimatedListState>();
-    if (mounted) setState(() {});
+    if (!mounted) return;
+
+    // Older (paginated) messages are appended after the already-loaded ones since
+    // the list is sorted newest-first. When that holds, insert only the new items
+    // via the SliverAnimatedList API instead of swapping _listKey, which would tear
+    // down the whole sliver (and its AutomaticKeepAlive cache of loaded images/url
+    // previews), causing them to redecode when scrolling back down.
+    final addedCount = _messages.length - previousLength;
+    final isSimpleAppend = addedCount > 0 &&
+        const ListEquality().equals(_messages.sublist(0, previousLength), previousMessages);
+
+    if (isSimpleAppend) {
+      for (int i = 0; i < addedCount; i++) {
+        _listKey.currentState?.insertItem(previousLength + i, duration: Duration.zero);
+      }
+      _listVersion.value++;
+    } else {
+      // Fallback: structure changed in a way we can't express as a simple append.
+      _listKey = GlobalKey<SliverAnimatedListState>();
+      setState(() {});
+    }
   }
 
   void handleNewMessage(Message message) async {
