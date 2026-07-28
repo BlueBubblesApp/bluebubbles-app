@@ -181,6 +181,23 @@ extension BuildContextThemeHelpers on BuildContext {
   Color get headerColor => _headerColor;
 
   Color get tileColor => _tileColor;
+
+  /// iOS skin [ListTile] subtitle [TextStyle] — mirrors [ThemeHelpers.iosSubtitle]
+  /// for the rare `StatelessWidget` that needs it without a `CustomState`.
+  TextStyle get iosSubtitle => theme.textTheme.labelLarge!.copyWith(
+      color: ThemeSvc.inDarkMode(this)
+          ? (SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
+              ? theme.colorScheme.onSurfaceVariant
+              : theme.colorScheme.onSurface)
+          : (SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurfaceVariant),
+      fontWeight: FontWeight.w300);
+
+  /// Material / Samsung skin [ListTile] subtitle [TextStyle] — mirrors
+  /// [ThemeHelpers.materialSubtitle].
+  TextStyle get materialSubtitle =>
+      theme.textTheme.labelLarge!.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold);
 }
 
 extension ColorSchemeHelpers on ColorScheme {

@@ -16,6 +16,7 @@ Actions are pure functions that run **inside** the background isolate. They perf
 | `prefs_actions.dart` | Settings sync, reply state persistence |
 | `send_message_actions.dart` | Outgoing message send pipeline actions |
 | `server_actions.dart` | Server version check, server details |
+| `storage_actions.dart` | Attachment storage analysis (filesystem walk + DB join), deletion |
 | `sync_actions.dart` | Incremental sync, contact upload |
 | `test_actions.dart` | Dev/debug test actions |
 

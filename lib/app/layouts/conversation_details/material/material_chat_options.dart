@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/ch
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/storage/storage_analyzer_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theme_studio/theme_studio_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
@@ -412,6 +413,15 @@ class ExpressiveChatOptions extends StatelessWidget {
           title: "Chat stats",
           supportingText: "Texting patterns and activity",
           onTap: () => NavigationSvc.push(context, ChatStatsPage(chat: chat)),
+        ),
+      ),
+      _OptionRow(
+        enabled: !kIsWeb,
+        build: (context) => M3EListTile(
+          icon: Icons.pie_chart_outline,
+          title: "Storage",
+          supportingText: "Attachment storage usage for this chat",
+          onTap: () => NavigationSvc.push(context, StorageAnalyzerPanel(initialChat: chat)),
         ),
       ),
       // Parity fix — "View bookmarks" was gated behind `if (iOS)` even though the flow

@@ -1,4 +1,4 @@
-import 'package:bluebubbles/app/layouts/conversation_details/pages/chat_stats/widgets/legend_grid.dart';
+import 'package:bluebubbles/app/components/charts/legend_grid.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/ui/chat/chat_stats/chat_stats_models.dart';

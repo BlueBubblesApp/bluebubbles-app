@@ -22,6 +22,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/misc/troubleshoot_panel.d
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/storage/storage_analyzer_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/system/notification_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_items_actions.dart';
@@ -736,37 +737,24 @@ List<Widget> buildSettingItemList({
         // Danger Zone Section
         if (!kIsWeb)
           SearchableSettingItem(
-            title: "Delete All Attachments", // Title to search
+            title: "Storage Analyzer",
+            searchTags: const ["Delete Attachments", "Free Up Space", "Manage Storage", "Clear Cache"],
+            onTap: () {
+              ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
+            },
             child: SettingsTile(
               backgroundColor: tileColor,
               onTap: () {
-                showBBDialog(
-                  barrierDismissible: true,
-                  context: context,
-                  title: "Are you sure?",
-                  body:
-                      "This will remove all attachments from this app. Recent attachments will be automatically re-downloaded when you enter a chat. This will not delete attachments from your server.",
-                  actions: [
-                    BBDialogAction(text: "No", onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
-                    BBDialogAction(
-                      text: "Yes",
-                      isDefault: true,
-                      onPressed: () async {
-                        final dir = Directory(FilesystemSvc.attachmentsPath);
-                        await dir.delete(recursive: true);
-                        showSnackbar("Success", "Deleted cached attachments");
-                      },
-                    ),
-                  ],
-                );
+                ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
               },
               leading: SettingsLeadingIcon(
-                iosIcon: CupertinoIcons.trash_slash_fill,
-                materialIcon: Icons.delete_forever_outlined,
+                iosIcon: CupertinoIcons.chart_pie_fill,
+                materialIcon: Icons.pie_chart_outline,
                 containerColor: Colors.red[700],
               ),
-              title: "Delete All Attachments",
-              subtitle: "Remove all attachments from this app",
+              title: "Storage Analyzer",
+              subtitle: "View and free up attachment storage",
+              trailing: const NextButton(),
             ),
           ),
 
