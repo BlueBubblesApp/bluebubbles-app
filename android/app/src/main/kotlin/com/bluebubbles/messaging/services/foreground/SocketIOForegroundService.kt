@@ -19,6 +19,7 @@ import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import com.bluebubbles.messaging.utils.PersistentLog
 import io.socket.client.IO
 import io.socket.client.Socket
+import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
 import org.json.JSONObject
@@ -119,7 +120,8 @@ class SocketIOForegroundService : Service() {
             }
 
             // Initialize socket.io connection
-            PersistentLog.d(applicationContext, Constants.logTag, "Foreground Service is connecting to: $serverUrl")
+            // Do not log serverUrl — it may contain credentials in query parameters.
+            PersistentLog.d(applicationContext, Constants.logTag, "Foreground Service is connecting to server")
 
             val opts = IO.Options()
 
@@ -136,9 +138,22 @@ class SocketIOForegroundService : Service() {
                 PersistentLog.e(applicationContext, Constants.logTag, "Failed to parse custom headers JSON string!", e)
             }
 
-            // Only log the headers if they are not null or empty
+            // Only log the header keys (not values) to avoid leaking auth tokens or API keys.
             if (opts.extraHeaders != null && opts.extraHeaders.isNotEmpty()) {
-                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io Custom headers: ${opts.extraHeaders}")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io Custom header keys: ${opts.extraHeaders!!.keys.joinToString(", ")}")
+            }
+
+            // Validate the URL before passing it to socket.io.
+            // socket.io's Java URLDecoder throws IllegalArgumentException in a background
+            // thread if the URL contains bare % characters (e.g. %s%), which crashes the
+            // process and permanently prevents the app from launching (GitHub issue #2845).
+            try {
+                URI(serverUrl)
+            } catch (e: URISyntaxException) {
+                // Do not log serverUrl — it may contain credentials in query parameters.
+                PersistentLog.e(applicationContext, Constants.logTag, "Server URL stored in preferences is malformed", e)
+                updateNotification(MISSING_SERVER_URL)
+                return
             }
 
             val encodedPw = URLEncoder.encode(storedPassword, "UTF-8")
@@ -153,7 +168,7 @@ class SocketIOForegroundService : Service() {
 
             mSocket!!.on(Socket.EVENT_CONNECT_ERROR) { args ->
                 val error = args[0] as Exception
-                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io failed to connect to $serverUrl! Error: ${error.message}")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io failed to connect to server! Error: ${error.message}")
                 updateNotification(CONNECT_FAILED + error.message)
             }
 

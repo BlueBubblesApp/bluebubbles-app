@@ -76,6 +76,7 @@ class ChatsService {
   /// Listeners for redacted mode settings to update all ChatStates
   StreamSubscription? _redactedModeListener;
   StreamSubscription? _hideContactInfoListener;
+  StreamSubscription? _hideMessageContentListener;
   StreamSubscription? _generateFakeAvatarsListener;
   StreamSubscription? _hideAttachmentsListener;
 
@@ -205,6 +206,9 @@ class ChatsService {
             .map((c) => c.guid)
             .toSet();
         chats = chats.where((e) => matchingGuids.contains(e.guid)).toList();
+      } else if (filters.showUngroupedOnly) {
+        final groupedGuids = CustomGroupsSvc.groups.expand((g) => g.chats).map((c) => c.guid).toSet();
+        chats = chats.where((e) => !groupedGuids.contains(e.guid)).toList();
       }
     }
 
@@ -479,6 +483,7 @@ class ChatsService {
     // Cancel existing listeners if any
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
+    _hideMessageContentListener?.cancel();
     _generateFakeAvatarsListener?.cancel();
     _hideAttachmentsListener?.cancel();
 
@@ -500,6 +505,17 @@ class ChatsService {
           chatState.redactContactInfo();
         } else {
           chatState.unredactContactInfo();
+        }
+      }
+    });
+
+    // Listen to hideMessageContent toggle - only affects subtitle/message text
+    _hideMessageContentListener = SettingsSvc.settings.hideMessageContent.listen((enabled) {
+      for (final chatState in chatStates.values) {
+        if (enabled) {
+          chatState.redactMessageContent();
+        } else {
+          chatState.unredactMessageContent();
         }
       }
     });
@@ -566,6 +582,7 @@ class ChatsService {
     _listVersionUpdateTimer?.cancel();
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
+    _hideMessageContentListener?.cancel();
     _generateFakeAvatarsListener?.cancel();
     _hideAttachmentsListener?.cancel();
     _customGroupsListener?.cancel();

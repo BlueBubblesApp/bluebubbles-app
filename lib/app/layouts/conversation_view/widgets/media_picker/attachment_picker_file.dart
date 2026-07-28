@@ -56,7 +56,8 @@ class _AttachmentPickerFileState extends State<AttachmentPickerFile> with ThemeH
         try {
           thumbnailBytes = await AttachmentsSvc.getVideoThumbnail(file.path, useCachedFile: false);
         } catch (ex) {
-          thumbnailBytes = FilesystemSvc.noVideoPreviewIcon;
+          // Leave thumbnailBytes null — _buildImage() falls back to Image.file(filePath),
+          // whose errorBuilder shows the themed placeholder since a raw video file won't decode.
         }
         filePath = file.path;
       } else if (widget.data.mimeType == "image/heic" ||

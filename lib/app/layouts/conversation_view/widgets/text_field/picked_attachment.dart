@@ -34,6 +34,7 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
   String? imagePath;
   bool isLoading = true;
   bool isEmpty = false;
+  bool thumbnailFailed = false;
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
       try {
         imageBytes = await AttachmentsSvc.getVideoThumbnail(file.path!, useCachedFile: false);
       } catch (ex) {
-        imageBytes = FilesystemSvc.noVideoPreviewIcon;
+        thumbnailFailed = true;
       }
       setState(() {
         isLoading = false;
@@ -272,6 +273,14 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
         height: iOS ? 150 : 75,
         width: iOS ? null : 75,
         cacheWidth: 300,
+      );
+    }
+
+    if (thumbnailFailed) {
+      return Container(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        height: iOS ? 150 : 75,
+        width: iOS ? null : 75,
       );
     }
 

@@ -37,6 +37,15 @@ enum IsolateEvent {
   ///   `messageIds`             — `List<int>` of all DB IDs saved in this page
   ///   `latestMessageIdPerChat` — `Map<String, int>` chatGuid → latest message DB ID in this page
   incrementalSyncPageComplete,
+
+  /// Emitted periodically while a storage analysis walks the attachments directory.
+  /// Payload: `Map<String, dynamic>` with keys:
+  ///   `runId`     — `String` opaque id of the analysis run this update belongs to
+  ///   `stage`     — `String` name of a `StorageAnalysisStage` value
+  ///   `processed` — `int` units finished within the current stage
+  ///   `total`     — `int` total units in the current stage (0 when indeterminate)
+  ///   `bytes`     — `int` bytes measured so far, for a live-updating total
+  storageAnalysisProgress,
 }
 
 /// A standard event message format for isolate-to-main communication

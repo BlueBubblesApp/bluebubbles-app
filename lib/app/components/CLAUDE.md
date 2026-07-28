@@ -18,3 +18,16 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 - `circle_progress_bar.dart` — circular progress indicator
 - `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`
+
+## Material 3 Expressive (`m3e/`)
+Opt-in Material-3-Expressive primitives (shape scale, motion tokens, tonal section containment,
+list tile, tonal button, button group) used by the **Material and Samsung** skins only — leaf-level,
+skin-agnostic building blocks. Import via barrel: `package:bluebubbles/app/components/m3e/m3e.dart`.
+
+## Charts (`charts/`)
+Thin `fl_chart` wrappers and stat-display primitives, shared across any feature that needs simple
+data visualization. Import via barrel: `package:bluebubbles/app/components/charts/charts.dart`.
+- `donut_chart.dart` — `DonutChart`/`DonutSlice`, pie/donut with built-in percent legend
+- `stat_tile.dart` — `StatTile`/`StatTileGrid`, responsive KPI tile grid
+- `section_skeleton.dart` — `SectionSkeleton`, shimmer loading placeholder
+- `legend_grid.dart` — `LegendGrid`, color-swatch + label legend

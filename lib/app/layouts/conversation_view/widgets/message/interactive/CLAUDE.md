@@ -11,6 +11,7 @@ Handles messages with Apple payload data: URL previews, Apple Pay, Game Pigeon i
 | `apple_pay.dart` | Apple Pay request / confirmation UI |
 | `game_pigeon.dart` | Game Pigeon game invitation card |
 | `embedded_media.dart` | Maps, Apple Music, iBooks, and other embedded content types |
+| `photo_slideshow.dart` | Photos app / iCloud shared album card. Falls back to an OG preview image fetched from the share URL (via `MetadataHelper.fetchMetadata(urlOverride:)`/`resolveCachedImage`, disk-cached) when the message has no attachment. |
 | `supported_interactive.dart` | Generic fallback for known-but-unsupported interactive types |
 | `unsupported_interactive.dart` | Fallback for completely unknown interactive types |
 

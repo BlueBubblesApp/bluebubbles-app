@@ -45,24 +45,24 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
               Container(
                   height: 50,
                   alignment: Alignment.bottomLeft,
-                  color: iOS ? headerColor : tileColor,
+                  color: headerColor,
                   child: Padding(
                     padding: EdgeInsets.only(bottom: 8.0, left: iOS ? 30 : 15),
                     child: Text("Notifications".psCapitalize, style: iOS ? iosSubtitle : materialSubtitle),
                   )),
-            SettingsSection(backgroundColor: tileColor, children: [
+            Obx(() => SettingsSection(backgroundColor: tileColor, children: [
               if (!kIsWeb)
-                Obx(() => SettingsSwitch(
-                      onChanged: (bool val) async {
-                        SettingsSvc.settings.notifyOnChatList.value = val;
-                        await SettingsSvc.settings.saveOneAsync('notifyOnChatList');
-                      },
-                      initialVal: SettingsSvc.settings.notifyOnChatList.value,
-                      title: "Send Notifications on Chat List",
-                      subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                      isThreeLine: true,
-                      backgroundColor: tileColor,
-                    )),
+                SettingsSwitch(
+                  onChanged: (bool val) async {
+                    SettingsSvc.settings.notifyOnChatList.value = val;
+                    await SettingsSvc.settings.saveOneAsync('notifyOnChatList');
+                  },
+                  initialVal: SettingsSvc.settings.notifyOnChatList.value,
+                  title: "Send Notifications on Chat List",
+                  subtitle: "Sends notifications for new messages while in the chat list or chat creator",
+                  isThreeLine: true,
+                  backgroundColor: tileColor,
+                ),
               if (kIsWeb)
                 SettingsTile(
                   onTap: () async {
@@ -78,56 +78,59 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
                   backgroundColor: tileColor,
                 ),
               const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-              Obx(() => SettingsSwitch(
-                    onChanged: (bool val) async {
-                      SettingsSvc.settings.notifyReactions.value = val;
-                      await SettingsSvc.settings.saveOneAsync('notifyReactions');
-                    },
-                    initialVal: SettingsSvc.settings.notifyReactions.value,
-                    title: "Notify for Reactions",
-                    subtitle: "Sends notifications for incoming reactions",
-                    backgroundColor: tileColor,
-                  )),
+              SettingsSwitch(
+                onChanged: (bool val) async {
+                  SettingsSvc.settings.notifyReactions.value = val;
+                  await SettingsSvc.settings.saveOneAsync('notifyReactions');
+                },
+                initialVal: SettingsSvc.settings.notifyReactions.value,
+                title: "Notify for Reactions",
+                subtitle: "Sends notifications for incoming reactions",
+                backgroundColor: tileColor,
+              ),
               const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-              Obx(() => SettingsSwitch(
-                    title: "Text Detection",
-                    subtitle: "Mute all chats except when your choice of text is found in a message",
-                    initialVal: SettingsSvc.settings.globalTextDetection.value.isNotEmpty,
-                    onChanged: (bool val) async {
-                      if (!val) {
-                        SettingsSvc.settings.globalTextDetection.value = "";
-                        await SettingsSvc.settings.saveOneAsync('globalTextDetection');
-                        return;
-                      }
-                      final TextEditingController controller = TextEditingController();
-                      controller.text = SettingsSvc.settings.globalTextDetection.value;
-                      await showDialog(
-                        context: context,
-                        builder: (context) => TextDetectionDialog(controller),
-                      );
-                      SettingsSvc.settings.globalTextDetection.value = controller.text;
-                      await SettingsSvc.settings.saveOneAsync('globalTextDetection');
-                    },
-                    backgroundColor: tileColor,
-                  )),
-              Obx(() => SettingsSvc.settings.globalTextDetection.value.isNotEmpty
-                  ? SettingsTile(
-                      title: "Whitelisted Phrases",
-                      subtitle: SettingsSvc.settings.globalTextDetection.value,
-                      leading: Icon(iOS ? CupertinoIcons.pencil : Icons.edit_outlined),
-                      onTap: () async {
-                        final TextEditingController controller = TextEditingController();
-                        controller.text = SettingsSvc.settings.globalTextDetection.value;
-                        await showDialog(
-                          context: context,
-                          builder: (context) => TextDetectionDialog(controller),
-                        );
-                        SettingsSvc.settings.globalTextDetection.value = controller.text;
-                        await SettingsSvc.settings.saveOneAsync('globalTextDetection');
-                      },
-                    )
-                  : const SizedBox.shrink())
-            ]),
+              SettingsSwitch(
+                title: "Text Detection",
+                subtitle: "Mute all chats except when your choice of text is found in a message",
+                initialVal: SettingsSvc.settings.globalTextDetection.value.isNotEmpty,
+                onChanged: (bool val) async {
+                  if (!val) {
+                    SettingsSvc.settings.globalTextDetection.value = "";
+                    await SettingsSvc.settings.saveOneAsync('globalTextDetection');
+                    return;
+                  }
+                  final TextEditingController controller = TextEditingController();
+                  controller.text = SettingsSvc.settings.globalTextDetection.value;
+                  await showDialog(
+                    context: context,
+                    builder: (context) => TextDetectionDialog(controller),
+                  );
+                  SettingsSvc.settings.globalTextDetection.value = controller.text;
+                  await SettingsSvc.settings.saveOneAsync('globalTextDetection');
+                },
+                backgroundColor: tileColor,
+              ),
+              if (SettingsSvc.settings.globalTextDetection.value.isNotEmpty)
+                SettingsTile(
+                  title: "Whitelisted Phrases",
+                  subtitle: SettingsSvc.settings.globalTextDetection.value,
+                  leading: const SettingsLeadingIcon(
+                    iosIcon: CupertinoIcons.pencil,
+                    materialIcon: Icons.edit_outlined,
+                    containerColor: Colors.teal,
+                  ),
+                  onTap: () async {
+                    final TextEditingController controller = TextEditingController();
+                    controller.text = SettingsSvc.settings.globalTextDetection.value;
+                    await showDialog(
+                      context: context,
+                      builder: (context) => TextDetectionDialog(controller),
+                    );
+                    SettingsSvc.settings.globalTextDetection.value = controller.text;
+                    await SettingsSvc.settings.saveOneAsync('globalTextDetection');
+                  },
+                ),
+            ])),
             SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Advanced"),
             SettingsSection(
               backgroundColor: tileColor,
@@ -190,6 +193,7 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
                               await SettingsSvc.settings.saveOneAsync('notificationReactionActionType');
                             },
                             secondaryColor: headerColor,
+                            useModernMenu: true,
                           )),
                     ),
                   ),
@@ -202,7 +206,7 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
     ];
 
     return Obx(() => BBScaffold(
-          backgroundColor: material ? tileColor : headerColor,
+          backgroundColor: headerColor,
           extendBodyBehindAppBar: false,
           appBar: samsung && index.value == 0
               ? null

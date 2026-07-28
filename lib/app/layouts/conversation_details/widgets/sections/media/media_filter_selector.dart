@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/attachment_section_type.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -22,10 +23,7 @@ class MediaFilterSelector extends StatelessWidget {
     final theme = Theme.of(context);
     return Obx(() {
       SettingsSvc.settings.skin.value;
-      final horizontal = attachmentSectionHorizontalPadding(
-        fullPage: true,
-        iOS: SettingsSvc.settings.skin.value == Skins.iOS,
-      );
+      final horizontal = attachmentSectionHorizontalPadding();
       return Padding(
         padding: EdgeInsets.fromLTRB(horizontal.toDouble(), 12, horizontal.toDouble(), 4),
         child: _isIOS
@@ -55,6 +53,7 @@ class MediaFilterSelector extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onSurface,
                   selectedForegroundColor: theme.colorScheme.onPrimary,
                   selectedBackgroundColor: theme.colorScheme.primary,
+                  shape: const RoundedRectangleBorder(borderRadius: M3EShapes.radiusXl),
                 ),
                 segments: [
                   for (final filter in MediaFilter.values) ButtonSegment(value: filter, label: Text(filter.label)),
