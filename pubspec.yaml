@@ -119,7 +119,7 @@ dependencies:
   metadata_fetch: ^0.4.2
   mime_type: ^1.0.1
   mobile_scanner: ^7.2.0 # no desktop support
-  msix: ^3.16.12
+  msix: ^3.18.0
   multi_value_listenable_builder: ^0.0.2
   native_dio_adapter: ^1.5.0
   network_info_plus: ^7.0.0
@@ -201,7 +201,7 @@ dependency_overrides:
   flutter_local_notifications_windows: # no identity + crashing fixes + suppressPopup
     git:
       url: https://github.com/jjoelj/flutter_local_notifications.git
-      ref: 4e48420b2d533027e4879b4165d56c0e100f645f
+      ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
       path: flutter_local_notifications_windows
   flutter_map: # https://github.com/fleaflet/flutter_map/issues/2152
     git:
@@ -333,7 +333,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 2.0.0.0
+  msix_version: 2.0.2.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

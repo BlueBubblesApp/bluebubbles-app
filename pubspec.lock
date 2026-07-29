@@ -1030,8 +1030,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: flutter_local_notifications_windows
-      ref: "4e48420b2d533027e4879b4165d56c0e100f645f"
-      resolved-ref: "4e48420b2d533027e4879b4165d56c0e100f645f"
+      ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
+      resolved-ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
       url: "https://github.com/jjoelj/flutter_local_notifications.git"
     source: git
     version: "3.1.1"
@@ -1939,10 +1939,10 @@ packages:
     dependency: "direct main"
     description:
       name: msix
-      sha256: b6b08e7a7b5d1845f2b1d31216d5b1fb558e98251efefe54eb79ed00d27bc2ac
+      sha256: "61415c352e8aea084332b8a5514e6408c961c8cdeca202804fff1040eb555ac7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.16.13"
+    version: "3.18.0"
   multi_value_listenable_builder:
     dependency: "direct main"
     description:
