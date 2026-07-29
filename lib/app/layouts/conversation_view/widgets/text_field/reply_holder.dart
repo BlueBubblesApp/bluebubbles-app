@@ -171,6 +171,10 @@ class _ReplyText extends StatelessWidget {
   final bool isIOS;
 
   String _getNotificationText() {
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
+    final hideMessageContent = redacted && SettingsSvc.settings.hideMessageContent.value;
+
     if (reply is MessagePart) {
       // Create a fake message and append the attachments.
       // This does not add anything to the DB and is just
@@ -183,20 +187,36 @@ class _ReplyText extends StatelessWidget {
       )
         ..dbAttachments.addAll(reply.attachments)
         ..mergeWith(message!);
-      return msg.getNotificationText();
+      return msg.getNotificationText(
+        hideContactInfo: hideContactInfo,
+        hideMessageContent: hideMessageContent,
+      );
     }
-    return message!.getNotificationText();
+    return message!.getNotificationText(
+      hideContactInfo: hideContactInfo,
+      hideMessageContent: hideMessageContent,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
+    final handle = message?.handleRelation.target;
+    final handleState = handle != null ? HandleSvc.getOrCreateHandleState(handle) : null;
+    final replyDisplayName = message?.isFromMe == true
+        ? "Yourself"
+        : hideContactInfo
+            ? (handleState?.displayName.value ?? handleState?.fakeName ?? "Someone")
+            : (handleState?.displayName.value ?? handle?.displayName ?? "Unknown");
+
     return Text.rich(
       TextSpan(children: [
         if (isIOS && reply != null) const TextSpan(text: "Replying to "),
         if (reply != null)
           TextSpan(
             children: MessageHelper.buildEmojiText(
-                message!.isFromMe! ? 'Yourself' : message!.handleRelation.target?.displayName ?? 'Unknown',
+                replyDisplayName,
                 context.textTheme.bodyMedium!.copyWith(
                   fontWeight: isIOS ? FontWeight.bold : FontWeight.w400,
                 )),
