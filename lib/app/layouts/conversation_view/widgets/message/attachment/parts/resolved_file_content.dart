@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
@@ -27,7 +28,9 @@ class ResolvedFileContent extends StatelessWidget {
     required this.cvController,
     this.isInReply = false,
     this.forceAllCornersRounded = false,
+    this.fillCell = false,
     this.galleryAttachments,
+    this.collectionController,
   });
 
   final PlatformFile file;
@@ -37,7 +40,9 @@ class ResolvedFileContent extends StatelessWidget {
   final ConversationViewController? cvController;
   final bool isInReply;
   final bool forceAllCornersRounded;
+  final bool fillCell;
   final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
@@ -49,31 +54,35 @@ class ResolvedFileContent extends StatelessWidget {
       right: message.isFromMe! ? 10 : 0,
     );
     if (attachment.mimeStart == "image" && !SettingsSvc.settings.highPerfMode.value) {
+      final closedShape = fillCell
+          ? const RoundedRectangleBorder()
+          : isiOS
+              ? RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(20.0),
+                    topRight: const Radius.circular(20.0),
+                    bottomLeft: forceAllCornersRounded
+                        ? const Radius.circular(20.0)
+                        : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+                    bottomRight: forceAllCornersRounded
+                        ? const Radius.circular(20.0)
+                        : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+                  ),
+                )
+              : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0)));
       return OpenContainer(
         tappable: false,
         openColor: Colors.black,
         closedColor: Colors.transparent,
         closedElevation: 0,
-        closedShape: isiOS
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20.0),
-                  topRight: const Radius.circular(20.0),
-                  bottomLeft: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                  bottomRight: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                ),
-              )
-            : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0))),
+        closedShape: closedShape,
         useRootNavigator: false,
         openBuilder: (context, _) => ConversationFullscreenHolder(
           currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,
           galleryAttachments: galleryAttachments,
+          collectionController: collectionController,
         ),
         closedBuilder: (context, openContainer) => GestureDetector(
           onTap: () {
@@ -82,21 +91,44 @@ class ResolvedFileContent extends StatelessWidget {
             ctrl.subjectFocusNode.unfocus();
             openContainer();
           },
-          child: Container(
-            color: Colors.transparent,
-            child: ImageViewer(
-              file: file,
-              attachment: attachment,
-              isFromMe: message.isFromMe!,
-              isInReply: isInReply,
-              controller: cvController,
-            ),
-          ),
+          child: fillCell
+              ? SizedBox.expand(
+                  child: ImageViewer(
+                    file: file,
+                    attachment: attachment,
+                    isFromMe: message.isFromMe!,
+                    isInReply: isInReply,
+                    controller: cvController,
+                    fillCell: true,
+                  ),
+                )
+              : Container(
+                  color: Colors.transparent,
+                  child: ImageViewer(
+                    file: file,
+                    attachment: attachment,
+                    isFromMe: message.isFromMe!,
+                    isInReply: isInReply,
+                    controller: cvController,
+                  ),
+                ),
         ),
       );
     }
 
     if (attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value) {
+      final video = VideoPlayer(
+        attachment: attachment,
+        file: file,
+        controller: cvController,
+        isFromMe: message.isFromMe!,
+        galleryAttachments: galleryAttachments,
+        collectionController: collectionController,
+        fillCell: fillCell,
+      );
+      if (fillCell) {
+        return SizedBox.expand(child: video);
+      }
       return ClipRRect(
         borderRadius: isiOS
             ? BorderRadius.only(
@@ -110,13 +142,7 @@ class ResolvedFileContent extends StatelessWidget {
                     : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
               )
             : const BorderRadius.all(Radius.circular(5.0)),
-        child: VideoPlayer(
-          attachment: attachment,
-          file: file,
-          controller: cvController,
-          isFromMe: message.isFromMe!,
-          galleryAttachments: galleryAttachments,
-        ),
+        child: video,
       );
     }
 

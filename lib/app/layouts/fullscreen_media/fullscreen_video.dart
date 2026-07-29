@@ -25,6 +25,7 @@ class FullscreenVideo extends StatefulWidget {
     this.videoController,
     this.mute,
     this.onOverlayToggle,
+    this.onOpenCollectionGrid,
   });
 
   final PlatformFile file;
@@ -34,6 +35,7 @@ class FullscreenVideo extends StatefulWidget {
   final VideoController? videoController;
   final RxBool? mute;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onOpenCollectionGrid;
 
   @override
   State<StatefulWidget> createState() => _FullscreenVideoState();
@@ -376,49 +378,66 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                 // widget (ConversationFullscreenHolder's "Done" app bar, or
                 // SingleAttachmentFullscreenViewer's own), driven by `onOverlayToggle`.
                 if (!iOS)
-                  Obx(() {
-                    final visible = showPlayPauseOverlay.value || _hover.value;
-                    return MouseRegion(
-                      onEnter: (event) => _hover.value = true,
-                      onExit: (event) => _hover.value = false,
-                      child: AbsorbPointer(
-                        absorbing: !visible,
-                        child: AnimatedOpacity(
-                          opacity: visible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 125),
-                          child: Container(
-                            height: kIsDesktop ? 80 : 100.0,
-                            width: NavigationSvc.width(context),
-                            color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
-                            child: SafeArea(
-                              left: false,
-                              right: false,
-                              bottom: false,
-                              child: SizedBox(
-                                height: kIsDesktop ? 80 : 50,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 5),
-                                      child: CupertinoButton(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Obx(() {
+                      final visible = showPlayPauseOverlay.value || _hover.value;
+                      return MouseRegion(
+                        onEnter: (event) => _hover.value = true,
+                        onExit: (event) => _hover.value = false,
+                        child: AbsorbPointer(
+                          absorbing: !visible,
+                          child: AnimatedOpacity(
+                            opacity: visible ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 125),
+                            child: Container(
+                              height: kIsDesktop ? 80 : 100.0,
+                              color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
+                              child: SafeArea(
+                                left: false,
+                                right: false,
+                                bottom: false,
+                                child: SizedBox(
+                                  height: kIsDesktop ? 80 : 50,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5),
+                                        child: CupertinoButton(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      if (widget.showInteractions && widget.onOpenCollectionGrid != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: 5),
+                                          child: CupertinoButton(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                                            minSize: 0,
+                                            onPressed: widget.onOpenCollectionGrid,
+                                            child: const Icon(
+                                              Icons.grid_view_outlined,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 // Bottom action bar for iOS
                 if (iOS && widget.showInteractions)
                   Positioned(

@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/components/image_blur_canvas.dart';
 import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -20,9 +21,21 @@ import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class MediaGalleryCard extends StatefulWidget {
-  const MediaGalleryCard({super.key, required this.attachment, this.showSenderAvatar = true});
+  const MediaGalleryCard({
+    super.key,
+    required this.attachment,
+    this.showSenderAvatar = true,
+    this.chat,
+    this.galleryAttachments,
+    this.collectionController,
+  });
   final Attachment attachment;
   final bool showSenderAvatar;
+  final Chat? chat;
+  /// Limits fullscreen paging to this list instead of all chat images.
+  final List<Attachment>? galleryAttachments;
+  /// When set, fullscreen shows a collection-grid button (omit when opened from a grid).
+  final CollectionMediaController? collectionController;
 
   @override
   State<MediaGalleryCard> createState() => _MediaGalleryCardState();
@@ -112,11 +125,14 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       return;
     }
 
+    VideoPlayerController? tempController;
     try {
       videoPreview = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      if (!mounted) return;
       dynamic _file = File(file.path!);
-      final tempController = VideoPlayerController.file(_file);
+      tempController = VideoPlayerController.file(_file);
       await tempController.initialize();
+      if (!mounted) return;
       duration = tempController.value.duration;
     } catch (_) {
       videoPreviewFailed = true;
@@ -126,6 +142,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         attachment.metadata!['thumbnail_status'] = 'error';
         await attachment.saveAsync(null);
       }
+    } finally {
+      await tempController?.dispose();
     }
 
     if (mounted) setState(() {});
@@ -162,9 +180,21 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               opacity: 0.3,
               child: file.path != null
                   ? (attachment.mimeType?.startsWith("image") ?? false)
-                      ? ImageDisplay(attachment: attachment, file: file)
+                      ? ImageDisplay(
+                          attachment: attachment,
+                          file: file,
+                          chat: widget.chat,
+                          galleryAttachments: widget.galleryAttachments,
+                          collectionController: widget.collectionController,
+                        )
                       : (attachment.mimeType?.startsWith("video") ?? false)
-                          ? ImageDisplay(attachment: attachment, image: videoPreview ?? Uint8List(0))
+                          ? ImageDisplay(
+                              attachment: attachment,
+                              image: videoPreview ?? Uint8List(0),
+                              chat: widget.chat,
+                              galleryAttachments: widget.galleryAttachments,
+                              collectionController: widget.collectionController,
+                            )
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
             ),
@@ -332,17 +362,24 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             attachment: attachment,
             file: file,
             showSenderAvatar: widget.showSenderAvatar,
+            chat: widget.chat,
+            galleryAttachments: widget.galleryAttachments,
+            collectionController: widget.collectionController,
             onPressChanged: _setPressed,
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
           if (videoPreview != null) {
             child = ImageDisplay(
-                attachment: attachment,
-                image: videoPreview!,
-                duration: duration,
-                showSenderAvatar: widget.showSenderAvatar,
-                onPressChanged: _setPressed);
+              attachment: attachment,
+              image: videoPreview!,
+              duration: duration,
+              showSenderAvatar: widget.showSenderAvatar,
+              chat: widget.chat,
+              galleryAttachments: widget.galleryAttachments,
+              collectionController: widget.collectionController,
+              onPressChanged: _setPressed,
+            );
             addPadding = false;
           } else if (videoPreviewFailed) {
             child = Text(
@@ -394,6 +431,9 @@ class ImageDisplay extends StatefulWidget {
     this.image,
     this.duration,
     this.showSenderAvatar = true,
+    this.chat,
+    this.galleryAttachments,
+    this.collectionController,
     this.onPressChanged,
   });
 
@@ -402,6 +442,9 @@ class ImageDisplay extends StatefulWidget {
   final Uint8List? image;
   final Duration? duration;
   final bool showSenderAvatar;
+  final Chat? chat;
+  final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
   final ValueChanged<bool>? onPressChanged;
 
   @override
@@ -425,8 +468,11 @@ class _ImageDisplayState extends State<ImageDisplay> {
       closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
         return ConversationFullscreenHolder(
+          currentChat: widget.chat,
           attachment: attachment,
           showInteractions: true,
+          galleryAttachments: widget.galleryAttachments,
+          collectionController: widget.collectionController,
         );
       },
       closedBuilder: (_, openContainer) {

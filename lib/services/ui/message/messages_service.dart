@@ -340,6 +340,9 @@ class MessagesService extends GetxController {
     state.updateIsDownloadedInternal(true);
     state.updateActiveDownloadInternal(null);
     state.updateTransferStateInternal(AttachmentTransferState.complete);
+    // loadImageProperties may have written width/height on the entity before this
+    // notify; push them into Rx so collage/stack observers rebuild.
+    state.updateDimensionsInternal(state.attachment.width, state.attachment.height);
 
     Logger.debug(
       "AttachmentState[$attachmentGuid] → complete (msg $messageGuid)",

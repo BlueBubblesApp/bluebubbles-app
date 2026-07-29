@@ -119,7 +119,17 @@ class Attachment {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }
 
-  bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
+  bool get hasValidSize => (displayWidth ?? 0) > 0 && (displayHeight ?? 0) > 0;
+
+  int? get displayWidth {
+    if (width != null && width! > 0) return width;
+    return (metadata?['width'] as num?)?.toInt();
+  }
+
+  int? get displayHeight {
+    if (height != null && height! > 0) return height;
+    return (metadata?['height'] as num?)?.toInt();
+  }
 
   double get aspectRatio =>
       hasValidSize ? (_isPortrait && height! < width! ? (height! / width!).abs() : (width! / height!).abs()) : 0.78;

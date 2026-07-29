@@ -123,6 +123,29 @@ enum Skins {
   Samsung,
 }
 
+/// Multi-attachment bubble layout preference (Media Settings).
+///
+/// [skinDefault] preserves the historical skin-based choice; the other values
+/// force a specific layout regardless of skin.
+enum MediaCollectionLayout {
+  skinDefault,
+  collage,
+  stack,
+  grid,
+}
+
+/// How [AttachmentHolder] sizes and decorates its content inside a message bubble.
+enum AttachmentFrameMode {
+  /// Standalone bubble attachment — natural size within max constraints.
+  natural,
+
+  /// Collage / stack card — cover-fills a fixed frame; clips and shadows itself.
+  fixedCard,
+
+  /// Grid cell — cover-fills parent cell geometry; parent clips; no card shadow.
+  gridCell,
+}
+
 enum SwipeDirection {
   LEFT,
   RIGHT,

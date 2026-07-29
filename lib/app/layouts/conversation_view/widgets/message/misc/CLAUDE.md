@@ -24,12 +24,19 @@ if (message.hasApplePayloadData || message.isInteractive)
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
 else if (messagePart.attachments.isNotEmpty)
-  → AttachmentHolder           // image, video, audio, sticker, file
+  if (messagePart.isMediaCollection)
+    resolveMediaCollectionLayout(count) →
+      collage → CollectionGroupCollage
+      stack   → CollectionGroupStack
+      grid    → CollectionGroupGrid
+    // skinDefault → iOS: collage (2–3) / stack (4+); else grid
+  else
+    → AttachmentHolder         // single image, video, audio, sticker, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
 
-Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`.
+Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`. Layout prefs live in Media Settings (**Multi-Attachment Layout**). See `attachment/collections/CLAUDE.md`.
 
 ## Adding a New Message Part Type
 
@@ -39,9 +46,9 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 
 ## Swipe-to-Reply
 
-`SwipeToReplyWrapper` wraps the entire bubble Stack. On swipe-right:
-1. Animates `slide_to_reply.dart` indicator
-2. Calls `cvController.setReplyToMessage(message)` to populate the reply bar in the text field
+`SwipeToReplyWrapper` detects swipe-right, animates `slide_to_reply.dart` via `replyOffset`, and sets `cvController.replyToMessage` (`MessageReplyContext`, optional `attachmentGuid`).
+
+Disabled at bubble level for media collections; collage cards swipe per-attachment, stack/grid do not.
 
 ## Bubble Effects
 

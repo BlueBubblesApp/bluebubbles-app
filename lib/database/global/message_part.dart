@@ -14,6 +14,7 @@ class MessagePart {
     required this.part,
     this.shouldRedact = false,
     this.attachmentPartIndices,
+    this.firstPartIndex,
   }) {
     if (attachments.isEmpty) attachments = [];
     if (mentions.isEmpty) mentions = [];
@@ -50,30 +51,47 @@ class MessagePart {
   List<MessagePart> edits;
   int part;
 
-  /// For gallery parts created by collapsing consecutive media-only parts,
+  /// For collection parts created by collapsing consecutive media-only parts,
   /// maps each attachment (by index) to its original messagePart index.
-  /// Null for non-gallery parts or single-source-part galleries.
+  /// Null for non-collection parts or single-source-part collections.
   List<int>? attachmentPartIndices;
 
-  /// Returns the original message part index for the attachment at [index].
-  /// Falls back to [part] if [attachmentPartIndices] is not set.
+  /// First raw message-part index covered by a collapsed media collection.
+  /// Null for non-collection parts. Collections set [part] to the *last* raw
+  /// index (avatar/tail checks) and this to the *first* (leading-part UI).
+  int? firstPartIndex;
+
+  /// Whether this bubble is the leading content of the message (raw part 0).
+  bool get isLeadingMessagePart => (firstPartIndex ?? part) == 0;
+
+  /// Returns the real source message-part index for the attachment at [index].
+  /// Falls back to [part] for non-collection and single-source collection parts.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
+
+  /// Whether a reaction/sticker targeting a real message-part index belongs on this bubble.
+  bool includesAssociatedPart(int? associatedMessagePart) {
+    final index = associatedMessagePart ?? 0;
+    final indices = attachmentPartIndices;
+    if (indices != null && indices.isNotEmpty) {
+      return indices.contains(index);
+    }
+    return index == part;
+  }
 
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 
-  /// True when this part contains only images or videos with no text or subject.
-  /// Used to determine whether adjacent parts can be collapsed into a gallery.
+  /// True when this part contains only images or videos with no body text.
+  /// Subject is allowed — it is display metadata, not a collapse barrier.
+  /// Used to determine whether adjacent parts can be collapsed into a collection.
   bool get isMediaOnlyPart =>
       attachments.isNotEmpty &&
       text == null &&
-      subject == null &&
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
-  /// True when this part's attachments form a multi-item media gallery (>1 images/videos).
-  /// Used to route the part to [MessageImageGallery] instead of [AttachmentHolder].
-  bool get isMediaGallery =>
+  /// Multi-item image/video group routed to collage/stack/grid instead of [AttachmentHolder].
+  bool get isMediaCollection =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }
 

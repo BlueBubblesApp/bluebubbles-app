@@ -25,6 +25,7 @@ class FullscreenImage extends StatefulWidget {
     required this.showInteractions,
     required this.updatePhysics,
     this.onOverlayToggle,
+    this.onOpenCollectionGrid,
   });
 
   final PlatformFile file;
@@ -32,6 +33,7 @@ class FullscreenImage extends StatefulWidget {
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onOpenCollectionGrid;
 
   @override
   State<FullscreenImage> createState() => _FullscreenImageState();
@@ -231,36 +233,54 @@ class _FullscreenImageState extends State<FullscreenImage>
                         ),
                         !widget.showInteractions
                             ? const SizedBox.shrink()
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: CupertinoButton(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                                      onPressed: () async {
-                                        showMetadataDialog(widget.attachment, context);
-                                      },
-                                      child: const Icon(
-                                        Icons.info_outlined,
-                                        color: Colors.white,
+                            : Padding(
+                                padding: const EdgeInsets.only(right: 5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (widget.onOpenCollectionGrid != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 10.0),
+                                        child: CupertinoButton(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                                          minSize: 0,
+                                          onPressed: widget.onOpenCollectionGrid,
+                                          child: const Icon(
+                                            Icons.grid_view_outlined,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        minSize: 0,
+                                        onPressed: () async {
+                                          showMetadataDialog(widget.attachment, context);
+                                        },
+                                        child: const Icon(
+                                          Icons.info_outlined,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: CupertinoButton(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                                      onPressed: () async {
-                                        refreshAttachment();
-                                      },
-                                      child: const Icon(
-                                        Icons.refresh,
-                                        color: Colors.white,
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        minSize: 0,
+                                        onPressed: () async {
+                                          refreshAttachment();
+                                        },
+                                        child: const Icon(
+                                          Icons.refresh,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                       ]),
                     ),

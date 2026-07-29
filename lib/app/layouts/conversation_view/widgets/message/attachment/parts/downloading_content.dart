@@ -13,13 +13,13 @@ class DownloadingContent extends StatelessWidget {
     required this.downloadController,
     required this.isInReply,
     required this.isiOS,
-    this.isInGallery = false,
+    this.isInCollection = false,
   });
 
   final AttachmentDownloadController downloadController;
   final bool isInReply;
   final bool isiOS;
-  final bool isInGallery;
+  final bool isInCollection;
 
   @override
   Widget build(BuildContext context) {
@@ -146,8 +146,8 @@ class DownloadingContent extends StatelessWidget {
           ),
           // Download state indicator — top-right, opposite the mime-type badge
           Positioned(
-            top: isInGallery ? 10 : 5,
-            right: isInGallery ? 10 : 0,
+            top: isInCollection ? 10 : 5,
+            right: isInCollection ? 10 : 0,
             child: SizedBox(
               width: 16,
               height: 16,
@@ -180,8 +180,8 @@ class DownloadingContent extends StatelessWidget {
           ),
           // Mime-type badge — top-left, styled like the LIVE photo tag
           Positioned(
-            top: isInGallery ? 10 : 5,
-            left: isInGallery ? 10 : 0,
+            top: isInCollection ? 10 : 5,
+            left: isInCollection ? 10 : 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(

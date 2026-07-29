@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;
@@ -28,7 +29,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.initialAttachmentGuid,
       this.replyMessage,
       this.replyPartIndex,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.collectionController});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -42,6 +44,9 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// When non-null, the fullscreen carousel is limited to these attachments
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
+
+  /// When set, the collection-grid button becomes available.
+  final CollectionMediaController? collectionController;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -79,6 +84,11 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
+  bool get _hasCollectionGrid => widget.collectionController != null;
+
+  void _openCollectionGrid() {
+    widget.collectionController!.openGrid(context);
+  }
 
   @override
   void initState() {
@@ -155,10 +165,21 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                       context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
                   iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                   actions: [
+                    if (_hasCollectionGrid)
+                      IconButton(
+                        onPressed: _openCollectionGrid,
+                        icon: Icon(
+                          CupertinoIcons.square_grid_2x2,
+                          color: context.theme.colorScheme.primary,
+                        ),
+                      ),
                     if (_canReply)
                       IconButton(
                         onPressed: triggerReply,
-                        icon: const Icon(CupertinoIcons.reply),
+                        icon: Icon(
+                          CupertinoIcons.reply,
+                          color: context.theme.colorScheme.primary,
+                        ),
                       ),
                   ],
                   backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
@@ -264,6 +285,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                         attachment: attachment,
                         file: content,
                         showInteractions: widget.showInteractions,
+                        onOpenCollectionGrid: _hasCollectionGrid ? _openCollectionGrid : null,
                         updatePhysics: (ScrollPhysics p) {
                           if (physics != p) {
                             setState(() {
@@ -287,6 +309,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                         showInteractions: widget.showInteractions,
                         videoController: widget.videoController,
                         mute: widget.mute,
+                        onOpenCollectionGrid: _hasCollectionGrid ? _openCollectionGrid : null,
                         onOverlayToggle: (show) {
                           if (showAppBar != show) {
                             setState(() {

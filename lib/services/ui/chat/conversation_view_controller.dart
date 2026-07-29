@@ -61,7 +61,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble smartReplyRowHeight = 0.0.obs;
   bool showingOverlays = false;
 
-  /// True while a pointer is actively dragging a [MessageImageGallery] fan of
+  /// True while a pointer is actively dragging a media collection stack fan of
   /// cards, so the list-wide timestamp-reveal swipe in [MessagesView] can
   /// ignore that drag instead of fighting the gallery for the same gesture.
   bool isGalleryDragging = false;

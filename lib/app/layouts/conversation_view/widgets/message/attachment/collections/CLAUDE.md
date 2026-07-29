@@ -1,0 +1,41 @@
+# attachment/collections/ — Media Collection Layouts
+
+Multi-attachment image/video parts (`isMediaCollection`) formed in `MessageHolder._collapseMediaCollectionParts`. Routed via `resolveMediaCollectionLayout(count)` from Media Settings (**Multi-Attachment Layout**).
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `collection_title.dart` | iOS-only tappable "X Photos" / "X Items" header; shared by stack and grid |
+| `collection_group_collage.dart` | Vertical overlapping collage (any count ≥ 2) |
+| `collection_group_stack.dart` | Swipeable fan stack (any count ≥ 2) |
+| `collection_group_grid.dart` | Google Messages–style multi-attachment grid |
+| `collection_attachment_card.dart` | Per-card popup, tapbacks, and swipe-to-reply wrapper |
+| `collection_download_button.dart` | Incoming-only circular download control; collage/stack/grid place it via `CollectionDownloadButton.wrap` |
+| `collection_media_controller.dart` | Owns opening `CollectionMediaGridPage` with reaction context; passed into fullscreen viewers only from collection cards |
+| `collection_media_grid_page.dart` | Full-page grid for a message collection (reuses `MediaGridSection`) |
+
+## Layout routing
+
+Prefs: `mediaCollectionLayoutSmall` (2–3 items) and `mediaCollectionLayoutLarge` (4+), each `skinDefault` | `collage` | `stack` | `grid`.
+
+- `skinDefault` preserves historical behavior: iOS → Collage (2–3) / Stack (4+); Material/Samsung → Grid
+- Explicit values force that layout regardless of skin
+
+Dispatcher: `MessagePartContent` → `CollectionGroupCollage` / `CollectionGroupStack` / `CollectionGroupGrid`.
+
+## Card sizing
+
+Each layout owns its width constants (`max*SizeFactor` × screen width, capped by `max*Width` on larger screens). Author-edge inset for all collections lives in `MessagePartContent`.
+
+- **Collage:** Per-card frames bucketed by orientation — landscape **4:3**, portrait/square/unknown **3:4** — reacting to `AttachmentState` dimensions. Uses `AttachmentFrameMode.fixedCard` so media cover-fills the frame.
+- **Stack:** Shared portrait **3:4** frame for every fan/past slot; same `fixedCard` cover-fill.
+- **Grid:** Predetermined cell geometry with `AttachmentFrameMode.gridCell` (same cover-fill path; parent clips; no card shadow).
+
+Each card is a `CollectionAttachmentCard` with its own `MessagePopupHolder` and `CollectionAttachmentReactions`. The outer `MessagePopupHolder` in `MessageHolder` defers gestures (`enableGestures: false`) for all collection parts; tapbacks are card-local, not bubble-level.
+
+## Related
+
+- Single-attachment renderer: `../attachment_holder.dart`
+- Pref resolution: `lib/helpers/ui/message_widget_helpers.dart` → `resolveMediaCollectionLayout`
+- Enum: `lib/helpers/types/constants.dart` → `MediaCollectionLayout`
