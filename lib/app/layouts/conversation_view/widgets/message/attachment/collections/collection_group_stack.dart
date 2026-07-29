@@ -220,48 +220,22 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       ));
     }
 
-    final stackColumn = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        if (isIOS)
-          CollectionTitle(
-            label: collectionController.title,
-            onTap: () => collectionController.openGrid(context),
-          ),
-        // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
-        // minHeight reserves room for per-card tapbacks (top: -14) above the label.
-        ReactionSpacing(
-          messageParts: const [],
-          part: widget.messagePart,
-          reactionsForPart: (part, reactions) =>
-              reactions.where((s) => part.includesAssociatedPart(s.associatedMessagePart)),
-          minHeightWhenNoReactions: 4,
-        ),
-        SizedBox(
-          width: fanCanvasWidth,
-          height: fanCanvasHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: stackChildren,
-          ),
-        ),
-      ],
-    );
-
-    final stackBody = CollectionDownloadButton.wrap(
-      isFromMe: isFromMe,
-      contentWidth: fanCanvasWidth,
-      attachments: _attachments,
-      child: stackColumn,
-    );
-
     // Fan motion uses Listener (never enters the gesture arena) so it isn't
     // swallowed by card recognizers (e.g. VideoPlayer onDoubleTap). RawGestureDetector
     // + [_EagerHorizontalDragRecognizer] still claims clear horizontal drags so
     // MessagesView's timestamp swipe doesn't win instead. Vertical motion is ignored
-    // so conversation list scroll wins.
-    final listener = Listener(
+    // so conversation list scroll wins. Scoped to the card canvas only — not title,
+    // reaction spacing, or the download button.
+    Widget cardCanvas = SizedBox(
+      width: fanCanvasWidth,
+      height: fanCanvasHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: stackChildren,
+      ),
+    );
+
+    cardCanvas = Listener(
       behavior: HitTestBehavior.translucent,
       onPointerSignal: (event) {
         if (event is PointerScrollEvent && _attachments.length > 1) {
@@ -382,27 +356,54 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           });
         }
       },
-      child: stackBody,
+      child: cardCanvas,
     );
 
-    if (_attachments.length <= 1) return listener;
+    if (_attachments.length > 1) {
+      cardCanvas = RawGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        gestures: <Type, GestureRecognizerFactory>{
+          _EagerHorizontalDragRecognizer: GestureRecognizerFactoryWithHandlers<_EagerHorizontalDragRecognizer>(
+            () => _EagerHorizontalDragRecognizer(debugOwner: this),
+            (_EagerHorizontalDragRecognizer instance) {
+              // Non-null callbacks register the recognizer; fan motion stays on Listener.
+              instance
+                ..onStart = (_) {}
+                ..onUpdate = (_) {}
+                ..onEnd = (_) {}
+                ..onCancel = () {};
+            },
+          ),
+        },
+        child: cardCanvas,
+      );
+    }
 
-    return RawGestureDetector(
-      behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        _EagerHorizontalDragRecognizer: GestureRecognizerFactoryWithHandlers<_EagerHorizontalDragRecognizer>(
-          () => _EagerHorizontalDragRecognizer(debugOwner: this),
-          (_EagerHorizontalDragRecognizer instance) {
-            // Non-null callbacks register the recognizer; fan motion stays on Listener.
-            instance
-              ..onStart = (_) {}
-              ..onUpdate = (_) {}
-              ..onEnd = (_) {}
-              ..onCancel = () {};
-          },
-        ),
-      },
-      child: listener,
+    return CollectionDownloadButton.wrap(
+      isFromMe: isFromMe,
+      contentWidth: fanCanvasWidth,
+      attachments: _attachments,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          if (isIOS)
+            CollectionTitle(
+              label: collectionController.title,
+              onTap: () => collectionController.openGrid(context),
+            ),
+          // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
+          // minHeight reserves room for per-card tapbacks (top: -14) above the label.
+          ReactionSpacing(
+            messageParts: const [],
+            part: widget.messagePart,
+            reactionsForPart: (part, reactions) =>
+                reactions.where((s) => part.includesAssociatedPart(s.associatedMessagePart)),
+            minHeightWhenNoReactions: 4,
+          ),
+          cardCanvas,
+        ],
+      ),
     );
   }
 
