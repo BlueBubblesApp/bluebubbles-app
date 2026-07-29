@@ -69,8 +69,19 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
     final hasBackground = ChatStateScope.maybeOf(context)?.customBackgroundPath.value?.isNotEmpty == true;
     final resolvedPart = part;
     if (!iOS) {
-      final messageText = controller.text.value;
-      String text = Message(text: messageText, subject: controller.subject.value).getNotificationText();
+      String text;
+      if (resolvedPart == null) {
+        text = "Failed to parse thread parts!";
+      } else {
+        final previewMessage = Message(
+          text: resolvedPart.text,
+          subject: resolvedPart.subject,
+          hasAttachments: resolvedPart.attachments.isNotEmpty,
+        )
+          ..dbAttachments.addAll(resolvedPart.attachments)
+          ..mergeWith(message);
+        text = previewMessage.getNotificationText();
+      }
       return MouseRegion(
         cursor: MouseCursor.defer,
         child: ConstrainedBox(
