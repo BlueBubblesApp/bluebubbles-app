@@ -206,6 +206,18 @@ class FilesystemService {
     // Contacts are now managed by ContactServiceV2 and don't need manual clearing
   }
 
+  /// Deletes all on-disk cache directories: attachments (originals/thumbnails/live-photo
+  /// .mov), per-chat avatars, per-chat custom backgrounds, per-message balloon bundle
+  /// directories, cached URL preview images, and cached contact avatars.
+  Future<void> deleteCacheDirectories() async {
+    if (kIsWeb) return;
+    final paths = [attachmentsPath, avatarsPath, customBackgroundsPath, messagesPath, urlPreviewsPath, contactAvatarsPath];
+    for (final path in paths) {
+      final dir = Directory(path);
+      if (await dir.exists()) await dir.delete(recursive: true);
+    }
+  }
+
   String uriToFilename(String? uri, String? mimeType) {
     // Handle any unknown cases
     String? ext = mimeType != null ? mimeType.split('/')[1] : null;
