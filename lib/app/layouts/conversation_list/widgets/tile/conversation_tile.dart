@@ -122,6 +122,7 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
     with AutomaticKeepAliveClientMixin {
   ConversationListController get listController => controller.listController;
   StreamSubscription? _activeSub;
+  bool _isTabletMode = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -136,7 +137,9 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
 
     _activeSub = ChatsSvc.activeChatGuid.listen((guid) {
       Future.microtask(() {
-        if (mounted) controller.shouldHighlight.value = NavigationSvc.isTabletMode(context) && guid == controller.chat.guid;
+        // don't touch `context` here — by the time this runs the element may be
+        // deactivated (e.g. mid list-rebuild), which `mounted` alone doesn't catch
+        if (mounted) controller.shouldHighlight.value = _isTabletMode && guid == controller.chat.guid;
       });
     });
   }
@@ -145,7 +148,8 @@ class _ConversationTileState extends CustomState<ConversationTile, void, Convers
   void didChangeDependencies() {
     super.didChangeDependencies();
     // isTabletMode reads MediaQuery, so it can't run in initState
-    controller.shouldHighlight.value = NavigationSvc.isTabletMode(context) && ChatsSvc.activeChatGuid.value == controller.chat.guid;
+    _isTabletMode = NavigationSvc.isTabletMode(context);
+    controller.shouldHighlight.value = _isTabletMode && ChatsSvc.activeChatGuid.value == controller.chat.guid;
   }
 
   @override
