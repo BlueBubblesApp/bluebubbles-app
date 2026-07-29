@@ -270,7 +270,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                       children: [
                         // message column
                         ...messageParts.mapIndexed((index, e) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              padding: e.isMediaCollection
+                                  ? const EdgeInsets.only(top: 2.0, bottom: 6.0)
+                                  : const EdgeInsets.symmetric(vertical: 2.0),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -485,7 +487,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                     e.attachments.isNotEmpty)) &&
                                                             !isNullOrEmpty(message.subject))
                                                           Padding(
-                                                            padding: const EdgeInsets.only(bottom: 2.0),
+                                                            padding: const EdgeInsets.only(bottom: 4.0),
                                                             child: ClipPath(
                                                               clipper: TailClipper(
                                                                 isFromMe: isFromMe,
