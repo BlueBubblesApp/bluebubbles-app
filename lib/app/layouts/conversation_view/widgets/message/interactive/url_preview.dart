@@ -44,6 +44,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   String? _iconImagePath;
   bool _previewImageFromDisk = false;
   late final AnimationController _imageAnimController;
+  Worker? _refreshWorker;
 
   @override
   bool get wantKeepAlive => true;
@@ -72,32 +73,8 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     required void Function(String path, bool fromDisk) onResult,
   }) async {
     if (kIsWeb) return;
-
-    // Check if already cached on disk via stored MD5.
-    final storedMd5 = message.metadata?[metadataKey] as String?;
-    if (storedMd5 != null) {
-      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
-      if (await File(cachedPath).exists()) {
-        onResult(cachedPath, true);
-        return;
-      }
-    }
-
-    // Download and cache.
-    try {
-      final response = await HttpSvc.dio.get<List<int>>(
-        imageUrl,
-        options: Options(responseType: ResponseType.bytes),
-      );
-      final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) return;
-      final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-      message.metadata = {...?message.metadata, metadataKey: hash};
-      if (message.id != null) message.save();
-      onResult(FilesystemSvc.urlPreviewImagePath(hash), false);
-    } catch (ex, stack) {
-      Logger.warn('Failed to cache URL preview image', error: ex, trace: stack, tag: 'UrlPreview');
-    }
+    final result = await MetadataHelper.resolveCachedImage(message, metadataKey, imageUrl);
+    if (result != null) onResult(result.$1, result.$2);
   }
 
   @override
@@ -108,11 +85,30 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       duration: const Duration(milliseconds: 250),
       value: 1.0,
     );
+    // UrlPreview is also used outside a message context (links/locations
+    // sections in conversation details), so look up the scope defensively
+    // rather than asserting one exists.
+    final messageState = context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState;
+    if (messageState != null) {
+      _refreshWorker = ever(messageState.previewRefreshKey, (_) {
+        if (!mounted) return;
+        setState(() {
+          content = null;
+          dataOverride = null;
+          _fetchedMetadata = null;
+          _previewImagePath = null;
+          _iconImagePath = null;
+          _previewImageFromDisk = false;
+        });
+        unawaited(_init());
+      });
+    }
     unawaited(_init());
   }
 
   @override
   void dispose() {
+    _refreshWorker?.dispose();
     _imageAnimController.dispose();
     super.dispose();
   }
@@ -142,7 +138,8 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         .replaceAll(",", "%2C");
     if (dataOverride!.url == null) return;
 
-    final response = await HttpSvc.dio.get(dataOverride!.url!);
+    final response = await HttpSvc.dio.get(dataOverride!.url!,
+        options: Options(followRedirects: true, maxRedirects: 2));
     final document = parser.parse(response.data);
     final link = document
         .getElementsByClassName("sc-platter-cell")
@@ -275,7 +272,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         try {
           final response = await HttpSvc.dio.get<List<int>>(
             fetched!.image!,
-            options: Options(responseType: ResponseType.bytes),
+            options: Options(responseType: ResponseType.bytes, followRedirects: true, maxRedirects: 2),
           );
           final bytes = response.data;
           if (bytes != null && bytes.isNotEmpty) {

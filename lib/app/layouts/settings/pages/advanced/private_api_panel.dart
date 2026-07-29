@@ -139,6 +139,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                           leading: const SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.checkmark_shield,
                             materialIcon: Icons.privacy_tip,
+                            containerColor: Colors.blue,
                           ),
                         ),
                       if (SettingsSvc.settings.serverPrivateAPI.value != true) const SettingsDivider(),
@@ -278,6 +279,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                       await SettingsSvc.settings.saveOneAsync('quickTapbackType');
                                     },
                                     secondaryColor: headerColor,
+                                    useModernMenu: true,
                                   )),
                             ),
                           ),

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
@@ -42,8 +43,15 @@ class MediaGalleryCard extends StatefulWidget {
 
 class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepAliveClientMixin, ThemeHelpers {
   Uint8List? videoPreview;
+  bool videoPreviewFailed = false;
   Duration? duration;
+  bool _pressed = false;
   late dynamic content;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
 
   Attachment get attachment => widget.attachment;
 
@@ -110,8 +118,10 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (videoPreview != null || file.path == null) return;
+    if (videoPreview != null || videoPreviewFailed || file.path == null) return;
     if (attachment.metadata?['thumbnail_status'] == 'error') {
+      videoPreviewFailed = true;
+      if (mounted) setState(() {});
       return;
     }
 
@@ -125,8 +135,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       if (!mounted) return;
       duration = tempController.value.duration;
     } catch (_) {
-      // If an error occurs, set the thumbnail to the cached no preview image
-      videoPreview = FilesystemSvc.noVideoPreviewIcon;
+      videoPreviewFailed = true;
 
       if (attachment.metadata?['thumbnail_status'] != 'error') {
         attachment.metadata ??= {};
@@ -137,9 +146,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       await tempController?.dispose();
     }
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -358,6 +365,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             chat: widget.chat,
             galleryAttachments: widget.galleryAttachments,
             collectionController: widget.collectionController,
+            onPressChanged: _setPressed,
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
@@ -370,8 +378,15 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               chat: widget.chat,
               galleryAttachments: widget.galleryAttachments,
               collectionController: widget.collectionController,
+              onPressChanged: _setPressed,
             );
             addPadding = false;
+          } else if (videoPreviewFailed) {
+            child = Text(
+              "Preview Unavailable",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            );
           } else {
             child = const Text(
               "Loading video preview...",
@@ -389,15 +404,17 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         child = const SizedBox.shrink();
       }
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+      return AnimatedContainer(
+        duration: M3EMotion.spatialFast.duration,
+        curve: M3EMotion.spatialFast.curve,
         clipBehavior: Clip.antiAlias,
-        child: Container(
-          alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_pressed ? M3EShapes.md : M3EShapes.lg),
           color: context.theme.colorScheme.surfaceContainerHighest,
-          padding: addPadding ? const EdgeInsets.all(10) : null,
-          child: child,
         ),
+        alignment: Alignment.center,
+        padding: addPadding ? const EdgeInsets.all(10) : null,
+        child: child,
       );
     }); // end Obx
   }
@@ -417,6 +434,7 @@ class ImageDisplay extends StatefulWidget {
     this.chat,
     this.galleryAttachments,
     this.collectionController,
+    this.onPressChanged,
   });
 
   final Attachment attachment;
@@ -427,6 +445,7 @@ class ImageDisplay extends StatefulWidget {
   final Chat? chat;
   final List<Attachment>? galleryAttachments;
   final CollectionMediaController? collectionController;
+  final ValueChanged<bool>? onPressChanged;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -445,6 +464,8 @@ class _ImageDisplayState extends State<ImageDisplay> {
     final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
 
     return OpenContainer(
+      transitionDuration: Durations.medium4,
+      closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
         return ConversationFullscreenHolder(
           currentChat: widget.chat,
@@ -462,6 +483,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
               onTap: () {
                 openContainer();
               },
+              onHighlightChanged: widget.onPressChanged,
               child: SizedBox(
                 width: cardSize,
                 height: cardSize,
@@ -491,8 +513,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                       ),
                     if (widget.showSenderAvatar &&
                         !(attachment.message.target?.isFromMe ?? true) &&
-                        attachment.message.target?.handleRelation.hasValue == true &&
-                        SettingsSvc.settings.skin.value == Skins.iOS)
+                        attachment.message.target?.handleRelation.hasValue == true)
                       Positioned(
                         top: 10,
                         right: 10,

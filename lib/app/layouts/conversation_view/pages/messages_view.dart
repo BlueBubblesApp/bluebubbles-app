@@ -98,7 +98,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
     _eventSubscription = EventDispatcherSvc.stream.listen((e) async {
       if (!mounted) return;
-      if (e.type == "refresh-messagebloc" && e.data == chat.guid) {
+      if ((e.type == "refresh-messagebloc" && e.data == chat.guid) || e.type == "storage-attachments-purged") {
         // Clear state items
         noMoreMessages = false;
         _messages = [];
@@ -566,6 +566,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       child: GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onHorizontalDragUpdate: (details) {
+            if (controller.isGalleryDragging) return;
             if (SettingsSvc.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
               controller.timestampOffset.value += details.delta.dx * 0.3;
             }

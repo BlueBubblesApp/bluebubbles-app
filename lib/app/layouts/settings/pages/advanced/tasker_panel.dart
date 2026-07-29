@@ -52,6 +52,7 @@ class _TaskerPanelState extends State<TaskerPanel> with ThemeHelpers {
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info_outline,
+                        containerColor: Colors.grey,
                       ),
                     ),
                   ],

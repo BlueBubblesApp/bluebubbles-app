@@ -61,6 +61,11 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble smartReplyRowHeight = 0.0.obs;
   bool showingOverlays = false;
 
+  /// True while a pointer is actively dragging a media collection stack fan of
+  /// cards, so the list-wide timestamp-reveal swipe in [MessagesView] can
+  /// ignore that drag instead of fighting the gallery for the same gesture.
+  bool isGalleryDragging = false;
+
   /// True while any route is pushed on top of the conversation view route (e.g.
   /// ConversationDetails). Used by onAppResume to skip keyboard auto-focus on mobile.
   bool showingSubRoute = false;

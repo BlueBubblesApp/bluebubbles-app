@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -26,29 +27,47 @@ class SettingsLeadingIcon extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Obx(() => Material(
-              shape: SettingsSvc.settings.skin.value == Skins.Samsung
-                  ? SquircleBorder(
-                      side: BorderSide(color: containerColor ?? context.theme.colorScheme.outline, width: 3.0),
-                    )
-                  : null,
-              color: SettingsSvc.settings.skin.value != Skins.Material
-                  ? containerColor ?? context.theme.colorScheme.outline
-                  : Colors.transparent,
-              borderRadius: SettingsSvc.settings.skin.value == Skins.iOS ? BorderRadius.circular(6) : null,
-              child: SizedBox(
-                width: boxSize ?? 30,
-                height: boxSize ?? 30,
-                child: Center(
-                  child: Icon(SettingsSvc.settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
-                      color: SettingsSvc.settings.skin.value != Skins.Material
-                          ? Colors.white
-                          : context.theme.colorScheme.outline,
-                      size:
-                          SettingsSvc.settings.skin.value != Skins.Material ? iconSize ?? 21 : iconSizeMaterial ?? 28),
+        Obx(() {
+          if (SettingsSvc.settings.skin.value == Skins.Material) {
+            final accent = containerColor ?? context.theme.colorScheme.primary;
+            return Container(
+              width: boxSize ?? 40,
+              height: boxSize ?? 40,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                borderRadius: const BorderRadius.all(Radius.circular(M3EShapes.md)),
+              ),
+              child: Center(
+                child: Icon(materialIcon, color: accent, size: iconSizeMaterial ?? 22),
+              ),
+            );
+          }
+
+          return Material(
+            shape: SettingsSvc.settings.skin.value == Skins.Samsung
+                ? SquircleBorder(
+                    side: BorderSide(color: containerColor ?? context.theme.colorScheme.outline, width: 3.0),
+                  )
+                : null,
+            color: SettingsSvc.settings.skin.value != Skins.Material
+                ? containerColor ?? context.theme.colorScheme.outline
+                : Colors.transparent,
+            borderRadius: SettingsSvc.settings.skin.value == Skins.iOS ? BorderRadius.circular(6) : null,
+            child: SizedBox(
+              width: boxSize ?? 30,
+              height: boxSize ?? 30,
+              child: Center(
+                child: Icon(
+                  SettingsSvc.settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
+                  color: SettingsSvc.settings.skin.value != Skins.Material
+                      ? Colors.white
+                      : context.theme.colorScheme.outline,
+                  size: SettingsSvc.settings.skin.value != Skins.Material ? iconSize ?? 21 : iconSizeMaterial ?? 28,
                 ),
               ),
-            )),
+            ),
+          );
+        }),
       ],
     );
   }
@@ -58,20 +77,14 @@ class SquircleBorder extends ShapeBorder {
   final BorderSide side;
   final double superRadius;
 
-  const SquircleBorder({
-    this.side = BorderSide.none,
-    this.superRadius = 5.0,
-  });
+  const SquircleBorder({this.side = BorderSide.none, this.superRadius = 5.0});
 
   @override
   EdgeInsetsGeometry get dimensions => EdgeInsets.all(side.width);
 
   @override
   ShapeBorder scale(double t) {
-    return SquircleBorder(
-      side: side.scale(t),
-      superRadius: superRadius * t,
-    );
+    return SquircleBorder(side: side.scale(t), superRadius: superRadius * t);
   }
 
   @override

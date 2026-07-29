@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/live_photo_mixin.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_unavailable_placeholder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -478,49 +479,14 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     );
   }
 
-  /// Themed placeholder shown in place of an image that failed to decode/render.
-  /// Sized to match the placeholder used while the image is loading so it doesn't
-  /// collapse to a sliver and hug the top of the top-aligned [Stack] in [build].
   Widget _buildImageError(BuildContext context, double width, double height, Object error, StackTrace? stacktrace) {
-    return Container(
-      width: max(width, 120),
-      height: max(height, 100),
-      alignment: Alignment.center,
-      color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              iOS ? CupertinoIcons.photo : Icons.broken_image_outlined,
-              size: 30,
-              color: context.theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Photo Unavailable",
-              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-              maxLines: 1,
-            ),
-            const SizedBox(height: 4),
-            InkWell(
-              borderRadius: BorderRadius.circular(4),
-              onTap: () => _showImageErrorDetails(context, error, stacktrace),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-                child: Text(
-                  "View Details",
-                  style: context.theme.textTheme.bodySmall!.copyWith(
-                    color: context.theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return MediaUnavailablePlaceholder(
+      width: width,
+      height: height,
+      iosIcon: CupertinoIcons.photo,
+      materialIcon: Icons.broken_image_outlined,
+      message: "Photo Unavailable",
+      onViewDetails: () => _showImageErrorDetails(context, error, stacktrace),
     );
   }
 

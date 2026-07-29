@@ -88,6 +88,13 @@ class MessageState extends StatefulController {
   /// [EmbeddedMedia] registers `ever()` on this key to call getContent().
   final RxInt embeddedMediaRefreshKey = 0.obs;
 
+  /// Increment to trigger a refresh of web-loaded preview content (URL
+  /// previews, Photos app previews, etc). [UrlPreview] and [PhotoSlideshow]
+  /// register `ever()` on this key to clear their cached preview image and
+  /// re-fetch. The "refresh preview" popup action clears `message.metadata`
+  /// and bumps this key - each widget owns how it re-fetches its own content.
+  final RxInt previewRefreshKey = 0.obs;
+
   // ========== Widget Controller Fields (merged from MessageWidgetController) ==========
 
   /// Whether to show previous edits for this message

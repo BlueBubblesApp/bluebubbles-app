@@ -34,6 +34,19 @@ class MessagePartContent extends StatelessWidget {
     final message = MessageStateScope.messageOf(context);
     // Interactive messages (URL previews, GamePigeon, etc.)
     if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
+      // These checks are message-level, not part-level, but Apple's attributedBody
+      // can split a single interactive balloon (e.g. a Photos share with its
+      // underlying attachment) across multiple MessageParts. InteractiveHolder
+      // already renders everything from message-level payloadData, so only the
+      // first part should render it - other parts would otherwise duplicate the
+      // widget (or, for an attachment part, risk falling through to
+      // AttachmentHolder and auto-downloading media the interactive widget
+      // intentionally avoids downloading).
+      final parts = MessageStateScope.of(context).parts;
+      final firstPart = parts.isEmpty ? messagePart.part : parts.map((p) => p.part).reduce((a, b) => a < b ? a : b);
+      if (messagePart.part != firstPart) {
+        return const SizedBox.shrink();
+      }
       return InteractiveHolder(
         message: messagePart,
       );

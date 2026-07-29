@@ -132,6 +132,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.group,
                           materialIcon: Icons.contacts,
+                          containerColor: Colors.green,
                         ),
                         title: "Fetch Contacts With Verbose Logging",
                         subtitle:
@@ -211,6 +212,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.doc,
                           materialIcon: Icons.file_open,
+                          containerColor: Colors.blueGrey,
                         ),
                         title: "Open Logs",
                         subtitle: Logger.logDir,
@@ -241,6 +243,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.folder,
                         materialIcon: Icons.folder,
+                        containerColor: Colors.purple,
                       ),
                       title: "Open App Data Location",
                       subtitle: FilesystemSvc.appDocDir.path,

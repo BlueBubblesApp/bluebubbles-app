@@ -99,6 +99,7 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                         delegate: SliverChildListDelegate([
                           SettingsSearchBar(
                             iOS: iOS,
+                            tileColor: tileColor,
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value.trim().toLowerCase();
