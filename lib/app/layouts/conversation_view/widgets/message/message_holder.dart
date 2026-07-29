@@ -499,6 +499,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
                                                                       e.part == controller.parts.length - 1,
+                                                                  messageState: controller,
                                                                   child: MessagePopupHolder(
                                                                     key: keys.length > index ? keys[index] : null,
                                                                     controller: controller,

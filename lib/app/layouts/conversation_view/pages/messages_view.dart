@@ -18,6 +18,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:get/get.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
@@ -618,6 +619,15 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
                         controller: scrollController,
                         reverse: true,
                         physics: ThemeSwitcher.getScrollPhysics(),
+                        // Default cache extent (250px) keeps only a couple of message rows mounted
+                        // beyond the viewport, so normal scrolling repeatedly tears down and
+                        // rebuilds MessageHolder's entire subtree (GlobalKeys, Rx state, effect
+                        // workers, etc.) for messages that were visible moments earlier. A wider
+                        // cache extent keeps a larger buffer mounted, cutting down on that churn.
+                        // The alternative would be to implement the keepAlive mixin on each MessageHolder,
+                        // but that would keep all messages in memory, which is not feasible for long
+                        // conversations. 10kpx is a compromise that keeps a few dozen messages alive.
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(10000),
                         slivers: <Widget>[
                           SliverToBoxAdapter(
                             child: SmartRepliesRow(
