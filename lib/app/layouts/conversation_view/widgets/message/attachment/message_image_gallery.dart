@@ -58,7 +58,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
   static const _fanSlotDx = <double>[0, 10, 17, 23, 28];
   static const _fanSlotDy = <double>[0, 4, 9, 14, 20];
-  static const _fanSlotAngle = <double>[0, 0.08, 0.175, 0.3, 0.425];
+  static const _fanSlotAngle = <double>[0, 0.05, 0.125, 0.2, 0.35];
   static const _fanSlotScale = <double>[1.0, 0.9, 0.8, 0.7, 0.6];
 
   static const _pastSlotDx = <double>[14, 20, 25];
