@@ -22,7 +22,7 @@ class SwipeToReplyWrapper extends StatefulWidget {
 
   final bool enabled;
 
-  /// Message-part id being replied to (not a collapsed list index).
+  /// Message-part id being replied to
   final int partIndex;
   final RxDouble replyOffset;
   final ConversationViewController cvController;
