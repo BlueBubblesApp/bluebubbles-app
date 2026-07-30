@@ -22,7 +22,7 @@ class SamsungTimestampObserver extends StatelessWidget {
   final List<MessagePart> messageParts;
   final MessagePart part;
   final ConversationViewController cvController;
-  final Iterable<Message> Function(int, List<Message>) reactionsForPart;
+  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class SamsungTimestampObserver extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .toList();
       return Padding(
-        padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part.part, reactions).isNotEmpty
+        padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty
             ? EdgeInsets.only(left: isFromMe ? 0 : 10, right: isFromMe ? 20 : 0)
             : const EdgeInsets.only(right: 10),
         child: MessageTimestamp(controller: ms, cvController: cvController),

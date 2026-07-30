@@ -196,8 +196,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     final alwaysShowAvatars = SettingsSvc.settings.alwaysShowAvatars.value;
     final avatarScale = SettingsSvc.settings.avatarScale.value;
 
-    Iterable<Message> reactionsForPart(int part, List<Message> reactions) {
-      return reactions.where((s) => (s.associatedMessagePart ?? 0) == part);
+    // Bubble-level reactions for [part], including any original ids in a collapsed gallery span.
+    Iterable<Message> reactionsForPart(MessagePart part, List<Message> reactions) {
+      return reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0));
     }
 
     /// Layout tree
