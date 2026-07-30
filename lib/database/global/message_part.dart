@@ -59,6 +59,17 @@ class MessagePart {
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 
+  /// Whether this bubble covers the raw message-part id [partId].
+  ///
+  /// For collapsed galleries, [attachmentPartIndices] is the span of original
+  /// ids; otherwise only [part] is covered. Collapsed bubbles set [part] to the
+  /// first id in that span.
+  bool coversPartId(int partId) {
+    final span = attachmentPartIndices;
+    if (span != null && span.isNotEmpty) return span.contains(partId);
+    return part == partId;
+  }
+
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));

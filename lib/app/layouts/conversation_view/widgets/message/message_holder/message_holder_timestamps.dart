@@ -84,12 +84,14 @@ class EditHistoryObserver extends StatelessWidget {
                                   isFromMe: message.isFromMe!,
                                   showTail: !part.isPkPass &&
                                       message.showTail(newerMessage) &&
-                                      part.part == ms.parts.length - 1,
+                                      ms.isTrailingMessagePart(part),
                                   connectLower: SettingsSvc.settings.skin.value == Skins.iOS
                                       ? false
-                                      : (part.part != 0 && part.part != ms.parts.length - 1) ||
-                                          (part.part == 0 && ms.parts.length > 1),
-                                  connectUpper: SettingsSvc.settings.skin.value == Skins.iOS ? false : part.part != 0,
+                                      : (!ms.isLeadingMessagePart(part) && !ms.isTrailingMessagePart(part)) ||
+                                          (ms.isLeadingMessagePart(part) && ms.parts.length > 1),
+                                  connectUpper: SettingsSvc.settings.skin.value == Skins.iOS
+                                      ? false
+                                      : !ms.isLeadingMessagePart(part),
                                 ),
                                 child: TextBubble(
                                   message: edit,

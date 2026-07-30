@@ -158,24 +158,21 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
 
       final groupedAttachments = <Attachment>[...current.attachments];
       final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
-      int lastPart = current.part;
       int j = i + 1;
       while (j < parts.length) {
         final next = parts[j];
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
-        lastPart = next.part;
         j++;
       }
 
       if (groupedAttachments.length > 1) {
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
-          // Use the last grouped message-part id (not the first) so downstream
-          // "is this the last part of the message" checks (e.g. avatar, tail)
-          // still resolve correctly against controller.parts.length - 1.
-          part: lastPart,
+          // First raw id is the bubble's part id; attachmentPartIndices holds the
+          // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
+          part: current.part,
           shouldRedact: current.shouldRedact,
           mentions: const [],
           edits: const [],
@@ -401,7 +398,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                     children: [
                                       // avatar, if needed
                                       if (message.showTail(newerMessage) &&
-                                          e.part == controller.parts.length - 1 &&
+                                          controller.isTrailingMessagePart(e) &&
                                           (showAvatar || SettingsSvc.settings.alwaysShowAvatars.value) &&
                                           !message.isFromMe! &&
                                           !message.isGroupEvent)
@@ -427,9 +424,10 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                           message.threadOriginatorGuid != null &&
                                                           olderMessage != null) ||
                                                       (index == messageParts.length - 1 &&
-                                                          service.struct
-                                                              .threads(message.guid!, e.part, returnOriginator: false)
-                                                              .isNotEmpty &&
+                                                          (e.attachmentPartIndices ?? [e.part]).any((id) => service
+                                                              .struct
+                                                              .threads(message.guid!, id, returnOriginator: false)
+                                                              .isNotEmpty) &&
                                                           newerMessage != null))
                                               ? ReplyLineDecoration(
                                                   isFromMe: message.isFromMe!,
@@ -472,7 +470,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                         if ((message.hasApplePayloadData ||
                                                                 message.isLegacyUrlPreview ||
                                                                 message.isInteractive ||
-                                                                (e.part == 0 &&
+                                                                (controller.isLeadingMessagePart(e) &&
                                                                     isNullOrEmpty(e.text) &&
                                                                     e.attachments.isNotEmpty)) &&
                                                             !isNullOrEmpty(message.subject))
@@ -484,10 +482,12 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 showTail: false,
                                                                 connectLower: iOS
                                                                     ? false
-                                                                    : (e.part != 0 &&
-                                                                            e.part != controller.parts.length - 1) ||
-                                                                        (e.part == 0 && controller.parts.length > 1),
-                                                                connectUpper: iOS ? false : e.part != 0,
+                                                                    : (!controller.isLeadingMessagePart(e) &&
+                                                                            !controller.isTrailingMessagePart(e)) ||
+                                                                        (controller.isLeadingMessagePart(e) &&
+                                                                            controller.parts.length > 1),
+                                                                connectUpper:
+                                                                    iOS ? false : !controller.isLeadingMessagePart(e),
                                                               ),
                                                               child: TextBubble(
                                                                 message: MessagePart(
@@ -517,7 +517,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                   part: e.part,
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
-                                                                      e.part == controller.parts.length - 1,
+                                                                      controller.isTrailingMessagePart(e),
                                                                   messageState: controller,
                                                                   child: MessagePopupHolder(
                                                                     key: keys.length > index ? keys[index] : null,
@@ -582,16 +582,19 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                               isFromMe: message.isFromMe!,
                                                                               showTail: !e.isPkPass &&
                                                                                   message.showTail(newerMessage) &&
-                                                                                  e.part == controller.parts.length - 1,
+                                                                                  controller.isTrailingMessagePart(e),
                                                                               connectLower: iOS
                                                                                   ? false
-                                                                                  : (e.part != 0 &&
-                                                                                          e.part !=
-                                                                                              controller.parts.length -
-                                                                                                  1) ||
-                                                                                      (e.part == 0 &&
+                                                                                  : (!controller.isLeadingMessagePart(
+                                                                                          e) &&
+                                                                                      !controller.isTrailingMessagePart(
+                                                                                          e)) ||
+                                                                                      (controller.isLeadingMessagePart(
+                                                                                              e) &&
                                                                                           controller.parts.length > 1),
-                                                                              connectUpper: iOS ? false : e.part != 0,
+                                                                              connectUpper: iOS
+                                                                                  ? false
+                                                                                  : !controller.isLeadingMessagePart(e),
                                                                             ),
                                                                             child: inner,
                                                                           );
