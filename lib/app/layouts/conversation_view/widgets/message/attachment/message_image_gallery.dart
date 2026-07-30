@@ -30,13 +30,21 @@ class MessageImageGallery extends StatefulWidget {
     required this.partIndex,
     required this.isInReply,
     required this.fanDirection,
+    this.attachmentPartIndices,
     this.infiniteScroll = false,
     this.currentIndexNotifier,
     this.reactionsByAttachmentKey,
   });
 
   final List<Attachment> attachments;
+
+  /// Collapsed gallery message-part id
   final int partIndex;
+
+  /// Original message-part id for each attachment index when the gallery is
+  /// collapsed from multiple parts. Null when all attachments share [partIndex].
+  final List<int>? attachmentPartIndices;
+
   final bool isInReply;
   final GalleryFanDirection fanDirection;
   final bool infiniteScroll;
@@ -248,14 +256,18 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     widget.currentIndexNotifier?.value = _currentIndex;
   }
 
-  Attachment _attachmentAtOffset(int offset) {
-    final index = (_currentIndex + offset) % _attachments.length;
-    return _attachments[index];
+  int _indexAtOffset(int offset) {
+    var index = (_currentIndex + offset) % _attachments.length;
+    if (index < 0) index += _attachments.length;
+    return index;
   }
 
-  MessagePart _partForAttachment(Attachment attachment) {
+  int _partIdForAttachment(int attachmentIndex) =>
+      widget.attachmentPartIndices?[attachmentIndex] ?? widget.partIndex;
+
+  MessagePart _partForAttachment(Attachment attachment, int attachmentIndex) {
     return MessagePart(
-      part: widget.partIndex,
+      part: _partIdForAttachment(attachmentIndex),
       attachments: [attachment],
       shouldRedact: false,
       text: null,
@@ -351,9 +363,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
     if (widget.infiniteScroll) {
       stackChildren.addAll(List.generate(_attachments.length, (i) {
-        final attachment = _attachmentAtOffset(i);
+        final attachmentIndex = _indexAtOffset(i);
         return _buildFanCard(
-          attachment: attachment,
+          attachment: _attachments[attachmentIndex],
+          attachmentIndex: attachmentIndex,
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -370,10 +383,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       final visibleFuture = min(futureCount, _visibleFanSlots - 1);
 
       for (int p = visiblePast; p >= 1; p--) {
-        final attachment = _attachments[_currentIndex - p];
+        final attachmentIndex = _currentIndex - p;
         final slot = (p - 1).clamp(0, _maxPastCards - 1);
         stackChildren.add(_buildPastCard(
-          attachment: attachment,
+          attachment: _attachments[attachmentIndex],
+          attachmentIndex: attachmentIndex,
           slotIndex: slot,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -383,9 +397,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       }
 
       for (int f = visibleFuture; f >= 1; f--) {
-        final attachment = _attachments[_currentIndex + f];
+        final attachmentIndex = _currentIndex + f;
         stackChildren.add(_buildFanCard(
-          attachment: attachment,
+          attachment: _attachments[attachmentIndex],
+          attachmentIndex: attachmentIndex,
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -398,6 +413,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
       stackChildren.add(_buildFanCard(
         attachment: _attachments[_currentIndex],
+        attachmentIndex: _currentIndex,
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
@@ -608,6 +624,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
   Widget _buildFanCard({
     required Attachment attachment,
+    required int attachmentIndex,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -646,7 +663,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
               IgnorePointer(
                 ignoring: !isCurrent,
                 child: AttachmentHolder(
-                  message: _partForAttachment(attachment),
+                  message: _partForAttachment(attachment, attachmentIndex),
                   transparentBackground: true,
                   showCardShadow: true,
                   galleryAttachments: _attachments,
@@ -662,6 +679,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
   Widget _buildPastCard({
     required Attachment attachment,
+    required int attachmentIndex,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -698,7 +716,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
               IgnorePointer(
                 ignoring: true,
                 child: AttachmentHolder(
-                  message: _partForAttachment(attachment),
+                  message: _partForAttachment(attachment, attachmentIndex),
                   transparentBackground: true,
                   showCardShadow: true,
                   galleryAttachments: _attachments,
