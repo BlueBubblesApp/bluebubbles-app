@@ -166,7 +166,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
           ),
         if (chat.isGroup)
           Padding(
-            padding: const EdgeInsets.only(left: 15.0, top: 20.0, bottom: 5.0),
+            padding: const EdgeInsets.only(left: 20.0, top: 20.0, bottom: 5.0),
             child: Text("${chat.handles.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
                 style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
           ),
