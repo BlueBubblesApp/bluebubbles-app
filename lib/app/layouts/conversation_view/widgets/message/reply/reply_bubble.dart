@@ -32,7 +32,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
 
-  MessagePart get part => controller.parts[widget.part];
+  MessagePart get part => controller.partById(widget.part)!;
   Message get message => controller.message;
 
   @override
@@ -141,7 +141,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                           connectUpper: false,
                           connectLower: false,
                         ),
-                        child: controller.parts.length <= widget.part
+                        child: controller.partById(widget.part) == null
                             ? Container(
                                 color: hasBackground
                                     ? context.theme.colorScheme.errorContainer.withValues(alpha: 0.4)

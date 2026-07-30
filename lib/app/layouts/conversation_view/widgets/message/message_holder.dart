@@ -172,9 +172,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
       if (groupedAttachments.length > 1) {
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
-          // Use the last grouped raw part index (not the first) so downstream
+          // Use the last grouped message-part id (not the first) so downstream
           // "is this the last part of the message" checks (e.g. avatar, tail)
-          // still resolve correctly against controller.parts.length.
+          // still resolve correctly against controller.parts.length - 1.
           part: lastPart,
           shouldRedact: current.shouldRedact,
           mentions: const [],
@@ -232,7 +232,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
 
         // Read controller.parts reactively so Obx rebuilds when parts change
         final rawMessageParts = widget.isReplyThread && widget.replyPart != null
-            ? [controller.parts[widget.replyPart!]]
+            ? [controller.partById(widget.replyPart!)!]
             : controller.parts.toList();
         final messageParts = _collapseImageGalleryParts(rawMessageParts);
 
