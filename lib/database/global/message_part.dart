@@ -51,11 +51,11 @@ class MessagePart {
   int part;
 
   /// For gallery parts created by collapsing consecutive media-only parts,
-  /// maps each attachment (by index) to its original messagePart index.
+  /// maps each attachment (by index) to its original message-part id.
   /// Null for non-gallery parts or single-source-part galleries.
   List<int>? attachmentPartIndices;
 
-  /// Returns the original message part index for the attachment at [index].
+  /// Returns the original message-part id for the attachment at [index].
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 

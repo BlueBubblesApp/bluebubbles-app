@@ -415,7 +415,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                           message.threadOriginatorGuid != null &&
                                                           olderMessage != null) ||
                                                       (index == messageParts.length - 1 &&
-                                                          service.struct.threads(message.guid!, index).isNotEmpty &&
+                                                          service.struct
+                                                              .threads(message.guid!, e.part, returnOriginator: false)
+                                                              .isNotEmpty &&
                                                           newerMessage != null))
                                               ? ReplyLineDecoration(
                                                   isFromMe: message.isFromMe!,
@@ -500,7 +502,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                               children: [
                                                                 // actual message content
                                                                 BubbleEffects(
-                                                                  part: index,
+                                                                  part: e.part,
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
                                                                       e.part == controller.parts.length - 1,
@@ -519,7 +521,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
                                                                           !(iOS && e.isMediaGallery),
-                                                                      partIndex: index,
+                                                                      partIndex: e.part,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
