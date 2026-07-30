@@ -73,9 +73,9 @@ class MessageState extends StatefulController {
   final RxBool isSent; // not temp guid
   final RxBool isReaction; // has associatedMessageGuid
 
-  /// Set to the part index that should play its bubble animation next frame.
+  /// Set to the message-part id that should play its bubble animation next frame.
   /// Consumers (BubbleEffects, TextBubble) wrap their animation trigger in Obx
-  /// and react when this equals their own part index.  Reset to null after
+  /// and react when this equals their own part id.  Reset to null after
   /// the animation has been kicked off so it can be retriggered later.
   final RxnInt playEffectPart = RxnInt(null);
 
@@ -125,6 +125,12 @@ class MessageState extends StatefulController {
   /// Reactive list of parsed message parts (text/attachments/edits/unsends).
   /// Populated by [buildMessageParts] in [onInit] and on content changes.
   final RxList<MessagePart> parts = <MessagePart>[].obs;
+
+  /// Finds a part by its message-part id ([MessagePart.part]), not list index.
+  MessagePart? partById(int partId) {
+    final idx = parts.indexWhere((p) => p.part == partId);
+    return idx >= 0 ? parts[idx] : null;
+  }
 
   /// Reactive state for the handle that sent this message.
   /// Null for outgoing messages or when no handle is attached.
@@ -220,7 +226,7 @@ class MessageState extends StatefulController {
 
   /// Signals that the bubble animation for [part] should play.
   /// [BubbleEffects] and [TextBubble] observe [playEffectPart] via ever() and
-  /// fire their animation when its value matches their own part index.
+  /// fire their animation when its value matches their own message-part id.
   /// Resetting to null first ensures re-triggering the same part always fires.
   void triggerBubbleEffect(int part) {
     if (playEffectPart.value == part) playEffectPart.value = null;
