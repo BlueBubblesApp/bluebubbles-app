@@ -128,6 +128,22 @@ class MessageState extends StatefulController {
     return idx >= 0 ? parts[idx] : null;
   }
 
+  /// Whether [p] is the leading bubble of this message (covers raw part 0).
+  ///
+  /// Uses [MessagePart.coversPartId]; collapsed galleries keep a span in
+  /// [MessagePart.attachmentPartIndices] and set [MessagePart.part] to the first id.
+  bool isLeadingMessagePart(MessagePart p) => p.coversPartId(0);
+
+  /// Whether [p] is the trailing bubble of this message (covers the last raw part id).
+  ///
+  /// Uses [parts] from [buildMessageParts] (not the collapsed UI list). Collapsed
+  /// galleries keep a span in [MessagePart.attachmentPartIndices] and set
+  /// [MessagePart.part] to the first id, so trailing is decided via [MessagePart.coversPartId].
+  bool isTrailingMessagePart(MessagePart p) {
+    if (parts.isEmpty) return true;
+    return p.coversPartId(parts.last.part);
+  }
+
   /// Reactive state for the handle that sent this message.
   /// Null for outgoing messages or when no handle is attached.
   /// Drives sender name and bubble color without boilerplate [ever()] calls.
