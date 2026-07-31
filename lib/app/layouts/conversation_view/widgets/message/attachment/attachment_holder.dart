@@ -205,20 +205,31 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   }
 
   /// Reserves [box] around a pre-resolve placeholder so it claims exactly the
-  /// space the image will.
+  /// space the image will, with the placeholder centred inside at its own
+  /// natural size.
   ///
-  /// `scaleDown` matters for small images: the download placeholder's icon and
-  /// labels have a fixed intrinsic size of roughly 190x150, so a 60pt-square
-  /// photo would otherwise overflow its own reserved box. Scaling only kicks in
-  /// when the box is genuinely too small; at normal bubble sizes the placeholder
-  /// renders 1:1.
+  /// The placeholder is deliberately **not** scaled to the box. Scaling made
+  /// every download card a different size and a different text size, since the
+  /// factor came from whatever aspect ratio that particular photo happened to
+  /// have. Callers instead switch to the compact layout (see
+  /// [_useCompactPlaceholder]) when the box can't host the full one, so the
+  /// content always renders at its designed proportions.
   Widget _reserve(({double width, double height})? box, Widget child) {
     if (box == null) return child;
     return SizedBox(
       width: box.width,
       height: box.height,
-      child: FittedBox(fit: BoxFit.scaleDown, child: child),
+      // scaleDown is a backstop only, for a box too small even for the compact
+      // layout. It is a no-op whenever the child already fits.
+      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: child)),
     );
+  }
+
+  /// Whether [box] is too small to host a placeholder of [naturalSize] without
+  /// squashing it.
+  bool _useCompactPlaceholder(({double width, double height})? box, Size naturalSize) {
+    if (box == null) return false;
+    return box.width < naturalSize.width || box.height < naturalSize.height;
   }
 
   Widget _buildContent({
@@ -289,6 +300,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isInReply: isInReply,
           isiOS: isiOS,
           isInGallery: widget.transparentBackground,
+          compact: _useCompactPlaceholder(reservedBox, DownloadingContent.fullVariantMinSize),
         ),
       );
     }
@@ -299,6 +311,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       NotLoadedContent(
         hideAttachments: false,
         isiOS: isiOS,
+        compact: _useCompactPlaceholder(reservedBox, NotLoadedContent.fullVariantMinSize),
       ),
     );
   }
