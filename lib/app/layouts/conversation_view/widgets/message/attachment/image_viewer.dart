@@ -48,6 +48,22 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   Future<Uint8List?>? _gifBytesFuture;
   final RxBool _gifHovering = false.obs;
 
+  // Rotation-corrected, downsampled preview used for fast inline display.
+  Future<String?>? _previewPathFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Migration path for attachments processed before orientation tracking
+    // was added: opportunistically reprocess once, only for attachments
+    // actually scrolled into view (never a bulk startup scan).
+    if (!kIsWeb && file.path != null && attachment.metadata?['_orientation_processed'] != true) {
+      AttachmentsSvc.loadImageProperties(attachment, actualPath: file.path).then((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
   bool get _isGif => attachment.mimeType?.contains("gif") ?? attachment.path.endsWith(".gif");
 
   // Read bytes off the UI thread — a synchronous read of a multi-MB GIF during
@@ -128,10 +144,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         return SizedBox(
           width: containerW,
           height: containerH,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: imageContent,
-          ),
+          child: ClipRRect(borderRadius: BorderRadius.circular(10), child: imageContent),
         );
       }
     }
@@ -150,32 +163,35 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             // Until bytes are loaded (or if unavailable), show the native path.
             if (bytes == null) return _buildStandardImage(context);
             _gifController ??= GifController();
-            return AnimatedSize(
-              duration: const Duration(milliseconds: 150),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
-                child: MouseRegion(
-                  onEnter: (_) {
-                    _gifHovering.value = true;
-                    _gifController?.play();
-                  },
-                  onExit: (_) {
-                    _gifHovering.value = false;
-                    _gifController?.pause();
-                  },
-                  child: Stack(
-                    alignment: !widget.isFromMe ? Alignment.topRight : Alignment.topLeft,
-                    children: [
-                      GifView.memory(
-                        bytes,
-                        controller: _gifController,
-                        autoPlay: false,
-                        fit: BoxFit.contain,
-                      ),
-                      // GIF badge, mirroring the LIVE badge — hidden while playing (hovered).
-                      Obx(() => _gifHovering.value ? const SizedBox.shrink() : _buildGifBadge()),
-                    ],
-                  ),
+            // Same explicit sizing as the native path, so swapping from
+            // _buildStandardImage to GifView once the bytes land doesn't
+            // resize the bubble.
+            final size = _displaySize(context);
+            return ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
+              child: MouseRegion(
+                onEnter: (_) {
+                  _gifHovering.value = true;
+                  _gifController?.play();
+                },
+                onExit: (_) {
+                  _gifHovering.value = false;
+                  _gifController?.pause();
+                },
+                child: Stack(
+                  alignment: !widget.isFromMe ? Alignment.topRight : Alignment.topLeft,
+                  children: [
+                    GifView.memory(
+                      bytes,
+                      controller: _gifController,
+                      autoPlay: false,
+                      width: size.width,
+                      height: size.height,
+                      fit: BoxFit.contain,
+                    ),
+                    // GIF badge, mirroring the LIVE badge — hidden while playing (hovered).
+                    Obx(() => _gifHovering.value ? const SizedBox.shrink() : _buildGifBadge()),
+                  ],
                 ),
               ),
             );
@@ -195,10 +211,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       left: widget.isFromMe ? 8 : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(4),
-        ),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(4)),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -206,12 +219,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             SizedBox(width: 3),
             Text(
               'GIF',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5),
             ),
           ],
         ),
@@ -219,33 +227,48 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     );
   }
 
+  /// The logical-point box this image occupies. Computed from the attachment's
+  /// stored display dimensions so the space can be reserved *before* the image
+  /// decodes — this is what keeps the messages view from shifting when a frame
+  /// arrives. Every `Image` in this widget is given this exact size.
+  ({double width, double height}) _displaySize(BuildContext context) {
+    final maxWidth = NavigationSvc.width(context) * 0.5;
+    final width = min(attachment.displayWidth?.toDouble() ?? maxWidth, maxWidth);
+    final height = min(
+      attachment.displayHeight?.toDouble() ?? maxWidth / attachment.aspectRatio,
+      maxWidth / attachment.aspectRatio,
+    );
+    return (width: width, height: height);
+  }
+
   Widget _buildStandardImage(BuildContext context) {
     // Build the appropriate image widget based on platform and file availability
     Widget imageWidget;
     if (kIsWeb || file.path == null) {
       // Web or no path - use memory image
+      final size = _displaySize(context);
+      final displayWidth = size.width;
+      final displayHeight = size.height;
       if (file.bytes == null) {
-        imageWidget = SizedBox(
-          width: min((attachment.displayWidth?.toDouble() ?? NavigationSvc.width(context) * 0.5),
-              NavigationSvc.width(context) * 0.5),
-          height: min(
-              (attachment.displayHeight?.toDouble() ?? NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-              NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-        );
+        imageWidget = SizedBox(width: displayWidth, height: displayHeight);
       } else {
-        final displayWidth = min((attachment.displayWidth?.toDouble() ?? NavigationSvc.width(context) * 0.5),
-            NavigationSvc.width(context) * 0.5);
-        final displayHeight = min(
-            (attachment.displayHeight?.toDouble() ?? NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-            NavigationSvc.width(context) * 0.5 / attachment.aspectRatio);
         final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
         final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
         final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-        imageWidget = Image.memory(file.bytes!,
+        // The decoder decodes the RAW (unrotated) buffer, so cache dimensions
+        // must be un-swapped relative to the already-visual display size
+        // before being handed to the decoder.
+        final swap = attachment.orientationSwapsDimensions;
+        imageWidget = RotatedBox(
+          quarterTurns: attachment.quarterTurns,
+          child: Image.memory(
+            file.bytes!,
             gaplessPlayback: true,
             filterQuality: FilterQuality.high,
-            cacheWidth: calculatedWidth,
-            cacheHeight: calculatedHeight,
+            width: displayWidth,
+            height: displayHeight,
+            cacheWidth: swap ? calculatedHeight : calculatedWidth,
+            cacheHeight: swap ? calculatedWidth : calculatedHeight,
             fit: BoxFit.contain,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               if (wasSynchronouslyLoaded) return child;
@@ -266,112 +289,156 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               return child;
             },
             errorBuilder: (context, object, stacktrace) =>
-                _buildImageError(context, displayWidth, displayHeight, object, stacktrace));
+                _buildImageError(context, displayWidth, displayHeight, object, stacktrace),
+          ),
+        );
       }
     } else {
-      // Calculate the proper height/width for the attachment to use only for the
-      // containers and placeholders, not the actual image. The Image widget should respect
-      // the EXIF data and display the image properly.
-      final displayWidth = min((attachment.displayWidth?.toDouble() ?? NavigationSvc.width(context) * 0.5),
-          NavigationSvc.width(context) * 0.5);
-      final displayHeight = min(
-          (attachment.displayHeight?.toDouble() ?? NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-          NavigationSvc.width(context) * 0.5 / attachment.aspectRatio);
+      // The box this image occupies, reserved up front so nothing moves when
+      // the decoded frame lands.
+      final size = _displaySize(context);
+      final displayWidth = size.width;
+      final displayHeight = size.height;
       // Use configured quality factor from settings (25% to 100%)
       final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
       final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
       final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-      imageWidget = Image.file(
-        File(file.path!),
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.high,
-        fit: BoxFit.contain,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) return child;
-          if (frame == null) {
-            // Show placeholder while loading
-            return Container(
-              width: displayWidth,
-              height: displayHeight,
-              color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.outline),
-                ),
-              ),
-            );
-          }
-          return child;
-        },
-        errorBuilder: (context, object, stacktrace) => FutureBuilder<String?>(
-          future: AttachmentsSvc.ensureImageCompatibility(attachment, actualPath: file.path),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return SizedBox(
-                width: min((attachment.displayWidth?.toDouble() ?? NavigationSvc.width(context) * 0.5),
-                    NavigationSvc.width(context) * 0.5),
-                height: min(
-                    (attachment.displayHeight?.toDouble() ??
-                        NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-                    NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-                child: const Center(child: CircularProgressIndicator()),
-              );
-            }
+      // Decoding the ORIGINAL file decodes the RAW (unrotated) buffer, so its
+      // cache dimensions must be un-swapped relative to the visual display size.
+      final swap = attachment.orientationSwapsDimensions;
 
-            if (snapshot.hasData && snapshot.data != null && snapshot.data != file.path) {
-              // Conversion successful, display converted image
-              return Image.file(
-                File(snapshot.data!),
-                gaplessPlayback: true,
-                filterQuality: FilterQuality.none,
-                cacheWidth: calculatedWidth,
-                cacheHeight: calculatedHeight,
-                fit: BoxFit.contain,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded) return child;
-                  if (frame == null) {
-                    // Show placeholder while loading converted image
-                    return Container(
-                      width: displayWidth,
-                      height: displayHeight,
-                      color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.outline),
-                        ),
-                      ),
-                    );
-                  }
-                  return child;
-                },
-              );
-            }
-
-            // Conversion failed or not needed
-            return _buildImageError(context, displayWidth, displayHeight, object, stacktrace);
-          },
+      Widget placeholder() => Container(
+        width: displayWidth,
+        height: displayHeight,
+        color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.outline),
+          ),
         ),
       );
+
+      // Fallback: render the original file directly (rotation-corrected via
+      // RotatedBox), used immediately on first view of a photo while its
+      // preview generates, and if preview generation ever fails.
+      Widget buildOriginalFallback() {
+        return RotatedBox(
+          quarterTurns: attachment.quarterTurns,
+          child: Image.file(
+            File(file.path!),
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.high,
+            fit: BoxFit.contain,
+            width: displayWidth,
+            height: displayHeight,
+            cacheWidth: swap ? calculatedHeight : calculatedWidth,
+            cacheHeight: swap ? calculatedWidth : calculatedHeight,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded) return child;
+              if (frame == null) return placeholder();
+              return child;
+            },
+            errorBuilder: (context, object, stacktrace) => FutureBuilder<String?>(
+              future: AttachmentsSvc.ensureImageCompatibility(attachment, actualPath: file.path),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SizedBox(
+                    width: displayWidth,
+                    height: displayHeight,
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasData && snapshot.data != null && snapshot.data != file.path) {
+                  // Conversion successful, display converted image (still the
+                  // raw/un-rotated buffer, so RotatedBox + swapped cache dims apply here too).
+                  return RotatedBox(
+                    quarterTurns: attachment.quarterTurns,
+                    child: Image.file(
+                      File(snapshot.data!),
+                      gaplessPlayback: true,
+                      filterQuality: FilterQuality.high,
+                      width: displayWidth,
+                      height: displayHeight,
+                      cacheWidth: swap ? calculatedHeight : calculatedWidth,
+                      cacheHeight: swap ? calculatedWidth : calculatedHeight,
+                      fit: BoxFit.contain,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded) return child;
+                        if (frame == null) return placeholder();
+                        return child;
+                      },
+                    ),
+                  );
+                }
+
+                // Conversion failed or not needed
+                return _buildImageError(context, displayWidth, displayHeight, object, stacktrace);
+              },
+            ),
+          ),
+        );
+      }
+
+      // Fast path: the preview file is already rotation-baked, so its native
+      // pixels map 1:1 to the visual dimensions -- no swap, no RotatedBox needed.
+      Widget buildPreview(String previewPath) {
+        return Image.file(
+          File(previewPath),
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.high,
+          width: displayWidth,
+          height: displayHeight,
+          cacheWidth: calculatedWidth,
+          cacheHeight: calculatedHeight,
+          fit: BoxFit.contain,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            if (frame == null) return placeholder();
+            return child;
+          },
+          errorBuilder: (context, object, stacktrace) => buildOriginalFallback(),
+        );
+      }
+
+      final cachedPreviewBytes = AttachmentsSvc.getCachedImagePreviewSync(file.path!);
+      if (cachedPreviewBytes != null) {
+        imageWidget = buildPreview(attachment.previewPath);
+      } else {
+        _previewPathFuture ??= AttachmentsSvc.getOrCreateImagePreview(attachment, actualPath: file.path);
+        imageWidget = FutureBuilder<String?>(
+          future: _previewPathFuture,
+          builder: (context, snapshot) {
+            // While the preview is still generating, hold the placeholder
+            // rather than decoding the full-resolution original — that decode
+            // is the expensive work the preview exists to avoid, and it would
+            // be thrown away moments later when the preview lands.
+            if (snapshot.connectionState != ConnectionState.done) return placeholder();
+            final previewPath = snapshot.data;
+            if (previewPath != null) return buildPreview(previewPath);
+            // Preview generation genuinely failed — fall back to the original.
+            return buildOriginalFallback();
+          },
+        );
+      }
     }
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 150),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: 40,
-          minWidth: 100,
-        ),
-        child: Stack(
-          alignment: !widget.isFromMe ? Alignment.topRight : Alignment.topLeft,
-          children: [
-            imageWidget,
-            // Live photo video overlay
-            if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
-            // Live photo button indicator
-            if (attachment.hasLivePhoto)
-              Obx(() => !isPlayingLivePhoto.value
+    // No AnimatedSize here: every Image above is given an explicit size, so the
+    // box never changes once laid out. Animating it only ever amplified a
+    // residual shift into a visible 150ms slide.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
+      child: Stack(
+        alignment: !widget.isFromMe ? Alignment.topRight : Alignment.topLeft,
+        children: [
+          imageWidget,
+          // Live photo video overlay
+          if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
+          // Live photo button indicator
+          if (attachment.hasLivePhoto)
+            Obx(
+              () => !isPlayingLivePhoto.value
                   ? Positioned(
                       top: 8,
                       right: widget.isFromMe ? null : 8,
@@ -401,11 +468,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                                   ),
                                 )
                               else
-                                const Icon(
-                                  Icons.album_outlined,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
+                                const Icon(Icons.album_outlined, size: 12, color: Colors.white),
                               const SizedBox(width: 3),
                               const Text(
                                 'LIVE',
@@ -421,9 +484,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         ),
                       ),
                     )
-                  : const SizedBox.shrink()),
-          ],
-        ),
+                  : const SizedBox.shrink(),
+            ),
+        ],
       ),
     );
   }
@@ -449,21 +512,15 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         child: Container(
           padding: const EdgeInsets.all(10.0),
           decoration: BoxDecoration(
-              color: context.theme.colorScheme.surface, borderRadius: const BorderRadius.all(Radius.circular(10))),
+            color: context.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          ),
           child: SingleChildScrollView(
-            child: SelectableText(
-              "$error\n\n$stacktrace",
-              style: context.theme.textTheme.bodyLarge,
-            ),
+            child: SelectableText("$error\n\n$stacktrace", style: context.theme.textTheme.bodyLarge),
           ),
         ),
       ),
-      actions: [
-        BBDialogAction(
-          text: "Close",
-          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-        ),
-      ],
+      actions: [BBDialogAction(text: "Close", onPressed: () => Navigator.of(context, rootNavigator: true).pop())],
     );
   }
 
