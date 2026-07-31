@@ -919,12 +919,10 @@ class ChatsService {
         .then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
-      late final dynamic error;
-      if (err is Response) {
-        error = err.data["error"]["message"];
-      } else {
-        error = err.toString();
-      }
+      // completeError rejects null, so this must never resolve to one — a
+      // server error body without a `message` key used to crash here rather
+      // than surfacing the failure.
+      final Object error = (err is Response ? err.data?["error"]?["message"] : null) ?? err?.toString() ?? 'Unknown error';
       if (!completer.isCompleted) completer.completeError(error);
     });
 

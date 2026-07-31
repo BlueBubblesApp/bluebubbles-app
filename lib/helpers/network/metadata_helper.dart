@@ -40,15 +40,13 @@ class MetadataHelper {
   /// message's payload data rather than its text), keying the dedup cache off
   /// that URL instead of the message GUID.
   static Future<Metadata?> fetchMetadata(Message message, {String? urlOverride}) async {
-    Metadata? data;
     final cacheKey = urlOverride ?? message.guid!;
     // If we have a cached item for this already, return that future
-    if (_metaCache.containsKey(cacheKey)) {
-      return _metaCache[cacheKey]!.future;
-    }
+    final cached = _metaCache[cacheKey];
+    if (cached != null) return cached.future;
 
     // Create a new completer for this request
-    Completer<Metadata?> completer = Completer();
+    final completer = Completer<Metadata?>();
     _metaCache[cacheKey] = completer;
 
     // Get the URL
@@ -56,19 +54,41 @@ class MetadataHelper {
     if (!url.startsWith("http")) {
       url = "https://$url";
     }
+
+    try {
+      completer.complete(await _fetchMetadataForUrl(url));
+      // Drop the entry after a while so a later view can refetch, while
+      // concurrent viewers of the same URL still share one request.
+      Future.delayed(const Duration(seconds: 15), () => _metaCache.remove(cacheKey));
+    } catch (ex, stack) {
+      // Evict immediately on failure. Every caller after this one reads the
+      // cached completer, so a completer left behind un-completed makes them
+      // await a future that never resolves — that is the URL preview / photo
+      // slideshow that spins forever. The eviction key also has to be
+      // `cacheKey`: it was `message.guid`, which for a urlOverride caller
+      // removes the wrong entry (or nothing at all) and pins the leak.
+      _metaCache.remove(cacheKey);
+      completer.completeError(ex, stack);
+    }
+
+    // Always returned, never rethrown — the caller consumes the error through
+    // this future. Rethrowing here would leave completer.future unawaited and
+    // surface as an unhandled async error.
+    return completer.future;
+  }
+
+  /// The actual fetch + normalisation, with no caching concerns.
+  static Future<Metadata?> _fetchMetadataForUrl(String url) async {
+    Metadata? data;
     try {
       data = await MetadataFetch.extract(url);
     } on SocketException catch (ex, stack) {
       Logger.warn('Network unavailable while fetching URL preview metadata; retryable',
           error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
       rethrow;
     } on TimeoutException catch (ex, stack) {
       Logger.warn('Timeout while fetching URL preview metadata; retryable',
           error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
       rethrow;
     } catch (ex, stack) {
       Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
@@ -78,42 +98,36 @@ class MetadataHelper {
     if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
+    // Manual parsing can also come back empty. The old code went on to
+    // dereference `data!` here, which threw and left the cached completer
+    // hanging forever.
+    if (data == null) return null;
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
-    RegExp exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data?.image == null && data?.title == null && data!.url != null && exp.hasMatch(data.url!)) {
+    final exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
+    if (data.image == null && data.title == null && data.url != null && exp.hasMatch(data.url!)) {
       data.image = data.url;
       data.title = "Image Preview";
     }
 
     // Remove the image data if the image data links to an "empty image"
-    String imageData = data?.image ?? "";
+    final imageData = data.image ?? "";
     if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
-      data?.image = null;
+      data.image = null;
     } else if (imageData.startsWith('//')) {
-      data?.image = 'https:$imageData';
+      data.image = 'https:$imageData';
       // In case the image is just a relative URL path
     } else if (imageData.startsWith('/')) {
-      data?.image = '$url$imageData';
+      data.image = '$url$imageData';
     }
 
     // Remove title or description if either are the "null" string
-    if (data?.title == "null") data?.title = null;
-    if (data?.description == "null") data?.description = null;
+    if (data.title == "null") data.title = null;
+    if (data.description == "null") data.description = null;
 
     // Set the OG URL
-    data?.url = url;
-
-    // Delete from the cache after 15 seconds (arbitrary)
-    Future.delayed(const Duration(seconds: 15), () {
-      if (_metaCache.containsKey(message.guid)) {
-        _metaCache.remove(message.guid);
-      }
-    });
-
-    // Tell everyone that it's complete
-    completer.complete(data);
-    return completer.future;
+    data.url = url;
+    return data;
   }
 
   /// Resolves [imageUrl] to a local disk-cached file path shared across
