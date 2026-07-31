@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' show min;
 import 'dart:ui';
 
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -46,13 +47,21 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   late final AnimationController _imageAnimController;
   Worker? _refreshWorker;
 
+  /// Incremented on every [_init] run. A run whose token no longer matches has
+  /// been superseded by a refresh and must not write state — otherwise a slow
+  /// in-flight fetch can land after the refresh reset and restore the very
+  /// values the refresh just cleared.
+  int _initToken = 0;
+
+  bool _isStale(int token) => !mounted || token != _initToken;
+
   @override
   bool get wantKeepAlive => true;
 
   /// Sets [_previewImagePath] and starts the grow-in animation for fresh
   /// downloads. Disk-loaded images are shown immediately without animation.
-  void _setPreviewImagePath(String path, {required bool fromDisk}) {
-    if (!mounted) return;
+  void _setPreviewImagePath(String path, {required bool fromDisk, required int token}) {
+    if (_isStale(token)) return;
     setState(() {
       _previewImagePath = path;
       _previewImageFromDisk = fromDisk;
@@ -71,9 +80,10 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     required String metadataKey,
     required Message message,
     required void Function(String path, bool fromDisk) onResult,
+    bool optimize = false,
   }) async {
     if (kIsWeb) return;
-    final result = await MetadataHelper.resolveCachedImage(message, metadataKey, imageUrl);
+    final result = await MetadataHelper.resolveCachedImage(message, metadataKey, imageUrl, optimize: optimize);
     if (result != null) onResult(result.$1, result.$2);
   }
 
@@ -103,7 +113,12 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         unawaited(_init());
       });
     }
-    unawaited(_init());
+    // Deferred off the build phase. _init's first leg runs synchronously up to
+    // its first real await, and _resolvePluginPayloadAttachment has none — it
+    // calls setState and kicks off an auto-download (which writes observables
+    // other widgets may be listening to) straight from initState, i.e. from
+    // inside the ancestor's build.
+    unawaited(Future.microtask(_init));
   }
 
   @override
@@ -114,15 +129,17 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   }
 
   Future<void> _init() async {
+    if (!mounted) return;
+    final token = ++_initToken;
     if (widget.file != null) {
-      await _initLocationPreview();
+      await _initLocationPreview(token);
     } else {
-      await _initMessagePreview();
+      await _initMessagePreview(token);
     }
   }
 
   /// Handles Apple Maps location widget previews (the vCard file attachment path).
-  Future<void> _initLocationPreview() async {
+  Future<void> _initLocationPreview(int token) async {
     String? location;
     if (kIsWeb || widget.file!.path == null) {
       location = utf8.decode(widget.file!.bytes!);
@@ -154,13 +171,13 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         dataOverride!.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata!.image);
         dataOverride!.summary = metadata.description ?? metadata.title;
         dataOverride!.url = url;
-        if (mounted) setState(() {});
+        if (!_isStale(token)) setState(() {});
       }
     });
   }
 
   /// Top-level coordinator for standard message URL previews.
-  Future<void> _initMessagePreview() async {
+  Future<void> _initMessagePreview(int token) async {
     final message = context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState.message;
     if (message == null) return;
 
@@ -168,14 +185,14 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     // runs during initState where dependOnInheritedWidgetOfExactType is illegal.
     final inReply = context.getInheritedWidgetOfExactType<ReplyScope>() != null;
 
-    if (await _resolvePluginPayloadAttachment(message)) return;
-    await _resolveServerImages(message, inReply);
-    await _fetchMissingMetadata(message, inReply);
+    if (await _resolvePluginPayloadAttachment(message, token)) return;
+    await _resolveServerImages(message, inReply, token);
+    await _fetchMissingMetadata(message, inReply, token);
   }
 
   /// Checks for a plugin payload attachment (e.g. Apple Music). Returns true
   /// and populates [content] if one is found — callers should stop further work.
-  Future<bool> _resolvePluginPayloadAttachment(Message message) async {
+  Future<bool> _resolvePluginPayloadAttachment(Message message, int token) async {
     if (data.imageMetadata?.url != null || data.iconMetadata?.url != null) return false;
 
     final attachment =
@@ -183,24 +200,26 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     if (attachment == null) return false;
 
     content = AttachmentsSvc.getContent(attachment, autoDownload: true, onComplete: (file) {
-      if (mounted) {
-        setState(() {
-          content = file;
-        });
-      }
+      if (_isStale(token)) return;
+      setState(() {
+        content = file;
+      });
     });
-    if (content is PlatformFile && mounted) setState(() {});
+    if (content is PlatformFile && !_isStale(token)) setState(() {});
     return true;
   }
 
   /// Resolves server-provided image and icon URLs to disk-cached files.
-  Future<void> _resolveServerImages(Message message, bool inReply) async {
+  Future<void> _resolveServerImages(Message message, bool inReply, int token) async {
     if (data.imageMetadata?.url != null && !inReply) {
       await _resolveImage(
         imageUrl: data.imageMetadata!.url!,
         metadataKey: 'previewImageMd5',
         message: message,
-        onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk),
+        // Icons are left alone: they are already tiny, and re-encoding a PNG
+        // favicon as JPEG would flatten its alpha.
+        optimize: true,
+        onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk, token: token),
       );
     }
 
@@ -210,11 +229,10 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         metadataKey: 'previewIconMd5',
         message: message,
         onResult: (path, _) {
-          if (mounted) {
-            setState(() {
-              _iconImagePath = path;
-            });
-          }
+          if (_isStale(token)) return;
+          setState(() {
+            _iconImagePath = path;
+          });
         },
       );
     }
@@ -223,43 +241,43 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   /// Fetches OG metadata when the server provided no image/icon. Skips if
   /// metadata was already fetched successfully, or retries if the last attempt
   /// failed due to a network error (so the flag is not set on network failures).
-  Future<void> _fetchMissingMetadata(Message message, bool inReply) async {
+  Future<void> _fetchMissingMetadata(Message message, bool inReply, int token) async {
     final hasServerImages = data.imageMetadata?.url != null || data.iconMetadata?.url != null;
     if (hasServerImages || message.url == null) return;
 
     if (MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      await _restoreCachedMetadata(message, inReply);
+      await _restoreCachedMetadata(message, inReply, token);
       return;
     }
 
     if (MetadataHelper.hasAttemptedFetch(message.metadata)) return;
 
-    await _runMetadataFetch(message, inReply);
+    await _runMetadataFetch(message, inReply, token);
   }
 
   /// Restores previously fetched metadata from [message.metadata] and
   /// re-resolves the cached preview image if available.
-  Future<void> _restoreCachedMetadata(Message message, bool inReply) async {
+  Future<void> _restoreCachedMetadata(Message message, bool inReply, int token) async {
     final meta = Metadata.fromJson(message.metadata!);
-    if (mounted) {
-      setState(() {
-        _fetchedMetadata = meta;
-      });
-    }
+    if (_isStale(token)) return;
+    setState(() {
+      _fetchedMetadata = meta;
+    });
     if (kIsWeb || inReply || meta.image == null) return;
 
     await _resolveImage(
       imageUrl: meta.image!,
       metadataKey: 'previewImageMd5',
       message: message,
-      onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk),
+      optimize: true,
+      onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk, token: token),
     );
   }
 
   /// Performs a live OG metadata fetch, caches the result, and downloads the
   /// preview image. Network errors are not marked as "attempted" so the next
   /// load can retry; non-network errors are marked to avoid repeated fetches.
-  Future<void> _runMetadataFetch(Message message, bool inReply) async {
+  Future<void> _runMetadataFetch(Message message, bool inReply, int token) async {
     try {
       final fetched = await MetadataHelper.fetchMetadata(message);
       final metaMap = <String, dynamic>{
@@ -278,7 +296,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
           if (bytes != null && bytes.isNotEmpty) {
             final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
             metaMap['previewImageMd5'] = hash;
-            _setPreviewImagePath(FilesystemSvc.urlPreviewImagePath(hash), fromDisk: false);
+            _setPreviewImagePath(FilesystemSvc.urlPreviewImagePath(hash), fromDisk: false, token: token);
           }
         } catch (ex, stack) {
           Logger.warn('Failed to download URL preview image', error: ex, trace: stack, tag: 'UrlPreview');
@@ -287,11 +305,10 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
 
       message.metadata = metaMap;
       if (!kIsWeb && message.id != null) message.save();
-      if (mounted) {
-        setState(() {
-          _fetchedMetadata = fetched;
-        });
-      }
+      if (_isStale(token)) return;
+      setState(() {
+        _fetchedMetadata = fetched;
+      });
     } on SocketException catch (ex, stack) {
       Logger.warn('Network unavailable for URL preview fetch; will retry', error: ex, trace: stack, tag: 'UrlPreview');
     } on TimeoutException catch (ex, stack) {
@@ -303,14 +320,95 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     }
   }
 
-  /// Builds the preview image container. When [animate] is true (fresh
-  /// download) the container is wrapped in [AnimatedSize] so it grows in
-  /// smoothly. When [animate] is false (disk load or web) it is returned as-is
-  /// to avoid the re-entrancy crash that occurs when [AnimatedSize] ticks its
-  /// animation controller during its own [performLayout].
-  Widget _buildPreviewImage(BuildContext context, {required bool animate, String? webImageUrl}) {
+  /// Builds the preview image container.
+  ///
+  /// When the cached image's dimensions are known ([knownSize], recorded at
+  /// cache time by [MetadataHelper.resolveCachedImage]) the exact box is
+  /// reserved before the image decodes, so the card never resizes as the frame
+  /// lands. That is the common path — every scroll past an already-cached
+  /// preview. It also lets the decode be bounded to the pixels actually drawn.
+  ///
+  /// [animate] applies only to a first-ever download, where there is no way to
+  /// know the size ahead of the bytes; the container grows in via
+  /// [SizeTransition] rather than snapping. SizeTransition animates on the
+  /// ticker between frames, unlike AnimatedSize, which drives its controller
+  /// during its own performLayout and crashes on re-entrancy here.
+  Widget _buildPreviewImage(BuildContext context, {required bool animate, String? webImageUrl, Size? knownSize}) {
     final ImageProvider imageProvider =
         _previewImagePath != null ? FileImage(File(_previewImagePath!)) : NetworkImage(webImageUrl!) as ImageProvider;
+    final maxHeight = context.height * 0.4;
+
+    Widget image({double? width, double? height, int? cacheWidth}) {
+      Widget onError(BuildContext context) => Center(
+            heightFactor: 1,
+            child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+          );
+      // filterQuality was `none` (nearest-neighbour), which visibly aliases any
+      // downscaled photo. `medium` is the right pick now that the decode is
+      // bounded near the drawn size, so there is little scaling left to do.
+      if (_previewImagePath != null) {
+        return Image.file(
+          File(_previewImagePath!),
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.medium,
+          width: width,
+          height: height,
+          cacheWidth: cacheWidth,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => onError(context),
+        );
+      }
+      return Image.network(
+        webImageUrl ?? '',
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
+        width: width,
+        height: height,
+        cacheWidth: cacheWidth,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => onError(context),
+      );
+    }
+
+    // Unsized fallback: dimensions unknown, so the image defines the box once it
+    // decodes (the pre-existing behaviour).
+    Widget sizedImage = ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight, minHeight: 100),
+      child: image(),
+    );
+
+    if (knownSize != null) {
+      sizedImage = LayoutBuilder(
+        builder: (context, constraints) {
+          // A LayoutBuilder can legitimately be handed an unbounded width; fall
+          // back rather than producing NaN.
+          if (!constraints.hasBoundedWidth) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight, minHeight: 100),
+              child: image(),
+            );
+          }
+          // Mirrors what RenderImage would have computed from the decoded
+          // bitmap: scale to the card width, then clamp to the height bounds.
+          final aspect = knownSize.width / knownSize.height;
+          final boxHeight = (constraints.maxWidth / aspect).clamp(100.0, maxHeight);
+          final boxWidth = min(constraints.maxWidth, boxHeight * aspect);
+          return SizedBox(
+            height: boxHeight,
+            width: constraints.maxWidth,
+            child: Center(
+              child: image(
+                width: boxWidth,
+                height: boxHeight,
+                // Display space, width only — passing both axes makes
+                // ResizeImagePolicy.exact behave like BoxFit.fill.
+                cacheWidth: (boxWidth * MediaQuery.devicePixelRatioOf(context)).round().clamp(1, 4096),
+              ),
+            ),
+          );
+        },
+      );
+    }
 
     final container = ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -321,41 +419,15 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         child: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: Center(
-              heightFactor: 1,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: context.height * 0.4, minHeight: 100),
-                child: _previewImagePath != null
-                    ? Image.file(
-                        File(_previewImagePath!),
-                        gaplessPlayback: true,
-                        filterQuality: FilterQuality.none,
-                        errorBuilder: (_, __, ___) => Center(
-                          heightFactor: 1,
-                          child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-                        ),
-                      )
-                    : Image.network(
-                        webImageUrl ?? '',
-                        gaplessPlayback: true,
-                        filterQuality: FilterQuality.none,
-                        errorBuilder: (_, __, ___) => Center(
-                          heightFactor: 1,
-                          child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
-                        ),
-                      ),
-              ),
-            ),
+            child: Center(heightFactor: 1, child: sizedImage),
           ),
         ),
       ),
     );
 
-    if (!animate) return container;
+    // Nothing to animate once the box is reserved up front.
+    if (!animate || knownSize != null) return container;
 
-    // SizeTransition animates via the ticker between frames (not during
-    // performLayout), so it never causes the re-entrancy crash that
-    // AnimatedSize triggers when a child changes size during layout.
     return SizeTransition(
       sizeFactor: CurvedAnimation(parent: _imageAnimController, curve: Curves.easeIn),
       axisAlignment: -1.0,
@@ -388,8 +460,14 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!inReply && (_previewImagePath != null || webImageUrl != null))
-            _buildPreviewImage(context,
-                animate: _previewImagePath != null && !_previewImageFromDisk, webImageUrl: webImageUrl),
+            _buildPreviewImage(
+              context,
+              animate: _previewImagePath != null && !_previewImageFromDisk,
+              webImageUrl: webImageUrl,
+              // Only meaningful for the disk-cached path; a network image on web
+              // has no recorded size.
+              knownSize: _previewImagePath != null ? MetadataHelper.cachedImageSize(message, 'previewImageMd5') : null,
+            ),
           if (resolvedContent?.bytes != null && hasAppleImage && !inReply)
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -543,16 +621,21 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
+                      // The icon never draws wider than 45pt, so cap the decode
+                      // there — some sites serve a 512px app icon as their
+                      // favicon.
                       child: _iconImagePath != null
                           ? Image.file(
                               File(_iconImagePath!),
                               gaplessPlayback: true,
-                              filterQuality: FilterQuality.none,
+                              filterQuality: FilterQuality.medium,
+                              cacheWidth: (45 * MediaQuery.devicePixelRatioOf(context)).round(),
                             )
                           : Image.network(
                               _data.iconMetadata!.url!,
                               gaplessPlayback: true,
-                              filterQuality: FilterQuality.none,
+                              filterQuality: FilterQuality.medium,
+                              cacheWidth: (45 * MediaQuery.devicePixelRatioOf(context)).round(),
                             ),
                     ),
                   ),

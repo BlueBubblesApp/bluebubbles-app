@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Size;
 
+import 'package:bluebubbles/services/backend/interfaces/image_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -120,11 +122,30 @@ class MetadataHelper {
   /// path is returned immediately with `fromDisk: true`. Otherwise the image is
   /// downloaded via [HttpSvc], cached to disk, and the resulting hash is
   /// persisted back onto [message.metadata]. Returns `null` on failure.
+  /// Longest-side cap for cached preview images. A link-preview card renders at
+  /// a few hundred logical points, but OG images are routinely 1200x630 or
+  /// larger — without this the full bitmap is decoded and held in Flutter's
+  /// image cache for every preview on screen.
+  static const int _previewImageMaxDimension = 1080;
+
+  /// Reads back the dimensions recorded for [metadataKey]'s cached image, so a
+  /// widget can reserve the right box *before* decoding. Null when the image was
+  /// cached by an older build that didn't record them.
+  static Size? cachedImageSize(Message? message, String metadataKey) {
+    final raw = message?.metadata?['${metadataKey}Size'];
+    if (raw is! Map) return null;
+    final w = (raw['width'] as num?)?.toDouble();
+    final h = (raw['height'] as num?)?.toDouble();
+    if (w == null || h == null || w <= 0 || h <= 0) return null;
+    return Size(w, h);
+  }
+
   static Future<(String path, bool fromDisk)?> resolveCachedImage(
     Message message,
     String metadataKey,
-    String imageUrl,
-  ) async {
+    String imageUrl, {
+    bool optimize = false,
+  }) async {
     if (kIsWeb) return null;
 
     final storedMd5 = message.metadata?[metadataKey] as String?;
@@ -143,13 +164,64 @@ class MetadataHelper {
       final bytes = response.data;
       if (bytes == null || bytes.isEmpty) return null;
       final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-      message.metadata = {...?message.metadata, metadataKey: hash};
+      final path = FilesystemSvc.urlPreviewImagePath(hash);
+      final size = optimize ? await _optimizeCachedImage(path) : null;
+      message.metadata = {
+        ...?message.metadata,
+        metadataKey: hash,
+        if (size != null) '${metadataKey}Size': {'width': size.width.toInt(), 'height': size.height.toInt()},
+      };
       if (message.id != null) message.save();
-      return (FilesystemSvc.urlPreviewImagePath(hash), false);
+      return (path, false);
     } catch (ex, stack) {
       Logger.warn('Failed to cache preview image', error: ex, trace: stack, tag: 'MetadataHelper');
       return null;
     }
+  }
+
+  /// Shrinks an oversized cached preview image in place and returns the
+  /// resulting display dimensions.
+  ///
+  /// Images already within [_previewImageMaxDimension] are left byte-identical:
+  /// re-encoding them would only lose quality, and would flatten alpha on the
+  /// PNG sources some sites use.
+  ///
+  /// Generation runs through the same isolate action as attachment previews, so
+  /// EXIF orientation is baked in and the tag cleared — the file on disk is
+  /// always upright, and nothing downstream may re-apply a rotation.
+  ///
+  /// The one gap: for an image left untouched, the returned size comes from the
+  /// container header and would be axis-swapped if that image carried an EXIF
+  /// orientation. That effectively doesn't happen for server-generated OG
+  /// images, and the cost is a mis-reserved box, not a wrong render.
+  static Future<Size?> _optimizeCachedImage(String path) async {
+    final original = await AttachmentsSvc.getImageSizing(path);
+    if (original.width <= 0 || original.height <= 0) return null;
+    if (original.longestSide <= _previewImageMaxDimension) return original;
+
+    // Write beside the target and rename in, so a kill mid-write can't leave a
+    // truncated file that exists() would accept forever. `.jpg` stays last for
+    // the benefit of any format-validating encoder in the chain.
+    final tempPath = '$path.tmp.jpg';
+    try {
+      final ok = await ImageInterface.generatePreview(
+        path: path,
+        outputPath: tempPath,
+        maxDimension: _previewImageMaxDimension,
+        quality: 85,
+      );
+      if (!ok) return original;
+      await File(tempPath).rename(path);
+    } catch (ex, stack) {
+      Logger.warn('Failed to downsample preview image', error: ex, trace: stack, tag: 'MetadataHelper');
+      try {
+        final temp = File(tempPath);
+        if (await temp.exists()) await temp.delete();
+      } catch (_) {}
+      return original;
+    }
+
+    return AttachmentsSvc.getImageSizing(path);
   }
 
   static Future<Metadata> getLocationMetadata(Position locationData) async {
