@@ -164,7 +164,8 @@ class StorageActions {
 
   /// Every regenerable file: thumbnails, partial downloads, format
   /// conversions, and the downsampled inline previews (`<name>.preview.qNN.jpg`,
-  /// plus any `.tmp` left behind by a generation that was killed mid-write).
+  /// plus any `.tmp.jpg` left behind by a generation killed mid-write — the
+  /// `.preview.` check covers those).
   ///
   /// The preview suffix has to be checked explicitly — `.preview.q90.jpg` ends
   /// in `.jpg` but has no sibling matching its stripped base, so

@@ -808,7 +808,11 @@ class AttachmentsService extends GetxService {
     // Generate into a temp sibling and rename into place. Writing straight to
     // the final path means a kill mid-write leaves a truncated file that
     // exists() happily accepts forever.
-    final tempPath = "$previewPath.tmp";
+    //
+    // The `.jpg` has to stay last: flutter_image_compress asserts the target
+    // filename matches the requested format, so a plain `.tmp` suffix would
+    // throw in debug builds and silently produce no HEIC previews.
+    final tempPath = "${previewPath.substring(0, previewPath.length - '.jpg'.length)}.tmp.jpg";
     final isHeic = attachment.mimeType!.contains('image/hei');
     bool ok = false;
 
