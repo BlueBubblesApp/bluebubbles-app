@@ -37,6 +37,17 @@ class AttachmentWithProgress {
 }
 
 class AttachmentsService extends GetxService {
+  /// The already-converted sibling of [basePath], if one is on disk. Checks the
+  /// current format first, then the legacy `.png` older builds wrote for HEIC —
+  /// those files decode fine, so there's no reason to reconvert.
+  /// Null means nothing has been converted yet.
+  String? _existingConvertedPath(Attachment attachment, String basePath) {
+    for (final candidate in {"$basePath.${attachment.convertedExtension}", "$basePath.png"}) {
+      if (File(candidate).existsSync()) return candidate;
+    }
+    return null;
+  }
+
   dynamic getContent(Attachment attachment, {String? path, bool? autoDownload, Function(PlatformFile)? onComplete}) {
     if (attachment.guid?.startsWith("temp") ?? false) {
       final sendProgress = OutgoingMsgHandler.attachmentProgress.firstWhereOrNull((e) => e.guid == attachment.guid);
@@ -143,36 +154,24 @@ class AttachmentsService extends GetxService {
 
     final pathName = path ?? attachment.path;
     final localFile = File(pathName);
-    final convertedFile = File(attachment.convertedPath);
-    final hasLocalFile = localFile.existsSync() || convertedFile.existsSync();
+    final convertedPath = _existingConvertedPath(attachment, pathName);
+    final hasLocalFile = localFile.existsSync() || convertedPath != null;
 
     // Prefer local file presence over the persisted flag because isDownloaded can
     // drift out of sync with filesystem state (e.g. failed display / stale DB flag).
     if ((attachment.isDownloaded == true && hasLocalFile) || hasLocalFile) {
-      // For images, check if we need HEIC/TIFF conversion
+      // For images, check if we need HEIC/TIFF conversion. Both fall back to the
+      // original when nothing has been converted yet — iOS/macOS decode HEIC
+      // natively, and everywhere else conversion happens on first display.
       String? compatiblePath = pathName;
-      if (attachment.mimeType?.contains('image/hei') ?? false) {
-        final convertedPath = "$pathName.png";
-        if (File(convertedPath).existsSync()) {
-          compatiblePath = convertedPath;
-        } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
-          // iOS/macOS have native HEIC support
-          compatiblePath = pathName;
-        } else {
-          // Will need conversion on first display
-          compatiblePath = pathName;
-        }
-      } else if (attachment.mimeType?.contains('image/tif') ?? false) {
-        final convertedPath = "$pathName.png";
-        if (File(convertedPath).existsSync()) {
-          compatiblePath = convertedPath;
-        } else {
-          // Will need conversion on first display
-          compatiblePath = pathName;
-        }
-      } else if (!localFile.existsSync() && convertedFile.existsSync()) {
+      final needsConversion =
+          (attachment.mimeType?.contains('image/hei') ?? false) ||
+          (attachment.mimeType?.contains('image/tif') ?? false);
+      if (needsConversion) {
+        compatiblePath = convertedPath ?? pathName;
+      } else if (!localFile.existsSync() && convertedPath != null) {
         // Fallback when original file is gone but converted file remains.
-        compatiblePath = attachment.convertedPath;
+        compatiblePath = convertedPath;
       }
 
       return PlatformFile(name: attachment.transferName!, path: compatiblePath, size: attachment.totalBytes ?? 0);
@@ -340,18 +339,23 @@ class AttachmentsService extends GetxService {
     attachment.bytes = null;
 
     if (!kIsWeb) {
-      final file = File(attachment.path);
-      final pngFile = File(attachment.convertedPath);
-      final thumbnail = File("${attachment.path}.thumbnail");
-      final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
-      final partial = File("${attachment.path}.part");
+      // Both conversion paths, since a file converted by an older build still
+      // sits at the legacy `.png` location.
+      final derived = {
+        attachment.path,
+        "${attachment.path}.thumbnail",
+        "${attachment.path}.part",
+        attachment.convertedPath,
+        "${attachment.convertedPath}.thumbnail",
+        attachment.legacyConvertedPath,
+        "${attachment.legacyConvertedPath}.thumbnail",
+      };
 
       try {
-        if (await file.exists()) await file.delete();
-        if (await pngFile.exists()) await pngFile.delete();
-        if (await thumbnail.exists()) await thumbnail.delete();
-        if (await pngThumbnail.exists()) await pngThumbnail.delete();
-        if (await partial.exists()) await partial.delete();
+        for (final path in derived) {
+          final f = File(path);
+          if (await f.exists()) await f.delete();
+        }
       } catch (_) {}
       // Sweeps every quality bucket, not just the current one.
       await deleteImagePreviews(attachment);
@@ -514,12 +518,12 @@ class AttachmentsService extends GetxService {
     // HEIC: Only convert on platforms that don't support it natively
     // Android 9+ and iOS have native support
     if (attachment.mimeType!.contains('image/hei')) {
-      final convertedPath = "$filePath.png";
+      // Checks the legacy `.png` too, so files converted by older builds are
+      // reused rather than reconverted.
+      final existing = _existingConvertedPath(attachment, filePath);
+      if (existing != null) return existing;
 
-      // Check if we already converted this file
-      if (await File(convertedPath).exists()) {
-        return convertedPath;
-      }
+      final convertedPath = "$filePath.${attachment.convertedExtension}";
 
       // iOS/macOS: Native HEIC support, use original
       if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
@@ -533,12 +537,16 @@ class AttachmentsService extends GetxService {
         // true, so the plugin has already rotated the pixels -- copying the
         // source Orientation tag onto the output would make Flutter's decoder
         // rotate a second time. This was the original orientation bug.
+        //
+        // JPEG, not PNG: camera photos have no alpha to preserve, and PNG
+        // costs a full-resolution decode on every draw (see
+        // Attachment.convertedExtension).
         final file = await FlutterImageCompress.compressAndGetFile(
           filePath,
           convertedPath,
-          format: CompressFormat.png,
+          format: CompressFormat.jpeg,
           keepExif: false,
-          quality: 100, // No quality loss for compatibility conversion
+          quality: 90,
         );
 
         if (file == null) {

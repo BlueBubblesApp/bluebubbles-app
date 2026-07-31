@@ -268,7 +268,21 @@ class Attachment {
     }
   }
 
-  String get convertedPath => "$path.png";
+  /// Extension used for the on-disk conversion of formats Flutter can't decode
+  /// natively.
+  ///
+  /// HEIC becomes JPEG: camera photos have no alpha, and PNG has no scaled
+  /// decode path (`SkPngCodec` doesn't implement `onGetScaledDimensions`), so a
+  /// 12 MP conversion fully inflates to ~48 MB RGBA before downscaling *every
+  /// time* it is drawn into a 200 pt bubble. JPEG at least gets DCT-domain 1/8
+  /// scaling. TIFF stays PNG — it may be a scan with alpha.
+  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) ? "jpg" : "png";
+
+  String get convertedPath => "$path.$convertedExtension";
+
+  /// Where conversions landed before HEIC moved to JPEG. Those files are still
+  /// perfectly decodable, so lookups check here before paying to reconvert.
+  String get legacyConvertedPath => "$path.png";
 
   /// Disk-cached, downsampled preview used for fast inline display (see
   /// `AttachmentsSvc.getOrCreateImagePreview`).

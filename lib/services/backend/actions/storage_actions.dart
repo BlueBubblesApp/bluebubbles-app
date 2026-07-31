@@ -149,10 +149,17 @@ class StorageActions {
     return _WalkResult(segments: segments, totalBytes: bytesSoFar);
   }
 
-  static bool _isConvertedPng(String name, List<File> siblings) {
-    if (!name.endsWith('.png')) return false;
-    final base = name.substring(0, name.length - 4);
-    return siblings.any((f) => p.basename(f.path) == base);
+  /// A conversion is named `<original>.<ext>` alongside the original it was
+  /// derived from, so the sibling check is what distinguishes it from a real
+  /// attachment that merely happens to be a PNG or JPEG. `.jpg` is included
+  /// because HEIC now converts to JPEG rather than PNG.
+  static bool _isConvertedImage(String name, List<File> siblings) {
+    for (final ext in const ['.png', '.jpg']) {
+      if (!name.endsWith(ext)) continue;
+      final base = name.substring(0, name.length - ext.length);
+      if (siblings.any((f) => p.basename(f.path) == base)) return true;
+    }
+    return false;
   }
 
   /// A folder can hold **more than one** real, non-derivative file — not just
@@ -166,7 +173,7 @@ class StorageActions {
   static List<File> _findOriginals(List<File> files) {
     return files.where((f) {
       final name = p.basename(f.path);
-      return !name.endsWith('.thumbnail') && !name.endsWith('.part') && !_isConvertedPng(name, files);
+      return !name.endsWith('.thumbnail') && !name.endsWith('.part') && !_isConvertedImage(name, files);
     }).toList();
   }
 
@@ -265,7 +272,7 @@ class StorageActions {
         final files = folder.listSync().whereType<File>().toList();
         for (final f in files) {
           final name = p.basename(f.path);
-          if (name.endsWith('.thumbnail') || name.endsWith('.part') || _isConvertedPng(name, files)) {
+          if (name.endsWith('.thumbnail') || name.endsWith('.part') || _isConvertedImage(name, files)) {
             bytesFreed += f.lengthSync();
             filesDeleted++;
             await f.delete();

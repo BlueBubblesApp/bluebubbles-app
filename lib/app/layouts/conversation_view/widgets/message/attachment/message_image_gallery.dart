@@ -117,9 +117,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final key = attachment.guid ?? attachment.transferName;
     if (key == null || _imageSizes.containsKey(key)) return;
     try {
-      // Prefer the converted PNG path (exists for HEIC/TIFF), fall back to original.
+      // Prefer a converted path (exists for HEIC/TIFF), fall back to original.
+      // legacyConvertedPath covers HEIC converted before it moved to JPEG.
       File? imageFile;
-      for (final candidate in [attachment.convertedPath, attachment.path]) {
+      for (final candidate in {attachment.convertedPath, attachment.legacyConvertedPath, attachment.path}) {
         final f = File(candidate);
         if (f.existsSync()) {
           imageFile = f;
