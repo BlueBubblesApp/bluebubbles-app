@@ -189,9 +189,7 @@ class Attachment {
     return await AttachmentInterface.findOneAttachmentAsync(guid: guid);
   }
 
-  static Future<List<Attachment>> findAsync({
-    AttachmentQueryDescriptor? queryDescriptor,
-  }) async {
+  static Future<List<Attachment>> findAsync({AttachmentQueryDescriptor? queryDescriptor}) async {
     if (kIsWeb) return [];
     return await AttachmentInterface.findAttachmentsAsync(queryDescriptor: queryDescriptor);
   }
@@ -206,19 +204,46 @@ class Attachment {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize(decimals: decimals);
   }
 
-  /// Returns the best available width for display purposes.
-  /// Prefers the dedicated DB field; falls back to a `width` key in metadata
-  /// (e.g. sent by the server before local dimension extraction runs).
-  int? get displayWidth {
+  /// Numeric EXIF orientation (1-8, per the EXIF spec). Defaults to 1
+  /// (normal, no rotation) when unknown.
+  int get orientation => (metadata?['_orientation'] as num?)?.toInt() ?? 1;
+
+  /// True when [orientation] implies a 90/270 rotation, meaning raw pixel
+  /// width/height must be swapped to get the visual (display) size.
+  bool get orientationSwapsDimensions => orientation == 5 || orientation == 6 || orientation == 7 || orientation == 8;
+
+  /// Raw (unrotated, decode-native) pixel width/height -- prefers the new
+  /// metadata keys, falls back to the legacy `width`/`height` DB fields for
+  /// attachments processed before orientation tracking was added.
+  int? get rawWidth {
+    final raw = (metadata?['_raw_width'] as num?)?.toInt();
+    if (raw != null && raw > 0) return raw;
     if (width != null && width! > 0) return width;
-    return (metadata?['width'] as num?)?.toInt();
+    return null;
   }
 
-  /// Returns the best available height for display purposes.
-  /// Prefers the dedicated DB field; falls back to a `height` key in metadata.
-  int? get displayHeight {
+  int? get rawHeight {
+    final raw = (metadata?['_raw_height'] as num?)?.toInt();
+    if (raw != null && raw > 0) return raw;
     if (height != null && height! > 0) return height;
-    return (metadata?['height'] as num?)?.toInt();
+    return null;
+  }
+
+  /// Returns the best available width for display purposes (i.e. the visual,
+  /// post-rotation size). Falls back to a `width` key in metadata (e.g. sent
+  /// by the server before local dimension extraction runs) when raw
+  /// dimensions aren't known yet.
+  int? get displayWidth {
+    final w = rawWidth, h = rawHeight;
+    if (w == null || h == null) return (metadata?['width'] as num?)?.toInt();
+    return orientationSwapsDimensions ? h : w;
+  }
+
+  /// Returns the best available height for display purposes. See [displayWidth].
+  int? get displayHeight {
+    final w = rawWidth, h = rawHeight;
+    if (w == null || h == null) return (metadata?['height'] as num?)?.toInt();
+    return orientationSwapsDimensions ? w : h;
   }
 
   bool get hasValidSize => (displayWidth ?? 0) > 0 && (displayHeight ?? 0) > 0;
@@ -245,6 +270,10 @@ class Attachment {
 
   String get convertedPath => "$path.png";
 
+  /// Disk-cached, downsampled preview used for fast inline display (see
+  /// `AttachmentsSvc.getOrCreateImagePreview`).
+  String get previewPath => "$path.preview.jpg";
+
   bool get existsOnDisk => File(path).existsSync();
 
   Future<bool> get existsOnDiskAsync async => await File(path).exists();
@@ -268,8 +297,11 @@ class Attachment {
     if (!file.existsSync()) return null;
     _pkPassParsed = true;
     try {
-      return _pkPass =
-          PkPass.fromBytes(file.readAsBytesSync(), skipSignatureVerification: true, skipChecksumVerification: true);
+      return _pkPass = PkPass.fromBytes(
+        file.readAsBytesSync(),
+        skipSignatureVerification: true,
+        skipChecksumVerification: true,
+      );
     } catch (_) {
       return _pkPass = null;
     }
@@ -308,19 +340,19 @@ class Attachment {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "uti": uti,
-        "mimeType": mimeType,
-        "isOutgoing": isOutgoing!,
-        "transferName": transferName,
-        "totalBytes": totalBytes,
-        "height": height,
-        "width": width,
-        "metadata": jsonEncode(metadata),
-        "exif": jsonEncode(exif),
-        "hasLivePhoto": hasLivePhoto,
-        "isDownloaded": isDownloaded,
-      };
+    "ROWID": id,
+    "originalROWID": originalROWID,
+    "guid": guid,
+    "uti": uti,
+    "mimeType": mimeType,
+    "isOutgoing": isOutgoing!,
+    "transferName": transferName,
+    "totalBytes": totalBytes,
+    "height": height,
+    "width": width,
+    "metadata": jsonEncode(metadata),
+    "exif": jsonEncode(exif),
+    "hasLivePhoto": hasLivePhoto,
+    "isDownloaded": isDownloaded,
+  };
 }

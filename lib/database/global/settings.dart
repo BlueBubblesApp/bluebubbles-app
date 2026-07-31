@@ -31,7 +31,7 @@ class Settings {
   final RxBool autoSave = false.obs;
   final RxString autoSavePicsLocation = "Pictures".obs;
   final RxString autoSaveDocsLocation = FilesystemService.androidDownloadsPath.obs;
-  final RxDouble previewImageQuality = 0.75.obs; // 0.25 to 1.0
+  final RxDouble previewImageQuality = 0.9.obs; // 0.25 to 1.0
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;

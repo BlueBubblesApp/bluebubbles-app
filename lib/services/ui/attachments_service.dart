@@ -24,8 +24,9 @@ import 'package:vcf_dart/vcf_dart.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 // ignore: non_constant_identifier_names
-AttachmentsService AttachmentsSvc =
-    Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
+AttachmentsService AttachmentsSvc = Get.isRegistered<AttachmentsService>()
+    ? Get.find<AttachmentsService>()
+    : Get.put(AttachmentsService());
 
 /// Wrapper class for attachments being sent that includes both the file and send progress
 class AttachmentWithProgress {
@@ -44,11 +45,7 @@ class AttachmentsService extends GetxService {
         if (!kIsWeb) {
           final pathName = path ?? attachment.path;
           if (File(pathName).existsSync()) {
-            final file = PlatformFile(
-              name: attachment.transferName!,
-              path: pathName,
-              size: attachment.totalBytes ?? 0,
-            );
+            final file = PlatformFile(name: attachment.transferName!, path: pathName, size: attachment.totalBytes ?? 0);
             // Return both the file and progress so UI can show image with progress overlay
             return AttachmentWithProgress(file, sendProgress);
           }
@@ -62,11 +59,7 @@ class AttachmentsService extends GetxService {
           final pathName = path ?? attachment.path;
           if (File(pathName).existsSync()) {
             // File exists at the temp path, return it
-            return PlatformFile(
-              name: attachment.transferName!,
-              path: pathName,
-              size: attachment.totalBytes ?? 0,
-            );
+            return PlatformFile(name: attachment.transferName!, path: pathName, size: attachment.totalBytes ?? 0);
           }
 
           // If file doesn't exist at temp path, it may have been replaced with a real GUID
@@ -76,19 +69,17 @@ class AttachmentsService extends GetxService {
             try {
               final message = attachment.message.target!;
               final messageAttachments = message.dbAttachments;
-              final match = messageAttachments.firstWhereOrNull((a) =>
-                  !a.guid!.startsWith("temp") &&
-                  a.transferName == attachment.transferName &&
-                  a.totalBytes == attachment.totalBytes);
+              final match = messageAttachments.firstWhereOrNull(
+                (a) =>
+                    !a.guid!.startsWith("temp") &&
+                    a.transferName == attachment.transferName &&
+                    a.totalBytes == attachment.totalBytes,
+              );
 
               if (match != null) {
                 // Found the updated attachment! Check if its file exists
                 if (File(match.path).existsSync()) {
-                  return PlatformFile(
-                    name: match.transferName!,
-                    path: match.path,
-                    size: match.totalBytes ?? 0,
-                  );
+                  return PlatformFile(name: match.transferName!, path: match.path, size: match.totalBytes ?? 0);
                 }
               }
             } catch (e) {
@@ -108,11 +99,7 @@ class AttachmentsService extends GetxService {
                   final potentialFile = File("${dir.path}/$fileName");
                   if (potentialFile.existsSync() &&
                       (attachment.totalBytes == null || potentialFile.lengthSync() == attachment.totalBytes)) {
-                    return PlatformFile(
-                      name: fileName,
-                      path: potentialFile.path,
-                      size: attachment.totalBytes ?? 0,
-                    );
+                    return PlatformFile(name: fileName, path: potentialFile.path, size: attachment.totalBytes ?? 0);
                   }
                 }
               }
@@ -143,11 +130,7 @@ class AttachmentsService extends GetxService {
           return AttachmentDownloader.startDownload(attachment, onComplete: onComplete);
         }
         // No GUID and no bytes — return a PlatformFile with whatever path is available.
-        return PlatformFile(
-          name: attachment.transferName!,
-          path: path,
-          size: attachment.totalBytes ?? 0,
-        );
+        return PlatformFile(name: attachment.transferName!, path: path, size: attachment.totalBytes ?? 0);
       } else {
         return PlatformFile(
           name: attachment.transferName!,
@@ -192,11 +175,7 @@ class AttachmentsService extends GetxService {
         compatiblePath = attachment.convertedPath;
       }
 
-      return PlatformFile(
-        name: attachment.transferName!,
-        path: compatiblePath,
-        size: attachment.totalBytes ?? 0,
-      );
+      return PlatformFile(name: attachment.transferName!, path: compatiblePath, size: attachment.totalBytes ?? 0);
       // Check for existing download controller
     } else if (AttachmentDownloader.getController(attachment.guid) != null) {
       return AttachmentDownloader.getController(attachment.guid);
@@ -278,9 +257,7 @@ class AttachmentsService extends GetxService {
         'Saved attachment to $savePath!',
         durationMs: 3000,
         button: TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: Get.theme.colorScheme.surfaceVariant,
-          ),
+          style: TextButton.styleFrom(backgroundColor: Get.theme.colorScheme.surfaceVariant),
           onPressed: () {
             launchUrl(Uri.file(savePath));
           },
@@ -303,17 +280,20 @@ class AttachmentsService extends GetxService {
           if (!isDocument) {
             try {
               if (file.path == null && file.bytes != null) {
-                await SaverGallery.saveImage(file.bytes!,
-                    quality: 100,
-                    fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
-                    skipIfExists: false);
+                await SaverGallery.saveImage(
+                  file.bytes!,
+                  quality: 100,
+                  fileName: file.name,
+                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  skipIfExists: false,
+                );
               } else {
                 await SaverGallery.saveFile(
-                    filePath: file.path!,
-                    fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
-                    skipIfExists: false);
+                  filePath: file.path!,
+                  fileName: file.name,
+                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  skipIfExists: false,
+                );
               }
               return showSnackbar('Success', 'Saved attachment to gallery!');
             } catch (_) {}
@@ -347,8 +327,11 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  Future<void> redownloadAttachment(Attachment attachment,
-      {Function(PlatformFile)? onComplete, Function()? onError}) async {
+  Future<void> redownloadAttachment(
+    Attachment attachment, {
+    Function(PlatformFile)? onComplete,
+    Function()? onError,
+  }) async {
     if (attachment.guid == null || attachment.guid!.startsWith('temp')) {
       return;
     }
@@ -362,6 +345,7 @@ class AttachmentsService extends GetxService {
       final thumbnail = File("${attachment.path}.thumbnail");
       final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
       final partial = File("${attachment.path}.part");
+      final preview = File(attachment.previewPath);
 
       try {
         if (await file.exists()) await file.delete();
@@ -369,7 +353,9 @@ class AttachmentsService extends GetxService {
         if (await thumbnail.exists()) await thumbnail.delete();
         if (await pngThumbnail.exists()) await pngThumbnail.delete();
         if (await partial.exists()) await partial.delete();
+        if (await preview.exists()) await preview.delete();
       } catch (_) {}
+      _imagePreviewMemCache.remove(attachment.path);
     }
 
     bool updateAttachment = false;
@@ -378,9 +364,13 @@ class AttachmentsService extends GetxService {
       updateAttachment = true;
     }
 
-    // Clear metadata processing flag and cached dimensions to force reprocessing
+    // Clear orientation/dimension processing flags and cached values to force reprocessing
     if (attachment.metadata != null) {
       attachment.metadata!.remove('_dimensions_processed');
+      attachment.metadata!.remove('_orientation_processed');
+      attachment.metadata!.remove('_orientation');
+      attachment.metadata!.remove('_raw_width');
+      attachment.metadata!.remove('_raw_height');
       updateAttachment = true;
     }
 
@@ -402,21 +392,18 @@ class AttachmentsService extends GetxService {
 
     // Always clear any stale controller/queue entry so this redownload starts fresh.
     AttachmentDownloader.clearControllerForGuid(attachment.guid!);
-    AttachmentDownloader.startDownload(
-      attachment,
-      onComplete: onComplete,
-      onError: onError,
-      forceFresh: true,
-    );
+    AttachmentDownloader.startDownload(attachment, onComplete: onComplete, onError: onError, forceFresh: true);
   }
 
-  Future<Size> getImageSizing(String filePath, Attachment attachment) async {
+  /// Returns the RAW (decode-native, unrotated) pixel size read straight from
+  /// the container/SOF header. This is the authoritative dimension source —
+  /// EXIF dimension tags are metadata and can disagree with the actual pixels.
+  Future<Size> getImageSizing(String filePath) async {
     try {
       dynamic file = File(filePath);
       final sizeResult = await isg.ImageSizeGetter.getSizeResultAsync(AsyncInput(FileInput(file)));
       final size = sizeResult.size;
-      return Size(size.needRotate ? size.height.toDouble() : size.width.toDouble(),
-          size.needRotate ? size.width.toDouble() : size.height.toDouble());
+      return Size(size.width.toDouble(), size.height.toDouble());
     } catch (ex) {
       return const Size(0, 0);
     }
@@ -507,11 +494,13 @@ class AttachmentsService extends GetxService {
 
       // Convert TIFF to PNG
       try {
-        final image = await ImageInterface.convertToPng(PlatformFile(
-          name: attachment.transferName ?? 'image.tiff',
-          path: originalFile.path,
-          size: attachment.totalBytes ?? 0,
-        ));
+        final image = await ImageInterface.convertToPng(
+          PlatformFile(
+            name: attachment.transferName ?? 'image.tiff',
+            path: originalFile.path,
+            size: attachment.totalBytes ?? 0,
+          ),
+        );
 
         if (image != null) {
           await File(convertedPath).writeAsBytes(image);
@@ -541,11 +530,15 @@ class AttachmentsService extends GetxService {
       // Android: Check API level (28+ has native support)
       // For now, convert all Android to be safe for older devices
       try {
+        // keepExif: false is load-bearing. autoCorrectionAngle defaults to
+        // true, so the plugin has already rotated the pixels -- copying the
+        // source Orientation tag onto the output would make Flutter's decoder
+        // rotate a second time. This was the original orientation bug.
         final file = await FlutterImageCompress.compressAndGetFile(
           filePath,
           convertedPath,
           format: CompressFormat.png,
-          keepExif: true,
+          keepExif: false,
           quality: 100, // No quality loss for compatibility conversion
         );
 
@@ -565,6 +558,25 @@ class AttachmentsService extends GetxService {
     return filePath;
   }
 
+  /// Writes freshly-extracted dimensions onto the entity and, when the
+  /// attachment has a live [AttachmentState], through that too — otherwise the
+  /// reactive `width`/`height` pair silently goes stale against the DB record.
+  void _applyDimensions(Attachment attachment, int width, int height) {
+    attachment.width = width;
+    attachment.height = height;
+
+    final message = attachment.message.target;
+    final chatGuid = message?.chat.target?.guid;
+    final messageGuid = message?.guid;
+    final attachmentGuid = attachment.guid;
+    if (chatGuid == null || messageGuid == null || attachmentGuid == null) return;
+
+    maybeFindMessagesSvc(chatGuid)?.getAttachmentState(messageGuid, attachmentGuid)?.updateDimensionsInternal(
+      width,
+      height,
+    );
+  }
+
   Future<String?> loadImageProperties(Attachment attachment, {String? actualPath}) async {
     if (kIsWeb || attachment.mimeType == null || attachment.mimeStart != "image") {
       return null;
@@ -572,115 +584,215 @@ class AttachmentsService extends GetxService {
 
     final filePath = actualPath ?? attachment.path;
 
-    // Check if dimensions have already been processed.
+    // Check if orientation/dimensions have already been processed.
     // We don't want to rely on the height/width or metadata alone because
     // it doesn't give the full picture of how to display the image (orientation, etc).
     // We need to "double-check" by reading EXIF and image properties directly.
-    if (attachment.metadata?['_dimensions_processed'] == true) {
+    if (attachment.metadata?['_orientation_processed'] == true) {
       return filePath;
     }
 
-    // Ensure we have a compatible image file first
+    final isGif = attachment.mimeType == "image/gif";
+
+    // Step 1 -- EXIF, read from the ORIGINAL file before any format conversion
+    // runs (in an isolate to avoid UI lag). Conversion can silently drop the
+    // orientation tag, so reading post-conversion would lose it entirely.
+    //
+    // EXIF is the source of truth for ORIENTATION ONLY. Its dimension tags
+    // (`ExifImageWidth`/`ExifImageLength`, `Image ImageWidth`) are metadata:
+    // they go stale when an editor crops without rewriting EXIF, IFD0 often
+    // describes the embedded thumbnail rather than the image, and both are
+    // frequently absent. They are kept only as a last-resort fallback below.
+    int orientation = 1;
+    int? exifWidth;
+    int? exifHeight;
+    if (!isGif) {
+      try {
+        final result = await ImageInterface.readExifOrientation(filePath);
+        if (result != null) {
+          orientation = result['orientation'] as int? ?? 1;
+          exifWidth = result['width'] as int?;
+          exifHeight = result['height'] as int?;
+          final raw = result['raw'];
+          // Crossed an isolate boundary -- copy rather than hard-cast.
+          attachment.exif = raw is Map ? Map<String, String>.from(raw) : <String, String>{};
+        } else {
+          // Null means EXIF has never been loaded. Empty map means we attempted to load it.
+          attachment.exif ??= {};
+        }
+      } catch (ex, stack) {
+        Logger.error('Failed to read EXIF orientation!', error: ex, trace: stack);
+      }
+    } else {
+      // GIFs don't produce EXIF data, but mark as loaded for loaded-vs-unloaded semantics.
+      attachment.exif ??= {};
+    }
+
+    // Step 2 -- resolve the file that will actually be decoded.
     final compatiblePath = await ensureImageCompatibility(attachment, actualPath: filePath);
     if (compatiblePath == null) return null;
 
-    bool dimensionsLoaded = false;
+    // A converted file has already had its rotation baked into the pixels
+    // (flutter_image_compress's autoCorrectionAngle) and carries no
+    // orientation tag, so it is upright. Recording the source's orientation
+    // against those dimensions would swap them a second time.
+    if (compatiblePath != filePath) {
+      orientation = 1;
+      exifWidth = null;
+      exifHeight = null;
+    }
 
-    // Try to get dimensions and metadata from EXIF first (runs in isolate to avoid UI lag)
-    if (attachment.mimeType != "image/gif") {
+    // Step 3 -- dimensions from the container/SOF header of the file we will
+    // decode. This is ground truth; EXIF only fills in if it fails.
+    int? rawWidth;
+    int? rawHeight;
+    if (isGif) {
       try {
-        final exif = await ImageInterface.readExifData(compatiblePath);
-        if (exif != null) {
-          // Extract dimensions from EXIF if available
-          int? exifWidth;
-          int? exifHeight;
-
-          if (exif.containsKey('EXIF ExifImageWidth')) {
-            exifWidth = int.tryParse(exif['EXIF ExifImageWidth']!);
-          } else if (exif.containsKey('Image ImageWidth')) {
-            exifWidth = int.tryParse(exif['Image ImageWidth']!);
-          }
-
-          if (exif.containsKey('EXIF ExifImageLength')) {
-            exifHeight = int.tryParse(exif['EXIF ExifImageLength']!);
-          } else if (exif.containsKey('Image ImageLength')) {
-            exifHeight = int.tryParse(exif['Image ImageLength']!);
-          }
-
-          String? orientationStr;
-          if (exif.containsKey('Image Orientation')) {
-            orientationStr = exif['Image Orientation'];
-          }
-
-          // Check if dimensions need to be swapped based on orientation
-          // Only rotations of 90° or 270° require swapping width/height for display.
-          // "Horizontal (normal)" (orientation 1) and "Mirrored horizontal" (orientation 2)
-          // involve no rotation (or only a flip) and must NOT be swapped.
-          bool needsSwap = orientationStr != null &&
-              (orientationStr.contains('90') || orientationStr.contains('270'));
-
-          if (exifWidth != null && exifHeight != null) {
-            if (needsSwap) {
-              attachment.width = exifHeight;
-              attachment.height = exifWidth;
-            } else {
-              attachment.width = exifWidth;
-              attachment.height = exifHeight;
-            }
-            dimensionsLoaded = true;
-          }
-
-          attachment.exif = exif;
-          await attachment.saveAsync(null);
-        } else if (attachment.exif == null) {
-          // Null means EXIF has never been loaded. Empty map means we attempted to load it.
-          attachment.exif = {};
-          await attachment.saveAsync(null);
+        // Read GIF dimensions in isolate (avoids loading full file into memory)
+        final dimensions = await ImageInterface.getGifDimensions(compatiblePath);
+        if (dimensions != null && dimensions['width'] != 0 && dimensions['height'] != 0) {
+          rawWidth = dimensions['width'];
+          rawHeight = dimensions['height'];
         }
       } catch (ex, stack) {
-        Logger.error('Failed to read EXIF data!', error: ex, trace: stack);
+        Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
       }
-    } else if (attachment.exif == null) {
-      // GIFs don't produce EXIF data, but mark as processed for loaded-vs-unloaded semantics.
-      attachment.exif = {};
-      await attachment.saveAsync(null);
-    }
-
-    // Fallback: Get dimensions using image size getter if not loaded from EXIF
-    if (!dimensionsLoaded && (attachment.width == null || attachment.height == null)) {
-      if (attachment.mimeType == "image/gif") {
-        try {
-          // Read GIF dimensions in isolate (avoids loading full file into memory)
-          final dimensions = await ImageInterface.getGifDimensions(compatiblePath);
-          if (dimensions != null && dimensions['width'] != 0 && dimensions['height'] != 0) {
-            attachment.width = dimensions['width'];
-            attachment.height = dimensions['height'];
-            dimensionsLoaded = true;
-          }
-        } catch (ex, stack) {
-          Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
+    } else {
+      try {
+        final size = await getImageSizing(compatiblePath);
+        if (size.width != 0 && size.height != 0) {
+          rawWidth = size.width.toInt();
+          rawHeight = size.height.toInt();
         }
-      } else {
-        try {
-          Size size = await getImageSizing(compatiblePath, attachment);
-          if (size.width != 0 && size.height != 0) {
-            attachment.width = size.width.toInt();
-            attachment.height = size.height.toInt();
-            dimensionsLoaded = true;
-          }
-        } catch (ex, stack) {
-          Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
-        }
+      } catch (ex, stack) {
+        Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
       }
     }
 
-    // Mark dimensions as processed to avoid reprocessing
+    // Step 4 -- EXIF dimensions, only if the header read produced nothing.
+    rawWidth ??= exifWidth;
+    rawHeight ??= exifHeight;
+
+    attachment.metadata ??= {};
+    attachment.metadata!['_orientation'] = orientation;
+
+    final dimensionsLoaded = rawWidth != null && rawHeight != null && rawWidth > 0 && rawHeight > 0;
     if (dimensionsLoaded) {
-      attachment.metadata ??= {};
-      attachment.metadata!['_dimensions_processed'] = true;
-      await attachment.saveAsync(null);
+      attachment.metadata!['_raw_width'] = rawWidth;
+      attachment.metadata!['_raw_height'] = rawHeight;
+      _applyDimensions(attachment, rawWidth, rawHeight);
+      // Only mark processed once we actually have dimensions, so a failed
+      // read is retried on the next view rather than cached as "done".
+      attachment.metadata!['_orientation_processed'] = true;
     }
+
+    await attachment.saveAsync(null);
 
     return filePath;
+  }
+
+  /// In-memory cache of image preview bytes keyed by original file path, so
+  /// widgets can render a previously-generated preview synchronously (no
+  /// async disk read -> no placeholder flash). Mirrors [_videoThumbnailMemCache].
+  final Map<String, Uint8List> _imagePreviewMemCache = {};
+  static const int _imagePreviewMemCacheMax = 64;
+
+  Uint8List? getCachedImagePreviewSync(String filePath) => _imagePreviewMemCache[filePath];
+
+  void clearImagePreviewCache() => _imagePreviewMemCache.clear();
+
+  void _memCacheImagePreview(String filePath, Uint8List bytes) {
+    _imagePreviewMemCache.remove(filePath);
+    _imagePreviewMemCache[filePath] = bytes;
+    if (_imagePreviewMemCache.length > _imagePreviewMemCacheMax) {
+      _imagePreviewMemCache.remove(_imagePreviewMemCache.keys.first);
+    }
+  }
+
+  // Preview resolution/quality both track the user's "image preview quality"
+  // setting (0.25-1.0, same knob already used to scale inline cacheWidth/
+  // cacheHeight elsewhere), so a lower slider produces a smaller, more
+  // compressed -- and thus faster-loading -- preview file.
+  static const int _imagePreviewBaseMaxDimension = 1080;
+  static const int _imagePreviewMinDimension = 270;
+
+  int get _imagePreviewMaxDimension {
+    final factor = SettingsSvc.settings.previewImageQuality.value;
+    return (_imagePreviewBaseMaxDimension * factor)
+        .round()
+        .clamp(_imagePreviewMinDimension, _imagePreviewBaseMaxDimension)
+        .toInt();
+  }
+
+  int get _imagePreviewQuality {
+    final factor = SettingsSvc.settings.previewImageQuality.value;
+    return (factor * 100).round().clamp(25, 100).toInt();
+  }
+
+  /// Returns the path to a downsampled preview file for [attachment]
+  /// (resolution/JPEG quality driven by the user's preview image quality
+  /// setting), generating + disk-caching it on first use.
+  /// The original attachment file is never modified. Returns null if
+  /// generation fails or isn't applicable (e.g. GIFs, which play natively
+  /// and don't get a static preview).
+  Future<String?> getOrCreateImagePreview(Attachment attachment, {String? actualPath}) async {
+    if (kIsWeb || attachment.mimeType == null || attachment.mimeStart != "image") return null;
+    if (attachment.mimeType == "image/gif") return null;
+
+    final filePath = actualPath ?? attachment.path;
+    final previewPath = attachment.previewPath;
+    final previewFile = File(previewPath);
+    if (await previewFile.exists()) return previewPath;
+    if (!await File(filePath).exists()) return null;
+
+    final isHeic = attachment.mimeType!.contains('image/hei');
+    bool ok = false;
+
+    if (isHeic) {
+      // HEIC: the `image` package can't decode HEIC, so use
+      // flutter_image_compress directly -- it handles decode+rotate+resize
+      // +encode in one native call. Not available on Windows/Linux (no
+      // platform implementation for this plugin), so this is expected to
+      // fail gracefully there -- callers fall back to the original file.
+      try {
+        // rotate: 0 -- flutter_image_compress's autoCorrectionAngle defaults
+        // to true and already applies the source's EXIF orientation to the
+        // pixels. Passing a rotation on top of that double-rotates.
+        final result = await FlutterImageCompress.compressAndGetFile(
+          filePath,
+          previewPath,
+          format: CompressFormat.jpeg,
+          quality: _imagePreviewQuality,
+          minWidth: _imagePreviewMaxDimension,
+          minHeight: _imagePreviewMaxDimension,
+          rotate: 0,
+          keepExif: false,
+        );
+        ok = result != null;
+      } catch (ex) {
+        Logger.warn('Failed to generate HEIC image preview (platform may not support it): $ex');
+        ok = false;
+      }
+    } else {
+      try {
+        ok = await ImageInterface.generatePreview(
+          path: filePath,
+          outputPath: previewPath,
+          maxDimension: _imagePreviewMaxDimension,
+          quality: _imagePreviewQuality,
+        );
+      } catch (ex, stack) {
+        Logger.error('Failed to generate image preview!', error: ex, trace: stack);
+        ok = false;
+      }
+    }
+
+    if (!ok) return null;
+
+    try {
+      _memCacheImagePreview(filePath, await previewFile.readAsBytes());
+    } catch (_) {}
+
+    return previewPath;
   }
 }

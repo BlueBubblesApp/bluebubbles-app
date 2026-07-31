@@ -254,43 +254,40 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       } else {
         final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
         final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-        final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-        // The decoder decodes the RAW (unrotated) buffer, so cache dimensions
-        // must be un-swapped relative to the already-visual display size
-        // before being handed to the decoder.
-        final swap = attachment.orientationSwapsDimensions;
-        imageWidget = RotatedBox(
-          quarterTurns: attachment.quarterTurns,
-          child: Image.memory(
-            file.bytes!,
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.high,
-            width: displayWidth,
-            height: displayHeight,
-            cacheWidth: swap ? calculatedHeight : calculatedWidth,
-            cacheHeight: swap ? calculatedWidth : calculatedHeight,
-            fit: BoxFit.contain,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded) return child;
-              if (frame == null) {
-                // Show placeholder while loading
-                return Container(
-                  width: displayWidth,
-                  height: displayHeight,
-                  color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.outline),
-                    ),
+        imageWidget = Image.memory(
+          file.bytes!,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.high,
+          width: displayWidth,
+          height: displayHeight,
+          // Display space, width only. The decoder already applies EXIF
+          // orientation (dimensions it reports, and cacheWidth/cacheHeight it
+          // accepts, are post-rotation), so nothing here may re-apply it.
+          // Passing height as well would make ResizeImagePolicy.exact behave
+          // like BoxFit.fill and stretch the bitmap; width alone preserves the
+          // aspect ratio.
+          cacheWidth: calculatedWidth,
+          fit: BoxFit.contain,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            if (frame == null) {
+              // Show placeholder while loading
+              return Container(
+                width: displayWidth,
+                height: displayHeight,
+                color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(context.theme.colorScheme.outline),
                   ),
-                );
-              }
-              return child;
-            },
-            errorBuilder: (context, object, stacktrace) =>
-                _buildImageError(context, displayWidth, displayHeight, object, stacktrace),
-          ),
+                ),
+              );
+            }
+            return child;
+          },
+          errorBuilder: (context, object, stacktrace) =>
+              _buildImageError(context, displayWidth, displayHeight, object, stacktrace),
         );
       }
     } else {
@@ -300,12 +297,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       final displayWidth = size.width;
       final displayHeight = size.height;
       // Use configured quality factor from settings (25% to 100%)
+      // Display space, width only — see the note on the Image.memory path above.
       final qualityFactor = SettingsSvc.settings.previewImageQuality.value;
       final calculatedWidth = (displayWidth * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-      final calculatedHeight = (displayHeight * Get.pixelRatio * qualityFactor).round().abs().nonZero;
-      // Decoding the ORIGINAL file decodes the RAW (unrotated) buffer, so its
-      // cache dimensions must be un-swapped relative to the visual display size.
-      final swap = attachment.orientationSwapsDimensions;
 
       Widget placeholder() => Container(
         width: displayWidth,
@@ -319,70 +313,58 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         ),
       );
 
-      // Fallback: render the original file directly (rotation-corrected via
-      // RotatedBox), used immediately on first view of a photo while its
-      // preview generates, and if preview generation ever fails.
+      // Fallback: render the original file directly, used when preview
+      // generation fails.
       Widget buildOriginalFallback() {
-        return RotatedBox(
-          quarterTurns: attachment.quarterTurns,
-          child: Image.file(
-            File(file.path!),
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.high,
-            fit: BoxFit.contain,
-            width: displayWidth,
-            height: displayHeight,
-            cacheWidth: swap ? calculatedHeight : calculatedWidth,
-            cacheHeight: swap ? calculatedWidth : calculatedHeight,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded) return child;
-              if (frame == null) return placeholder();
-              return child;
+        return Image.file(
+          File(file.path!),
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.high,
+          fit: BoxFit.contain,
+          width: displayWidth,
+          height: displayHeight,
+          cacheWidth: calculatedWidth,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            if (frame == null) return placeholder();
+            return child;
+          },
+          errorBuilder: (context, object, stacktrace) => FutureBuilder<String?>(
+            future: AttachmentsSvc.ensureImageCompatibility(attachment, actualPath: file.path),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox(
+                  width: displayWidth,
+                  height: displayHeight,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasData && snapshot.data != null && snapshot.data != file.path) {
+                // Conversion successful, display converted image.
+                return Image.file(
+                  File(snapshot.data!),
+                  gaplessPlayback: true,
+                  filterQuality: FilterQuality.high,
+                  width: displayWidth,
+                  height: displayHeight,
+                  cacheWidth: calculatedWidth,
+                  fit: BoxFit.contain,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded) return child;
+                    if (frame == null) return placeholder();
+                    return child;
+                  },
+                );
+              }
+
+              // Conversion failed or not needed
+              return _buildImageError(context, displayWidth, displayHeight, object, stacktrace);
             },
-            errorBuilder: (context, object, stacktrace) => FutureBuilder<String?>(
-              future: AttachmentsSvc.ensureImageCompatibility(attachment, actualPath: file.path),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SizedBox(
-                    width: displayWidth,
-                    height: displayHeight,
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (snapshot.hasData && snapshot.data != null && snapshot.data != file.path) {
-                  // Conversion successful, display converted image (still the
-                  // raw/un-rotated buffer, so RotatedBox + swapped cache dims apply here too).
-                  return RotatedBox(
-                    quarterTurns: attachment.quarterTurns,
-                    child: Image.file(
-                      File(snapshot.data!),
-                      gaplessPlayback: true,
-                      filterQuality: FilterQuality.high,
-                      width: displayWidth,
-                      height: displayHeight,
-                      cacheWidth: swap ? calculatedHeight : calculatedWidth,
-                      cacheHeight: swap ? calculatedWidth : calculatedHeight,
-                      fit: BoxFit.contain,
-                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                        if (wasSynchronouslyLoaded) return child;
-                        if (frame == null) return placeholder();
-                        return child;
-                      },
-                    ),
-                  );
-                }
-
-                // Conversion failed or not needed
-                return _buildImageError(context, displayWidth, displayHeight, object, stacktrace);
-              },
-            ),
           ),
         );
       }
 
-      // Fast path: the preview file is already rotation-baked, so its native
-      // pixels map 1:1 to the visual dimensions -- no swap, no RotatedBox needed.
       Widget buildPreview(String previewPath) {
         return Image.file(
           File(previewPath),
@@ -391,7 +373,6 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           width: displayWidth,
           height: displayHeight,
           cacheWidth: calculatedWidth,
-          cacheHeight: calculatedHeight,
           fit: BoxFit.contain,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
             if (wasSynchronouslyLoaded) return child;
