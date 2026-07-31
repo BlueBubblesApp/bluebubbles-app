@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/generated/objectbox.g.dart';
@@ -247,6 +248,26 @@ class Attachment {
   }
 
   bool get hasValidSize => (displayWidth ?? 0) > 0 && (displayHeight ?? 0) > 0;
+
+  /// The logical-point box this attachment occupies inline, given the bubble's
+  /// [maxWidth].
+  ///
+  /// This is the **single source of truth** for that box. The download
+  /// placeholder, the decode placeholder, and the decoded image all reserve
+  /// exactly this, so nothing moves as an attachment progresses from
+  /// "downloading" to "rendered".
+  ///
+  /// When dimensions aren't known yet this falls back to a [maxWidth]-wide box
+  /// at [aspectRatio]'s default — that box *will* change once the real
+  /// dimensions land, which is why extraction wants to happen as early as
+  /// possible.
+  ({double width, double height}) displayBox(double maxWidth) {
+    final fallbackHeight = maxWidth / aspectRatio;
+    return (
+      width: math.min(displayWidth?.toDouble() ?? maxWidth, maxWidth),
+      height: math.min(displayHeight?.toDouble() ?? fallbackHeight, fallbackHeight),
+    );
+  }
 
   double get aspectRatio => hasValidSize ? (displayWidth! / displayHeight!).abs() : 0.78;
 

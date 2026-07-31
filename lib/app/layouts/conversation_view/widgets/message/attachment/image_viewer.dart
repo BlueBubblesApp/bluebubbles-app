@@ -227,19 +227,11 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     );
   }
 
-  /// The logical-point box this image occupies. Computed from the attachment's
-  /// stored display dimensions so the space can be reserved *before* the image
-  /// decodes — this is what keeps the messages view from shifting when a frame
-  /// arrives. Every `Image` in this widget is given this exact size.
-  ({double width, double height}) _displaySize(BuildContext context) {
-    final maxWidth = NavigationSvc.width(context) * 0.5;
-    final width = min(attachment.displayWidth?.toDouble() ?? maxWidth, maxWidth);
-    final height = min(
-      attachment.displayHeight?.toDouble() ?? maxWidth / attachment.aspectRatio,
-      maxWidth / attachment.aspectRatio,
-    );
-    return (width: width, height: height);
-  }
+  /// The logical-point box this image occupies. Every `Image` in this widget is
+  /// given this exact size, and [AttachmentHolder] reserves the same box for the
+  /// download/not-loaded placeholders — see [Attachment.displayBox].
+  ({double width, double height}) _displaySize(BuildContext context) =>
+      attachment.displayBox(NavigationSvc.width(context) * 0.5);
 
   Widget _buildStandardImage(BuildContext context) {
     // Build the appropriate image widget based on platform and file availability

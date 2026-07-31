@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
+import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:supercharged/supercharged.dart';
 
 enum GalleryFanDirection {
@@ -78,14 +80,26 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   int? _activeDragPointer;
   VelocityTracker? _velocityTracker;
   ConversationViewController? _cvController;
+  late final MessageState _ms;
+  final List<Worker> _sizeWorkers = [];
 
   List<Attachment> get _attachments => widget.attachments;
 
   @override
   void initState() {
     super.initState();
-    _cvController = MessageStateScope.readStateOnce(context).cvController;
+    _ms = MessageStateScope.readStateOnce(context);
+    _cvController = _ms.cvController;
+    _watchAttachmentSizes();
     _loadImageSizes();
+  }
+
+  @override
+  void dispose() {
+    for (final w in _sizeWorkers) {
+      w.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -96,12 +110,42 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     if (!listEquals(oldKeys, newKeys)) {
       _currentIndex = 0;
       _imageSizes.clear();
+      _watchAttachmentSizes();
       _loadImageSizes();
     } else {
-      final diff = widget.attachments.filter((a) => !_imageSizes.containsKey(a.guid ?? a.transferName)).toList();
+      final diff = widget.attachments.filter((a) => _sizeFor(a) == null).toList();
       if (diff.isNotEmpty) {
         _loadImageSizes();
       }
+    }
+  }
+
+  /// The fan's card height is derived from its tallest image, so it has to
+  /// re-measure when an attachment finishes downloading or when local dimension
+  /// extraction lands. Neither rebuilds this widget on its own — the download
+  /// progress UI updates inside `AttachmentHolder`'s own `Obx`, well below here,
+  /// so without these workers the fan keeps the square fallback height it
+  /// picked while the file was still missing.
+  void _watchAttachmentSizes() {
+    for (final w in _sizeWorkers) {
+      w.dispose();
+    }
+    _sizeWorkers.clear();
+
+    for (final a in _attachments) {
+      final guid = a.guid;
+      if (guid == null) continue;
+      final state = _ms.getOrCreateAttachmentState(guid, attachment: a);
+      _sizeWorkers.add(
+        everAll([state.width, state.height, state.resolvedFile], (_) {
+          if (!mounted) return;
+          // Dimensions may already be on the attachment (the state write and
+          // the entity write happen together), so rebuild regardless; the probe
+          // is only needed when they aren't.
+          _loadOneImageSize(a, force: true);
+          setState(() {});
+        }),
+      );
     }
   }
 
@@ -113,9 +157,23 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
   }
 
-  Future<void> _loadOneImageSize(Attachment attachment) async {
+  /// The size to lay [attachment] out at, preferring the dimensions already
+  /// tracked on the attachment over decoding the file to find out. Falls back to
+  /// the probed size for attachments whose dimensions were never extracted.
+  Size? _sizeFor(Attachment attachment) {
+    final w = attachment.displayWidth;
+    final h = attachment.displayHeight;
+    if (w != null && h != null && w > 0 && h > 0) return Size(w.toDouble(), h.toDouble());
     final key = attachment.guid ?? attachment.transferName;
-    if (key == null || _imageSizes.containsKey(key)) return;
+    return key != null ? _imageSizes[key] : null;
+  }
+
+  Future<void> _loadOneImageSize(Attachment attachment, {bool force = false}) async {
+    final key = attachment.guid ?? attachment.transferName;
+    if (key == null) return;
+    if (!force && _imageSizes.containsKey(key)) return;
+    // Stored dimensions already answer this — no reason to decode the file.
+    if (attachment.hasValidSize) return;
     try {
       // Prefer a converted path (exists for HEIC/TIFF), fall back to original.
       // legacyConvertedPath covers HEIC converted before it moved to JPEG.
@@ -194,8 +252,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final tallest = _attachments.fold<double>(
       minHeight,
       (current, a) {
-        final key = a.guid ?? a.transferName;
-        final size = key != null ? _imageSizes[key] : null;
+        final size = _sizeFor(a);
         if (size == null || size.width <= 0 || size.height <= 0) {
           return max(current, baseCardWidth);
         }
