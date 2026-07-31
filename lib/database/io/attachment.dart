@@ -272,7 +272,11 @@ class Attachment {
 
   /// Disk-cached, downsampled preview used for fast inline display (see
   /// `AttachmentsSvc.getOrCreateImagePreview`).
-  String get previewPath => "$path.preview.jpg";
+  ///
+  /// The JPEG quality bucket is part of the filename so that changing the
+  /// preview-quality setting resolves to a different file instead of silently
+  /// reusing a preview generated at the old quality.
+  String previewPathForQuality(int quality) => "$path.preview.q$quality.jpg";
 
   bool get existsOnDisk => File(path).existsSync();
 

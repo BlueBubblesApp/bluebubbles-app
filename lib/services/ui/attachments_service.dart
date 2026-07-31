@@ -345,7 +345,6 @@ class AttachmentsService extends GetxService {
       final thumbnail = File("${attachment.path}.thumbnail");
       final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
       final partial = File("${attachment.path}.part");
-      final preview = File(attachment.previewPath);
 
       try {
         if (await file.exists()) await file.delete();
@@ -353,9 +352,9 @@ class AttachmentsService extends GetxService {
         if (await thumbnail.exists()) await thumbnail.delete();
         if (await pngThumbnail.exists()) await pngThumbnail.delete();
         if (await partial.exists()) await partial.delete();
-        if (await preview.exists()) await preview.delete();
       } catch (_) {}
-      _imagePreviewMemCache.remove(attachment.path);
+      // Sweeps every quality bucket, not just the current one.
+      await deleteImagePreviews(attachment);
     }
 
     bool updateAttachment = false;
@@ -691,28 +690,31 @@ class AttachmentsService extends GetxService {
     return filePath;
   }
 
-  /// In-memory cache of image preview bytes keyed by original file path, so
-  /// widgets can render a previously-generated preview synchronously (no
-  /// async disk read -> no placeholder flash). Mirrors [_videoThumbnailMemCache].
-  final Map<String, Uint8List> _imagePreviewMemCache = {};
-  static const int _imagePreviewMemCacheMax = 64;
+  /// Paths of previews already confirmed on disk this session, so a widget can
+  /// decide synchronously whether to render the preview or the placeholder
+  /// without an async stat. Only the fact of existence is held here — the
+  /// bytes belong in Flutter's own `imageCache`, which knows how to evict them.
+  final Set<String> _generatedPreviews = {};
 
-  Uint8List? getCachedImagePreviewSync(String filePath) => _imagePreviewMemCache[filePath];
+  /// Preview generations currently running, keyed by preview path. Scroll churn
+  /// recreates `_ImageViewerState`, so without this two generations can
+  /// interleave writes to the same file.
+  final Map<String, Future<String?>> _previewJobs = {};
 
-  void clearImagePreviewCache() => _imagePreviewMemCache.clear();
-
-  void _memCacheImagePreview(String filePath, Uint8List bytes) {
-    _imagePreviewMemCache.remove(filePath);
-    _imagePreviewMemCache[filePath] = bytes;
-    if (_imagePreviewMemCache.length > _imagePreviewMemCacheMax) {
-      _imagePreviewMemCache.remove(_imagePreviewMemCache.keys.first);
-    }
+  /// The preview path for [attachment] at the current quality setting, but only
+  /// if it is already known to exist. Null means "render the placeholder and
+  /// call [getOrCreateImagePreview]".
+  String? knownPreviewPath(Attachment attachment) {
+    final path = attachment.previewPathForQuality(_imagePreviewQuality);
+    return _generatedPreviews.contains(path) ? path : null;
   }
 
+  void clearImagePreviewCache() => _generatedPreviews.clear();
+
   // Preview resolution/quality both track the user's "image preview quality"
-  // setting (0.25-1.0, same knob already used to scale inline cacheWidth/
-  // cacheHeight elsewhere), so a lower slider produces a smaller, more
-  // compressed -- and thus faster-loading -- preview file.
+  // setting (0.25-1.0, same knob already used to scale inline cacheWidth
+  // elsewhere), so a lower slider produces a smaller, more compressed -- and
+  // thus faster-loading -- preview file.
   static const int _imagePreviewBaseMaxDimension = 1080;
   static const int _imagePreviewMinDimension = 270;
 
@@ -729,6 +731,20 @@ class AttachmentsService extends GetxService {
     return (factor * 100).round().clamp(25, 100).toInt();
   }
 
+  /// Deletes every generated preview for [attachment], across all quality
+  /// buckets, and forgets them. Used when the source file is being replaced.
+  Future<void> deleteImagePreviews(Attachment attachment) async {
+    final prefix = "${attachment.path}.preview.";
+    _generatedPreviews.removeWhere((p) => p.startsWith(prefix));
+    try {
+      final dir = Directory(attachment.directory);
+      if (!await dir.exists()) return;
+      await for (final entity in dir.list()) {
+        if (entity is File && entity.path.startsWith(prefix)) await entity.delete();
+      }
+    } catch (_) {}
+  }
+
   /// Returns the path to a downsampled preview file for [attachment]
   /// (resolution/JPEG quality driven by the user's preview image quality
   /// setting), generating + disk-caching it on first use.
@@ -740,11 +756,33 @@ class AttachmentsService extends GetxService {
     if (attachment.mimeType == "image/gif") return null;
 
     final filePath = actualPath ?? attachment.path;
-    final previewPath = attachment.previewPath;
-    final previewFile = File(previewPath);
-    if (await previewFile.exists()) return previewPath;
+    // The filename carries the quality bucket, so moving the slider produces a
+    // different path rather than silently reusing a preview at the old quality.
+    final previewPath = attachment.previewPathForQuality(_imagePreviewQuality);
+
+    final inFlight = _previewJobs[previewPath];
+    if (inFlight != null) return inFlight;
+
+    final job = _generateImagePreview(attachment, filePath, previewPath);
+    _previewJobs[previewPath] = job;
+    try {
+      return await job;
+    } finally {
+      _previewJobs.remove(previewPath);
+    }
+  }
+
+  Future<String?> _generateImagePreview(Attachment attachment, String filePath, String previewPath) async {
+    if (await File(previewPath).exists()) {
+      _generatedPreviews.add(previewPath);
+      return previewPath;
+    }
     if (!await File(filePath).exists()) return null;
 
+    // Generate into a temp sibling and rename into place. Writing straight to
+    // the final path means a kill mid-write leaves a truncated file that
+    // exists() happily accepts forever.
+    final tempPath = "$previewPath.tmp";
     final isHeic = attachment.mimeType!.contains('image/hei');
     bool ok = false;
 
@@ -760,7 +798,7 @@ class AttachmentsService extends GetxService {
         // pixels. Passing a rotation on top of that double-rotates.
         final result = await FlutterImageCompress.compressAndGetFile(
           filePath,
-          previewPath,
+          tempPath,
           format: CompressFormat.jpeg,
           quality: _imagePreviewQuality,
           minWidth: _imagePreviewMaxDimension,
@@ -777,7 +815,7 @@ class AttachmentsService extends GetxService {
       try {
         ok = await ImageInterface.generatePreview(
           path: filePath,
-          outputPath: previewPath,
+          outputPath: tempPath,
           maxDimension: _imagePreviewMaxDimension,
           quality: _imagePreviewQuality,
         );
@@ -787,12 +825,22 @@ class AttachmentsService extends GetxService {
       }
     }
 
-    if (!ok) return null;
+    if (!ok) {
+      try {
+        final temp = File(tempPath);
+        if (await temp.exists()) await temp.delete();
+      } catch (_) {}
+      return null;
+    }
 
     try {
-      _memCacheImagePreview(filePath, await previewFile.readAsBytes());
-    } catch (_) {}
+      await File(tempPath).rename(previewPath);
+    } catch (ex, stack) {
+      Logger.error('Failed to move image preview into place!', error: ex, trace: stack);
+      return null;
+    }
 
+    _generatedPreviews.add(previewPath);
     return previewPath;
   }
 }

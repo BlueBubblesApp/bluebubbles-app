@@ -160,9 +160,11 @@ class ImageActions {
 
       final longestSide = image.width > image.height ? image.width : image.height;
       if (longestSide > maxDimension) {
+        // copyResize defaults to Interpolation.nearest, which aliases badly
+        // going from ~4000px down to ~1080px -- previews come out crunchy.
         image = image.width >= image.height
-            ? img.copyResize(image, width: maxDimension)
-            : img.copyResize(image, height: maxDimension);
+            ? img.copyResize(image, width: maxDimension, interpolation: img.Interpolation.average)
+            : img.copyResize(image, height: maxDimension, interpolation: img.Interpolation.average);
       }
 
       final encoded = img.encodeJpg(image, quality: quality);

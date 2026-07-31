@@ -383,9 +383,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         );
       }
 
-      final cachedPreviewBytes = AttachmentsSvc.getCachedImagePreviewSync(file.path!);
-      if (cachedPreviewBytes != null) {
-        imageWidget = buildPreview(attachment.previewPath);
+      final knownPreview = AttachmentsSvc.knownPreviewPath(attachment);
+      if (knownPreview != null) {
+        imageWidget = buildPreview(knownPreview);
       } else {
         _previewPathFuture ??= AttachmentsSvc.getOrCreateImagePreview(attachment, actualPath: file.path);
         imageWidget = FutureBuilder<String?>(
