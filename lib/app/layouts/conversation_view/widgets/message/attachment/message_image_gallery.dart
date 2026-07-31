@@ -13,6 +13,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:supercharged/supercharged.dart';
@@ -138,15 +139,33 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       final state = _ms.getOrCreateAttachmentState(guid, attachment: a);
       _sizeWorkers.add(
         everAll([state.width, state.height, state.resolvedFile], (_) {
-          if (!mounted) return;
-          // Dimensions may already be on the attachment (the state write and
-          // the entity write happen together), so rebuild regardless; the probe
-          // is only needed when they aren't.
-          _loadOneImageSize(a, force: true);
-          setState(() {});
+          _runOutsideBuild(() {
+            if (!mounted) return;
+            // Dimensions may already be on the attachment (the state write and
+            // the entity write happen together), so rebuild regardless; the
+            // probe below only does work when they aren't.
+            unawaited(_loadOneImageSize(a, force: true));
+            setState(() {});
+          });
         }),
       );
     }
+  }
+
+  /// Runs [fn] once the framework is out of its build/layout phase.
+  ///
+  /// GetX workers fire synchronously from whoever wrote the value, and
+  /// `AttachmentHolder.initState` resolves an already-downloaded file while this
+  /// widget is still building its own subtree — so calling `setState` straight
+  /// from a worker throws "setState() called during build".
+  void _runOutsideBuild(VoidCallback fn) {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    final midFrame = phase == SchedulerPhase.persistentCallbacks || phase == SchedulerPhase.midFrameMicrotasks;
+    if (!midFrame) {
+      fn();
+      return;
+    }
+    SchedulerBinding.instance.addPostFrameCallback((_) => fn());
   }
 
   void _loadImageSizes() {
@@ -206,11 +225,15 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       stream.addListener(listener);
 
       final size = await completer.future;
-      if (mounted && size != null) {
+      if (size == null) return;
+      // A cached image resolves its listener synchronously, so this can land
+      // mid-frame just like the workers above.
+      _runOutsideBuild(() {
+        if (!mounted) return;
         setState(() {
           _imageSizes[key] = size;
         });
-      }
+      });
     } catch (_) {}
   }
 
