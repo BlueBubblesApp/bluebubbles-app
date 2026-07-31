@@ -584,6 +584,11 @@ class AttachmentsService extends GetxService {
     );
   }
 
+  /// Property extractions currently running, keyed by file path. Fast scrolling
+  /// otherwise fires one isolate EXIF read (plus possibly a HEIC conversion)
+  /// per tile, each rebuilding its widget on completion.
+  final Map<String, Future<String?>> _propertyJobs = {};
+
   Future<String?> loadImageProperties(Attachment attachment, {String? actualPath}) async {
     if (kIsWeb || attachment.mimeType == null || attachment.mimeStart != "image") {
       return null;
@@ -599,6 +604,19 @@ class AttachmentsService extends GetxService {
       return filePath;
     }
 
+    final inFlight = _propertyJobs[filePath];
+    if (inFlight != null) return inFlight;
+
+    final job = _loadImageProperties(attachment, filePath);
+    _propertyJobs[filePath] = job;
+    try {
+      return await job;
+    } finally {
+      _propertyJobs.remove(filePath);
+    }
+  }
+
+  Future<String?> _loadImageProperties(Attachment attachment, String filePath) async {
     final isGif = attachment.mimeType == "image/gif";
 
     // Step 1 -- EXIF, read from the ORIGINAL file before any format conversion
