@@ -122,7 +122,7 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
     if (imageUrl != null) {
       final image = await MetadataHelper.resolveCachedImage(message, imageUrl, slot: slot);
       if (image != null) {
-        MessageMetadataStore.write(message, result.metadata!, slot: slot, imageHash: image.md5);
+        MessageMetadataStore.write(message, result.metadata!, slot: slot, imageHash: image.hash);
         if (mounted) setState(() => _previewImagePath = image.path);
         return;
       }

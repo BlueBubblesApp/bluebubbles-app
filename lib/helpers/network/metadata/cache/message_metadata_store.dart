@@ -37,10 +37,14 @@ enum MetadataCacheSlot {
     required this.storesMetadata,
   });
 
-  /// MD5 of the disk-cached preview image.
+  /// Content hash of the disk-cached preview image.
+  ///
+  /// The key string still says `Md5` because it is persisted on existing
+  /// message rows; the value it holds is now a SHA-256. Renaming the key would
+  /// orphan every already-cached image.
   final String imageHashKey;
 
-  /// MD5 of the disk-cached site icon, when the slot renders one.
+  /// Content hash of the disk-cached site icon, when the slot renders one.
   final String? iconHashKey;
 
   /// Legacy boolean flag. Still written so that downgrading the app keeps the
@@ -79,10 +83,10 @@ abstract final class MessageMetadataStore {
     return metadata.isEmpty ? null : metadata;
   }
 
-  /// The MD5 of the disk-cached preview image for [slot], if one was saved.
+  /// The content hash of the disk-cached preview image for [slot], if saved.
   static String? imageHash(Message message, MetadataCacheSlot slot) => _string(message.metadata?[slot.imageHashKey]);
 
-  /// The MD5 of the disk-cached icon for [slot], if the slot caches one.
+  /// The content hash of the disk-cached icon for [slot], if it caches one.
   static String? iconHash(Message message, MetadataCacheSlot slot) {
     final key = slot.iconHashKey;
     if (key == null) return null;

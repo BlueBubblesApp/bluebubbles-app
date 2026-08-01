@@ -20,12 +20,14 @@ Public entry point is `MetadataHelper` (`../metadata_helper.dart`), re-exported 
 ## Flow
 
 ```
+MetadataHelper.shouldAutoFetch()            policy + sender gate
 MetadataHelper.fetchForMessage()
   └─ UrlMetadataFetcher.fetch()            url_metadata_fetcher.dart
        ├─ MetadataUrls.parse                   scheme defaulting
        ├─ SiteParserRegistry.forUrl → prepare  canonicalise, strip trackers
-       ├─ UrlSafetyGuard.checkResolved         reject private/loopback hosts
-       ├─ MetadataHttpClient.fetch             capped, charset-aware, own Dio
+       ├─ MetadataHttpClient.fetch             own Dio; concurrency-limited
+       │    └─ per hop: UrlSafetyGuard → request → follow Location manually
+       ├─ HtmlStructureGuard.isSafe            reject pathological nesting
        ├─ MetadataDocumentPipeline.run         OG → Twitter → JSON-LD → HTML
        │                                        → Microdata → BodyImage → Icon
        ├─ OEmbedResolver.resolve               only if a gap remains
@@ -72,6 +74,38 @@ are deliberately **not** stamped, so they retry on the next build — see
 Legacy `metadata_fetch` keys (`image`, `url`, `previewImageFetched`) are still read and written
 for backward and forward compatibility.
 
+## Security Model
+
+Link previews fetch attacker-chosen URLs and parse attacker-written markup, automatically,
+for messages anyone can send. The protections and where they live:
+
+| Concern | Where |
+|---|---|
+| Loopback / private / link-local targets | `UrlSafetyGuard`, called from `MetadataHttpClient` |
+| Redirects into the LAN | `followRedirects: false` + per-hop guard in `MetadataHttpClient.fetch` |
+| Permissive IPv4 literals (`127.1`, `0177.0.0.1`) | `UrlSafetyGuard.parseLooseIpv4` |
+| Server credential leakage | dedicated `Dio`, never `HttpSvc.dio` |
+| Oversized bodies | streaming caps in `MetadataHttpClient` |
+| Stack overflow from nested markup | `HtmlStructureGuard`, before parsing |
+| Connection/memory exhaustion | `FetchConcurrencyLimiter` |
+| Tracking pixels, undecodable images | `PreviewImageDownloader` validation |
+| Site-name spoofing | the card's site line comes from the URL, never `og:site_name` |
+| Bidi text spoofing | `MetadataText.clean` |
+| IP disclosure to unknown senders | `LinkPreviewPolicy` + `MetadataHelper.shouldAutoFetch` |
+
+**`UrlSafetyGuard` is called in exactly one place** — inside `MetadataHttpClient.fetch`, per hop.
+Do not add call sites elsewhere; do not re-enable dio's own redirect following. That combination
+is what makes the guard cover the page fetch, discovered oEmbed endpoints, image downloads, and
+every redirect between them.
+
+**Known limitation:** the guard resolves a hostname and the socket layer resolves it again, so DNS
+rebinding is not prevented. Dart's `HttpClient` does not expose enough control to connect to a
+pinned address with the original Host header and SNI. `LinkPreviewPolicy.contactsOnly` (the
+default) is the mitigation — it limits who can trigger an automatic fetch at all.
+
+**A manual tap bypasses the policy and the retry TTL, and nothing else.** Every other protection
+still applies to a user-initiated load.
+
 ## Rules
 
 - **Never** route third-party requests through `HttpSvc.dio` — see `../CLAUDE.md`.
@@ -85,5 +119,12 @@ for backward and forward compatibility.
 
 ## Settings
 
-`SettingsSvc.settings.fetchUrlPreviews` gates all automatic fetching. Server-supplied previews
-(Apple payload data) are unaffected. Explicit user actions (sharing a location) bypass the gate.
+`SettingsSvc.settings.linkPreviewPolicy` (`LinkPreviewPolicy`) controls automatic fetching:
+
+- `always` — fetch every link
+- `contactsOnly` — **default** — fetch only for messages from a saved contact, or from the user
+- `never` — tap to load, always
+
+The gate is evaluated per *message sender* (`MetadataHelper.shouldAutoFetch`), not per chat, so a
+stranger's links in a group are still gated. Missing contacts permission fails open. Server-supplied
+previews (Apple payload data) never involve a request and are unaffected.

@@ -323,7 +323,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     if (!inReply && imageUrl != null) {
       final image = await MetadataHelper.resolveCachedImage(message, imageUrl);
       if (image != null) {
-        imageHash = image.md5;
+        imageHash = image.hash;
         _setPreviewImagePath(image.path, fromDisk: image.fromDisk);
       }
     }
@@ -332,7 +332,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     if (iconUrl != null) {
       final icon = await MetadataHelper.resolveCachedImage(message, iconUrl, isIcon: true);
       if (icon != null) {
-        iconHash = icon.md5;
+        iconHash = icon.hash;
         if (mounted) setState(() => _iconImagePath = icon.path);
       }
     }

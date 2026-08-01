@@ -12,7 +12,7 @@ import 'package:image_size_getter/image_size_getter.dart' as isg;
 class CachedPreviewImage {
   const CachedPreviewImage({
     required this.path,
-    required this.md5,
+    required this.hash,
     required this.fromDisk,
     this.width,
     this.height,
@@ -21,9 +21,9 @@ class CachedPreviewImage {
   /// Absolute path to the cached file.
   final String path;
 
-  /// Content hash, which is also the filename. Persisted on the message so the
-  /// same image is shared across every message that links it.
-  final String md5;
+  /// SHA-256 of the image bytes, which is also the filename. Persisted on the
+  /// message so the same image is shared across every message that links it.
+  final String hash;
 
   /// True when the file was already on disk, so the UI can skip the grow-in
   /// animation.
@@ -102,7 +102,7 @@ class PreviewImageDownloader {
       final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
       return CachedPreviewImage(
         path: FilesystemSvc.urlPreviewImagePath(hash),
-        md5: hash,
+        hash: hash,
         fromDisk: false,
         width: size?.$1,
         height: size?.$2,

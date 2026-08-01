@@ -86,6 +86,7 @@ abstract final class MetadataHelper {
   /// Returns a [MetadataFetchResult] rather than throwing so callers can tell
   /// a permanent failure from a transient one — see
   /// [MetadataFetchResult.isRetryable].
+  ///
   /// Set [manual] when the user explicitly asked for this preview. A tap is
   /// consent, so it bypasses the policy check — including
   /// [LinkPreviewPolicy.never], where tap-to-load is the *only* way a preview
@@ -167,7 +168,7 @@ abstract final class MetadataHelper {
     if (storedHash != null) {
       final cachedPath = FilesystemSvc.urlPreviewImagePath(storedHash);
       if (await File(cachedPath).exists()) {
-        return CachedPreviewImage(path: cachedPath, md5: storedHash, fromDisk: true);
+        return CachedPreviewImage(path: cachedPath, hash: storedHash, fromDisk: true);
       }
     }
 
@@ -178,9 +179,9 @@ abstract final class MetadataHelper {
     final map = <String, dynamic>{...?message.metadata};
     if (isIcon) {
       final key = slot.iconHashKey;
-      if (key != null) map[key] = downloaded.md5;
+      if (key != null) map[key] = downloaded.hash;
     } else {
-      map[slot.imageHashKey] = downloaded.md5;
+      map[slot.imageHashKey] = downloaded.hash;
     }
     message.metadata = map;
     if (!kIsWeb && message.id != null) message.save();

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/backend/java_dart_interop/method_channel_service.dart';
 import 'package:characters/characters.dart';
@@ -69,22 +72,101 @@ class FilesystemService {
   String get customBackgroundsPath => join(appDocDir.path, 'custom_backgrounds');
   String get urlPreviewsPath => join(appDocDir.path, 'url_previews');
 
-  /// Returns the path for a cached URL preview image identified by its MD5 hash.
-  String urlPreviewImagePath(String md5) => join(urlPreviewsPath, md5);
+  /// Returns the path for a cached URL preview image identified by its content
+  /// hash. Accepts hashes written by older versions too, since the filename is
+  /// whatever was persisted on the message.
+  String urlPreviewImagePath(String hash) => join(urlPreviewsPath, hash);
 
-  /// Downloads and caches a URL preview image. Computes an MD5 hash of the raw
-  /// bytes and uses it as the filename so that identical images across different
-  /// messages share a single file. Returns the hex MD5 string.
+  /// Upper bound on the URL preview cache. Past this, the least recently used
+  /// entries are deleted.
+  static const int urlPreviewCacheMaxBytes = 128 * 1024 * 1024;
+
+  /// How often the cache is measured. Listing the directory on every save
+  /// would be wasteful; previews arrive far faster than the cache fills.
+  static const Duration _urlPreviewPruneInterval = Duration(hours: 6);
+
+  DateTime? _lastUrlPreviewPrune;
+
+  /// Caches a URL preview image, keyed by the SHA-256 of its bytes.
+  ///
+  /// Content addressing means identical images shared across messages occupy a
+  /// single file. SHA-256 rather than MD5 because these bytes come from
+  /// attacker-influenced markup: chosen-prefix MD5 collisions are practical, and
+  /// the cache is shared across senders, so a collision would let one sender
+  /// control what renders in another's preview.
+  ///
+  /// Existing MD5-named files are left alone — they are still valid content for
+  /// the messages that reference them, and eviction ages them out.
   Future<String> saveUrlPreviewImage(Uint8List bytes) async {
     if (kIsWeb) throw 'saveUrlPreviewImage is not supported on web';
-    final hash = md5.convert(bytes).toString();
+    final hash = sha256.convert(bytes).toString();
     final dir = Directory(urlPreviewsPath);
     await dir.create(recursive: true);
     final file = File(join(urlPreviewsPath, hash));
     if (!file.existsSync()) {
       await file.writeAsBytes(bytes, flush: true);
     }
+    unawaited(_maybePruneUrlPreviewCache());
     return hash;
+  }
+
+  /// Runs [pruneUrlPreviewCache] at most once per [_urlPreviewPruneInterval].
+  Future<void> _maybePruneUrlPreviewCache() async {
+    final last = _lastUrlPreviewPrune;
+    final now = DateTime.now();
+    if (last != null && now.difference(last) < _urlPreviewPruneInterval) return;
+    _lastUrlPreviewPrune = now;
+
+    try {
+      await pruneUrlPreviewCache();
+    } catch (ex, stack) {
+      Logger.warn('Failed to prune URL preview cache', error: ex, trace: stack, tag: 'FilesystemService');
+    }
+  }
+
+  /// Deletes the least recently used preview images until the cache fits in
+  /// [maxBytes].
+  ///
+  /// The cache previously grew without bound: every preview image any sender
+  /// ever linked stayed on disk forever.
+  Future<int> pruneUrlPreviewCache({int maxBytes = urlPreviewCacheMaxBytes}) async {
+    if (kIsWeb) return 0;
+
+    final dir = Directory(urlPreviewsPath);
+    if (!await dir.exists()) return 0;
+
+    final entries = <({File file, int size, DateTime modified})>[];
+    var total = 0;
+
+    await for (final entity in dir.list(followLinks: false)) {
+      if (entity is! File) continue;
+      try {
+        final stat = await entity.stat();
+        entries.add((file: entity, size: stat.size, modified: stat.modified));
+        total += stat.size;
+      } catch (_) {
+        // Raced with another writer; skip it.
+      }
+    }
+
+    if (total <= maxBytes) return 0;
+
+    entries.sort((a, b) => a.modified.compareTo(b.modified));
+
+    var freed = 0;
+    for (final entry in entries) {
+      if (total - freed <= maxBytes) break;
+      try {
+        await entry.file.delete();
+        freed += entry.size;
+      } catch (_) {
+        // Deleted underneath us, or in use.
+      }
+    }
+
+    Logger.info('Pruned ${(freed / 1024 / 1024).toStringAsFixed(1)}MB from the URL preview cache',
+        tag: 'FilesystemService');
+    return freed;
   }
 
   // ---------------------------------------------------------------------------
