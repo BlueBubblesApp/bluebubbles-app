@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/network/metadata/network/html_body_decoder.d
 import 'package:bluebubbles/helpers/network/metadata/network/metadata_http_client.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/oembed_resolver.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/preview_image_downloader.dart';
-import 'package:bluebubbles/helpers/network/metadata/network/url_safety_guard.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_document_pipeline.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
@@ -71,16 +70,11 @@ class UrlMetadataFetcher {
   Future<MetadataFetchResult> _fetchUncached(Uri requestUri) async {
     final site = SiteParserRegistry.forUrl(requestUri);
 
-    // Canonicalise before the safety check so a site parser cannot rewrite a
-    // vetted URL into a blocked one.
     final prepared = _prepare(requestUri, site);
 
-    final blocked = await UrlSafetyGuard.checkResolved(prepared);
-    if (blocked != null) {
-      Logger.debug('Refusing metadata fetch for $prepared: ${blocked.name}', tag: 'UrlMetadataFetcher');
-      return MetadataFetchResult.failure(blocked, metadata: _fallbackFor(requestUri, site));
-    }
-
+    // No safety check here: [MetadataHttpClient] guards every request it makes,
+    // including each redirect hop and the oEmbed endpoint discovered from page
+    // markup. A blocked host surfaces as a MetadataFetchException below.
     try {
       final resource = await _client.fetch(
         prepared,

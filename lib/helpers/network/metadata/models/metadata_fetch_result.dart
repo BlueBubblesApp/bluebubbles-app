@@ -31,6 +31,9 @@ enum MetadataFetchStatus {
   /// The server answered with a non-success status code.
   httpError,
 
+  /// The redirect chain exceeded the hop limit, or looped.
+  tooManyRedirects,
+
   /// DNS/socket/TLS failure.
   networkError,
 
@@ -101,6 +104,7 @@ class MetadataFetchResult {
       case MetadataFetchStatus.unsupportedScheme:
       case MetadataFetchStatus.blockedHost:
       case MetadataFetchStatus.unsupportedContent:
+      case MetadataFetchStatus.tooManyRedirects:
       case MetadataFetchStatus.parseError:
         return false;
     }

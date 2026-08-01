@@ -76,6 +76,22 @@ abstract final class UrlSafetyGuard {
       return MetadataFetchStatus.blockedHost;
     }
 
+    // `InternetAddress.tryParse` only accepts canonical dotted-quad, but the
+    // platform resolver accepts everything `inet_aton` does. Without this,
+    // `http://127.1/` and `http://0177.0.0.1/` sail past the check above and
+    // are then resolved to loopback by the OS.
+    final loose = parseLooseIpv4(host);
+    if (loose != null && isPrivateV4Word(loose)) {
+      return MetadataFetchStatus.blockedHost;
+    }
+
+    // A host made only of digits, dots and hex prefixes is an address attempt.
+    // If neither parser could make sense of it, refuse rather than hand it to
+    // a resolver whose interpretation we cannot predict.
+    if (literal == null && loose == null && looksNumeric(host)) {
+      return MetadataFetchStatus.blockedHost;
+    }
+
     return null;
   }
 
@@ -102,10 +118,89 @@ abstract final class UrlSafetyGuard {
         if (isPrivateAddress(address)) return MetadataFetchStatus.blockedHost;
       }
     } catch (_) {
-      // Lookup failure, timeout, or a platform without DNS access.
+      // Lookup failed, timed out, or the platform has no DNS access. For an
+      // ordinary hostname that is harmless — the request is about to fail
+      // anyway. For something that looks like an address literal it is not:
+      // an attacker who controls the nameserver can stall the lookup to force
+      // this path, so those fail closed.
+      if (looksNumeric(uri.host)) return MetadataFetchStatus.blockedHost;
     }
 
     return null;
+  }
+
+  /// Whether [host] consists only of characters an address literal can contain.
+  ///
+  /// Used to decide whether an unparseable, unresolvable host should fail open
+  /// (a normal domain) or closed (something pretending to be an address).
+  static bool looksNumeric(String host) {
+    if (host.isEmpty) return false;
+    for (final part in host.split('.')) {
+      if (part.isEmpty) continue;
+      final body = part.toLowerCase().startsWith('0x') ? part.substring(2) : part;
+      if (body.isEmpty) return false;
+      for (final unit in body.toLowerCase().codeUnits) {
+        final isDigit = unit >= 0x30 && unit <= 0x39;
+        final isHex = unit >= 0x61 && unit <= 0x66;
+        if (!isDigit && !isHex) return false;
+      }
+    }
+    return true;
+  }
+
+  /// Parses the permissive IPv4 forms `inet_aton` accepts, returning the
+  /// address as a 32-bit word.
+  ///
+  /// Handles octal (`0177.0.0.1`), hex (`0x7f.0.0.1`), packed decimal
+  /// (`2130706433`) and the short forms (`127.1`, `127.0.1`) where the final
+  /// part absorbs the remaining bytes. Returns null when [host] is not an
+  /// address in any of those forms.
+  static int? parseLooseIpv4(String host) {
+    if (host.isEmpty) return null;
+    final parts = host.split('.');
+    if (parts.isEmpty || parts.length > 4) return null;
+
+    final values = <int>[];
+    for (final part in parts) {
+      final value = _parsePart(part);
+      if (value == null) return null;
+      values.add(value);
+    }
+
+    // Every part except the last addresses exactly one byte.
+    for (var i = 0; i < values.length - 1; i++) {
+      if (values[i] > 0xFF) return null;
+    }
+
+    // The last part absorbs whatever bytes the earlier parts did not.
+    final remainingBytes = 4 - (values.length - 1);
+    final maxLast = remainingBytes >= 4 ? 0xFFFFFFFF : (1 << (8 * remainingBytes)) - 1;
+    if (values.last > maxLast) return null;
+
+    var word = 0;
+    for (var i = 0; i < values.length - 1; i++) {
+      word |= values[i] << (8 * (3 - i));
+    }
+    return (word | values.last) & 0xFFFFFFFF;
+  }
+
+  /// [_isPrivateV4] over a packed 32-bit address.
+  static bool isPrivateV4Word(int word) => _isPrivateV4((word >> 24) & 0xFF, (word >> 16) & 0xFF);
+
+  static int? _parsePart(String raw) {
+    final part = raw.trim();
+    if (part.isEmpty) return null;
+
+    final lower = part.toLowerCase();
+    if (lower.startsWith('0x')) {
+      final digits = lower.substring(2);
+      if (digits.isEmpty) return null;
+      return int.tryParse(digits, radix: 16);
+    }
+    if (part.length > 1 && part.startsWith('0')) {
+      return int.tryParse(part.substring(1), radix: 8);
+    }
+    return int.tryParse(part, radix: 10);
   }
 
   /// Whether [address] is loopback, private, link-local or otherwise not a

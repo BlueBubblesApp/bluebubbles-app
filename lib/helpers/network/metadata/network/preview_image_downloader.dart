@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/network/metadata/network/metadata_http_client.dart';
-import 'package:bluebubbles/helpers/network/metadata/network/url_safety_guard.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -72,13 +71,9 @@ class PreviewImageDownloader {
     final uri = MetadataUrls.parse(imageUrl);
     if (uri == null) return null;
 
-    // Preview images come from attacker-influenced markup, so they get the
-    // same host checks as the page itself.
-    if (UrlSafetyGuard.check(uri) != null) {
-      Logger.debug('Refusing to download preview image from blocked host: ${uri.host}', tag: 'PreviewImage');
-      return null;
-    }
-
+    // Host safety is enforced inside [MetadataHttpClient] for every hop, so
+    // preview images — which come straight out of attacker-influenced markup
+    // and may redirect — get the same treatment as the page itself.
     try {
       final resource = await _client.fetch(
         uri,

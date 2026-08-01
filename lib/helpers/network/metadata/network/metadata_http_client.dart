@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/network/metadata/models/metadata_fetch_result.dart';
+import 'package:bluebubbles/helpers/network/metadata/network/url_safety_guard.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -119,12 +120,13 @@ class MetadataHttpClient {
       connectTimeout: connectTimeout,
       receiveTimeout: receiveTimeout,
       sendTimeout: connectTimeout,
-      followRedirects: true,
-      // Shortener chains (t.co -> bit.ly -> destination) routinely need more
-      // than the two hops the old code allowed.
-      maxRedirects: maxRedirects,
+      // Redirects are followed by hand in [fetch] so that [UrlSafetyGuard] can
+      // vet every hop. Letting dio follow them internally means only the first
+      // URL is ever checked, and a public URL can 302 into the user's LAN.
+      followRedirects: false,
       // Report the real status instead of throwing, so the caller can tell a
-      // retryable 503 from a permanent 404.
+      // retryable 503 from a permanent 404 — and so 3xx reaches the redirect
+      // handling below rather than surfacing as an error.
       validateStatus: (_) => true,
       headers: const {
         'User-Agent': userAgent,
@@ -138,7 +140,15 @@ class MetadataHttpClient {
     ));
   }
 
+  /// Status codes that carry a `Location` header.
+  static const Set<int> _redirectCodes = {301, 302, 303, 307, 308};
+
   /// Fetches [uri], reading at most [maxBytes] of the body.
+  ///
+  /// Redirects are followed manually so that [UrlSafetyGuard] runs against
+  /// **every** hop. This is the only place the guard is applied, which means it
+  /// covers the page fetch, the oEmbed endpoint discovered from page markup,
+  /// preview image downloads, and every redirect in between.
   ///
   /// Throws [MetadataFetchException] with a specific status for every failure
   /// mode so the orchestrator can decide whether the attempt is retryable.
@@ -146,24 +156,77 @@ class MetadataHttpClient {
     Uri uri, {
     required int maxBytes,
     Set<FetchedContentKind>? accept,
-    CancelToken? cancelToken,
   }) async {
-    final token = cancelToken ?? CancelToken();
+    var current = uri;
+    final visited = <String>{};
 
-    Response<ResponseBody> response;
-    try {
-      response = await _dio.getUri<ResponseBody>(
-        uri,
-        options: Options(responseType: ResponseType.stream),
-        cancelToken: token,
-      );
-    } on DioException catch (ex) {
-      throw MetadataFetchException(_statusForDioError(ex), cause: ex);
-    } catch (ex) {
-      throw MetadataFetchException(MetadataFetchStatus.networkError, cause: ex);
+    for (var hop = 0; hop <= maxRedirects; hop++) {
+      final blocked = await UrlSafetyGuard.checkResolved(current);
+      if (blocked != null) throw MetadataFetchException(blocked);
+
+      // A fresh token per hop: aborting one hop's body must not poison the
+      // next request.
+      final token = CancelToken();
+
+      Response<ResponseBody> response;
+      try {
+        response = await _dio.getUri<ResponseBody>(
+          current,
+          options: Options(responseType: ResponseType.stream),
+          cancelToken: token,
+        );
+      } on DioException catch (ex) {
+        throw MetadataFetchException(_statusForDioError(ex), cause: ex);
+      } catch (ex) {
+        throw MetadataFetchException(MetadataFetchStatus.networkError, cause: ex);
+      }
+
+      final status = response.statusCode ?? 0;
+      if (!_redirectCodes.contains(status)) {
+        return _readResource(response, status, maxBytes, accept, token);
+      }
+
+      final location = response.headers.value('location');
+      await _drain(response.data, token);
+
+      final next = _resolveLocation(current, location);
+      if (next == null) {
+        throw MetadataFetchException(MetadataFetchStatus.httpError, httpStatusCode: status);
+      }
+      if (!visited.add(next.toString())) {
+        throw MetadataFetchException(MetadataFetchStatus.tooManyRedirects, httpStatusCode: status);
+      }
+      current = next;
     }
 
-    final statusCode = response.statusCode ?? 0;
+    throw MetadataFetchException(MetadataFetchStatus.tooManyRedirects);
+  }
+
+  /// Resolves a `Location` header against the URL that produced it.
+  ///
+  /// Returns null when the header is missing, unparseable, or points somewhere
+  /// other than http(s) — an `intent://` or `javascript:` redirect target is
+  /// not something to chase.
+  Uri? _resolveLocation(Uri current, String? location) {
+    if (location == null || location.trim().isEmpty) return null;
+    try {
+      final next = current.resolve(location.trim());
+      if (next.scheme != 'http' && next.scheme != 'https') return null;
+      if (next.host.isEmpty) return null;
+      return next;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Validates and reads a non-redirect response.
+  Future<FetchedResource> _readResource(
+    Response<ResponseBody> response,
+    int statusCode,
+    int maxBytes,
+    Set<FetchedContentKind>? accept,
+    CancelToken token,
+  ) async {
     final contentType = response.headers.value(Headers.contentTypeHeader);
     final kind = FetchedContentKind.fromContentType(contentType);
 

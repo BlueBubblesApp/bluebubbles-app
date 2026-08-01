@@ -366,13 +366,18 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     final message = MessageStateScope.maybeMessageOf(context);
     // Web-only fallback: disk caching is unavailable on web, so fall back to network image.
     final webImageUrl = kIsWeb ? (data.imageMetadata?.url ?? _fetchedMetadata?.imageUrl) : null;
-    // Prefer the site name the page declared (`og:site_name`) over the bare
-    // host, falling back to the host when nothing declared one.
+    // The site line must show where the link actually goes, so it is derived
+    // from the URL — never from `og:site_name`, which is attacker-controlled
+    // text. A phishing page at any domain can declare itself "Apple", and this
+    // is the one line on the card a user relies on to tell them otherwise.
+    //
+    // The declared site name is still parsed and stored; it earns its keep by
+    // letting MetadataText.stripSiteSuffix trim " - Site Name" off titles.
+    // `data.siteName` (below) comes from Apple's own payload via the server,
+    // not from the page, so it remains an acceptable last resort.
     final _rawSiteText = widget.file != null
         ? (dataOverride?.siteName ?? "")
-        : data.siteName ??
-            _fetchedMetadata?.siteName ??
-            Uri.tryParse(data.originalUrl ?? data.url ?? "")?.host;
+        : Uri.tryParse(data.originalUrl ?? data.url ?? "")?.host ?? data.siteName;
     final siteText = _rawSiteText?.replaceFirst(RegExp(r'^www\.'), '');
     // Show the plugin-payload attachment image only when no disk-cached preview is available.
     final hasAppleImage = _previewImagePath == null && webImageUrl == null;
