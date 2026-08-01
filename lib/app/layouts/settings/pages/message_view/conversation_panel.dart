@@ -149,7 +149,8 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                     title: "About link previews",
                     subtitle: "Building a preview means contacting the linked website, which reveals your IP "
                         "address and roughly when you read the message to whoever controls that link. Previews "
-                        "sent by the server as part of the message are always shown and never involve a request.",
+                        "sent by the server as part of the message are always shown and never involve a request. "
+                        "Without contacts access, every sender counts as unknown and previews wait for a tap.",
                     isThreeLine: true,
                   ),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),

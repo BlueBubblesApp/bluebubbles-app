@@ -42,6 +42,11 @@ abstract final class MetadataHelper {
   /// not per chat: in a group containing both a contact and a stranger, the
   /// stranger's messages are still gated.
   ///
+  /// Fails closed: a sender that cannot be confirmed as a contact counts as
+  /// unknown, including when contacts access is unavailable entirely. That
+  /// means denying the contacts permission turns every link into tap-to-load
+  /// rather than quietly reverting to fetching everything.
+  ///
   /// A manual tap bypasses this entirely — see [fetchForMessage], which does
   /// not consult it.
   static Future<bool> shouldAutoFetch(Message message) async {
@@ -57,12 +62,14 @@ abstract final class MetadataHelper {
     // The user chose to send this link themselves.
     if (message.isFromMe ?? false) return true;
 
-    // Without contacts access every sender looks unknown, which would silently
-    // disable previews on desktop and for anyone who declined the permission.
-    // Failing open is the deliberate choice: the setting is about unknown
-    // *senders*, not about the app's ability to identify them.
-    if (!ContactsSvcV2.hasContactAccessSync) return true;
-
+    // Everything below fails closed. A sender we cannot confirm is a contact is
+    // treated as unknown, whatever the reason — no handle, contacts permission
+    // denied, a server without the contacts API, or a lookup error. The user
+    // asked for previews from saved contacts only, and "we could not check"
+    // is not the same as "yes".
+    //
+    // `getContactForHandle` already returns null when access is unavailable, so
+    // no separate permission check is needed here.
     final handleId = message.handle?.id;
     if (handleId == null) return false;
 

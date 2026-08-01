@@ -126,5 +126,11 @@ still applies to a user-initiated load.
 - `never` — tap to load, always
 
 The gate is evaluated per *message sender* (`MetadataHelper.shouldAutoFetch`), not per chat, so a
-stranger's links in a group are still gated. Missing contacts permission fails open. Server-supplied
-previews (Apple payload data) never involve a request and are unaffected.
+stranger's links in a group are still gated.
+
+It **fails closed**: a sender that cannot be confirmed as a contact counts as unknown — no handle,
+contacts permission denied, a server without the contacts API, or a lookup error all gate the
+preview. Denying contacts access therefore turns every link into tap-to-load rather than reverting
+to fetching everything.
+
+Server-supplied previews (Apple payload data) never involve a request and are unaffected.
