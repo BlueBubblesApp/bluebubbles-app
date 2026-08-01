@@ -1,5 +1,6 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/network/metadata/metadata.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';

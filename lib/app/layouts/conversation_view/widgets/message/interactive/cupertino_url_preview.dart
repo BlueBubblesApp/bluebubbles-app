@@ -70,7 +70,7 @@ class CupertinoUrlPreview extends StatelessWidget {
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: context.height * 0.4, minHeight: 100),
                         child: Image.memory(
-                          resolvedContent!.bytes!,
+                          resolvedContent.bytes!,
                           gaplessPlayback: true,
                           filterQuality: FilterQuality.none,
                           errorBuilder: (context, object, stacktrace) => Center(
