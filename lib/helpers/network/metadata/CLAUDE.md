@@ -133,4 +133,8 @@ contacts permission denied, a server without the contacts API, or a lookup error
 preview. Denying contacts access therefore turns every link into tap-to-load rather than reverting
 to fetching everything.
 
-Server-supplied previews (Apple payload data) never involve a request and are unaffected.
+Apple's payload data supplies a title and summary with the message, and those always render — no
+request involved. Its `imageMetadata.url` is *not* exempt: that image lives on a third-party host, so
+downloading it is an outbound request and is gated like any other. Anything already on disk is served
+without touching the network, which is why `MetadataHelper.resolveCachedImage` applies the gate only
+on a cache miss.

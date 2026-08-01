@@ -20,6 +20,7 @@ class StorageInterface {
       'ageFilter': ageFilter.name,
       'runId': runId,
       'attachmentsPath': FilesystemSvc.attachmentsPath,
+      'urlPreviewsPath': FilesystemSvc.urlPreviewsPath,
     };
 
     final Map<String, dynamic> result = isIsolate
@@ -43,6 +44,7 @@ class StorageInterface {
       'ageFilter': ageFilter.name,
       'segments': segments.map((s) => s.name).toList(),
       'attachmentsPath': FilesystemSvc.attachmentsPath,
+      'urlPreviewsPath': FilesystemSvc.urlPreviewsPath,
     };
 
     final Map<String, dynamic> result = isIsolate

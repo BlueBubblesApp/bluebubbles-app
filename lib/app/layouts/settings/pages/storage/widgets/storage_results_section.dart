@@ -117,11 +117,11 @@ class StorageResultsSection extends StatelessWidget with StorageAnalyzerHelpersM
                     ],
                   )),
             ),
-          if (!result.orphanScanValid)
+          if (!result.globalScanValid)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                "Orphaned files aren't shown while a chat or age filter is active.",
+                "Orphaned files and link previews aren't shown while a chat or age filter is active.",
                 style: context.theme.textTheme.labelSmall?.copyWith(color: context.theme.colorScheme.outline),
                 textAlign: TextAlign.center,
               ),

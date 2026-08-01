@@ -162,11 +162,19 @@ abstract final class MetadataHelper {
   ///
   /// Returns null when the image is missing, unreachable, or fails validation
   /// — including the tracking pixels that used to be blocklisted by hostname.
+  ///
+  /// Set [bypassGate] when the caller has already cleared this message through
+  /// [shouldAutoFetch], or when the user asked for the preview explicitly.
+  /// Otherwise a **download** (never a disk hit) is gated on the sender policy:
+  /// a cache the user cleared from the Storage Analyzer must not silently
+  /// re-fetch from a sender whose previews they chose not to load
+  /// automatically.
   static Future<CachedPreviewImage?> resolveCachedImage(
     Message message,
     String imageUrl, {
     MetadataCacheSlot slot = MetadataCacheSlot.urlPreview,
     bool isIcon = false,
+    bool bypassGate = false,
   }) async {
     if (kIsWeb) return null;
 
@@ -178,6 +186,10 @@ abstract final class MetadataHelper {
         return CachedPreviewImage(path: cachedPath, hash: storedHash, fromDisk: true);
       }
     }
+
+    // Only reached on a cache miss, so the policy check costs nothing on the
+    // common path.
+    if (!bypassGate && !await shouldAutoFetch(message)) return null;
 
     final downloaded = await fetcher.images.download(imageUrl);
     if (downloaded == null) return null;

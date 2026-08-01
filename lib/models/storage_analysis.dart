@@ -4,13 +4,24 @@ enum StorageSegmentType {
   photos, videos, audio, documents, other,
   thumbnailsAndConversions,
   orphaned,
+
+  /// Cached link preview images (`url_previews/`). Content-addressed and
+  /// shared across every message linking the same page, so — like
+  /// [orphaned] — they cannot be attributed to one chat or one date and are
+  /// only reported on an unfiltered scan. See [StorageAnalysisResult.globalScanValid].
+  urlPreviews,
 }
 
 extension StorageSegmentTypeX on StorageSegmentType {
   /// Whether files in this segment map to a DB row that must be reset on delete.
   /// false only for [StorageSegmentType.thumbnailsAndConversions] (touches an existing row's
   /// derived files, not the tracked original) and [StorageSegmentType.orphaned] (no row at all).
-  bool get resetsAttachmentRow => this != StorageSegmentType.orphaned;
+  bool get resetsAttachmentRow =>
+      this != StorageSegmentType.orphaned && this != StorageSegmentType.urlPreviews;
+
+  /// Whether this segment lives outside the per-chat attachment tree, so a
+  /// chat or age filter cannot narrow it and the scan skips it entirely.
+  bool get isGlobal => this == StorageSegmentType.orphaned || this == StorageSegmentType.urlPreviews;
 }
 
 class StorageSegment {
@@ -37,17 +48,18 @@ class StorageAnalysisResult {
   final StorageAgeFilter ageFilter;
   final DateTime computedAt;
 
-  /// false whenever [chatGuid] or [ageFilter] narrowed the scan — orphan
-  /// folders can't be attributed to a chat or a date, so the walk skips
-  /// orphan detection entirely rather than report a partial number.
-  final bool orphanScanValid;
+  /// false whenever [chatGuid] or [ageFilter] narrowed the scan — neither
+  /// orphan folders nor cached link preview images can be attributed to a chat
+  /// or a date, so the walk skips them entirely rather than report a partial
+  /// number. See [StorageSegmentTypeX.isGlobal].
+  final bool globalScanValid;
 
   const StorageAnalysisResult({
     required this.segments,
     required this.chatGuid,
     required this.ageFilter,
     required this.computedAt,
-    required this.orphanScanValid,
+    required this.globalScanValid,
   });
 
   int get totalBytes => segments.fold(0, (a, s) => a + s.bytes);
@@ -60,7 +72,7 @@ class StorageAnalysisResult {
         chatGuid: json['chatGuid'] as String?,
         ageFilter: StorageAgeFilter.values.byName(json['ageFilter'] as String),
         computedAt: DateTime.fromMillisecondsSinceEpoch(json['computedAt'] as int),
-        orphanScanValid: json['orphanScanValid'] as bool,
+        globalScanValid: json['globalScanValid'] as bool,
       );
 
   Map<String, dynamic> toMap() => {
@@ -68,7 +80,7 @@ class StorageAnalysisResult {
         'chatGuid': chatGuid,
         'ageFilter': ageFilter.name,
         'computedAt': computedAt.millisecondsSinceEpoch,
-        'orphanScanValid': orphanScanValid,
+        'globalScanValid': globalScanValid,
       };
 }
 

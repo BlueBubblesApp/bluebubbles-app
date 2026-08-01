@@ -75,9 +75,11 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     required Message message,
     required void Function(CachedPreviewImage image) onResult,
     bool isIcon = false,
+    bool bypassGate = false,
   }) async {
     if (kIsWeb) return;
-    final result = await MetadataHelper.resolveCachedImage(message, imageUrl, isIcon: isIcon);
+    final result =
+        await MetadataHelper.resolveCachedImage(message, imageUrl, isIcon: isIcon, bypassGate: bypassGate);
     if (result != null) onResult(result);
   }
 
@@ -163,7 +165,9 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   }
 
   /// Top-level coordinator for standard message URL previews.
-  Future<void> _initMessagePreview() async {
+  ///
+  /// Set [force] when the user tapped to load, which skips the sender policy.
+  Future<void> _initMessagePreview({bool force = false}) async {
     final message = context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState.message;
     if (message == null) return;
 
@@ -172,8 +176,26 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     final inReply = context.getInheritedWidgetOfExactType<ReplyScope>() != null;
 
     if (await _resolvePluginPayloadAttachment(message)) return;
-    await _resolveServerImages(message, inReply);
-    await _fetchMissingMetadata(message, inReply);
+
+    // Resolved once and threaded through both branches, so scrolling a chat
+    // costs at most one contact lookup per message rather than one per image.
+    final canFetch = force || await MetadataHelper.shouldAutoFetch(message);
+
+    if (data.imageMetadata?.url != null || data.iconMetadata?.url != null) {
+      await _resolveServerImages(message, inReply, bypassGate: canFetch);
+
+      // The card's title and summary arrived with the message, but its image
+      // sits on a third-party host, so fetching that is an outbound request
+      // like any other and is gated the same way. Anything already on disk was
+      // returned above without touching the network.
+      final imageStillMissing = data.imageMetadata?.url != null && _previewImagePath == null && !inReply;
+      if (!canFetch && imageStillMissing && mounted) {
+        setState(() => _needsManualLoad = true);
+      }
+      return;
+    }
+
+    await _fetchMissingMetadata(message, inReply, canFetch: canFetch);
   }
 
   /// Checks for a plugin payload attachment (e.g. Apple Music). Returns true
@@ -197,11 +219,15 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   }
 
   /// Resolves server-provided image and icon URLs to disk-cached files.
-  Future<void> _resolveServerImages(Message message, bool inReply) async {
+  ///
+  /// A disk hit is always served; [bypassGate] only decides whether a cache
+  /// miss may go to the network.
+  Future<void> _resolveServerImages(Message message, bool inReply, {required bool bypassGate}) async {
     if (data.imageMetadata?.url != null && !inReply) {
       await _resolveImage(
         imageUrl: data.imageMetadata!.url!,
         message: message,
+        bypassGate: bypassGate,
         onResult: (image) => _setPreviewImagePath(image.path, fromDisk: image.fromDisk),
       );
     }
@@ -211,6 +237,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
         imageUrl: data.iconMetadata!.url!,
         message: message,
         isIcon: true,
+        bypassGate: bypassGate,
         onResult: (image) {
           if (mounted) setState(() => _iconImagePath = image.path);
         },
@@ -222,13 +249,12 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   ///
   /// Cached metadata is restored first; a fresh fetch only runs when the store
   /// says the last attempt has aged out (or never happened).
-  Future<void> _fetchMissingMetadata(Message message, bool inReply) async {
-    final hasServerImages = data.imageMetadata?.url != null || data.iconMetadata?.url != null;
-    if (hasServerImages || message.url == null) return;
+  Future<void> _fetchMissingMetadata(Message message, bool inReply, {required bool canFetch}) async {
+    if (message.url == null) return;
 
     final cached = MessageMetadataStore.read(message);
     if (cached != null) {
-      await _applyMetadata(message, cached, inReply, persist: false);
+      await _applyMetadata(message, cached, inReply, persist: false, bypassGate: canFetch);
 
       // Real metadata never goes stale. A cache entry holding only a site name
       // is the fallback written after a failed attempt, so it is retried once
@@ -238,9 +264,9 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       return;
     }
 
-    // Nothing cached and the policy says don't reach out on our own — offer
-    // the tap-to-load affordance instead of silently showing a bare card.
-    if (!await MetadataHelper.shouldAutoFetch(message)) {
+    // The policy says don't reach out on our own — offer the tap-to-load
+    // affordance instead of silently showing a bare card.
+    if (!canFetch) {
       if (mounted) setState(() => _needsManualLoad = true);
       return;
     }
@@ -256,14 +282,12 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   Future<void> _loadPreviewManually() async {
     if (_manualLoadRunning) return;
 
-    final message = context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState.message;
-    if (message == null) return;
-
-    final inReply = context.getInheritedWidgetOfExactType<ReplyScope>() != null;
-
     setState(() => _manualLoadRunning = true);
     try {
-      await _runMetadataFetch(message, inReply, manual: true);
+      // Re-enters the normal flow with the policy forced open, so this handles
+      // both shapes: a server-supplied image that was gated, and a link that
+      // needs its metadata fetched from scratch.
+      await _initMessagePreview(force: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -288,7 +312,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       // link the site itself refused to describe.
       final partial = result.metadata;
       if (partial != null && partial.isNotEmpty) {
-        await _applyMetadata(message, partial, inReply, persist: result.shouldMarkAttempted);
+        await _applyMetadata(message, partial, inReply, persist: result.shouldMarkAttempted, bypassGate: true);
         return;
       }
 
@@ -296,16 +320,22 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       return;
     }
 
-    await _applyMetadata(message, result.metadata!, inReply, persist: true);
+    await _applyMetadata(message, result.metadata!, inReply, persist: true, bypassGate: true);
   }
 
   /// Renders [metadata], resolving its image and icon, and optionally writes
   /// it back to the message.
+  /// Set [bypassGate] when [metadata] came from a fetch that already cleared
+  /// the sender policy, so re-checking it for the image download is redundant.
+  /// Restoring from cache leaves it false: the metadata may have been stored
+  /// long ago, under a different policy, and the image download is a fresh
+  /// outbound request.
   Future<void> _applyMetadata(
     Message message,
     UrlMetadata metadata,
     bool inReply, {
     required bool persist,
+    bool bypassGate = false,
   }) async {
     if (mounted) setState(() => _fetchedMetadata = metadata);
 
@@ -321,7 +351,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     // wasted bandwidth and disk.
     final imageUrl = metadata.imageUrl;
     if (!inReply && imageUrl != null) {
-      final image = await MetadataHelper.resolveCachedImage(message, imageUrl);
+      final image = await MetadataHelper.resolveCachedImage(message, imageUrl, bypassGate: bypassGate);
       if (image != null) {
         imageHash = image.hash;
         _setPreviewImagePath(image.path, fromDisk: image.fromDisk);
@@ -330,7 +360,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
 
     final iconUrl = metadata.iconUrl;
     if (iconUrl != null) {
-      final icon = await MetadataHelper.resolveCachedImage(message, iconUrl, isIcon: true);
+      final icon = await MetadataHelper.resolveCachedImage(message, iconUrl, isIcon: true, bypassGate: bypassGate);
       if (icon != null) {
         iconHash = icon.hash;
         if (mounted) setState(() => _iconImagePath = icon.path);
