@@ -23,7 +23,8 @@ Import via barrel: `package:bluebubbles/helpers/helpers.dart` (re-exports most f
 - `network_helpers.dart` — HTTP utility functions
 - `network_tasks.dart` — async network operations
 - `network_error_handler.dart` — classifies and surfaces network errors to UI
-- `metadata_helper.dart` — URL metadata / Open Graph extraction for link previews
+- `metadata_helper.dart` — public entry point for URL preview metadata
+- `metadata/` — the metadata pipeline (parsers, HTTP client, site parsers, caches) → `network/metadata/CLAUDE.md`
 
 ## Backend Helpers (`backend/`) → `backend/CLAUDE.md`
 - `settings_helpers.dart` — settings read/write shortcuts — **not** exported by `helpers.dart`, import directly

@@ -34,6 +34,14 @@ class Settings {
   final RxDouble previewImageQuality = 0.75.obs; // 0.25 to 1.0
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
+
+  /// Whether to fetch link preview metadata directly from linked websites.
+  ///
+  /// Turning this off stops the app contacting sites that other people link
+  /// to, which otherwise discloses the user's IP address and rough read time
+  /// to whoever controls the URL. Previews supplied by the server as part of
+  /// Apple's payload data are unaffected.
+  final RxBool fetchUrlPreviews = true.obs;
   final RxBool showIncrementalSync = false.obs;
   final RxBool highPerfMode = false.obs;
   final RxBool reduceMotion = false.obs;
@@ -296,6 +304,7 @@ class Settings {
       'imageQuality': previewImageQuality.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
+      'fetchUrlPreviews': fetchUrlPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'reduceMotion': reduceMotion.value,
@@ -460,6 +469,8 @@ class Settings {
         map['autoOpenKeyboard'] ?? SettingsSvc.settings.autoOpenKeyboard.value;
     SettingsSvc.settings.hideTextPreviews.value =
         map['hideTextPreviews'] ?? SettingsSvc.settings.hideTextPreviews.value;
+    SettingsSvc.settings.fetchUrlPreviews.value =
+        map['fetchUrlPreviews'] ?? SettingsSvc.settings.fetchUrlPreviews.value;
     SettingsSvc.settings.showIncrementalSync.value =
         map['showIncrementalSync'] ?? SettingsSvc.settings.showIncrementalSync.value;
     SettingsSvc.settings.highPerfMode.value = map['highPerfMode'] ?? SettingsSvc.settings.highPerfMode.value;
@@ -706,6 +717,7 @@ class Settings {
     s.previewImageQuality.value = map['imageQuality']?.toDouble() ?? 1.0;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
+    s.fetchUrlPreviews.value = map['fetchUrlPreviews'] ?? true;
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.reduceMotion.value = map['reduceMotion'] ?? false;

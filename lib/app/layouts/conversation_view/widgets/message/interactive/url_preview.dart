@@ -5,17 +5,13 @@ import 'dart:ui';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:html/parser.dart' as parser;
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -39,7 +35,7 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   PlatformFile? get resolvedContent => content is PlatformFile ? content as PlatformFile : null;
   File? get file => resolvedContent?.path != null ? File(resolvedContent!.path!) : null;
   Object? content;
-  Metadata? _fetchedMetadata;
+  UrlMetadata? _fetchedMetadata;
   String? _previewImagePath;
   String? _iconImagePath;
   bool _previewImageFromDisk = false;
@@ -62,19 +58,20 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     }
   }
 
-  /// Resolves an image URL to a local disk file. If the MD5 hash is already
-  /// stored in [message.metadata] and the file exists on disk, [onResult] is
-  /// called immediately with [fromDisk] = true (no animation). Otherwise the
-  /// image is downloaded, saved and [onResult] is called with [fromDisk] = false.
+  /// Resolves an image URL to a local disk file. If the hash is already stored
+  /// on the message and the file exists on disk, [onResult] is called
+  /// immediately with `fromDisk: true` (no animation). Otherwise the image is
+  /// downloaded, validated, saved, and [onResult] is called with
+  /// `fromDisk: false`.
   Future<void> _resolveImage({
     required String imageUrl,
-    required String metadataKey,
     required Message message,
-    required void Function(String path, bool fromDisk) onResult,
+    required void Function(CachedPreviewImage image) onResult,
+    bool isIcon = false,
   }) async {
     if (kIsWeb) return;
-    final result = await MetadataHelper.resolveCachedImage(message, metadataKey, imageUrl);
-    if (result != null) onResult(result.$1, result.$2);
+    final result = await MetadataHelper.resolveCachedImage(message, imageUrl, isIcon: isIcon);
+    if (result != null) onResult(result);
   }
 
   @override
@@ -130,32 +127,29 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       location = await File(widget.file!.path!).readAsString();
     }
 
-    dataOverride = UrlPreviewData(title: data.title, siteName: data.siteName);
-    dataOverride!.url = AttachmentsSvc.parseAppleLocationUrl(location)
+    final mapsUrl = AttachmentsSvc.parseAppleLocationUrl(location)
         ?.replaceAll("\\", "")
         .replaceAll("http:", "https:")
         .replaceAll("/?", "/place?")
         .replaceAll(",", "%2C");
-    if (dataOverride!.url == null) return;
+    if (mapsUrl == null) return;
 
-    final response = await HttpSvc.dio.get(dataOverride!.url!,
-        options: Options(followRedirects: true, maxRedirects: 2));
-    final document = parser.parse(response.data);
-    final link = document
-        .getElementsByClassName("sc-platter-cell")
-        .firstOrNull
-        ?.children
-        .firstWhereOrNull((e) => e.localName == "a");
-    final url = link?.attributes["href"];
-    if (url == null) return;
+    dataOverride = UrlPreviewData(title: data.title, siteName: data.siteName)..url = mapsUrl;
+    if (mounted) setState(() {});
 
-    MetadataFetch.extract(dataOverride!.url!).then((metadata) {
-      if (metadata?.image != null) {
-        dataOverride!.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata!.image);
-        dataOverride!.summary = metadata.description ?? metadata.title;
-        dataOverride!.url = url;
-        if (mounted) setState(() {});
+    // A single fetch now covers both halves of this: `AppleMapsSiteParser`
+    // pulls the place title and the canonical "open in Maps" link out of the
+    // same document the preview metadata comes from. This used to download the
+    // page twice — once here for the link, once inside the metadata library.
+    final metadata = (await MetadataHelper.fetchForUrl(mapsUrl)).metadata;
+    if (metadata == null || !mounted) return;
+
+    setState(() {
+      if (metadata.imageUrl != null) {
+        dataOverride!.imageMetadata = MediaMetadata(size: const Size.square(1), url: metadata.imageUrl);
       }
+      dataOverride!.summary = metadata.description ?? metadata.title;
+      dataOverride!.url = metadata.canonicalUrl ?? mapsUrl;
     });
   }
 
@@ -198,108 +192,111 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     if (data.imageMetadata?.url != null && !inReply) {
       await _resolveImage(
         imageUrl: data.imageMetadata!.url!,
-        metadataKey: 'previewImageMd5',
         message: message,
-        onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk),
+        onResult: (image) => _setPreviewImagePath(image.path, fromDisk: image.fromDisk),
       );
     }
 
     if (data.iconMetadata?.url != null) {
       await _resolveImage(
         imageUrl: data.iconMetadata!.url!,
-        metadataKey: 'previewIconMd5',
         message: message,
-        onResult: (path, _) {
-          if (mounted) {
-            setState(() {
-              _iconImagePath = path;
-            });
-          }
+        isIcon: true,
+        onResult: (image) {
+          if (mounted) setState(() => _iconImagePath = image.path);
         },
       );
     }
   }
 
-  /// Fetches OG metadata when the server provided no image/icon. Skips if
-  /// metadata was already fetched successfully, or retries if the last attempt
-  /// failed due to a network error (so the flag is not set on network failures).
+  /// Fetches metadata when the server provided no image or icon.
+  ///
+  /// Cached metadata is restored first; a fresh fetch only runs when the store
+  /// says the last attempt has aged out (or never happened).
   Future<void> _fetchMissingMetadata(Message message, bool inReply) async {
     final hasServerImages = data.imageMetadata?.url != null || data.iconMetadata?.url != null;
     if (hasServerImages || message.url == null) return;
 
-    if (MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      await _restoreCachedMetadata(message, inReply);
+    final cached = MessageMetadataStore.read(message);
+    if (cached != null) {
+      await _applyMetadata(message, cached, inReply, persist: false);
+
+      // Real metadata never goes stale. A cache entry holding only a site name
+      // is the fallback written after a failed attempt, so it is retried once
+      // the store's TTL elapses rather than sticking forever.
+      if (cached.hasDisplayableContent || !MessageMetadataStore.shouldFetch(message)) return;
+    } else if (!MessageMetadataStore.shouldFetch(message)) {
       return;
     }
-
-    if (MetadataHelper.hasAttemptedFetch(message.metadata)) return;
 
     await _runMetadataFetch(message, inReply);
   }
 
-  /// Restores previously fetched metadata from [message.metadata] and
-  /// re-resolves the cached preview image if available.
-  Future<void> _restoreCachedMetadata(Message message, bool inReply) async {
-    final meta = Metadata.fromJson(message.metadata!);
-    if (mounted) {
-      setState(() {
-        _fetchedMetadata = meta;
-      });
-    }
-    if (kIsWeb || inReply || meta.image == null) return;
+  /// Performs a live metadata fetch, persists the result and downloads the
+  /// preview image.
+  ///
+  /// Transient failures (timeouts, socket errors, 5xx, rate limiting) are left
+  /// unrecorded so the next build retries; permanent ones are stamped so the
+  /// fetch is not repeated until the store's TTL elapses.
+  Future<void> _runMetadataFetch(Message message, bool inReply) async {
+    final result = await MetadataHelper.fetchForMessage(message);
 
-    await _resolveImage(
-      imageUrl: meta.image!,
-      metadataKey: 'previewImageMd5',
-      message: message,
-      onResult: (path, fromDisk) => _setPreviewImagePath(path, fromDisk: fromDisk),
-    );
+    if (!result.isSuccess) {
+      // A site parser may still have supplied a usable icon or site name for a
+      // link the site itself refused to describe.
+      final partial = result.metadata;
+      if (partial != null && partial.isNotEmpty) {
+        await _applyMetadata(message, partial, inReply, persist: result.shouldMarkAttempted);
+        return;
+      }
+
+      if (result.shouldMarkAttempted) MessageMetadataStore.markAttempted(message);
+      return;
+    }
+
+    await _applyMetadata(message, result.metadata!, inReply, persist: true);
   }
 
-  /// Performs a live OG metadata fetch, caches the result, and downloads the
-  /// preview image. Network errors are not marked as "attempted" so the next
-  /// load can retry; non-network errors are marked to avoid repeated fetches.
-  Future<void> _runMetadataFetch(Message message, bool inReply) async {
-    try {
-      final fetched = await MetadataHelper.fetchMetadata(message);
-      final metaMap = <String, dynamic>{
-        ...?message.metadata,
-        ...(fetched?.toJson() ?? {}),
-        'previewImageFetched': true,
-      };
+  /// Renders [metadata], resolving its image and icon, and optionally writes
+  /// it back to the message.
+  Future<void> _applyMetadata(
+    Message message,
+    UrlMetadata metadata,
+    bool inReply, {
+    required bool persist,
+  }) async {
+    if (mounted) setState(() => _fetchedMetadata = metadata);
 
-      if (!kIsWeb && !inReply && fetched?.image != null) {
-        try {
-          final response = await HttpSvc.dio.get<List<int>>(
-            fetched!.image!,
-            options: Options(responseType: ResponseType.bytes, followRedirects: true, maxRedirects: 2),
-          );
-          final bytes = response.data;
-          if (bytes != null && bytes.isNotEmpty) {
-            final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-            metaMap['previewImageMd5'] = hash;
-            _setPreviewImagePath(FilesystemSvc.urlPreviewImagePath(hash), fromDisk: false);
-          }
-        } catch (ex, stack) {
-          Logger.warn('Failed to download URL preview image', error: ex, trace: stack, tag: 'UrlPreview');
-        }
-      }
+    if (kIsWeb) {
+      if (persist) MessageMetadataStore.write(message, metadata);
+      return;
+    }
 
-      message.metadata = metaMap;
-      if (!kIsWeb && message.id != null) message.save();
-      if (mounted) {
-        setState(() {
-          _fetchedMetadata = fetched;
-        });
+    String? imageHash;
+    String? iconHash;
+
+    // Reply bubbles render text only, so downloading a hero image for them is
+    // wasted bandwidth and disk.
+    final imageUrl = metadata.imageUrl;
+    if (!inReply && imageUrl != null) {
+      final image = await MetadataHelper.resolveCachedImage(message, imageUrl);
+      if (image != null) {
+        imageHash = image.md5;
+        _setPreviewImagePath(image.path, fromDisk: image.fromDisk);
       }
-    } on SocketException catch (ex, stack) {
-      Logger.warn('Network unavailable for URL preview fetch; will retry', error: ex, trace: stack, tag: 'UrlPreview');
-    } on TimeoutException catch (ex, stack) {
-      Logger.warn('Timeout during URL preview fetch; will retry', error: ex, trace: stack, tag: 'UrlPreview');
-    } catch (ex, stack) {
-      Logger.error('Failed to fetch URL preview metadata', error: ex, trace: stack, tag: 'UrlPreview');
-      message.metadata = {...?message.metadata, 'previewImageFetched': true};
-      if (!kIsWeb && message.id != null) message.save();
+    }
+
+    final iconUrl = metadata.iconUrl;
+    if (iconUrl != null) {
+      final icon = await MetadataHelper.resolveCachedImage(message, iconUrl, isIcon: true);
+      if (icon != null) {
+        iconHash = icon.md5;
+        if (mounted) setState(() => _iconImagePath = icon.path);
+      }
+    }
+
+    if (persist) {
+      MessageMetadataStore.write(message, metadata, imageHash: imageHash, iconHash: iconHash);
     }
   }
 
@@ -368,10 +365,14 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     super.build(context);
     final message = MessageStateScope.maybeMessageOf(context);
     // Web-only fallback: disk caching is unavailable on web, so fall back to network image.
-    final webImageUrl = kIsWeb ? (data.imageMetadata?.url ?? _fetchedMetadata?.image) : null;
+    final webImageUrl = kIsWeb ? (data.imageMetadata?.url ?? _fetchedMetadata?.imageUrl) : null;
+    // Prefer the site name the page declared (`og:site_name`) over the bare
+    // host, falling back to the host when nothing declared one.
     final _rawSiteText = widget.file != null
         ? (dataOverride?.siteName ?? "")
-        : Uri.tryParse(data.originalUrl ?? data.url ?? "")?.host ?? data.siteName;
+        : data.siteName ??
+            _fetchedMetadata?.siteName ??
+            Uri.tryParse(data.originalUrl ?? data.url ?? "")?.host;
     final siteText = _rawSiteText?.replaceFirst(RegExp(r'^www\.'), '');
     // Show the plugin-payload attachment image only when no disk-cached preview is available.
     final hasAppleImage = _previewImagePath == null && webImageUrl == null;
@@ -496,10 +497,15 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
                 Flexible(
                   child:
                       Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // The `!= "www"` guards that used to live here existed
+                    // because the old metadata library defaulted a failed
+                    // fetch's title to the first dot-segment of the host. The
+                    // parser no longer invents titles, so a null title now
+                    // genuinely means the page had none.
                     Text(
-                      !isNullOrEmpty(_data.title) && _data.title != "www"
+                      !isNullOrEmpty(_data.title)
                           ? _data.title!
-                          : !isNullOrEmpty(_fetchedMetadata?.title) && _fetchedMetadata?.title != "www"
+                          : !isNullOrEmpty(_fetchedMetadata?.title)
                               ? _fetchedMetadata!.title!
                               : !isNullOrEmpty(siteText)
                                   ? siteText!

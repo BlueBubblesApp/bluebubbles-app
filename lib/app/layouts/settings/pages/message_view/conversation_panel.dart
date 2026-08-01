@@ -127,6 +127,20 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                         backgroundColor: tileColor,
                         isThreeLine: true,
                       )),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  Obx(() => SettingsSwitch(
+                        onChanged: (bool val) async {
+                          SettingsSvc.settings.fetchUrlPreviews.value = val;
+                          await SettingsSvc.settings.saveOneAsync('fetchUrlPreviews');
+                        },
+                        initialVal: SettingsSvc.settings.fetchUrlPreviews.value,
+                        title: "Fetch Link Previews",
+                        subtitle: "Loads titles and images for links by contacting the linked website. Turning "
+                            "this off keeps your IP address private from sites others link to; previews sent "
+                            "by the server still show",
+                        backgroundColor: tileColor,
+                        isThreeLine: true,
+                      )),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     SettingsTile(

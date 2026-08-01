@@ -1,227 +1,166 @@
-import 'dart:async';
-import 'dart:convert';
-
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/network/metadata/metadata.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/models.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:html/dom.dart' as html;
-import 'package:html/parser.dart' as parser;
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
 
-class MetadataHelper {
-  static bool mapIsNotEmpty(Map<String, dynamic>? data) {
-    if (data == null) return false;
-    return data.containsKey("title") && data["title"] != null;
+export 'package:bluebubbles/helpers/network/metadata/metadata.dart';
+
+/// Entry point for URL preview metadata.
+///
+/// A thin facade over the pipeline in `helpers/network/metadata/` — see
+/// `metadata/metadata.dart` for the layout. Widgets should only ever need
+/// [fetchForMessage], [resolveCachedImage] and the [MessageMetadataStore]
+/// helpers re-exported here.
+abstract final class MetadataHelper {
+  static UrlMetadataFetcher? _fetcher;
+
+  /// The shared fetcher. Created lazily so that app startup does not pay for
+  /// an HTTP client nobody may use.
+  static UrlMetadataFetcher get fetcher => _fetcher ??= UrlMetadataFetcher();
+
+  /// Replaces the shared fetcher. Test seam.
+  @visibleForTesting
+  static set fetcher(UrlMetadataFetcher value) {
+    _fetcher?.dispose();
+    _fetcher = value;
   }
 
-  static bool isNotEmpty(Metadata? data) {
-    return data?.title != null || data?.description != null || data?.image != null;
+  /// Whether the user has left automatic link preview fetching enabled.
+  ///
+  /// Fetching a preview for a link somebody else sent discloses the user's IP
+  /// address and rough read time to whoever controls that URL, so it is worth
+  /// being able to turn off. Server-supplied previews (Apple's own payload
+  /// data) are unaffected.
+  static bool get fetchingEnabled => SettingsSvc.settings.fetchUrlPreviews.value;
+
+  // ---------------------------------------------------------------------------
+  // Fetching
+  // ---------------------------------------------------------------------------
+
+  /// Fetches metadata for [message]'s URL, or for [urlOverride] when the link
+  /// lives somewhere other than the message text (a Photos share link in the
+  /// payload data, for example).
+  ///
+  /// Returns a [MetadataFetchResult] rather than throwing so callers can tell
+  /// a permanent failure from a transient one — see
+  /// [MetadataFetchResult.isRetryable].
+  static Future<MetadataFetchResult> fetchForMessage(
+    Message message, {
+    String? urlOverride,
+  }) async {
+    if (!fetchingEnabled) {
+      return const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser);
+    }
+
+    final url = urlOverride ?? message.url;
+    if (url == null || url.trim().isEmpty) {
+      return const MetadataFetchResult.failure(MetadataFetchStatus.invalidUrl);
+    }
+
+    return fetcher.fetch(url);
   }
 
-  /// Returns true when a metadata-fetch attempt has already completed without
-  /// a network error (even if no image was found). Use this to avoid repeated
-  /// fetches when the URL simply has no preview image.
-  static bool hasAttemptedFetch(Map<String, dynamic>? metadata) {
-    return metadata?['previewImageFetched'] == true;
+  /// Fetches metadata for a bare URL, outside any message context.
+  static Future<MetadataFetchResult> fetchForUrl(String url) {
+    if (!fetchingEnabled) {
+      return Future.value(const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser));
+    }
+    return fetcher.fetch(url);
   }
 
-  static final Map<String, Completer<Metadata?>> _metaCache = {};
+  /// Forgets any memoised result for [url] so the next fetch hits the network.
+  static void invalidate(String url) => fetcher.invalidate(url);
 
-  /// Fetches OG metadata for [message]. By default the URL is parsed from
-  /// [message.text] (standard link-preview flow); pass [urlOverride] to fetch
-  /// metadata for a different URL instead (e.g. a share link embedded in a
-  /// message's payload data rather than its text), keying the dedup cache off
-  /// that URL instead of the message GUID.
-  static Future<Metadata?> fetchMetadata(Message message, {String? urlOverride}) async {
-    Metadata? data;
-    final cacheKey = urlOverride ?? message.guid!;
-    // If we have a cached item for this already, return that future
-    if (_metaCache.containsKey(cacheKey)) {
-      return _metaCache[cacheKey]!.future;
+  /// Forgets every memoised result reachable from [message].
+  ///
+  /// Clearing `message.metadata` alone is not enough to force a refresh: the
+  /// in-memory cache is keyed by URL and would keep serving the previous
+  /// result. The manual "refresh preview" action needs both.
+  static void invalidateForMessage(Message message) {
+    final urls = <String>{
+      if (message.url != null) message.url!,
+      for (final data in message.payloadData?.urlData ?? const <UrlPreviewData>[]) ...[
+        if (data.url != null) data.url!,
+        if (data.originalUrl != null) data.originalUrl!,
+      ],
+    };
+
+    for (final url in urls) {
+      fetcher.invalidate(url);
     }
-
-    // Create a new completer for this request
-    Completer<Metadata?> completer = Completer();
-    _metaCache[cacheKey] = completer;
-
-    // Get the URL
-    String url = urlOverride ?? message.url!;
-    if (!url.startsWith("http")) {
-      url = "https://$url";
-    }
-    try {
-      data = await MetadataFetch.extract(url);
-    } on SocketException catch (ex, stack) {
-      Logger.warn('Network unavailable while fetching URL preview metadata; retryable',
-          error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
-      rethrow;
-    } on TimeoutException catch (ex, stack) {
-      Logger.warn('Timeout while fetching URL preview metadata; retryable',
-          error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
-      rethrow;
-    } catch (ex, stack) {
-      Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
-    }
-
-    // If the everything in the metadata is null or empty, try to manually parse
-    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
-      data = await MetadataHelper._manuallyGetMetadata(url);
-    }
-
-    // If the URL is supposedly to an actual image, set the image to the URL manually
-    RegExp exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data?.image == null && data?.title == null && data!.url != null && exp.hasMatch(data.url!)) {
-      data.image = data.url;
-      data.title = "Image Preview";
-    }
-
-    // Remove the image data if the image data links to an "empty image"
-    String imageData = data?.image ?? "";
-    if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
-      data?.image = null;
-    } else if (imageData.startsWith('//')) {
-      data?.image = 'https:$imageData';
-      // In case the image is just a relative URL path
-    } else if (imageData.startsWith('/')) {
-      data?.image = '$url$imageData';
-    }
-
-    // Remove title or description if either are the "null" string
-    if (data?.title == "null") data?.title = null;
-    if (data?.description == "null") data?.description = null;
-
-    // Set the OG URL
-    data?.url = url;
-
-    // Delete from the cache after 15 seconds (arbitrary)
-    Future.delayed(const Duration(seconds: 15), () {
-      if (_metaCache.containsKey(message.guid)) {
-        _metaCache.remove(message.guid);
-      }
-    });
-
-    // Tell everyone that it's complete
-    completer.complete(data);
-    return completer.future;
   }
 
-  /// Resolves [imageUrl] to a local disk-cached file path shared across
-  /// messages (content-addressed by MD5 hash, see [FilesystemService.saveUrlPreviewImage]).
-  /// If [message.metadata]`[metadataKey]` already points to a file on disk, that
-  /// path is returned immediately with `fromDisk: true`. Otherwise the image is
-  /// downloaded via [HttpSvc], cached to disk, and the resulting hash is
-  /// persisted back onto [message.metadata]. Returns `null` on failure.
-  static Future<(String path, bool fromDisk)?> resolveCachedImage(
+  // ---------------------------------------------------------------------------
+  // Images
+  // ---------------------------------------------------------------------------
+
+  /// Resolves [imageUrl] to a disk-cached file shared across messages.
+  ///
+  /// If [message] already stores a hash for [slot] and that file exists, it is
+  /// returned immediately with `fromDisk: true`. Otherwise the image is
+  /// downloaded, validated (content type, size, dimensions), written to the
+  /// shared cache, and the hash persisted back onto the message.
+  ///
+  /// Returns null when the image is missing, unreachable, or fails validation
+  /// — including the tracking pixels that used to be blocklisted by hostname.
+  static Future<CachedPreviewImage?> resolveCachedImage(
     Message message,
-    String metadataKey,
-    String imageUrl,
-  ) async {
+    String imageUrl, {
+    MetadataCacheSlot slot = MetadataCacheSlot.urlPreview,
+    bool isIcon = false,
+  }) async {
     if (kIsWeb) return null;
 
-    final storedMd5 = message.metadata?[metadataKey] as String?;
-    if (storedMd5 != null) {
-      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
+    final storedHash =
+        isIcon ? MessageMetadataStore.iconHash(message, slot) : MessageMetadataStore.imageHash(message, slot);
+    if (storedHash != null) {
+      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedHash);
       if (await File(cachedPath).exists()) {
-        return (cachedPath, true);
+        return CachedPreviewImage(path: cachedPath, md5: storedHash, fromDisk: true);
       }
     }
 
-    try {
-      final response = await HttpSvc.dio.get<List<int>>(
-        imageUrl,
-        options: Options(responseType: ResponseType.bytes, followRedirects: true, maxRedirects: 10),
-      );
-      final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) return null;
-      final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-      message.metadata = {...?message.metadata, metadataKey: hash};
-      if (message.id != null) message.save();
-      return (FilesystemSvc.urlPreviewImagePath(hash), false);
-    } catch (ex, stack) {
-      Logger.warn('Failed to cache preview image', error: ex, trace: stack, tag: 'MetadataHelper');
+    final downloaded = await fetcher.images.download(imageUrl);
+    if (downloaded == null) return null;
+
+    // Persist the hash without disturbing the slot's attempt bookkeeping.
+    final map = <String, dynamic>{...?message.metadata};
+    if (isIcon) {
+      final key = slot.iconHashKey;
+      if (key != null) map[key] = downloaded.md5;
+    } else {
+      map[slot.imageHashKey] = downloaded.md5;
+    }
+    message.metadata = map;
+    if (!kIsWeb && message.id != null) message.save();
+
+    return downloaded;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Location previews
+  // ---------------------------------------------------------------------------
+
+  /// Metadata for an Apple Maps link at [position], used when sharing the
+  /// user's current location.
+  ///
+  /// Returns null when the lookup fails; callers must handle that rather than
+  /// force-unwrapping, because Apple Maps does not always serve an image.
+  static Future<UrlMetadata?> getLocationMetadata(Position position) async {
+    final coordinates = '${position.latitude},${position.longitude}';
+    final url = 'https://maps.apple.com/?ll=$coordinates&q=$coordinates';
+
+    // Location sharing is an explicit user action, so it is not gated on the
+    // automatic-preview setting.
+    final result = await fetcher.fetch(url);
+    final metadata = result.metadata;
+    if (metadata == null || metadata.isEmpty) {
+      Logger.warn('Could not resolve Apple Maps metadata (${result.status.name})', tag: 'MetadataHelper');
       return null;
     }
-  }
-
-  static Future<Metadata> getLocationMetadata(Position locationData) async {
-    String metaUrl =
-        "https://maps.apple.com/?ll=${locationData.latitude},${locationData.longitude}&q=${locationData.latitude},${locationData.longitude}";
-    String userAgent =
-        " Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
-
-    HttpClient client = HttpClient();
-    client.userAgent = userAgent;
-
-    HttpClientRequest request = await client.getUrl(Uri.parse(metaUrl));
-    HttpClientResponse response = await request.close();
-    String data = await response.transform(utf8.decoder).join();
-
-    html.Document document = parser.parse(data);
-    Metadata metadata = MetadataParser.parse(document);
-    String title = document.getElementsByTagName("title")[0].text;
-    int split = title.lastIndexOf(' - ');
-    if (split != -1) {
-      title = title.substring(0, split);
-    }
-    metadata.title = title;
-
     return metadata;
-  }
-
-  /// Manually tries to parse out metadata from a given [url]
-  static Future<Metadata> _manuallyGetMetadata(String url) async {
-    Metadata meta = Metadata();
-
-    try {
-      final response = await HttpSvc.dio.get(url,
-          options: Options(
-            followRedirects: true,
-            maxRedirects: 2,
-            headers: {
-              // pretend to be a social media crawler
-              "User-Agent":
-                  "Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0 Google (+https://developers.google.com/+/web/snippet/)"
-            },
-          ));
-      if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
-        meta.image = url;
-      }
-      final document = parser.parse(response.data);
-      final props = document.head?.children
-              .where((e) => e.localName == "meta" && e.attributes["property"].toString().contains("og:"))
-              .map((e) => MapEntry(e.attributes["property"], e.attributes["content"]))
-              .toList() ??
-          [];
-      for (MapEntry entry in props) {
-        if (entry.key == "og:title") {
-          meta.title = entry.value;
-        } else if (entry.key == "og:description") {
-          meta.description = entry.value;
-        } else if (entry.key == "og:image") {
-          meta.image = entry.value;
-        } else if (entry.key == "og:video" && meta.image != null) {
-          meta.image = entry.value;
-        } else if (entry.key == "og:url") {
-          meta.url = entry.value;
-        }
-      }
-    } on HandshakeException catch (ex) {
-      meta.title = 'Invalid SSL Certificate';
-      meta.description = ex.message;
-    } catch (ex, stack) {
-      meta.title = ex.toString();
-      Logger.error('Failed to manually get metadata!', error: ex, trace: stack);
-    }
-
-    return meta;
   }
 }

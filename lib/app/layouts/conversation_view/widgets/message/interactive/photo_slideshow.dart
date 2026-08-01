@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -76,8 +75,10 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
       return;
     }
 
+    const slot = MetadataCacheSlot.photoSlideshow;
+
     // Already cached on disk from a previous fetch.
-    final storedMd5 = message.metadata?['photoPreviewImageMd5'] as String?;
+    final storedMd5 = MessageMetadataStore.imageHash(message, slot);
     if (storedMd5 != null) {
       final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
       if (await File(cachedPath).exists()) {
@@ -86,8 +87,10 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
       }
     }
 
-    // A previous attempt already ran and found no image to cache - don't retry every build.
-    if (message.metadata?['photoPreviewImageFetched'] == true) {
+    // A previous attempt already ran and found no image to cache. Unlike the
+    // old permanent flag this ages out, so a share page that was temporarily
+    // unreachable is retried rather than left blank forever.
+    if (!MessageMetadataStore.shouldFetch(message, slot: slot)) {
       if (mounted) setState(() => _previewFetchFailed = true);
       return;
     }
@@ -97,20 +100,20 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
       return;
     }
 
-    try {
-      final metadata = await MetadataHelper.fetchMetadata(message, urlOverride: data.url);
-      if (metadata?.image != null) {
-        final result = await MetadataHelper.resolveCachedImage(message, 'photoPreviewImageMd5', metadata!.image!);
-        if (result != null) {
-          if (mounted) setState(() => _previewImagePath = result.$1);
-          return;
-        }
+    final result = await MetadataHelper.fetchForMessage(message, urlOverride: data.url);
+    final imageUrl = result.metadata?.imageUrl;
+
+    if (imageUrl != null) {
+      final image = await MetadataHelper.resolveCachedImage(message, imageUrl, slot: slot);
+      if (image != null) {
+        MessageMetadataStore.write(message, result.metadata!, slot: slot, imageHash: image.md5);
+        if (mounted) setState(() => _previewImagePath = image.path);
+        return;
       }
-      message.metadata = {...?message.metadata, 'photoPreviewImageFetched': true};
-      if (message.id != null) message.save();
-    } catch (ex, stack) {
-      Logger.warn('Failed to fetch Photos preview image', error: ex, trace: stack, tag: 'PhotoSlideshow');
     }
+
+    // Only record the attempt when retrying could not help.
+    if (result.shouldMarkAttempted) MessageMetadataStore.markAttempted(message, slot: slot);
     if (mounted) setState(() => _previewFetchFailed = true);
   }
 
