@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/network/metadata/cache/metadata_memory_cache.dart';
+import 'package:bluebubbles/helpers/ui/async_task.dart';
 import 'package:bluebubbles/helpers/network/metadata/models/metadata_fetch_result.dart';
 import 'package:bluebubbles/helpers/network/metadata/models/metadata_source.dart';
 import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
@@ -6,6 +7,7 @@ import 'package:bluebubbles/helpers/network/metadata/network/html_body_decoder.d
 import 'package:bluebubbles/helpers/network/metadata/network/metadata_http_client.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/oembed_resolver.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/preview_image_downloader.dart';
+import 'package:bluebubbles/helpers/network/metadata/parsing/html_structure_guard.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_document_pipeline.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
@@ -106,13 +108,30 @@ class UrlMetadataFetcher {
         );
       }
 
-      final context = MetadataParseContext(
-        document: html_parser.parse(body),
-        requestUri: requestUri,
-        finalUri: resource.finalUri,
-      );
+      // Refuse pathologically nested markup before parsing. The parsers walk
+      // the DOM recursively, so a document engineered to nest tens of
+      // thousands of elements deep would overflow the stack and take the app
+      // down — from nothing more than an incoming text message.
+      if (!HtmlStructureGuard.isSafe(body)) {
+        Logger.warn('Refusing deeply nested document from $prepared', tag: 'UrlMetadataFetcher');
+        return MetadataFetchResult.failure(
+          MetadataFetchStatus.unsupportedContent,
+          httpStatusCode: resource.statusCode,
+          metadata: _fallbackFor(requestUri, site),
+        );
+      }
 
-      var metadata = MetadataDocumentPipeline.run(context);
+      // Parsing a 512KB document is milliseconds of synchronous work. Handing
+      // it to the scheduler keeps it off the frame that triggered the fetch.
+      // Note this is not an isolate — `runAsync` defers on the same thread —
+      // so the guard above, not this, is what makes hostile markup survivable.
+      final context = await runAsync(() => MetadataParseContext(
+            document: html_parser.parse(body),
+            requestUri: requestUri,
+            finalUri: resource.finalUri,
+          ));
+
+      var metadata = await runAsync(() => MetadataDocumentPipeline.run(context));
 
       // oEmbed costs an extra request, so it is only consulted when the
       // document left a gap the card would actually show.

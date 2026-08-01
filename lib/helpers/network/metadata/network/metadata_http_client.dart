@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/network/metadata/models/metadata_fetch_result.dart';
+import 'package:bluebubbles/helpers/network/metadata/network/fetch_concurrency_limiter.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/url_safety_guard.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -87,9 +88,12 @@ class MetadataHttpClient {
     this.connectTimeout = const Duration(seconds: 8),
     this.receiveTimeout = const Duration(seconds: 10),
     this.maxRedirects = 5,
-  }) : _dio = dio ?? _buildDio(connectTimeout, receiveTimeout, maxRedirects);
+    int maxConcurrent = 6,
+  })  : _dio = dio ?? _buildDio(connectTimeout, receiveTimeout),
+        _limiter = FetchConcurrencyLimiter(maxConcurrent);
 
   final Dio _dio;
+  final FetchConcurrencyLimiter _limiter;
   final Duration connectTimeout;
   final Duration receiveTimeout;
   final int maxRedirects;
@@ -115,7 +119,7 @@ class MetadataHttpClient {
       'Mozilla/5.0 (compatible; facebookexternalhit/1.1; +http://www.facebook.com/externalhit_uatext.php) '
       'BlueBubbles/1.0 (+https://bluebubbles.app)';
 
-  static Dio _buildDio(Duration connectTimeout, Duration receiveTimeout, int maxRedirects) {
+  static Dio _buildDio(Duration connectTimeout, Duration receiveTimeout) {
     return Dio(BaseOptions(
       connectTimeout: connectTimeout,
       receiveTimeout: receiveTimeout,
@@ -153,6 +157,16 @@ class MetadataHttpClient {
   /// Throws [MetadataFetchException] with a specific status for every failure
   /// mode so the orchestrator can decide whether the attempt is retryable.
   Future<FetchedResource> fetch(
+    Uri uri, {
+    required int maxBytes,
+    Set<FetchedContentKind>? accept,
+  }) {
+    // The whole redirect chain holds one slot: a chain is one logical fetch,
+    // and releasing between hops would let a long chain jump the queue.
+    return _limiter.run(() => _fetchChain(uri, maxBytes: maxBytes, accept: accept));
+  }
+
+  Future<FetchedResource> _fetchChain(
     Uri uri, {
     required int maxBytes,
     Set<FetchedContentKind>? accept,

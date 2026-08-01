@@ -32,6 +32,17 @@ abstract final class MetadataText {
   /// made entirely of them is correctly treated as empty.
   static final RegExp _exoticSpaces = RegExp('[\u{00A0}\u{2000}-\u{200B}\u{202F}\u{205F}\u{3000}\u{FEFF}]');
 
+  /// Bidirectional formatting characters, stripped outright.
+  ///
+  /// A title carrying an RTL override renders in a different order than it
+  /// reads, which is a cheap way to disguise what a preview actually says.
+  /// None of these have any legitimate use in a link title.
+  ///
+  /// Deliberately excludes U+200C/U+200D (ZWNJ/ZWJ): those are real characters
+  /// in Arabic and Indic scripts, and ZWJ is what holds multi-person emoji
+  /// sequences together.
+  static final RegExp _bidiControls = RegExp('[\u{061C}\u{200E}\u{200F}\u{202A}-\u{202E}\u{2066}-\u{2069}]');
+
   static final RegExp _whitespaceRun = RegExp(r'\s+');
   static final RegExp _entity = RegExp(r'&(?:#\d+|#[xX][0-9a-fA-F]+|[a-zA-Z]+);');
 
@@ -67,7 +78,7 @@ abstract final class MetadataText {
   static String? clean(String? raw, {int maxLength = maxTitleLength}) {
     if (raw == null) return null;
 
-    var value = raw.replaceAll(_exoticSpaces, ' ').trim();
+    var value = raw.replaceAll(_bidiControls, '').replaceAll(_exoticSpaces, ' ').trim();
     if (value.isEmpty) return null;
 
     if (_entity.hasMatch(value)) {

@@ -96,8 +96,19 @@ abstract final class MetadataUrls {
     }
   }
 
-  /// [resolve], returning a string.
-  static String? resolveToString(Uri base, String? raw) => resolve(base, raw)?.toString();
+  /// Upper bound on a URL we are willing to store or re-request.
+  ///
+  /// Every URL field ends up persisted on the message row and handed back to
+  /// the network layer later, so an unbounded one is both database bloat and a
+  /// request we would rather not make. Well past what any real CDN produces.
+  static const int maxLength = 2048;
+
+  /// [resolve], returning a string, and rejecting absurdly long URLs.
+  static String? resolveToString(Uri base, String? raw) {
+    final resolved = resolve(base, raw)?.toString();
+    if (resolved == null || resolved.length > maxLength) return null;
+    return resolved;
+  }
 
   /// Removes analytics-only query parameters and the fragment.
   ///
