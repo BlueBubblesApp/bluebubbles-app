@@ -68,7 +68,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   static const _pastSlotDy = <double>[5, 11, 17];
   static const _pastSlotAngle = <double>[0.1, 0.19, 0.28];
   static const _pastSlotScale = <double>[0.82, 0.72, 0.62];
-  static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
+  static const _pastSlotOpacity = <double>[0.80, 0.70, 0.60];
 
   static const double _scrollAdvanceThreshold = 50.0;
 

@@ -414,7 +414,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                                          color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                                           blurRadius: 3,
                                           offset: const Offset(0, 1),
                                         ),
@@ -449,7 +449,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                         blurRadius: 3,
                         offset: const Offset(0, 1),
                       ),
