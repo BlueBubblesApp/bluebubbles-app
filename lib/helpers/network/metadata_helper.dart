@@ -28,13 +28,52 @@ abstract final class MetadataHelper {
     _fetcher = value;
   }
 
-  /// Whether the user has left automatic link preview fetching enabled.
+  /// The user's automatic-fetch policy.
+  static LinkPreviewPolicy get policy => SettingsSvc.settings.linkPreviewPolicy.value;
+
+  /// Whether fetching is permitted at all, regardless of sender.
+  static bool get fetchingEnabled => policy != LinkPreviewPolicy.never;
+
+  /// Whether [message]'s link may be fetched without the user asking.
   ///
-  /// Fetching a preview for a link somebody else sent discloses the user's IP
-  /// address and rough read time to whoever controls that URL, so it is worth
-  /// being able to turn off. Server-supplied previews (Apple's own payload
-  /// data) are unaffected.
-  static bool get fetchingEnabled => SettingsSvc.settings.fetchUrlPreviews.value;
+  /// Under [LinkPreviewPolicy.contactsOnly] this is the difference between
+  /// "anyone who knows your number can make your phone issue a request" and
+  /// "only people you have saved can". It is evaluated per *message sender*,
+  /// not per chat: in a group containing both a contact and a stranger, the
+  /// stranger's messages are still gated.
+  ///
+  /// A manual tap bypasses this entirely — see [fetchForMessage], which does
+  /// not consult it.
+  static Future<bool> shouldAutoFetch(Message message) async {
+    switch (policy) {
+      case LinkPreviewPolicy.never:
+        return false;
+      case LinkPreviewPolicy.always:
+        return true;
+      case LinkPreviewPolicy.contactsOnly:
+        break;
+    }
+
+    // The user chose to send this link themselves.
+    if (message.isFromMe ?? false) return true;
+
+    // Without contacts access every sender looks unknown, which would silently
+    // disable previews on desktop and for anyone who declined the permission.
+    // Failing open is the deliberate choice: the setting is about unknown
+    // *senders*, not about the app's ability to identify them.
+    if (!ContactsSvcV2.hasContactAccessSync) return true;
+
+    final handleId = message.handle?.id;
+    if (handleId == null) return false;
+
+    try {
+      return (await ContactsSvcV2.getContactForHandle(handleId)) != null;
+    } catch (ex, stack) {
+      Logger.warn('Could not resolve sender contact; treating as unknown',
+          error: ex, trace: stack, tag: 'MetadataHelper');
+      return false;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Fetching
@@ -47,11 +86,16 @@ abstract final class MetadataHelper {
   /// Returns a [MetadataFetchResult] rather than throwing so callers can tell
   /// a permanent failure from a transient one — see
   /// [MetadataFetchResult.isRetryable].
+  /// Set [manual] when the user explicitly asked for this preview. A tap is
+  /// consent, so it bypasses the policy check — including
+  /// [LinkPreviewPolicy.never], where tap-to-load is the *only* way a preview
+  /// ever loads. Every other protection still applies.
   static Future<MetadataFetchResult> fetchForMessage(
     Message message, {
     String? urlOverride,
+    bool manual = false,
   }) async {
-    if (!fetchingEnabled) {
+    if (!manual && !fetchingEnabled) {
       return const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser);
     }
 
@@ -64,8 +108,12 @@ abstract final class MetadataHelper {
   }
 
   /// Fetches metadata for a bare URL, outside any message context.
-  static Future<MetadataFetchResult> fetchForUrl(String url) {
-    if (!fetchingEnabled) {
+  ///
+  /// There is no sender to evaluate here, so [LinkPreviewPolicy.contactsOnly]
+  /// behaves like [LinkPreviewPolicy.always]. The only caller is the Apple Maps
+  /// location card, whose URL is always `maps.apple.com`.
+  static Future<MetadataFetchResult> fetchForUrl(String url, {bool manual = false}) {
+    if (!manual && !fetchingEnabled) {
       return Future.value(const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser));
     }
     return fetcher.fetch(url);

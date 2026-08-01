@@ -39,6 +39,13 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   String? _previewImagePath;
   String? _iconImagePath;
   bool _previewImageFromDisk = false;
+
+  /// True when a preview exists to load but the policy says not to fetch it
+  /// automatically. Drives the tap-to-load affordance.
+  bool _needsManualLoad = false;
+
+  /// True while a manually triggered fetch is running.
+  bool _manualLoadRunning = false;
   late final AnimationController _imageAnimController;
   Worker? _refreshWorker;
 
@@ -96,6 +103,8 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
           _previewImagePath = null;
           _iconImagePath = null;
           _previewImageFromDisk = false;
+          _needsManualLoad = false;
+          _manualLoadRunning = false;
         });
         unawaited(_init());
       });
@@ -229,7 +238,40 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
       return;
     }
 
+    // Nothing cached and the policy says don't reach out on our own — offer
+    // the tap-to-load affordance instead of silently showing a bare card.
+    if (!await MetadataHelper.shouldAutoFetch(message)) {
+      if (mounted) setState(() => _needsManualLoad = true);
+      return;
+    }
+
     await _runMetadataFetch(message, inReply);
+  }
+
+  /// Loads the preview in response to an explicit tap.
+  ///
+  /// A tap is consent, so this bypasses [MetadataHelper.shouldAutoFetch]
+  /// entirely — but every other protection (host guard, redirect vetting,
+  /// size caps, image validation) still applies.
+  Future<void> _loadPreviewManually() async {
+    if (_manualLoadRunning) return;
+
+    final message = context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState.message;
+    if (message == null) return;
+
+    final inReply = context.getInheritedWidgetOfExactType<ReplyScope>() != null;
+
+    setState(() => _manualLoadRunning = true);
+    try {
+      await _runMetadataFetch(message, inReply, manual: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _manualLoadRunning = false;
+          _needsManualLoad = false;
+        });
+      }
+    }
   }
 
   /// Performs a live metadata fetch, persists the result and downloads the
@@ -238,8 +280,8 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
   /// Transient failures (timeouts, socket errors, 5xx, rate limiting) are left
   /// unrecorded so the next build retries; permanent ones are stamped so the
   /// fetch is not repeated until the store's TTL elapses.
-  Future<void> _runMetadataFetch(Message message, bool inReply) async {
-    final result = await MetadataHelper.fetchForMessage(message);
+  Future<void> _runMetadataFetch(Message message, bool inReply, {bool manual = false}) async {
+    final result = await MetadataHelper.fetchForMessage(message, manual: manual);
 
     if (!result.isSuccess) {
       // A site parser may still have supplied a usable icon or site name for a
@@ -298,6 +340,45 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
     if (persist) {
       MessageMetadataStore.write(message, metadata, imageHash: imageHash, iconHash: iconHash);
     }
+  }
+
+  /// The tap-to-load affordance shown when the policy declines to fetch a
+  /// preview on its own.
+  ///
+  /// Deliberately understated: this appears on links from unknown senders, and
+  /// it should read as an available action rather than as a warning about the
+  /// message.
+  Widget _buildLoadPreviewButton(BuildContext context) {
+    final color = context.theme.colorScheme.primary;
+
+    return InkWell(
+      onTap: _manualLoadRunning ? null : _loadPreviewManually,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_manualLoadRunning)
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+              )
+            else
+              Icon(CupertinoIcons.cloud_download, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              _manualLoadRunning ? "Loading Preview\u{2026}" : "Load Preview",
+              style: context.theme.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Builds the preview image container. When [animate] is true (fresh
@@ -544,6 +625,8 @@ class _UrlPreviewState extends State<UrlPreview> with AutomaticKeepAliveClientMi
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
+                    if (_needsManualLoad && !inReply) const SizedBox(height: 8),
+                    if (_needsManualLoad && !inReply) _buildLoadPreviewButton(context),
                   ]),
                 ),
                 if (_data.iconMetadata?.url != null || _iconImagePath != null) const SizedBox(width: 10),

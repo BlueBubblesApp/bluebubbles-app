@@ -128,19 +128,30 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                         isThreeLine: true,
                       )),
                   const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  Obx(() => SettingsSwitch(
-                        onChanged: (bool val) async {
-                          SettingsSvc.settings.fetchUrlPreviews.value = val;
-                          await SettingsSvc.settings.saveOneAsync('fetchUrlPreviews');
+                  Obx(() => SettingsOptions<LinkPreviewPolicy>(
+                        initial: SettingsSvc.settings.linkPreviewPolicy.value,
+                        onChanged: (val) async {
+                          if (val == null) return;
+                          SettingsSvc.settings.linkPreviewPolicy.value = val;
+                          await SettingsSvc.settings.saveOneAsync('linkPreviewPolicy');
                         },
-                        initialVal: SettingsSvc.settings.fetchUrlPreviews.value,
-                        title: "Fetch Link Previews",
-                        subtitle: "Loads titles and images for links by contacting the linked website. Turning "
-                            "this off keeps your IP address private from sites others link to; previews sent "
-                            "by the server still show",
-                        backgroundColor: tileColor,
-                        isThreeLine: true,
+                        options: LinkPreviewPolicy.values,
+                        textProcessing: (val) => val.label,
+                        capitalize: false,
+                        title: "Load Link Previews",
+                        subtitle: SettingsSvc.settings.linkPreviewPolicy.value.description,
+                        secondaryColor: headerColor,
+                        useModernMenu: true,
                       )),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "About link previews",
+                    subtitle: "Building a preview means contacting the linked website, which reveals your IP "
+                        "address and roughly when you read the message to whoever controls that link. Previews "
+                        "sent by the server as part of the message are always shown and never involve a request.",
+                    isThreeLine: true,
+                  ),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
                     SettingsTile(

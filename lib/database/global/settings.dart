@@ -16,6 +16,25 @@ import 'package:get/get.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:universal_io/io.dart';
 
+/// Reads [Settings.linkPreviewPolicy], honouring the boolean that preceded it.
+///
+/// Installs that saw the interim `fetchUrlPreviews` flag carry their choice
+/// forward: off stays off, on becomes the contacts-only default rather than
+/// silently re-enabling unconditional fetching.
+LinkPreviewPolicy _readLinkPreviewPolicy(Map<String, dynamic> map) {
+  final stored = map['linkPreviewPolicy'];
+  if (stored is int && stored >= 0 && stored < LinkPreviewPolicy.values.length) {
+    return LinkPreviewPolicy.values[stored];
+  }
+
+  final legacy = map['fetchUrlPreviews'];
+  if (legacy is bool) {
+    return legacy ? LinkPreviewPolicy.contactsOnly : LinkPreviewPolicy.never;
+  }
+
+  return LinkPreviewPolicy.contactsOnly;
+}
+
 class Settings {
   final RxString iMessageStatsSource = "server".obs;
   final RxInt firstFcmRegisterDate = 0.obs;
@@ -35,13 +54,13 @@ class Settings {
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
 
-  /// Whether to fetch link preview metadata directly from linked websites.
+  /// When the app may contact a linked website to build a preview card.
   ///
-  /// Turning this off stops the app contacting sites that other people link
-  /// to, which otherwise discloses the user's IP address and rough read time
-  /// to whoever controls the URL. Previews supplied by the server as part of
-  /// Apple's payload data are unaffected.
-  final RxBool fetchUrlPreviews = true.obs;
+  /// Defaults to [LinkPreviewPolicy.contactsOnly]: links from people the user
+  /// has saved load automatically, links from unknown senders wait for a tap.
+  /// Previews supplied by the server as part of Apple's payload data are
+  /// unaffected — no outbound request is involved.
+  final Rx<LinkPreviewPolicy> linkPreviewPolicy = LinkPreviewPolicy.contactsOnly.obs;
   final RxBool showIncrementalSync = false.obs;
   final RxBool highPerfMode = false.obs;
   final RxBool reduceMotion = false.obs;
@@ -304,7 +323,7 @@ class Settings {
       'imageQuality': previewImageQuality.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
-      'fetchUrlPreviews': fetchUrlPreviews.value,
+      'linkPreviewPolicy': linkPreviewPolicy.value.index,
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'reduceMotion': reduceMotion.value,
@@ -469,8 +488,9 @@ class Settings {
         map['autoOpenKeyboard'] ?? SettingsSvc.settings.autoOpenKeyboard.value;
     SettingsSvc.settings.hideTextPreviews.value =
         map['hideTextPreviews'] ?? SettingsSvc.settings.hideTextPreviews.value;
-    SettingsSvc.settings.fetchUrlPreviews.value =
-        map['fetchUrlPreviews'] ?? SettingsSvc.settings.fetchUrlPreviews.value;
+    SettingsSvc.settings.linkPreviewPolicy.value = map['linkPreviewPolicy'] != null
+        ? LinkPreviewPolicy.values[map['linkPreviewPolicy']]
+        : SettingsSvc.settings.linkPreviewPolicy.value;
     SettingsSvc.settings.showIncrementalSync.value =
         map['showIncrementalSync'] ?? SettingsSvc.settings.showIncrementalSync.value;
     SettingsSvc.settings.highPerfMode.value = map['highPerfMode'] ?? SettingsSvc.settings.highPerfMode.value;
@@ -717,7 +737,7 @@ class Settings {
     s.previewImageQuality.value = map['imageQuality']?.toDouble() ?? 1.0;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
-    s.fetchUrlPreviews.value = map['fetchUrlPreviews'] ?? true;
+    s.linkPreviewPolicy.value = _readLinkPreviewPolicy(map);
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.reduceMotion.value = map['reduceMotion'] ?? false;
