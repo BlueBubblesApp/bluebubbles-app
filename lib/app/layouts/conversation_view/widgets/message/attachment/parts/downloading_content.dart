@@ -14,12 +14,24 @@ class DownloadingContent extends StatelessWidget {
     required this.isInReply,
     required this.isiOS,
     this.isInGallery = false,
+    this.compact = false,
   });
 
   final AttachmentDownloadController downloadController;
   final bool isInReply;
   final bool isiOS;
   final bool isInGallery;
+
+  /// Forces the small ring + label row instead of the full icon-and-labels
+  /// card. Set by [AttachmentHolder] when the box reserved for the incoming
+  /// image is too small to host the full layout at its natural size.
+  final bool compact;
+
+  /// Roughly what the full layout needs: the inner `minWidth: 150` plus its
+  /// 20pt side padding, and 40 + icon(52) + two text lines + 20 vertically.
+  /// [AttachmentHolder] compares a reserved box against this to decide whether
+  /// to ask for [compact].
+  static const Size fullVariantMinSize = Size(190, 150);
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +46,16 @@ class DownloadingContent extends StatelessWidget {
       final isQueued = downloadController.state.value == AttachmentDownloadState.queued;
 
       // Compact variant: just a small ring + status label, no icon, no file size.
-      if (isInReply) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-          child: Row(
+      if (isInReply || compact) {
+        return ConstrainedBox(
+          // The Flexible below needs a finite width to lay out against, and
+          // AttachmentHolder's reserved-box backstop is a FittedBox, which
+          // hands its child unbounded constraints. Reply bubbles supply a
+          // bounded width themselves, but capping here is harmless for them.
+          constraints: const BoxConstraints(maxWidth: 200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+            child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
@@ -86,6 +104,7 @@ class DownloadingContent extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         );
       }

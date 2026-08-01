@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/generated/objectbox.g.dart';
@@ -189,9 +190,7 @@ class Attachment {
     return await AttachmentInterface.findOneAttachmentAsync(guid: guid);
   }
 
-  static Future<List<Attachment>> findAsync({
-    AttachmentQueryDescriptor? queryDescriptor,
-  }) async {
+  static Future<List<Attachment>> findAsync({AttachmentQueryDescriptor? queryDescriptor}) async {
     if (kIsWeb) return [];
     return await AttachmentInterface.findAttachmentsAsync(queryDescriptor: queryDescriptor);
   }
@@ -206,22 +205,69 @@ class Attachment {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize(decimals: decimals);
   }
 
-  /// Returns the best available width for display purposes.
-  /// Prefers the dedicated DB field; falls back to a `width` key in metadata
-  /// (e.g. sent by the server before local dimension extraction runs).
-  int? get displayWidth {
+  /// Numeric EXIF orientation (1-8, per the EXIF spec). Defaults to 1
+  /// (normal, no rotation) when unknown.
+  int get orientation => (metadata?['_orientation'] as num?)?.toInt() ?? 1;
+
+  /// True when [orientation] implies a 90/270 rotation, meaning raw pixel
+  /// width/height must be swapped to get the visual (display) size.
+  bool get orientationSwapsDimensions => orientation == 5 || orientation == 6 || orientation == 7 || orientation == 8;
+
+  /// Raw (unrotated, decode-native) pixel width/height -- prefers the new
+  /// metadata keys, falls back to the legacy `width`/`height` DB fields for
+  /// attachments processed before orientation tracking was added.
+  int? get rawWidth {
+    final raw = (metadata?['_raw_width'] as num?)?.toInt();
+    if (raw != null && raw > 0) return raw;
     if (width != null && width! > 0) return width;
-    return (metadata?['width'] as num?)?.toInt();
+    return null;
   }
 
-  /// Returns the best available height for display purposes.
-  /// Prefers the dedicated DB field; falls back to a `height` key in metadata.
-  int? get displayHeight {
+  int? get rawHeight {
+    final raw = (metadata?['_raw_height'] as num?)?.toInt();
+    if (raw != null && raw > 0) return raw;
     if (height != null && height! > 0) return height;
-    return (metadata?['height'] as num?)?.toInt();
+    return null;
+  }
+
+  /// Returns the best available width for display purposes (i.e. the visual,
+  /// post-rotation size). Falls back to a `width` key in metadata (e.g. sent
+  /// by the server before local dimension extraction runs) when raw
+  /// dimensions aren't known yet.
+  int? get displayWidth {
+    final w = rawWidth, h = rawHeight;
+    if (w == null || h == null) return (metadata?['width'] as num?)?.toInt();
+    return orientationSwapsDimensions ? h : w;
+  }
+
+  /// Returns the best available height for display purposes. See [displayWidth].
+  int? get displayHeight {
+    final w = rawWidth, h = rawHeight;
+    if (w == null || h == null) return (metadata?['height'] as num?)?.toInt();
+    return orientationSwapsDimensions ? w : h;
   }
 
   bool get hasValidSize => (displayWidth ?? 0) > 0 && (displayHeight ?? 0) > 0;
+
+  /// The logical-point box this attachment occupies inline, given the bubble's
+  /// [maxWidth].
+  ///
+  /// This is the **single source of truth** for that box. The download
+  /// placeholder, the decode placeholder, and the decoded image all reserve
+  /// exactly this, so nothing moves as an attachment progresses from
+  /// "downloading" to "rendered".
+  ///
+  /// When dimensions aren't known yet this falls back to a [maxWidth]-wide box
+  /// at [aspectRatio]'s default — that box *will* change once the real
+  /// dimensions land, which is why extraction wants to happen as early as
+  /// possible.
+  ({double width, double height}) displayBox(double maxWidth) {
+    final fallbackHeight = maxWidth / aspectRatio;
+    return (
+      width: math.min(displayWidth?.toDouble() ?? maxWidth, maxWidth),
+      height: math.min(displayHeight?.toDouble() ?? fallbackHeight, fallbackHeight),
+    );
+  }
 
   double get aspectRatio => hasValidSize ? (displayWidth! / displayHeight!).abs() : 0.78;
 
@@ -243,7 +289,29 @@ class Attachment {
     }
   }
 
-  String get convertedPath => "$path.png";
+  /// Extension used for the on-disk conversion of formats Flutter can't decode
+  /// natively.
+  ///
+  /// HEIC becomes JPEG: camera photos have no alpha, and PNG has no scaled
+  /// decode path (`SkPngCodec` doesn't implement `onGetScaledDimensions`), so a
+  /// 12 MP conversion fully inflates to ~48 MB RGBA before downscaling *every
+  /// time* it is drawn into a 200 pt bubble. JPEG at least gets DCT-domain 1/8
+  /// scaling. TIFF stays PNG — it may be a scan with alpha.
+  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) ? "jpg" : "png";
+
+  String get convertedPath => "$path.$convertedExtension";
+
+  /// Where conversions landed before HEIC moved to JPEG. Those files are still
+  /// perfectly decodable, so lookups check here before paying to reconvert.
+  String get legacyConvertedPath => "$path.png";
+
+  /// Disk-cached, downsampled preview used for fast inline display (see
+  /// `AttachmentsSvc.getOrCreateImagePreview`).
+  ///
+  /// The JPEG quality bucket is part of the filename so that changing the
+  /// preview-quality setting resolves to a different file instead of silently
+  /// reusing a preview generated at the old quality.
+  String previewPathForQuality(int quality) => "$path.preview.q$quality.jpg";
 
   bool get existsOnDisk => File(path).existsSync();
 
@@ -268,8 +336,11 @@ class Attachment {
     if (!file.existsSync()) return null;
     _pkPassParsed = true;
     try {
-      return _pkPass =
-          PkPass.fromBytes(file.readAsBytesSync(), skipSignatureVerification: true, skipChecksumVerification: true);
+      return _pkPass = PkPass.fromBytes(
+        file.readAsBytesSync(),
+        skipSignatureVerification: true,
+        skipChecksumVerification: true,
+      );
     } catch (_) {
       return _pkPass = null;
     }
@@ -308,19 +379,19 @@ class Attachment {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "uti": uti,
-        "mimeType": mimeType,
-        "isOutgoing": isOutgoing!,
-        "transferName": transferName,
-        "totalBytes": totalBytes,
-        "height": height,
-        "width": width,
-        "metadata": jsonEncode(metadata),
-        "exif": jsonEncode(exif),
-        "hasLivePhoto": hasLivePhoto,
-        "isDownloaded": isDownloaded,
-      };
+    "ROWID": id,
+    "originalROWID": originalROWID,
+    "guid": guid,
+    "uti": uti,
+    "mimeType": mimeType,
+    "isOutgoing": isOutgoing!,
+    "transferName": transferName,
+    "totalBytes": totalBytes,
+    "height": height,
+    "width": width,
+    "metadata": jsonEncode(metadata),
+    "exif": jsonEncode(exif),
+    "hasLivePhoto": hasLivePhoto,
+    "isDownloaded": isDownloaded,
+  };
 }

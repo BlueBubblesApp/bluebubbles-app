@@ -41,6 +41,8 @@ class IsolateActons {
     IsolateRequestType.convertImageToPng: (data) async => ImageActions.convertToPng(data as Map<String, dynamic>),
     IsolateRequestType.readExifData: ImageActions.readExifData,
     IsolateRequestType.getGifDimensions: ImageActions.getGifDimensions,
+    IsolateRequestType.readExifOrientation: ImageActions.readExifOrientation,
+    IsolateRequestType.generatePreview: (data) async => ImageActions.generatePreview(data as Map<String, dynamic>),
 
     // Prefs
     IsolateRequestType.saveReplyToMessageState: PrefsActions.saveReplyToMessageState,

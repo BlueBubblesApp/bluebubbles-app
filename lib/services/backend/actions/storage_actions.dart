@@ -199,25 +199,45 @@ class StorageActions {
         .toList();
   }
 
-  static bool _isConvertedPng(String name, List<File> siblings) {
-    if (!name.endsWith('.png')) return false;
-    final base = name.substring(0, name.length - 4);
-    return siblings.any((f) => p.basename(f.path) == base);
+  /// A conversion is named `<original>.<ext>` alongside the original it was
+  /// derived from, so the sibling check is what distinguishes it from a real
+  /// attachment that merely happens to be a PNG or JPEG. `.jpg` is included
+  /// because HEIC now converts to JPEG rather than PNG.
+  static bool _isConvertedImage(String name, List<File> siblings) {
+    for (final ext in const ['.png', '.jpg']) {
+      if (!name.endsWith(ext)) continue;
+      final base = name.substring(0, name.length - ext.length);
+      if (siblings.any((f) => p.basename(f.path) == base)) return true;
+    }
+    return false;
+  }
+
+  /// Every regenerable file: thumbnails, partial downloads, format
+  /// conversions, and the downsampled inline previews (`<name>.preview.qNN.jpg`,
+  /// plus any `.tmp.jpg` left behind by a generation killed mid-write — the
+  /// `.preview.` check covers those).
+  ///
+  /// The preview suffix has to be checked explicitly — `.preview.q90.jpg` ends
+  /// in `.jpg` but has no sibling matching its stripped base, so
+  /// [_isConvertedImage] does not catch it and previews would otherwise count
+  /// as originals and survive "delete thumbnails & conversions".
+  static bool _isDerived(String name, List<File> siblings) {
+    return name.endsWith('.thumbnail') ||
+        name.endsWith('.part') ||
+        name.endsWith('.tmp') ||
+        name.contains('.preview.') ||
+        _isConvertedImage(name, siblings);
   }
 
   /// A folder can hold **more than one** real, non-derivative file — not just
   /// "the original" plus cache junk. The main case: Live Photos. The `.mov`
   /// companion is written as a plain sibling of the still image, named
   /// `<transferName-without-ext>.mov` (see `LivePhotoMixin.getLivePhotoPath()`
-  /// — it is not a separate `Attachment`/GUID). That file doesn't end in
-  /// `.thumbnail`/`.part` and isn't a converted-PNG sibling, so it qualifies
-  /// as an "original" here too — see `_classifyOriginals` for how its bytes
-  /// get attributed.
+  /// — it is not a separate `Attachment`/GUID). That file isn't derived from
+  /// anything, so it qualifies as an "original" here too — see
+  /// `_classifyOriginals` for how its bytes get attributed.
   static List<File> _findOriginals(List<File> files) {
-    return files.where((f) {
-      final name = p.basename(f.path);
-      return !name.endsWith('.thumbnail') && !name.endsWith('.part') && !_isConvertedPng(name, files);
-    }).toList();
+    return files.where((f) => !_isDerived(p.basename(f.path), files)).toList();
   }
 
   /// Maps each "original" file to the segment its bytes count toward.
@@ -335,11 +355,11 @@ class StorageActions {
         await folder.delete(recursive: true);
         resetGuids.add(guid);
       } else if (deleteDerivedOnly) {
-        // Original stays; only .thumbnail/.part/.png-conversion siblings go.
+        // Original stays; only regenerable siblings go.
         final files = folder.listSync().whereType<File>().toList();
         for (final f in files) {
           final name = p.basename(f.path);
-          if (name.endsWith('.thumbnail') || name.endsWith('.part') || _isConvertedPng(name, files)) {
+          if (_isDerived(name, files)) {
             bytesFreed += f.lengthSync();
             filesDeleted++;
             await f.delete();
@@ -355,7 +375,13 @@ class StorageActions {
           final row = Database.attachments.query(Attachment_.guid.equals(guid)).build().findFirst();
           if (row == null) continue;
           row.isDownloaded = false;
-          row.metadata?.remove('_dimensions_processed');
+          // Must match the keys loadImageProperties actually writes, or the
+          // reset silently fails to force reprocessing on next view.
+          row.metadata
+            ?..remove('_orientation_processed')
+            ..remove('_orientation')
+            ..remove('_raw_width')
+            ..remove('_raw_height');
           row.height = null;
           row.width = null;
           row.exif = null;

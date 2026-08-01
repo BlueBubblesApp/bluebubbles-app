@@ -15,6 +15,7 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 
 ## Other Components
 - `bb_chip.dart` — chip/tag widget (used for labels, selected contacts, etc.)
+- `bb_switch.dart` — `BBSwitch`, skin-aware toggle (`CupertinoSwitch` on iOS skin, Material `Switch` otherwise). Used internally by `SettingsSwitch`; prefer it over raw `Switch`/`CupertinoSwitch` for any new toggle.
 - `circle_progress_bar.dart` — circular progress indicator
 - `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`

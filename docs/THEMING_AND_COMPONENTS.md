@@ -88,6 +88,26 @@ Wraps `RawChip` with the app's standard chip styling: rounded-rectangle shape
 
 Used for things like filter chips and selected-contact tags in chat creation.
 
+## `BBSwitch`
+
+`lib/app/components/bb_switch.dart`
+
+Skin-aware toggle: renders `CupertinoSwitch` under the iOS skin (`context.iOS`) and Material
+`Switch` otherwise. Drop-in replacement for either — takes `value`, `onChanged`, and an optional
+`activeColor` (mapped to `activeTrackColor` on the Cupertino side).
+
+```dart
+BBSwitch(
+  value: someFlag,
+  activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
+  onChanged: (val) => setState(() => someFlag = val),
+)
+```
+
+`SettingsSwitch` (`lib/app/layouts/settings/widgets/content/settings_switch.dart`) uses this
+internally, so every settings toggle built on top of it is skin-aware for free. Prefer `BBSwitch`
+over raw `Switch`/`CupertinoSwitch` for any new toggle outside of `SettingsSwitch`.
+
 ## Dialogs (`dialog_helpers.dart`)
 
 `lib/helpers/ui/dialog_helpers.dart`

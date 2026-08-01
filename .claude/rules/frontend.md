@@ -106,6 +106,7 @@ theming, platform, and skin conventions. Full reference: `docs/THEMING_AND_COMPO
 | `Scaffold` | `BBScaffold` | `lib/app/wrappers/bb_scaffold.dart` |
 | `AppBar` | `BBAppBar` | `lib/app/wrappers/bb_app_bar.dart` |
 | `RawChip` | `BBChip` | `lib/app/components/bb_chip.dart` |
+| `Switch` / `CupertinoSwitch` | `BBSwitch` | `lib/app/components/bb_switch.dart` |
 | `AlertDialog` / `CupertinoAlertDialog` | `showBBDialog<T>()`, `showAreYouSure()`, `showBBListSelector<T>()`, `BBProgressDialog` | `lib/helpers/ui/dialog_helpers.dart` |
 
 Dialog helpers are skin-aware (Cupertino on iOS skin, Material on Material/Samsung) — don't

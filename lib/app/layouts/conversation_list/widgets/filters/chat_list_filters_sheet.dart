@@ -97,6 +97,12 @@ void showChatListFilterSheet(
             setSheetState(() {});
           }
 
+          void resetFiltersAndSave() {
+            resetFilters();
+            ChatsSvc.saveChatListFiltersAsDefault();
+            showToast("Reset filters and saved as default");
+          }
+
           Widget sectionLabel(String label) => Padding(
                 padding: const EdgeInsets.only(top: 16, left: 10),
                 child: Text(label, style: sectionLabelStyle),
@@ -157,6 +163,13 @@ void showChatListFilterSheet(
                             ),
                             PullDownMenuItem(
                               itemTheme: itemTheme,
+                              title: "Reset Filters & Save",
+                              icon: CupertinoIcons.arrow_uturn_left,
+                              enabled: currentFilters.hasActiveFilter || !matchesDefault,
+                              onTap: resetFiltersAndSave,
+                            ),
+                            PullDownMenuItem(
+                              itemTheme: itemTheme,
                               title: "Load Saved Default",
                               icon: CupertinoIcons.arrow_down_doc,
                               enabled: !matchesDefault,
@@ -182,6 +195,11 @@ void showChatListFilterSheet(
                               child: const Text("Clear All Filters"),
                             ),
                             MenuItemButton(
+                              leadingIcon: const Icon(Icons.settings_backup_restore),
+                              onPressed: currentFilters.hasActiveFilter || !matchesDefault ? resetFiltersAndSave : null,
+                              child: const Text("Reset Filters & Save"),
+                            ),
+                            MenuItemButton(
                               leadingIcon: const Icon(Icons.download_outlined),
                               onPressed: !matchesDefault ? loadSavedDefault : null,
                               child: const Text("Load Saved Default"),
@@ -197,7 +215,7 @@ void showChatListFilterSheet(
                       Expanded(
                         child: Center(
                           child: Text(
-                            "Filter",
+                            "Chat Filters",
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                         ),
