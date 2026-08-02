@@ -141,7 +141,14 @@ abstract final class MetadataHelper {
   /// Clearing `message.metadata` alone is not enough to force a refresh: the
   /// in-memory cache is keyed by URL and would keep serving the previous
   /// result. The manual "refresh preview" action needs both.
+  ///
+  /// Also drops the image downloader's record of permanently-failed URLs. A
+  /// refresh is a deliberate request for a real retry, and the icon/image URLs
+  /// are not reachable from the message — they live inside the metadata being
+  /// discarded — so there is nothing per-URL to invalidate here.
   static void invalidateForMessage(Message message) {
+    fetcher.images.clearFailures();
+
     final urls = <String>{
       if (message.url != null) message.url!,
       for (final data in message.payloadData?.urlData ?? const <UrlPreviewData>[]) ...[

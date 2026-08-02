@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/network/metadata/models/metadata_fetch_result.dart';
 import 'package:bluebubbles/helpers/network/metadata/network/metadata_http_client.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
 import 'package:bluebubbles/services/backend/interfaces/image_interface.dart';
@@ -57,12 +58,38 @@ class PreviewImageDownloader {
   /// together lands here too.
   final Map<String, Future<CachedPreviewImage?>> _inFlight = {};
 
+  /// URLs that failed for a reason a retry cannot change, and when that
+  /// verdict expires. See [failureTtl].
+  ///
+  /// Only *permanent* failures land here. A timeout or a 5xx is left out
+  /// deliberately, so a preview that failed because the network was down still
+  /// loads once it comes back.
+  final Map<String, DateTime> _permanentFailures = {};
+
   /// Anything smaller in either dimension is a spacer, a bullet or a tracking
   /// pixel rather than a preview.
   static const int minDimension = 32;
 
   /// A body this small cannot be a real image.
   static const int minBytes = 128;
+
+  /// How long a *permanent* failure is remembered.
+  ///
+  /// Without this, a URL that can never produce an image is re-requested every
+  /// time a card is built — and cards are built constantly: scrolling one into
+  /// view, opening the message popup (which renders a second copy of the
+  /// bubble), and every "Refresh Preview". The metadata fetch has had a retry
+  /// TTL all along; the image download did not, so a dead icon cost a full
+  /// round trip per build, forever.
+  ///
+  /// The common case this exists for is [IconParser]'s `/favicon.ico` guess:
+  /// when a page declares no usable icon the parser falls back to that path,
+  /// and plenty of sites answer it with their SPA shell as `text/html`, 200.
+  static const Duration failureTtl = Duration(hours: 1);
+
+  /// Upper bound on remembered failures, so a long session cannot grow this
+  /// without limit.
+  static const int _maxFailureEntries = 256;
 
   /// Formats the `Image` widget cannot decode. SVG in particular is common for
   /// favicons and would render as a permanent error box.
@@ -117,6 +144,11 @@ class PreviewImageDownloader {
   Future<CachedPreviewImage?> download(String imageUrl, {bool optimize = false}) {
     if (kIsWeb) return Future.value();
 
+    if (_isKnownBad(imageUrl)) {
+      Logger.debug('Skipping $imageUrl; a previous attempt failed permanently', tag: 'PreviewImage');
+      return Future.value();
+    }
+
     final pending = _inFlight[imageUrl];
     if (pending != null) {
       Logger.debug('Joining in-flight download for $imageUrl', tag: 'PreviewImage');
@@ -147,21 +179,22 @@ class PreviewImageDownloader {
       );
 
       if (resource.truncated) {
-        Logger.debug('Preview image exceeded the size cap: $imageUrl', tag: 'PreviewImage');
-        return null;
+        return _reject(imageUrl, 'exceeded the ${MetadataHttpClient.maxImageBytes ~/ (1024 * 1024)}MB size cap');
       }
 
       final mime = resource.contentType?.split(';').first.trim().toLowerCase();
-      if (mime != null && unsupportedMimeTypes.contains(mime)) return null;
+      if (mime != null && unsupportedMimeTypes.contains(mime)) {
+        return _reject(imageUrl, 'content type $mime cannot be decoded');
+      }
 
       final bytes = resource.bytes;
-      if (bytes.length < minBytes) return null;
+      if (bytes.length < minBytes) {
+        return _reject(imageUrl, 'body of ${bytes.length}B is too small to be an image');
+      }
 
       final size = _dimensions(bytes);
       if (size != null && (size.$1 < minDimension || size.$2 < minDimension)) {
-        Logger.debug('Discarding ${size.$1}x${size.$2} preview image (likely a tracking pixel): $imageUrl',
-            tag: 'PreviewImage');
-        return null;
+        return _reject(imageUrl, '${size.$1}x${size.$2} is likely a tracking pixel');
       }
 
       final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
@@ -176,11 +209,63 @@ class PreviewImageDownloader {
         width: optimized?.$1 ?? size?.$1,
         height: optimized?.$2 ?? size?.$2,
       );
+    } on MetadataFetchException catch (ex) {
+      // Reuses the fetch layer's own verdict rather than re-deriving it, so
+      // "which failures are worth retrying" is defined in exactly one place.
+      final retryable = MetadataFetchResult.failure(ex.status, httpStatusCode: ex.httpStatusCode).isRetryable;
+      if (retryable) {
+        // No stack trace: a transient network failure is expected and the
+        // trace is always the same 25 frames of this pipeline.
+        Logger.debug('Preview image $imageUrl failed (${ex.status.name}, retryable)', tag: 'PreviewImage');
+        return null;
+      }
+      return _reject(imageUrl, '${ex.status.name}${ex.httpStatusCode != null ? ' (HTTP ${ex.httpStatusCode})' : ''}');
     } catch (ex, stack) {
-      Logger.debug('Failed to download preview image $imageUrl: $ex', error: ex, trace: stack, tag: 'PreviewImage');
+      // An unexpected error genuinely is worth a trace — but it is not a
+      // verdict about the URL, so it is not remembered.
+      Logger.warn('Unexpected error downloading preview image $imageUrl',
+          error: ex, trace: stack, tag: 'PreviewImage');
       return null;
     }
   }
+
+  /// Records [imageUrl] as permanently unusable and returns null.
+  ///
+  /// Logged without a stack trace on purpose: every one of these is an ordinary
+  /// property of the remote resource, not a fault in this code, and the trace
+  /// is identical every time.
+  CachedPreviewImage? _reject(String imageUrl, String reason) {
+    Logger.debug('Discarding preview image $imageUrl: $reason', tag: 'PreviewImage');
+
+    if (_permanentFailures.length >= _maxFailureEntries) {
+      _permanentFailures.removeWhere((_, expiry) => DateTime.now().isAfter(expiry));
+      // Still full of live entries — drop the one closest to expiring.
+      if (_permanentFailures.length >= _maxFailureEntries) {
+        final oldest = _permanentFailures.entries.reduce((a, b) => a.value.isBefore(b.value) ? a : b);
+        _permanentFailures.remove(oldest.key);
+      }
+    }
+
+    _permanentFailures[imageUrl] = DateTime.now().add(failureTtl);
+    return null;
+  }
+
+  /// Whether [imageUrl] is inside its [failureTtl] after a permanent failure.
+  bool _isKnownBad(String imageUrl) {
+    final expiry = _permanentFailures[imageUrl];
+    if (expiry == null) return false;
+    if (DateTime.now().isAfter(expiry)) {
+      _permanentFailures.remove(imageUrl);
+      return false;
+    }
+    return true;
+  }
+
+  /// Forgets every remembered failure, so the next request retries for real.
+  ///
+  /// Called when the user explicitly asks for a refresh — a deliberate action
+  /// should not be answered out of a negative cache.
+  void clearFailures() => _permanentFailures.clear();
 
   /// Shrinks an oversized cached preview image in place, returning its new
   /// dimensions, or null when it was left untouched.
