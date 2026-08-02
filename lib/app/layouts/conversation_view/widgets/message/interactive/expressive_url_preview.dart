@@ -19,9 +19,14 @@ import 'package:url_launcher/url_launcher.dart';
 ///    foreign here;
 ///  * `M3EShapes` corner radii instead of a hardcoded 20px;
 ///  * the tap-to-load affordance is an `M3ETonalButton`, the M3E idiom for an
-///    optional action inside a card, rather than an inline text button;
-///  * the site line sits above the title, which is how M3E cards lead with
-///    provenance.
+///    optional action inside a card, rather than an inline text button.
+///
+/// The text block is ordered the same way the iOS skin orders it, and the same
+/// way Google Messages does: title first, then a source row of favicon +
+/// domain beneath it. This skin used to lead with the site line and hang a
+/// 40px favicon off the left of the entire block, which read as a list tile
+/// rather than a link card. The favicon now sits inline with the domain at
+/// [_sourceIconSize], scaled to that line's own text.
 ///
 /// Renders one of three shapes depending on how much the page gave us — see
 /// [UrlPreviewLayout]. The card's width does not change between them, so a link
@@ -36,6 +41,13 @@ class ExpressiveUrlPreview extends StatelessWidget {
   /// to drive the card's height, so a very tall or very wide og:image cannot
   /// distort the bubble.
   static const double _imageAspectRatio = 16 / 9;
+
+  /// Favicon edge in the source row.
+  ///
+  /// Matched to the rendered height of the `labelSmall` site line it sits
+  /// against, so the two read as one line. A larger mark turns the row into a
+  /// list tile and pushes the domain off its own baseline.
+  static const double _sourceIconSize = 16;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +81,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
   // Shapes
   // ---------------------------------------------------------------------------
 
-  /// The full card: cropped image on top, then site line and title.
+  /// The full card: cropped image on top, then the text block.
   Widget _buildHero(BuildContext context, {required Message? message, required bool inReply}) {
     final resolvedContent = controller.resolvedContent;
 
@@ -90,99 +102,86 @@ class ExpressiveUrlPreview extends StatelessWidget {
           padding: inReply
               ? const EdgeInsets.all(M3ESpacing.md)
               : const EdgeInsets.fromLTRB(M3ESpacing.lg, M3ESpacing.md, M3ESpacing.lg, M3ESpacing.lg),
-          // Two nested rows so the two trailing/leading elements can align
-          // differently: the spinner centres against the whole text block,
-          // while the favicon stays level with the first line of it.
-          child: Row(
-            // Full width with the spinner pushed to the trailing edge, rather
-            // than tucked against the end of the text.
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Leading, matching the compact shape: the favicon is the
-                    // source badge for the text it sits against, so it stays on
-                    // the same side no matter which shape the card is in.
-                    if (controller.hasIcon) _buildIcon(context),
-                    if (controller.hasIcon) const SizedBox(width: M3ESpacing.md),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Provenance first: the host is the one line a user
-                          // relies on to see where a link actually goes, and it
-                          // is derived from the URL, never from og:site_name.
-                          if (controller.showsSiteLine(message?.text)) _buildSiteLine(context),
-                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3ESpacing.xs),
-                          _buildTitle(context, message),
-                          ..._buildManualLoadAffordance(context, inReply: inReply),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
-            ],
-          ),
+          child: _buildBody(context, message: message, inReply: inReply),
         ),
       ],
     );
   }
 
-  /// No image, but the page described itself: favicon, site line and title in a
-  /// single dense row — [_buildHero] without the image header, and tighter
-  /// padding with a smaller favicon to match.
+  /// No image, but the page gave us something: [_buildHero]'s text block
+  /// without the image header, and tighter padding to match.
   Widget _buildCompact(BuildContext context, {required Message? message, required bool inReply}) {
     return Padding(
       padding: inReply
           ? const EdgeInsets.all(M3ESpacing.md)
           : const EdgeInsets.symmetric(horizontal: M3ESpacing.lg, vertical: M3ESpacing.md),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Leading rather than trailing here: with no image above it,
-                    // the favicon is the only mark on the card and reads as the
-                    // source badge for the lines it sits against.
-                    if (controller.hasIcon) _buildIcon(context, size: 32),
-                    if (controller.hasIcon) const SizedBox(width: M3ESpacing.md),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (controller.showsSiteLine(message?.text)) _buildSiteLine(context),
-                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3ESpacing.xs),
-                          _buildTitle(context, message),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
-            ],
-          ),
-          ..._buildManualLoadAffordance(context, inReply: inReply),
-        ],
-      ),
+      child: _buildBody(context, message: message, inReply: inReply),
+    );
+  }
+
+  /// The text block, plus the refresh spinner pinned to the trailing edge.
+  ///
+  /// Shared by [_buildHero] and [_buildCompact] — they differ only in whether
+  /// an image sits above this and in how much padding surrounds it, so the two
+  /// shapes cannot drift apart.
+  Widget _buildBody(BuildContext context, {required Message? message, required bool inReply}) {
+    return Row(
+      // Full width with the spinner pushed to the trailing edge, rather than
+      // tucked against the end of the text.
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Flexible(child: _buildTextBlock(context, message: message, inReply: inReply)),
+        if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+      ],
+    );
+  }
+
+  /// Title first, then the source row beneath it.
+  ///
+  /// This is Google Messages' arrangement, and the one the iOS skin already
+  /// used: the headline leads and provenance sits under it, with the site's own
+  /// mark beside the domain. The Expressive skin used to lead with the site line
+  /// and hang a large favicon off the left of the whole block, which read as a
+  /// list tile rather than a link card.
+  Widget _buildTextBlock(BuildContext context, {required Message? message, required bool inReply}) {
+    final site = controller.siteText;
+    final hasSourceRow = site != null && site.isNotEmpty;
+
+    // When the title *is* the host — which is what [UrlPreviewController.titleFor]
+    // falls back to when the page supplied no title of its own — the source row
+    // already says it, and rendering both would print the domain twice, once in
+    // bold. Dropping the title leaves the icon + domain line, which is the more
+    // informative of the two.
+    final showsTitle = controller.showsSiteLine(message?.text) || !hasSourceRow;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showsTitle) _buildTitle(context, message),
+        if (showsTitle && hasSourceRow) const SizedBox(height: M3ESpacing.xs),
+        if (hasSourceRow) _buildSourceRow(context),
+        ..._buildManualLoadAffordance(context, inReply: inReply),
+      ],
+    );
+  }
+
+  /// Favicon and domain on one line — where the link actually goes.
+  ///
+  /// The icon is sized to the site line's own text so it reads as part of that
+  /// line rather than as a badge floating beside the card. The domain is
+  /// derived from the URL, never from `og:site_name`.
+  Widget _buildSourceRow(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (controller.hasIcon) _buildIcon(context, size: _sourceIconSize),
+        if (controller.hasIcon) const SizedBox(width: M3ESpacing.sm),
+        Flexible(child: _buildSiteLine(context)),
+      ],
     );
   }
 
@@ -378,23 +377,32 @@ class ExpressiveUrlPreview extends StatelessWidget {
   /// where there is no disk cache — see [UrlPreviewController.webIconUrl] for
   /// why there is no such fallback anywhere else. A load failure collapses the
   /// icon rather than surfacing as an uncaught rendering error.
-  Widget _buildIcon(BuildContext context, {double size = 40}) {
+  Widget _buildIcon(BuildContext context, {double size = _sourceIconSize}) {
     final iconImagePath = controller.iconImagePath.value;
     final webIconUrl = controller.webIconUrl;
 
-    final icon = ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: size, maxHeight: size),
+    // A definite box rather than a max constraint: the source row's height must
+    // not depend on the intrinsic size of whatever favicon came back, or the
+    // domain shifts as icons of different sizes resolve. `contain` keeps a
+    // non-square mark from being stretched into the square.
+    final icon = SizedBox(
+      width: size,
+      height: size,
       child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(M3EShapes.sm)),
+        // Proportional to the mark. A radius chosen for a 40px badge rounds a
+        // 16px favicon into a circle and eats its corners.
+        borderRadius: BorderRadius.all(Radius.circular(size / 4)),
         child: iconImagePath != null
             ? Image.file(
                 File(iconImagePath),
+                fit: BoxFit.contain,
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.medium,
                 errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               )
             : Image.network(
                 webIconUrl!,
+                fit: BoxFit.contain,
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.medium,
                 errorBuilder: (_, __, ___) => const SizedBox.shrink(),

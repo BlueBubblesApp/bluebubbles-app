@@ -61,9 +61,27 @@ implement all three, at the same width, so moving between them only changes heig
 
 | `UrlPreviewLayout` | When | Renders |
 |---|---|---|
-| `hero` | a preview image resolved (or a plugin payload carries artwork) | image, then leading favicon beside title, summary, site line |
-| `compact` | no image, but the page supplied a title or summary | leading favicon (when there is one), title, site line — **no summary**, which is what makes it shorter |
-| `bare` | nothing beyond the link | a single line showing the link |
+| `hero` | a preview image resolved (or a plugin payload carries artwork) | image, then the text block |
+| `compact` | no image, but the page supplied a title, a summary, **or just a favicon** | the text block alone, tighter padding — **no summary**, which is what makes it shorter |
+| `bare` | nothing resolved at all | a single line showing the link |
+
+**The text block** is title first, then a source row of favicon + domain beneath it — the iOS
+skin's order, and Google Messages'. Both Expressive shapes share one `_buildTextBlock`, so they
+cannot drift. The Expressive skin previously led with the site line and hung a 40px favicon off
+the left of the whole block; that read as a list tile rather than a link card. The favicon is now
+inline with the domain, sized to that line's text.
+
+When the title *is* the host — what `titleFor` falls back to when the page supplied no title —
+the title is dropped and only the source row renders, since otherwise the domain prints twice,
+once in bold. That is the shape an icon-only card takes.
+
+A resolved favicon alone is enough for `compact`. `compact` is the only shape that draws the icon,
+so keying purely on title/summary meant a page publishing an icon and nothing else fell to `bare`
+and the downloaded icon was silently discarded — the card showed a generic link glyph instead of
+the site's own mark. Such a card renders the icon beside the host, since `titleFor` falls back to
+the host. Key on `hasIcon` (backed by `iconImagePath`, set only after a successful download), never
+on `metadata.iconUrl` — `IconParser` guesses `/favicon.ico` for every page, so that field is almost
+always non-null whether or not an icon actually exists.
 
 **Payload image, fetched words.** Apple's payload often arrives as artwork and nothing else — a
 plugin-payload attachment, or an `imageMetadata` with no `title`. That used to short-circuit the
@@ -77,6 +95,20 @@ TTL'd and cached exactly like any other. A payload that supplied a title but no 
 **not** trigger this: it already reads fine, and fetching for a description alone would put a
 request behind nearly every preview in the app.
 
+**When the payload artwork is a dead end.** `keepPayloadImage` must never be hardcoded `true` for
+the plugin-payload branch. It suppresses the `og:image` download, so a payload whose attachment
+never produces a file left the card imageless with no way back — and because that branch returns
+early, "Refresh Preview" on such a message did *nothing at all*. `keepPayloadImage` is now
+`!artworkIsDeadEnd`, where a dead end is `force && !hasPayloadArtwork`.
+
+The `force` half is load-bearing. `AttachmentsSvc.getContent` returns a download controller and
+calls `onComplete` later, so on the first build of a new message the artwork is almost never on
+hand yet. Treating that as "no artwork" would fetch the page's `og:image` for nearly every payload
+message, and `showsAppleImage` makes the downloaded image win over the artwork that lands a moment
+later — inverting the precedence this whole path exists to preserve. So an automatic load trusts
+the artwork is coming; only a deliberate load (refresh, tap-to-load), where the attachment has
+already had its chance, is allowed to conclude it is not.
+
 A favicon never promotes a card to `hero` — it is a 40px mark beside the title, not a hero image.
 The tap-to-load affordance renders in all three, or a gated link could never be loaded.
 
@@ -85,6 +117,20 @@ exactly like tap-to-load — the user picked the action out of a menu. Without i
 preview whose sender `shouldAutoFetch` gates just replaces the card with the tap-to-load prompt,
 so the refresh appears to undo itself. Every other protection still applies. This holds for
 `PhotoSlideshow` too, which listens to the same key.
+
+**Refresh rolls back.** It is destructive before it is productive: `refreshPreview` clears the row,
+the controller blanks its own state, and only then is the network involved — so any failure after
+that point (host down, bot block, connection dropped) used to leave a message that had a working
+preview a second ago permanently blank. `_CardSnapshot` is captured before the clear and restored
+when the reload produces nothing, and it re-persists the metadata too, since the row is already
+gone by the time the worker runs. The image hashes are recovered from the cached file basenames —
+`FilesystemSvc.urlPreviewImagePath` is `join(dir, hash)` and those files are never deleted.
+
+"Produced nothing" is measured with the same `_CardSnapshot.hasContent` on both sides, and counts
+only what a *load* yields. Payload title/summary arrive with the message and are there either way,
+so counting them would make a refresh that lost everything look like a success. A partial success
+is left alone — the fresher answer wins, and stitching the old image onto new words would render a
+card that never existed.
 
 Both the preview image and the favicon animate in on a **fresh download only** —
 `imageAnimation` / `iconAnimation` sit at their end value by default and are only rewound by
@@ -119,6 +165,11 @@ rebuild against the new skin.
 **Presentation only in the skin files.** Anything touching the network, the disk cache, the sender
 policy or the retry TTL belongs on `UrlPreviewController`, including derived values like the site
 line — that one is security-relevant and must never diverge between skins.
+
+The site line is the host, run through `SiteDisplayNames` so a mapped domain renders as its
+friendly name (`chat.whatsapp.com` → WhatsApp). The map is a `const` in code, not a setting, and
+is resolved at display time, so adding an entry re-labels cached cards with no refetch. See
+`helpers/network/metadata/CLAUDE.md` → **Site Names**.
 
 ## Adding a New Interactive Type
 

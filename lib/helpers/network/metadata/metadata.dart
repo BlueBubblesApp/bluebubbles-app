@@ -27,4 +27,5 @@ export 'sites/site_metadata_parser.dart';
 export 'sites/site_parser_registry.dart';
 export 'url_metadata_fetcher.dart';
 export 'util/metadata_text.dart';
+export 'util/site_display_names.dart';
 export 'util/metadata_urls.dart';

@@ -9,6 +9,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' show basename;
 import 'package:universal_io/io.dart';
 
 /// How much a link preview card has to work with, and therefore which shape it
@@ -21,9 +22,15 @@ enum UrlPreviewLayout {
   /// A preview image resolved. The full card: image, favicon, title, site line.
   hero,
 
-  /// No image, but the page described itself. A dense row — favicon (when there
-  /// is one), title, site line — with tighter padding and a smaller favicon
-  /// than [hero].
+  /// No image, but the page gave us *something* — a title, a summary, or just a
+  /// favicon. A dense row — favicon (when there is one), title, site line —
+  /// with tighter padding and a smaller favicon than [hero].
+  ///
+  /// An icon on its own is enough to land here. It is the only shape that draws
+  /// the favicon at all, so a page publishing an icon and nothing else would
+  /// otherwise fall to [bare] and have that icon discarded. Such a card renders
+  /// the icon beside the host, since [titleFor] falls back to the host when
+  /// nothing supplied a title.
   ///
   /// The summary is not rendered in either shape. It is still parsed and
   /// stored, and [hasSummary] still counts toward [hasDescribedContent], so a
@@ -177,6 +184,14 @@ class UrlPreviewController {
   /// is available.
   bool get showsAppleImage => previewImagePath.value == null && webImageUrl == null;
 
+  /// True when Apple's payload artwork is on hand **right now** — the file is
+  /// downloaded and readable, not merely referenced.
+  ///
+  /// Deliberately a point-in-time answer, not "will there ever be artwork".
+  /// [_loadMessagePreview] only trusts a `false` here on a forced load, where
+  /// the attachment has had its chance; see the comment there.
+  bool get hasPayloadArtwork => resolvedContent?.bytes != null || contentFile != null;
+
   bool get hasIcon => iconImagePath.value != null || webIconUrl != null;
 
   /// True when this card renders inside a reply bubble, which is laid out
@@ -190,9 +205,7 @@ class UrlPreviewController {
   /// beside the title, and treating it as a hero image is what produced the
   /// stretched, blurry cards this state machine exists to avoid.
   bool get hasPreviewImage =>
-      previewImagePath.value != null ||
-      webImageUrl != null ||
-      (showsAppleImage && (resolvedContent?.bytes != null || contentFile != null));
+      previewImagePath.value != null || webImageUrl != null || (showsAppleImage && hasPayloadArtwork);
 
   /// True when the page supplied something the URL does not already say.
   ///
@@ -206,9 +219,20 @@ class UrlPreviewController {
   ///
   /// Reply bubbles never carry an image, so they can only ever be [compact] or
   /// [bare].
+  ///
+  /// [hasIcon] counts toward [compact] even with nothing else: a resolved
+  /// favicon is a real, downloaded, decodable image, and [bare] is the one
+  /// shape that does not draw it — so a page that published an icon but no
+  /// title or description rendered a generic link glyph and threw the icon
+  /// away. [bare] now means what it says: nothing resolved at all.
+  ///
+  /// Safe to key on because [hasIcon] reads `iconImagePath`, which is only set
+  /// after a download succeeded. `metadata.iconUrl` would be the wrong signal —
+  /// `IconParser` falls back to guessing `/favicon.ico` for every page, so it
+  /// is nearly always non-null whether or not an icon exists.
   UrlPreviewLayout get layout {
     if (!_inReply && hasPreviewImage) return UrlPreviewLayout.hero;
-    if (hasDescribedContent) return UrlPreviewLayout.compact;
+    if (hasDescribedContent || hasIcon) return UrlPreviewLayout.compact;
     return UrlPreviewLayout.bare;
   }
 
@@ -233,12 +257,18 @@ class UrlPreviewController {
   /// itself only on the message. `Uri.tryParse('')` returns a Uri whose host is
   /// `''`, not null, so the old `?? siteName` fallback was unreachable and
   /// those cards rendered with no site line.
+  /// The host is additionally run through [SiteDisplayNames], which maps a
+  /// domain to the name people actually call it (`chat.whatsapp.com` ->
+  /// "WhatsApp"). That is still URL-derived — the lookup key is the real host,
+  /// so an unmapped lookalike renders its raw self and the anti-spoofing
+  /// property above is untouched. The payload fallback is left alone: it has no
+  /// host to key on.
   String? get siteText {
     if (file != null) return dataOverride.value?.siteName;
 
     final host = MetadataUrls.parse(effectiveData.originalUrl ?? effectiveData.url ?? message?.url)?.host;
-    final raw = isNullOrEmpty(host) ? effectiveData.siteName : host;
-    return raw?.replaceFirst(RegExp(r'^www\.'), '');
+    if (!isNullOrEmpty(host)) return SiteDisplayNames.forHost(host);
+    return effectiveData.siteName?.replaceFirst(RegExp(r'^www\.'), '');
   }
 
   /// Title to render, falling back through the payload, the fetched metadata,
@@ -332,6 +362,15 @@ class UrlPreviewController {
       _refreshWorker = ever(messageState.previewRefreshKey, (_) async {
         if (_disposed) return;
         Logger.debug('Refresh requested; clearing card state for $_logId', tag: _tag);
+
+        // Captured before anything is cleared. A refresh is destructive on both
+        // sides — this controller blanks the card, and `refreshPreview` has
+        // already wiped the row — so without this a refresh that fails (host
+        // down, bot block, the network dropping mid-request) leaves a message
+        // that had a perfectly good preview a moment ago with nothing at all,
+        // permanently. Rolling back makes a failed refresh a no-op instead.
+        final previous = _CardSnapshot.capture(this);
+
         content.value = null;
         dataOverride.value = null;
         fetchedMetadata.value = null;
@@ -353,7 +392,23 @@ class UrlPreviewController {
           // applies.
           await load(force: true);
         } finally {
-          if (!_disposed) refreshRunning.value = false;
+          if (!_disposed) {
+            // The same predicate on both sides, so "did the refresh produce
+            // anything" is asked the one way. Note it deliberately measures
+            // only what a *load* produces — payload title/summary arrive with
+            // the message and are present either way, so counting them would
+            // make a refresh that lost everything look successful.
+            //
+            // Restores only on a total loss. A partial success — new words but
+            // no new picture — is still the fresher answer, and stitching the
+            // old image onto it would render a card that never existed.
+            final produced = _CardSnapshot.capture(this);
+            if (!produced.hasContent && previous.hasContent) {
+              Logger.warn('Refresh produced nothing for $_logId; restoring the previous preview', tag: _tag);
+              previous.restoreTo(this);
+            }
+            refreshRunning.value = false;
+          }
           Logger.debug('Refresh finished for $_logId (layout: ${layout.name})', tag: _tag);
         }
       });
@@ -458,10 +513,30 @@ class UrlPreviewController {
 
     if (hasPluginPayload) {
       Logger.debug('Using plugin payload attachment for $_logId', tag: _tag);
-      // The attachment is artwork only — it carries no title and no summary —
-      // so the page still gets fetched for the words. The artwork stays.
-      if (_payloadNeedsMetadata) {
-        await _fetchMissingMetadata(msg, canFetch: canFetch, keepPayloadImage: true);
+
+      // Whether the payload's artwork is a dead end, not merely late.
+      //
+      // On an automatic load the artwork is trusted to arrive: `getContent`
+      // hands back a download controller and calls `onComplete` later, so on
+      // the first build of a new message it is almost never on hand yet.
+      // Treating "not here yet" as "not coming" would fetch the page's
+      // og:image for nearly every payload message, and that image then *wins*
+      // over the artwork landing a moment later (see [showsAppleImage]).
+      //
+      // A forced load is the opposite situation. The user picked "Refresh
+      // Preview" or tapped to load and is watching the card: if the artwork
+      // is still not on hand, it is not coming, and refusing to look anywhere
+      // else is what made refresh appear to do nothing at all.
+      final artworkIsDeadEnd = force && !hasPayloadArtwork;
+
+      // Fetch when the payload left a gap the card would show — no words, or
+      // no picture it can draw.
+      if (_payloadNeedsMetadata || artworkIsDeadEnd) {
+        Logger.debug(
+            'Fetching to fill payload gaps for $_logId '
+            '(needsMetadata: $_payloadNeedsMetadata, artworkDeadEnd: $artworkIsDeadEnd)',
+            tag: _tag);
+        await _fetchMissingMetadata(msg, canFetch: canFetch, keepPayloadImage: !artworkIsDeadEnd);
       }
       return;
     }
@@ -684,5 +759,90 @@ class UrlPreviewController {
     iconImagePath.value = path;
     iconImageFromDisk.value = fromDisk;
     if (!fromDisk) iconAnimation.forward(from: 0);
+  }
+}
+
+/// Everything a card was showing, captured so a failed refresh can put it back.
+///
+/// Exists because "Refresh Preview" is destructive before it is productive: the
+/// row is cleared by `refreshPreview`, the controller blanks its own state, and
+/// only then does the network get involved. Any failure after that point used to
+/// leave the message permanently blank.
+class _CardSnapshot {
+  const _CardSnapshot({
+    required this.metadata,
+    required this.previewImagePath,
+    required this.iconImagePath,
+    required this.previewImageFromDisk,
+    required this.iconImageFromDisk,
+    required this.appleImageFromDisk,
+    required this.content,
+    required this.dataOverride,
+  });
+
+  factory _CardSnapshot.capture(UrlPreviewController c) => _CardSnapshot(
+        metadata: c.fetchedMetadata.value,
+        previewImagePath: c.previewImagePath.value,
+        iconImagePath: c.iconImagePath.value,
+        previewImageFromDisk: c.previewImageFromDisk.value,
+        iconImageFromDisk: c.iconImageFromDisk.value,
+        appleImageFromDisk: c.appleImageFromDisk.value,
+        content: c.content.value,
+        dataOverride: c.dataOverride.value,
+      );
+
+  final UrlMetadata? metadata;
+  final String? previewImagePath;
+  final String? iconImagePath;
+  final bool previewImageFromDisk;
+  final bool iconImageFromDisk;
+  final bool appleImageFromDisk;
+  final Object? content;
+  final UrlPreviewData? dataOverride;
+
+  /// Whether there was anything here worth restoring.
+  bool get hasContent =>
+      metadata != null || previewImagePath != null || iconImagePath != null || content != null || dataOverride != null;
+
+  void restoreTo(UrlPreviewController c) {
+    c.fetchedMetadata.value = metadata;
+    c.previewImagePath.value = previewImagePath;
+    c.iconImagePath.value = iconImagePath;
+    // Restored images are already on screen's terms — they came off disk the
+    // first time and are not arriving fresh now, so nothing should animate in.
+    c.previewImageFromDisk.value = previewImageFromDisk || previewImagePath != null;
+    c.iconImageFromDisk.value = iconImageFromDisk || iconImagePath != null;
+    c.appleImageFromDisk.value = true;
+    c.content.value = content;
+    c.dataOverride.value = dataOverride;
+
+    _repersist(c);
+  }
+
+  /// Puts the metadata back on the message.
+  ///
+  /// `refreshPreview` cleared the row before the reload started, so an
+  /// in-memory rollback alone would still lose the preview on the next app
+  /// launch. The image hashes are recovered from the cached file paths —
+  /// `FilesystemSvc.urlPreviewImagePath` is `join(dir, hash)`, so the basename
+  /// *is* the hash, and those files were never deleted.
+  void _repersist(UrlPreviewController c) {
+    final msg = c.message;
+    final data = metadata;
+    if (msg == null || data == null) return;
+
+    try {
+      MessageMetadataStore.write(
+        msg,
+        data,
+        imageHash: previewImagePath == null ? null : basename(previewImagePath!),
+        iconHash: iconImagePath == null ? null : basename(iconImagePath!),
+      );
+    } catch (ex, stack) {
+      // The card is already correct on screen; failing to re-persist costs the
+      // preview on next launch, not now.
+      Logger.warn('Could not re-persist the restored preview for ${msg.guid}',
+          error: ex, trace: stack, tag: 'UrlPreview');
+    }
   }
 }

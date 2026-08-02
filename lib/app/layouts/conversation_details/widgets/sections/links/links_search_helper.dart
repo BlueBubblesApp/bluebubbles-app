@@ -1,7 +1,8 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 
-/// Domain text for a link preview (host without leading `www.`).
+/// Domain text for a link preview — the configured [SiteDisplayNames] label for
+/// the host, else the host without a leading `www.`.
 ///
 /// Mirrors `UrlPreviewController.siteText`, including its fallbacks: Apple's
 /// payload does not always carry a URL — an Apple Music link arrives as a
@@ -10,8 +11,8 @@ import 'package:bluebubbles/helpers/helpers.dart';
 /// which is why the `siteName` fallback needs an explicit emptiness check.
 String linkPreviewDomain(UrlPreviewData data, {String? messageUrl}) {
   final host = MetadataUrls.parse(data.originalUrl ?? data.url ?? messageUrl)?.host;
-  final raw = isNullOrEmpty(host) ? (data.siteName ?? '') : host!;
-  return raw.replaceFirst(RegExp(r'^www\.'), '');
+  if (!isNullOrEmpty(host)) return SiteDisplayNames.forHost(host) ?? host!;
+  return (data.siteName ?? '').replaceFirst(RegExp(r'^www\.'), '');
 }
 
 int _fieldMatchScore(String field, String query, int tierBase) {
@@ -32,8 +33,14 @@ int linkPreviewSearchScore(UrlPreviewData data, String query, {String? messageUr
   final title = (data.title ?? '').toLowerCase();
   final description = (data.summary ?? '').toLowerCase();
 
+  // Scored on the raw host too, not just the label [linkPreviewDomain] resolved
+  // to. Once `chat.whatsapp.com` renders as "WhatsApp", searching for either the
+  // name or the address a user remembers typing should still find the link.
+  final host = (MetadataUrls.parse(data.originalUrl ?? data.url ?? messageUrl)?.host ?? '').toLowerCase();
+
   return [
     _fieldMatchScore(domain, normalizedQuery, 300),
+    if (host != domain) _fieldMatchScore(host, normalizedQuery, 300),
     _fieldMatchScore(title, normalizedQuery, 200),
     _fieldMatchScore(description, normalizedQuery, 100),
   ].reduce((a, b) => a > b ? a : b);

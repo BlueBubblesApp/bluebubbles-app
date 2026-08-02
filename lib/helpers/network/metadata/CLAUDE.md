@@ -67,6 +67,24 @@ the pipeline only runs them when the cheap strategies left the relevant gap.
 
 Currently registered: Apple Maps, YouTube, Amazon, Reddit.
 
+## Site Names
+
+`util/site_display_names.dart` maps a host to the name people call that site —
+`chat.whatsapp.com` → WhatsApp, `music.apple.com` → Apple Music. `SiteDisplayNames.names` is a
+`const` map maintained in code; add entries there. It is deliberately **not** a user setting.
+
+It is applied at **display time** — `UrlPreviewController.siteText` and `linkPreviewDomain`, the
+only two places that render a site line. Nothing is written onto the message row, so a new entry
+applies to cards that are already cached, without a refetch. Don't move this into `_finalize` or a
+site parser: that would bake one label into persisted metadata, so an entry added later would only
+apply to links seen after the change.
+
+Lookup walks up the host one label at a time (`m.youtube.com` → `youtube.com`), stopping at two
+labels. Labels are only ever dropped at a dot, which is what keeps `evil-apple.com` and
+`apple.com.evil.com` from inheriting `apple.com`'s label. The key is always the **real host**, so
+this does not weaken the "never `og:site_name`" rule below — an unmapped lookalike still renders
+itself.
+
 ## Persistence
 
 Never read or write `message.metadata` keys directly — go through `MessageMetadataStore`.
@@ -106,7 +124,7 @@ for messages anyone can send. The protections and where they live:
 | Stack overflow from nested markup | `HtmlStructureGuard`, before parsing |
 | Connection/memory exhaustion | `FetchConcurrencyLimiter` |
 | Tracking pixels, undecodable images | `PreviewImageDownloader` validation |
-| Site-name spoofing | the card's site line comes from the URL, never `og:site_name` |
+| Site-name spoofing | the card's site line comes from the URL, never `og:site_name`; `SiteDisplayNames` re-labels it but is keyed on the real host |
 | Bidi text spoofing | `MetadataText.clean` |
 | IP disclosure to unknown senders | `LinkPreviewPolicy` + `MetadataHelper.shouldAutoFetch` |
 
