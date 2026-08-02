@@ -488,9 +488,12 @@ class Settings {
         map['autoOpenKeyboard'] ?? SettingsSvc.settings.autoOpenKeyboard.value;
     SettingsSvc.settings.hideTextPreviews.value =
         map['hideTextPreviews'] ?? SettingsSvc.settings.hideTextPreviews.value;
-    SettingsSvc.settings.linkPreviewPolicy.value = map['linkPreviewPolicy'] != null
-        ? LinkPreviewPolicy.values[map['linkPreviewPolicy']]
-        : SettingsSvc.settings.linkPreviewPolicy.value;
+    // Through the same reader as [fromMap]: a bare `values[map[...]]` throws a
+    // RangeError on an index this build doesn't have, and skips the legacy
+    // `fetchUrlPreviews` migration entirely.
+    final hasLinkPreviewPolicy = map.containsKey('linkPreviewPolicy') || map.containsKey('fetchUrlPreviews');
+    SettingsSvc.settings.linkPreviewPolicy.value =
+        hasLinkPreviewPolicy ? _readLinkPreviewPolicy(map) : SettingsSvc.settings.linkPreviewPolicy.value;
     SettingsSvc.settings.showIncrementalSync.value =
         map['showIncrementalSync'] ?? SettingsSvc.settings.showIncrementalSync.value;
     SettingsSvc.settings.highPerfMode.value = map['highPerfMode'] ?? SettingsSvc.settings.highPerfMode.value;

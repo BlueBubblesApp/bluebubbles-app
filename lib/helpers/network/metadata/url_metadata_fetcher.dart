@@ -238,8 +238,10 @@ class UrlMetadataFetcher {
 
     // Most sites suffix their title with the site name; the card renders the
     // site on its own line, so the suffix is pure duplication.
-    final stripped = MetadataText.stripSiteSuffix(title, siteName);
-    return stripped == null || stripped.isEmpty ? title : stripped;
+    //
+    // `stripSiteSuffix` returns [title] unchanged when there is nothing to
+    // strip, so there is no empty/null case to guard here.
+    return MetadataText.stripSiteSuffix(title, siteName);
   }
 
   /// Releases the underlying HTTP connections.

@@ -61,7 +61,6 @@ class CupertinoUrlPreview extends StatelessWidget {
 
   /// The full card: image on top, then title and site line.
   Widget _buildHero(BuildContext context, {required Message? message, required bool inReply}) {
-    Logger.test('Building Hero!');
     final webImageUrl = controller.webImageUrl;
     final previewImagePath = controller.previewImagePath.value;
     final resolvedContent = controller.resolvedContent;
@@ -80,9 +79,9 @@ class CupertinoUrlPreview extends StatelessWidget {
             webImageUrl: webImageUrl,
           ),
         if (hasAppleImage && resolvedContent?.bytes != null)
-          _buildBlurredImage(context, MemoryImage(resolvedContent!.bytes!), _appleImageFromBytes(context)),
+          _growIn(_buildBlurredImage(context, MemoryImage(resolvedContent!.bytes!), _appleImageFromBytes(context))),
         if (hasAppleImage && resolvedContent != null && resolvedContent.bytes == null && contentFile != null)
-          _buildBlurredImage(context, FileImage(contentFile), _appleImageFromFile(context)),
+          _growIn(_buildBlurredImage(context, FileImage(contentFile), _appleImageFromFile(context))),
         Padding(
           padding: inReply
               ? const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0)
@@ -138,7 +137,6 @@ class CupertinoUrlPreview extends StatelessWidget {
   /// single dense row — [_buildHero] without the image header, and tighter
   /// padding with a smaller favicon to match.
   Widget _buildCompact(BuildContext context, {required Message? message, required bool inReply}) {
-    Logger.test('Building Compact!');
     return Padding(
       padding: inReply
           ? const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0)
@@ -190,7 +188,6 @@ class CupertinoUrlPreview extends StatelessWidget {
   /// tap-to-load affordance when the policy is what is holding the preview back.
   Widget _buildBare(BuildContext context, {required bool inReply}) {
     final link = controller.linkText ?? controller.siteText ?? "";
-    Logger.test('Building Bare!');
     return Padding(
       padding: inReply
           ? const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0)
@@ -403,14 +400,29 @@ class CupertinoUrlPreview extends StatelessWidget {
     );
 
     if (!animate) return container;
+    return _sizeTransition(container);
+  }
 
-    // SizeTransition animates via the ticker between frames (not during
-    // performLayout), so it never causes the re-entrancy crash that
-    // AnimatedSize triggers when a child changes size during layout.
+  /// Wraps the plugin payload's artwork (Apple Music and friends) in the same
+  /// grow-in the downloaded preview image gets.
+  ///
+  /// This image arrives on its own path — an attachment, not a URL — so it does
+  /// not go through [_buildPreviewImage] and used to appear with no animation at
+  /// all, however it turned up. It animates on the same rule as everything else:
+  /// only when it landed while the user was looking.
+  Widget _growIn(Widget child) {
+    if (controller.appleImageFromDisk.value) return child;
+    return _sizeTransition(child);
+  }
+
+  /// SizeTransition animates via the ticker between frames (not during
+  /// performLayout), so it never causes the re-entrancy crash that AnimatedSize
+  /// triggers when a child changes size during layout.
+  Widget _sizeTransition(Widget child) {
     return SizeTransition(
       sizeFactor: CurvedAnimation(parent: controller.imageAnimation, curve: Curves.easeIn),
       axisAlignment: -1.0,
-      child: container,
+      child: child,
     );
   }
 

@@ -78,8 +78,18 @@ A completed attempt is stamped with a timestamp and retried after
 are deliberately **not** stamped, so they retry on the next build — see
 `MetadataFetchResult.isRetryable`.
 
-Legacy `metadata_fetch` keys (`image`, `url`, `previewImageFetched`) are still read and written
-for backward and forward compatibility.
+Legacy `metadata_fetch` keys are handled asymmetrically, on purpose:
+
+- `image` / `url` — **read and written**. `UrlMetadata.fromJson` understands them, so rows written
+  by the old implementation still render.
+- `previewImageFetched` — **written only**, never read. It is kept so that downgrading the app
+  keeps the old "don't refetch" behaviour, but honouring it on the way *up* would restore exactly
+  the "failed once, never retries" bug `retryAfter` exists to fix. Rows carrying only that flag are
+  treated as expired and get one retry against the current parser.
+
+Clearing a preview goes through `MessageMetadataStore.clear(message, slot: ...)` — not
+`message.metadata = null`, which also discards the other slot's cached hash and any keys the server
+owns.
 
 ## Security Model
 

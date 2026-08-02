@@ -8,7 +8,13 @@ import 'package:get/get.dart';
 class M3ETonalButton extends StatefulWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onPressed;
+
+  /// Null disables the button: no tap, no ripple, no long-press, dimmed
+  /// content, and `enabled: false` to the semantics tree so a screen reader
+  /// stops announcing it as actionable. Pass null rather than an empty
+  /// callback for a busy/unavailable state.
+  final VoidCallback? onPressed;
+
   final VoidCallback? onLongPress;
   final BorderRadius borderRadius;
 
@@ -38,42 +44,56 @@ class _M3ETonalButtonState extends State<M3ETonalButton> {
     final colorScheme = context.theme.colorScheme;
     const pressedRadius = BorderRadius.all(Radius.circular(M3EShapes.md));
 
-    return GestureDetector(
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
-      child: AnimatedContainer(
-        duration: M3EMotion.spatialFast.duration,
-        curve: M3EMotion.spatialFast.curve,
-        decoration: BoxDecoration(
-          color: colorScheme.secondaryContainer,
-          borderRadius: _pressed ? pressedRadius : widget.borderRadius,
-        ),
-        constraints: const BoxConstraints(minHeight: 56),
-        clipBehavior: Clip.antiAlias,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: widget.onPressed,
-            onLongPress: widget.onLongPress,
-            splashFactory: context.theme.splashFactory,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(widget.icon, color: colorScheme.onSecondaryContainer),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.theme.textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSecondaryContainer,
+    final enabled = widget.onPressed != null;
+    // M3's disabled recipe: the container and its content keep their own hues
+    // and drop to the standard opacities, rather than switching to a different
+    // colour role.
+    final containerColor =
+        enabled ? colorScheme.secondaryContainer : colorScheme.onSurface.withValues(alpha: 0.12);
+    final contentColor =
+        enabled ? colorScheme.onSecondaryContainer : colorScheme.onSurface.withValues(alpha: 0.38);
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      child: GestureDetector(
+        onTapDown: enabled ? (_) => _setPressed(true) : null,
+        onTapUp: enabled ? (_) => _setPressed(false) : null,
+        onTapCancel: enabled ? () => _setPressed(false) : null,
+        child: AnimatedContainer(
+          duration: M3EMotion.spatialFast.duration,
+          curve: M3EMotion.spatialFast.curve,
+          decoration: BoxDecoration(
+            color: containerColor,
+            borderRadius: _pressed ? pressedRadius : widget.borderRadius,
+          ),
+          constraints: const BoxConstraints(minHeight: 56),
+          clipBehavior: Clip.antiAlias,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              // Null on both leaves InkWell inert — no splash, no hover, no
+              // focus node — which is what "disabled" should mean visually too.
+              onTap: widget.onPressed,
+              onLongPress: enabled ? widget.onLongPress : null,
+              splashFactory: context.theme.splashFactory,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(widget.icon, color: contentColor),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.theme.textTheme.labelMedium?.copyWith(color: contentColor),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

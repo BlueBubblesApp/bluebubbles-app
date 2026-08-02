@@ -48,13 +48,16 @@ class _UrlPreviewState extends State<UrlPreview>
     controller = UrlPreviewController(data: widget.data, file: widget.file, vsync: this);
 
     // UrlPreview is also used outside a message context (the links and
-    // locations sections of conversation details), so look the scope up
-    // defensively rather than asserting one exists.
+    // locations sections of conversation details), so both scopes are looked up
+    // defensively rather than asserted.
     //
-    // getInheritedWidgetOfExactType (no dependency registration) is used for
-    // ReplyScope because dependOnInheritedWidgetOfExactType is illegal here.
+    // getInheritedWidgetOfExactType throughout: dependOnInheritedWidgetOfExactType
+    // is illegal in initState, and neither scope changes for a given subtree so
+    // there is no dependency worth registering. Both of these are inherited
+    // widgets, so this is also an O(1) lookup — findAncestorWidgetOfExactType
+    // would walk the ancestor chain once per message bubble for the same answer.
     controller.attach(
-      messageState: context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState,
+      messageState: context.getInheritedWidgetOfExactType<MessageStateScope>()?.messageState,
       inReply: context.getInheritedWidgetOfExactType<ReplyScope>() != null,
       isClone: MessageCloneScope.of(context),
     );

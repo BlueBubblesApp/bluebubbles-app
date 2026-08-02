@@ -91,6 +91,13 @@ Both the preview image and the favicon animate in on a **fresh download only** â
 `_setPreviewImage`/`_setIconImage` when `fromDisk` is false, so scrolling past a cached card is
 instant rather than replaying every animation.
 
+The plugin payload's artwork is a **third** image path and needs its own flag. It is an attachment,
+not a URL, so it never touches `previewImagePath` and is rendered by its own branch in both skins â€”
+which is why it appeared with no animation at all until `appleImageFromDisk` existed.
+`AttachmentsSvc.getContent` draws exactly the right line for free: it returns a `PlatformFile`
+synchronously when the file is already downloaded, and only calls `onComplete` when it actually had
+to fetch it. So the flag starts true (no animation) and is cleared in that callback.
+
 The card has two independent progress signals, both rendered by every shape:
 `manualLoadRunning` (tap-to-load, shown inside the affordance itself) and `refreshRunning`
 (the popup menu's "Refresh Preview", a trailing spinner). Refresh clears the card back to nothing

@@ -100,22 +100,33 @@ class PreviewImageDownloader {
   /// Set [optimize] for the card's hero image, which is the one that is large
   /// enough to be worth downsampling. Icons are left alone: a favicon is
   /// already tiny, and re-encoding one as JPEG would flatten its alpha.
+  ///
+  /// Keyed by [imageUrl] **alone**, deliberately — not by `'$imageUrl|$optimize'`.
+  /// Both variants resolve to the same file, because the cache path is a digest
+  /// of the downloaded bytes and [_optimize] renames its result over that same
+  /// path. Keying on [optimize] as well let a hero and an icon download of one
+  /// URL run concurrently and race to write it, with the loser reporting
+  /// pre-resize dimensions for a file that had already been downsampled.
+  ///
+  /// The consequence is that when a page uses one URL for both its `og:image`
+  /// and its icon, whichever request arrives first decides whether the shared
+  /// file gets downsampled. That is safe in practice: [_optimize] already skips
+  /// the formats an icon cares about (PNG/APNG keep their alpha, GIF keeps its
+  /// frames) and anything already within [optimizedMaxDimension], which a
+  /// favicon always is.
   Future<CachedPreviewImage?> download(String imageUrl, {bool optimize = false}) {
     if (kIsWeb) return Future.value();
 
-    // Keyed with [optimize] because the two produce different files on disk.
-    final key = '$imageUrl|$optimize';
-
-    final pending = _inFlight[key];
+    final pending = _inFlight[imageUrl];
     if (pending != null) {
       Logger.debug('Joining in-flight download for $imageUrl', tag: 'PreviewImage');
       return pending;
     }
 
     final future = _download(imageUrl, optimize: optimize);
-    _inFlight[key] = future;
+    _inFlight[imageUrl] = future;
     return future.whenComplete(() {
-      if (identical(_inFlight[key], future)) _inFlight.remove(key);
+      if (identical(_inFlight[imageUrl], future)) _inFlight.remove(imageUrl);
     });
   }
 

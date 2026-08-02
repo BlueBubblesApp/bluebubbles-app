@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:html/dom.dart';
 
 /// Amazon product pages.
@@ -93,7 +94,7 @@ class AmazonSiteParser extends SiteMetadataParser {
   static final RegExp _asin = RegExp(r'^[A-Z0-9]{10}$');
 
   @override
-  bool matches(Uri url) => MetadataUrls.hostMatchesAny(url.host, _hosts);
+  bool matches(Uri url) => url.hostMatchesAny(_hosts);
 
   @override
   Uri prepare(Uri url) {

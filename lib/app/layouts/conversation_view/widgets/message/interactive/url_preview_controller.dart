@@ -105,6 +105,15 @@ class UrlPreviewController {
   /// True when the favicon came off disk, so the card skips the pop-in.
   final RxBool iconImageFromDisk = false.obs;
 
+  /// True when the plugin payload's artwork was already on disk, so the card
+  /// skips the grow-in.
+  ///
+  /// Starts true, like [iconAnimation] starts at its end value: the attachment
+  /// is usually already downloaded, and a card scrolled into view should simply
+  /// have its picture. Only [_resolvePluginPayloadAttachment] finishing a live
+  /// download flips it.
+  final RxBool appleImageFromDisk = true.obs;
+
   /// True when there is a preview to load but the policy says not to fetch it
   /// automatically. Drives the tap-to-load affordance.
   final RxBool needsManualLoad = false.obs;
@@ -330,6 +339,7 @@ class UrlPreviewController {
         iconImagePath.value = null;
         previewImageFromDisk.value = false;
         iconImageFromDisk.value = false;
+        appleImageFromDisk.value = true;
         needsManualLoad.value = false;
         manualLoadRunning.value = false;
         refreshRunning.value = true;
@@ -491,8 +501,16 @@ class UrlPreviewController {
         msg.dbAttachments.firstWhereOrNull((e) => e.transferName?.contains("pluginPayloadAttachment") ?? false);
     if (attachment == null) return false;
 
+    // `getContent` returns a ready `PlatformFile` synchronously when the
+    // attachment is already on disk, and calls `onComplete` later when it had
+    // to download it. That split is exactly the animation rule: a card scrolled
+    // into view already has its picture, while one that lands while the user is
+    // looking grows in.
     content.value = AttachmentsSvc.getContent(attachment, autoDownload: true, onComplete: (loaded) {
-      if (!_disposed) content.value = loaded;
+      if (_disposed) return;
+      appleImageFromDisk.value = false;
+      content.value = loaded;
+      imageAnimation.forward(from: 0);
     });
     return true;
   }

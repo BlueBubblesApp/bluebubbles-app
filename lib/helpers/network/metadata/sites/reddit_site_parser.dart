@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 
 /// Reddit posts, comments and share links.
 ///
@@ -48,7 +49,7 @@ class RedditSiteParser extends SiteMetadataParser {
   };
 
   @override
-  bool matches(Uri url) => MetadataUrls.hostMatchesAny(url.host, _hosts);
+  bool matches(Uri url) => url.hostMatchesAny(_hosts);
 
   @override
   Uri prepare(Uri url) {

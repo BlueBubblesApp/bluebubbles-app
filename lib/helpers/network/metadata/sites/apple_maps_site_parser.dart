@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 
 /// Apple Maps place and location links.
 ///
@@ -23,7 +24,7 @@ class AppleMapsSiteParser extends SiteMetadataParser {
   static const String _platterClass = 'sc-platter-cell';
 
   @override
-  bool matches(Uri url) => MetadataUrls.hostMatchesAny(url.host, const ['maps.apple.com']);
+  bool matches(Uri url) => url.hostMatchesAny(const ['maps.apple.com']);
 
   @override
   UrlMetadata refine(UrlMetadata base, MetadataParseContext context) {

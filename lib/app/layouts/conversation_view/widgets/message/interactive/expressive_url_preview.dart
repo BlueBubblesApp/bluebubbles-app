@@ -88,8 +88,8 @@ class ExpressiveUrlPreview extends StatelessWidget {
         if (header != null) header,
         Padding(
           padding: inReply
-              ? const EdgeInsets.all(M3EShapes.md)
-              : const EdgeInsets.fromLTRB(M3EShapes.lg, M3EShapes.md, M3EShapes.lg, M3EShapes.lg),
+              ? const EdgeInsets.all(M3ESpacing.md)
+              : const EdgeInsets.fromLTRB(M3ESpacing.lg, M3ESpacing.md, M3ESpacing.lg, M3ESpacing.lg),
           // Two nested rows so the two trailing/leading elements can align
           // differently: the spinner centres against the whole text block,
           // while the favicon stays level with the first line of it.
@@ -109,7 +109,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
                     // source badge for the text it sits against, so it stays on
                     // the same side no matter which shape the card is in.
                     if (controller.hasIcon) _buildIcon(context),
-                    if (controller.hasIcon) const SizedBox(width: M3EShapes.md),
+                    if (controller.hasIcon) const SizedBox(width: M3ESpacing.md),
                     Flexible(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -119,7 +119,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
                           // relies on to see where a link actually goes, and it
                           // is derived from the URL, never from og:site_name.
                           if (controller.showsSiteLine(message?.text)) _buildSiteLine(context),
-                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3EShapes.xs),
+                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3ESpacing.xs),
                           _buildTitle(context, message),
                           ..._buildManualLoadAffordance(context, inReply: inReply),
                         ],
@@ -142,8 +142,8 @@ class ExpressiveUrlPreview extends StatelessWidget {
   Widget _buildCompact(BuildContext context, {required Message? message, required bool inReply}) {
     return Padding(
       padding: inReply
-          ? const EdgeInsets.all(M3EShapes.md)
-          : const EdgeInsets.symmetric(horizontal: M3EShapes.lg, vertical: M3EShapes.md),
+          ? const EdgeInsets.all(M3ESpacing.md)
+          : const EdgeInsets.symmetric(horizontal: M3ESpacing.lg, vertical: M3ESpacing.md),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,14 +162,14 @@ class ExpressiveUrlPreview extends StatelessWidget {
                     // the favicon is the only mark on the card and reads as the
                     // source badge for the lines it sits against.
                     if (controller.hasIcon) _buildIcon(context, size: 32),
-                    if (controller.hasIcon) const SizedBox(width: M3EShapes.md),
+                    if (controller.hasIcon) const SizedBox(width: M3ESpacing.md),
                     Flexible(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (controller.showsSiteLine(message?.text)) _buildSiteLine(context),
-                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3EShapes.xs),
+                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: M3ESpacing.xs),
                           _buildTitle(context, message),
                         ],
                       ),
@@ -193,8 +193,8 @@ class ExpressiveUrlPreview extends StatelessWidget {
 
     return Padding(
       padding: inReply
-          ? const EdgeInsets.all(M3EShapes.md)
-          : const EdgeInsets.symmetric(horizontal: M3EShapes.lg, vertical: M3EShapes.md),
+          ? const EdgeInsets.all(M3ESpacing.md)
+          : const EdgeInsets.symmetric(horizontal: M3ESpacing.lg, vertical: M3ESpacing.md),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.link, size: 16, color: context.theme.colorScheme.onSurfaceVariant),
-                    const SizedBox(width: M3EShapes.sm),
+                    const SizedBox(width: M3ESpacing.sm),
                     Flexible(
                       child: Text(
                         link,
@@ -254,7 +254,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
   /// centred against the text block by the row that holds it.
   Widget _buildRefreshIndicator(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: M3EShapes.md),
+      padding: const EdgeInsets.only(left: M3ESpacing.md),
       child: SizedBox(
         width: 18,
         height: 18,
@@ -285,7 +285,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
   List<Widget> _buildManualLoadAffordance(BuildContext context, {required bool inReply}) {
     if (!controller.needsManualLoad.value || inReply) return const [];
     return [
-      const SizedBox(height: M3EShapes.lg),
+      const SizedBox(height: M3ESpacing.lg),
       SizedBox(width: double.infinity, child: _buildLoadPreviewButton(context)),
     ];
   }
@@ -298,8 +298,15 @@ class ExpressiveUrlPreview extends StatelessWidget {
     required Uint8List? appleBytes,
     required File? appleFile,
   }) {
+    // Whether this image is new enough to be worth animating. The payload's own
+    // artwork arrives on a different path from a downloaded preview image — an
+    // attachment rather than a URL — so it carries its own flag; before that it
+    // simply never animated, however it turned up.
+    final bool animate;
+
     final Widget image;
     if (previewImagePath != null) {
+      animate = !controller.previewImageFromDisk.value;
       image = Image.file(
         File(previewImagePath),
         fit: BoxFit.cover,
@@ -307,6 +314,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
         errorBuilder: (_, __, ___) => _imageFallback(context),
       );
     } else if (webImageUrl != null) {
+      animate = false;
       image = Image.network(
         webImageUrl,
         fit: BoxFit.cover,
@@ -314,6 +322,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
         errorBuilder: (_, __, ___) => _imageFallback(context),
       );
     } else if (appleBytes != null) {
+      animate = !controller.appleImageFromDisk.value;
       image = Image.memory(
         appleBytes,
         fit: BoxFit.cover,
@@ -321,6 +330,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
         errorBuilder: (_, __, ___) => _imageFallback(context),
       );
     } else if (appleFile != null) {
+      animate = !controller.appleImageFromDisk.value;
       image = Image.file(
         appleFile,
         fit: BoxFit.cover,
@@ -340,7 +350,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
     );
 
     // Only a freshly downloaded image grows in; a disk load appears at once.
-    if (previewImagePath == null || controller.previewImageFromDisk.value) return container;
+    if (!animate) return container;
 
     return SizeTransition(
       sizeFactor: CurvedAnimation(parent: controller.imageAnimation, curve: Curves.easeOutCubic),
@@ -414,10 +424,13 @@ class ExpressiveUrlPreview extends StatelessWidget {
   Widget _buildLoadPreviewButton(BuildContext context) {
     final running = controller.manualLoadRunning.value;
 
+    // Null while running, not an empty callback: an inert `() {}` kept the
+    // button rippling on tap and announcing itself as actionable while the
+    // load it represents was already in flight.
     return M3ETonalButton(
       icon: running ? Icons.hourglass_empty : Icons.download_outlined,
       label: running ? "Loading Preview\u{2026}" : "Load Preview",
-      onPressed: running ? () {} : controller.loadManually,
+      onPressed: running ? null : controller.loadManually,
       borderRadius: const BorderRadius.all(Radius.circular(M3EShapes.md)),
     );
   }

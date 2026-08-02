@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/network/metadata/network/html_body_decoder.d
 import 'package:bluebubbles/helpers/network/metadata/network/metadata_http_client.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 /// A provider that exposes an oEmbed endpoint.
@@ -21,7 +22,7 @@ class OEmbedProvider {
   /// Hosts (and their subdomains) this provider serves.
   final List<String> hosts;
 
-  bool matches(Uri uri) => MetadataUrls.hostMatchesAny(uri.host, hosts);
+  bool matches(Uri uri) => uri.hostMatchesAny(hosts);
 }
 
 /// Fetches oEmbed metadata for pages that expose it.

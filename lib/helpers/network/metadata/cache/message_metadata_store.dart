@@ -47,9 +47,15 @@ enum MetadataCacheSlot {
   /// Content hash of the disk-cached site icon, when the slot renders one.
   final String? iconHashKey;
 
-  /// Legacy boolean flag. Still written so that downgrading the app keeps the
-  /// old "don't refetch" behaviour, and still read as a fallback when
-  /// [attemptedAtKey] is absent on rows written by older versions.
+  /// Legacy boolean flag. Written, and cleared by [MessageMetadataStore.clear],
+  /// purely so that downgrading the app keeps the old "don't refetch"
+  /// behaviour.
+  ///
+  /// Deliberately **not** read: a row carrying only this flag was written by a
+  /// build with no retry TTL, so honouring it would preserve exactly the
+  /// "failed once, never retries" bug [MessageMetadataStore.retryAfter] exists
+  /// to fix. Those rows are treated as expired instead — see
+  /// [MessageMetadataStore.shouldFetch].
   final String attemptedKey;
 
   /// Millisecond timestamp of the last completed attempt. This is what the

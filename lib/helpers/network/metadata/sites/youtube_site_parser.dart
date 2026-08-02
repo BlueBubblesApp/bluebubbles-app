@@ -3,6 +3,7 @@ import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
 import 'package:bluebubbles/helpers/network/metadata/parsing/metadata_parse_context.dart';
 import 'package:bluebubbles/helpers/network/metadata/sites/site_metadata_parser.dart';
 import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 
 /// YouTube links in all their forms.
 ///
@@ -30,7 +31,7 @@ class YouTubeSiteParser extends SiteMetadataParser {
   static final RegExp _videoId = RegExp(r'^[A-Za-z0-9_-]{11}$');
 
   @override
-  bool matches(Uri url) => MetadataUrls.hostMatchesAny(url.host, _hosts);
+  bool matches(Uri url) => url.hostMatchesAny(_hosts);
 
   @override
   Uri prepare(Uri url) {
@@ -86,10 +87,10 @@ class YouTubeSiteParser extends SiteMetadataParser {
 
   /// Extracts the video ID from any YouTube URL shape, or null.
   static String? videoId(Uri url) {
-    if (!MetadataUrls.hostMatchesAny(url.host, _hosts)) return null;
+    if (!url.hostMatchesAny(_hosts)) return null;
 
     // youtu.be/<id>
-    if (MetadataUrls.hostMatches(url.host, 'youtu.be')) {
+    if (url.hostMatches('youtu.be')) {
       final first = url.pathSegments.isEmpty ? null : url.pathSegments.first;
       return _validate(first);
     }
@@ -116,7 +117,7 @@ class YouTubeSiteParser extends SiteMetadataParser {
   }
 
   Uri _desktopHost(Uri url) {
-    if (MetadataUrls.hostMatches(url.host, 'youtube.com') && url.host.toLowerCase() != 'www.youtube.com') {
+    if (url.hostMatches('youtube.com') && url.host.toLowerCase() != 'www.youtube.com') {
       return url.replace(host: 'www.youtube.com');
     }
     return url;

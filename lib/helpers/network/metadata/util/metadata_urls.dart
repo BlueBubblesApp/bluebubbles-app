@@ -170,19 +170,4 @@ abstract final class MetadataUrls {
     if (host.isEmpty) return null;
     return host.startsWith('www.') ? host.substring(4) : host;
   }
-
-  /// True when [host] equals [domain] or is a subdomain of it.
-  static bool hostMatches(String host, String domain) {
-    final lower = host.toLowerCase();
-    return lower == domain || lower.endsWith('.$domain');
-  }
-
-  /// True when [host] is `<anything>.<domain>` for one of the public suffixes
-  /// a site uses per-country (`amazon.co.uk`, `amazon.de`, ...).
-  static bool hostMatchesAny(String host, Iterable<String> domains) {
-    for (final domain in domains) {
-      if (hostMatches(host, domain)) return true;
-    }
-    return false;
-  }
 }
