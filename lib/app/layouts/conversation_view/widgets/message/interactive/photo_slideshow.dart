@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -41,6 +42,12 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
   /// automatically, so the placeholder becomes a tap target instead.
   bool _needsManualLoad = false;
 
+  /// Set when the reset came from "Refresh Preview", so the refetch it triggers
+  /// counts as user-initiated. Picking the action out of a menu is consent, the
+  /// same as tapping the placeholder; without this a refresh on a gated sender
+  /// just replaces the preview with the tap-to-load prompt.
+  bool _refreshRequested = false;
+
   late MessageState _ms;
   Worker? _refreshWorker;
   Message get message => _ms.message;
@@ -52,6 +59,9 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
   void initState() {
     super.initState();
     _ms = MessageStateScope.readStateOnce(context);
+    // The popup's decorative copy shares this MessageState, so a subscribed
+    // clone would make every "Refresh Preview" run twice. See MessageCloneScope.
+    if (MessageCloneScope.of(context)) return;
     _refreshWorker = ever(_ms.previewRefreshKey, (_) {
       if (!mounted) return;
       setState(() {
@@ -59,6 +69,7 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
         _previewFetchStarted = false;
         _previewFetchFailed = false;
         _needsManualLoad = false;
+        _refreshRequested = true;
       });
     });
   }
@@ -138,9 +149,11 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
     super.build(context);
     if (_previewImagePath == null && !_previewFetchStarted) {
       _previewFetchStarted = true;
+      final manual = _refreshRequested;
+      _refreshRequested = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_resolvePreviewImage(message));
+        unawaited(_resolvePreviewImage(message, manual: manual));
       });
     }
     return Column(

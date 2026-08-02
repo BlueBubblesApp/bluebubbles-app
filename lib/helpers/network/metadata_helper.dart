@@ -72,10 +72,15 @@ abstract final class MetadataHelper {
     // `getContactForHandle` already returns null when access is unavailable, so
     // no separate permission check is needed here.
     final handleId = message.handle?.id;
-    if (handleId == null) return false;
+    if (handleId == null) {
+      Logger.debug('No handle on ${message.guid}; treating sender as unknown', tag: 'MetadataHelper');
+      return false;
+    }
 
     try {
-      return (await ContactsSvcV2.getContactForHandle(handleId)) != null;
+      final isContact = (await ContactsSvcV2.getContactForHandle(handleId)) != null;
+      Logger.debug('Sender of ${message.guid} ${isContact ? "is" : "is not"} a saved contact', tag: 'MetadataHelper');
+      return isContact;
     } catch (ex, stack) {
       Logger.warn('Could not resolve sender contact; treating as unknown',
           error: ex, trace: stack, tag: 'MetadataHelper');
@@ -190,9 +195,17 @@ abstract final class MetadataHelper {
 
     // Only reached on a cache miss, so the policy check costs nothing on the
     // common path.
-    if (!bypassGate && !await shouldAutoFetch(message)) return null;
+    if (!bypassGate && !await shouldAutoFetch(message)) {
+      Logger.debug('Not downloading ${isIcon ? "icon" : "image"} $imageUrl; sender policy declined',
+          tag: 'MetadataHelper');
+      return null;
+    }
 
-    final downloaded = await fetcher.images.download(imageUrl);
+    Logger.debug('Downloading ${isIcon ? "icon" : "image"} $imageUrl', tag: 'MetadataHelper');
+
+    // Only the hero image is downsampled. A favicon is already small, and
+    // re-encoding one as JPEG would flatten its alpha.
+    final downloaded = await fetcher.images.download(imageUrl, optimize: !isIcon);
     if (downloaded == null) return null;
 
     // Persist the hash without disturbing the slot's attempt bookkeeping.

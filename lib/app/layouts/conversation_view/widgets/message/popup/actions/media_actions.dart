@@ -281,6 +281,7 @@ void refreshPreview(MessagePopupActionContext ctx) {
   // The persisted copy is only half the cache — drop the in-memory entry too,
   // or the refetch is served from it and nothing appears to change.
   MetadataHelper.invalidateForMessage(ctx.message);
+  Logger.debug('Refresh Preview: cleared metadata and memo cache for ${ctx.message.guid}', tag: 'RefreshPreview');
   ctx.messageState.previewRefreshKey.value++;
   ctx.popDetails();
 }

@@ -1,8 +1,16 @@
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 
-/// Domain text shown on link preview cards (host without leading `www.`).
-String linkPreviewDomain(UrlPreviewData data) {
-  final raw = Uri.tryParse(data.originalUrl ?? data.url ?? '')?.host ?? data.siteName ?? '';
+/// Domain text for a link preview (host without leading `www.`).
+///
+/// Mirrors `UrlPreviewController.siteText`, including its fallbacks: Apple's
+/// payload does not always carry a URL — an Apple Music link arrives as a
+/// `specialization` blob with the link only on the message — so [messageUrl] is
+/// threaded in, and `Uri.tryParse('')` yields an empty host rather than null,
+/// which is why the `siteName` fallback needs an explicit emptiness check.
+String linkPreviewDomain(UrlPreviewData data, {String? messageUrl}) {
+  final host = MetadataUrls.parse(data.originalUrl ?? data.url ?? messageUrl)?.host;
+  final raw = isNullOrEmpty(host) ? (data.siteName ?? '') : host!;
   return raw.replaceFirst(RegExp(r'^www\.'), '');
 }
 
@@ -16,11 +24,11 @@ int _fieldMatchScore(String field, String query, int tierBase) {
 
 /// Match score for a link preview. Higher is better; `0` means no match.
 /// Priority: domain (300) > title (200) > description/summary (100).
-int linkPreviewSearchScore(UrlPreviewData data, String query) {
+int linkPreviewSearchScore(UrlPreviewData data, String query, {String? messageUrl}) {
   final normalizedQuery = query.trim().toLowerCase();
   if (normalizedQuery.isEmpty) return 0;
 
-  final domain = linkPreviewDomain(data).toLowerCase();
+  final domain = linkPreviewDomain(data, messageUrl: messageUrl).toLowerCase();
   final title = (data.title ?? '').toLowerCase();
   final description = (data.summary ?? '').toLowerCase();
 
@@ -40,7 +48,7 @@ List<Message> filterAndSortLinks(List<Message> messages, String query) {
   for (final message in messages) {
     final data = message.payloadData?.urlData?.firstOrNull;
     if (data == null) continue;
-    final score = linkPreviewSearchScore(data, normalizedQuery);
+    final score = linkPreviewSearchScore(data, normalizedQuery, messageUrl: message.url);
     if (score > 0) {
       scored.add((message: message, score: score));
     }

@@ -35,7 +35,14 @@ MetadataHelper.fetchForMessage()
 ```
 
 Concurrent calls for the same URL collapse onto one request (`MetadataMemoryCache`),
-keyed by normalised URL — **not** by message GUID.
+keyed by normalised URL — **not** by message GUID. `PreviewImageDownloader` single-flights the
+same way for image and icon downloads.
+
+Two widgets asking for the same preview at once is the normal case, not an edge case:
+`MessagePopup` renders a **second copy** of the bubble against the same `MessageState`, so both
+copies' `previewRefreshKey` workers fire on "Refresh Preview" (it is dispatched before the popup
+closes). Anything in this pipeline that hits the network must therefore be single-flighted, or
+every long-press and every refresh does the work twice.
 
 ## Parser Precedence
 
@@ -116,6 +123,12 @@ still applies to a user-initiated load.
   player URL or an .mp4.
 - The preview image is validated (content type, size, dimensions ≥ 32px) before it reaches disk,
   which is what makes hostname blocklists for tracking pixels unnecessary.
+- Downsampling goes through `ImageInterface.generatePreview` — the same isolate action
+  `AttachmentsSvc` uses for inline attachment previews. Don't write a second resize
+  implementation here. It applies only to the hero image (`optimize: !isIcon`), and is skipped
+  for GIF (re-encoding drops every frame but the first) and PNG (JPEG has no alpha). The cache
+  hash stays a digest of the *downloaded* bytes, not of what lands on disk, so two messages
+  linking the same og:image still share one cache entry.
 
 ## Settings
 
@@ -138,3 +151,8 @@ request involved. Its `imageMetadata.url` is *not* exempt: that image lives on a
 downloading it is an outbound request and is gated like any other. Anything already on disk is served
 without touching the network, which is why `MetadataHelper.resolveCachedImage` applies the gate only
 on a cache miss.
+
+A payload that carries **only** an image — no title and no summary, which is the common shape for a
+plugin-payload attachment — still runs a normal, gated metadata fetch for the text. The payload
+artwork wins; the fetch fills in title, summary and (when the payload had none) the icon. See
+`UrlPreviewController._payloadNeedsMetadata`.

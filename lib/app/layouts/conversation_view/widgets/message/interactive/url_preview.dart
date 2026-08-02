@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/intera
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/expressive_url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -55,6 +56,7 @@ class _UrlPreviewState extends State<UrlPreview>
     controller.attach(
       messageState: context.findAncestorWidgetOfExactType<MessageStateScope>()?.messageState,
       inReply: context.getInheritedWidgetOfExactType<ReplyScope>() != null,
+      isClone: MessageCloneScope.of(context),
     );
   }
 
@@ -67,6 +69,26 @@ class _UrlPreviewState extends State<UrlPreview>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return iOS ? CupertinoUrlPreview(controller: controller) : ExpressiveUrlPreview(controller: controller);
+    final card = iOS ? CupertinoUrlPreview(controller: controller) : ExpressiveUrlPreview(controller: controller);
+
+    // Reply bubbles are laid out compactly and carry no image or affordance, so
+    // they keep shrink-wrapping.
+    if (controller.inReply) return card;
+
+    // Take the full width offered, rather than the width the current content
+    // happens to want. Without this the card is sized by whatever it holds at
+    // the moment: it starts narrow around a bare title, widens when the
+    // tap-to-load affordance appears, changes again when the label switches to
+    // "Loading Preview…", and jumps to full width when the image lands. Fixing
+    // the width up front leaves height — the image growing in — as the only
+    // thing that animates.
+    //
+    // Via LayoutBuilder rather than `width: double.infinity` because this widget
+    // is also rendered in the conversation-details link and location lists,
+    // where an unbounded width is possible and infinity would throw.
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          constraints.hasBoundedWidth ? SizedBox(width: constraints.maxWidth, child: card) : card,
+    );
   }
 }

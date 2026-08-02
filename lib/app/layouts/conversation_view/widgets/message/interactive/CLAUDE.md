@@ -43,6 +43,58 @@ Called from `MessagePartContent` when `message.hasApplePayloadData || message.is
   `message.metadata` keys directly.
 - Transient fetch failures (`!result.shouldMarkAttempted`) must not be recorded as attempts, or
   the message loses its preview permanently.
+- **Never point an `Image.network` at a payload/metadata image or icon URL off web.** It is an
+  ungated outbound request to a third-party host issued from `build`, and it bypasses
+  `shouldAutoFetch`, the disk cache and `UrlSafetyGuard`. Both skins render images only from
+  `previewImagePath`/`iconImagePath`, falling back to the network solely via the controller's
+  `webImageUrl`/`webIconUrl` (both null off web). Every image needs an `errorBuilder`, and every
+  `DecorationImage` an `onError` — a dead host would otherwise escape as an uncaught rendering
+  error.
+- `UrlPreview` fixes the card's width to the constraints it is handed (except in a reply bubble),
+  so the card does not resize as the title, the tap-to-load affordance, or the image arrive.
+  Height is the only thing that changes, and it animates. Don't reintroduce shrink-wrapping.
+
+## URL Preview Shapes
+
+`UrlPreviewController.layout` picks one of three shapes from what actually resolved. Both skins
+implement all three, at the same width, so moving between them only changes height:
+
+| `UrlPreviewLayout` | When | Renders |
+|---|---|---|
+| `hero` | a preview image resolved (or a plugin payload carries artwork) | image, then leading favicon beside title, summary, site line |
+| `compact` | no image, but the page supplied a title or summary | leading favicon (when there is one), title, site line — **no summary**, which is what makes it shorter |
+| `bare` | nothing beyond the link | a single line showing the link |
+
+**Payload image, fetched words.** Apple's payload often arrives as artwork and nothing else — a
+plugin-payload attachment, or an `imageMetadata` with no `title`. That used to short-circuit the
+whole load, leaving a hero image headed by the bare host. It now takes the image from the payload
+and still runs the normal metadata fetch for the title and summary
+(`_payloadNeedsMetadata` → `_fetchMissingMetadata(keepPayloadImage: true)`). `keepPayloadImage`
+suppresses only the `og:image` download — the payload's picture is already on screen, so replacing
+it costs a request and a second file on disk for no visible gain — and the persisted image hash
+survives because `MessageMetadataStore.write` only writes hashes it is handed. The fetch is gated,
+TTL'd and cached exactly like any other. A payload that supplied a title but no description does
+**not** trigger this: it already reads fine, and fetching for a description alone would put a
+request behind nearly every preview in the app.
+
+A favicon never promotes a card to `hero` — it is a 40px mark beside the title, not a hero image.
+The tap-to-load affordance renders in all three, or a gated link could never be loaded.
+
+**"Refresh Preview" is consent.** The `previewRefreshKey` reload runs with `force`/`manual` set,
+exactly like tap-to-load — the user picked the action out of a menu. Without it, refreshing a
+preview whose sender `shouldAutoFetch` gates just replaces the card with the tap-to-load prompt,
+so the refresh appears to undo itself. Every other protection still applies. This holds for
+`PhotoSlideshow` too, which listens to the same key.
+
+Both the preview image and the favicon animate in on a **fresh download only** —
+`imageAnimation` / `iconAnimation` sit at their end value by default and are only rewound by
+`_setPreviewImage`/`_setIconImage` when `fromDisk` is false, so scrolling past a cached card is
+instant rather than replaying every animation.
+
+The card has two independent progress signals, both rendered by every shape:
+`manualLoadRunning` (tap-to-load, shown inside the affordance itself) and `refreshRunning`
+(the popup menu's "Refresh Preview", a trailing spinner). Refresh clears the card back to nothing
+before re-fetching, so without the spinner it reads as the preview having vanished.
 
 ## Skin Handling
 
