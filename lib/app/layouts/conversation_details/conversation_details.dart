@@ -132,7 +132,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
               SliverToBoxAdapter(
                 child: AttachmentsLoader(chat: chat, onAttachmentsLoaded: onAttachmentsLoaded),
               ),
-              const SliverPadding(padding: EdgeInsets.symmetric(vertical: 10)),
+              SliverPadding(padding: EdgeInsets.symmetric(vertical: SettingsSvc.settings.skin.value == Skins.iOS ? 0 : 5)),
               SettingsSvc.settings.skin.value == Skins.iOS
                   ? ChatOptions(chat: chat)
                   : ExpressiveChatOptions(chat: chat),

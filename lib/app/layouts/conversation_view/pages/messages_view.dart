@@ -619,15 +619,13 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
                         controller: scrollController,
                         reverse: true,
                         physics: ThemeSwitcher.getScrollPhysics(),
-                        // Default cache extent (250px) keeps only a couple of message rows mounted
-                        // beyond the viewport, so normal scrolling repeatedly tears down and
-                        // rebuilds MessageHolder's entire subtree (GlobalKeys, Rx state, effect
-                        // workers, etc.) for messages that were visible moments earlier. A wider
-                        // cache extent keeps a larger buffer mounted, cutting down on that churn.
-                        // The alternative would be to implement the keepAlive mixin on each MessageHolder,
-                        // but that would keep all messages in memory, which is not feasible for long
-                        // conversations. 10kpx is a compromise that keeps a few dozen messages alive.
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(10000),
+                        // MessageHolder implements AutomaticKeepAliveClientMixin, so already-built
+                        // messages survive scrolling arbitrarily far away without needing a large
+                        // cache extent (which forces eager build/layout of everything within its
+                        // window on every layout pass. A 10k px extent visibly stuttered chat open
+                        // for exactly that reason). This is just a small bump over the 250px default
+                        // for minor smoothing of local scroll gestures.
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                         slivers: <Widget>[
                           SliverToBoxAdapter(
                             child: SmartRepliesRow(

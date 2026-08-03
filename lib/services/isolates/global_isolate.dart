@@ -178,9 +178,8 @@ class GlobalIsolate {
     try {
       await _sendPortCompleter!.future.timeout(
         startupTimeout,
-        onTimeout: () => throw TimeoutException(
-          'Timeout waiting for isolate SendPort after ${startupTimeout.inSeconds}s',
-        ),
+        onTimeout: () =>
+            throw TimeoutException('Timeout waiting for isolate SendPort after ${startupTimeout.inSeconds}s'),
       );
       Logger.debug('Received SendPort from isolate');
     } catch (e) {
@@ -479,9 +478,7 @@ class GlobalIsolate {
         return;
       }
 
-      Logger.info(
-        '$isolateDebugName has been idle for ${idleTimeout!.inSeconds}s. Shutting down...',
-      );
+      Logger.info('$isolateDebugName has been idle for ${idleTimeout!.inSeconds}s. Shutting down...');
       stop();
     });
   }
@@ -616,11 +613,7 @@ class GlobalIsolate {
 
   /// The isolate entry point - uses shared logic with global service initialization
   static Future<void> _isolateEntryPoint(List<dynamic> args) async {
-    await sharedIsolateEntryPoint(
-      args,
-      StartupTasks.initGlobalIsolateServices,
-      IsolateActons.actions,
-    );
+    await sharedIsolateEntryPoint(args, StartupTasks.initGlobalIsolateServices, IsolateActons.actions);
   }
 }
 
@@ -648,6 +641,8 @@ enum IsolateRequestType {
   convertImageToPng,
   readExifData,
   getGifDimensions,
+  readExifOrientation,
+  generatePreview,
 
   // Prefs actions
   saveReplyToMessageState,

@@ -410,43 +410,40 @@ class AttachmentFiltersButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasActiveFilter = filters.hasActiveFilter(typeSection);
     final color = iconColor ?? Theme.of(context).colorScheme.primary;
+    final horizontalPadding = attachmentSectionHorizontalPadding().toDouble();
+    final rightMargin = (horizontalPadding - _iconTrailingInset).clamp(0.0, double.infinity);
 
-    return Obx(() {
-      final horizontalPadding = attachmentSectionHorizontalPadding().toDouble();
-      final rightMargin = (horizontalPadding - _iconTrailingInset).clamp(0.0, double.infinity);
-
-      return Padding(
-        padding: EdgeInsets.only(right: rightMargin),
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              if (hasActiveFilter)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
+    return Padding(
+      padding: EdgeInsets.only(right: rightMargin),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            if (hasActiveFilter)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
                   ),
                 ),
-              IconButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  onPressed();
-                },
-                icon: Icon(Icons.tune, color: color),
               ),
-            ],
-          ),
+            IconButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                onPressed();
+              },
+              icon: Icon(Icons.tune, color: color),
+            ),
+          ],
         ),
-      );
-    });
+      ),
+    );
   }
 }

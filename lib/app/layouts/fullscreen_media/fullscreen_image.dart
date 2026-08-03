@@ -83,7 +83,7 @@ class _FullscreenImageState extends State<FullscreenImage>
     // For non-web platforms, ensure we have a compatible image path
     // but don't load bytes into memory - let Image.file handle it
     compatiblePath = await AttachmentsSvc.ensureImageCompatibility(attachment, actualPath: file.path!);
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -100,19 +100,59 @@ class _FullscreenImageState extends State<FullscreenImage>
       compatiblePath = null;
       hasError = false;
     });
-    AttachmentsSvc.redownloadAttachment(widget.attachment, onComplete: (newFile) {
-      if (kIsWeb || newFile.path == null) {
+    AttachmentsSvc.redownloadAttachment(
+      widget.attachment,
+      onComplete: (newFile) {
+        if (kIsWeb || newFile.path == null) {
+          setState(() {
+            bytes = newFile.bytes;
+          });
+        } else {
+          initBytes();
+        }
+      },
+      onError: () {
         setState(() {
-          bytes = newFile.bytes;
+          hasError = true;
         });
-      } else {
-        initBytes();
-      }
-    }, onError: () {
-      setState(() {
-        hasError = true;
-      });
-    });
+      },
+    );
+  }
+
+  Widget _buildPhotoView(BuildContext context) {
+    if (bytes == null && compatiblePath == null) {
+      return hasError
+          ? Center(child: Text("Failed to load image", style: context.theme.textTheme.bodyLarge))
+          : Center(child: buildProgressIndicator(context));
+    }
+
+    // No orientation handling here: the decoder applies EXIF orientation
+    // itself, so the provider's reported size is already display-space and
+    // PhotoViewComputedScale.contained reads it correctly.
+    return PhotoView(
+      gaplessPlayback: true,
+      minScale: PhotoViewComputedScale.contained,
+      maxScale: PhotoViewComputedScale.contained * 10,
+      controller: controller,
+      imageProvider: bytes != null
+          ? MemoryImage(bytes!) as ImageProvider
+          : FileImage(File(compatiblePath ?? file.path!)),
+      loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
+        return Center(child: buildProgressIndicator(context));
+      },
+      scaleStateChangedCallback: (scale) {
+        if (scale == PhotoViewScaleState.zoomedIn ||
+            scale == PhotoViewScaleState.covering ||
+            scale == PhotoViewScaleState.originalSize) {
+          widget.updatePhysics(const NeverScrollableScrollPhysics());
+        } else {
+          widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
+        }
+      },
+      errorBuilder: (context, object, stacktrace) =>
+          Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
+      filterQuality: FilterQuality.high,
+    );
   }
 
   @override
@@ -141,34 +181,7 @@ class _FullscreenImageState extends State<FullscreenImage>
         },
         child: Stack(
           children: [
-            (bytes != null || compatiblePath != null)
-                ? PhotoView(
-                    gaplessPlayback: true,
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.contained * 10,
-                    controller: controller,
-                    imageProvider: bytes != null
-                        ? MemoryImage(bytes!) as ImageProvider
-                        : FileImage(File(compatiblePath ?? file.path!)),
-                    loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
-                      return Center(child: buildProgressIndicator(context));
-                    },
-                    scaleStateChangedCallback: (scale) {
-                      if (scale == PhotoViewScaleState.zoomedIn ||
-                          scale == PhotoViewScaleState.covering ||
-                          scale == PhotoViewScaleState.originalSize) {
-                        widget.updatePhysics(const NeverScrollableScrollPhysics());
-                      } else {
-                        widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
-                      }
-                    },
-                    errorBuilder: (context, object, stacktrace) =>
-                        Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
-                    filterQuality: FilterQuality.high,
-                  )
-                : hasError
-                    ? Center(child: Text("Failed to load image", style: context.theme.textTheme.bodyLarge))
-                    : Center(child: buildProgressIndicator(context)),
+            _buildPhotoView(context),
             // Live photo video overlay
             if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
             if (!iOS)
@@ -185,84 +198,81 @@ class _FullscreenImageState extends State<FullscreenImage>
                     bottom: false,
                     child: SizedBox(
                       height: kIsDesktop ? 80 : 50,
-                      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 5),
-                              child: CupertinoButton(
-                                padding: const EdgeInsets.symmetric(horizontal: 5),
-                                onPressed: () async {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(left: 5),
+                                child: CupertinoButton(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Icon(Icons.close, color: Colors.white),
                                 ),
                               ),
-                            ),
-                            if (widget.showInteractions)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 5.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
+                              if (widget.showInteractions)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 5.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
                                         (message?.isFromMe ?? false)
                                             ? 'You'
                                             : message?.handleRelation.target?.displayName ?? "Unknown",
-                                        style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white)),
-                                    if (message?.dateCreated != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 2.0),
-                                        child: Text(
+                                        style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white),
+                                      ),
+                                      if (message?.dateCreated != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 2.0),
+                                          child: Text(
                                             samsung
                                                 ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
                                                 : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
-                                            style: context.theme.textTheme.bodyLarge!
-                                                .copyWith(color: samsung ? Colors.grey : Colors.white)),
+                                            style: context.theme.textTheme.bodyLarge!.copyWith(
+                                              color: samsung ? Colors.grey : Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          !widget.showInteractions
+                              ? const SizedBox.shrink()
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        onPressed: () async {
+                                          showMetadataDialog(widget.attachment, context);
+                                        },
+                                        child: const Icon(Icons.info_outlined, color: Colors.white),
                                       ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        onPressed: () async {
+                                          refreshAttachment();
+                                        },
+                                        child: const Icon(Icons.refresh, color: Colors.white),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                          ],
-                        ),
-                        !widget.showInteractions
-                            ? const SizedBox.shrink()
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: CupertinoButton(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                                      onPressed: () async {
-                                        showMetadataDialog(widget.attachment, context);
-                                      },
-                                      child: const Icon(
-                                        Icons.info_outlined,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: CupertinoButton(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                                      onPressed: () async {
-                                        refreshAttachment();
-                                      },
-                                      child: const Icon(
-                                        Icons.refresh,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ]),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -341,10 +351,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                       children: [
                         FloatingActionButton(
                           backgroundColor: context.theme.colorScheme.secondary,
-                          child: Icon(
-                            Icons.file_download_outlined,
-                            color: context.theme.colorScheme.onSecondary,
-                          ),
+                          child: Icon(Icons.file_download_outlined, color: context.theme.colorScheme.onSecondary),
                           onPressed: () => AttachmentsSvc.saveToDisk(widget.file),
                         ),
                         if (!kIsWeb && !kIsDesktop)
@@ -352,10 +359,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                             padding: const EdgeInsets.only(left: 16.0),
                             child: FloatingActionButton(
                               backgroundColor: context.theme.colorScheme.secondary,
-                              child: Icon(
-                                Icons.share_outlined,
-                                color: context.theme.colorScheme.onSecondary,
-                              ),
+                              child: Icon(Icons.share_outlined, color: context.theme.colorScheme.onSecondary),
                               onPressed: () {
                                 if (widget.file.path != null) {
                                   Share.files([widget.file.path!]);

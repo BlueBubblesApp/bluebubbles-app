@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Size;
 
+import 'package:bluebubbles/services/backend/interfaces/image_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -38,15 +40,13 @@ class MetadataHelper {
   /// message's payload data rather than its text), keying the dedup cache off
   /// that URL instead of the message GUID.
   static Future<Metadata?> fetchMetadata(Message message, {String? urlOverride}) async {
-    Metadata? data;
     final cacheKey = urlOverride ?? message.guid!;
     // If we have a cached item for this already, return that future
-    if (_metaCache.containsKey(cacheKey)) {
-      return _metaCache[cacheKey]!.future;
-    }
+    final cached = _metaCache[cacheKey];
+    if (cached != null) return cached.future;
 
     // Create a new completer for this request
-    Completer<Metadata?> completer = Completer();
+    final completer = Completer<Metadata?>();
     _metaCache[cacheKey] = completer;
 
     // Get the URL
@@ -54,19 +54,41 @@ class MetadataHelper {
     if (!url.startsWith("http")) {
       url = "https://$url";
     }
+
+    try {
+      completer.complete(await _fetchMetadataForUrl(url));
+      // Drop the entry after a while so a later view can refetch, while
+      // concurrent viewers of the same URL still share one request.
+      Future.delayed(const Duration(seconds: 15), () => _metaCache.remove(cacheKey));
+    } catch (ex, stack) {
+      // Evict immediately on failure. Every caller after this one reads the
+      // cached completer, so a completer left behind un-completed makes them
+      // await a future that never resolves — that is the URL preview / photo
+      // slideshow that spins forever. The eviction key also has to be
+      // `cacheKey`: it was `message.guid`, which for a urlOverride caller
+      // removes the wrong entry (or nothing at all) and pins the leak.
+      _metaCache.remove(cacheKey);
+      completer.completeError(ex, stack);
+    }
+
+    // Always returned, never rethrown — the caller consumes the error through
+    // this future. Rethrowing here would leave completer.future unawaited and
+    // surface as an unhandled async error.
+    return completer.future;
+  }
+
+  /// The actual fetch + normalisation, with no caching concerns.
+  static Future<Metadata?> _fetchMetadataForUrl(String url) async {
+    Metadata? data;
     try {
       data = await MetadataFetch.extract(url);
     } on SocketException catch (ex, stack) {
       Logger.warn('Network unavailable while fetching URL preview metadata; retryable',
           error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
       rethrow;
     } on TimeoutException catch (ex, stack) {
       Logger.warn('Timeout while fetching URL preview metadata; retryable',
           error: ex, trace: stack, tag: 'MetadataHelper');
-      completer.completeError(ex, stack);
-      _metaCache.remove(message.guid);
       rethrow;
     } catch (ex, stack) {
       Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
@@ -76,42 +98,36 @@ class MetadataHelper {
     if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
       data = await MetadataHelper._manuallyGetMetadata(url);
     }
+    // Manual parsing can also come back empty. The old code went on to
+    // dereference `data!` here, which threw and left the cached completer
+    // hanging forever.
+    if (data == null) return null;
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
-    RegExp exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data?.image == null && data?.title == null && data!.url != null && exp.hasMatch(data.url!)) {
+    final exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
+    if (data.image == null && data.title == null && data.url != null && exp.hasMatch(data.url!)) {
       data.image = data.url;
       data.title = "Image Preview";
     }
 
     // Remove the image data if the image data links to an "empty image"
-    String imageData = data?.image ?? "";
+    final imageData = data.image ?? "";
     if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
-      data?.image = null;
+      data.image = null;
     } else if (imageData.startsWith('//')) {
-      data?.image = 'https:$imageData';
+      data.image = 'https:$imageData';
       // In case the image is just a relative URL path
     } else if (imageData.startsWith('/')) {
-      data?.image = '$url$imageData';
+      data.image = '$url$imageData';
     }
 
     // Remove title or description if either are the "null" string
-    if (data?.title == "null") data?.title = null;
-    if (data?.description == "null") data?.description = null;
+    if (data.title == "null") data.title = null;
+    if (data.description == "null") data.description = null;
 
     // Set the OG URL
-    data?.url = url;
-
-    // Delete from the cache after 15 seconds (arbitrary)
-    Future.delayed(const Duration(seconds: 15), () {
-      if (_metaCache.containsKey(message.guid)) {
-        _metaCache.remove(message.guid);
-      }
-    });
-
-    // Tell everyone that it's complete
-    completer.complete(data);
-    return completer.future;
+    data.url = url;
+    return data;
   }
 
   /// Resolves [imageUrl] to a local disk-cached file path shared across
@@ -120,11 +136,30 @@ class MetadataHelper {
   /// path is returned immediately with `fromDisk: true`. Otherwise the image is
   /// downloaded via [HttpSvc], cached to disk, and the resulting hash is
   /// persisted back onto [message.metadata]. Returns `null` on failure.
+  /// Longest-side cap for cached preview images. A link-preview card renders at
+  /// a few hundred logical points, but OG images are routinely 1200x630 or
+  /// larger — without this the full bitmap is decoded and held in Flutter's
+  /// image cache for every preview on screen.
+  static const int _previewImageMaxDimension = 1080;
+
+  /// Reads back the dimensions recorded for [metadataKey]'s cached image, so a
+  /// widget can reserve the right box *before* decoding. Null when the image was
+  /// cached by an older build that didn't record them.
+  static Size? cachedImageSize(Message? message, String metadataKey) {
+    final raw = message?.metadata?['${metadataKey}Size'];
+    if (raw is! Map) return null;
+    final w = (raw['width'] as num?)?.toDouble();
+    final h = (raw['height'] as num?)?.toDouble();
+    if (w == null || h == null || w <= 0 || h <= 0) return null;
+    return Size(w, h);
+  }
+
   static Future<(String path, bool fromDisk)?> resolveCachedImage(
     Message message,
     String metadataKey,
-    String imageUrl,
-  ) async {
+    String imageUrl, {
+    bool optimize = false,
+  }) async {
     if (kIsWeb) return null;
 
     final storedMd5 = message.metadata?[metadataKey] as String?;
@@ -143,13 +178,64 @@ class MetadataHelper {
       final bytes = response.data;
       if (bytes == null || bytes.isEmpty) return null;
       final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-      message.metadata = {...?message.metadata, metadataKey: hash};
+      final path = FilesystemSvc.urlPreviewImagePath(hash);
+      final size = optimize ? await _optimizeCachedImage(path) : null;
+      message.metadata = {
+        ...?message.metadata,
+        metadataKey: hash,
+        if (size != null) '${metadataKey}Size': {'width': size.width.toInt(), 'height': size.height.toInt()},
+      };
       if (message.id != null) message.save();
-      return (FilesystemSvc.urlPreviewImagePath(hash), false);
+      return (path, false);
     } catch (ex, stack) {
       Logger.warn('Failed to cache preview image', error: ex, trace: stack, tag: 'MetadataHelper');
       return null;
     }
+  }
+
+  /// Shrinks an oversized cached preview image in place and returns the
+  /// resulting display dimensions.
+  ///
+  /// Images already within [_previewImageMaxDimension] are left byte-identical:
+  /// re-encoding them would only lose quality, and would flatten alpha on the
+  /// PNG sources some sites use.
+  ///
+  /// Generation runs through the same isolate action as attachment previews, so
+  /// EXIF orientation is baked in and the tag cleared — the file on disk is
+  /// always upright, and nothing downstream may re-apply a rotation.
+  ///
+  /// The one gap: for an image left untouched, the returned size comes from the
+  /// container header and would be axis-swapped if that image carried an EXIF
+  /// orientation. That effectively doesn't happen for server-generated OG
+  /// images, and the cost is a mis-reserved box, not a wrong render.
+  static Future<Size?> _optimizeCachedImage(String path) async {
+    final original = await AttachmentsSvc.getImageSizing(path);
+    if (original.width <= 0 || original.height <= 0) return null;
+    if (original.longestSide <= _previewImageMaxDimension) return original;
+
+    // Write beside the target and rename in, so a kill mid-write can't leave a
+    // truncated file that exists() would accept forever. `.jpg` stays last for
+    // the benefit of any format-validating encoder in the chain.
+    final tempPath = '$path.tmp.jpg';
+    try {
+      final ok = await ImageInterface.generatePreview(
+        path: path,
+        outputPath: tempPath,
+        maxDimension: _previewImageMaxDimension,
+        quality: 85,
+      );
+      if (!ok) return original;
+      await File(tempPath).rename(path);
+    } catch (ex, stack) {
+      Logger.warn('Failed to downsample preview image', error: ex, trace: stack, tag: 'MetadataHelper');
+      try {
+        final temp = File(tempPath);
+        if (await temp.exists()) await temp.delete();
+      } catch (_) {}
+      return original;
+    }
+
+    return AttachmentsSvc.getImageSizing(path);
   }
 
   static Future<Metadata> getLocationMetadata(Position locationData) async {

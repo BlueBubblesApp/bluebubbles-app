@@ -100,7 +100,12 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
     try {
       final metadata = await MetadataHelper.fetchMetadata(message, urlOverride: data.url);
       if (metadata?.image != null) {
-        final result = await MetadataHelper.resolveCachedImage(message, 'photoPreviewImageMd5', metadata!.image!);
+        final result = await MetadataHelper.resolveCachedImage(
+          message,
+          'photoPreviewImageMd5',
+          metadata!.image!,
+          optimize: true,
+        );
         if (result != null) {
           if (mounted) setState(() => _previewImagePath = result.$1);
           return;

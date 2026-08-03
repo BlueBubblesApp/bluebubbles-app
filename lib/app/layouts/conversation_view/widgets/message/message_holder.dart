@@ -52,7 +52,10 @@ class MessageHolder extends StatefulWidget {
   State<StatefulWidget> createState() => _MessageHolderState();
 }
 
-class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
+class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveClientMixin, ThemeHelpers {
+  @override
+  bool get wantKeepAlive => true;
+
   MessageState get controller => widget.ms;
 
   Message get message => controller.message;
@@ -189,6 +192,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     controller.built = true;
 
     // Cache settings values to avoid repeated observable reads
@@ -401,7 +405,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                       Padding(
                                         padding:
                                             (showAvatar || alwaysShowAvatars) && !(message.isGroupEvent || e.isUnsent)
-                                                ? EdgeInsets.only(left: 35.0 * avatarScale)
+                                                ? EdgeInsets.only(
+                                                    left: 35.0 * avatarScale + (e.isMediaGallery ? 12.0 : 0.0))
                                                 : EdgeInsets.zero,
                                         child: DecoratedBox(
                                           decoration: iOS &&
