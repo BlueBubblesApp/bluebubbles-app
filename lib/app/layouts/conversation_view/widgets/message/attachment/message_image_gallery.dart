@@ -1,11 +1,8 @@
-import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
-import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -13,10 +10,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:supercharged/supercharged.dart';
 
 enum GalleryFanDirection {
   left,
@@ -66,6 +60,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   static const double _swipeCommitThreshold = 70;
   static const double _maxDragDx = 140;
   static const double _maxWiggleDx = 20.0;
+  static const double _maxStackSizeFactor = 0.42;
+  static const double _maxStackWidth = 220.0;
+  /// Portrait card aspect (width:height = 3:4).
+  static const double _portraitAspect = 3 / 4;
 
   static const _fanSlotDx = <double>[0, 10, 17, 23, 28];
   static const _fanSlotDy = <double>[0, 4, 9, 14, 20];
@@ -85,30 +83,16 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   double _scrollAccumulator = 0;
   bool _hapticGivenForCurrentEnd = false;
   bool _labelHovered = false;
-  final Map<String, Size> _imageSizes = {};
   int? _activeDragPointer;
   VelocityTracker? _velocityTracker;
   ConversationViewController? _cvController;
-  late final MessageState _ms;
-  final List<Worker> _sizeWorkers = [];
 
   List<Attachment> get _attachments => widget.attachments;
 
   @override
   void initState() {
     super.initState();
-    _ms = MessageStateScope.readStateOnce(context);
-    _cvController = _ms.cvController;
-    _watchAttachmentSizes();
-    _loadImageSizes();
-  }
-
-  @override
-  void dispose() {
-    for (final w in _sizeWorkers) {
-      w.dispose();
-    }
-    super.dispose();
+    _cvController = MessageStateScope.readStateOnce(context).cvController;
   }
 
   @override
@@ -118,131 +102,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
     if (!listEquals(oldKeys, newKeys)) {
       _currentIndex = 0;
-      _imageSizes.clear();
-      _watchAttachmentSizes();
-      _loadImageSizes();
-    } else {
-      final diff = widget.attachments.filter((a) => _sizeFor(a) == null).toList();
-      if (diff.isNotEmpty) {
-        _loadImageSizes();
-      }
     }
-  }
-
-  /// The fan's card height is derived from its tallest image, so it has to
-  /// re-measure when an attachment finishes downloading or when local dimension
-  /// extraction lands. Neither rebuilds this widget on its own — the download
-  /// progress UI updates inside `AttachmentHolder`'s own `Obx`, well below here,
-  /// so without these workers the fan keeps the square fallback height it
-  /// picked while the file was still missing.
-  void _watchAttachmentSizes() {
-    for (final w in _sizeWorkers) {
-      w.dispose();
-    }
-    _sizeWorkers.clear();
-
-    for (final a in _attachments) {
-      final guid = a.guid;
-      if (guid == null) continue;
-      final state = _ms.getOrCreateAttachmentState(guid, attachment: a);
-      _sizeWorkers.add(
-        everAll([state.width, state.height, state.resolvedFile], (_) {
-          _runOutsideBuild(() {
-            if (!mounted) return;
-            // Dimensions may already be on the attachment (the state write and
-            // the entity write happen together), so rebuild regardless; the
-            // probe below only does work when they aren't.
-            unawaited(_loadOneImageSize(a, force: true));
-            setState(() {});
-          });
-        }),
-      );
-    }
-  }
-
-  /// Runs [fn] once the framework is out of its build/layout phase.
-  ///
-  /// GetX workers fire synchronously from whoever wrote the value, and
-  /// `AttachmentHolder.initState` resolves an already-downloaded file while this
-  /// widget is still building its own subtree — so calling `setState` straight
-  /// from a worker throws "setState() called during build".
-  void _runOutsideBuild(VoidCallback fn) {
-    final phase = SchedulerBinding.instance.schedulerPhase;
-    final midFrame = phase == SchedulerPhase.persistentCallbacks || phase == SchedulerPhase.midFrameMicrotasks;
-    if (!midFrame) {
-      fn();
-      return;
-    }
-    SchedulerBinding.instance.addPostFrameCallback((_) => fn());
-  }
-
-  void _loadImageSizes() {
-    for (final a in _attachments) {
-      if (a.mimeStart == 'image') {
-        _loadOneImageSize(a);
-      }
-    }
-  }
-
-  /// The size to lay [attachment] out at, preferring the dimensions already
-  /// tracked on the attachment over decoding the file to find out. Falls back to
-  /// the probed size for attachments whose dimensions were never extracted.
-  Size? _sizeFor(Attachment attachment) {
-    final w = attachment.displayWidth;
-    final h = attachment.displayHeight;
-    if (w != null && h != null && w > 0 && h > 0) return Size(w.toDouble(), h.toDouble());
-    final key = attachment.guid ?? attachment.transferName;
-    return key != null ? _imageSizes[key] : null;
-  }
-
-  Future<void> _loadOneImageSize(Attachment attachment, {bool force = false}) async {
-    final key = attachment.guid ?? attachment.transferName;
-    if (key == null) return;
-    if (!force && _imageSizes.containsKey(key)) return;
-    // Stored dimensions already answer this — no reason to decode the file.
-    if (attachment.hasValidSize) return;
-    try {
-      // Prefer a converted path (exists for HEIC/TIFF), fall back to original.
-      // legacyConvertedPath covers HEIC converted before it moved to JPEG.
-      File? imageFile;
-      for (final candidate in {attachment.convertedPath, attachment.legacyConvertedPath, attachment.path}) {
-        final f = File(candidate);
-        if (f.existsSync()) {
-          imageFile = f;
-          break;
-        }
-      }
-      if (imageFile == null) return;
-
-      final completer = Completer<Size?>();
-      final provider = FileImage(imageFile);
-      final stream = provider.resolve(ImageConfiguration.empty);
-      late ImageStreamListener listener;
-      listener = ImageStreamListener(
-        (ImageInfo info, bool _) {
-          if (!completer.isCompleted) {
-            completer.complete(Size(info.image.width.toDouble(), info.image.height.toDouble()));
-          }
-          stream.removeListener(listener);
-        },
-        onError: (dynamic _, StackTrace? _) {
-          if (!completer.isCompleted) completer.complete(null);
-          stream.removeListener(listener);
-        },
-      );
-      stream.addListener(listener);
-
-      final size = await completer.future;
-      if (size == null) return;
-      // A cached image resolves its listener synchronously, so this can land
-      // mid-frame just like the workers above.
-      _runOutsideBuild(() {
-        if (!mounted) return;
-        setState(() {
-          _imageSizes[key] = size;
-        });
-      });
-    } catch (_) {}
   }
 
   void _advance(int direction) {
@@ -279,22 +139,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   }
 
   double _computeBaseCardHeight(double baseCardWidth) {
-    if (widget.isInReply) return 120.0;
-
-    const double maxHeight = 500.0;
-    const double minHeight = 100.0;
-
-    final tallest = _attachments.fold<double>(
-      minHeight,
-      (current, a) {
-        final size = _sizeFor(a);
-        if (size == null || size.width <= 0 || size.height <= 0) {
-          return max(current, baseCardWidth);
-        }
-        return max(current, (size.height / size.width) * baseCardWidth);
-      },
-    );
-    return tallest.clamp(minHeight, maxHeight);
+    return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
   void _showGalleryPopup(BuildContext context, String title) {
@@ -322,9 +167,12 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
   @override
   Widget build(BuildContext context) {
-    final baseCardWidth = min((NavigationSvc.width(context) * 0.5), 260.0);
-    final baseHeight = _computeBaseCardHeight(baseCardWidth);
-    final baseCardHeight = baseHeight.clamp(100.0, 500.0);
+    // Calculated against screen width; maxStackWidth caps size on larger screens.
+    final baseCardWidth = min(
+      NavigationSvc.width(context) * _maxStackSizeFactor,
+      _maxStackWidth,
+    );
+    final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
     final fanCanvasWidth = baseCardWidth + 56;
     final fanCanvasHeight = baseCardHeight;
