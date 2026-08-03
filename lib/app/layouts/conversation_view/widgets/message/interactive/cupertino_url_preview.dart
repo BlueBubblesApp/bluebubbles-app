@@ -132,7 +132,7 @@ class CupertinoUrlPreview extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+                  if (controller.refreshRunning.value || controller.loading.value) _buildRefreshIndicator(context),
                 ],
               ),
             ],
@@ -149,7 +149,7 @@ class CupertinoUrlPreview extends StatelessWidget {
     return Padding(
       padding: inReply
           ? const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0)
-          : const EdgeInsets.fromLTRB(18.0, 12.0, 15.0, 12.0),
+          : const EdgeInsets.fromLTRB(18.0, 12.0, 18.0, 12.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +188,7 @@ class CupertinoUrlPreview extends StatelessWidget {
                   ],
                 ),
               ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+              if (controller.refreshRunning.value || controller.loading.value) _buildRefreshIndicator(context),
             ],
           ),
         ],
@@ -232,7 +232,7 @@ class CupertinoUrlPreview extends StatelessWidget {
                   ],
                 ),
               ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+              if (controller.refreshRunning.value || controller.loading.value) _buildRefreshIndicator(context),
             ],
           ),
           if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 10),

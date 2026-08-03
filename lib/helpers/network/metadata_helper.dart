@@ -71,7 +71,7 @@ abstract final class MetadataHelper {
     //
     // `getContactForHandle` already returns null when access is unavailable, so
     // no separate permission check is needed here.
-    final handleId = message.handle?.id;
+    final handleId = message.handleRelation.target?.id;
     if (handleId == null) {
       Logger.debug('No handle on ${message.guid}; treating sender as unknown', tag: 'MetadataHelper');
       return false;

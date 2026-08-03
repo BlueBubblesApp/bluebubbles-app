@@ -135,6 +135,20 @@ class UrlPreviewController {
   /// other feedback, and a cache-cleared refetch is the slowest path there is.
   final RxBool refreshRunning = false.obs;
 
+  /// True while **any** [load] call is in flight — the initial automatic load
+  /// (a new message arriving, or an older one's card being built for the first
+  /// time as it scrolls into view), a contact-resolution retry, or a forced
+  /// reload.
+  ///
+  /// The skins render the same trailing spinner for this as for
+  /// [refreshRunning], so a card that is quietly resolving in the background
+  /// looks no different from one the user explicitly asked to reload — manual
+  /// vs. automatic is not something the UI should have to distinguish.
+  /// [manualLoadRunning] stays separate: it drives the tap-to-load
+  /// affordance's own inline state, a different widget than the trailing
+  /// spinner this drives.
+  final RxBool loading = false.obs;
+
   static const String _tag = 'UrlPreview';
 
   /// Short identifier for log lines — the message GUID, or the link when the
@@ -144,6 +158,7 @@ class UrlPreviewController {
   MessageState? _messageState;
   bool _inReply = false;
   Worker? _refreshWorker;
+  Worker? _contactResyncWorker;
   bool _disposed = false;
 
   Message? get message => _messageState?.message;
@@ -359,6 +374,29 @@ class UrlPreviewController {
     _inReply = inReply;
 
     if (messageState != null && !isClone) {
+      // Under LinkPreviewPolicy.contactsOnly, [MetadataHelper.shouldAutoFetch]
+      // fails closed on a sender it cannot yet confirm is a contact — and
+      // contact matching runs as a background sync that may still be in
+      // flight when this card does its one-shot initial [load]. Without this,
+      // a message from a contact whose sync simply hadn't landed yet is stuck
+      // showing the tap-to-load affordance forever, since nothing else ever
+      // asks the policy again. `displayName` is what changes once
+      // `ContactServiceV2.notifyHandlesUpdated` pushes the resolved contact
+      // into the handle's state (see `ChatState`'s participant-subtitle
+      // worker for the same pattern), so a flip there is the signal to
+      // re-check — but only when the earlier attempt actually needed it, so
+      // an unrelated handle update (e.g. a color change) doesn't re-run a
+      // fetch that already succeeded.
+      final handle = messageState.message.handleRelation.target;
+      if (handle != null) {
+        final handleState = HandleSvc.getOrCreateHandleState(handle);
+        _contactResyncWorker = ever(handleState.displayName, (_) {
+          if (_disposed || !needsManualLoad.value) return;
+          Logger.debug('Contact info updated for $_logId; re-checking auto-fetch policy', tag: _tag);
+          unawaited(load());
+        });
+      }
+
       _refreshWorker = ever(messageState.previewRefreshKey, (_) async {
         if (_disposed) return;
         Logger.debug('Refresh requested; clearing card state for $_logId', tag: _tag);
@@ -420,6 +458,7 @@ class UrlPreviewController {
   void dispose() {
     _disposed = true;
     _refreshWorker?.dispose();
+    _contactResyncWorker?.dispose();
     imageAnimation.dispose();
     iconAnimation.dispose();
   }
@@ -432,11 +471,23 @@ class UrlPreviewController {
   ///
   /// Set [force] when the user asked for this preview, which skips the sender
   /// policy — see [loadManually] for why a deliberate action counts as consent.
+  ///
+  /// Drives [loading] around the whole call, whatever triggered it — a new
+  /// message's first build, an older one's card scrolling into view for the
+  /// first time, or a contact-resolution retry. See [loading] for why that
+  /// matters: it is what lets the trailing spinner show for every one of
+  /// those the same way it does for a forced reload.
   Future<void> load({bool force = false}) async {
-    if (file != null) {
-      await _loadLocationPreview();
-    } else {
-      await _loadMessagePreview(force: force);
+    if (_disposed) return;
+    loading.value = true;
+    try {
+      if (file != null) {
+        await _loadLocationPreview();
+      } else {
+        await _loadMessagePreview(force: force);
+      }
+    } finally {
+      if (!_disposed) loading.value = false;
     }
   }
 

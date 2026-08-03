@@ -133,7 +133,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Flexible(child: _buildTextBlock(context, message: message, inReply: inReply)),
-        if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+        if (controller.refreshRunning.value || controller.loading.value) _buildRefreshIndicator(context),
       ],
     );
   }
@@ -229,7 +229,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
                   ],
                 ),
               ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+              if (controller.refreshRunning.value || controller.loading.value) _buildRefreshIndicator(context),
             ],
           ),
           ..._buildManualLoadAffordance(context, inReply: inReply),

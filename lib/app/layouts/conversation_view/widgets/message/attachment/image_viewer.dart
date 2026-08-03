@@ -363,7 +363,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           gaplessPlayback: true,
           filterQuality: FilterQuality.high,
           width: displayWidth,
-          height: displayHeight,
+          // Commented out because it causes clipping issues
+          // when an image exists in the same message as text.
+          // height: displayHeight,
           cacheWidth: calculatedWidth,
           fit: BoxFit.contain,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

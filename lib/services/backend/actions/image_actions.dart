@@ -49,7 +49,13 @@ class ImageActions {
     try {
       final bytes = input['bytes'] as Uint8List;
 
-      final decoded = img.decodeIco(bytes);
+      // Plenty of sites serve a plain PNG/BMP under `Content-Type: image/x-icon`
+      // (Google's favicons among them) — `IcoDecoder` checks the real ICO
+      // header's reserved field and returns null on anything else, so a site
+      // that mislabels its icon this way used to have it discarded outright.
+      // Falling back to generic format sniffing recovers those.
+      var decoded = img.decodeIco(bytes);
+      decoded ??= img.decodeImage(bytes);
       if (decoded == null) return null;
 
       // An .ico embeds several resolutions of the same mark; [img.decodeIco]

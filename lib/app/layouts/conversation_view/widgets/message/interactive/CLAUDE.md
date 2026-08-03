@@ -148,10 +148,26 @@ which is why it appeared with no animation at all until `appleImageFromDisk` exi
 synchronously when the file is already downloaded, and only calls `onComplete` when it actually had
 to fetch it. So the flag starts true (no animation) and is cleared in that callback.
 
-The card has two independent progress signals, both rendered by every shape:
-`manualLoadRunning` (tap-to-load, shown inside the affordance itself) and `refreshRunning`
-(the popup menu's "Refresh Preview", a trailing spinner). Refresh clears the card back to nothing
-before re-fetching, so without the spinner it reads as the preview having vanished.
+The card has two independent progress signals. `manualLoadRunning` drives the tap-to-load
+affordance's own inline state (shown inside the button itself) and is unaffected by anything else.
+The trailing spinner is shown by every shape whenever `refreshRunning.value || loading.value` —
+`refreshRunning` covers the popup menu's "Refresh Preview" (which clears the card back to nothing
+before re-fetching, so without the spinner it reads as the preview having vanished), and `loading`
+covers **every** call to `UrlPreviewController.load()`: the initial automatic load on first build —
+whether that is a brand-new incoming message or an older message's card being built for the first
+time as it scrolls into view — and the contact-resolution retry below. Manual vs. automatic is
+deliberately not something the UI distinguishes; both read as "this card is doing something."
+
+**Auto-fetch retries once contacts catch up.** `MetadataHelper.shouldAutoFetch` fails closed under
+`LinkPreviewPolicy.contactsOnly` when it cannot yet confirm the sender is a saved contact — and
+contact matching (`ContactServiceV2.syncContactsToHandles`) runs as a background sync that may
+still be in flight when a card's one-shot initial `load()` runs. Without a retry, a message from a
+contact whose sync simply hadn't landed yet got stuck on the tap-to-load affordance forever, since
+nothing else ever re-asked the policy. `UrlPreviewController.attach()` now also subscribes to the
+sender's `HandleState.displayName` (via `HandleSvc.getOrCreateHandleState`) — the field that
+changes once `ContactServiceV2.notifyHandlesUpdated` pushes a resolved contact into the handle's
+state — and re-runs `load()` when it changes, but only if `needsManualLoad` is currently true, so an
+unrelated handle update (e.g. a color change) doesn't re-run a fetch that already succeeded.
 
 ## Skin Handling
 
