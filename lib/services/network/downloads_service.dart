@@ -90,8 +90,16 @@ class AttachmentDownloadService extends GetxService {
 
   void clearControllerForGuid(String guid, {bool deleteRegistered = true}) {
     _removeGuidFromQueueMap(guid);
-    if (deleteRegistered && Get.isRegistered<AttachmentDownloadController>(tag: guid)) {
-      Get.delete<AttachmentDownloadController>(tag: guid);
+    if (Get.isRegistered<AttachmentDownloadController>(tag: guid)) {
+      // Abort any in-flight request before dropping the registration -- otherwise
+      // a still-running fetchAttachment() keeps writing to the same deterministic
+      // `.part` path a freshly-started controller (or a redownload's file wipe)
+      // will also touch, and whichever one loses the race hits a rename/delete on
+      // a file the other side already moved out from under it.
+      Get.find<AttachmentDownloadController>(tag: guid).cancel();
+      if (deleteRegistered) {
+        Get.delete<AttachmentDownloadController>(tag: guid);
+      }
     }
   }
 
@@ -169,6 +177,7 @@ class AttachmentDownloadController extends GetxController {
   final Rxn<PlatformFile> file = Rxn<PlatformFile>();
   final Rx<AttachmentDownloadState> state = Rx<AttachmentDownloadState>(AttachmentDownloadState.queued);
   Stopwatch stopwatch = Stopwatch();
+  CancelToken? _cancelToken;
 
   AttachmentDownloadController({
     required this.attachment,
@@ -185,10 +194,18 @@ class AttachmentDownloadController extends GetxController {
     super.onInit();
   }
 
+  /// Aborts an in-flight request. Called when a newer controller for the same
+  /// attachment is about to reuse this one's deterministic `.part` path (see
+  /// [AttachmentDownloadService.clearControllerForGuid]).
+  void cancel() {
+    if (_cancelToken?.isCancelled == false) _cancelToken?.cancel('superseded');
+  }
+
   Future<void> fetchAttachment() async {
     if (attachment.guid == null || attachment.guid!.contains("temp")) return;
     state.value = AttachmentDownloadState.downloading;
     stopwatch.start();
+    _cancelToken = CancelToken();
 
     // Mark as not downloaded while downloading (handles re-downloads)
     attachment.isDownloaded = false;
@@ -208,6 +225,7 @@ class AttachmentDownloadController extends GetxController {
         .download(
       attachment.guid!,
       savePath: tempPath,
+      cancelToken: _cancelToken,
       onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)),
     )
         .catchError((err) async {
@@ -268,7 +286,26 @@ class AttachmentDownloadController extends GetxController {
       // Atomically move the completed file into its final path. Only now does
       // attachment.path exist, so readers can never observe partial content.
       if (tempPath != null && savePath != null) {
-        await File(tempPath).rename(savePath);
+        try {
+          await File(tempPath).rename(savePath);
+        } on PathNotFoundException {
+          // The `.part` file is gone. cancel() closes most of this race, but a
+          // download that had already finished writing (just not renamed yet)
+          // when a newer request superseded it can still lose it. If savePath
+          // exists, the newer request already won and renamed its own copy in
+          // -- there's nothing left for this one to do. Otherwise this really
+          // is a lost file, so fail the same way the request-level catchError
+          // above does rather than letting this escape as an unhandled Future
+          // rejection (fetchAttachment() is fired off without being awaited).
+          if (!await File(savePath).exists()) {
+            for (Function f in errorFuncs) {
+              f.call();
+            }
+            state.value = AttachmentDownloadState.error;
+            AttachmentDownloader._removeFromQueue(this);
+            return;
+          }
+        }
       }
     }
 
