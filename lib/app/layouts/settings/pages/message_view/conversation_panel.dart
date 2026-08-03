@@ -128,31 +128,55 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                         isThreeLine: true,
                       )),
                   const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  Obx(() => SettingsOptions<LinkPreviewPolicy>(
-                        initial: SettingsSvc.settings.linkPreviewPolicy.value,
-                        onChanged: (val) async {
-                          if (val == null) return;
-                          SettingsSvc.settings.linkPreviewPolicy.value = val;
-                          await SettingsSvc.settings.saveOneAsync('linkPreviewPolicy');
-                        },
-                        options: LinkPreviewPolicy.values,
-                        textProcessing: (val) => val.label,
-                        capitalize: false,
-                        title: "Load Link Previews",
-                        subtitle: SettingsSvc.settings.linkPreviewPolicy.value.description,
-                        secondaryColor: headerColor,
-                        useModernMenu: true,
-                      )),
-                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "About link previews",
-                    subtitle: "Building a preview means contacting the linked website, which reveals your IP "
-                        "address and roughly when you read the message to whoever controls that link. Preview "
-                        "text that arrives with a message is always shown, but loading its image is still a "
-                        "request. Without contacts access, every sender counts as unknown and previews wait "
-                        "for a tap.",
-                    isThreeLine: true,
+                  // One tile: a static title/description header, styled like
+                  // `SettingsTile`, with the toggle underneath rather than beside
+                  // it. `SettingsOptions` gets an empty title so it renders no
+                  // label of its own on any skin — the iOS segmented control was
+                  // otherwise unlabeled entirely, and Material's inline label sat
+                  // beside the control rather than above it either way.
+                  //
+                  // Both pieces have to live inside one `Column` here, as a single
+                  // entry in `SettingsSection.children` — on Material/Samsung,
+                  // `M3ESection` gives every *top-level* child its own rounded
+                  // corners and a gap from its neighbors, so two separate entries
+                  // rendered as two visually distinct tiles despite having no
+                  // divider between them. iOS didn't show the seam because its
+                  // `SettingsSection` just stacks every child in one card.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 0.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Load Link Previews", style: context.theme.textTheme.bodyLarge),
+                            const SizedBox(height: 4.0),
+                            Text(
+                              "Loading a preview visits the link, which can reveal your IP address and roughly "
+                              "when you read the message to whoever controls it.",
+                              style: context.theme.textTheme.bodySmall!.copyWith(
+                                  color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Obx(() => SettingsOptions<LinkPreviewPolicy>(
+                            initial: SettingsSvc.settings.linkPreviewPolicy.value,
+                            onChanged: (val) async {
+                              if (val == null) return;
+                              SettingsSvc.settings.linkPreviewPolicy.value = val;
+                              await SettingsSvc.settings.saveOneAsync('linkPreviewPolicy');
+                            },
+                            options: LinkPreviewPolicy.values,
+                            textProcessing: (val) => val.label,
+                            capitalize: false,
+                            title: "",
+                            secondaryColor: headerColor,
+                            useModernMenu: true,
+                            clampWidth: false
+                          )),
+                    ],
                   ),
                   if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                   if (!kIsWeb)
