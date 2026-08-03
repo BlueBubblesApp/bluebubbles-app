@@ -16,6 +16,25 @@ import 'package:get/get.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:universal_io/io.dart';
 
+/// Reads [Settings.linkPreviewPolicy], honouring the boolean that preceded it.
+///
+/// Installs that saw the interim `fetchUrlPreviews` flag carry their choice
+/// forward: off stays off, on becomes the contacts-only default rather than
+/// silently re-enabling unconditional fetching.
+LinkPreviewPolicy _readLinkPreviewPolicy(Map<String, dynamic> map) {
+  final stored = map['linkPreviewPolicy'];
+  if (stored is int && stored >= 0 && stored < LinkPreviewPolicy.values.length) {
+    return LinkPreviewPolicy.values[stored];
+  }
+
+  final legacy = map['fetchUrlPreviews'];
+  if (legacy is bool) {
+    return legacy ? LinkPreviewPolicy.contactsOnly : LinkPreviewPolicy.never;
+  }
+
+  return LinkPreviewPolicy.contactsOnly;
+}
+
 class Settings {
   final RxString iMessageStatsSource = "server".obs;
   final RxInt firstFcmRegisterDate = 0.obs;
@@ -34,6 +53,14 @@ class Settings {
   final RxDouble previewImageQuality = 0.75.obs; // 0.25 to 1.0
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
+
+  /// When the app may contact a linked website to build a preview card.
+  ///
+  /// Defaults to [LinkPreviewPolicy.contactsOnly]: links from people the user
+  /// has saved load automatically, links from unknown senders wait for a tap.
+  /// Previews supplied by the server as part of Apple's payload data are
+  /// unaffected — no outbound request is involved.
+  final Rx<LinkPreviewPolicy> linkPreviewPolicy = LinkPreviewPolicy.contactsOnly.obs;
   final RxBool showIncrementalSync = false.obs;
   final RxBool highPerfMode = false.obs;
   final RxBool reduceMotion = false.obs;
@@ -296,6 +323,7 @@ class Settings {
       'imageQuality': previewImageQuality.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
+      'linkPreviewPolicy': linkPreviewPolicy.value.index,
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'reduceMotion': reduceMotion.value,
@@ -460,6 +488,12 @@ class Settings {
         map['autoOpenKeyboard'] ?? SettingsSvc.settings.autoOpenKeyboard.value;
     SettingsSvc.settings.hideTextPreviews.value =
         map['hideTextPreviews'] ?? SettingsSvc.settings.hideTextPreviews.value;
+    // Through the same reader as [fromMap]: a bare `values[map[...]]` throws a
+    // RangeError on an index this build doesn't have, and skips the legacy
+    // `fetchUrlPreviews` migration entirely.
+    final hasLinkPreviewPolicy = map.containsKey('linkPreviewPolicy') || map.containsKey('fetchUrlPreviews');
+    SettingsSvc.settings.linkPreviewPolicy.value =
+        hasLinkPreviewPolicy ? _readLinkPreviewPolicy(map) : SettingsSvc.settings.linkPreviewPolicy.value;
     SettingsSvc.settings.showIncrementalSync.value =
         map['showIncrementalSync'] ?? SettingsSvc.settings.showIncrementalSync.value;
     SettingsSvc.settings.highPerfMode.value = map['highPerfMode'] ?? SettingsSvc.settings.highPerfMode.value;
@@ -706,6 +740,7 @@ class Settings {
     s.previewImageQuality.value = map['imageQuality']?.toDouble() ?? 1.0;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
+    s.linkPreviewPolicy.value = _readLinkPreviewPolicy(map);
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
     s.reduceMotion.value = map['reduceMotion'] ?? false;

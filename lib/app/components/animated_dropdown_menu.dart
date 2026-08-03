@@ -43,14 +43,16 @@ class AnimatedDropdownMenu extends StatefulWidget {
 
 class _AnimatedDropdownMenuState extends State<AnimatedDropdownMenu> with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
-  late final AnimationController _animationController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 300),
-    reverseDuration: const Duration(milliseconds: 250),
-  );
-  late final Animation<double> _scaleAnimation =
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack);
-  late final Animation<double> _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
+
+  // Created eagerly in initState, not as `late final` field initializers. A
+  // lazy initializer runs on first *access*, and for a menu that is never
+  // opened the first access is `dispose()` — which builds a Ticker while the
+  // element is already deactivated, and `SingleTickerProviderStateMixin` looks
+  // up the `TickerMode` inherited widget to do it. That throws "Looking up a
+  // deactivated widget's ancestor is unsafe".
+  late final AnimationController _animationController;
+  late final CurvedAnimation _scaleAnimation;
+  late final CurvedAnimation _fadeAnimation;
   OverlayEntry? _overlayEntry;
 
   Alignment _targetAnchor = Alignment.bottomRight;
@@ -58,9 +60,23 @@ class _AnimatedDropdownMenuState extends State<AnimatedDropdownMenu> with Single
   Offset _offset = const Offset(0, 8);
 
   @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      reverseDuration: const Duration(milliseconds: 250),
+    );
+    _scaleAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack);
+    _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
+  }
+
+  @override
   void dispose() {
     _overlayEntry?.remove();
     _overlayEntry = null;
+    _scaleAnimation.dispose();
+    _fadeAnimation.dispose();
     _animationController.dispose();
     super.dispose();
   }

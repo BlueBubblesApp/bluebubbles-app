@@ -19,6 +19,18 @@ A message renders as a composition of specialized sub-widgets.
 | `parts/` | Per-part-type renderers (a message can have multiple parts) | |
 | `shared/` | Shared utilities across message widgets | |
 
+## Message Clones
+
+`MessagePopup` re-renders the bubble it was opened from against the **same** `MessageState`, so
+while the popup is open there are two complete copies of every widget in that message — each with
+its own state and its own listeners on the shared observables. Anything that reacts to a shared
+signal by *doing work* (rather than just drawing) must check
+`MessageCloneScope.of(context)` in `initState` and skip subscribing, or the work runs twice.
+`previewRefreshKey` is the case this was built for: "Refresh Preview" is dispatched before the
+popup closes, so both listeners fire.
+
+See `shared/message_clone_scope.dart`.
+
 ## Related
 - Reactive state: `lib/app/state/message_state.dart`
 - DB model: `lib/database/io/message.dart`

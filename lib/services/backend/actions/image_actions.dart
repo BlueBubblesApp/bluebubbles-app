@@ -37,6 +37,35 @@ class ImageActions {
     }
   }
 
+  /// Decodes a multi-resolution `.ico` file and re-encodes its largest frame as
+  /// PNG. Flutter's `Image` widget has no ICO decoder — this is why the
+  /// preview pipeline used to discard every favicon served as `image/x-icon` —
+  /// but the `image` package's own format sniffing already recognises ICO, so
+  /// no extra dependency is needed to read it.
+  /// Input: Map with 'bytes' key (Uint8List of the raw .ico file)
+  /// Output: PNG-encoded bytes of the largest embedded frame, or null on
+  /// failure (corrupt file, or a decoder that returns no frames)
+  static Uint8List? convertIcoToPng(Map<String, dynamic> input) {
+    try {
+      final bytes = input['bytes'] as Uint8List;
+
+      final decoded = img.decodeIco(bytes);
+      if (decoded == null) return null;
+
+      // An .ico embeds several resolutions of the same mark; [img.decodeIco]
+      // returns them all as one multi-frame Image (frame 0 is whichever the
+      // file listed first, not necessarily the largest). Pick the biggest so a
+      // favicon does not get stuck at a 16x16 frame when a 256x256 one shipped
+      // alongside it.
+      final frame = decoded.frames.reduce((a, b) => a.width * a.height >= b.width * b.height ? a : b);
+
+      return Uint8List.fromList(img.encodePng(frame));
+    } catch (e) {
+      Logger.warn('Error converting ICO to PNG: $e');
+      return null;
+    }
+  }
+
   /// Reads EXIF data from an image file
   /// Input: Map with 'path' key containing file path
   /// Output: Map<String, String> with EXIF tag names and their printable values

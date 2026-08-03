@@ -19,6 +19,7 @@ import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -276,9 +277,15 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                             child: ConstrainedBox(
                               key: _childKey,
                               constraints: BoxConstraints(maxWidth: widget.size.width),
-                              child: MessageStateScope(
-                                messageState: widget.controller,
-                                child: widget.child,
+                              // Marked as a clone so anything inside that
+                              // reacts to shared state by doing work (URL
+                              // preview refreshes, say) knows not to — this
+                              // copy and the real bubble both see every signal.
+                              child: MessageCloneScope(
+                                child: MessageStateScope(
+                                  messageState: widget.controller,
+                                  child: widget.child,
+                                ),
                               ),
                             ),
                           ),

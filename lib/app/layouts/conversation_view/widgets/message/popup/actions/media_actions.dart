@@ -274,10 +274,17 @@ void redownload(MessagePopupActionContext ctx) {
 /// re-fetch. Generic across preview types - the widget itself (via
 /// [MessageState.previewRefreshKey]) owns how it re-fetches its own content.
 void refreshPreview(MessagePopupActionContext ctx) {
-  if (ctx.message.metadata != null) {
-    ctx.message.metadata = null;
-    ctx.message.save();
+  // Per slot, rather than `message.metadata = null`. Blanking the whole map
+  // also threw away the other slot's cached image hash and anything the server
+  // put there — keys this action has no business touching. `clear` removes only
+  // the slot's own keys and its attempt bookkeeping.
+  for (final slot in MetadataCacheSlot.values) {
+    MessageMetadataStore.clear(ctx.message, slot: slot);
   }
+  // The persisted copy is only half the cache — drop the in-memory entry too,
+  // or the refetch is served from it and nothing appears to change.
+  MetadataHelper.invalidateForMessage(ctx.message);
+  Logger.debug('Refresh Preview: cleared metadata and memo cache for ${ctx.message.guid}', tag: 'RefreshPreview');
   ctx.messageState.previewRefreshKey.value++;
   ctx.popDetails();
 }

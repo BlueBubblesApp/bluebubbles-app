@@ -130,6 +130,49 @@ enum SwipeDirection {
 
 enum BBTitleBarStyle { native, custom, hidden }
 
+/// When the app may contact a linked website to build a preview card.
+///
+/// Fetching a preview for somebody else's link discloses the user's IP address
+/// and rough read time to whoever controls that URL, and runs the parser
+/// against markup that person chose. Restricting it to known senders shrinks
+/// that exposure to people already in the user's contacts.
+///
+/// Previews supplied by the server as part of Apple's payload data are
+/// unaffected by this setting — no outbound request is involved.
+enum LinkPreviewPolicy {
+  /// Never fetch automatically; every preview is loaded by tapping.
+  never,
+
+  /// Fetch only for messages sent by a saved contact (or by the user).
+  contactsOnly,
+
+  /// Fetch for every link.
+  always;
+
+  /// Label for the settings picker.
+  String get label {
+    switch (this) {
+      case LinkPreviewPolicy.never:
+        return 'Never';
+      case LinkPreviewPolicy.contactsOnly:
+        return 'Contacts Only';
+      case LinkPreviewPolicy.always:
+        return 'Always';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case LinkPreviewPolicy.never:
+        return 'Link previews load only when you tap them';
+      case LinkPreviewPolicy.contactsOnly:
+        return 'Load automatically for saved contacts; tap to load for everyone else';
+      case LinkPreviewPolicy.always:
+        return 'Load automatically for every link, including from unknown senders';
+    }
+  }
+}
+
 enum MaterialSwipeAction {
   pin,
   alerts,

@@ -1,313 +1,255 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:ui' show Size;
-
-import 'package:bluebubbles/services/backend/interfaces/image_interface.dart';
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/network/metadata/metadata.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/database/models.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:html/dom.dart' as html;
-import 'package:html/parser.dart' as parser;
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:universal_io/io.dart';
 
-class MetadataHelper {
-  static bool mapIsNotEmpty(Map<String, dynamic>? data) {
-    if (data == null) return false;
-    return data.containsKey("title") && data["title"] != null;
+export 'package:bluebubbles/helpers/network/metadata/metadata.dart';
+
+/// Entry point for URL preview metadata.
+///
+/// A thin facade over the pipeline in `helpers/network/metadata/` — see
+/// `metadata/metadata.dart` for the layout. Widgets should only ever need
+/// [fetchForMessage], [resolveCachedImage] and the [MessageMetadataStore]
+/// helpers re-exported here.
+abstract final class MetadataHelper {
+  static UrlMetadataFetcher? _fetcher;
+
+  /// The shared fetcher. Created lazily so that app startup does not pay for
+  /// an HTTP client nobody may use.
+  static UrlMetadataFetcher get fetcher => _fetcher ??= UrlMetadataFetcher();
+
+  /// Replaces the shared fetcher. Test seam.
+  @visibleForTesting
+  static set fetcher(UrlMetadataFetcher value) {
+    _fetcher?.dispose();
+    _fetcher = value;
   }
 
-  static bool isNotEmpty(Metadata? data) {
-    return data?.title != null || data?.description != null || data?.image != null;
-  }
+  /// The user's automatic-fetch policy.
+  static LinkPreviewPolicy get policy => SettingsSvc.settings.linkPreviewPolicy.value;
 
-  /// Returns true when a metadata-fetch attempt has already completed without
-  /// a network error (even if no image was found). Use this to avoid repeated
-  /// fetches when the URL simply has no preview image.
-  static bool hasAttemptedFetch(Map<String, dynamic>? metadata) {
-    return metadata?['previewImageFetched'] == true;
-  }
+  /// Whether fetching is permitted at all, regardless of sender.
+  static bool get fetchingEnabled => policy != LinkPreviewPolicy.never;
 
-  static final Map<String, Completer<Metadata?>> _metaCache = {};
+  /// Whether [message]'s link may be fetched without the user asking.
+  ///
+  /// Under [LinkPreviewPolicy.contactsOnly] this is the difference between
+  /// "anyone who knows your number can make your phone issue a request" and
+  /// "only people you have saved can". It is evaluated per *message sender*,
+  /// not per chat: in a group containing both a contact and a stranger, the
+  /// stranger's messages are still gated.
+  ///
+  /// Fails closed: a sender that cannot be confirmed as a contact counts as
+  /// unknown, including when contacts access is unavailable entirely. That
+  /// means denying the contacts permission turns every link into tap-to-load
+  /// rather than quietly reverting to fetching everything.
+  ///
+  /// A manual tap bypasses this entirely — see [fetchForMessage], which does
+  /// not consult it.
+  static Future<bool> shouldAutoFetch(Message message) async {
+    switch (policy) {
+      case LinkPreviewPolicy.never:
+        return false;
+      case LinkPreviewPolicy.always:
+        return true;
+      case LinkPreviewPolicy.contactsOnly:
+        break;
+    }
 
-  /// Fetches OG metadata for [message]. By default the URL is parsed from
-  /// [message.text] (standard link-preview flow); pass [urlOverride] to fetch
-  /// metadata for a different URL instead (e.g. a share link embedded in a
-  /// message's payload data rather than its text), keying the dedup cache off
-  /// that URL instead of the message GUID.
-  static Future<Metadata?> fetchMetadata(Message message, {String? urlOverride}) async {
-    final cacheKey = urlOverride ?? message.guid!;
-    // If we have a cached item for this already, return that future
-    final cached = _metaCache[cacheKey];
-    if (cached != null) return cached.future;
+    // The user chose to send this link themselves.
+    if (message.isFromMe ?? false) return true;
 
-    // Create a new completer for this request
-    final completer = Completer<Metadata?>();
-    _metaCache[cacheKey] = completer;
-
-    // Get the URL
-    String url = urlOverride ?? message.url!;
-    if (!url.startsWith("http")) {
-      url = "https://$url";
+    // Everything below fails closed. A sender we cannot confirm is a contact is
+    // treated as unknown, whatever the reason — no handle, contacts permission
+    // denied, a server without the contacts API, or a lookup error. The user
+    // asked for previews from saved contacts only, and "we could not check"
+    // is not the same as "yes".
+    //
+    // `getContactForHandle` already returns null when access is unavailable, so
+    // no separate permission check is needed here.
+    final handleId = message.handle?.id;
+    if (handleId == null) {
+      Logger.debug('No handle on ${message.guid}; treating sender as unknown', tag: 'MetadataHelper');
+      return false;
     }
 
     try {
-      completer.complete(await _fetchMetadataForUrl(url));
-      // Drop the entry after a while so a later view can refetch, while
-      // concurrent viewers of the same URL still share one request.
-      Future.delayed(const Duration(seconds: 15), () => _metaCache.remove(cacheKey));
+      final isContact = (await ContactsSvcV2.getContactForHandle(handleId)) != null;
+      Logger.debug('Sender of ${message.guid} ${isContact ? "is" : "is not"} a saved contact', tag: 'MetadataHelper');
+      return isContact;
     } catch (ex, stack) {
-      // Evict immediately on failure. Every caller after this one reads the
-      // cached completer, so a completer left behind un-completed makes them
-      // await a future that never resolves — that is the URL preview / photo
-      // slideshow that spins forever. The eviction key also has to be
-      // `cacheKey`: it was `message.guid`, which for a urlOverride caller
-      // removes the wrong entry (or nothing at all) and pins the leak.
-      _metaCache.remove(cacheKey);
-      completer.completeError(ex, stack);
-    }
-
-    // Always returned, never rethrown — the caller consumes the error through
-    // this future. Rethrowing here would leave completer.future unawaited and
-    // surface as an unhandled async error.
-    return completer.future;
-  }
-
-  /// The actual fetch + normalisation, with no caching concerns.
-  static Future<Metadata?> _fetchMetadataForUrl(String url) async {
-    Metadata? data;
-    try {
-      data = await MetadataFetch.extract(url);
-    } on SocketException catch (ex, stack) {
-      Logger.warn('Network unavailable while fetching URL preview metadata; retryable',
+      Logger.warn('Could not resolve sender contact; treating as unknown',
           error: ex, trace: stack, tag: 'MetadataHelper');
-      rethrow;
-    } on TimeoutException catch (ex, stack) {
-      Logger.warn('Timeout while fetching URL preview metadata; retryable',
-          error: ex, trace: stack, tag: 'MetadataHelper');
-      rethrow;
-    } catch (ex, stack) {
-      Logger.error('An error occurred while fetching URL Preview Metadata!', error: ex, trace: stack);
+      return false;
     }
-
-    // If the everything in the metadata is null or empty, try to manually parse
-    if (data?.toMap().values.where((e) => !isNullOrEmpty(e)).isEmpty ?? true) {
-      data = await MetadataHelper._manuallyGetMetadata(url);
-    }
-    // Manual parsing can also come back empty. The old code went on to
-    // dereference `data!` here, which threw and left the cached completer
-    // hanging forever.
-    if (data == null) return null;
-
-    // If the URL is supposedly to an actual image, set the image to the URL manually
-    final exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
-    if (data.image == null && data.title == null && data.url != null && exp.hasMatch(data.url!)) {
-      data.image = data.url;
-      data.title = "Image Preview";
-    }
-
-    // Remove the image data if the image data links to an "empty image"
-    final imageData = data.image ?? "";
-    if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
-      data.image = null;
-    } else if (imageData.startsWith('//')) {
-      data.image = 'https:$imageData';
-      // In case the image is just a relative URL path
-    } else if (imageData.startsWith('/')) {
-      data.image = '$url$imageData';
-    }
-
-    // Remove title or description if either are the "null" string
-    if (data.title == "null") data.title = null;
-    if (data.description == "null") data.description = null;
-
-    // Set the OG URL
-    data.url = url;
-    return data;
   }
 
-  /// Resolves [imageUrl] to a local disk-cached file path shared across
-  /// messages (content-addressed by MD5 hash, see [FilesystemService.saveUrlPreviewImage]).
-  /// If [message.metadata]`[metadataKey]` already points to a file on disk, that
-  /// path is returned immediately with `fromDisk: true`. Otherwise the image is
-  /// downloaded via [HttpSvc], cached to disk, and the resulting hash is
-  /// persisted back onto [message.metadata]. Returns `null` on failure.
-  /// Longest-side cap for cached preview images. A link-preview card renders at
-  /// a few hundred logical points, but OG images are routinely 1200x630 or
-  /// larger — without this the full bitmap is decoded and held in Flutter's
-  /// image cache for every preview on screen.
-  static const int _previewImageMaxDimension = 1080;
+  // ---------------------------------------------------------------------------
+  // Fetching
+  // ---------------------------------------------------------------------------
 
-  /// Reads back the dimensions recorded for [metadataKey]'s cached image, so a
-  /// widget can reserve the right box *before* decoding. Null when the image was
-  /// cached by an older build that didn't record them.
-  static Size? cachedImageSize(Message? message, String metadataKey) {
-    final raw = message?.metadata?['${metadataKey}Size'];
-    if (raw is! Map) return null;
-    final w = (raw['width'] as num?)?.toDouble();
-    final h = (raw['height'] as num?)?.toDouble();
-    if (w == null || h == null || w <= 0 || h <= 0) return null;
-    return Size(w, h);
+  /// Fetches metadata for [message]'s URL, or for [urlOverride] when the link
+  /// lives somewhere other than the message text (a Photos share link in the
+  /// payload data, for example).
+  ///
+  /// Returns a [MetadataFetchResult] rather than throwing so callers can tell
+  /// a permanent failure from a transient one — see
+  /// [MetadataFetchResult.isRetryable].
+  ///
+  /// Set [manual] when the user explicitly asked for this preview. A tap is
+  /// consent, so it bypasses the policy check — including
+  /// [LinkPreviewPolicy.never], where tap-to-load is the *only* way a preview
+  /// ever loads. Every other protection still applies.
+  static Future<MetadataFetchResult> fetchForMessage(
+    Message message, {
+    String? urlOverride,
+    bool manual = false,
+  }) async {
+    if (!manual && !fetchingEnabled) {
+      return const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser);
+    }
+
+    final url = urlOverride ?? message.url;
+    if (url == null || url.trim().isEmpty) {
+      return const MetadataFetchResult.failure(MetadataFetchStatus.invalidUrl);
+    }
+
+    return fetcher.fetch(url);
   }
 
-  static Future<(String path, bool fromDisk)?> resolveCachedImage(
+  /// Fetches metadata for a bare URL, outside any message context.
+  ///
+  /// There is no sender to evaluate here, so [LinkPreviewPolicy.contactsOnly]
+  /// behaves like [LinkPreviewPolicy.always]. The only caller is the Apple Maps
+  /// location card, whose URL is always `maps.apple.com`.
+  static Future<MetadataFetchResult> fetchForUrl(String url, {bool manual = false}) {
+    if (!manual && !fetchingEnabled) {
+      return Future.value(const MetadataFetchResult.failure(MetadataFetchStatus.disabledByUser));
+    }
+    return fetcher.fetch(url);
+  }
+
+  /// Forgets any memoised result for [url] so the next fetch hits the network.
+  static void invalidate(String url) => fetcher.invalidate(url);
+
+  /// Forgets every memoised result reachable from [message].
+  ///
+  /// Clearing `message.metadata` alone is not enough to force a refresh: the
+  /// in-memory cache is keyed by URL and would keep serving the previous
+  /// result. The manual "refresh preview" action needs both.
+  ///
+  /// Also drops the image downloader's record of permanently-failed URLs. A
+  /// refresh is a deliberate request for a real retry, and the icon/image URLs
+  /// are not reachable from the message — they live inside the metadata being
+  /// discarded — so there is nothing per-URL to invalidate here.
+  static void invalidateForMessage(Message message) {
+    fetcher.images.clearFailures();
+
+    final urls = <String>{
+      if (message.url != null) message.url!,
+      for (final data in message.payloadData?.urlData ?? const <UrlPreviewData>[]) ...[
+        if (data.url != null) data.url!,
+        if (data.originalUrl != null) data.originalUrl!,
+      ],
+    };
+
+    for (final url in urls) {
+      fetcher.invalidate(url);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Images
+  // ---------------------------------------------------------------------------
+
+  /// Resolves [imageUrl] to a disk-cached file shared across messages.
+  ///
+  /// If [message] already stores a hash for [slot] and that file exists, it is
+  /// returned immediately with `fromDisk: true`. Otherwise the image is
+  /// downloaded, validated (content type, size, dimensions), written to the
+  /// shared cache, and the hash persisted back onto the message.
+  ///
+  /// Returns null when the image is missing, unreachable, or fails validation
+  /// — including the tracking pixels that used to be blocklisted by hostname.
+  ///
+  /// Set [bypassGate] when the caller has already cleared this message through
+  /// [shouldAutoFetch], or when the user asked for the preview explicitly.
+  /// Otherwise a **download** (never a disk hit) is gated on the sender policy:
+  /// a cache the user cleared from the Storage Analyzer must not silently
+  /// re-fetch from a sender whose previews they chose not to load
+  /// automatically.
+  static Future<CachedPreviewImage?> resolveCachedImage(
     Message message,
-    String metadataKey,
     String imageUrl, {
-    bool optimize = false,
+    MetadataCacheSlot slot = MetadataCacheSlot.urlPreview,
+    bool isIcon = false,
+    bool bypassGate = false,
   }) async {
     if (kIsWeb) return null;
 
-    final storedMd5 = message.metadata?[metadataKey] as String?;
-    if (storedMd5 != null) {
-      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
+    final storedHash =
+        isIcon ? MessageMetadataStore.iconHash(message, slot) : MessageMetadataStore.imageHash(message, slot);
+    if (storedHash != null) {
+      final cachedPath = FilesystemSvc.urlPreviewImagePath(storedHash);
       if (await File(cachedPath).exists()) {
-        return (cachedPath, true);
+        return CachedPreviewImage(path: cachedPath, hash: storedHash, fromDisk: true);
       }
     }
 
-    try {
-      final response = await HttpSvc.dio.get<List<int>>(
-        imageUrl,
-        options: Options(responseType: ResponseType.bytes, followRedirects: true, maxRedirects: 10),
-      );
-      final bytes = response.data;
-      if (bytes == null || bytes.isEmpty) return null;
-      final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
-      final path = FilesystemSvc.urlPreviewImagePath(hash);
-      final size = optimize ? await _optimizeCachedImage(path) : null;
-      message.metadata = {
-        ...?message.metadata,
-        metadataKey: hash,
-        if (size != null) '${metadataKey}Size': {'width': size.width.toInt(), 'height': size.height.toInt()},
-      };
-      if (message.id != null) message.save();
-      return (path, false);
-    } catch (ex, stack) {
-      Logger.warn('Failed to cache preview image', error: ex, trace: stack, tag: 'MetadataHelper');
+    // Only reached on a cache miss, so the policy check costs nothing on the
+    // common path.
+    if (!bypassGate && !await shouldAutoFetch(message)) {
+      Logger.debug('Not downloading ${isIcon ? "icon" : "image"} $imageUrl; sender policy declined',
+          tag: 'MetadataHelper');
       return null;
     }
+
+    Logger.debug('Downloading ${isIcon ? "icon" : "image"} $imageUrl', tag: 'MetadataHelper');
+
+    // Only the hero image is downsampled. A favicon is already small, and
+    // re-encoding one as JPEG would flatten its alpha.
+    final downloaded = await fetcher.images.download(imageUrl, optimize: !isIcon);
+    if (downloaded == null) return null;
+
+    // Persist the hash without disturbing the slot's attempt bookkeeping.
+    final map = <String, dynamic>{...?message.metadata};
+    if (isIcon) {
+      final key = slot.iconHashKey;
+      if (key != null) map[key] = downloaded.hash;
+    } else {
+      map[slot.imageHashKey] = downloaded.hash;
+    }
+    message.metadata = map;
+    if (!kIsWeb && message.id != null) message.save();
+
+    return downloaded;
   }
 
-  /// Shrinks an oversized cached preview image in place and returns the
-  /// resulting display dimensions.
-  ///
-  /// Images already within [_previewImageMaxDimension] are left byte-identical:
-  /// re-encoding them would only lose quality, and would flatten alpha on the
-  /// PNG sources some sites use.
-  ///
-  /// Generation runs through the same isolate action as attachment previews, so
-  /// EXIF orientation is baked in and the tag cleared — the file on disk is
-  /// always upright, and nothing downstream may re-apply a rotation.
-  ///
-  /// The one gap: for an image left untouched, the returned size comes from the
-  /// container header and would be axis-swapped if that image carried an EXIF
-  /// orientation. That effectively doesn't happen for server-generated OG
-  /// images, and the cost is a mis-reserved box, not a wrong render.
-  static Future<Size?> _optimizeCachedImage(String path) async {
-    final original = await AttachmentsSvc.getImageSizing(path);
-    if (original.width <= 0 || original.height <= 0) return null;
-    if (original.longestSide <= _previewImageMaxDimension) return original;
+  // ---------------------------------------------------------------------------
+  // Location previews
+  // ---------------------------------------------------------------------------
 
-    // Write beside the target and rename in, so a kill mid-write can't leave a
-    // truncated file that exists() would accept forever. `.jpg` stays last for
-    // the benefit of any format-validating encoder in the chain.
-    final tempPath = '$path.tmp.jpg';
-    try {
-      final ok = await ImageInterface.generatePreview(
-        path: path,
-        outputPath: tempPath,
-        maxDimension: _previewImageMaxDimension,
-        quality: 85,
-      );
-      if (!ok) return original;
-      await File(tempPath).rename(path);
-    } catch (ex, stack) {
-      Logger.warn('Failed to downsample preview image', error: ex, trace: stack, tag: 'MetadataHelper');
-      try {
-        final temp = File(tempPath);
-        if (await temp.exists()) await temp.delete();
-      } catch (_) {}
-      return original;
+  /// Metadata for an Apple Maps link at [position], used when sharing the
+  /// user's current location.
+  ///
+  /// Returns null when the lookup fails; callers must handle that rather than
+  /// force-unwrapping, because Apple Maps does not always serve an image.
+  static Future<UrlMetadata?> getLocationMetadata(Position position) async {
+    final coordinates = '${position.latitude},${position.longitude}';
+    final url = 'https://maps.apple.com/?ll=$coordinates&q=$coordinates';
+
+    // Location sharing is an explicit user action, so it is not gated on the
+    // automatic-preview setting.
+    final result = await fetcher.fetch(url);
+    final metadata = result.metadata;
+    if (metadata == null || metadata.isEmpty) {
+      Logger.warn('Could not resolve Apple Maps metadata (${result.status.name})', tag: 'MetadataHelper');
+      return null;
     }
-
-    return AttachmentsSvc.getImageSizing(path);
-  }
-
-  static Future<Metadata> getLocationMetadata(Position locationData) async {
-    String metaUrl =
-        "https://maps.apple.com/?ll=${locationData.latitude},${locationData.longitude}&q=${locationData.latitude},${locationData.longitude}";
-    String userAgent =
-        " Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
-
-    HttpClient client = HttpClient();
-    client.userAgent = userAgent;
-
-    HttpClientRequest request = await client.getUrl(Uri.parse(metaUrl));
-    HttpClientResponse response = await request.close();
-    String data = await response.transform(utf8.decoder).join();
-
-    html.Document document = parser.parse(data);
-    Metadata metadata = MetadataParser.parse(document);
-    String title = document.getElementsByTagName("title")[0].text;
-    int split = title.lastIndexOf(' - ');
-    if (split != -1) {
-      title = title.substring(0, split);
-    }
-    metadata.title = title;
-
     return metadata;
-  }
-
-  /// Manually tries to parse out metadata from a given [url]
-  static Future<Metadata> _manuallyGetMetadata(String url) async {
-    Metadata meta = Metadata();
-
-    try {
-      final response = await HttpSvc.dio.get(url,
-          options: Options(
-            followRedirects: true,
-            maxRedirects: 2,
-            headers: {
-              // pretend to be a social media crawler
-              "User-Agent":
-                  "Mozilla/5.0 (Windows NT 6.1; rv:6.0) Gecko/20110814 Firefox/6.0 Google (+https://developers.google.com/+/web/snippet/)"
-            },
-          ));
-      if (response.headers.value('content-type')?.startsWith("image/") ?? false) {
-        meta.image = url;
-      }
-      final document = parser.parse(response.data);
-      final props = document.head?.children
-              .where((e) => e.localName == "meta" && e.attributes["property"].toString().contains("og:"))
-              .map((e) => MapEntry(e.attributes["property"], e.attributes["content"]))
-              .toList() ??
-          [];
-      for (MapEntry entry in props) {
-        if (entry.key == "og:title") {
-          meta.title = entry.value;
-        } else if (entry.key == "og:description") {
-          meta.description = entry.value;
-        } else if (entry.key == "og:image") {
-          meta.image = entry.value;
-        } else if (entry.key == "og:video" && meta.image != null) {
-          meta.image = entry.value;
-        } else if (entry.key == "og:url") {
-          meta.url = entry.value;
-        }
-      }
-    } on HandshakeException catch (ex) {
-      meta.title = 'Invalid SSL Certificate';
-      meta.description = ex.message;
-    } catch (ex, stack) {
-      meta.title = ex.toString();
-      Logger.error('Failed to manually get metadata!', error: ex, trace: stack);
-    }
-
-    return meta;
   }
 }
