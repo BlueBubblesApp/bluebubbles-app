@@ -157,6 +157,16 @@ still applies to a user-initiated load.
   for GIF (re-encoding drops every frame but the first) and PNG (JPEG has no alpha). The cache
   hash stays a digest of the *downloaded* bytes, not of what lands on disk, so two messages
   linking the same og:image still share one cache entry.
+- `PreviewImageDownloader.unsupportedMimeTypes` is for formats nothing in this app can decode
+  (SVG, HEIC/HEIF/AVIF) — those are rejected outright. `_convertibleMimeTypes` is for formats
+  Flutter's `Image` widget can't render but `package:image` can — currently just `.ico`
+  (`image/x-icon`, `image/vnd.microsoft.icon`), the majority of real-world favicons.
+  `ImageInterface.convertIcoToPng` (→ `ImageActions.convertIcoToPng`, the same isolate-routed
+  pattern as `generatePreview`) decodes the largest embedded frame and re-encodes it as PNG
+  *before* the size/dimension checks and the disk cache — so a converted icon is validated and
+  cached exactly like any other PNG, and nothing downstream needs to know ICO was ever involved.
+  Add a new format here, not to `unsupportedMimeTypes`, if it turns out `package:image` can
+  already decode it.
 
 ## Settings
 

@@ -86,46 +86,55 @@ class CupertinoUrlPreview extends StatelessWidget {
           padding: inReply
               ? const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0)
               : const EdgeInsets.fromLTRB(15.0, 15.0, 15.0, 15.0),
-          // Two nested rows so the two trailing/leading elements can align
-          // differently: the spinner centres against the whole text block,
-          // while the favicon stays level with the first line of it.
-          child: Row(
-            // Full width with the spinner pushed to the trailing edge, rather
-            // than tucked against the end of the text.
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Leading, matching the compact shape: the favicon is the
-                    // source badge for the text it sits against, so it stays on
-                    // the same side no matter which shape the card is in.
-                    if (controller.hasIcon) _buildIcon(context),
-                    if (controller.hasIcon) const SizedBox(width: 10),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTitle(context, message),
-                          // I think it looks better without the summary -Zach
-                          // if (controller.hasSummary && !inReply) const SizedBox(height: 5),
-                          // if (controller.hasSummary && !inReply) _buildSummary(context),
-                          if (controller.showsSiteLine(message?.text)) const SizedBox(height: 5),
-                          if (controller.showsSiteLine(message?.text)) _buildSiteLine(context, inReply: inReply),
-                          if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 8),
-                          if (controller.needsManualLoad.value && !inReply) _buildLoadPreviewButton(context),
-                        ],
-                      ),
+              // Above the title/site line rather than below them, so the action
+              // reads as the card's headline rather than as a footnote under
+              // content that has not loaded yet.
+              if (controller.needsManualLoad.value && !inReply) _buildLoadPreviewButton(context),
+              if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 8),
+              // Two nested rows so the two trailing/leading elements can align
+              // differently: the spinner centres against the whole text block,
+              // while the favicon stays level with the first line of it.
+              Row(
+                // Full width with the spinner pushed to the trailing edge, rather
+                // than tucked against the end of the text.
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Leading, matching the compact shape: the favicon is the
+                        // source badge for the text it sits against, so it stays on
+                        // the same side no matter which shape the card is in.
+                        if (controller.hasIcon) _buildIcon(context),
+                        if (controller.hasIcon) const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildTitle(context, message),
+                              // I think it looks better without the summary -Zach
+                              // if (controller.hasSummary && !inReply) const SizedBox(height: 5),
+                              // if (controller.hasSummary && !inReply) _buildSummary(context),
+                              if (controller.showsSiteLine(message?.text)) const SizedBox(height: 5),
+                              if (controller.showsSiteLine(message?.text)) _buildSiteLine(context, inReply: inReply),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  if (controller.refreshRunning.value) _buildRefreshIndicator(context),
+                ],
               ),
-              if (controller.refreshRunning.value) _buildRefreshIndicator(context),
             ],
           ),
         ),
@@ -145,6 +154,11 @@ class CupertinoUrlPreview extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Above the title/site line rather than below them, so the action
+          // reads as the card's headline rather than as a footnote under
+          // content that has not loaded yet.
+          if (controller.needsManualLoad.value && !inReply) _buildLoadPreviewButton(context),
+          if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 10),
           Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,8 +191,6 @@ class CupertinoUrlPreview extends StatelessWidget {
               if (controller.refreshRunning.value) _buildRefreshIndicator(context),
             ],
           ),
-          if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 10),
-          if (controller.needsManualLoad.value && !inReply) _buildLoadPreviewButton(context),
         ],
       ),
     );

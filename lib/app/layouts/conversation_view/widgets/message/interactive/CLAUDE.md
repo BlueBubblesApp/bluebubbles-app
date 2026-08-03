@@ -110,7 +110,11 @@ the artwork is coming; only a deliberate load (refresh, tap-to-load), where the 
 already had its chance, is allowed to conclude it is not.
 
 A favicon never promotes a card to `hero` — it is a 40px mark beside the title, not a hero image.
-The tap-to-load affordance renders in all three, or a gated link could never be loaded.
+The tap-to-load affordance renders in all three, or a gated link could never be loaded. In `hero`
+and `compact` it renders **above** the title/site line, not below — the affordance is the card's
+headline in this state, since nothing has actually loaded yet; only payload text (title/site line,
+when Apple's payload carried one) can appear above it. `bare` keeps the button below its one line,
+since there is no title/site line to lead with.
 
 **"Refresh Preview" is consent.** The `previewRefreshKey` reload runs with `force`/`manual` set,
 exactly like tap-to-load — the user picked the action out of a menu. Without it, refreshing a

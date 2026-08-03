@@ -639,6 +639,7 @@ enum IsolateRequestType {
 
   // Image actions
   convertImageToPng,
+  convertIcoToPng,
   readExifData,
   getGifDimensions,
   readExifOrientation,

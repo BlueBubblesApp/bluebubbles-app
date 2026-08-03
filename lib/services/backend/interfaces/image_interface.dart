@@ -16,6 +16,18 @@ class ImageInterface {
     }
   }
 
+  /// Decodes a `.ico` favicon and re-encodes its largest frame as PNG, in the
+  /// global isolate. Returns null on failure.
+  static Future<Uint8List?> convertIcoToPng(Uint8List bytes) async {
+    final input = {'bytes': bytes};
+
+    if (isIsolate) {
+      return ImageActions.convertIcoToPng(input);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<Uint8List?>(IsolateRequestType.convertIcoToPng, input: input);
+    }
+  }
+
   /// Reads EXIF data from an image file in the global isolate
   /// Returns a map of EXIF tag names to their string values
   static Future<Map<String, String>?> readExifData(String filePath) async {

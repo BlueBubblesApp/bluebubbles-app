@@ -138,13 +138,19 @@ class ExpressiveUrlPreview extends StatelessWidget {
     );
   }
 
-  /// Title first, then the source row beneath it.
+  /// The tap-to-load affordance first when it is showing, then the title, then
+  /// the source row beneath it.
   ///
-  /// This is Google Messages' arrangement, and the one the iOS skin already
-  /// used: the headline leads and provenance sits under it, with the site's own
-  /// mark beside the domain. The Expressive skin used to lead with the site line
-  /// and hang a large favicon off the left of the whole block, which read as a
-  /// list tile rather than a link card.
+  /// The title/site ordering is Google Messages' arrangement, and the one the
+  /// iOS skin already used: the headline leads and provenance sits under it,
+  /// with the site's own mark beside the domain. The Expressive skin used to
+  /// lead with the site line and hang a large favicon off the left of the whole
+  /// block, which read as a list tile rather than a link card.
+  ///
+  /// The button leads everything else, rather than trailing as a footnote under
+  /// content that has not loaded — this is a state where nothing has been
+  /// fetched yet, so the action is the headline of the card, not an
+  /// afterthought under a title/site line that is itself only ever payload text.
   Widget _buildTextBlock(BuildContext context, {required Message? message, required bool inReply}) {
     final site = controller.siteText;
     final hasSourceRow = site != null && site.isNotEmpty;
@@ -155,15 +161,17 @@ class ExpressiveUrlPreview extends StatelessWidget {
     // bold. Dropping the title leaves the icon + domain line, which is the more
     // informative of the two.
     final showsTitle = controller.showsSiteLine(message?.text) || !hasSourceRow;
+    final showsManualLoad = controller.needsManualLoad.value && !inReply;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showsManualLoad) SizedBox(width: double.infinity, child: _buildLoadPreviewButton(context)),
+        if (showsManualLoad) const SizedBox(height: M3ESpacing.lg),
         if (showsTitle) _buildTitle(context, message),
         if (showsTitle && hasSourceRow) const SizedBox(height: M3ESpacing.xs),
         if (hasSourceRow) _buildSourceRow(context),
-        ..._buildManualLoadAffordance(context, inReply: inReply),
       ],
     );
   }

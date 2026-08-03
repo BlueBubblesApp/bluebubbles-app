@@ -39,6 +39,7 @@ class IsolateActons {
 
     // Image — convertToPng is sync so wrap as async lambda
     IsolateRequestType.convertImageToPng: (data) async => ImageActions.convertToPng(data as Map<String, dynamic>),
+    IsolateRequestType.convertIcoToPng: (data) async => ImageActions.convertIcoToPng(data as Map<String, dynamic>),
     IsolateRequestType.readExifData: ImageActions.readExifData,
     IsolateRequestType.getGifDimensions: ImageActions.getGifDimensions,
     IsolateRequestType.readExifOrientation: ImageActions.readExifOrientation,

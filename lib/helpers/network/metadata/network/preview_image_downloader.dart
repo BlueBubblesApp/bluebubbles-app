@@ -91,15 +91,23 @@ class PreviewImageDownloader {
   /// without limit.
   static const int _maxFailureEntries = 256;
 
-  /// Formats the `Image` widget cannot decode. SVG in particular is common for
-  /// favicons and would render as a permanent error box.
+  /// Formats the `Image` widget cannot decode, and that this downloader has no
+  /// conversion path for either. SVG in particular is common for favicons and
+  /// would render as a permanent error box.
   static const Set<String> unsupportedMimeTypes = {
     'image/svg+xml',
-    'image/x-icon',
-    'image/vnd.microsoft.icon',
     'image/heic',
     'image/heif',
     'image/avif',
+  };
+
+  /// Formats the `Image` widget cannot decode but that [ImageInterface] can —
+  /// converted to PNG in [_convert] before anything else runs, so every check
+  /// after that point (dimensions, the disk cache, `_optimize`) sees a normal
+  /// PNG and needs no format-specific handling of its own.
+  static const Set<String> _convertibleMimeTypes = {
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
   };
 
   /// Longest side an optimised preview image is resized down to.
@@ -187,7 +195,20 @@ class PreviewImageDownloader {
         return _reject(imageUrl, 'content type $mime cannot be decoded');
       }
 
-      final bytes = resource.bytes;
+      var bytes = resource.bytes;
+      // Converted up front so every check below — the size floor, the
+      // dimension floor, the disk cache, [_optimize] — runs against ordinary
+      // PNG bytes and never needs to know ICO was ever involved.
+      var effectiveMime = mime;
+      if (mime != null && _convertibleMimeTypes.contains(mime)) {
+        final converted = await ImageInterface.convertIcoToPng(bytes);
+        if (converted == null) {
+          return _reject(imageUrl, 'content type $mime failed to decode');
+        }
+        bytes = converted;
+        effectiveMime = 'image/png';
+      }
+
       if (bytes.length < minBytes) {
         return _reject(imageUrl, 'body of ${bytes.length}B is too small to be an image');
       }
@@ -200,7 +221,7 @@ class PreviewImageDownloader {
       final hash = await FilesystemSvc.saveUrlPreviewImage(Uint8List.fromList(bytes));
       final path = FilesystemSvc.urlPreviewImagePath(hash);
 
-      final optimized = optimize ? await _optimize(path, mime: mime, size: size) : null;
+      final optimized = optimize ? await _optimize(path, mime: effectiveMime, size: size) : null;
 
       return CachedPreviewImage(
         path: path,
