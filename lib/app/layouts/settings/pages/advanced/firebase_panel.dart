@@ -351,6 +351,11 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
 
                                     SettingsSvc.settings.firstFcmRegisterDate.value = 0;
                                     await SettingsSvc.settings.saveOneAsync('firstFcmRegisterDate');
+                                    // deleteFcmData() clears the FCM config from SharedPreferences via an
+                                    // async write. exit(0) hard-kills the process, which can terminate that
+                                    // background write before it flushes to disk, leaving a stale config that
+                                    // reloads on next launch. Give the write a moment to land before exiting.
+                                    await Future.delayed(const Duration(seconds: 1));
                                     exit(0);
                                   },
                                 ),
