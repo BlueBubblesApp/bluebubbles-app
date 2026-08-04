@@ -253,12 +253,12 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (cachedController != null) {
       // Reuse existing controller
       videoController = cachedController;
-      if (cachedController.rect.value != null) {
-        firstFrameReady.value = true;
-        if (aspectRatio.value != cachedController.aspectRatio) {
-          aspectRatio.value = cachedController.aspectRatio;
-        }
+      if (cachedController.rect.value != null && aspectRatio.value != cachedController.aspectRatio) {
+        aspectRatio.value = cachedController.aspectRatio;
       }
+      // firstFrameReady is set inside createListener via waitUntilFirstFrameRendered --
+      // for an already-rendered cached controller that future is already complete, so
+      // it resolves on the next microtask rather than staying false.
       createListener(cachedController);
     } else if (kIsDesktop || kIsWeb) {
       // Desktop/web: eager init (no thumbnail support there)
@@ -361,7 +361,18 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       if (controller.rect.value == null) return;
       final ratio = controller.aspectRatio;
       if (aspectRatio.value != ratio) aspectRatio.value = ratio;
-      if (!firstFrameReady.value) firstFrameReady.value = true;
+    });
+
+    // `waitUntilFirstFrameRendered` sounds like the right signal, but on Android (and
+    // desktop) media_kit_video actually completes it from the same native video-geometry
+    // ("first frame rendered" / `VideoOutput.Resize`) event that also updates `rect` -- it
+    // fires once the decoder reports frame dimensions, not once the platform surface has
+    // actually presented a frame. That gap is small but visible as a black flash once the
+    // thumbnail fades. There's no more precise "pixel actually on screen" signal exposed by
+    // the package, so add a short grace delay before trusting it.
+    controller.waitUntilFirstFrameRendered.then((_) async {
+      if (!kIsWeb) await Future.delayed(const Duration(milliseconds: 400));
+      if (mounted && !firstFrameReady.value) firstFrameReady.value = true;
     });
 
     controller.player.stream.completed.listen((completed) async {
