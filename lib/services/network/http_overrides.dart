@@ -4,6 +4,11 @@ import 'package:universal_io/io.dart';
 
 /// Shared certificate validation logic for both HTTP and WebSocket connections
 /// Returns true if the certificate should be accepted (override bad cert), false otherwise
+///
+/// SECURITY / TODO: this accepts *any* failed certificate (self-signed, expired,
+/// wrong CA) as long as the host matches the configured server, so a MITM on that
+/// host is not detectable. Needs cert pinning or an explicit opt-in setting —
+/// coming back to this. See ENGINEERING-STANDARDS.md §9.6.
 bool shouldAcceptCertificate(X509Certificate cert, String host, int port) {
   String serverUrl = sanitizeServerAddress() ?? "";
 

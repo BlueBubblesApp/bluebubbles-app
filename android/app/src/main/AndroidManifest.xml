@@ -76,10 +76,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- Keep exported="false": only MainActivity broadcasts this, via an
+             explicit Intent. Exporting lets any app restart the socket service. -->
         <receiver
             android:name=".services.foreground.ForegroundServiceBroadcastReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="restartservice" />
             </intent-filter>
@@ -145,11 +147,13 @@
             </intent-filter>
         </service>
 
+        <!-- Keep exported="false": every start/stop site uses an explicit in-app
+             Intent. Exporting lets any app start or stop the socket service. -->
         <service
             android:name=".services.foreground.SocketIOForegroundService"
             android:foregroundServiceType="remoteMessaging"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"
