@@ -62,6 +62,7 @@ dependencies:
   encrypter_plus: ^5.1.0
   exif: ^3.3.0
   faker: ^2.2.0
+  fc_native_video_thumbnail: ^3.0.1
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
   firebase_dart:
@@ -176,7 +177,6 @@ dependencies:
   vcf_dart: ^1.0.2
   version: ^3.0.2
   video_player: ^2.10.0
-  video_thumbnail: ^0.5.6
   win32: ^5.10.1
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2

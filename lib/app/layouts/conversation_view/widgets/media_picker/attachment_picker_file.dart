@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -30,7 +29,6 @@ class AttachmentPickerFile extends StatefulWidget {
 
 class _AttachmentPickerFileState extends State<AttachmentPickerFile> with ThemeHelpers {
   String? filePath;
-  Uint8List? thumbnailBytes; // Only for videos and special formats
   bool isLoading = true;
   bool hasError = false;
 
@@ -51,15 +49,15 @@ class _AttachmentPickerFileState extends State<AttachmentPickerFile> with ThemeH
         return;
       }
 
-      // Only load bytes for videos (thumbnails only)
+      // For videos, generate a thumbnail file and point filePath at it.
       if (widget.data.mimeType?.startsWith("video/") ?? false) {
         try {
-          thumbnailBytes = await AttachmentsSvc.getVideoThumbnail(file.path, useCachedFile: false);
+          filePath = await AttachmentsSvc.getVideoThumbnail(file.path, useCachedFile: false);
         } catch (ex) {
-          // Leave thumbnailBytes null — _buildImage() falls back to Image.file(filePath),
-          // whose errorBuilder shows the themed placeholder since a raw video file won't decode.
+          // Leave filePath null for now — falls back to the raw video path below, whose
+          // errorBuilder shows the themed placeholder since a raw video file won't decode.
         }
-        filePath = file.path;
+        filePath ??= file.path;
       } else if (widget.data.mimeType == "image/heic" ||
           widget.data.mimeType == "image/heif" ||
           widget.data.mimeType == "image/tif" ||
@@ -127,23 +125,6 @@ class _AttachmentPickerFileState extends State<AttachmentPickerFile> with ThemeH
   }
 
   Widget _buildImage() {
-    // Use memory image only for videos and incompatible formats
-    if (thumbnailBytes != null) {
-      return Positioned.fill(
-        child: Image.memory(
-          thumbnailBytes!,
-          fit: BoxFit.cover,
-          cacheWidth: (150 * MediaQuery.of(context).devicePixelRatio).toInt(),
-          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (frame == null) {
-              return _buildPlaceholderContent(context);
-            }
-            return child;
-          },
-        ),
-      );
-    }
-
     if (filePath != null) {
       return Positioned.fill(
         child: Image.file(
@@ -209,10 +190,4 @@ class _AttachmentPickerFileState extends State<AttachmentPickerFile> with ThemeH
     );
   }
 
-  @override
-  void dispose() {
-    // Clear any loaded thumbnail bytes
-    thumbnailBytes = null;
-    super.dispose();
-  }
 }

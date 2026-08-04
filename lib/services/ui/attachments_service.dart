@@ -6,6 +6,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vcf_dart/vcf_dart.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 // ignore: non_constant_identifier_names
 AttachmentsService AttachmentsSvc = Get.isRegistered<AttachmentsService>()
@@ -412,60 +412,76 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  /// In-memory cache of video thumbnail bytes keyed by video file path, so widgets can render a
-  /// previously-loaded thumbnail synchronously (no async disk read → no placeholder flash).
-  final Map<String, Uint8List> _videoThumbnailMemCache = {};
-  static const int _videoThumbnailMemCacheMax = 64;
+  /// Paths of video thumbnails known to already be on disk and at current resolution, so widgets
+  /// can render a previously-generated thumbnail synchronously (no async disk stat → no
+  /// placeholder flash). Deliberately holds only path strings, never decoded bytes -- thumbnails
+  /// are always read from disk via [File]/[Image.file] to keep decoded frames out of Dart memory.
+  final Set<String> _knownGoodVideoThumbnailPaths = {};
+  static const int _knownGoodVideoThumbnailPathsMax = 64;
 
-  Uint8List? getCachedVideoThumbnailSync(String filePath) => _videoThumbnailMemCache[filePath];
+  final FcNativeVideoThumbnail _videoThumbnailPlugin = FcNativeVideoThumbnail();
 
-  /// Clears the in-memory video thumbnail cache. Call after bulk-deleting
-  /// attachment files so stale bytes aren't served for paths that no longer
-  /// exist on disk.
-  void clearVideoThumbnailCache() => _videoThumbnailMemCache.clear();
+  /// Returns the on-disk thumbnail path for [filePath] if one is already known-good, else null.
+  String? getCachedVideoThumbnailSync(String filePath) {
+    final cachedPath = "$filePath.thumbnail";
+    return _knownGoodVideoThumbnailPaths.contains(cachedPath) ? cachedPath : null;
+  }
 
-  void _memCacheVideoThumbnail(String filePath, Uint8List bytes) {
-    _videoThumbnailMemCache.remove(filePath);
-    _videoThumbnailMemCache[filePath] = bytes;
-    if (_videoThumbnailMemCache.length > _videoThumbnailMemCacheMax) {
-      _videoThumbnailMemCache.remove(_videoThumbnailMemCache.keys.first);
+  /// Clears the known-good video thumbnail path cache. Call after bulk-deleting
+  /// attachment files so stale paths aren't served for files that no longer exist on disk.
+  void clearVideoThumbnailCache() => _knownGoodVideoThumbnailPaths.clear();
+
+  void _markVideoThumbnailKnownGood(String cachedPath) {
+    _knownGoodVideoThumbnailPaths.remove(cachedPath);
+    _knownGoodVideoThumbnailPaths.add(cachedPath);
+    if (_knownGoodVideoThumbnailPaths.length > _knownGoodVideoThumbnailPathsMax) {
+      _knownGoodVideoThumbnailPaths.remove(_knownGoodVideoThumbnailPaths.first);
     }
   }
 
-  Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
-    final cachedFile = File("$filePath.thumbnail");
+  /// Generates (or reuses) a video thumbnail and returns the path to it on disk -- never loads
+  /// the decoded thumbnail into memory as bytes, so callers must render it via [Image.file].
+  ///
+  /// When [useCachedFile] is true (the common case), the thumbnail is written next to the source
+  /// video at `$filePath.thumbnail` and reused across calls. When false (e.g. a picker preview for
+  /// a not-yet-sent attachment), a one-off thumbnail is written to the system temp directory
+  /// instead, since the source file may live in a location that isn't safe/writable to cache
+  /// alongside (e.g. the photo library).
+  Future<String?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
+    final cachedPath = "$filePath.thumbnail";
     if (useCachedFile) {
-      final memCached = _videoThumbnailMemCache[filePath];
-      if (memCached != null) return memCached;
-      try {
-        final bytes = await cachedFile.readAsBytes();
-        if (!_isLowResThumbnail(bytes)) {
-          _memCacheVideoThumbnail(filePath, bytes);
-          return bytes;
-        }
-      } catch (_) {}
+      if (await File(cachedPath).exists() && !await _isLowResThumbnailFile(cachedPath)) {
+        _markVideoThumbnailKnownGood(cachedPath);
+        return cachedPath;
+      }
     }
 
-    final thumbnail = await VideoThumbnail.thumbnailData(
-      video: filePath,
-      imageFormat: ImageFormat.PNG,
-      maxWidth: 512, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
-      quality: 25,
+    final destPath = useCachedFile
+        ? cachedPath
+        : join(FilesystemSvc.sysTempPath,
+            "${basenameWithoutExtension(filePath)}_${DateTime.now().microsecondsSinceEpoch}.thumbnail.jpg");
+
+    final success = await _videoThumbnailPlugin.saveThumbnailToFile(
+      srcFile: filePath,
+      destFile: destPath,
+      // Bounding box only -- the native side fits the video's real aspect ratio within this box
+      // rather than stretching to a square.
+      width: 512,
+      height: 512,
+      quality: 80,
     );
 
-    if (!isNullOrEmpty(thumbnail) && useCachedFile) {
-      _memCacheVideoThumbnail(filePath, thumbnail!);
-      await cachedFile.writeAsBytes(thumbnail);
-    }
-
-    return thumbnail;
+    if (!success) return null;
+    if (useCachedFile) _markVideoThumbnailKnownGood(destPath);
+    return destPath;
   }
 
   /// Thumbnails were historically generated at 128px, which looks blurry now that video previews
   /// render at message-bubble size — treat those disk caches as stale so they get regenerated.
-  bool _isLowResThumbnail(Uint8List bytes) {
+  Future<bool> _isLowResThumbnailFile(String path) async {
     try {
-      final size = isg.ImageSizeGetter.getSizeResult(isg.MemoryInput(bytes)).size;
+      final sizeResult = await isg.ImageSizeGetter.getSizeResultAsync(AsyncInput(FileInput(File(path))));
+      final size = sizeResult.size;
       return size.width < 256 && size.height < 256;
     } catch (_) {
       return false;

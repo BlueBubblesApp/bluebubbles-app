@@ -724,6 +724,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  fc_native_video_thumbnail:
+    dependency: "direct main"
+    description:
+      name: fc_native_video_thumbnail
+      sha256: f726fdeb48aaaf008be89e379346f15656b92e1d2c02b9bdc043b1a467e71fb1
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   ffi:
     dependency: transitive
     description:
@@ -3277,14 +3285,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
-  video_thumbnail:
-    dependency: "direct main"
-    description:
-      name: video_thumbnail
-      sha256: "181a0c205b353918954a881f53a3441476b9e301641688a581e0c13f00dc588b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.5.6"
   vm_service:
     dependency: transitive
     description:
@@ -3423,4 +3423,4 @@ packages:
     version: "3.1.3"
 sdks:
   dart: ">=3.12.2 <4.0.0"
-  flutter: ">=3.41.0"
+  flutter: ">=3.44.0"

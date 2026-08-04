@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_auth
   dynamic_color
   emoji_picker_flutter
+  fc_native_video_thumbnail
   file_selector_windows
   flutter_acrylic
   flutter_timezone
