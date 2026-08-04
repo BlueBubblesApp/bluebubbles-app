@@ -5,7 +5,6 @@ import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart'
 import 'package:bluebubbles/services/backend_ui_interop/event_dispatcher.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/network/downloads_service.dart';
-import 'package:bluebubbles/services/ui/attachments_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 
@@ -58,7 +57,6 @@ class StorageInterface {
     // Main-thread cleanup — these touch GetX/Flutter singletons unavailable
     // inside the isolate, mirroring the tail of redownloadAttachment.
     final guids = (result['guids'] as List).cast<String>();
-    AttachmentsSvc.clearVideoThumbnailCache();
     for (final g in guids) {
       AttachmentDownloader.clearControllerForGuid(g);
     }

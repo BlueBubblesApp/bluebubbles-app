@@ -1087,7 +1087,6 @@ class ChatsService {
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
     }
-    AttachmentsSvc.clearVideoThumbnailCache();
     HandleSvc.reset();
 
     // Use init() rather than reset() so the empty-database case is handled

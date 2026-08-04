@@ -389,6 +389,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (thumbnailFailed) {
       return Container(color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3));
     }
+
     return Image.file(File(thumbnailPath!),
         fit: fit, filterQuality: filterQuality, gaplessPlayback: true, frameBuilder: frameBuilder);
   }
@@ -405,7 +406,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       thumbnailPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
       _seedAspectRatioFromThumbnail();
       if (mounted) setState(() {});
-    } catch (ex) {
+    } catch (ex, s) {
+      Logger.error('VideoPlayer: Failed to generate thumbnail for ${file.name}', error: ex, trace: s);
       thumbnailFailed = true;
       if (mounted) setState(() {});
     }

@@ -62,7 +62,7 @@ dependencies:
   encrypter_plus: ^5.1.0
   exif: ^3.3.0
   faker: ^2.2.0
-  fc_native_video_thumbnail: ^3.0.1
+  ffmpeg_kit_flutter_new_min: ^3.6.2
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
   firebase_dart:

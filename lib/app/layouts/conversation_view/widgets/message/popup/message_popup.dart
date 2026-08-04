@@ -108,7 +108,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   bool get showDownload =>
       (isSent &&
           part.attachments.isNotEmpty &&
-          part.attachments.where((element) => AttachmentsSvc.getContent(element) is PlatformFile).isNotEmpty) ||
+          part.attachments.where((element) => AttachmentsSvc.hasLocalFile(element)).isNotEmpty) ||
       isEmbeddedMedia;
 
   bool get showRefreshPreview =>

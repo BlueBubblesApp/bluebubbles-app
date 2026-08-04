@@ -205,6 +205,16 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     super.onClose();
   }
 
+  /// Disposes and evicts the cached [VideoController] for [attachmentGuid] -- call before a
+  /// redownload replaces the underlying file, since the cached controller/aspect ratio is from
+  /// the old decode and would otherwise get reused as-is.
+  void invalidateVideoPlayer(String attachmentGuid) {
+    final controller = videoPlayers.remove(attachmentGuid);
+    if (controller == null) return;
+    controller.player.pause();
+    controller.player.dispose();
+  }
+
   Future<void> scrollToBottom() async {
     if (scrollController.positions.isNotEmpty && scrollController.positions.first.extentBefore > 0) {
       await scrollController.animateTo(

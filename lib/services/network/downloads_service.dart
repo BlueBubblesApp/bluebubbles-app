@@ -179,6 +179,14 @@ class AttachmentDownloadController extends GetxController {
   Stopwatch stopwatch = Stopwatch();
   CancelToken? _cancelToken;
 
+  /// Guards against [fetchAttachment] running twice for this instance. Every
+  /// caller (both branches of [AttachmentDownloadService._fetchNext]) already
+  /// checks `state.value == queued` before calling, but that check and the
+  /// synchronous `state.value = downloading` assignment below aren't the same
+  /// operation -- if two call sites both observe `queued` in the same tick,
+  /// they'd otherwise both proceed to issue their own GET for the same file.
+  bool _fetchStarted = false;
+
   AttachmentDownloadController({
     required this.attachment,
     Function(PlatformFile)? onComplete,
@@ -203,6 +211,8 @@ class AttachmentDownloadController extends GetxController {
 
   Future<void> fetchAttachment() async {
     if (attachment.guid == null || attachment.guid!.contains("temp")) return;
+    if (_fetchStarted) return;
+    _fetchStarted = true;
     state.value = AttachmentDownloadState.downloading;
     stopwatch.start();
     _cancelToken = CancelToken();
