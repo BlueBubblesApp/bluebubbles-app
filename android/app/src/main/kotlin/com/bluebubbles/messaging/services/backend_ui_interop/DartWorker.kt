@@ -11,6 +11,7 @@ import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.utils.PersistentLog
+import java.io.File
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.gson.GsonBuilder
@@ -82,9 +83,30 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         }
     }
 
+    /// Large worker payloads are spilled to a cache file by DartWorkManager (WorkManager
+    /// caps input data at ~10 KB). Resolve the marker back to the JSON, deleting the file.
+    private fun resolveWorkerPayload(rawData: String): String? {
+        if (!rawData.startsWith(DartWorkManager.DATA_FILE_MARKER)) {
+            return rawData
+        }
+        val path = rawData.removePrefix(DartWorkManager.DATA_FILE_MARKER)
+        val payloadFile = File(path)
+        return try {
+            val json = payloadFile.readText()
+            PersistentLog.d(applicationContext, Constants.logTag, "Loaded ${json.length} byte worker payload from $path")
+            payloadFile.delete()
+            json
+        } catch (e: Exception) {
+            PersistentLog.e(applicationContext, Constants.logTag, "Failed to read worker payload file $path", e)
+            payloadFile.delete()
+            null
+        }
+    }
+
     override fun startWork(): ListenableFuture<Result> {
         val method = inputData.getString("method")!!
-        val data = inputData.getString("data")!!
+        val data = resolveWorkerPayload(inputData.getString("data")!!)
+            ?: return Futures.immediateFuture(Result.failure())
         val gson = GsonBuilder()
                 .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
                 .create()
