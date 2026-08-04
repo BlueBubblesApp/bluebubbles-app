@@ -409,10 +409,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (kIsWeb || kIsDesktop) return;
 
     try {
-      // Fetch the thumbnail. Previously a persisted `thumbnail_status: 'error'`
-      // short-circuited this permanently on every future load -- a single
-      // transient failure (e.g. file not fully flushed to disk yet) got stuck
-      // forever. Always retry on mount now; the in-memory `thumbnailFailed`
+      // Always retry on mount now; the in-memory `thumbnailFailed`
       // flag still prevents retrying repeatedly within the same widget lifetime.
       thumbnailPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
       _seedAspectRatioFromThumbnail();
