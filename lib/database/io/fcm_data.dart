@@ -70,17 +70,13 @@ class FCMData {
   }
 
   static FCMData getFCM() {
+    // ObjectBox is the durable source of truth for FCM configuration. When it's empty the
+    // config isn't present, so return an unconfigured FCMData rather than rebuilding it from
+    // the SharedPreferences mirror. That mirror can lag behind the database (e.g. a clear
+    // whose async prefs write didn't flush before the app exited), and reading it here would
+    // otherwise resurrect a configuration the user already cleared.
     final result = Database.fcmData.getAll();
-    if (result.isEmpty) {
-      return FCMData(
-        projectID: PrefsSvc.firebase.getProjectID(),
-        storageBucket: PrefsSvc.firebase.getStorageBucket(),
-        apiKey: PrefsSvc.firebase.getApiKey(),
-        firebaseURL: PrefsSvc.firebase.getFirebaseURL(),
-        clientID: PrefsSvc.firebase.getClientID(),
-        applicationID: PrefsSvc.firebase.getApplicationID(),
-      );
-    }
+    if (result.isEmpty) return FCMData();
     return result.first;
   }
 
