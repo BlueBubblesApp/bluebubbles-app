@@ -93,6 +93,7 @@ class Settings {
   final RxBool startVideosMutedFullscreen = true.obs;
   final RxBool use24HrFormat = false.obs;
   final RxBool alwaysShowAvatars = false.obs;
+  final RxBool dndFavoritesOverride = false.obs;
   final RxBool notifyOnChatList = false.obs;
   final RxBool notifyReactions = true.obs;
   final RxBool colorsFromMedia = false.obs;
@@ -356,6 +357,7 @@ class Settings {
       'startVideosMutedFullscreen': startVideosMutedFullscreen.value,
       'use24HrFormat': use24HrFormat.value,
       'alwaysShowAvatars': alwaysShowAvatars.value,
+      'dndFavoritesOverride': dndFavoritesOverride.value,
       'notifyOnChatList': notifyOnChatList.value,
       'notifyReactions': notifyReactions.value,
       'globalTextDetection': globalTextDetection.value,
@@ -546,6 +548,8 @@ class Settings {
     SettingsSvc.settings.use24HrFormat.value = map['use24HrFormat'] ?? SettingsSvc.settings.use24HrFormat.value;
     SettingsSvc.settings.alwaysShowAvatars.value =
         map['alwaysShowAvatars'] ?? SettingsSvc.settings.alwaysShowAvatars.value;
+    SettingsSvc.settings.dndFavoritesOverride.value =
+        map['dndFavoritesOverride'] ?? SettingsSvc.settings.dndFavoritesOverride.value;
     SettingsSvc.settings.notifyOnChatList.value =
         map['notifyOnChatList'] ?? SettingsSvc.settings.notifyOnChatList.value;
     SettingsSvc.settings.notifyReactions.value = map['notifyReactions'] ?? SettingsSvc.settings.notifyReactions.value;
@@ -773,6 +777,7 @@ class Settings {
     s.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
     s.use24HrFormat.value = map['use24HrFormat'] ?? false;
     s.alwaysShowAvatars.value = map['alwaysShowAvatars'] ?? false;
+    s.dndFavoritesOverride.value = map['dndFavoritesOverride'] ?? false;
     s.notifyOnChatList.value = map['notifyOnChatList'] ?? false;
     s.notifyReactions.value = map['notifyReactions'] ?? true;
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
