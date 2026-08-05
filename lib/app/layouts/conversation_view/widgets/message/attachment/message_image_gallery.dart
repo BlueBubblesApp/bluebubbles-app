@@ -218,7 +218,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
     final galleryLabel = photoCount > 0 && videoCount > 0
-        ? '${photoCount + videoCount} Photos & Videos'
+        ? '${photoCount + videoCount} Items'
         : videoCount > 0
             ? '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}'
             : '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
