@@ -183,6 +183,11 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       right: message.isFromMe! ? 10 : 0,
     );
 
+    // Fan cards are sized by MessageImageGallery; padding is on the gallery wrapper.
+    if (widget.transparentBackground) {
+      return EdgeInsets.zero;
+    }
+
     // Treat an error preview the same as a resolved file — no extra padding.
     final hasError = state.hasError.value || message.error > 0;
     final effectiveFile =
@@ -198,12 +203,6 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       return const EdgeInsets.symmetric(vertical: 5, horizontal: 10).add(sideInsets);
     }
     if (state.isSending.value && message.isFromMe!) {
-      return EdgeInsets.zero;
-    }
-    // Gallery cards (transparentBackground=true) constrain their height via an
-    // outer SizedBox. DownloadingContent / NotLoadedContent handle their own
-    // internal padding, so adding extra padding here causes overflow.
-    if (widget.transparentBackground) {
       return EdgeInsets.zero;
     }
     return const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(sideInsets);
