@@ -169,7 +169,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
-    // Stable fan room for this collection (not remaining future at the current index).
+    // Horizontal spread of fanned cards behind the front card; sizes the canvas.
     final double maxFanDx;
     if (widget.infiniteScroll) {
       maxFanDx = _fanSlotDx.last;
@@ -179,6 +179,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
     final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
+    final isFromMe = widget.fanDirection == GalleryFanDirection.left;
+    // Sent: shift cards right so the front card's right edge meets the end-aligned canvas.
+    // Received: anchor at the left so the front card lines up with the start-aligned canvas.
+    final fanAnchorX = isFromMe ? maxFanDx : 0.0;
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
     final galleryLabel = photoCount > 0 && videoCount > 0
@@ -215,6 +219,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
+          fanAnchorX: fanAnchorX,
           isCurrent: i == 0,
         );
       }).reversed);
@@ -232,6 +237,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
+          fanAnchorX: fanAnchorX,
         ));
       }
 
@@ -243,6 +249,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
+          fanAnchorX: fanAnchorX,
           isCurrent: false,
         ));
       }
@@ -253,6 +260,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
+        fanAnchorX: fanAnchorX,
         isCurrent: true,
       ));
     }
@@ -363,8 +371,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       },
       child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-              widget.fanDirection == GalleryFanDirection.left ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             MouseRegion(
               onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
@@ -456,6 +463,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
+    required double fanAnchorX,
     required bool isCurrent,
   }) {
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
@@ -469,7 +477,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final cardHeight = baseCardHeight * scale;
     // Scale-center so smaller cards don't poke out past the fan spread.
     final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
-    final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = fanAnchorX + slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
@@ -509,6 +517,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
+    required double fanAnchorX,
   }) {
     // Mirror of the one-sided fan (negative dx/angle, opposite pivot); opacity only is past-specific.
     final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
@@ -519,7 +528,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
     final slotDx = _fanSlotDx[slot];
-    final fromLeft = -slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = fanAnchorX - slotDx + ((baseCardWidth - cardWidth) / 2);
 
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
