@@ -88,6 +88,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   void initState() {
     super.initState();
     _cvController = MessageStateScope.readStateOnce(context).cvController;
+    _setCurrentIndex(widget.currentIndexNotifier?.value ?? 0);
   }
 
   @override
@@ -96,19 +97,31 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
     final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
     if (!listEquals(oldKeys, newKeys)) {
-      _currentIndex = 0;
+      _setCurrentIndex(0);
+    } else if (_currentIndex >= widget.attachments.length) {
+      _setCurrentIndex(_currentIndex);
     }
+  }
+
+  void _setCurrentIndex(int index, {bool resetDrag = false}) {
+    if (_attachments.isEmpty) return;
+    int clamped;
+    if (widget.infiniteScroll) {
+      clamped = index % _attachments.length;
+      if (clamped < 0) clamped += _attachments.length;
+    } else {
+      clamped = index.clamp(0, _attachments.length - 1);
+    }
+    if (clamped < 0) return;
+    if (clamped == _currentIndex && !resetDrag) return;
+    _currentIndex = clamped;
+    widget.currentIndexNotifier?.value = _currentIndex;
+    if (resetDrag) _dragDx = 0;
   }
 
   void _advance(int direction) {
     if (_attachments.length <= 1) return;
-    if (widget.infiniteScroll) {
-      _currentIndex = (_currentIndex + direction) % _attachments.length;
-      if (_currentIndex < 0) _currentIndex += _attachments.length;
-    } else {
-      _currentIndex = (_currentIndex + direction).clamp(0, _attachments.length - 1);
-    }
-    widget.currentIndexNotifier?.value = _currentIndex;
+    _setCurrentIndex(_currentIndex + direction);
   }
 
   int _indexAtOffset(int offset) {
