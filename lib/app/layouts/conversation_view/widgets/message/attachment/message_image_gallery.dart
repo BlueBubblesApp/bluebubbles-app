@@ -179,11 +179,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
     final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
-    // baseOffset / textOffset still nudge the label for row alignment; cards use scale-center.
-    final baseOffset =
-        ((fanCanvasWidth - baseCardWidth) / 2) + (widget.fanDirection == GalleryFanDirection.left ? 36 : -50);
-    final fanDirectionSign = widget.fanDirection == GalleryFanDirection.left ? -1.0 : 1.0;
-    final textOffset = (baseOffset + 25 + fanDirectionSign * 10.0).clamp(0.0, double.infinity);
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
     final galleryLabel = photoCount > 0 && videoCount > 0
@@ -371,53 +366,48 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           crossAxisAlignment:
               widget.fanDirection == GalleryFanDirection.left ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: (widget.fanDirection == GalleryFanDirection.left
-                  ? const EdgeInsets.only(right: 20)
-                  : EdgeInsets.only(left: textOffset)),
-              child: MouseRegion(
-                onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
-                onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
-                child: GestureDetector(
-                  onTap: kIsDesktop ? () => _showGalleryPopup(context, galleryLabel) : null,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        left: -6,
-                        right: -6,
-                        top: -2,
-                        bottom: -2,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                            color: _labelHovered
-                                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+            MouseRegion(
+              onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
+              onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
+              child: GestureDetector(
+                onTap: kIsDesktop ? () => _showGalleryPopup(context, galleryLabel) : null,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      left: -6,
+                      right: -6,
+                      top: -2,
+                      bottom: -2,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          color: _labelHovered
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.grid_view_rounded,
-                            size: 10,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            galleryLabel,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.grid_view_rounded,
+                          size: 10,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          galleryLabel,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
