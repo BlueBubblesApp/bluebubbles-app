@@ -263,7 +263,11 @@ class Message {
       associatedMessageGuid: json["associatedMessageGuid"]?.toString().replaceAll("bp:", "").split("/").last,
       associatedMessagePart: json["associatedMessagePart"] ??
           int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
-      associatedMessageType: json["associatedMessageType"],
+      associatedMessageType: (json["associatedMessageEmoji"] != null && json["associatedMessageEmoji"].toString().isNotEmpty)
+          ? (json["associatedMessageType"] == "3006" || json["associatedMessageType"] == "-emoji"
+              ? "-${json["associatedMessageEmoji"]}"
+              : json["associatedMessageEmoji"])
+          : json["associatedMessageType"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
       handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, Object>()) : null,
       hasAttachments: (json['attachments'] as List? ?? []).isNotEmpty || json['hasAttachments'] == true,
@@ -608,7 +612,7 @@ class Message {
   List<Attachment> get previewAttachments => dbAttachments.where((e) => e.mimeType == null).toList();
 
   List<Message> get reactions => associatedMessages
-      .where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", "")))
+      .where((item) => ReactionTypes.checkReactionType(item.associatedMessageType))
       .toList();
 
   MessageStatusIndicator get indicatorToShow {

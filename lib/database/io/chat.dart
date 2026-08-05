@@ -310,7 +310,7 @@ class Chat {
 
     /// If reaction and notify reactions off, then don't notify, otherwise notify
     return !SettingsSvc.settings.notifyReactions.value &&
-        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+        ReactionTypes.checkReactionType(message?.associatedMessageType);
   }
 
   /// Toggle unread status - pure DB operation
