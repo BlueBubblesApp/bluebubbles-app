@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -124,19 +125,35 @@ Widget buildBackButton(BuildContext context,
 }
 
 /// The empty-state shown in the conversation list when there is nothing to
-/// display for the current filter (all chats, archived, or unknown senders).
-Widget buildEmptyChatListState(BuildContext context, {bool showArchived = false, bool showUnknown = false}) {
-  final IconData icon = showArchived
-      ? Icons.archive_outlined
-      : showUnknown
-          ? Icons.person_search_rounded
-          : Icons.chat_bubble_outline_rounded;
-  final String title = showArchived
-      ? "No archived chats"
-      : showUnknown
-          ? "No messages from unknown senders"
-          : "No conversations yet";
-  final String? subtitle = showArchived || showUnknown ? null : "Tap the compose button to start a new one";
+/// display for the current filter (all chats, archived, unknown senders, or
+/// an active [ChatListFilters] chip selection).
+Widget buildEmptyChatListState(
+  BuildContext context, {
+  bool showArchived = false,
+  bool showUnknown = false,
+  ChatListFilters? filters,
+}) {
+  final bool hasActiveFilter = filters?.hasActiveFilter ?? false;
+
+  final IconData icon = hasActiveFilter
+      ? Icons.filter_list_off_rounded
+      : showArchived
+          ? Icons.archive_outlined
+          : showUnknown
+              ? Icons.person_search_rounded
+              : Icons.chat_bubble_outline_rounded;
+  final String title = hasActiveFilter
+      ? "No conversations match your filters"
+      : showArchived
+          ? "No archived chats"
+          : showUnknown
+              ? "No messages from unknown senders"
+              : "No conversations yet";
+  final String? subtitle = hasActiveFilter
+      ? null
+      : showArchived || showUnknown
+          ? null
+          : "Tap the compose button to start a new one";
 
   return Column(
     mainAxisSize: MainAxisSize.min,
@@ -169,6 +186,14 @@ Widget buildEmptyChatListState(BuildContext context, {bool showArchived = false,
             ),
             textAlign: TextAlign.center,
           ),
+        ),
+      ],
+      if (hasActiveFilter) ...[
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: () => ChatsSvc.chatListFilters.value = const ChatListFilters(),
+          icon: const Icon(Icons.filter_list_off, size: 18),
+          label: const Text("Clear Filters"),
         ),
       ],
     ],

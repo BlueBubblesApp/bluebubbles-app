@@ -7,6 +7,7 @@ Contains migration scripts that run when the database version is incremented.
 | File | Purpose |
 |------|---------|
 | `message_handle_relationship_migration.dart` | Migrates legacy message→handle relationships to the new N:M `ToMany` schema |
+| `chat_latest_message_migration.dart` | Backfills `Chat.dbLatestMessage` / `dbOnlyLatestMessageDate` |
 
 ## How Migrations Work
 1. `database.dart` stores `Database.version`

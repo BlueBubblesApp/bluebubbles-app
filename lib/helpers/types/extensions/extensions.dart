@@ -234,6 +234,42 @@ extension UrlParsing on String {
   bool get hasUrl => urlRegex.hasMatch(this) && !kIsWeb;
 }
 
+/// Bidirectional formatting characters. A string carrying an RTL override
+/// renders in a different order than it reads, which is a cheap way to disguise
+/// what a title, filename or contact name actually says.
+///
+/// Deliberately excludes U+200C/U+200D (ZWNJ/ZWJ): those are real characters in
+/// Arabic and Indic scripts, and ZWJ is what holds multi-person emoji sequences
+/// together.
+final RegExp _bidiControls = RegExp('[\u{061C}\u{200E}\u{200F}\u{202A}-\u{202E}\u{2066}-\u{2069}]');
+
+/// Non-breaking and zero-width spaces, plus the byte-order mark.
+final RegExp _exoticSpaces = RegExp('[\u{00A0}\u{2000}-\u{200B}\u{202F}\u{205F}\u{3000}\u{FEFF}]');
+
+extension InvisibleCharacters on String {
+  /// Strips bidi overrides and normalises exotic spaces to plain ones.
+  ///
+  /// Normalising the spaces *before* any whitespace collapse is what makes a
+  /// string built entirely out of them correctly come out empty.
+  String get withoutInvisibleFormatting => replaceAll(_bidiControls, '').replaceAll(_exoticSpaces, ' ');
+}
+
+extension HostMatching on Uri {
+  /// True when this URI's host equals [domain] or is a subdomain of it.
+  ///
+  /// Compares label-wise rather than by bare `endsWith`, so `notyoutube.com`
+  /// does not match `youtube.com`.
+  bool hostMatches(String domain) {
+    final lower = host.toLowerCase();
+    final target = domain.toLowerCase();
+    return lower == target || lower.endsWith('.$target');
+  }
+
+  /// True when [hostMatches] holds for any of [domains] — the per-country
+  /// public suffixes a site uses (`amazon.co.uk`, `amazon.de`, ...).
+  bool hostMatchesAny(Iterable<String> domains) => domains.any(hostMatches);
+}
+
 extension ShortenString on String {
   String shorten(int length) {
     if (this.length <= length) return this;

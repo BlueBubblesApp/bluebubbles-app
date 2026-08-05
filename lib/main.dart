@@ -612,7 +612,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
         break;
       case 'close_app':
         await windowManager.setPreventClose(false);
-        await windowManager.destroy();
+        await windowManager.close();
         break;
     }
   }

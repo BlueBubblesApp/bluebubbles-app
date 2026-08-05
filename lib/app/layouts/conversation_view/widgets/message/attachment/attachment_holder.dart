@@ -149,7 +149,30 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     };
   }
 
-  EdgeInsetsGeometry _computePadding(AttachmentState state, bool hideAttachments, bool showTail, bool isInReply) {
+  /// The box an image attachment will occupy once it renders, so the
+  /// download / not-loaded placeholders can reserve exactly that space and
+  /// nothing moves when the file finally resolves.
+  ///
+  /// Null when the size isn't knowable or reserving it would be wrong:
+  /// - dimensions haven't been extracted yet (nothing to reserve),
+  /// - reply bubbles and gallery cards, which impose their own geometry,
+  /// - non-images. Video is deliberately excluded: `VideoPlayer` doesn't size
+  ///   itself from [Attachment.displayBox], so reserving that box would just
+  ///   move the jump rather than remove it.
+  ({double width, double height})? _reservedImageBox(BuildContext context, bool isInReply, bool hideAttachments) {
+    if (isInReply || hideAttachments || widget.transparentBackground) return null;
+    if (attachment.mimeStart != "image") return null;
+    if (!attachment.hasValidSize) return null;
+    return attachment.displayBox(NavigationSvc.width(context) * 0.5);
+  }
+
+  EdgeInsetsGeometry _computePadding(
+    AttachmentState state,
+    bool hideAttachments,
+    bool showTail,
+    bool isInReply, {
+    required bool hasReservedBox,
+  }) {
     final sideInsets = EdgeInsets.only(
       left: message.isFromMe! ? 0 : 10,
       right: message.isFromMe! ? 10 : 0,
@@ -160,7 +183,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     final effectiveFile =
         state.resolvedFile.value ?? (hasError && message.isFromMe == true ? state.uploadPreviewFile.value : null);
 
-    if (effectiveFile != null && !hideAttachments) {
+    // A reserved box means the placeholder is standing in for the image at its
+    // exact final size, so it has to take the image's padding too — otherwise
+    // the outer geometry still shifts by the padding delta on resolve.
+    if ((effectiveFile != null || hasReservedBox) && !hideAttachments) {
       return showTail ? EdgeInsets.zero : sideInsets;
     }
     if (isInReply) {
@@ -178,12 +204,41 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     return const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(sideInsets);
   }
 
+  /// Reserves [box] around a pre-resolve placeholder so it claims exactly the
+  /// space the image will, with the placeholder centred inside at its own
+  /// natural size.
+  ///
+  /// The placeholder is deliberately **not** scaled to the box. Scaling made
+  /// every download card a different size and a different text size, since the
+  /// factor came from whatever aspect ratio that particular photo happened to
+  /// have. Callers instead switch to the compact layout (see
+  /// [_useCompactPlaceholder]) when the box can't host the full one, so the
+  /// content always renders at its designed proportions.
+  Widget _reserve(({double width, double height})? box, Widget child) {
+    if (box == null) return child;
+    return SizedBox(
+      width: box.width,
+      height: box.height,
+      // scaleDown is a backstop only, for a box too small even for the compact
+      // layout. It is a no-op whenever the child already fits.
+      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: child)),
+    );
+  }
+
+  /// Whether [box] is too small to host a placeholder of [naturalSize] without
+  /// squashing it.
+  bool _useCompactPlaceholder(({double width, double height})? box, Size naturalSize) {
+    if (box == null) return false;
+    return box.width < naturalSize.width || box.height < naturalSize.height;
+  }
+
   Widget _buildContent({
     required AttachmentState state,
     required bool hideAttachments,
     required bool showTail,
     required bool isInReply,
     required bool isiOS,
+    required ({double width, double height})? reservedBox,
   }) {
     // Redacted mode always shows placeholder regardless of download status.
     if (hideAttachments) {
@@ -238,18 +293,26 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     // Download in progress — show the download controller's progress UI.
     final download = state.activeDownload.value;
     if (download != null) {
-      return DownloadingContent(
-        downloadController: download,
-        isInReply: isInReply,
-        isiOS: isiOS,
-        isInGallery: widget.transparentBackground,
+      return _reserve(
+        reservedBox,
+        DownloadingContent(
+          downloadController: download,
+          isInReply: isInReply,
+          isiOS: isiOS,
+          isInGallery: widget.transparentBackground,
+          compact: _useCompactPlaceholder(reservedBox, DownloadingContent.fullVariantMinSize),
+        ),
       );
     }
 
     // Not yet loaded, queued, or errored.
-    return NotLoadedContent(
-      hideAttachments: false,
-      isiOS: isiOS,
+    return _reserve(
+      reservedBox,
+      NotLoadedContent(
+        hideAttachments: false,
+        isiOS: isiOS,
+        compact: _useCompactPlaceholder(reservedBox, NotLoadedContent.fullVariantMinSize),
+      ),
     );
   }
 
@@ -292,11 +355,14 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final transparentCard = hasPreview && (widget.transparentBackground || isPass);
+        final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
         // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
         // to fill the SizedBox dimensions set by MessageImageGallery and have their
         // background clipped to rounded corners.
         final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
+        // Only meaningful before the file resolves; once it has, the image
+        // itself defines the box.
+        final reservedBox = hasPreview ? null : _reservedImageBox(context, isInReply, hideAttachments);
         Widget content = Material(
           color: Colors.transparent,
           child: InkWell(
@@ -311,7 +377,13 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                   minWidth: isInReply ? 0 : 100,
                 ),
                 child: Padding(
-                  padding: _computePadding(state, hideAttachments, showTail, isInReply),
+                  padding: _computePadding(
+                    state,
+                    hideAttachments,
+                    showTail,
+                    isInReply,
+                    hasReservedBox: reservedBox != null,
+                  ),
                   child: AnimatedSize(
                     duration: const Duration(milliseconds: 150),
                     // AnimatedSize loosens constraints, so content would render at its
@@ -327,6 +399,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                 showTail: showTail,
                                 isInReply: isInReply,
                                 isiOS: isiOS,
+                                reservedBox: reservedBox,
                               ),
                             ),
                           )
@@ -341,7 +414,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                       borderRadius: BorderRadius.circular(20),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                                          color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                                           blurRadius: 3,
                                           offset: const Offset(0, 1),
                                         ),
@@ -355,6 +428,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                   showTail: showTail,
                                   isInReply: isInReply,
                                   isiOS: isiOS,
+                                  reservedBox: reservedBox,
                                 ),
                               ),
                             ),
@@ -375,7 +449,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                         blurRadius: 3,
                         offset: const Offset(0, 1),
                       ),

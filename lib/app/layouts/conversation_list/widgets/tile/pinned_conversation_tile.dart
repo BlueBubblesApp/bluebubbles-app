@@ -55,13 +55,18 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
 
-
-    controller.shouldHighlight.value = ChatsSvc.activeChatGuid.value == controller.chat.guid;
     _activeSub = ChatsSvc.activeChatGuid.listen((guid) {
       Future.microtask(() {
-        if (mounted) controller.shouldHighlight.value = guid == controller.chat.guid;
+        if (mounted) controller.shouldHighlight.value = NavigationSvc.isTabletMode(context) && guid == controller.chat.guid;
       });
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // isTabletMode reads MediaQuery, so it can't run in initState
+    controller.shouldHighlight.value = NavigationSvc.isTabletMode(context) && ChatsSvc.activeChatGuid.value == controller.chat.guid;
   }
 
   @override

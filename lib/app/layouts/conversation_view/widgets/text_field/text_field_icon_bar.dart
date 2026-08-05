@@ -182,7 +182,7 @@ class TextFieldIconBar extends StatelessWidget {
                             contentPadding: const EdgeInsets.fromLTRB(28, 5, 32, 7),
                             filled: true,
                             hintStyle: const KlipySearchFieldStyle().hintStyle,
-                            hintText: "Search Klipy",
+                            hintText: "Search KLIPY",
                             isCollapsed: true,
                             isDense: true,
                           ),

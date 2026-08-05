@@ -65,6 +65,7 @@ class IncrementalSyncManager extends SyncManager {
     "chats",
     "chats.participants",
     "attachments",
+    "handle",
     "attributedBody",
     "messageSummaryInfo",
     "payloadData"

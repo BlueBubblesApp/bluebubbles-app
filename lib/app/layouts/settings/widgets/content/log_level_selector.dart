@@ -33,6 +33,7 @@ class LogLevelSelectorState extends State<LogLevelSelector> {
         textProcessing: (val) => val.name,
         capitalize: true,
         title: "Log Level",
+        useModernMenu: true,
       );
     });
   }

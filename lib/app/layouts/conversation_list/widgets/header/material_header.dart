@@ -107,6 +107,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                             color: context.theme.colorScheme.onSurfaceVariant,
                                           ),
                                         )),
+                                    const ChatListFilterButton(),
                                     const Padding(
                                       padding: EdgeInsets.only(right: 8),
                                       child: OverflowMenu(),

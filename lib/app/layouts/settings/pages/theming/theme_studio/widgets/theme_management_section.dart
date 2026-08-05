@@ -46,6 +46,7 @@ class ThemeManagementSection extends StatelessWidget {
                       leading: const SettingsLeadingIcon(
                         iosIcon: Icons.edit_outlined,
                         materialIcon: Icons.edit_outlined,
+                        containerColor: Colors.teal,
                       ),
                       trailing: const NextButton(),
                       onTap: () => _showRenameDialog(context),
@@ -58,6 +59,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.share_outlined,
                       materialIcon: Icons.share_outlined,
+                      containerColor: Colors.green,
                     ),
                     onTap: () => _exportTheme(context),
                   ),
@@ -68,6 +70,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.colorize_outlined,
                       materialIcon: Icons.colorize_outlined,
+                      containerColor: Colors.purple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => _generateFromSeed(context) : null,
@@ -79,6 +82,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.image_outlined,
                       materialIcon: Icons.image_outlined,
+                      containerColor: Colors.deepPurple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => controller.generateFromImage(context) : null,

@@ -91,6 +91,27 @@ samsung   // bool — current skin is Samsung
 
 Never hardcode color hex values — always derive from `context.theme`.
 
+- Message bubbles: use `ColorSchemeHelpers.bubble(context, isIMessage)` / `.onBubble(...)` —
+  never read `colorScheme.primary`/`secondary` directly for bubble coloring.
+- Dark-mode branches: use `ThemeSvc.inDarkMode(context)`, not `MediaQuery.platformBrightnessOf` —
+  it's the one that respects the user's light/dark/system override.
+
+## Reusable Components
+
+Prefer these over raw Flutter/Material/Cupertino equivalents — they bake in this app's
+theming, platform, and skin conventions. Full reference: `docs/THEMING_AND_COMPONENTS.md`.
+
+| Instead of | Use | File |
+|---|---|---|
+| `Scaffold` | `BBScaffold` | `lib/app/wrappers/bb_scaffold.dart` |
+| `AppBar` | `BBAppBar` | `lib/app/wrappers/bb_app_bar.dart` |
+| `RawChip` | `BBChip` | `lib/app/components/bb_chip.dart` |
+| `Switch` / `CupertinoSwitch` | `BBSwitch` | `lib/app/components/bb_switch.dart` |
+| `AlertDialog` / `CupertinoAlertDialog` | `showBBDialog<T>()`, `showAreYouSure()`, `showBBListSelector<T>()`, `BBProgressDialog` | `lib/helpers/ui/dialog_helpers.dart` |
+
+Dialog helpers are skin-aware (Cupertino on iOS skin, Material on Material/Samsung) — don't
+branch on skin manually when one of these already exists.
+
 ## Avatars
 
 - Single contact: `ContactAvatarWidget`

@@ -278,16 +278,26 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                       _pointerDownPosition = null;
                     }
                   },
-                  child: Video(
-                      controller: videoController,
-                      controls: (state) => Padding(
-                            padding: EdgeInsets.all(!kIsWeb && !kIsDesktop ? 0 : 20).copyWith(
-                                bottom: !kIsWeb && !kIsDesktop ? (iOS && widget.showInteractions ? 100 : 10) : 0),
-                            child: kIsDesktop
-                                ? media_kit_video_controls.MaterialDesktopVideoControls(state)
-                                : media_kit_video_controls.MaterialVideoControls(state),
-                          ),
-                      filterQuality: FilterQuality.medium),
+                  // Disable horizontal-drag-to-seek — its recognizer is always attached
+                  // regardless of this flag (only the callback itself is gated), so it still
+                  // wins the gesture arena over the fullscreen gallery's own swipe handling.
+                  // Setting seekGesture false at least stops it from also seeking the video
+                  // as a side effect of a swipe-to-next-attachment gesture.
+                  child: media_kit_video_controls.MaterialVideoControlsTheme(
+                    normal: media_kit_video_controls.kDefaultMaterialVideoControlsThemeData.copyWith(seekGesture: false),
+                    fullscreen:
+                        media_kit_video_controls.kDefaultMaterialVideoControlsThemeData.copyWith(seekGesture: false),
+                    child: Video(
+                        controller: videoController,
+                        controls: (state) => Padding(
+                              padding: EdgeInsets.all(!kIsWeb && !kIsDesktop ? 0 : 20).copyWith(
+                                  bottom: !kIsWeb && !kIsDesktop ? (iOS && widget.showInteractions ? 100 : 10) : 0),
+                              child: kIsDesktop
+                                  ? media_kit_video_controls.MaterialDesktopVideoControls(state)
+                                  : media_kit_video_controls.MaterialVideoControls(state),
+                            ),
+                        filterQuality: FilterQuality.medium),
+                  ),
                 ),
                 if (kIsWeb || kIsDesktop)
                   Obx(() {

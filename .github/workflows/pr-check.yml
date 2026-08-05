@@ -8,6 +8,9 @@ name: PR Check
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # Warm the SDK/pub caches in master's scope (see warm-cache job below).
+  push:
+    branches: [master]
   workflow_dispatch:
 
 # Cancel superseded runs when a PR is pushed again.
@@ -15,40 +18,54 @@ concurrency:
   group: pr-check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
   FLUTTER_VERSION: "3.44.6"
+  FVM_VERSION: "4.1.2"
 
 jobs:
+  # Populate the SDK + pub caches in master's scope on every merge. PR runs can only
+  # restore caches from their own ref or the base branch (master); without this job
+  # that shared scope stays empty and each PR redownloads the SDK. Just installs the
+  # SDK and resolves packages — no compile — so it's cheap.
+  warm-cache:
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm, windows-latest]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
+
   analyze:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install fvm
-        run: |
-          curl -fsSL https://fvm.app/install.sh | bash
-          echo "$HOME/fvm/bin" >> "$GITHUB_PATH"
-
-      - name: Cache Flutter SDK (fvm)
-        uses: actions/cache@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
         with:
-          path: ~/fvm
-          key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
 
-      - name: Cache pub packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
-
-      - name: Select Flutter version
-        run: fvm use "$FLUTTER_VERSION" --force
-
-      - name: Pub get
-        run: fvm flutter pub get --enforce-lockfile
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=" > .env
+        shell: bash
 
       # --no-fatal-infos: the codebase carries ~270 pre-existing info-level lints
       # (deprecations, use_build_context_synchronously). Fail only on new
@@ -61,7 +78,7 @@ jobs:
   build-windows:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event_name != 'push' && !github.event.pull_request.draft }}
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -69,30 +86,17 @@ jobs:
         run: git config --system core.longpaths true
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Install fvm
-        run: choco install fvm -y
-
-      - name: Cache Flutter SDK (fvm)
-        uses: actions/cache@v5
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
         with:
-          path: ~/fvm
-          key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
 
-      - name: Cache pub packages
-        uses: actions/cache@v5
-        with:
-          path: ~/AppData/Local/Pub/Cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
-
-      - name: Select Flutter version
-        run: fvm use $env:FLUTTER_VERSION --force
-        shell: pwsh
-
-      - name: Pub get
-        run: fvm flutter pub get --enforce-lockfile
-        shell: pwsh
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=" > .env
+        shell: bash
 
       # Compile only — no msix/installer packaging (that's the release workflow).
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
@@ -103,12 +107,16 @@ jobs:
   build-linux:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
-    if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'push' && !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Install system dependencies
         run: |
@@ -124,28 +132,14 @@ jobs:
             libayatana-appindicator3-dev \
             libnotify-dev
 
-      - name: Install fvm
-        run: |
-          curl -fsSL https://fvm.app/install.sh | bash
-          echo "$HOME/fvm/bin" >> "$GITHUB_PATH"
-
-      - name: Cache Flutter SDK (fvm)
-        uses: actions/cache@v5
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
         with:
-          path: ~/fvm
-          key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
 
-      - name: Cache pub packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
-
-      - name: Select Flutter version
-        run: fvm use "$FLUTTER_VERSION" --force
-
-      - name: Pub get
-        run: fvm flutter pub get --enforce-lockfile
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=" > .env
 
       # Compile only — no tarball packaging (that's the release workflow).
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.

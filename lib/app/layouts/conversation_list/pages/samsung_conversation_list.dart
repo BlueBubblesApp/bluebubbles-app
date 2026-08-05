@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/components/sliver_decoration.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/samsung_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
@@ -94,6 +95,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final _chats = ChatsSvc.getFilteredChats(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
+                  filters: ChatsSvc.chatListFilters.value,
                 );
                 final _pinnedChats = _chats.where((e) => e.isPinned ?? false).toList();
                 final _unpinnedChats = _chats.where((e) => !(e.isPinned ?? false)).toList();
@@ -103,13 +105,20 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   controller: controller.samsungScrollController,
                   slivers: [
                     SamsungHeader(parentController: controller),
+                    if (!showArchived && !showUnknown)
+                      const SliverToBoxAdapter(
+                        child: CustomGroupFilterChipRow(
+                          padding: EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 16),
+                        ),
+                      ),
                     if (!loaded || _unpinnedChats.isEmpty)
                       SliverToBoxAdapter(
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 50),
                             child: loaded
-                                ? buildEmptyChatListState(context, showArchived: showArchived, showUnknown: showUnknown)
+                                ? buildEmptyChatListState(context,
+                                    showArchived: showArchived, showUnknown: showUnknown, filters: ChatsSvc.chatListFilters.value)
                                 : Column(
                                     children: [
                                       Padding(

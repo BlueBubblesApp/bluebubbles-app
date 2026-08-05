@@ -102,6 +102,11 @@ class BBAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBg = backgroundColor ?? context.headerColor;
+    // A transparent app bar shows the theme surface through it, but its literal
+    // color (0x00000000) reads as pure black to brightness estimation — without
+    // this, transparent app bars would flip status bar/icon colors to light-on-dark
+    // contrast even in a light theme. Estimate from the real visible color instead.
+    final effectiveBrightnessColor = effectiveBg == Colors.transparent ? context.theme.colorScheme.surface : effectiveBg;
     final effectiveCenterTitle = centerTitle ?? context.iOS;
     final effectiveSurfaceTint = surfaceTintColor ?? context.theme.colorScheme.primary;
     final effectiveTitle =
@@ -120,7 +125,7 @@ class BBAppBar extends StatelessWidget implements PreferredSizeWidget {
       systemOverlayStyle: systemOverlayStyle ??
           context.systemUiOverlayStyle(
             statusBarColor: effectiveBg,
-            backgroundBrightness: ThemeData.estimateBrightnessForColor(effectiveBg),
+            backgroundBrightness: ThemeData.estimateBrightnessForColor(effectiveBrightnessColor),
           ),
       automaticallyImplyLeading: automaticallyImplyLeading,
       leadingWidth: leadingWidth,

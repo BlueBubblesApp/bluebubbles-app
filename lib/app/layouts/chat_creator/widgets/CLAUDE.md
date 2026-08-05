@@ -8,7 +8,6 @@ Sub-widgets for the new conversation creation UI.
 |------|---------|
 | `recipient_chips_row.dart` | Horizontal scrollable row of selected contact chips (To: field) |
 | `selected_contact_chip.dart` | Single removable chip representing a chosen recipient |
-| `recipient_chips_row.dart` | Row of selected contact chips (scrollable To: field) |
 | `search_results_list.dart` | Scrollable list of contact/handle search results |
 | `search_contact_tile.dart` | Single search result row (avatar, name, address) |
 | `chat_list_section.dart` | Section showing existing chats matching the search query |

@@ -1,5 +1,7 @@
 # lib/database/ — Data Persistence
 
+See `docs/MODELS.md` for the consolidated cross-directory entity/DTO field reference.
+
 ## Platform Abstraction
 | Directory | Platform | Role |
 |-----------|----------|------|
@@ -11,7 +13,7 @@ Conditional imports resolve the correct implementation at compile time.
 
 ## Key Entities (`io/`) → `io/CLAUDE.md`
 - `chat.dart`, `message.dart`, `attachment.dart`, `handle.dart`
-- `contact.dart`, `contact_v2.dart`, `theme.dart`, `fcm_data.dart`
+- `contact_v2.dart`, `theme.dart`, `fcm_data.dart`, `launch_at_startup.dart`
 
 ## Key Shared Models (`global/`) → `global/CLAUDE.md`
 - `settings.dart`, `message_part.dart`, `attributed_body.dart`

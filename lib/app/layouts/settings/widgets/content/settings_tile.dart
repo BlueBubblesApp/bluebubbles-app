@@ -16,6 +16,7 @@ class SettingsTile extends StatelessWidget {
     this.subtitle,
     this.backgroundColor,
     this.isThreeLine = false,
+    this.minVerticalPadding = 14,
   });
 
   final Function? onTap;
@@ -26,6 +27,7 @@ class SettingsTile extends StatelessWidget {
   final Widget? leading;
   final Color? backgroundColor;
   final bool isThreeLine;
+  final double minVerticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class SettingsTile extends StatelessWidget {
           child: ListTile(
             mouseCursor: MouseCursor.defer,
             enableFeedback: true,
-            minVerticalPadding: 14,
+            minVerticalPadding: minVerticalPadding,
             horizontalTitleGap: 10,
             dense: SettingsSvc.settings.skin.value == Skins.iOS ? true : false,
             leading: leading == null

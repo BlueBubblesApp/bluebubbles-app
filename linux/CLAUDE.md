@@ -1,6 +1,6 @@
 # linux/ — Linux Native (Minimal Custom Code)
 
-C++ code: `main.cc` + `my_application.cc/h` — standard GTK-based Flutter app wrapper.
+C++ code: `main.cc` + `my_application.cc/h` — standard GTK-based Flutter app wrapper. `splash_screen.cc/h` — native splash screen shown before the Flutter engine attaches.
 
 ## Distribution Packages (project root)
 - `flatpak/` — Flatpak package (`app.bluebubbles.BlueBubbles`)

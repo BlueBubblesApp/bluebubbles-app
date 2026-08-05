@@ -73,6 +73,7 @@ class MessagePartWrapper extends StatelessWidget {
       children: [
         // actual message content
         BubbleEffects(
+          messageState: controller,
           part: part.part,
           globalKey: globalKey,
           showTail: !part.isPkPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1,

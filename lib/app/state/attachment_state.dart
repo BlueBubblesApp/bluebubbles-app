@@ -66,6 +66,13 @@ class AttachmentState {
   final RxnString mimeType;
   final RxnString transferName;
   final RxnInt totalBytes;
+
+  /// RAW (decode-native, pre-rotation) pixel dimensions, mirroring
+  /// [Attachment.width] / [Attachment.height].
+  ///
+  /// These are **not** the size to lay an image out at. For that, use
+  /// [Attachment.displayWidth] / [Attachment.displayHeight], which apply the
+  /// EXIF orientation swap.
   final RxnInt width;
   final RxnInt height;
   final RxBool hasLivePhoto;

@@ -1,0 +1,63 @@
+name: Setup Flutter
+description: Install fvm + the pinned Flutter SDK, resolve dependencies, and cache both.
+
+inputs:
+  flutter-version:
+    description: Flutter SDK version to install via fvm.
+    required: true
+  fvm-version:
+    description: fvm version to activate.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
+
+    - name: Install fvm
+      run: dart pub global activate fvm "${{ inputs.fvm-version }}"
+      shell: bash
+
+    # Split restore/save: actions/cache only writes when the whole job succeeds, so a
+    # later analyze, compile or signing failure would discard a freshly downloaded SDK
+    # and pub cache. Each save below runs as soon as its directory is populated instead.
+    - name: Restore Flutter SDK (fvm)
+      id: cache-fvm
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ~/fvm
+        key: fvm-${{ runner.os }}-${{ runner.arch }}-${{ inputs.flutter-version }}
+
+    - name: Restore pub packages
+      id: cache-pub
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ~/.pub-cache
+        key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+    # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
+    # from Git Bash on the Windows runner, and this form works on all three platforms.
+    - name: Select Flutter version
+      run: dart pub global run fvm:main use "${{ inputs.flutter-version }}" --force
+      shell: bash
+
+    # No explicit status check, so the saves inherit the implicit success() — they never
+    # persist a half-populated directory left behind by a step that failed.
+    - name: Save Flutter SDK (fvm)
+      if: steps.cache-fvm.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ~/fvm
+        key: ${{ steps.cache-fvm.outputs.cache-primary-key }}
+
+    - name: Pub get
+      run: dart pub global run fvm:main flutter pub get --enforce-lockfile
+      shell: bash
+
+    - name: Save pub packages
+      if: steps.cache-pub.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ~/.pub-cache
+        key: ${{ steps.cache-pub.outputs.cache-primary-key }}

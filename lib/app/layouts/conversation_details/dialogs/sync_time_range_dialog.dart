@@ -20,6 +20,8 @@ const List<SyncTimeRangeOption> defaultSyncTimeRangeOptions = [
   SyncTimeRangeOption(label: "1 Month", duration: Duration(days: 30)),
   SyncTimeRangeOption(label: "6 Months", duration: Duration(days: 182)),
   SyncTimeRangeOption(label: "1 Year", duration: Duration(days: 365)),
+  SyncTimeRangeOption(label: "3 Years", duration: Duration(days: 365 * 3)),
+  SyncTimeRangeOption(label: "All Time", duration: Duration(days: 365 * 100)),
 ];
 
 /// Shows a dialog for selecting a time range to sync messages.
@@ -35,15 +37,19 @@ Future<DateTimeRange?> showSyncTimeRangeDialog(
 }) {
   final effectiveOptions = options ?? defaultSyncTimeRangeOptions;
   final now = DateTime.now().toUtc();
+  final epoch = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
   return showBBListSelector<DateTimeRange>(
     context: context,
     title: "How far back?",
     options: effectiveOptions
-        .map((option) => BBListSelectorOption(
-              label: option.label,
-              value: DateTimeRange(start: now.subtract(option.duration), end: now),
-            ))
+        .map((option) {
+          final start = now.subtract(option.duration);
+          return BBListSelectorOption(
+            label: option.label,
+            value: DateTimeRange(start: start.isBefore(epoch) ? epoch : start, end: now),
+          );
+        })
         .toList(),
   );
 }

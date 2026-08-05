@@ -102,24 +102,29 @@ return chat;
 
 ---
 
-## ADR-005: ChatState and MessageState Decouple DB Entities from UI Reactivity
+## ADR-005: ChatState, MessageState, HandleState, and AttachmentState Decouple DB Entities from UI Reactivity
 
-**Decision:** `ChatState` and `MessageState` are thin reactive wrapper classes that mirror the fields of `Chat` and `Message` as individually observable `Rx*` variables. The UI reads from state objects, never directly from DB entities.
+**Decision:** `ChatState`, `MessageState`, `HandleState`, and `AttachmentState` are thin reactive wrapper classes that mirror the fields of `Chat`, `Message`, `Handle`, and `Attachment` as individually observable `Rx*` variables. The UI reads from state objects, never directly from DB entities.
 
-**Context:** `Chat` and `Message` are ObjectBox entities. They carry lazy-loaded relations and cannot be observed for field-level changes without re-querying. Passing entities directly to `Obx()` widgets would cause the entire widget to rebuild on any field change.
+**Context:** These are ObjectBox entities. They carry lazy-loaded relations and cannot be observed for field-level changes without re-querying. Passing entities directly to `Obx()` widgets would cause the entire widget to rebuild on any field change.
 
 **Rationale:**
 - `Obx()` rebuilds only the sub-tree that reads a specific `Rx*` field. If only `isPinned` changes, only the widget reading `chatState.isPinned` rebuilds — not the avatar, title, or subtitle.
 - The DB entity lives in the isolate context; the reactive wrapper lives on the main thread. This is a clean boundary.
 - Computed convenience fields (`hasError`, `isSending`, `isSent`) can be derived and kept in sync inside the state class without polluting the DB entity.
 
+**Ownership varies by state class:**
+- `ChatState` / `MessageState` are the primary per-entity wrappers, generally held by the UI-facing services (`ChatsService`, `MessagesService`).
+- `HandleState` is owned by `HandleService` and kept in a per-handle registry keyed by `Handle.id`; fetch it via `HandleService.getOrCreateHandleState()`, never construct it directly. It also owns all redacted-mode logic (fake names/addresses/avatars) — the underlying `Handle` DB object always returns raw, non-redacted data.
+- `AttachmentState` is owned by its parent `MessageState` and stored in `MessageState.attachmentStates`, keyed by attachment GUID, accessed via `MessageState.getAttachmentState()`. It additionally tracks upload/download lifecycle via an `AttachmentTransferState` enum (`idle` → `uploading`/`queued` → `downloading` → `processing` → `complete`/`error`).
+
 **Consequences:**
 - Every field that a widget renders must exist as an `Rx*` in the corresponding state class.
-- Adding a new displayable chat/message property means adding it to both the entity (`database/io/`) and the state class (`app/state/`).
-- `*Internal` methods are the only write path to state fields — UI widgets must never assign to `chatState.someField.value` directly.
-- Services are responsible for calling `updateXxxInternal()` after confirmed DB writes.
+- Adding a new displayable property means adding it to both the entity (`database/io/`) and the state class (`app/state/`).
+- `*Internal` methods are the only write path to state fields — UI widgets must never assign to `chatState.someField.value` (or the `handleState`/`attachmentState` equivalent) directly.
+- Services are responsible for calling `updateXxxInternal()` after confirmed DB writes: `HandleState` mutations must go through `HandleService`; `AttachmentState` mutations go through `MessagesService`, `OutgoingMessageHandler`, or `IncomingMessageHandler`.
 
-**Key files:** `lib/app/state/chat_state.dart`, `lib/app/state/message_state.dart`
+**Key files:** `lib/app/state/chat_state.dart`, `lib/app/state/message_state.dart`, `lib/app/state/handle_state.dart`, `lib/app/state/attachment_state.dart`
 
 ---
 
@@ -155,7 +160,7 @@ Obx(() => Column(children: [
 
 ## ADR-007: `*Internal` Methods Are the Sole Write Path to State
 
-**Decision:** `ChatState` and `MessageState` expose only `update*Internal()` methods for mutation. No public setters. Services call these after confirming a DB write; widgets never do.
+**Decision:** `ChatState`, `MessageState`, `HandleState`, and `AttachmentState` expose only `update*Internal()` methods for mutation. No public setters. Services call these after confirming a DB write; widgets never do.
 
 **Context:** If both services and widgets can write state, it's impossible to guarantee that the DB and in-memory state agree. Race conditions and stale reads become inevitable.
 
@@ -209,22 +214,13 @@ Obx(() => Column(children: [
 
 ---
 
-## ADR-010: Frame-Aware `setState` via `OptimizedState`
+## ADR-010: (Superseded) Frame-Aware `setState` via `OptimizedState`
 
-**Decision:** `OptimizedState` (in `lib/app/wrappers/stateful_boilerplate.dart`) overrides `setState` to defer updates until the current animation frame completes before applying them.
+**Status:** Superseded — `OptimizedState` was removed from `lib/app/wrappers/stateful_boilerplate.dart` in April 2024 ("Remove unused boilerplate code") because it was dead code by that point. Nothing replaced its scheduler-phase deferral; `CustomState.updateWidget()` calls `setState()` directly with no frame-aware gating. Kept here for history — do not reference `OptimizedState` in new code or docs.
 
-**Context:** Calling `setState` during an animation frame (e.g., while a scroll animation is in progress) causes layout jank because Flutter must interrupt the frame to process the state change.
+**Original decision:** `OptimizedState` overrode `setState` to defer updates until the current animation frame completed, using a `SchedulerBinding.instance.schedulerPhase` check plus an `endOfFrame` Future, to avoid layout jank when real-time updates (e.g., new messages) arrived mid-scroll-animation.
 
-**Rationale:**
-- The scheduler phase check (`SchedulerBinding.instance.schedulerPhase`) detects whether Flutter is mid-frame.
-- If mid-frame, the update is deferred to `endOfFrame` via a Future.
-- The `animCompleted` Completer adds a second gate — if a widget-level animation is in progress, updates wait for that too.
-- The result is visually smooth list scrolling even when new messages arrive during a fling gesture.
-
-**Consequences:**
-- Subclassing `OptimizedState` is mandatory for any stateful widget that processes real-time updates (message tiles, chat list rows).
-- Do not call `super.setState()` directly inside `OptimizedState` subclasses.
-- Widgets with controllers should use `CustomStateful` + `CustomState` instead, which also inherits this behavior.
+**Current state:** Widgets with controllers use `CustomStateful` + `CustomState` (see "Widget Base Classes" in `docs/ARCHITECTURE.md`); widgets without one use plain `StatelessWidget`. Neither performs frame-aware deferral. If jank from real-time updates during animation resurfaces as a problem, that mitigation needs to be reintroduced deliberately rather than assumed present.
 
 ---
 
@@ -244,8 +240,6 @@ Obx(() => Column(children: [
 - Driving a `TickerProvider` / `AnimationController` where the animation itself is the state
 - Responding to `FocusNode` or `ScrollController` listeners where storing the value in an `Rx*` field would require significant wiring for a trivial one-off effect
 - One-time post-frame measurements (`WidgetsBinding.instance.addPostFrameCallback`) that only affect local layout
-
-In all such cases, prefer `OptimizedState` as the base class so the frame-aware deferral still applies.
 
 **Consequences:**
 - New widgets that need dynamic state must expose that state as `Rx*` fields on a controller or state class, then wrap the reading widget in `Obx()`.

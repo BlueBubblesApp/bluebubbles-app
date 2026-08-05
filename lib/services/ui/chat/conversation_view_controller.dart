@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:bluebubbles/services/ui/chat/send_data.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;
@@ -41,7 +40,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   }
 
   // caching items
-  final Map<String, Metadata> legacyUrlPreviews = {};
   final Map<String, VideoController> videoPlayers = {};
   final Map<String, PlayerController> audioPlayers = {};
   final Map<String, Player> audioPlayersDesktop = {};
@@ -60,6 +58,11 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxBool showSmartReplyRow = false.obs;
   final RxDouble smartReplyRowHeight = 0.0.obs;
   bool showingOverlays = false;
+
+  /// True while a pointer is actively dragging a [MessageImageGallery] fan of
+  /// cards, so the list-wide timestamp-reveal swipe in [MessagesView] can
+  /// ignore that drag instead of fighting the gallery for the same gesture.
+  bool isGalleryDragging = false;
 
   /// True while any route is pushed on top of the conversation view route (e.g.
   /// ConversationDetails). Used by onAppResume to skip keyboard auto-focus on mobile.

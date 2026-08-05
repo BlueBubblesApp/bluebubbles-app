@@ -1,6 +1,6 @@
 # ios/ — iOS Native (Minimal Custom Code)
 
-Custom Swift: `Runner/AppDelegate.swift` — standard Flutter app delegate (14 lines). Registers plugins only via `GeneratedPluginRegistrant`.
+Custom Swift: `Runner/AppDelegate.swift` — standard Flutter app delegate (13 lines). Registers plugins only via `GeneratedPluginRegistrant`.
 
 All iOS-specific Flutter behavior is plugin-driven. iOS-specific Dart code lives in:
 - `lib/services/backend/java_dart_interop/` — method channel setup

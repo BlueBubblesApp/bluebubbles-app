@@ -22,7 +22,6 @@ Plain Dart classes — no ObjectBox annotations. Safe to use on web. All have `f
 ## Contact & Location
 | File | Purpose |
 |------|---------|
-| `structured_name.dart` | Contact name component parsing (first, last, nickname) |
 | `apple_location.dart` | Apple Maps coordinate + label model |
 | `findmy_friend.dart` | Find My friend location model |
 | `findmy_device.dart` | Find My device location model |

@@ -12,7 +12,6 @@ import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:passkit_ui/passkit_ui.dart';
 
@@ -53,7 +52,8 @@ class ResolvedFileContent extends StatelessWidget {
       return OpenContainer(
         tappable: false,
         openColor: Colors.black,
-        closedColor: context.theme.colorScheme.surfaceContainerHighest,
+        closedColor: Colors.transparent,
+        closedElevation: 0,
         closedShape: isiOS
             ? RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
@@ -83,7 +83,7 @@ class ResolvedFileContent extends StatelessWidget {
             openContainer();
           },
           child: Container(
-            color: context.theme.colorScheme.surfaceContainerHighest,
+            color: Colors.transparent,
             child: ImageViewer(
               file: file,
               attachment: attachment,

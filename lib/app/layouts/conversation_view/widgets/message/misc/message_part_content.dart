@@ -8,6 +8,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Renders the appropriate content widget based on message type
 /// Extracted from MessageHolder to reduce nesting and improve readability
@@ -27,6 +28,19 @@ class MessagePartContent extends StatelessWidget {
     final chat = ChatStateScope.chatOf(context);
     // Interactive messages (URL previews, GamePigeon, etc.)
     if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
+      // These checks are message-level, not part-level, but Apple's attributedBody
+      // can split a single interactive balloon (e.g. a Photos share with its
+      // underlying attachment) across multiple MessageParts. InteractiveHolder
+      // already renders everything from message-level payloadData, so only the
+      // first part should render it - other parts would otherwise duplicate the
+      // widget (or, for an attachment part, risk falling through to
+      // AttachmentHolder and auto-downloading media the interactive widget
+      // intentionally avoids downloading).
+      final parts = MessageStateScope.of(context).parts;
+      final firstPart = parts.isEmpty ? messagePart.part : parts.map((p) => p.part).reduce((a, b) => a < b ? a : b);
+      if (messagePart.part != firstPart) {
+        return const SizedBox.shrink();
+      }
       return InteractiveHolder(
         message: messagePart,
       );
@@ -43,16 +57,37 @@ class MessagePartContent extends StatelessWidget {
     if (messagePart.attachments.isNotEmpty) {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (iOS && messagePart.isMediaGallery) {
+        final state = MessageStateScope.of(context);
         return Padding(
             padding:
                 EdgeInsets.only(left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10),
-            child: MessageImageGallery(
-              attachments: messagePart.attachments,
-              partIndex: messagePart.part,
-              isInReply: false,
-              fanDirection: message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right,
-              currentIndexNotifier: galleryCurrentIndexNotifier,
-            ));
+            child: Obx(() {
+              // Each attachment in the gallery may originally have been its own
+              // message part (see MessageHolder._collapseImageGalleryParts), so a
+              // tapback can be associated with just one image/video, not the whole
+              // gallery. Map reactions back to the specific attachment they landed on.
+              final reactions = state.associatedMessages
+                  .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
+                  .toList();
+              final reactionsByAttachmentKey = <String, List<Message>>{};
+              for (int i = 0; i < messagePart.attachments.length; i++) {
+                final attachment = messagePart.attachments[i];
+                final key = attachment.guid ?? attachment.transferName;
+                if (key == null) continue;
+                final originalPart = messagePart.partIndexForAttachment(i);
+                final matches = reactions.where((r) => (r.associatedMessagePart ?? 0) == originalPart).toList();
+                if (matches.isNotEmpty) reactionsByAttachmentKey[key] = matches;
+              }
+
+              return MessageImageGallery(
+                attachments: messagePart.attachments,
+                partIndex: messagePart.part,
+                isInReply: false,
+                fanDirection: message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right,
+                currentIndexNotifier: galleryCurrentIndexNotifier,
+                reactionsByAttachmentKey: reactionsByAttachmentKey,
+              );
+            }));
       }
       return AttachmentHolder(
         message: messagePart,

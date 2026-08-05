@@ -11,6 +11,7 @@ Settings panels for managing the BlueBubbles server connection, authentication, 
 | `backup_restore_actions.dart` | Backup/restore data operations (fetch, delete, device default naming) |
 | `backup_restore_dialogs.dart` | Shared backup/restore dialogs (destination picker) |
 | `backup_restore_types.dart` | Backup enums (`BackupDestination`, `BackupKind`) |
+| `pinned_chats_backup.dart` | Backup/restore of pinned chat order |
 | `oauth_panel.dart` | OAuth /Google sign-in for cloud relay connection |
 
 ## Subdirectories

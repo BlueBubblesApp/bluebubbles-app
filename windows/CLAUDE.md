@@ -5,6 +5,7 @@
 - `flutter_window.cpp/h` — `FlutterViewController` host; plugin registration on `OnCreate`
 - `win32_window.cpp/h` — Win32 window base class (creation, message routing)
 - `utils.cpp/h` — UTF-8 / UTF-16 helpers
+- `splash_screen.cpp/h` — native splash screen shown before the Flutter engine attaches
 
 ## Installer
 - `build.ps1` — release build script (mirrors `linux/build.sh`). `-Phase` splits it so CI can sign the app payload between building and packaging:

@@ -4,7 +4,7 @@
 Each resource has an interface and a concrete action file → `interfaces/CLAUDE.md` + `actions/CLAUDE.md`
 - `interfaces/chat_interface.dart` → `actions/chat_actions.dart`
 - `interfaces/message_interface.dart` → `actions/message_actions.dart`
-- (same for: attachment, contact, contact_v2, handle, image, prefs, server, sync, test)
+- (same for: app, attachment, contact_v2, handle, image, log, prefs, send_message, server, sync, test)
 
 ## Sync System (`sync/`) → `sync/CLAUDE.md`
 - `sync_service.dart` — coordinator
@@ -27,3 +27,5 @@ Each resource has an interface and a concrete action file → `interfaces/CLAUDE
 - `lifecycle/` — foreground/background lifecycle → `lifecycle/CLAUDE.md`
 - `filesystem/` — file I/O, attachment path resolution → `filesystem/CLAUDE.md`
 - `setup/` — first-run server connection orchestration → `setup/CLAUDE.md`
+- `web/listeners.dart` — web-platform socket listeners (exported from `services.dart`)
+- `descriptors/attachment_query_descriptor.dart` — typed query descriptor for attachment lookups

@@ -145,15 +145,14 @@ All three variants share the same controller. Skin-specific logic never leaks in
 
 ### Widget Base Classes
 
-`lib/app/wrappers/stateful_boilerplate.dart` provides three base classes:
+`lib/app/wrappers/stateful_boilerplate.dart` provides:
 
 | Base | Use when |
 |------|---------|
-| `CustomStateful<T>` + `CustomState<T, R, S>` | Widget shares or owns a `StatefulController` |
-| `OptimizedState<T>` | Stateful widget without a controller; needs frame-aware `setState` |
+| `CustomStateful<T>` + `CustomState<T, R, S>` | Widget shares or owns a `StatefulController` (`T extends StatefulController`) |
 | Plain `StatelessWidget` | No mutable state |
 
-`OptimizedState.setState()` checks the Flutter scheduler phase before applying updates, preventing layout jank during animation frames.
+`CustomState` manages the paired `GetxController`'s lifecycle: it registers an `updateWidget` callback in `initState()` and deletes the controller (`Get.delete<S>(tag: _tag)`) in `dispose()` unless `forceDelete` was set to `false` (see `frontend.md`).
 
 ---
 
@@ -173,17 +172,37 @@ Conditional imports resolve the correct module at compile time. Service and UI c
 
 ## Service Startup Order
 
-`lib/helpers/backend/startup_tasks.dart` registers services in a strict order to satisfy dependencies:
+`lib/helpers/backend/startup_tasks.dart` registers services in dependency order via `GetIt.registerSingletonAsync()`/`registerSingleton()`. There are four separate entry points — one for the main app, three for the various isolate/background contexts — each initializing a different subset of services.
 
-1. `FilesystemService` → `SharedPreferencesService` → `SettingsService` → Logger
-2. Database initialization
-3. `GlobalIsolate` + `IncrementalSyncIsolate` registered with GetIt
-4. `HttpService`, `MethodChannelService`, `LifecycleService` (await in parallel)
-5. `ContactServiceV2`, `ChatsService`, `SocketService`, `NotificationsService`
-6. `EventDispatcher`
+### Main app (`StartupTasks.initStartupServices()`)
+
+1. `FilesystemService` → `SharedPreferencesService` → `SettingsService` → `BaseLogger` (sequential, each awaited before the next starts)
+2. `LifecycleService`, `NotificationsService`, `MethodChannelService` — pre-registered (async, not yet awaited)
+3. Instance-lock check (Linux only), then `Database.init()` — once the DB is ready, the interop services above are allowed to finish their own init
+4. `GlobalIsolate` + `IncrementalSyncIsolate` registered with GetIt; FCM data loaded from the DB into settings
+5. `HttpService`, then wait for `LifecycleService`
+6. `IncomingMessageHandler` registered, then wait for `MethodChannelService`
+7. `CloudMessagingService` registered; `ContactServiceV2` re-registered (async)
+8. `IntentsService`, `SyncService`, `ThemesService` registered
+9. In parallel: `ThemeSvc.init()`, `IntentsSvc.init()`, wait for `ContactServiceV2`
+10. `NavigatorService`, then `HandleService` registered
+11. `ChatsService`, `TypingIndicatorService`, `SocketService` registered; wait for `NotificationsService`
+12. `EventDispatcher`, then `OutgoingMessageHandler`
+
+### Isolate / background contexts
+
+`initGlobalIsolateServices()`, `initSyncIsolateServices()`, and `initBackgroundIsolate()` each run a lighter sequence: core services → interop pre-registration → `Database.init()` → `ContactServiceV2` → `HandleService` → `ChatsService` (via the shared `_initContactHandleChats()` helper) → `HttpService`. This is where services get an "initial registration" distinct from the main-thread sequence above — the two contexts have independent GetIt instances and don't share service objects.
+
+If adding a new service, place it at the correct position in `startup_tasks.dart` rather than trusting this list as exhaustive — it summarizes the shape of the sequence, not a guaranteed line-for-line order.
+
+---
+
+## Sync System
+
+`lib/services/backend/sync/` (`sync/CLAUDE.md`) coordinates bringing the local DB up to date with the server: `SyncService` is the single entry point and picks between a `FullSyncManager` (bulk fetch on first setup or full resync) and `IncrementalSyncManager` (resumable delta sync since the last run), plus dedicated `ChatSyncManager` and `HandleSyncManager` for narrower syncs. All managers share a `SyncStatus` lifecycle (`IDLE → IN_PROGRESS → COMPLETED_SUCCESS`/`COMPLETED_ERROR`, with a `STOPPING` state for user cancellation) exposed as `Rx` fields for UI progress display. Incremental sync normally runs inside `IncrementalSyncIsolate` (see Background Isolate System above) rather than blocking the main thread.
 
 ---
 
 ## Event Bus
 
-`lib/services/backend_ui_interop/event_dispatcher.dart` is a broadcast `StreamController<Tuple2<String, dynamic>>`. Backend services emit named events; UI widgets subscribe in `initState()` and cancel in `dispose()`. This decouples the backend from the UI without needing shared observable state for one-off cross-cutting events (e.g., "chat-updated").
+`lib/services/backend_ui_interop/event_dispatcher.dart` is a broadcast `StreamController<Tuple2<String, dynamic>>`. Backend services emit named events; UI widgets subscribe in `initState()` and cancel in `dispose()`. This decouples the backend from the UI without needing shared observable state for one-off cross-cutting events (e.g., "chat-updated"). Use sparingly, only when absolutely necessary.

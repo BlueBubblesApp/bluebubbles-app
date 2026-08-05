@@ -18,10 +18,13 @@ SettingsSvc.settings.enablePrivateAPI.value
 **Saving a setting change:**
 ```dart
 SettingsSvc.settings.myField.value = newValue;
-await SettingsSvc.saveSettings();   // or use saveSettings() helper from settings_helpers.dart
+await SettingsSvc.settings.saveOneAsync('myField');   // or saveManyAsync([...]) / saveAsync() for all fields
 ```
 
 Also owns `AppUpdateInfo` and `ServerUpdateInfo` models for update check state.
+
+## Actions (`actions/`) → `actions/CLAUDE.md`
+Category-scoped `SharedPreferences` action helpers, one file per domain. Accessed via the category helpers on `PrefsSvc` (e.g. `PrefsSvc.desktop`, `PrefsSvc.theme`) described below — don't call these action files directly.
 
 ---
 

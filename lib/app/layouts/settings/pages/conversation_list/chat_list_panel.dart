@@ -106,7 +106,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Appearance"),
-                SettingsSection(
+                Obx(() => SettingsSection(
                   backgroundColor: tileColor,
                   children: [
                     Obx(() => SettingsSwitch(
@@ -132,135 +132,103 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           isThreeLine: true,
                         )),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        if (iOS) {
-                          return const SettingsTile(
-                            title: "Pin Configuration",
-                            subtitle: "The row and column count of the pin grid. ",
-                            isThreeLine: true,
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        if (iOS) {
-                          return Row(
-                            children: <Widget>[
-                              const Padding(
-                                padding: EdgeInsets.only(left: 48),
-                                child: SizedBox(
-                                  width: 100,
-                                  child: Text("Row Count in Portrait"),
-                                ),
-                              ),
-                              Flexible(
-                                child: SettingsOptions<int>(
-                                  onChanged: (int? val) async {
-                                    if (val == null) return;
-                                    SettingsSvc.settings.pinRowsPortrait.value = val.toInt();
-                                    await SettingsSvc.settings.saveOneAsync('pinRowsPortrait');
-                                  },
-                                  options: List.generate(4, (index) => index + 1),
-                                  initial: SettingsSvc.settings.pinRowsPortrait.value,
-                                  title: '',
-                                  secondaryColor: context.theme.colorScheme.secondary,
-                                  textProcessing: (val) => val.toString(),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                            ],
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        if (iOS) {
-                          return Row(
-                            children: <Widget>[
-                              const Padding(
-                                padding: EdgeInsets.only(left: 48),
-                                child: SizedBox(
-                                  width: 100,
-                                  child: Text("Row Count in Landscape"),
-                                ),
-                              ),
-                              Flexible(
-                                child: SettingsOptions<int>(
-                                  onChanged: (int? val) async {
-                                    if (val == null) return;
-                                    SettingsSvc.settings.pinRowsLandscape.value = val.toInt();
-                                    await SettingsSvc.settings.saveOneAsync('pinRowsLandscape');
-                                  },
-                                  options: List.generate(4, (index) => index + 1),
-                                  initial: SettingsSvc.settings.pinRowsLandscape.value,
-                                  title: '',
-                                  secondaryColor: context.theme.colorScheme.secondary,
-                                  textProcessing: (val) => val.toString(),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                            ],
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        if (iOS) {
-                          return Row(
-                            children: <Widget>[
-                              const Padding(
-                                padding: EdgeInsets.only(left: 48),
-                                child: SizedBox(
-                                  width: 100,
-                                  child: Text("Column Count"),
-                                ),
-                              ),
-                              Flexible(
-                                child: SettingsOptions<int>(
-                                  onChanged: (int? val) async {
-                                    if (val == null) return;
-                                    SettingsSvc.settings.pinColumnsPortrait.value = val.toInt();
-                                    await SettingsSvc.settings.saveOneAsync('pinColumnsPortrait');
-                                  },
-                                  options: List.generate(4, (index) => index + 1),
-                                  initial: SettingsSvc.settings.pinColumnsPortrait.value,
-                                  title: '',
-                                  secondaryColor: context.theme.colorScheme.secondary,
-                                  textProcessing: (val) => val.toString(),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                            ],
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
+                    if (!kIsDesktop && !kIsWeb && iOS)
+                      const SettingsTile(
+                        title: "Pin Configuration",
+                        subtitle: "The row and column count of the pin grid. ",
+                        isThreeLine: true,
+                      ),
+                    if (!kIsDesktop && !kIsWeb && iOS)
+                      Row(
+                        children: <Widget>[
+                          const Padding(
+                            padding: EdgeInsets.only(left: 48),
+                            child: SizedBox(
+                              width: 100,
+                              child: Text("Row Count in Portrait"),
+                            ),
+                          ),
+                          Flexible(
+                            child: SettingsOptions<int>(
+                              onChanged: (int? val) async {
+                                if (val == null) return;
+                                SettingsSvc.settings.pinRowsPortrait.value = val.toInt();
+                                await SettingsSvc.settings.saveOneAsync('pinRowsPortrait');
+                              },
+                              options: List.generate(4, (index) => index + 1),
+                              initial: SettingsSvc.settings.pinRowsPortrait.value,
+                              title: '',
+                              secondaryColor: context.theme.colorScheme.secondary,
+                              textProcessing: (val) => val.toString(),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                        ],
+                      ),
+                    if (!kIsDesktop && !kIsWeb && iOS)
+                      Row(
+                        children: <Widget>[
+                          const Padding(
+                            padding: EdgeInsets.only(left: 48),
+                            child: SizedBox(
+                              width: 100,
+                              child: Text("Row Count in Landscape"),
+                            ),
+                          ),
+                          Flexible(
+                            child: SettingsOptions<int>(
+                              onChanged: (int? val) async {
+                                if (val == null) return;
+                                SettingsSvc.settings.pinRowsLandscape.value = val.toInt();
+                                await SettingsSvc.settings.saveOneAsync('pinRowsLandscape');
+                              },
+                              options: List.generate(4, (index) => index + 1),
+                              initial: SettingsSvc.settings.pinRowsLandscape.value,
+                              title: '',
+                              secondaryColor: context.theme.colorScheme.secondary,
+                              textProcessing: (val) => val.toString(),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                        ],
+                      ),
+                    if (!kIsDesktop && !kIsWeb && iOS)
+                      Row(
+                        children: <Widget>[
+                          const Padding(
+                            padding: EdgeInsets.only(left: 48),
+                            child: SizedBox(
+                              width: 100,
+                              child: Text("Column Count"),
+                            ),
+                          ),
+                          Flexible(
+                            child: SettingsOptions<int>(
+                              onChanged: (int? val) async {
+                                if (val == null) return;
+                                SettingsSvc.settings.pinColumnsPortrait.value = val.toInt();
+                                await SettingsSvc.settings.saveOneAsync('pinColumnsPortrait');
+                              },
+                              options: List.generate(4, (index) => index + 1),
+                              initial: SettingsSvc.settings.pinColumnsPortrait.value,
+                              title: '',
+                              secondaryColor: context.theme.colorScheme.secondary,
+                              textProcessing: (val) => val.toString(),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                        ],
+                      ),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (kIsDesktop)
-                      Obx(() {
-                        if (iOS) {
-                          return SettingsTile(
-                            title:
-                                "Pinned Chat Configuration (${SettingsSvc.settings.pinRowsPortrait.value} row${SettingsSvc.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsSvc.settings.pinColumnsLandscape})",
-                            subtitle:
-                                "Pinned chats will overflow onto multiple pages if they do not fit in this configuration.",
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
-                    if (kIsDesktop)
-                      Obx(() {
-                        if (iOS) {
-                          return Row(
+                    if (kIsDesktop && iOS)
+                      SettingsTile(
+                        title:
+                            "Pinned Chat Configuration (${SettingsSvc.settings.pinRowsPortrait.value} row${SettingsSvc.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsSvc.settings.pinColumnsLandscape})",
+                        subtitle:
+                            "Pinned chats will overflow onto multiple pages if they do not fit in this configuration.",
+                      ),
+                    if (kIsDesktop && iOS)
+                      Row(
                             children: <Widget>[
                               Flexible(
                                 child: Column(
@@ -430,11 +398,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                                 return const SizedBox.shrink();
                               }),
                             ],
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
+                          ),
                     if (kIsDesktop && iOS) const SizedBox(height: 24),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
@@ -450,66 +414,63 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                         trailing: const NextButton(),
                       ),
                   ],
-                ),
+                )),
                 if (!kIsWeb && !kIsDesktop && !iOS)
                   SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Swipe Actions"),
                 if (!kIsWeb && !kIsDesktop && !iOS)
-                  SettingsSection(
+                  Obx(() => SettingsSection(
                     backgroundColor: tileColor,
                     children: [
-                      Obx(() => SettingsSwitch(
-                            onChanged: (bool val) async {
-                              SettingsSvc.settings.swipableConversationTiles.value = val;
-                              await SettingsSvc.settings.saveOneAsync('swipableConversationTiles');
-                            },
-                            initialVal: SettingsSvc.settings.swipableConversationTiles.value,
-                            title: "Swipe Actions for Conversation Tiles",
-                            subtitle: "Enables swipe actions for conversation tiles when using Material theme",
-                            backgroundColor: tileColor,
-                          )),
-                      Obx(() {
-                        if (SettingsSvc.settings.swipableConversationTiles.value) {
-                          return Container(
-                            color: tileColor,
-                            child: Column(
-                              children: [
-                                SettingsOptions<MaterialSwipeAction>(
-                                  initial: SettingsSvc.settings.materialRightAction.value,
-                                  onChanged: (val) async {
-                                    if (val != null) {
-                                      SettingsSvc.settings.materialRightAction.value = val;
-                                      await SettingsSvc.settings.saveOneAsync('materialRightAction');
-                                    }
-                                  },
-                                  options: MaterialSwipeAction.values,
-                                  textProcessing: (val) =>
-                                      val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
-                                  title: "Swipe Right Action",
-                                  secondaryColor: headerColor,
-                                ),
-                                SettingsOptions<MaterialSwipeAction>(
-                                  initial: SettingsSvc.settings.materialLeftAction.value,
-                                  onChanged: (val) async {
-                                    if (val != null) {
-                                      SettingsSvc.settings.materialLeftAction.value = val;
-                                      await SettingsSvc.settings.saveOneAsync('materialLeftAction');
-                                    }
-                                  },
-                                  options: MaterialSwipeAction.values,
-                                  textProcessing: (val) =>
-                                      val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
-                                  title: "Swipe Left Action",
-                                  secondaryColor: headerColor,
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }),
+                      SettingsSwitch(
+                        onChanged: (bool val) async {
+                          SettingsSvc.settings.swipableConversationTiles.value = val;
+                          await SettingsSvc.settings.saveOneAsync('swipableConversationTiles');
+                        },
+                        initialVal: SettingsSvc.settings.swipableConversationTiles.value,
+                        title: "Swipe Actions for Conversation Tiles",
+                        subtitle: "Enables swipe actions for conversation tiles when using Material theme",
+                        backgroundColor: tileColor,
+                      ),
+                      if (SettingsSvc.settings.swipableConversationTiles.value)
+                        Container(
+                          color: tileColor,
+                          child: Column(
+                            children: [
+                              SettingsOptions<MaterialSwipeAction>(
+                                initial: SettingsSvc.settings.materialRightAction.value,
+                                onChanged: (val) async {
+                                  if (val != null) {
+                                    SettingsSvc.settings.materialRightAction.value = val;
+                                    await SettingsSvc.settings.saveOneAsync('materialRightAction');
+                                  }
+                                },
+                                options: MaterialSwipeAction.values,
+                                textProcessing: (val) =>
+                                    val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                                title: "Swipe Right Action",
+                                secondaryColor: headerColor,
+                                useModernMenu: true,
+                              ),
+                              SettingsOptions<MaterialSwipeAction>(
+                                initial: SettingsSvc.settings.materialLeftAction.value,
+                                onChanged: (val) async {
+                                  if (val != null) {
+                                    SettingsSvc.settings.materialLeftAction.value = val;
+                                    await SettingsSvc.settings.saveOneAsync('materialLeftAction');
+                                  }
+                                },
+                                options: MaterialSwipeAction.values,
+                                textProcessing: (val) =>
+                                    val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                                title: "Swipe Left Action",
+                                secondaryColor: headerColor,
+                                useModernMenu: true,
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
-                  ),
+                  )),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Misc"),
                 Obx(() => SettingsSection(
                       backgroundColor: tileColor,
@@ -526,7 +487,33 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                             backgroundColor: tileColor,
                             isThreeLine: true,
                           ),
-                        if (SettingsSvc.settings.skin.value == Skins.iOS && !kIsWeb && !kIsDesktop)
+                        if (SettingsSvc.settings.skin.value == Skins.iOS)
+                          const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.showFiltersInHeader.value = val;
+                            await SettingsSvc.settings.saveOneAsync('showFiltersInHeader');
+                          },
+                          initialVal: SettingsSvc.settings.showFiltersInHeader.value,
+                          title: "Show Filters in Header",
+                          subtitle:
+                              "Adds a shortcut button next to search to quickly open the chat list filters, highlighted when a filter is active",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.showCustomGroupFilterChips.value = val;
+                            await SettingsSvc.settings.saveOneAsync('showCustomGroupFilterChips');
+                          },
+                          initialVal: SettingsSvc.settings.showCustomGroupFilterChips.value,
+                          title: "Show Custom Group Filters",
+                          subtitle: "Adds quick-filter chips for your custom groups above the chat list",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        ),
+                        if (!kIsWeb && !kIsDesktop)
                           const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         if (!kIsWeb && !kIsDesktop)
                           SettingsSwitch(

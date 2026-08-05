@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 2.0.0+86
+version: 2.0.0+88
 publish_to: none
 
 environment:
@@ -34,15 +34,16 @@ dependencies:
   chunked_stream: ^1.4.2
   collection: ^1.19.0
   confetti: ^0.8.0
-  connectivity_plus:
-    git:
-      url: https://github.com/edde746/plus_plugins
-      ref: 2b614414ce95d920880765d07cbb9759699a4563
-      path: packages/connectivity_plus/connectivity_plus
+  connectivity_plus: ^7.3.0
   crop_your_image: ^2.0.0
   csslib: ^1.0.2
   cupertino_icons: ^1.0.8
   defer_pointer: ^0.0.2
+  desktop_drop:
+    git:
+      url: https://github.com/jjoelj/flutter-plugins.git
+      ref: 83d5f846f83307b115191a80a1e9ecbda9804570
+      path: packages/desktop_drop
   desktop_webview_auth:
     git:
       url: https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git
@@ -68,6 +69,7 @@ dependencies:
       url: https://github.com/appsup-dart/firebase_dart.git
       ref: beb79f70a2bb0e96e6bb9fdebac2ff452f138950
       path: packages/firebase_dart
+  fl_chart: ^1.2.0
   flex_color_picker: ^3.7.1
   flex_color_scheme: ^8.1.1
   flutter_acrylic: ^1.1.4
@@ -91,6 +93,7 @@ dependencies:
       url: https://github.com/BlueBubblesApp/xgesture_flutter.git
       ref: d63342cb17976f60bd94e7c1a822398115d3f83c
   get: ^4.7.2
+  gif_view: ^1.0.3
   github: ^9.25.0
   google_fonts: ^8.0.2
   google_mlkit_entity_extraction: ^0.15.3 # mobile only
@@ -113,10 +116,9 @@ dependencies:
   media_kit: ^1.2.2 # Primary package.
   media_kit_video: ^2.0.0 # For video rendering.
   media_kit_libs_video: ^1.0.7 # Native video dependencies.
-  metadata_fetch: ^0.4.2
   mime_type: ^1.0.1
   mobile_scanner: ^7.2.0 # no desktop support
-  msix: ^3.16.12
+  msix: ^3.18.0
   multi_value_listenable_builder: ^0.0.2
   native_dio_adapter: ^1.5.0
   network_info_plus: ^7.0.0
@@ -163,7 +165,6 @@ dependencies:
   sprung: ^3.0.1
   store_checker: ^1.8.0
   synchronized: ^3.3.0+3
-  super_drag_and_drop: ^0.9.1
   supercharged: ^2.1.1
   system_info2: ^4.0.0
   tray_manager: ^0.5.1
@@ -199,7 +200,7 @@ dependency_overrides:
   flutter_local_notifications_windows: # no identity + crashing fixes + suppressPopup
     git:
       url: https://github.com/jjoelj/flutter_local_notifications.git
-      ref: 3e7fb1172968dd3d53e2f1f307261c1bc60d1b96
+      ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
       path: flutter_local_notifications_windows
   flutter_map: # https://github.com/fleaflet/flutter_map/issues/2152
     git:
@@ -286,7 +287,6 @@ flutter:
     - assets/images/person.png
     - assets/images/person64.png
     - assets/images/transparent.png
-    - assets/images/no-video-preview.png
     - assets/images/unplayable-video.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
@@ -332,7 +332,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 1.15.104.0
+  msix_version: 2.0.2.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico
@@ -341,3 +341,6 @@ msix_config:
   architecture: x64
   capabilities: internetClient, location, microphone, webcam
   protocol_activation: imessage
+  toast_activator:
+    clsid: 1c09a4af-0327-4a79-a0f3-a1404df74ed1
+    display_name: BlueBubbles

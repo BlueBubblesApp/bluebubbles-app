@@ -816,11 +816,48 @@
           "targetId": "7:1716592500251888002"
         }
       ]
+    },
+    {
+      "id": "19:6026421545462496199",
+      "lastPropertyId": "4:3135907887940008645",
+      "name": "CustomGroup",
+      "properties": [
+        {
+          "id": "1:8900054274318388937",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3717588417637161554",
+          "name": "name",
+          "indexId": "20:7536809638379289421",
+          "type": 9,
+          "flags": 40
+        },
+        {
+          "id": "3:4839844138628793238",
+          "name": "sortOrder",
+          "type": 6
+        },
+        {
+          "id": "4:3135907887940008645",
+          "name": "showUnreadBadge",
+          "type": 1
+        }
+      ],
+      "relations": [
+        {
+          "id": "3:2372732884714308620",
+          "name": "chats",
+          "targetId": "3:9017250848141753702"
+        }
+      ]
     }
   ],
-  "lastEntityId": "18:7539271658762089511",
-  "lastIndexId": "19:7371282683088301083",
-  "lastRelationId": "2:2117154782513366348",
+  "lastEntityId": "19:6026421545462496199",
+  "lastIndexId": "20:7536809638379289421",
+  "lastRelationId": "3:2372732884714308620",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,

@@ -13,7 +13,6 @@ Message handleSendError(dynamic error, Message m) {
 
   if (error is Response) {
     final statusCode = error.statusCode ?? 0;
-    final serverMsg = error.data is Map ? (error.data['error']?['message'] as String?) : null;
 
     switch (statusCode) {
       case 502:
@@ -30,7 +29,7 @@ Message handleSendError(dynamic error, Message m) {
         break;
       default:
         clientError = ClientMessageError.clientError;
-        errorMessageText = serverMsg ?? "Server error ($statusCode).";
+        errorMessageText = _normalizeErrorData(error.data) ?? "Server error ($statusCode).";
     }
   } else if (error is DioException) {
     switch (error.type) {
@@ -62,4 +61,28 @@ Message handleSendError(dynamic error, Message m) {
   m.error = clientError.code;
   m.errorMessage = errorMessageText;
   return m;
+}
+
+/// Normalizes a server error response body shaped like `{status, message, error: {type, message}}`
+/// into a single readable string. Falls back to whatever subset of keys is present:
+/// `[status] error.type: error.message` -> `[status] message` -> `null` (caller supplies fallback).
+String? _normalizeErrorData(dynamic data) {
+  if (data is! Map) return null;
+
+  final status = data['status'];
+  final nestedError = data['error'];
+  if (nestedError is Map) {
+    final type = nestedError['type'];
+    final message = nestedError['message'];
+    if (type != null && message != null) {
+      return status != null ? "[$status] $type: $message" : "$type: $message";
+    }
+  }
+
+  final message = data['message'];
+  if (message != null) {
+    return status != null ? "[$status] $message" : message.toString();
+  }
+
+  return null;
 }

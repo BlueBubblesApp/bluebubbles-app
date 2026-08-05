@@ -151,7 +151,8 @@ class _ConnectionIndicatorState extends State<ConnectionIndicator> {
     super.initState();
     // Only pre-show if already mid-reconnect (e.g. widget remounted during retry cycle)
     final initial = SocketSvc.state.value;
-    if (initial == SocketState.reconnecting || initial == SocketState.error) {
+    if (SettingsSvc.settings.finishedSetup.value &&
+        (initial == SocketState.reconnecting || initial == SocketState.error)) {
       _isVisible = true;
       _displayState = initial;
       _hasHadConnectionFailure = true;
@@ -161,6 +162,7 @@ class _ConnectionIndicatorState extends State<ConnectionIndicator> {
 
   void _onSocketStateChanged(SocketState state) {
     if (!mounted) return;
+    if (!SettingsSvc.settings.finishedSetup.value) return;
     if (state == SocketState.reconnecting) {
       _hasHadConnectionFailure = true;
       _hideTimer?.cancel();

@@ -11,7 +11,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 
 enum LineType { meToMe, otherToMe, meToOther, otherToOther }
 
@@ -252,10 +251,6 @@ class Message {
     // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     WebListeners.notifyMessage(newMessage, tempGuid: oldGuid, chat: chat);
     return newMessage;
-  }
-
-  Message updateMetadata(Metadata? metadata) {
-    return this;
   }
 
   Message setPlayedDate({DateTime? timestamp}) {

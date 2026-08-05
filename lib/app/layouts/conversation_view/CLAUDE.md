@@ -3,6 +3,7 @@
 ## Structure
 - `pages/conversation_view.dart` — main chat screen
 - `pages/messages_view.dart` — scrollable message list
+- `widgets/messages_view_components.dart` — extracted widgets shared by the message list (e.g. `TypingIndicatorRow`)
 - `widgets/message/` — all message rendering → `CLAUDE.md` inside
 - `widgets/header/` — chat header bar and info → `CLAUDE.md` inside
 - `widgets/text_field/` — message composer

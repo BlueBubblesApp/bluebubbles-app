@@ -40,15 +40,17 @@ class BackupRestoreDialogs {
     );
   }
 
-  /// Shown only when one or more pinned chats couldn't be matched on import —
-  /// callers should skip this dialog entirely when [skipped] is empty.
-  static Future<void> showPinnedChatsRestoreSummary({
+  /// Shown only when one or more entries couldn't be matched/restored on
+  /// import — callers should skip this dialog entirely when [skipped] is
+  /// empty. Used by both the Pinned Chats and Custom Groups restore flows.
+  static Future<void> showRestoreSummary({
     required BuildContext context,
+    required String title,
     required List<String> skipped,
   }) {
     return showBBDialog(
       context: context,
-      title: "Some Pinned Chats Couldn't Be Restored",
+      title: title,
       content: SizedBox(
         width: NavigationSvc.width(context) * 3 / 5,
         child: SingleChildScrollView(

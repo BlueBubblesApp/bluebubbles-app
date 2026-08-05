@@ -7,17 +7,17 @@ After any `@Entity` annotation change: **`dart run build_runner build`**
 
 | File | Key Fields | Relations |
 |------|-----------|-----------|
-| `chat.dart` | guid (unique+indexed), chatIdentifier, isArchived, isPinned, muteType, displayName | → messages (ToMany backlink), → handles/participants (ToMany) |
-| `message.dart` | guid (unique+indexed), text, dateCreated (indexed), isFromMe, error, hasDdResults | → chat (ToOne), → handle (ToOne), → attachments (ToMany), → associations (ToMany) |
-| `attachment.dart` | guid (unique), uti, mimeType, transferName, totalBytes | → message (ToOne via backlink) |
-| `handle.dart` | address+service unique pair, service (iMessage/SMS), country | → contact V1 (ToOne), ← ContactV2.handles (backlink) |
+| `chat.dart` | guid (unique+indexed), chatIdentifier, isArchived, isPinned, muteType, displayName | → dbLatestMessage (ToOne), → messages (ToMany backlink), → handles (ToMany) / participants (transient mirror) |
+| `message.dart` | guid (unique+indexed, nullable), text, dateCreated (indexed), isFromMe, error, hasDdResults | → chat (ToOne), → handleRelation (ToOne, replacing legacy embedded `handle` field), → dbAttachments (ToMany backlink), → associatedMessages (plain list) |
+| `attachment.dart` | guid (unique), uti, mimeType, transferName, totalBytes | → message (ToOne; owning side of `Message.dbAttachments` backlink) |
+| `handle.dart` | uniqueAddressAndService (unique -- synthesized `"$address/$service"`), address, service (iMessage/SMS), country | ↔ contact_v2 (ToMany, `@Backlink('handles')`) |
 | `contact_v2.dart` | displayName, nativeContactId (unique), avatarPath | ↔ handles (ToMany N:M) |
 
-| `theme.dart` | name (unique), serialized FlutterThemeData, googleFont, gradientBg | — |
-| `theme_entry.dart` | reference to a Theme record | — |
-| `theme_object.dart` | theme metadata wrapper | — |
-| `fcm_data.dart` | FCM tokens and Firebase auth credentials | — |
-| `launch_at_startup.dart` | startup behavior configuration | — |
+| `theme.dart` (`ThemeStruct`) | name (unique), serialized FlutterThemeData, googleFont, gradientBg | — |
+| `theme_entry.dart` | style entry (color or font) | → themeObject (ToOne<ThemeObject>) |
+| `theme_object.dart` | `@Deprecated('Use ThemeStruct instead')` legacy theme metadata wrapper | — |
+| `fcm_data.dart` (`FCMData`) | FCM tokens and Firebase auth credentials | — |
+| `launch_at_startup.dart` | not an `@Entity` -- plain static autostart helper (desktop only), no persisted fields | — |
 
 ## Rules
 - Primary key: always `int? id` (nullable; ObjectBox assigns on first `put`)

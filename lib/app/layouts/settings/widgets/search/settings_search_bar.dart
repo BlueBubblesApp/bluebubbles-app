@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 class SettingsSearchBar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final bool iOS;
+  final Color? tileColor;
 
-  const SettingsSearchBar({super.key, this.onChanged, required this.iOS});
+  const SettingsSearchBar({super.key, this.onChanged, required this.iOS, this.tileColor});
 
   @override
   State<SettingsSearchBar> createState() => _SettingsSearchBarState();
@@ -56,7 +57,7 @@ class _SettingsSearchBarState extends State<SettingsSearchBar> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 8),
       child: widget.iOS
           ? SettingsSearchBariOS(
               // use cupertino search bar if iOS style
@@ -68,6 +69,7 @@ class _SettingsSearchBarState extends State<SettingsSearchBar> {
               // material themed search bar
               controller: _controller,
               focusNode: _focusNode,
+              backgroundColor: widget.tileColor != null ? WidgetStatePropertyAll(widget.tileColor) : null,
               hintText: 'Search Settings',
               hintStyle: MaterialStateProperty.all(
                 TextStyle(

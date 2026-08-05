@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
+import 'package:bluebubbles/services/backend/interfaces/custom_group_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
@@ -130,7 +131,8 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
               final availableWidth = constraints.maxWidth;
               final availableHeight = constraints.maxHeight;
               final previewWidth = min(max(availableWidth - 50, 0.0), 500.0);
-              final menuHeight = itemHeight * 5 + 5;
+              final menuItemCount = 5 + (CustomGroupsSvc.groups.isNotEmpty ? 1 : 0);
+              final menuHeight = itemHeight * menuItemCount + 5;
               final previewHeight = min(
                   max(min(availableHeight / 2, availableHeight - menuHeight - 25), itemHeight * 2), availableHeight);
               final maxLeft = max(availableWidth - previewWidth - 25, 0.0);
@@ -357,6 +359,38 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
           ),
         ),
       ),
+      if (CustomGroupsSvc.groups.isNotEmpty)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final group = await showBBListSelector<CustomGroup>(
+                context: context,
+                title: "Add to Custom Group",
+                options: CustomGroupsSvc.groups
+                    .map((g) => BBListSelectorOption(label: g.name, value: g))
+                    .toList(),
+              );
+              if (group != null) {
+                final chatGuids = group.chats.map((c) => c.guid).toSet();
+                chatGuids.add(widget.chat.guid);
+                await CustomGroupInterface.updateChats(id: group.id!, chatGuids: chatGuids.toList());
+              }
+              if (mounted) popPeekView();
+            },
+            child: ListTile(
+              mouseCursor: MouseCursor.defer,
+              dense: !kIsDesktop && !kIsWeb,
+              title: Text(
+                'Add to Custom Group',
+                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              ),
+              trailing: Icon(
+                  ios ? cupertino.CupertinoIcons.folder_badge_plus : Icons.playlist_add,
+                  color: context.theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        ),
       Material(
         color: Colors.transparent,
         child: InkWell(

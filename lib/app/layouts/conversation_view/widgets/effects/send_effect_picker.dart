@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/bubble_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
@@ -382,11 +381,10 @@ void sendEffectAction(
                                         child: Padding(
                                           key: key,
                                           padding: const EdgeInsets.only(right: 5.0),
-                                          child: MessageStateScope(
+                                          child: BubbleEffects(
                                             messageState: previewState,
-                                            child: BubbleEffects(
-                                              globalKey: key,
-                                              part: 0,
+                                            globalKey: key,
+                                            part: 0,
                                               showTail: true,
                                               child: ClipPath(
                                                 clipper: TailClipper(
@@ -464,7 +462,6 @@ void sendEffectAction(
                                                 ),
                                               ),
                                             ),
-                                          ),
                                         ));
                                   }),
                                 ),

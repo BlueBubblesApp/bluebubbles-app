@@ -94,6 +94,9 @@ Future<T?> showBBDialog<T>({
       title: title != null ? Text(title, style: ctx.textTheme.titleLarge) : null,
       content: bodyWidget,
       backgroundColor: ctx.colorScheme.surfaceContainerHighest,
+      // Default AlertDialog leaves a 24px gap below the content, right above
+      // the action buttons — tighten just that, leave the rest as default.
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 6),
       actions: actions
           .map(
             (a) => TextButton(
@@ -122,6 +125,10 @@ Future<void> showAreYouSure(
   String? yesText = "Yes",
   Color? noColor,
   Color? yesColor,
+  /// Marks the "Yes" action as destructive — renders red on the iOS skin
+  /// (via [CupertinoDialogAction.isDestructiveAction]) in addition to any
+  /// [yesColor] override on Material/Samsung.
+  bool yesIsDestructive = false,
   TextAlign textAlign = TextAlign.center,
   required Function onNo,
   required Function onYes,
@@ -140,6 +147,7 @@ Future<void> showAreYouSure(
       BBDialogAction(
         text: yesText ?? "Yes",
         color: yesColor,
+        isDestructive: yesIsDestructive,
         isDefault: true,
         onPressed: () => onYes.call(),
       ),
@@ -221,14 +229,19 @@ Future<T?> showBBListSelector<T>({
                   color: option.isDestructive ? context.colorScheme.error : null,
                 ),
               ),
-              onTap: () => Navigator.of(context).pop(option.value),
+              // showBBDialog pushes with useRootNavigator: true, so popping must
+              // target the root navigator too — otherwise Navigator.of(context)
+              // (context here being the original caller's, not the dialog's own)
+              // can resolve to a nested Navigator and pop the underlying page
+              // instead of dismissing this dialog.
+              onTap: () => Navigator.of(context, rootNavigator: true).pop(option.value),
             );
           }),
         ],
       ),
     ),
     actions: [
-      BBDialogAction(text: cancelText, onPressed: () => Navigator.of(context).pop()),
+      BBDialogAction(text: cancelText, onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
     ],
   );
 }

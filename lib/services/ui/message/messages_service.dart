@@ -839,16 +839,32 @@ class MessagesService extends GetxController {
     toUpdate ??= struct.getMessage(updated.guid!);
     if (toUpdate == null) return;
 
-    // Preserve error fields before merging — Message.merge unconditionally
-    // copies newMessage.error onto existing.error when they differ, but here
-    // toUpdate is the stale struct copy (error = 0) and updated is the
-    // authoritative new state (error may be set by handleSendError).
-    // Without this, the error is silently reset to 0 before updateFromMessage runs.
+    // Capture the previous edit date BEFORE the merge/updateFromMessage below.
+    // toUpdate is the *same* Message instance held by messageState.message, so
+    // updateFromMessage() mutates toUpdate.dateEdited in place — comparing
+    // against toUpdate after that point would always be equal and the
+    // buildMessageParts guard would never fire. See the guard below.
+    final previousDateEdited = toUpdate.dateEdited;
+    final previousDateDeleted = toUpdate.dateDeleted;
+
+    // Preserve authoritative fields before merging — Message.merge is written for
+    // existing(older).merge(newMessage(newer)), but here we call it inverted:
+    // `updated` is the authoritative new state and `toUpdate` is the stale struct
+    // copy. Merge would copy stale error/attributedBody/messageSummaryInfo from
+    // toUpdate onto updated, reverting server-side edits/retractions in memory
+    // (the DB write path handles this correctly, which is why re-entering the
+    // chat shows the right thing). Snapshot and restore the incoming values.
     final incomingError = updated.error;
     final incomingErrorMessage = updated.errorMessage;
+    final incomingAttributedBody = updated.attributedBody;
+    final incomingSummaryInfo = updated.messageSummaryInfo;
+    final incomingPayloadData = updated.payloadData;
     updated = updated.mergeWith(toUpdate);
     updated.error = incomingError;
     updated.errorMessage = incomingErrorMessage;
+    if (incomingAttributedBody.isNotEmpty) updated.attributedBody = incomingAttributedBody;
+    if (incomingSummaryInfo.isNotEmpty) updated.messageSummaryInfo = incomingSummaryInfo;
+    if (incomingPayloadData != null) updated.payloadData = incomingPayloadData;
     struct.removeMessage(oldGuid ?? updated.guid!);
     struct.removeAttachments(toUpdate.dbAttachments.map((e) => e.guid!));
     struct.addMessages([updated]);
@@ -867,7 +883,9 @@ class MessagesService extends GetxController {
       // If dateEdited changed, messageSummaryInfo has new edit/retraction data.
       // Force-rebuild parts so isUnsent flags and edit history reflect the update.
       // This mirrors the `hasEdited` check in MessageState.updateMessage (web path).
-      if (updated.dateEdited != toUpdate.dateEdited) {
+      // Compare against previousDateEdited (snapshotted above) rather than
+      // toUpdate.dateEdited — updateFromMessage() just mutated toUpdate in place.
+      if (updated.dateEdited != previousDateEdited || updated.dateDeleted != previousDateDeleted) {
         messageState.buildMessageParts(force: true);
       }
 
@@ -1410,7 +1428,12 @@ class MessagesService extends GetxController {
     try {
       final response = await HttpSvc.message.unsend(messageGuid, partIndex: partIndex);
       final updatedMessage = Message.fromMap(response.data['data']);
-      IncomingMsgHandler.handle(IncomingPayload(
+      // Await the handler — it processes on an async FIFO queue, so firing and
+      // forgetting would let the buildMessageParts below run against a message
+      // whose messageSummaryInfo hasn't been updated yet, wiping the optimistic
+      // unsent flag and briefly showing the message again. Awaiting lets
+      // updateMessage() rebuild parts once with the authoritative server state.
+      await IncomingMsgHandler.handle(IncomingPayload(
         type: MessageEventType.updatedMessage,
         source: MessageSource.apiResponse,
         chat: chat,
@@ -1418,7 +1441,7 @@ class MessagesService extends GetxController {
       ));
 
       // Re-fetch state and force-rebuild parts so reactive getters (isFullyUnsent,
-      // isPartiallyUnsent, retractedParts) immediately reflect the server response.
+      // isPartiallyUnsent, retractedParts) reflect the server response.
       final postSuccessState = getMessageStateIfExists(messageGuid);
       postSuccessState?.buildMessageParts(force: true);
     } catch (ex, stack) {

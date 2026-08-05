@@ -19,13 +19,14 @@ import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
@@ -109,6 +110,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           part.attachments.isNotEmpty &&
           part.attachments.where((element) => AttachmentsSvc.getContent(element) is PlatformFile).isNotEmpty) ||
       isEmbeddedMedia;
+
+  bool get showRefreshPreview =>
+      message.isLegacyUrlPreview || message.payloadData?.type == PayloadType.url || message.isPhotoSlideshow;
 
   bool get canOpenInImageViewer =>
       kIsDesktop && !kIsWeb && part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
@@ -249,7 +253,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                             ? 10
                                             : 30),
                                 child: Container(
-                                  color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                                  color: Colors.transparent.withValues(alpha: 0.1),
                                 ),
                               ))
                         : null,
@@ -273,9 +277,15 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                             child: ConstrainedBox(
                               key: _childKey,
                               constraints: BoxConstraints(maxWidth: widget.size.width),
-                              child: MessageStateScope(
-                                messageState: widget.controller,
-                                child: widget.child,
+                              // Marked as a clone so anything inside that
+                              // reacts to shared state by doing work (URL
+                              // preview refreshes, say) knows not to — this
+                              // copy and the real bubble both see every signal.
+                              child: MessageCloneScope(
+                                child: MessageStateScope(
+                                  messageState: widget.controller,
+                                  child: widget.child,
+                                ),
                               ),
                             ),
                           ),
@@ -645,6 +655,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
         onTap: () => popup_message_actions.messageInfo(_buildActionContext(DetailsMenuAction.MessageInfo)),
         action: DetailsMenuAction.MessageInfo,
       ),
+      if (showRefreshPreview)
+        DetailsMenuActionWidget(
+          onTap: () => popup_media_actions.refreshPreview(_buildActionContext(DetailsMenuAction.RefreshPreview)),
+          action: DetailsMenuAction.RefreshPreview,
+        ),
     ].sorted((a, b) => SettingsSvc.settings.detailsMenuActions
         .indexOf(a.action)
         .compareTo(SettingsSvc.settings.detailsMenuActions.indexOf(b.action)));

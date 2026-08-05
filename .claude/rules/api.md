@@ -2,22 +2,62 @@
 
 ## HTTP Calls
 
-All HTTP methods live in `lib/services/network/http_service.dart`.
+`HttpService` (`lib/services/network/http_service.dart`) is a thin entrypoint — it owns `dio`, core
+request boilerplate, and a named sub-service per API domain (`lib/services/network/api/*.dart`).
+**Never add request methods directly to `HttpService`.** Add them to the relevant domain file and
+call through `HttpSvc.<domain>.<method>()`.
 
-**Always** wrap calls in `runApiGuarded()`:
+| Property | Class | File |
+|---|---|---|
+| `server` | `ServerApi` | `api/server_api.dart` |
+| `fcm` | `FcmApi` | `api/fcm_api.dart` |
+| `attachment` | `AttachmentApi` | `api/attachment_api.dart` |
+| `chat` | `ChatApi` | `api/chat_api.dart` |
+| `message` | `MessageApi` | `api/message_api.dart` |
+| `handle` | `HandleApi` | `api/handle_api.dart` |
+| `contact` | `ContactApi` | `api/contact_api.dart` |
+| `backup` | `BackupApi` | `api/backup_api.dart` |
+| `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` |
+| `icloud` | `iCloudApi` | `api/icloud_api.dart` |
+| `firebase` | `FirebaseApi` | `api/firebase_api.dart` |
+
+Full method-level reference: `lib/services/network/CLAUDE.md` and `lib/services/network/api/CLAUDE.md`.
+
+Each sub-service implements against `BaseApi` (`api/base_api.dart`), an abstract interface
+(`dio`, `origin`, `apiRoot`, `headers`, `buildQueryParams()`, `runApiGuarded()`,
+`returnSuccessOrError()`) implemented by `HttpService`. Sub-services take a `BaseApi _svc` in their
+constructor rather than importing `HttpService` directly — this avoids a circular import.
+
+**Always** wrap calls in `runApiGuarded()` and finish with `returnSuccessOrError()`:
 ```dart
-Future<Response> myEndpoint(String param) {
-  return runApiGuarded(() async {
-    final params = buildQueryParams({'key': param}); // adds auth GUID automatically
-    return await dio.get('/endpoint', queryParameters: params);
-  });
+class ChatApi {
+  final BaseApi _svc;
+  ChatApi(this._svc);
+
+  Future<Response> markRead(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.apiRoot}/chat/$guid/read",
+        queryParameters: _svc.buildQueryParams(), // adds auth GUID automatically
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
 }
 ```
 
-- `buildQueryParams()` must be called for every request — it injects the server auth key.
+- `_svc.buildQueryParams()` must be called for every request — it injects the server auth key.
 - Return `Future<Response>` for raw endpoints; typed futures when you parse the response.
 - `runApiGuarded()` handles retries on 502 and propagates all other errors via `Future.error(e, s)`.
+- Accept a `CancelToken? cancelToken` param on requests that may need to be cancelled.
 - Timeouts are configured globally from settings (`apiTimeout`) — don't set per-request timeouts.
+
+**Adding a new endpoint:**
+1. Find the right domain file in `api/` and add the method there.
+2. For a brand-new domain, create `<domain>_api.dart` implementing against `BaseApi`, then wire it
+   up as a named property on `HttpService` (constructed in `HttpService.init()`).
+3. Never add request methods directly to `HttpService`.
 
 ## Interface → Action Pattern
 

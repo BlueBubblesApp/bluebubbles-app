@@ -5,7 +5,7 @@
 | File | What's inside |
 |------|---------------|
 | `startup_tasks.dart` | `StartupTasks` — ordered service initialization; the single source of truth for startup sequence |
-| `settings_helpers.dart` | `saveNewServerUrl()`, `saveSettings()` — convenience wrappers for common settings mutations |
+| `settings_helpers.dart` | `saveNewServerUrl()`, `clearServerUrl()`, `disableBatteryOptimizations()` — convenience wrappers for common settings mutations |
 | `foreground_service_helpers.dart` | `runForegroundService()`, `restartForegroundService()` — Android foreground service control via method channel |
 
 ---
@@ -37,7 +37,7 @@ If adding a new service, place it in this file at the correct position in the de
 
 `saveNewServerUrl(url)` — validates the URL via `sanitizeServerAddress()`, persists it, optionally restarts the socket and Android foreground service. Use this instead of writing `serverAddress` directly.
 
-`saveSettings()` — persists the current `Settings` object via `PrefsInterface`. Call after mutating any `SettingsSvc.settings` field.
+`clearServerUrl()` / `disableBatteryOptimizations()` — remaining convenience wrappers in this file.
 
 ---
 

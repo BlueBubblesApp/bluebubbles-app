@@ -85,6 +85,9 @@ class Chat {
   @Backlink('chat')
   final messages = ToMany<Message>();
 
+  @Backlink('chats')
+  final customGroups = ToMany<CustomGroup>();
+
   @Transient()
   String? _fakeName;
 
