@@ -65,16 +65,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   /// Portrait card aspect (width:height = 3:4).
   static const double _portraitAspect = 3 / 4;
 
-  static const _fanSlotDx = <double>[0, 10, 17, 23, 28];
+  static const _fanSlotDx = <double>[0, 7, 12, 16, 20];
   static const _fanSlotDy = <double>[0, 4, 9, 14, 20];
-  static const _fanSlotAngle = <double>[0, 0.05, 0.125, 0.2, 0.35];
+  static const _fanSlotAngle = <double>[0, 0.06, 0.13, 0.225, 0.32];
   static const _fanSlotScale = <double>[1.0, 0.9, 0.8, 0.7, 0.6];
-
-  static const _pastSlotDx = <double>[14, 20, 25];
-  static const _pastSlotDy = <double>[5, 11, 17];
-  static const _pastSlotAngle = <double>[0.1, 0.19, 0.28];
-  static const _pastSlotScale = <double>[0.82, 0.72, 0.62];
-  static const _pastSlotOpacity = <double>[0.80, 0.70, 0.60];
+  static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
 
   static const double _scrollAdvanceThreshold = 50.0;
 
@@ -174,9 +169,17 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
-    final fanCanvasWidth = baseCardWidth + 56;
+    // Stable fan room for this collection (not remaining future at the current index).
+    final double maxFanDx;
+    if (widget.infiniteScroll) {
+      maxFanDx = _fanSlotDx.last;
+    } else {
+      final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
+      maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
+    }
+    final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
-    // baseOffset / textOffset still nudge the stack for row alignment; fan slots are one-sided.
+    // baseOffset / textOffset still nudge the label for row alignment; cards use scale-center.
     final baseOffset =
         ((fanCanvasWidth - baseCardWidth) / 2) + (widget.fanDirection == GalleryFanDirection.left ? 36 : -50);
     final fanDirectionSign = widget.fanDirection == GalleryFanDirection.left ? -1.0 : 1.0;
@@ -217,7 +220,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          baseOffset: baseOffset,
           isCurrent: i == 0,
         );
       }).reversed);
@@ -229,14 +231,12 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
       for (int p = visiblePast; p >= 1; p--) {
         final attachmentIndex = _currentIndex - p;
-        final slot = (p - 1).clamp(0, _maxPastCards - 1);
         stackChildren.add(_buildPastCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
-          slotIndex: slot,
+          slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          baseOffset: baseOffset,
         ));
       }
 
@@ -248,7 +248,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          baseOffset: baseOffset,
           isCurrent: false,
         ));
       }
@@ -259,7 +258,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
-        baseOffset: baseOffset,
         isCurrent: true,
       ));
     }
@@ -468,7 +466,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required double baseOffset,
     required bool isCurrent,
   }) {
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
@@ -477,11 +474,12 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     // One-sided fan: left grows with slot, positive angle, pivot bottom-left.
     final angle = slot == 0 ? 0.0 : _fanSlotAngle[slot];
     final dy = _fanSlotDy[slot] + overflowDepth;
-    final dx = _fanSlotDx[slot];
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
-    final centeredLeft = baseOffset + ((baseCardWidth - cardWidth) / 2);
+    // Scale-center so smaller cards don't poke out past the fan spread.
+    final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
+    final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
@@ -490,27 +488,25 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: centeredLeft + dx + dragOffset,
-      child: Transform.translate(
-        offset: Offset.zero,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: cardWidth, minHeight: cardHeight, maxHeight: cardHeight),
-          child: Transform.rotate(
-            angle: angle.toDouble() + dragRotate,
-            alignment: Alignment.bottomLeft,
-            child: _withReactionOverlay(
-              IgnorePointer(
-                ignoring: !isCurrent,
-                child: AttachmentHolder(
-                  message: _partForAttachment(attachment, attachmentIndex),
-                  transparentBackground: true,
-                  showCardShadow: true,
-                  fill: true,
-                  galleryAttachments: _attachments,
-                ),
+      left: fromLeft + dragOffset,
+      child: SizedBox(
+        width: cardWidth,
+        height: cardHeight,
+        child: Transform.rotate(
+          angle: angle.toDouble() + dragRotate,
+          alignment: Alignment.bottomLeft,
+          child: _withReactionOverlay(
+            IgnorePointer(
+              ignoring: !isCurrent,
+              child: AttachmentHolder(
+                message: _partForAttachment(attachment, attachmentIndex),
+                transparentBackground: true,
+                showCardShadow: true,
+                fill: true,
+                galleryAttachments: _attachments,
               ),
-              attachment,
             ),
+            attachment,
           ),
         ),
       ),
@@ -523,25 +519,24 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required double baseOffset,
   }) {
-    final slot = slotIndex.clamp(0, _maxPastCards - 1);
-    // Mirror of the one-sided fan (negative dx/angle, opposite pivot).
-    final angle = -_pastSlotAngle[slot];
-    final dx = -_pastSlotDx[slot];
-    final scale = _pastSlotScale[slot];
-    final dy = _pastSlotDy[slot];
-    final opacity = _pastSlotOpacity[slot];
+    // Mirror of the one-sided fan (negative dx/angle, opposite pivot); opacity only is past-specific.
+    final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
+    final angle = -_fanSlotAngle[slot];
+    final scale = _fanSlotScale[slot];
+    final dy = _fanSlotDy[slot];
+    final opacity = _pastSlotOpacity[(slot - 1).clamp(0, _pastSlotOpacity.length - 1)];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
-    final centeredLeft = baseOffset + ((baseCardWidth - cardWidth) / 2);
+    final slotDx = _fanSlotDx[slot];
+    final fromLeft = -slotDx + ((baseCardWidth - cardWidth) / 2);
 
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: centeredLeft + dx,
+      left: fromLeft,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
         opacity: opacity,
