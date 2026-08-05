@@ -25,6 +25,7 @@ class FullscreenImage extends StatefulWidget {
     required this.showInteractions,
     required this.updatePhysics,
     this.onOverlayToggle,
+    this.onJumpToMessage,
   });
 
   final PlatformFile file;
@@ -32,6 +33,7 @@ class FullscreenImage extends StatefulWidget {
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onJumpToMessage;
 
   @override
   State<FullscreenImage> createState() => _FullscreenImageState();
@@ -155,6 +157,75 @@ class _FullscreenImageState extends State<FullscreenImage>
     );
   }
 
+  Widget _senderHeaderColumn({required bool jumpEnabled}) {
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Obx(() {
+          final msg = message;
+          if (msg == null) return const SizedBox.shrink();
+          final name = (msg.isFromMe ?? false)
+              ? 'You'
+              : (msg.handleRelation.target != null
+                      ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!).displayName.value
+                      : null) ??
+                  'Unknown';
+          return Text(name, style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white));
+        }),
+        if (message?.dateCreated != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Text(
+              samsung
+                  ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
+                  : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
+              style: context.theme.textTheme.bodyLarge!
+                  .copyWith(color: samsung ? Colors.grey : Colors.white),
+            ),
+          ),
+      ],
+    );
+
+    if (!jumpEnabled) return column;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onJumpToMessage,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: column,
+        ),
+      ),
+    );
+  }
+
+  Widget _samsungBottomAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: context.theme.textTheme.labelMedium?.copyWith(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -217,29 +288,8 @@ class _FullscreenImageState extends State<FullscreenImage>
                               if (widget.showInteractions)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 5.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        (message?.isFromMe ?? false)
-                                            ? 'You'
-                                            : message?.handleRelation.target?.displayName ?? "Unknown",
-                                        style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white),
-                                      ),
-                                      if (message?.dateCreated != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 2.0),
-                                          child: Text(
-                                            samsung
-                                                ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
-                                                : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
-                                            style: context.theme.textTheme.bodyLarge!.copyWith(
-                                              color: samsung ? Colors.grey : Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                  child: _senderHeaderColumn(
+                                    jumpEnabled: samsung && widget.onJumpToMessage != null,
                                   ),
                                 ),
                             ],
@@ -291,9 +341,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                     child: Container(
                       height: 60,
                       decoration: BoxDecoration(
-                        color: samsung
-                            ? Colors.black
-                            : context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
+                        color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -301,7 +349,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                           IconButton(
                             icon: Icon(
                               CupertinoIcons.cloud_download,
-                              color: samsung ? Colors.white : context.theme.colorScheme.primary,
+                              color: context.theme.colorScheme.primary,
                             ),
                             onPressed: () => AttachmentsSvc.saveToDisk(widget.file),
                           ),
@@ -309,7 +357,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                             IconButton(
                               icon: Icon(
                                 CupertinoIcons.share,
-                                color: samsung ? Colors.white : context.theme.colorScheme.primary,
+                                color: context.theme.colorScheme.primary,
                               ),
                               onPressed: () {
                                 if (widget.file.path != null) {
@@ -320,17 +368,55 @@ class _FullscreenImageState extends State<FullscreenImage>
                           IconButton(
                             icon: Icon(
                               CupertinoIcons.info,
-                              color: samsung ? Colors.white : context.theme.colorScheme.primary,
+                              color: context.theme.colorScheme.primary,
                             ),
                             onPressed: () => showMetadataDialog(widget.attachment, context),
                           ),
                           IconButton(
                             icon: Icon(
                               CupertinoIcons.refresh,
-                              color: samsung ? Colors.white : context.theme.colorScheme.primary,
+                              color: context.theme.colorScheme.primary,
                             ),
                             onPressed: () => refreshAttachment(),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // Bottom actions bar (Samsung style)
+            if (widget.showInteractions && samsung)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: AnimatedOpacity(
+                  opacity: showOverlay ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: SafeArea(
+                    top: false,
+                    child: Container(
+                      height: 72,
+                      color: Colors.black,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _samsungBottomAction(
+                            icon: Icons.file_download_outlined,
+                            label: 'Save',
+                            onPressed: () => AttachmentsSvc.saveToDisk(widget.file),
+                          ),
+                          if (!kIsWeb && !kIsDesktop)
+                            _samsungBottomAction(
+                              icon: Icons.share_outlined,
+                              label: 'Share',
+                              onPressed: () {
+                                if (widget.file.path != null) {
+                                  Share.files([widget.file.path!]);
+                                }
+                              },
+                            ),
                         ],
                       ),
                     ),

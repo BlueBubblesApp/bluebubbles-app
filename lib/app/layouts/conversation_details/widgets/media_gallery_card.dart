@@ -20,9 +20,15 @@ import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class MediaGalleryCard extends StatefulWidget {
-  const MediaGalleryCard({super.key, required this.attachment, this.showSenderAvatar = true});
+  const MediaGalleryCard({
+    super.key,
+    required this.attachment,
+    this.showSenderAvatar = true,
+    this.showJumpToMessage = false,
+  });
   final Attachment attachment;
   final bool showSenderAvatar;
+  final bool showJumpToMessage;
 
   @override
   State<MediaGalleryCard> createState() => _MediaGalleryCardState();
@@ -162,9 +168,13 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               opacity: 0.3,
               child: file.path != null
                   ? (attachment.mimeType?.startsWith("image") ?? false)
-                      ? ImageDisplay(attachment: attachment, file: file)
+                      ? ImageDisplay(attachment: attachment, file: file, showJumpToMessage: widget.showJumpToMessage)
                       : (attachment.mimeType?.startsWith("video") ?? false)
-                          ? ImageDisplay(attachment: attachment, image: videoPreview ?? Uint8List(0))
+                          ? ImageDisplay(
+                              attachment: attachment,
+                              image: videoPreview ?? Uint8List(0),
+                              showJumpToMessage: widget.showJumpToMessage,
+                            )
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
             ),
@@ -333,6 +343,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             file: file,
             showSenderAvatar: widget.showSenderAvatar,
             onPressChanged: _setPressed,
+            showJumpToMessage: widget.showJumpToMessage,
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
@@ -342,7 +353,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                 image: videoPreview!,
                 duration: duration,
                 showSenderAvatar: widget.showSenderAvatar,
-                onPressChanged: _setPressed);
+                onPressChanged: _setPressed,
+                showJumpToMessage: widget.showJumpToMessage);
             addPadding = false;
           } else if (videoPreviewFailed) {
             child = Text(
@@ -395,6 +407,7 @@ class ImageDisplay extends StatefulWidget {
     this.duration,
     this.showSenderAvatar = true,
     this.onPressChanged,
+    this.showJumpToMessage = false,
   });
 
   final Attachment attachment;
@@ -403,6 +416,7 @@ class ImageDisplay extends StatefulWidget {
   final Duration? duration;
   final bool showSenderAvatar;
   final ValueChanged<bool>? onPressChanged;
+  final bool showJumpToMessage;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -427,6 +441,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
         return ConversationFullscreenHolder(
           attachment: attachment,
           showInteractions: true,
+          showJumpToMessage: widget.showJumpToMessage,
         );
       },
       closedBuilder: (_, openContainer) {

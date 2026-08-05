@@ -168,7 +168,10 @@ class _DocumentsSectionState extends State<DocumentsSection> with ThemeHelpers {
                 childAspectRatio: 1.75,
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, int index) => MediaGalleryCard(attachment: _displayedDocs[index]),
+                (context, int index) => MediaGalleryCard(
+                  attachment: _displayedDocs[index],
+                  showJumpToMessage: true,
+                ),
                 childCount: _visibleCount,
               ),
             ),
