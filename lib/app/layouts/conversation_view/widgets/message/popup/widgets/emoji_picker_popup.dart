@@ -41,7 +41,7 @@ class EmojiPickerPopup extends StatelessWidget {
         color: isIOS
             ? colorScheme.surface.withOpacity(0.85)
             : (isMaterial
-                ? (colorScheme.surfaceContainer ?? colorScheme.surface)
+                ? colorScheme.surfaceContainer
                 : colorScheme.surface),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(isMaterial ? 28 : (isSamsung ? 24 : 16)),
@@ -136,8 +136,8 @@ class EmojiPickerPopup extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: isMaterial
-                                ? (colorScheme.surfaceContainerHigh ?? colorScheme.surfaceContainerHighest)
-                                : colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                                ? colorScheme.surfaceContainerHigh
+                                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(isMaterial ? 22 : 12),
                             border: Border.all(
                               color: colorScheme.outline.withOpacity(0.15),
@@ -166,7 +166,7 @@ class EmojiPickerPopup extends StatelessWidget {
                 ),
                 searchViewConfig: SearchViewConfig(
                   backgroundColor: isMaterial
-                      ? (colorScheme.surfaceContainer ?? colorScheme.surface)
+                      ? colorScheme.surfaceContainer
                       : colorScheme.surface,
                   buttonIconColor: colorScheme.primary,
                   hintText: "Search emojis...",

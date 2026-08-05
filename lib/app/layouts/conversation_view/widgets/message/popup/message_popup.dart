@@ -29,7 +29,7 @@ import 'package:flutter/material.dart' hide BackButton;
 import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
