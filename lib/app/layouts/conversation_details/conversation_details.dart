@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/widgets/attachments
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_info.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/chat_options.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/widgets/participants_findmy_card/participants_findmy_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/documents/documents_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/links/links_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/locations/locations_section.dart';
@@ -125,6 +126,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                     ? ChatInfo(chat: chat)
                     : ExpressiveChatHeader(chat: chat),
               ),
+              if (ParticipantsFindMyMapCard.isSupported) ParticipantsFindMyMapCard(chat: chat),
               SettingsSvc.settings.skin.value == Skins.iOS
                   ? ParticipantsList(chat: chat)
                   : ExpressiveParticipantsSection(chat: chat),
