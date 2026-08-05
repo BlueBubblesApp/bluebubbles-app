@@ -176,12 +176,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
 
     final fanCanvasWidth = baseCardWidth + 56;
     final fanCanvasHeight = baseCardHeight;
+    // baseOffset / textOffset still nudge the stack for row alignment; fan slots are one-sided.
     final baseOffset =
         ((fanCanvasWidth - baseCardWidth) / 2) + (widget.fanDirection == GalleryFanDirection.left ? 36 : -50);
     final fanDirectionSign = widget.fanDirection == GalleryFanDirection.left ? -1.0 : 1.0;
     final textOffset = (baseOffset + 25 + fanDirectionSign * 10.0).clamp(0.0, double.infinity);
-    final direction = widget.fanDirection == GalleryFanDirection.left ? -1.0 : 1.0;
-    final mirroredBias = direction * 10.0;
     final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
     final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
     final galleryLabel = photoCount > 0 && videoCount > 0
@@ -219,8 +218,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
           baseOffset: baseOffset,
-          direction: direction,
-          mirroredBias: mirroredBias,
           isCurrent: i == 0,
         );
       }).reversed);
@@ -240,7 +237,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
           baseOffset: baseOffset,
-          direction: direction,
         ));
       }
 
@@ -253,8 +249,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
           baseOffset: baseOffset,
-          direction: direction,
-          mirroredBias: mirroredBias,
           isCurrent: false,
         ));
       }
@@ -266,8 +260,6 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
         baseOffset: baseOffset,
-        direction: direction,
-        mirroredBias: mirroredBias,
         isCurrent: true,
       ));
     }
@@ -314,11 +306,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
         _velocityTracker?.addPosition(event.timeStamp, event.position);
         if (!widget.infiniteScroll) {
-          final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+          // Left advances / right goes back for both sides.
           final atStart = _currentIndex == 0;
           final atEnd = _currentIndex == _attachments.length - 1;
-          final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
-          final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
+          final blockedPositive = atStart;
+          final blockedNegative = atEnd;
 
           final draggingIntoBlockedEnd =
               (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
@@ -358,10 +350,10 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           return;
         }
 
+        // Negative drag (left) advances; positive (right) goes back — same for both sides.
         final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-        final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
         setState(() {
-          _advance(rawSign * fanFlip);
+          _advance(rawSign);
           _dragDx = 0;
         });
       },
@@ -477,16 +469,15 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required double baseCardWidth,
     required double baseCardHeight,
     required double baseOffset,
-    required double direction,
-    required double mirroredBias,
     required bool isCurrent,
   }) {
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
     final overflowDepth =
         slotIndex >= _visibleFanSlots ? ((slotIndex - (_visibleFanSlots - 1)).clamp(0, 6) * 0.7) : 0.0;
-    final angle = slot == 0 ? 0.0 : direction * _fanSlotAngle[slot];
+    // One-sided fan: left grows with slot, positive angle, pivot bottom-left.
+    final angle = slot == 0 ? 0.0 : _fanSlotAngle[slot];
     final dy = _fanSlotDy[slot] + overflowDepth;
-    final dx = direction * _fanSlotDx[slot];
+    final dx = _fanSlotDx[slot];
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
@@ -499,14 +490,14 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: centeredLeft + mirroredBias + dx + dragOffset,
+      left: centeredLeft + dx + dragOffset,
       child: Transform.translate(
         offset: Offset.zero,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: cardWidth, minHeight: cardHeight, maxHeight: cardHeight),
           child: Transform.rotate(
             angle: angle.toDouble() + dragRotate,
-            alignment: widget.fanDirection == GalleryFanDirection.left ? Alignment.bottomRight : Alignment.bottomLeft,
+            alignment: Alignment.bottomLeft,
             child: _withReactionOverlay(
               IgnorePointer(
                 ignoring: !isCurrent,
@@ -533,25 +524,24 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     required double baseCardWidth,
     required double baseCardHeight,
     required double baseOffset,
-    required double direction,
   }) {
     final slot = slotIndex.clamp(0, _maxPastCards - 1);
-    final angle = -direction * _pastSlotAngle[slot];
-    final dx = -direction * _pastSlotDx[slot];
+    // Mirror of the one-sided fan (negative dx/angle, opposite pivot).
+    final angle = -_pastSlotAngle[slot];
+    final dx = -_pastSlotDx[slot];
     final scale = _pastSlotScale[slot];
     final dy = _pastSlotDy[slot];
     final opacity = _pastSlotOpacity[slot];
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
     final centeredLeft = baseOffset + ((baseCardWidth - cardWidth) / 2);
-    final pastBias = -direction * 10.0;
 
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       top: 1 + dy,
-      left: centeredLeft + pastBias + dx,
+      left: centeredLeft + dx,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
         opacity: opacity,
@@ -560,7 +550,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           height: cardHeight,
           child: Transform.rotate(
             angle: angle.toDouble(),
-            alignment: widget.fanDirection == GalleryFanDirection.left ? Alignment.bottomLeft : Alignment.bottomRight,
+            alignment: Alignment.bottomRight,
             child: _withReactionOverlay(
               IgnorePointer(
                 ignoring: true,
