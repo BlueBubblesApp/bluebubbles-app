@@ -124,6 +124,14 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     _setCurrentIndex(_currentIndex + direction);
   }
 
+  void _jumpTo(int index) {
+    if (_attachments.length <= 1) return;
+    HapticFeedback.lightImpact();
+    setState(() {
+      _setCurrentIndex(index, resetDrag: true);
+    });
+  }
+
   int _indexAtOffset(int offset) {
     var index = (_currentIndex + offset) % _attachments.length;
     if (index < 0) index += _attachments.length;
@@ -494,6 +502,20 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
+    final card = _withReactionOverlay(
+      IgnorePointer(
+        ignoring: !isCurrent,
+        child: AttachmentHolder(
+          message: _partForAttachment(attachment, attachmentIndex),
+          transparentBackground: true,
+          showCardShadow: true,
+          fill: true,
+          galleryAttachments: _attachments,
+        ),
+      ),
+      attachment,
+    );
+
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
       duration: const Duration(milliseconds: 180),
@@ -506,19 +528,13 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         child: Transform.rotate(
           angle: angle.toDouble() + dragRotate,
           alignment: Alignment.bottomLeft,
-          child: _withReactionOverlay(
-            IgnorePointer(
-              ignoring: !isCurrent,
-              child: AttachmentHolder(
-                message: _partForAttachment(attachment, attachmentIndex),
-                transparentBackground: true,
-                showCardShadow: true,
-                fill: true,
-                galleryAttachments: _attachments,
-              ),
-            ),
-            attachment,
-          ),
+          child: isCurrent
+              ? card
+              : GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _jumpTo(attachmentIndex),
+                  child: card,
+                ),
         ),
       ),
     );
@@ -558,18 +574,22 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           child: Transform.rotate(
             angle: angle.toDouble(),
             alignment: Alignment.bottomRight,
-            child: _withReactionOverlay(
-              IgnorePointer(
-                ignoring: true,
-                child: AttachmentHolder(
-                  message: _partForAttachment(attachment, attachmentIndex),
-                  transparentBackground: true,
-                  showCardShadow: true,
-                  fill: true,
-                  galleryAttachments: _attachments,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _jumpTo(attachmentIndex),
+              child: _withReactionOverlay(
+                IgnorePointer(
+                  ignoring: true,
+                  child: AttachmentHolder(
+                    message: _partForAttachment(attachment, attachmentIndex),
+                    transparentBackground: true,
+                    showCardShadow: true,
+                    fill: true,
+                    galleryAttachments: _attachments,
+                  ),
                 ),
+                attachment,
               ),
-              attachment,
             ),
           ),
         ),
