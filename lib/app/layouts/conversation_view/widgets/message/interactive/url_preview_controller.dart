@@ -606,10 +606,30 @@ class UrlPreviewController {
         needsManualLoad.value = true;
       }
 
+      // An icon with no hero image is worth one opportunistic attempt at the
+      // page's `og:image`. Gated on `hasAttempted` rather than the usual
+      // retry TTL: "no image on this page" is a stable answer that will never
+      // change on its own, so re-running the fetch later — or on every
+      // rebuild, since a fresh controller (a popup clone, a rebuilt row, a
+      // cold start) has no memory of what an earlier instance already tried —
+      // would just repeat the same work forever. `MessageMetadataStore`
+      // persists the attempt on the message itself so it survives across
+      // instances; only "Refresh Preview" (which clears it) earns another
+      // try. Skipped entirely when the sender policy blocks fetching: the
+      // card already reads fine without the image, so it's not worth
+      // surfacing a tap-to-load affordance for a purely decorative extra.
+      final missingImageWithIcon = canFetch &&
+          data.imageMetadata?.url == null &&
+          data.iconMetadata?.url != null &&
+          !MessageMetadataStore.hasAttempted(msg);
+
       // An image with nothing to caption it. Fetch the page for the title and
       // summary, keeping whatever artwork the payload already resolved.
-      if (_payloadNeedsMetadata && !_disposed) {
-        Logger.debug('Payload carries an image but no title or summary; fetching those for $_logId', tag: _tag);
+      if ((_payloadNeedsMetadata || missingImageWithIcon) && !_disposed) {
+        Logger.debug(
+            'Payload is missing metadata (needsMetadata: $_payloadNeedsMetadata, '
+            'missingImageWithIcon: $missingImageWithIcon); fetching for $_logId',
+            tag: _tag);
         await _fetchMissingMetadata(msg, canFetch: canFetch, keepPayloadImage: previewImagePath.value != null);
       }
       return;

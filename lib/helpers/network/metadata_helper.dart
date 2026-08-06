@@ -69,23 +69,20 @@ abstract final class MetadataHelper {
     // asked for previews from saved contacts only, and "we could not check"
     // is not the same as "yes".
     //
-    // `getContactForHandle` already returns null when access is unavailable, so
-    // no separate permission check is needed here.
-    final handleId = message.handleRelation.target?.id;
-    if (handleId == null) {
+    // Read straight off the handle's own `contactsV2` backlink instead of
+    // going through `ContactsSvcV2.getContactForHandle`, which round-trips
+    // through `GlobalIsolate` for what is otherwise a single indexed ObjectBox
+    // relation lookup — this runs on every `UrlPreviewController.load()`, so
+    // that round trip was pure overhead. No separate permission check is
+    // needed either: with contacts access denied, nothing is ever synced into
+    // `contactsV2`, so it reads empty and this already fails closed.
+    final handle = message.handleRelation.target;
+    if (handle == null) {
       Logger.debug('No handle on ${message.guid}; treating sender as unknown', tag: 'MetadataHelper');
       return false;
     }
 
-    try {
-      final isContact = (await ContactsSvcV2.getContactForHandle(handleId)) != null;
-      Logger.debug('Sender of ${message.guid} ${isContact ? "is" : "is not"} a saved contact', tag: 'MetadataHelper');
-      return isContact;
-    } catch (ex, stack) {
-      Logger.warn('Could not resolve sender contact; treating as unknown',
-          error: ex, trace: stack, tag: 'MetadataHelper');
-      return false;
-    }
+    return handle.contactsV2.isNotEmpty;
   }
 
   // ---------------------------------------------------------------------------
