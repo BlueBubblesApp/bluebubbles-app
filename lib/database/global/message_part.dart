@@ -50,9 +50,9 @@ class MessagePart {
   List<MessagePart> edits;
   int part;
 
-  /// For gallery parts created by collapsing consecutive media-only parts,
+  /// For collection parts created by collapsing consecutive media-only parts,
   /// maps each attachment (by index) to its original message-part id.
-  /// Null for non-gallery parts or single-source-part galleries.
+  /// Null for non-collection parts or single-source-part collections.
   List<int>? attachmentPartIndices;
 
   /// Returns the original message-part id for the attachment at [index].
@@ -61,7 +61,7 @@ class MessagePart {
 
   /// Whether this bubble covers the raw message-part id [partId].
   ///
-  /// For collapsed galleries, [attachmentPartIndices] is the span of original
+  /// For collapsed collections, [attachmentPartIndices] is the span of original
   /// ids; otherwise only [part] is covered. Collapsed bubbles set [part] to the
   /// first id in that span.
   bool coversPartId(int partId) {
@@ -75,16 +75,16 @@ class MessagePart {
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
 
   /// True when this part contains only images or videos with no text or subject.
-  /// Used to determine whether adjacent parts can be collapsed into a gallery.
+  /// Used to determine whether adjacent parts can be collapsed into a collection.
   bool get isMediaOnlyPart =>
       attachments.isNotEmpty &&
       text == null &&
       subject == null &&
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
-  /// True when this part's attachments form a multi-item media gallery (>1 images/videos).
+  /// True when this part's attachments form a multi-item media collection (>1 images/videos).
   /// Used to route the part to [MessageImageGallery] instead of [AttachmentHolder].
-  bool get isMediaGallery =>
+  bool get isMediaCollection =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }
 

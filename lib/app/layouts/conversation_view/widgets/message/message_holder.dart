@@ -144,7 +144,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     widget.cvController.lastFocusedNode.requestFocus();
   }
 
-  List<MessagePart> _collapseImageGalleryParts(List<MessagePart> parts) {
+  List<MessagePart> _collapseMediaCollectionParts(List<MessagePart> parts) {
     if (!iOS) return parts;
     final collapsed = <MessagePart>[];
     int i = 0;
@@ -196,7 +196,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     final alwaysShowAvatars = SettingsSvc.settings.alwaysShowAvatars.value;
     final avatarScale = SettingsSvc.settings.avatarScale.value;
 
-    // Bubble-level reactions for [part], including any original ids in a collapsed gallery span.
+    // Bubble-level reactions for [part], including any original ids in a collapsed collection span.
     Iterable<Message> reactionsForPart(MessagePart part, List<Message> reactions) {
       return reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0));
     }
@@ -244,7 +244,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                   ),
               ]
             : controller.parts.toList();
-        final messageParts = _collapseImageGalleryParts(rawMessageParts);
+        final messageParts = _collapseMediaCollectionParts(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
         // always safe to access, even when parts are added after initState.
@@ -416,7 +416,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                         padding:
                                             (showAvatar || alwaysShowAvatars) && !(message.isGroupEvent || e.isUnsent)
                                                 ? EdgeInsets.only(
-                                                    left: 35.0 * avatarScale + (e.isMediaGallery ? 12.0 : 0.0))
+                                                    left: 35.0 * avatarScale + (e.isMediaCollection ? 12.0 : 0.0))
                                                 : EdgeInsets.zero,
                                         child: DecoratedBox(
                                           decoration: iOS &&
@@ -529,27 +529,27 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    galleryCurrentIndex: e.isMediaGallery
+                                                                    galleryCurrentIndex: e.isMediaCollection
                                                                         ? _galleryIndices.putIfAbsent(
                                                                             e.part, () => ValueNotifier(0))
                                                                         : null,
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          !(iOS && e.isMediaGallery),
+                                                                          !(iOS && e.isMediaCollection),
                                                                       partIndex: e.part,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
-                                                                          final isGallery = iOS && e.isMediaGallery;
+                                                                          final isCollection = iOS && e.isMediaCollection;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
                                                                               MessagePartContent(
                                                                                 messagePart: e,
                                                                                 galleryCurrentIndexNotifier: e
-                                                                                        .isMediaGallery
+                                                                                        .isMediaCollection
                                                                                     ? _galleryIndices.putIfAbsent(
                                                                                         e.part, () => ValueNotifier(0))
                                                                                     : null,
@@ -580,7 +580,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                                 }),
                                                                             ],
                                                                           );
-                                                                          if (isGallery) return inner;
+                                                                          if (isCollection) return inner;
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,
@@ -609,10 +609,10 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 ),
                                                                 // Reactions are in the inner Stack so they are always
                                                                 // positioned relative to the bubble, not the sticker.
-                                                                // Gallery parts show a reaction per attachment instead
+                                                                // Collection parts show a reaction per attachment instead
                                                                 // (inside MessageImageGallery), since a tapback can be
-                                                                // associated with just one image/video in the gallery.
-                                                                if (!(iOS && e.isMediaGallery))
+                                                                // associated with just one image/video in the collection.
+                                                                if (!(iOS && e.isMediaCollection))
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
                                                                     part: e,
