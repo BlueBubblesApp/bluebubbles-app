@@ -305,7 +305,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           downloadController: download,
           isInReply: isInReply,
           isiOS: isiOS,
-          isInGallery: widget.transparentBackground,
+          isInCollection: widget.transparentBackground,
           compact: _useCompactPlaceholder(reservedBox, DownloadingContent.fullVariantMinSize),
         ),
       );

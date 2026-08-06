@@ -10,10 +10,10 @@ import 'package:get/get.dart';
 /// Isolated widget for reaction display
 /// Only rebuilds when MessageState.associatedMessages changes
 ///
-/// Not used for media-gallery parts on iOS skin — those attach a reaction
-/// per attachment inside [MessageImageGallery] instead, since a gallery can
+/// Not used for media-collection parts on iOS skin — those attach a reaction
+/// per attachment inside [MessageImageGallery] instead, since a collection can
 /// bundle several originally-separate message parts (see
-/// MessageHolder._collapseImageGalleryParts) and a tapback is only ever
+/// MessageHolder._collapseMediaCollectionParts) and a tapback is only ever
 /// associated with one of them.
 class ReactionObserver extends StatelessWidget {
   const ReactionObserver({
@@ -113,7 +113,7 @@ class ReactionSpacing extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .cast<Message>()
           .toList();
-      // coversPartId covers collapsed gallery spans via attachmentPartIndices.
+      // coversPartId covers collapsed collection spans via attachmentPartIndices.
       if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty) {
         return const SizedBox(height: 12.5);
       }
