@@ -1,5 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_gallery.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_stack.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
@@ -81,14 +81,10 @@ class MessagePartContent extends StatelessWidget {
                 if (matches.isNotEmpty) reactionsByAttachmentKey[key] = matches;
               }
 
-              return MessageImageGallery(
-                attachments: messagePart.attachments,
-                partIndex: messagePart.part,
-                attachmentPartIndices: messagePart.attachmentPartIndices,
-                isInReply: false,
-                fanDirection: isFromMe ? GalleryFanDirection.left : GalleryFanDirection.right,
-                currentIndexNotifier: galleryCurrentIndexNotifier,
+              return CollectionGroupStack(
+                messagePart: messagePart,
                 reactionsByAttachmentKey: reactionsByAttachmentKey,
+                currentIndexNotifier: galleryCurrentIndexNotifier,
               );
             }));
       }

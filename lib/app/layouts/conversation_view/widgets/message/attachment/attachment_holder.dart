@@ -183,7 +183,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       right: message.isFromMe! ? 10 : 0,
     );
 
-    // Fan cards are sized by MessageImageGallery; padding is on the gallery wrapper.
+    // Fan cards are sized by CollectionGroupStack; padding is on the collection wrapper.
     if (widget.transparentBackground) {
       return EdgeInsets.zero;
     }
@@ -377,8 +377,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
         final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
-        // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
-        // to fill the SizedBox dimensions set by MessageImageGallery and have their
+        // Collection stack cards in non-preview states (downloading, not-loaded, etc.) need
+        // to fill the SizedBox dimensions set by CollectionGroupStack and have their
         // background clipped to rounded corners.
         final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
         // Explicit fill (gallery fan) also expands into the parent-fixed frame.
