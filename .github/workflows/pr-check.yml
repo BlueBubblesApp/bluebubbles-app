@@ -130,7 +130,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libmpv-dev \
             libayatana-appindicator3-dev \
-            libnotify-dev
+            libnotify-dev \
+            libjson-glib-dev
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter
