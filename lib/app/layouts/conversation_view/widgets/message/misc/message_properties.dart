@@ -41,9 +41,9 @@ class _MessagePropertiesState extends State<MessageProperties> with ThemeHelpers
 
   List<TextSpan> getProperties() {
     final properties = <TextSpan>[];
-    // Galleries are per-attachment for replies (native iMessage). Skip the
+    // Collections are per-attachment for replies (native iMessage). Skip the
     // aggregate bubble-level count; open threads via per-card popup instead.
-    final replyList = widget.part.isMediaGallery
+    final replyList = widget.part.isMediaCollection
         ? const <Message>[]
         : service.struct.threadsForParts(
             message.guid!,

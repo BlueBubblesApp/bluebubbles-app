@@ -54,7 +54,7 @@ class MessagePartContent extends StatelessWidget {
     // Messages with attachments
     if (messagePart.attachments.isNotEmpty) {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
-      if (iOS && messagePart.isMediaGallery) {
+      if (iOS && messagePart.isMediaCollection) {
         final state = MessageStateScope.of(context);
         // Same 10px author-side inset single attachments get from TailClipper.
         final isFromMe = message.isFromMe == true;
@@ -64,10 +64,10 @@ class MessagePartContent extends StatelessWidget {
               right: isFromMe ? 10 : 0,
             ),
             child: Obx(() {
-              // Each attachment in the gallery may originally have been its own
-              // message part (see MessageHolder._collapseImageGalleryParts), so a
+              // Each attachment in the collection may originally have been its own
+              // message part (see MessageHolder._collapseMediaCollectionParts), so a
               // tapback can be associated with just one image/video, not the whole
-              // gallery. Map reactions back to the specific attachment they landed on.
+              // collection. Map reactions back to the specific attachment they landed on.
               final reactions = state.associatedMessages
                   .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
                   .toList();
