@@ -611,7 +611,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 // Reactions are in the inner Stack so they are always
                                                                 // positioned relative to the bubble, not the sticker.
                                                                 // Collection parts show a reaction per attachment instead
-                                                                // (inside MessageImageGallery), since a tapback can be
+                                                                // (inside CollectionGroupStack), since a tapback can be
                                                                 // associated with just one image/video in the collection.
                                                                 if (!(iOS && e.isMediaCollection))
                                                                   MessageReactions(
