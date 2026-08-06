@@ -184,7 +184,8 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    double narrowWidth = message.isFromMe! || !SettingsSvc.settings.alwaysShowAvatars.value ? 330 : 360;
+    double narrowWidth =
+        message.isFromMe! || !(chat.isGroup || SettingsSvc.settings.alwaysShowAvatars.value) ? 330 : 360;
     bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
 
     return Theme(
