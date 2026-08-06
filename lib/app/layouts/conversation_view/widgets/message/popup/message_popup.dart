@@ -184,9 +184,20 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    double narrowWidth =
-        message.isFromMe! || !(chat.isGroup || SettingsSvc.settings.alwaysShowAvatars.value) ? 330 : 360;
-    bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
+    // Decide whether the tapback row needs to wrap to a second line by comparing its actual
+    // content width (derived from the fixed per-item padding/icon sizes used below) against the
+    // real horizontal space available at the picker's anchor position, rather than guessing from
+    // overall screen width. widget.childPosition.dx already reflects any avatar space the bubble
+    // was pushed past, so no avatar/group special-casing is needed here.
+    final double screenWidth = NavigationSvc.width(widthContext);
+    const double reactionPickerEdgeMargin = 15;
+    final double reactionPickerAvailableWidth = message.isFromMe!
+        ? screenWidth - reactionPickerEdgeMargin - reactionPickerEdgeMargin
+        : screenWidth - (widget.childPosition.dx + 10) - reactionPickerEdgeMargin;
+    final double reactionItemWidth = iOS ? 47.0 : 44.0; // icon/emoji + its fixed padding, see item build below
+    // + container padding
+    final double reactionRowContentWidth = reactionItemWidth * ReactionTypes.toList().length + 10;
+    bool narrowScreen = reactionRowContentWidth > reactionPickerAvailableWidth;
 
     return Theme(
       data: context.theme.copyWith(
