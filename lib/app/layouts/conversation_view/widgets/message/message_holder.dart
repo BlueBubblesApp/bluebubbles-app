@@ -494,8 +494,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     iOS ? false : !controller.isLeadingMessagePart(e),
                                                               ),
                                                               child: TextBubble(
+                                                                subjectOnly: true,
                                                                 message: MessagePart(
-                                                                  subject: e.subject,
+                                                                  subject: message.subject,
                                                                   part: e.part,
                                                                 ),
                                                               ),
