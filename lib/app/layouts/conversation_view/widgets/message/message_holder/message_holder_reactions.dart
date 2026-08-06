@@ -11,7 +11,7 @@ import 'package:get/get.dart';
 /// Only rebuilds when MessageState.associatedMessages changes
 ///
 /// Not used for media-collection parts on iOS skin — those attach a reaction
-/// per attachment inside [MessageImageGallery] instead, since a collection can
+/// per attachment inside [CollectionGroupStack] instead, since a collection can
 /// bundle several originally-separate message parts (see
 /// MessageHolder._collapseMediaCollectionParts) and a tapback is only ever
 /// associated with one of them.
