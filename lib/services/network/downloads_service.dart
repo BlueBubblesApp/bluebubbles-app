@@ -187,6 +187,10 @@ class AttachmentDownloadController extends GetxController {
   /// they'd otherwise both proceed to issue their own GET for the same file.
   bool _fetchStarted = false;
 
+  /// Set once this download has been failed, so the request-level `catchError`
+  /// and the checks that follow it can't run the error path twice.
+  bool _failed = false;
+
   AttachmentDownloadController({
     required this.attachment,
     Function(PlatformFile)? onComplete,
@@ -207,6 +211,45 @@ class AttachmentDownloadController extends GetxController {
   /// [AttachmentDownloadService.clearControllerForGuid]).
   void cancel() {
     if (_cancelToken?.isCancelled == false) _cancelToken?.cancel('superseded');
+  }
+
+  /// Fails this download: drops any partial file, notifies the error callbacks,
+  /// moves to [AttachmentDownloadState.error], and frees the queue slot.
+  ///
+  /// Every abnormal exit from [fetchAttachment] must come through here. A path
+  /// that returns without it leaves the controller parked in a non-terminal
+  /// state forever: the UI keeps rendering the downloading widget, the tap
+  /// handler refuses to retry (it only retries from `error`), and — because
+  /// [AttachmentDownloadService._fetchNext] counts `downloading` controllers
+  /// against `maxConcurrentDownloads` (default 2) — the slot is never released,
+  /// so two stranded downloads deadlock the queue for the whole session.
+  Future<void> _failDownload(String? tempPath, String reason, {Object? error, StackTrace? trace}) async {
+    if (_failed) return;
+    _failed = true;
+
+    Logger.error(
+      "Attachment download failed for ${attachment.guid} ($reason)",
+      error: error,
+      trace: trace,
+    );
+
+    if (!kIsWeb && tempPath != null) {
+      try {
+        final tempFile = File(tempPath);
+        if (await tempFile.exists()) await tempFile.delete();
+      } catch (_) {}
+    }
+
+    for (Function f in errorFuncs) {
+      try {
+        f.call();
+      } catch (e, s) {
+        Logger.error("Attachment download error callback threw", error: e, trace: s);
+      }
+    }
+
+    state.value = AttachmentDownloadState.error;
+    AttachmentDownloader._removeFromQueue(this);
   }
 
   Future<void> fetchAttachment() async {
@@ -236,36 +279,63 @@ class AttachmentDownloadController extends GetxController {
       attachment.guid!,
       savePath: tempPath,
       cancelToken: _cancelToken,
-      onReceiveProgress: (count, total) => setProgress(kIsWeb ? (count / total) : (count / attachment.totalBytes!)),
-    )
-        .catchError((err) async {
-      if (!kIsWeb && tempPath != null) {
-        File file = File(tempPath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-      for (Function f in errorFuncs) {
-        f.call();
-      }
-
-      state.value = AttachmentDownloadState.error;
-      AttachmentDownloader._removeFromQueue(this);
+      onReceiveProgress: (count, total) {
+        // `attachment.totalBytes` is preferred on native because dio reports
+        // -1 for `total` when the server omits Content-Length. Either can be
+        // missing, so fall back to whichever is usable rather than asserting
+        // one with `!` -- a throw here fails an otherwise fine download.
+        final int denominator = kIsWeb ? total : (attachment.totalBytes ?? total);
+        setProgress(denominator > 0 ? count / denominator : 0);
+      },
+    ).catchError((err, stack) async {
+      await _failDownload(tempPath, "request failed", error: err, trace: stack);
       return Response(requestOptions: RequestOptions(path: ''));
     });
 
+    if (_failed) return;
+
     Logger.info("Finished downloading attachment");
     if (response.statusCode != 200) {
-      // Don't leave a lingering partial file behind on a failed request.
-      if (tempPath != null) {
-        try {
-          final tempFile = File(tempPath);
-          if (await tempFile.exists()) await tempFile.delete();
-        } catch (_) {}
-      }
+      await _failDownload(tempPath, "server returned status ${response.statusCode}");
       return;
     }
 
+    try {
+      await _processDownloadedFile(response, savePath, tempPath);
+    } catch (e, s) {
+      await _failDownload(tempPath, "post-processing failed", error: e, trace: s);
+      return;
+    }
+
+    if (_failed) return;
+
+    // The download is complete and the state machine has said so. Everything
+    // past this point is best-effort -- a failure here must not walk that back.
+    for (Function f in completeFuncs) {
+      try {
+        f.call(file.value);
+      } catch (e, s) {
+        Logger.error("Attachment download completion callback threw", error: e, trace: s);
+      }
+    }
+
+    // Finally, remove the downloader from queue
+    AttachmentDownloader._removeFromQueue(this);
+
+    try {
+      await _runPostCompletionHandling();
+    } catch (e, s) {
+      Logger.error("Post-download handling failed for ${attachment.guid}", error: e, trace: s);
+    }
+  }
+
+  /// Converts the finished response into the on-disk (or in-memory) file and
+  /// marks this controller complete.
+  ///
+  /// Everything in here runs while the UI is showing "Processing...", so any
+  /// throw that escapes it strands the controller in that state — hence the
+  /// caller wrapping this in a try/catch that routes to [_failDownload].
+  Future<void> _processDownloadedFile(Response response, String? savePath, String? tempPath) async {
     attachment.webUrl = response.requestOptions.path;
     stopwatch.stop();
     Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
@@ -308,11 +378,7 @@ class AttachmentDownloadController extends GetxController {
           // above does rather than letting this escape as an unhandled Future
           // rejection (fetchAttachment() is fired off without being awaited).
           if (!await File(savePath).exists()) {
-            for (Function f in errorFuncs) {
-              f.call();
-            }
-            state.value = AttachmentDownloadState.error;
-            AttachmentDownloader._removeFromQueue(this);
+            await _failDownload(tempPath, "temp file lost before rename");
             return;
           }
         }
@@ -342,15 +408,11 @@ class AttachmentDownloadController extends GetxController {
 
     // Mark as complete
     state.value = AttachmentDownloadState.complete;
+  }
 
-    // Call completion callbacks while controller is still registered
-    for (Function f in completeFuncs) {
-      f.call(file.value);
-    }
-
-    // Finally, remove the downloader from queue
-    AttachmentDownloader._removeFromQueue(this);
-
+  /// Optional work that runs after the download has already been marked
+  /// complete: mirroring bytes to disk on desktop, and the auto-save setting.
+  Future<void> _runPostCompletionHandling() async {
     // Desktop-specific handling
     if (kIsDesktop && attachment.bytes != null) {
       File _file = await File(attachment.path).create(recursive: true);
