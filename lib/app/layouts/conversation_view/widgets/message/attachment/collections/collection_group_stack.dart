@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -12,49 +12,26 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-enum GalleryFanDirection {
-  left,
-  right,
-}
-
-class MessageImageGallery extends StatefulWidget {
-  const MessageImageGallery({
+/// iOS fan stack for multi-attachment media collections.
+class CollectionGroupStack extends StatefulWidget {
+  const CollectionGroupStack({
     super.key,
-    required this.attachments,
-    required this.partIndex,
-    required this.isInReply,
-    required this.fanDirection,
-    this.attachmentPartIndices,
-    this.infiniteScroll = false,
-    this.currentIndexNotifier,
+    required this.messagePart,
     this.reactionsByAttachmentKey,
+    this.currentIndexNotifier,
+    this.infiniteScroll = false,
   });
 
-  final List<Attachment> attachments;
-
-  /// Collapsed gallery message-part id
-  final int partIndex;
-
-  /// Original message-part id for each attachment index when the gallery is
-  /// collapsed from multiple parts. Null when all attachments share [partIndex].
-  final List<int>? attachmentPartIndices;
-
-  final bool isInReply;
-  final GalleryFanDirection fanDirection;
-  final bool infiniteScroll;
-  final ValueNotifier<int>? currentIndexNotifier;
-
-  /// Tapback reactions keyed by attachment (guid, falling back to
-  /// transferName) so each card in the fan can show the reaction that was
-  /// actually left on that specific image/video, rather than one reaction
-  /// shared across the whole gallery.
+  final MessagePart messagePart;
   final Map<String, List<Message>>? reactionsByAttachmentKey;
+  final ValueNotifier<int>? currentIndexNotifier;
+  final bool infiniteScroll;
 
   @override
-  State<MessageImageGallery> createState() => _MessageImageGalleryState();
+  State<CollectionGroupStack> createState() => _CollectionGroupStackState();
 }
 
-class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHelpers {
+class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeHelpers {
   static const int _visibleFanSlots = 5;
   static const int _maxPastCards = 3;
   static const double _swipeCommitThreshold = 70;
@@ -62,6 +39,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   static const double _maxWiggleDx = 20.0;
   static const double _maxStackSizeFactor = 0.42;
   static const double _maxStackWidth = 220.0;
+
   /// Portrait card aspect (width:height = 3:4).
   static const double _portraitAspect = 3 / 4;
 
@@ -77,13 +55,14 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   double _dragDx = 0;
   double _scrollAccumulator = 0;
   bool _hapticGivenForCurrentEnd = false;
-  bool _labelHovered = false;
   int? _activeDragPointer;
   Offset? _dragStartPosition;
   VelocityTracker? _velocityTracker;
   ConversationViewController? _cvController;
 
-  List<Attachment> get _attachments => widget.attachments;
+  List<Attachment> get _attachments => widget.messagePart.attachments;
+
+  bool get _isFromMe => MessageStateScope.messageOf(context).isFromMe == true;
 
   @override
   void initState() {
@@ -103,13 +82,13 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   }
 
   @override
-  void didUpdateWidget(covariant MessageImageGallery oldWidget) {
+  void didUpdateWidget(covariant CollectionGroupStack oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldKeys = oldWidget.attachments.map((a) => a.guid ?? a.transferName).toList();
-    final newKeys = widget.attachments.map((a) => a.guid ?? a.transferName).toList();
+    final oldKeys = oldWidget.messagePart.attachments.map((a) => a.guid ?? a.transferName).toList();
+    final newKeys = widget.messagePart.attachments.map((a) => a.guid ?? a.transferName).toList();
     if (!listEquals(oldKeys, newKeys)) {
       _setCurrentIndex(0);
-    } else if (_currentIndex >= widget.attachments.length) {
+    } else if (_currentIndex >= widget.messagePart.attachments.length) {
       _setCurrentIndex(_currentIndex);
     }
   }
@@ -149,27 +128,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     return index;
   }
 
-  int _partIdForAttachment(int attachmentIndex) =>
-      widget.attachmentPartIndices?[attachmentIndex] ?? widget.partIndex;
-
-  MessagePart _partForAttachment(Attachment attachment, int attachmentIndex) {
-    return MessagePart(
-      part: _partIdForAttachment(attachmentIndex),
-      attachments: [attachment],
-      shouldRedact: false,
-      text: null,
-      subject: null,
-      mentions: const [],
-      edits: const [],
-      isUnsent: false,
-    );
-  }
-
   double _computeBaseCardHeight(double baseCardWidth) {
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
-  void _showGalleryPopup(BuildContext context, String title) {
+  void _showCollectionPopup(BuildContext context, String title) {
     showBBDialog(
       useRootNavigator: false,
       context: context,
@@ -211,17 +174,9 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     }
     final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
-    final isFromMe = widget.fanDirection == GalleryFanDirection.left;
     // Sent: shift cards right so the front card's right edge meets the end-aligned canvas.
     // Received: anchor at the left so the front card lines up with the start-aligned canvas.
-    final fanAnchorX = isFromMe ? maxFanDx : 0.0;
-    final photoCount = _attachments.where((a) => a.mimeStart == 'image').length;
-    final videoCount = _attachments.where((a) => a.mimeStart == 'video').length;
-    final galleryLabel = photoCount > 0 && videoCount > 0
-        ? '${photoCount + videoCount} Items'
-        : videoCount > 0
-            ? '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}'
-            : '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
+    final fanAnchorX = _isFromMe ? maxFanDx : 0.0;
 
     final stackChildren = <Widget>[];
 
@@ -301,52 +256,12 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     // set isGalleryDragging or claim the horizontal swipe for fan navigation.
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        MouseRegion(
-          onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
-          onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
-          child: GestureDetector(
-            onTap: kIsDesktop ? () => _showGalleryPopup(context, galleryLabel) : null,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  left: -6,
-                  right: -6,
-                  top: -2,
-                  bottom: -2,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    decoration: BoxDecoration(
-                      color: _labelHovered
-                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.grid_view_rounded,
-                      size: 10,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      galleryLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        CollectionTitle(
+          attachments: _attachments,
+          isFromMe: _isFromMe,
+          onTap: () => _showCollectionPopup(context, CollectionTitle.labelFor(_attachments)),
         ),
         const SizedBox(height: 4),
         Listener(
@@ -500,27 +415,20 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     );
   }
 
-  List<Message> _reactionsFor(Attachment attachment) {
-    final key = attachment.guid ?? attachment.transferName;
-    if (key == null) return const [];
-    return widget.reactionsByAttachmentKey?[key] ?? const [];
-  }
-
-  Widget _withReactionOverlay(Widget card, Attachment attachment) {
-    final reactions = _reactionsFor(attachment);
-    if (reactions.isEmpty) return card;
-    final isFromMe = widget.fanDirection == GalleryFanDirection.left;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        card,
-        Positioned(
-          top: -14,
-          left: isFromMe ? -14 : null,
-          right: isFromMe ? null : -14,
-          child: ReactionHolder(reactions: reactions),
-        ),
-      ],
+  Widget _buildCardContent({
+    required Attachment attachment,
+    required int attachmentIndex,
+    required bool isCurrent,
+    required bool ignorePointer,
+  }) {
+    return CollectionAttachmentCard(
+      attachment: attachment,
+      attachmentIndex: attachmentIndex,
+      messagePart: widget.messagePart,
+      galleryAttachments: _attachments,
+      reactionsByAttachmentKey: widget.reactionsByAttachmentKey,
+      isFromMe: _isFromMe,
+      ignorePointer: ignorePointer,
     );
   }
 
@@ -548,18 +456,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
-    final card = _withReactionOverlay(
-      IgnorePointer(
-        ignoring: !isCurrent,
-        child: AttachmentHolder(
-          message: _partForAttachment(attachment, attachmentIndex),
-          transparentBackground: true,
-          showCardShadow: true,
-          fill: true,
-          galleryAttachments: _attachments,
-        ),
-      ),
-      attachment,
+    final card = _buildCardContent(
+      attachment: attachment,
+      attachmentIndex: attachmentIndex,
+      isCurrent: isCurrent,
+      ignorePointer: !isCurrent,
     );
 
     return AnimatedPositioned(
@@ -623,18 +524,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _jumpTo(attachmentIndex),
-              child: _withReactionOverlay(
-                IgnorePointer(
-                  ignoring: true,
-                  child: AttachmentHolder(
-                    message: _partForAttachment(attachment, attachmentIndex),
-                    transparentBackground: true,
-                    showCardShadow: true,
-                    fill: true,
-                    galleryAttachments: _attachments,
-                  ),
-                ),
-                attachment,
+              child: _buildCardContent(
+                attachment: attachment,
+                attachmentIndex: attachmentIndex,
+                isCurrent: false,
+                ignorePointer: true,
               ),
             ),
           ),
