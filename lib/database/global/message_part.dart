@@ -57,7 +57,7 @@ class MessagePart {
 
   /// Returns the original message-part id for the attachment at [index].
   /// Falls back to [part] if [attachmentPartIndices] is not set.
-  int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
+  int partIdForAttachment(int index) => attachmentPartIndices?[index] ?? part;
 
   /// Whether this bubble covers the raw message-part id [partId].
   ///
