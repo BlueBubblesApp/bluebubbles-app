@@ -15,11 +15,13 @@ class MessagePartContent extends StatelessWidget {
   const MessagePartContent({
     super.key,
     required this.messagePart,
-    this.galleryCurrentIndexNotifier,
+    required this.cvController,
+    required this.isEditing,
   });
 
   final MessagePart messagePart;
-  final ValueNotifier<int>? galleryCurrentIndexNotifier;
+  final ConversationViewController cvController;
+  final bool isEditing;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +86,8 @@ class MessagePartContent extends StatelessWidget {
               return CollectionGroupStack(
                 messagePart: messagePart,
                 reactionsByAttachmentKey: reactionsByAttachmentKey,
-                currentIndexNotifier: galleryCurrentIndexNotifier,
+                cvController: cvController,
+                isEditing: isEditing,
               );
             }));
       }

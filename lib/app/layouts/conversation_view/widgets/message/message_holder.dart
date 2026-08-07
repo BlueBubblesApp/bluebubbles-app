@@ -102,15 +102,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
   List<RxDouble> replyOffsets = [];
   List<GlobalKey> keys = [];
   final RxBool tapped = false.obs;
-  final Map<int, ValueNotifier<int>> _galleryIndices = {};
-
-  @override
-  void dispose() {
-    for (final notifier in _galleryIndices.values) {
-      notifier.dispose();
-    }
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -530,10 +521,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    galleryCurrentIndex: e.isMediaCollection
-                                                                        ? _galleryIndices.putIfAbsent(
-                                                                            e.part, () => ValueNotifier(0))
-                                                                        : null,
+                                                                    enableGestures: !(iOS && e.isMediaCollection),
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
@@ -549,11 +537,8 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                             children: [
                                                                               MessagePartContent(
                                                                                 messagePart: e,
-                                                                                galleryCurrentIndexNotifier: e
-                                                                                        .isMediaCollection
-                                                                                    ? _galleryIndices.putIfAbsent(
-                                                                                        e.part, () => ValueNotifier(0))
-                                                                                    : null,
+                                                                                cvController: widget.cvController,
+                                                                                isEditing: isEditing(e.part),
                                                                               ),
                                                                               if (message.isFromMe!)
                                                                                 Obx(() {
