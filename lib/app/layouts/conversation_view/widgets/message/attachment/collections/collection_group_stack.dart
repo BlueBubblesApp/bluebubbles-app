@@ -18,13 +18,15 @@ class CollectionGroupStack extends StatefulWidget {
     super.key,
     required this.messagePart,
     this.reactionsByAttachmentKey,
-    this.currentIndexNotifier,
+    required this.cvController,
+    required this.isEditing,
     this.infiniteScroll = false,
   });
 
   final MessagePart messagePart;
   final Map<String, List<Message>>? reactionsByAttachmentKey;
-  final ValueNotifier<int>? currentIndexNotifier;
+  final ConversationViewController cvController;
+  final bool isEditing;
   final bool infiniteScroll;
 
   @override
@@ -58,7 +60,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   int? _activeDragPointer;
   Offset? _dragStartPosition;
   VelocityTracker? _velocityTracker;
-  ConversationViewController? _cvController;
 
   List<Attachment> get _attachments => widget.messagePart.attachments;
 
@@ -67,8 +68,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   @override
   void initState() {
     super.initState();
-    _cvController = MessageStateScope.readStateOnce(context).cvController;
-    _setCurrentIndex(widget.currentIndexNotifier?.value ?? 0);
+    _setCurrentIndex(0);
   }
 
   @override
@@ -77,7 +77,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     _dragStartPosition = null;
     _velocityTracker = null;
     _hapticGivenForCurrentEnd = false;
-    _cvController?.isGalleryDragging = false;
+    widget.cvController.isGalleryDragging = false;
     super.dispose();
   }
 
@@ -105,7 +105,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     if (clamped < 0) return;
     if (clamped == _currentIndex && !resetDrag) return;
     _currentIndex = clamped;
-    widget.currentIndexNotifier?.value = _currentIndex;
     if (resetDrag) _dragDx = 0;
   }
 
@@ -302,7 +301,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
             // GestureDetector ancestor in MessagesView) doesn't also react to the
             // same pointer — see conversation_view_controller.dart's field doc.
-            _cvController?.isGalleryDragging = true;
+            widget.cvController.isGalleryDragging = true;
           },
           onPointerMove: (event) {
             if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
@@ -316,7 +315,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 _dragStartPosition = null;
                 _velocityTracker = null;
                 _hapticGivenForCurrentEnd = false;
-                _cvController?.isGalleryDragging = false;
+                widget.cvController.isGalleryDragging = false;
                 if (mounted && _dragDx != 0) {
                   setState(() {
                     _dragDx = 0;
@@ -364,7 +363,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             _activeDragPointer = null;
             _dragStartPosition = null;
             _hapticGivenForCurrentEnd = false;
-            _cvController?.isGalleryDragging = false;
+            widget.cvController.isGalleryDragging = false;
             final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
             _velocityTracker = null;
             if (_attachments.length <= 1) return;
@@ -393,7 +392,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             _dragStartPosition = null;
             _velocityTracker = null;
             _hapticGivenForCurrentEnd = false;
-            _cvController?.isGalleryDragging = false;
+            widget.cvController.isGalleryDragging = false;
             if (_attachments.length <= 1) return;
             if (mounted) {
               setState(() {
@@ -429,6 +428,9 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       reactionsByAttachmentKey: widget.reactionsByAttachmentKey,
       isFromMe: _isFromMe,
       ignorePointer: ignorePointer,
+      cvController: widget.cvController,
+      isEditing: widget.isEditing,
+      enableGestures: isCurrent,
     );
   }
 
