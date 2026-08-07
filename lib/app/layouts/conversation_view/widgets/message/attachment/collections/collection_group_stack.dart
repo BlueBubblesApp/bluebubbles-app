@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -251,164 +252,169 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
     // Listener wraps only the card canvas so pointer-down on the label does not
     // set isGalleryDragging or claim the horizontal swipe for fan navigation.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        CollectionTitle(
-          attachments: _attachments,
-          isFromMe: _isFromMe,
-          onTap: () => _showCollectionPopup(context, CollectionTitle.labelFor(_attachments)),
-        ),
-        const SizedBox(height: 4),
-        Listener(
-          // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
-          // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
-          // VideoPlayer registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
-          // holding the arena open was swallowing fast horizontal swipes over video attachments while
-          // images (which register no onDoubleTap) were unaffected. Listener never enters the arena, so
-          // it always sees the drag regardless of what the card underneath does with the same pointer.
-          behavior: HitTestBehavior.translucent,
-          onPointerSignal: (event) {
-            if (event is PointerScrollEvent && _attachments.length > 1) {
-              GestureBinding.instance.pointerSignalResolver.register(event, (event) {
-                if (!mounted) return;
-                final scrollEvent = event as PointerScrollEvent;
-                _scrollAccumulator += scrollEvent.scrollDelta.dy;
-                if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
-                  final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
-                  _scrollAccumulator = 0;
-                  final oldIndex = _currentIndex;
-                  setState(() {
-                    _advance(scrollDir);
-                    _dragDx = 0;
-                  });
-                  if (_currentIndex == oldIndex && !widget.infiniteScroll) {
-                    HapticFeedback.lightImpact();
+    return CollectionDownloadButton.wrap(
+      isFromMe: _isFromMe,
+      contentWidth: fanCanvasWidth,
+      attachments: _attachments,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          CollectionTitle(
+            attachments: _attachments,
+            isFromMe: _isFromMe,
+            onTap: () => _showCollectionPopup(context, CollectionTitle.labelFor(_attachments)),
+          ),
+          const SizedBox(height: 4),
+          Listener(
+            // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
+            // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
+            // VideoPlayer registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
+            // holding the arena open was swallowing fast horizontal swipes over video attachments while
+            // images (which register no onDoubleTap) were unaffected. Listener never enters the arena, so
+            // it always sees the drag regardless of what the card underneath does with the same pointer.
+            behavior: HitTestBehavior.translucent,
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent && _attachments.length > 1) {
+                GestureBinding.instance.pointerSignalResolver.register(event, (event) {
+                  if (!mounted) return;
+                  final scrollEvent = event as PointerScrollEvent;
+                  _scrollAccumulator += scrollEvent.scrollDelta.dy;
+                  if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
+                    final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
+                    _scrollAccumulator = 0;
+                    final oldIndex = _currentIndex;
+                    setState(() {
+                      _advance(scrollDir);
+                      _dragDx = 0;
+                    });
+                    if (_currentIndex == oldIndex && !widget.infiniteScroll) {
+                      HapticFeedback.lightImpact();
+                    }
                   }
-                }
-              });
-            }
-          },
-          onPointerDown: (event) {
-            if (_attachments.length <= 1) return;
-            _activeDragPointer = event.pointer;
-            _dragStartPosition = event.position;
-            _velocityTracker = VelocityTracker.withKind(event.kind);
-            _velocityTracker!.addPosition(event.timeStamp, event.position);
-            // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
-            // GestureDetector ancestor in MessagesView) doesn't also react to the
-            // same pointer — see conversation_view_controller.dart's field doc.
-            widget.cvController.isGalleryDragging = true;
-          },
-          onPointerMove: (event) {
-            if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
-            // Bail out of fan drag when the pointer is clearly vertical so the
-            // conversation list can scroll and isGalleryDragging does not stick.
-            final start = _dragStartPosition;
-            if (start != null) {
-              final total = event.position - start;
-              if (total.dy.abs() >= total.dx.abs() && total.distance >= 8.0) {
-                _activeDragPointer = null;
-                _dragStartPosition = null;
-                _velocityTracker = null;
-                _hapticGivenForCurrentEnd = false;
-                widget.cvController.isGalleryDragging = false;
-                if (mounted && _dragDx != 0) {
-                  setState(() {
-                    _dragDx = 0;
-                  });
-                }
-                return;
+                });
               }
-            }
-            _velocityTracker?.addPosition(event.timeStamp, event.position);
-            if (!widget.infiniteScroll) {
-              // Left advances / right goes back for both sides.
-              final atStart = _currentIndex == 0;
-              final atEnd = _currentIndex == _attachments.length - 1;
-              final blockedPositive = atStart;
-              final blockedNegative = atEnd;
-
-              final draggingIntoBlockedEnd =
-                  (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
-              if (draggingIntoBlockedEnd) {
-                if (!_hapticGivenForCurrentEnd) {
-                  HapticFeedback.lightImpact();
-                  _hapticGivenForCurrentEnd = true;
+            },
+            onPointerDown: (event) {
+              if (_attachments.length <= 1) return;
+              _activeDragPointer = event.pointer;
+              _dragStartPosition = event.position;
+              _velocityTracker = VelocityTracker.withKind(event.kind);
+              _velocityTracker!.addPosition(event.timeStamp, event.position);
+              // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
+              // GestureDetector ancestor in MessagesView) doesn't also react to the
+              // same pointer — see conversation_view_controller.dart's field doc.
+              widget.cvController.isGalleryDragging = true;
+            },
+            onPointerMove: (event) {
+              if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
+              // Bail out of fan drag when the pointer is clearly vertical so the
+              // conversation list can scroll and isGalleryDragging does not stick.
+              final start = _dragStartPosition;
+              if (start != null) {
+                final total = event.position - start;
+                if (total.dy.abs() >= total.dx.abs() && total.distance >= 8.0) {
+                  _activeDragPointer = null;
+                  _dragStartPosition = null;
+                  _velocityTracker = null;
+                  _hapticGivenForCurrentEnd = false;
+                  widget.cvController.isGalleryDragging = false;
+                  if (mounted && _dragDx != 0) {
+                    setState(() {
+                      _dragDx = 0;
+                    });
+                  }
+                  return;
                 }
+              }
+              _velocityTracker?.addPosition(event.timeStamp, event.position);
+              if (!widget.infiniteScroll) {
+                // Left advances / right goes back for both sides.
+                final atStart = _currentIndex == 0;
+                final atEnd = _currentIndex == _attachments.length - 1;
+                final blockedPositive = atStart;
+                final blockedNegative = atEnd;
+
+                final draggingIntoBlockedEnd =
+                    (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
+                if (draggingIntoBlockedEnd) {
+                  if (!_hapticGivenForCurrentEnd) {
+                    HapticFeedback.lightImpact();
+                    _hapticGivenForCurrentEnd = true;
+                  }
+                  if (mounted) {
+                    setState(() {
+                      _dragDx += event.delta.dx * 0.3;
+                      if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+                      if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+                    });
+                  }
+                  return;
+                } else {
+                  _hapticGivenForCurrentEnd = false;
+                }
+              }
+              if (mounted) {
+                setState(() {
+                  _dragDx += event.delta.dx;
+                  _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+                });
+              }
+            },
+            onPointerUp: (event) {
+              if (_activeDragPointer != event.pointer) return;
+              _activeDragPointer = null;
+              _dragStartPosition = null;
+              _hapticGivenForCurrentEnd = false;
+              widget.cvController.isGalleryDragging = false;
+              final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+              _velocityTracker = null;
+              if (_attachments.length <= 1) return;
+              final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
+              if (!commit) {
                 if (mounted) {
                   setState(() {
-                    _dragDx += event.delta.dx * 0.3;
-                    if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-                    if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+                    _dragDx = 0;
                   });
                 }
                 return;
-              } else {
-                _hapticGivenForCurrentEnd = false;
               }
-            }
-            if (mounted) {
-              setState(() {
-                _dragDx += event.delta.dx;
-                _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-              });
-            }
-          },
-          onPointerUp: (event) {
-            if (_activeDragPointer != event.pointer) return;
-            _activeDragPointer = null;
-            _dragStartPosition = null;
-            _hapticGivenForCurrentEnd = false;
-            widget.cvController.isGalleryDragging = false;
-            final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
-            _velocityTracker = null;
-            if (_attachments.length <= 1) return;
-            final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
-            if (!commit) {
+
+              // Negative drag (left) advances; positive (right) goes back — same for both sides.
+              final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
+              if (mounted) {
+                setState(() {
+                  _advance(rawSign);
+                  _dragDx = 0;
+                });
+              }
+            },
+            onPointerCancel: (event) {
+              if (_activeDragPointer != event.pointer) return;
+              _activeDragPointer = null;
+              _dragStartPosition = null;
+              _velocityTracker = null;
+              _hapticGivenForCurrentEnd = false;
+              widget.cvController.isGalleryDragging = false;
+              if (_attachments.length <= 1) return;
               if (mounted) {
                 setState(() {
                   _dragDx = 0;
                 });
               }
-              return;
-            }
-
-            // Negative drag (left) advances; positive (right) goes back — same for both sides.
-            final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-            if (mounted) {
-              setState(() {
-                _advance(rawSign);
-                _dragDx = 0;
-              });
-            }
-          },
-          onPointerCancel: (event) {
-            if (_activeDragPointer != event.pointer) return;
-            _activeDragPointer = null;
-            _dragStartPosition = null;
-            _velocityTracker = null;
-            _hapticGivenForCurrentEnd = false;
-            widget.cvController.isGalleryDragging = false;
-            if (_attachments.length <= 1) return;
-            if (mounted) {
-              setState(() {
-                _dragDx = 0;
-              });
-            }
-          },
-          child: SizedBox(
-            width: fanCanvasWidth,
-            height: fanCanvasHeight,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: stackChildren,
+            },
+            child: SizedBox(
+              width: fanCanvasWidth,
+              height: fanCanvasHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: stackChildren,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
