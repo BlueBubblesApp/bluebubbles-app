@@ -554,6 +554,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                                 messagePart: e,
                                                                                 cvController: widget.cvController,
                                                                                 isEditing: isEditing(e.part),
+                                                                                canSwipeToReply: canSwipeToReply,
                                                                               ),
                                                                               if (message.isFromMe!)
                                                                                 Obx(() {
