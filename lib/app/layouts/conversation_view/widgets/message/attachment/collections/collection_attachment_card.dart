@@ -1,6 +1,9 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 /// Single card slot in an iOS media collection stack.
@@ -13,7 +16,10 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.galleryAttachments,
     this.reactionsByAttachmentKey,
     required this.isFromMe,
+    required this.cvController,
+    required this.isEditing,
     this.ignorePointer = false,
+    this.enableGestures = false,
   });
 
   final Attachment attachment;
@@ -22,9 +28,14 @@ class CollectionAttachmentCard extends StatelessWidget {
   final List<Attachment> galleryAttachments;
   final Map<String, List<Message>>? reactionsByAttachmentKey;
   final bool isFromMe;
+  final ConversationViewController cvController;
+  final bool isEditing;
 
   /// When true, pointer events pass through to the stack (past / background cards).
   final bool ignorePointer;
+
+  /// When true, long-press / double-tap open the per-card popup menu.
+  final bool enableGestures;
 
   int _partIdForAttachment() => messagePart.attachmentPartIndices?[attachmentIndex] ?? messagePart.part;
 
@@ -66,15 +77,23 @@ class CollectionAttachmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scopedPart = _scopedPart();
     return _withReactionOverlay(
-      IgnorePointer(
-        ignoring: ignorePointer,
-        child: AttachmentHolder(
-          message: _scopedPart(),
-          transparentBackground: true,
-          showCardShadow: true,
-          fill: true,
-          galleryAttachments: galleryAttachments,
+      MessagePopupHolder(
+        controller: MessageStateScope.of(context),
+        cvController: cvController,
+        part: scopedPart,
+        isEditing: isEditing,
+        enableGestures: enableGestures,
+        child: IgnorePointer(
+          ignoring: ignorePointer,
+          child: AttachmentHolder(
+            message: scopedPart,
+            transparentBackground: true,
+            showCardShadow: true,
+            fill: true,
+            galleryAttachments: galleryAttachments,
+          ),
         ),
       ),
     );
