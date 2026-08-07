@@ -31,7 +31,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
     final state = MessageStateScope.of(context);
     return Obx(() {
       final isFromMe = state.isFromMe.value;
-      final targetPart = collectionPart.partIndexForAttachment(attachmentIndex);
+      final targetPart = collectionPart.partIdForAttachment(attachmentIndex);
       final reactions = state.associatedMessages
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .where((e) => (e.associatedMessagePart ?? 0) == targetPart)
@@ -83,7 +83,7 @@ class CollectionAttachmentCard extends StatelessWidget {
   /// When true, long-press / double-tap open the per-card popup menu.
   final bool enableGestures;
 
-  int _partIdForAttachment() => messagePart.partIndexForAttachment(attachmentIndex);
+  int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
 
   MessagePart _scopedPart() {
     return MessagePart(
