@@ -2,6 +2,8 @@
 
 Renders all non-text media inside message bubbles. Entry point: `AttachmentHolder`, which dispatches to the appropriate renderer based on MIME type.
 
+Multi-attachment **collections** live in `collections/` → [CLAUDE.md](collections/CLAUDE.md).
+
 ## Files
 
 | File | Purpose |
@@ -14,6 +16,8 @@ Renders all non-text media inside message bubbles. Entry point: `AttachmentHolde
 | `sticker_holder.dart` | Sticker rendering (full-size emoji-like overlays) |
 | `other_file.dart` | Generic file display for docs, archives, APKs, etc. |
 | `live_photo_mixin.dart` | Mixin for handling Live Photo metadata |
+| `collections/` | media collections for multi-attachment rendering → CLAUDE.md |
+| `parts/` | Per-transfer-state renderers for a single attachment slot → CLAUDE.md |
 
 ## Key Patterns
 
