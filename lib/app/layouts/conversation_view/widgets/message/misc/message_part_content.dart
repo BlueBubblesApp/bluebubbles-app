@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_collage.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_stack.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -11,6 +12,9 @@ import 'package:flutter/material.dart';
 /// Renders the appropriate content widget based on message type
 /// Extracted from MessageHolder to reduce nesting and improve readability
 class MessagePartContent extends StatelessWidget {
+  /// Author-side inset matching single attachments / [TailClipper].
+  static const double _collectionEdgeInset = 10.0;
+
   const MessagePartContent({
     super.key,
     required this.messagePart,
@@ -56,18 +60,29 @@ class MessagePartContent extends StatelessWidget {
     if (messagePart.attachments.isNotEmpty) {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (iOS && messagePart.isMediaCollection) {
-        // Same 10px author-side inset single attachments get from TailClipper.
+        final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
+        final Widget collection = switch (layout) {
+          MediaCollectionLayout.collage => CollectionGroupCollage(
+              messagePart: messagePart,
+              cvController: cvController,
+              isEditing: isEditing,
+            ),
+          MediaCollectionLayout.stack ||
+          MediaCollectionLayout.grid ||
+          MediaCollectionLayout.skinDefault =>
+            CollectionGroupStack(
+              messagePart: messagePart,
+              cvController: cvController,
+              isEditing: isEditing,
+            ),
+        };
         final isFromMe = message.isFromMe == true;
         return Padding(
           padding: EdgeInsets.only(
-            left: isFromMe ? 0 : 10,
-            right: isFromMe ? 10 : 0,
+            left: isFromMe ? 0 : _collectionEdgeInset,
+            right: isFromMe ? _collectionEdgeInset : 0,
           ),
-          child: CollectionGroupStack(
-            messagePart: messagePart,
-            cvController: cvController,
-            isEditing: isEditing,
-          ),
+          child: collection,
         );
       }
       return AttachmentHolder(

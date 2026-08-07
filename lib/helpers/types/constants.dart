@@ -123,6 +123,15 @@ enum Skins {
   Samsung,
 }
 
+/// Layout used for multi-attachment media collections.
+/// [skinDefault] follows iOS: collage for 2–3 / stack for 4+; Material/Samsung: grid.
+enum MediaCollectionLayout {
+  skinDefault,
+  collage,
+  stack,
+  grid,
+}
+
 enum SwipeDirection {
   LEFT,
   RIGHT,
