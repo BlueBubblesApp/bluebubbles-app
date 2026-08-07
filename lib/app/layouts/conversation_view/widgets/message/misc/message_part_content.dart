@@ -20,11 +20,15 @@ class MessagePartContent extends StatelessWidget {
     required this.messagePart,
     required this.cvController,
     required this.isEditing,
+    this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
   final bool isEditing;
+
+  /// Passed through to collage for per-card swipe-to-reply (stack has no swipe).
+  final bool canSwipeToReply;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +70,7 @@ class MessagePartContent extends StatelessWidget {
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
+              canSwipeToReply: canSwipeToReply,
             ),
           MediaCollectionLayout.stack ||
           MediaCollectionLayout.grid ||
