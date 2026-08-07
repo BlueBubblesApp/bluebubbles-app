@@ -6,6 +6,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/not_loaded_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/downloading_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/resolved_file_content.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
@@ -253,6 +254,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     required bool isInReply,
     required bool isiOS,
     required ({double width, double height})? reservedBox,
+    required bool fill,
+    required bool forceAllCornersRounded,
   }) {
     // Redacted mode always shows placeholder regardless of download status.
     if (hideAttachments) {
@@ -275,8 +278,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isiOS: isiOS,
           cvController: controller.cvController,
           isInReply: isInReply,
-          forceAllCornersRounded: widget.transparentBackground,
-          fill: widget.fill,
+          forceAllCornersRounded: forceAllCornersRounded,
+          fill: fill,
           galleryAttachments: widget.galleryAttachments,
         );
       }
@@ -292,8 +295,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         isiOS: isiOS,
         cvController: controller.cvController,
         isInReply: isInReply,
-        forceAllCornersRounded: widget.transparentBackground,
-        fill: widget.fill,
+        forceAllCornersRounded: forceAllCornersRounded,
+        fill: fill,
         galleryAttachments: widget.galleryAttachments,
       );
     }
@@ -376,13 +379,23 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
+        // Message popup has no bubble tail — leave the stack cover-fill path and paint
+        // like a standalone attachment (same maxWidth/maxHeight constraints, no expand).
+        final inPopup = PopupScope.maybeOf(context) != null;
+        final fill = widget.fill && !inPopup;
+        final forceAllCornersRounded = widget.transparentBackground || inPopup;
+        // Popup videos need transparency — otherwise the square Ink peeks past ClipRRect.
+        final transparentCard = hasPreview &&
+            (widget.transparentBackground ||
+                isPass ||
+                attachment.mimeStart == "image" ||
+                (inPopup && attachment.mimeStart == "video"));
         // Collection stack cards in non-preview states (downloading, not-loaded, etc.) need
         // to fill the SizedBox dimensions set by CollectionGroupStack and have their
-        // background clipped to rounded corners.
-        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
+        // background clipped to rounded corners. Skip expand in the popup.
+        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview && !inPopup;
         // Explicit fill (gallery fan) also expands into the parent-fixed frame.
-        final expandIntoParent = widget.fill || shouldExpandAndClipForGallery;
+        final expandIntoParent = fill || shouldExpandAndClipForGallery;
         // Only meaningful before the file resolves; once it has, the image
         // itself defines the box.
         final reservedBox = hasPreview ? null : _reservedImageBox(context, isInReply, hideAttachments);
@@ -438,6 +451,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                         isInReply: isInReply,
                                         isiOS: isiOS,
                                         reservedBox: reservedBox,
+                                        fill: fill,
+                                        forceAllCornersRounded: forceAllCornersRounded,
                                       ),
                                     ),
                                   )
@@ -449,6 +464,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                       isInReply: isInReply,
                                       isiOS: isiOS,
                                       reservedBox: reservedBox,
+                                      fill: fill,
+                                      forceAllCornersRounded: forceAllCornersRounded,
                                     ),
                                   ),
                           )
@@ -478,6 +495,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                   isInReply: isInReply,
                                   isiOS: isiOS,
                                   reservedBox: reservedBox,
+                                  fill: fill,
+                                  forceAllCornersRounded: forceAllCornersRounded,
                                 ),
                               ),
                             ),
