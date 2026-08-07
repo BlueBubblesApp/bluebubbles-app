@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_galle
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -170,11 +171,11 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
       maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
     }
+    // Left-anchor for both sides so from-me front card is inset from the end-aligned
+    // canvas by maxFanDx (future fan stays on-canvas). Tapbacks may overhang the
+    // author edge — no extra reaction gutter.
     final fanCanvasWidth = baseCardWidth + maxFanDx;
     final fanCanvasHeight = baseCardHeight;
-    // Sent: shift cards right so the front card's right edge meets the end-aligned canvas.
-    // Received: anchor at the left so the front card lines up with the start-aligned canvas.
-    final fanAnchorX = _isFromMe ? maxFanDx : 0.0;
 
     final stackChildren = <Widget>[];
 
@@ -204,7 +205,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          fanAnchorX: fanAnchorX,
           isCurrent: i == 0,
         );
       }).reversed);
@@ -222,7 +222,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          fanAnchorX: fanAnchorX,
         ));
       }
 
@@ -234,7 +233,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
-          fanAnchorX: fanAnchorX,
           isCurrent: false,
         ));
       }
@@ -245,7 +243,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
-        fanAnchorX: fanAnchorX,
         isCurrent: true,
       ));
     }
@@ -265,7 +262,15 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             isFromMe: _isFromMe,
             onTap: () => _showCollectionPopup(context, CollectionTitle.labelFor(_attachments)),
           ),
-          const SizedBox(height: 4),
+          // Reserve room for per-card tapbacks (top: -14) so they don't cover the label.
+          // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
+          ReactionSpacing(
+            messageParts: const [],
+            part: widget.messagePart,
+            reactionsForPart: (part, reactions) =>
+                reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
+            minHeightWhenNoReactions: 4,
+          ),
           Listener(
             // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
             // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
@@ -442,7 +447,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required double fanAnchorX,
     required bool isCurrent,
   }) {
     final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
@@ -456,7 +460,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     final cardHeight = baseCardHeight * scale;
     // Scale-center so smaller cards don't poke out past the fan spread.
     final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
-    final fromLeft = fanAnchorX + slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
@@ -497,7 +501,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
-    required double fanAnchorX,
   }) {
     // Mirror of the one-sided fan (negative dx/angle, opposite pivot); opacity only is past-specific.
     final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
@@ -508,7 +511,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     final cardWidth = baseCardWidth * scale;
     final cardHeight = baseCardHeight * scale;
     final slotDx = _fanSlotDx[slot];
-    final fromLeft = fanAnchorX - slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = -slotDx + ((baseCardWidth - cardWidth) / 2);
 
     return AnimatedPositioned(
       key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
