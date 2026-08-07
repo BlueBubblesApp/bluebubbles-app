@@ -17,14 +17,12 @@ class CollectionGroupStack extends StatefulWidget {
   const CollectionGroupStack({
     super.key,
     required this.messagePart,
-    this.reactionsByAttachmentKey,
     required this.cvController,
     required this.isEditing,
     this.infiniteScroll = false,
   });
 
   final MessagePart messagePart;
-  final Map<String, List<Message>>? reactionsByAttachmentKey;
   final ConversationViewController cvController;
   final bool isEditing;
   final bool infiniteScroll;
@@ -425,8 +423,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       attachmentIndex: attachmentIndex,
       messagePart: widget.messagePart,
       galleryAttachments: _attachments,
-      reactionsByAttachmentKey: widget.reactionsByAttachmentKey,
-      isFromMe: _isFromMe,
       ignorePointer: ignorePointer,
       cvController: widget.cvController,
       isEditing: widget.isEditing,
