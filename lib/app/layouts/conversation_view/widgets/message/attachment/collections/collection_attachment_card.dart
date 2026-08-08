@@ -17,6 +17,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
     required this.attachmentIndex,
     this.tailType = ReactionTailType.standard,
     this.alignTrailing = false,
+    this.tightOverhang = false,
   });
 
   final MessagePart collectionPart;
@@ -25,6 +26,9 @@ class CollectionAttachmentReactions extends StatelessWidget {
 
   /// Pin to the top-trailing corner. Also implied for [ReactionTailType.inside].
   final bool alignTrailing;
+
+  /// Smaller hang-off (grid) so badges stay nearer their cell on shared gaps.
+  final bool tightOverhang;
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +46,11 @@ class CollectionAttachmentReactions extends StatelessWidget {
       // (collage and similar) follows author side like a normal bubble.
       final forceTrailing = alignTrailing || tailType == ReactionTailType.inside;
       final alignRight = forceTrailing || !isFromMe;
+      final edge = tightOverhang ? -14.0 : -20.0;
       return Positioned(
-        top: -14,
-        left: alignRight ? null : -20,
-        right: alignRight ? -20 : null,
+        top: tightOverhang ? -10.0 : -14.0,
+        left: alignRight ? null : edge,
+        right: alignRight ? edge : null,
         child: ReactionHolder(
           reactions: reactions,
           tailType: tailType,
