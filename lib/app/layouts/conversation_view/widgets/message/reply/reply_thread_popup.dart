@@ -17,7 +17,13 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 void showReplyThread(BuildContext context, Message message, MessagePart part, MessagesService service,
     ConversationViewController cvController) {
   final originatorPart = message.threadOriginatorGuid != null ? message.normalizedThreadPart : part.part;
-  final _messages = service.struct.threads(message.threadOriginatorGuid ?? message.guid!, originatorPart);
+  final originatorGuid = message.threadOriginatorGuid ?? message.guid!;
+  final _messages = message.threadOriginatorGuid != null
+      ? service.struct.threads(originatorGuid, originatorPart)
+      : service.struct.threadsForParts(
+          originatorGuid,
+          part.attachmentPartIndices ?? [part.part],
+        );
   _messages.sort((a, b) => Message.sort(a, b, descending: false));
   _buildThreadView(_messages, originatorPart, cvController, context);
 }
