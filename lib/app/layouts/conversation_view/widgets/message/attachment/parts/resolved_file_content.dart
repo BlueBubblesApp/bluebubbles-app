@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
@@ -29,6 +30,7 @@ class ResolvedFileContent extends StatelessWidget {
     this.forceAllCornersRounded = false,
     this.fill = false,
     this.galleryAttachments,
+    this.collectionController,
   });
 
   final PlatformFile file;
@@ -42,6 +44,9 @@ class ResolvedFileContent extends StatelessWidget {
   /// Cover-fill a parent-fixed frame (gallery cards).
   final bool fill;
   final List<Attachment>? galleryAttachments;
+
+  /// When set, fullscreen shows a collection-grid button (omit when opened from a grid).
+  final CollectionMediaController? collectionController;
 
   /// Bubble-style media radius, or zero when [fill] (parent owns clip/shadow).
   BorderRadius _mediaBorderRadius(Message message) {
@@ -84,6 +89,7 @@ class ResolvedFileContent extends StatelessWidget {
           attachment: attachment,
           showInteractions: true,
           galleryAttachments: galleryAttachments,
+          collectionController: collectionController,
         ),
         closedBuilder: (context, openContainer) => GestureDetector(
           onTap: () {
@@ -124,6 +130,7 @@ class ResolvedFileContent extends StatelessWidget {
         controller: cvController,
         isFromMe: message.isFromMe!,
         galleryAttachments: galleryAttachments,
+        collectionController: collectionController,
         fill: fill,
       );
       return ClipRRect(

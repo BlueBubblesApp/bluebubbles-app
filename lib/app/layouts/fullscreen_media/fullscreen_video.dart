@@ -26,6 +26,7 @@ class FullscreenVideo extends StatefulWidget {
     this.videoController,
     this.mute,
     this.onOverlayToggle,
+    this.onOpenCollectionGallery,
   });
 
   final PlatformFile file;
@@ -35,6 +36,7 @@ class FullscreenVideo extends StatefulWidget {
   final VideoController? videoController;
   final RxBool? mute;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onOpenCollectionGallery;
 
   @override
   State<StatefulWidget> createState() => _FullscreenVideoState();
@@ -396,7 +398,7 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                               child: SizedBox(
                                 height: kIsDesktop ? 80 : 50,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Padding(
                                       padding: const EdgeInsets.only(left: 5),
@@ -409,6 +411,18 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                                         ),
                                       ),
                                     ),
+                                    if (widget.showInteractions && widget.onOpenCollectionGallery != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 5),
+                                        child: CupertinoButton(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                                          onPressed: widget.onOpenCollectionGallery,
+                                          child: const Icon(
+                                            Icons.grid_view_outlined,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),

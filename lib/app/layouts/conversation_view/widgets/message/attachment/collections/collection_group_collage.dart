@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/swipe_to_reply_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -60,6 +61,12 @@ class CollectionGroupCollage extends StatelessWidget {
       NavigationSvc.width(context) * _maxCollageSizeFactor,
       _maxCollageWidth,
     );
+    final collectionController = CollectionMediaController(
+      chat: cvController.chat,
+      media: _attachments,
+      messageState: messageState,
+      collectionPart: messagePart,
+    );
 
     return Obx(() {
       final isFromMe = messageState.isFromMe.value;
@@ -94,7 +101,7 @@ class CollectionGroupCollage extends StatelessWidget {
                 right: isFromMe
                     ? (_staggerInward(i, alignFirstToAuthor) ? _horizontalStagger : 0.0)
                     : null,
-                child: _buildCard(i, cardWidth, heights[i], isFromMe, isIOS),
+                child: _buildCard(collectionController, i, cardWidth, heights[i], isFromMe, isIOS),
               ),
           ],
         ),
@@ -111,6 +118,7 @@ class CollectionGroupCollage extends StatelessWidget {
   }
 
   Widget _buildCard(
+    CollectionMediaController collectionController,
     int index,
     double cardWidth,
     double cardHeight,
@@ -122,6 +130,7 @@ class CollectionGroupCollage extends StatelessWidget {
       attachmentIndex: index,
       messagePart: messagePart,
       galleryAttachments: _attachments,
+      collectionController: collectionController,
       cvController: cvController,
       isEditing: isEditing,
       enableGestures: true,
