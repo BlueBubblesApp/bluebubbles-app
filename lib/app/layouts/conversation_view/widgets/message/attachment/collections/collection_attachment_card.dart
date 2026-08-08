@@ -38,8 +38,8 @@ class CollectionAttachmentReactions extends StatelessWidget {
           .toList();
       if (reactions.isEmpty) return const SizedBox.shrink();
 
-      // Stack fans always open right, so inside-tail reactions stay on the trailing
-      // edge for both sides. Standard (collage) follows author side like a normal bubble.
+      // Inside-tail (fan stack) stays on the trailing edge for both sides. Standard
+      // (collage and similar) follows author side like a normal bubble.
       final forceTrailing = alignTrailing || tailType == ReactionTailType.inside;
       final alignRight = forceTrailing || !isFromMe;
       return Positioned(
@@ -56,9 +56,10 @@ class CollectionAttachmentReactions extends StatelessWidget {
   }
 }
 
-/// Single card slot in an iOS media collection (collage or stack).
+/// Shared card slot for media collection layouts (collage, stack, grid).
 ///
-/// Owns card shadow and rounded clip around media; reactions sit outside the clip.
+/// Parents own frame size and motion; this widget owns card shadow + rounded clip
+/// around media, popup, and reactions (reactions sit outside the clip).
 class CollectionAttachmentCard extends StatelessWidget {
   const CollectionAttachmentCard({
     super.key,
@@ -80,13 +81,13 @@ class CollectionAttachmentCard extends StatelessWidget {
   final ConversationViewController cvController;
   final bool isEditing;
 
-  /// When true, pointer events pass through to the stack (past / background cards).
+  /// When true, pointer events pass through to overlapping / background card.
   final bool ignorePointer;
 
   /// When true, long-press / double-tap open the per-card popup menu.
   final bool enableGestures;
 
-  /// Stack uses [ReactionTailType.inside]; collage keeps the default standard bubble.
+  /// Fan stack uses [ReactionTailType.inside]; collage and grid keep the default standard bubble.
   final ReactionTailType reactionTailType;
 
   int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
