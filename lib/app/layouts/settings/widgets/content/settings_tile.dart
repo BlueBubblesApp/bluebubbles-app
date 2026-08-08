@@ -16,7 +16,7 @@ class SettingsTile extends StatelessWidget {
     this.subtitle,
     this.backgroundColor,
     this.isThreeLine = false,
-    this.minVerticalPadding = 14,
+    this.minVerticalPadding = 6,
   });
 
   final Function? onTap;
