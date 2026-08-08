@@ -100,6 +100,8 @@ class CollectionGroupGrid extends StatelessWidget {
             enableGestures: true,
             hideReactions: true,
             showCardShadow: false,
+            // Parent cell ClipRRect owns silhouette corners; keep media square inside.
+            mediaClipBorderRadius: BorderRadius.zero,
           ),
         ),
         moreOverlayBuilder: (index, width, height, cellMoreCount) {
