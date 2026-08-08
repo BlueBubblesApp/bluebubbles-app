@@ -27,6 +27,18 @@ class ContactServiceV2 {
   /// in a burst, and each full sync is an expensive Contacts Provider sweep.
   static const Duration _contactChangeDebounce = Duration(seconds: 30);
 
+  /// Minimum time between OS permission re-checks on app resume while the last
+  /// known status is `granted` or `permanentlyDenied` — states unlikely to have
+  /// changed since the last check. A plain `denied` status is re-checked on
+  /// every resume instead (see [refreshPermissionStatusOnResume]), since that's
+  /// the state most likely to change from outside the app (user grants access
+  /// via system Settings and switches back).
+  static const Duration _permissionRecheckThrottle = Duration(minutes: 15);
+
+  /// Last known permission status, used to decide whether
+  /// [refreshPermissionStatusOnResume] should throttle its re-check.
+  PermissionStatus? _lastKnownPermissionStatus;
+
   /// Whether we have permission to access contacts
   bool _hasContactAccess = false;
 
@@ -54,7 +66,9 @@ class ContactServiceV2 {
     if (kIsWeb || kIsDesktop) {
       return SettingsSvc.getServerDetails().supportsContactsApi;
     } else {
-      return (await Permission.contacts.status).isGranted;
+      final status = await Permission.contacts.status;
+      _lastKnownPermissionStatus = status;
+      return status.isGranted;
     }
   }
 
@@ -63,6 +77,7 @@ class ContactServiceV2 {
     if (kIsWeb || kIsDesktop) return false;
 
     final status = await Permission.contacts.request();
+    _lastKnownPermissionStatus = status;
     _hasContactAccess = status.isGranted;
 
     if (_hasContactAccess) {
@@ -72,6 +87,78 @@ class ContactServiceV2 {
     }
 
     return _hasContactAccess;
+  }
+
+  /// Re-check the OS contacts permission status on app resume.
+  ///
+  /// A plain [PermissionStatus.denied] (never granted, or deniable again) is
+  /// re-checked on every call — it's the state most likely to have changed
+  /// from outside the app (the user grants access via system Settings and
+  /// switches back), and the check itself is a cheap platform-channel status
+  /// query. [PermissionStatus.granted] and [PermissionStatus.permanentlyDenied]
+  /// are unlikely to have changed since the last check, so those are throttled
+  /// via a persisted last-checked timestamp (survives app restarts).
+  Future<void> refreshPermissionStatusOnResume() async {
+    if (kIsWeb || kIsDesktop) return;
+
+    final lastStatus = _lastKnownPermissionStatus;
+    if (lastStatus == null || lastStatus == PermissionStatus.denied) {
+      _hasContactAccess = await _canAccessContacts();
+      return;
+    }
+
+    final lastCheckMillis = PrefsSvc.system.getLastContactPermissionCheck();
+    final lastCheck = lastCheckMillis != null ? DateTime.fromMillisecondsSinceEpoch(lastCheckMillis) : null;
+    if (lastCheck != null && DateTime.now().difference(lastCheck) < _permissionRecheckThrottle) {
+      return;
+    }
+
+    _hasContactAccess = await _canAccessContacts();
+    await PrefsSvc.system.setLastContactPermissionCheck(DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Force a live re-check of the OS contacts permission status, bypassing
+  /// the in-memory cache. Used by the Contacts Management page's "Refresh
+  /// Status" action — unlike [requestContactPermission], this never shows
+  /// the OS permission prompt.
+  Future<bool> checkPermissionStatus() async {
+    _hasContactAccess = await _canAccessContacts();
+    return _hasContactAccess;
+  }
+
+  /// Returns each on-device account with contacts, plus a live contact count
+  /// per account, for the Contacts Management page's account selector.
+  Future<List<Map<String, dynamic>>> getAccountContactCounts() async {
+    try {
+      return await ContactV2Interface.getAccountContactCounts();
+    } catch (e, stack) {
+      Logger.error('[ContactServiceV2] Error getting account contact counts', error: e, trace: stack);
+      return [];
+    }
+  }
+
+  /// Same as [syncContactsToHandles], but also returns the device contact
+  /// count and matched-contact count — used by the Contacts Management
+  /// page's manual refresh for diagnostic display.
+  Future<Map<String, dynamic>> syncContactsToHandlesWithStats() async {
+    const Map<String, dynamic> empty = {'affectedHandleIds': <int>[], 'deviceContactCount': 0, 'matchedContactCount': 0};
+
+    final access = await hasContactAccess;
+    if (!access) return empty;
+
+    try {
+      final raw = await ContactV2Interface.syncContactsToHandlesWithStats();
+      final affectedHandleIds = (raw['affectedHandleIds'] as List).cast<int>();
+      notifyHandlesUpdated(affectedHandleIds);
+      return {
+        'affectedHandleIds': affectedHandleIds,
+        'deviceContactCount': raw['deviceContactCount'] as int? ?? 0,
+        'matchedContactCount': raw['matchedContactCount'] as int? ?? 0,
+      };
+    } catch (e, stack) {
+      Logger.error('[ContactServiceV2] Error syncing contacts with stats', error: e, trace: stack);
+      return empty;
+    }
   }
 
   /// Initialize the contact service
