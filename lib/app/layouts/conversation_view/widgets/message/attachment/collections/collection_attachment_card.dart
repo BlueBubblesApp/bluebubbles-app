@@ -130,9 +130,6 @@ class CollectionAttachmentCard extends StatelessWidget {
             ignoring: ignorePointer,
             child: AttachmentHolder(
               message: scopedPart,
-              transparentBackground: true,
-              // Shadow/clip live on this card; keep holder from drawing a second shadow.
-              showCardShadow: false,
               fill: true,
               galleryAttachments: galleryAttachments,
             ),
