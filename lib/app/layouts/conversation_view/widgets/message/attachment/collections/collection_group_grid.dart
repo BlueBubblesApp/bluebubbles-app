@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -44,6 +46,24 @@ class CollectionGroupGrid extends StatelessWidget {
   /// One column of the 5+ bottom row (3 columns with two gaps).
   double _columnWidth(double gridWidth) => (gridWidth - 2 * _gap) / 3;
 
+  void _openSeeMoreFullscreen(BuildContext context) {
+    // Interim: open the fullscreen carousel on the covered 5th tile (index 4),
+    // not the PR6 overview page.
+    final attachment = _attachments[4];
+    cvController.focusNode.unfocus();
+    cvController.subjectFocusNode.unfocus();
+    Navigator.of(context).push(
+      ThemeSwitcher.buildPageRoute(
+        builder: (context) => ConversationFullscreenHolder(
+          currentChat: cvController.chat,
+          attachment: attachment,
+          showInteractions: true,
+          galleryAttachments: _attachments,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
@@ -56,6 +76,7 @@ class CollectionGroupGrid extends StatelessWidget {
       _maxGridWidth,
     );
     final gridHeight = _gridHeight(count, gridWidth);
+    final moreCount = count > 5 ? count - 5 : null;
 
     // Media layer: clipped cells with in-card reactions suppressed.
     final imageLayer = _wrapGridCard(
@@ -66,7 +87,8 @@ class CollectionGroupGrid extends StatelessWidget {
       child: _buildCellLayout(
         count: count,
         gridWidth: gridWidth,
-        cellBuilder: (index, width, height) => ClipRRect(
+        moreCount: moreCount,
+        cellBuilder: (index, width, height, cellMoreCount) => ClipRRect(
           borderRadius: _cellBorderRadius(count, index, cardRadius),
           child: CollectionAttachmentCard(
             attachment: _attachments[index],
@@ -80,6 +102,31 @@ class CollectionGroupGrid extends StatelessWidget {
             showCardShadow: false,
           ),
         ),
+        moreOverlayBuilder: (index, width, height, cellMoreCount) {
+          if (cellMoreCount == null || cellMoreCount <= 0) return null;
+          return ClipRRect(
+            borderRadius: _cellBorderRadius(count, index, cardRadius),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _openSeeMoreFullscreen(context),
+              child: ColoredBox(
+                color: Colors.black54,
+                child: Center(
+                  child: Text(
+                    '+$cellMoreCount',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: SettingsSvc.settings.skin.value == Skins.Material
+                          ? FontWeight.w500
+                          : FontWeight.w300,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
 
@@ -90,14 +137,21 @@ class CollectionGroupGrid extends StatelessWidget {
       child: _buildCellLayout(
         count: count,
         gridWidth: gridWidth,
-        cellBuilder: (index, width, height) => CollectionAttachmentReactions(
-          collectionPart: messagePart,
-          attachmentIndex: index,
-          alignTrailing: true,
-          tailType: SettingsSvc.settings.skin.value == Skins.iOS
-              ? ReactionTailType.inside
-              : ReactionTailType.standard,
-        ),
+        moreCount: moreCount,
+        cellBuilder: (index, width, height, cellMoreCount) {
+          // Overflow "+N" cell is a see-more control, not attachment 4; hide its tapbacks.
+          if (cellMoreCount != null && cellMoreCount > 0) {
+            return const SizedBox.shrink();
+          }
+          return CollectionAttachmentReactions(
+            collectionPart: messagePart,
+            attachmentIndex: index,
+            alignTrailing: true,
+            tailType: SettingsSvc.settings.skin.value == Skins.iOS
+                ? ReactionTailType.inside
+                : ReactionTailType.standard,
+          );
+        },
       ),
     );
 
@@ -136,13 +190,16 @@ class CollectionGroupGrid extends StatelessWidget {
   Widget _buildCellLayout({
     required int count,
     required double gridWidth,
-    required Widget Function(int index, double width, double height) cellBuilder,
+    required Widget Function(int index, double width, double height, int? moreCount) cellBuilder,
+    Widget? Function(int index, double width, double height, int? moreCount)? moreOverlayBuilder,
+    int? moreCount,
   }) {
     Widget gap({bool horizontal = false}) {
       return horizontal ? const SizedBox(width: _gap) : const SizedBox(height: _gap, width: double.infinity);
     }
 
-    Widget buildCell(int index, double width, double height) {
+    Widget buildCell(int index, double width, double height, {int? cellMoreCount}) {
+      final overlay = moreOverlayBuilder?.call(index, width, height, cellMoreCount);
       return SizedBox(
         width: width,
         height: height,
@@ -150,7 +207,8 @@ class CollectionGroupGrid extends StatelessWidget {
           fit: StackFit.expand,
           clipBehavior: Clip.none,
           children: [
-            cellBuilder(index, width, height),
+            cellBuilder(index, width, height, cellMoreCount),
+            if (overlay != null) Positioned.fill(child: overlay),
           ],
         ),
       );
@@ -234,7 +292,12 @@ class CollectionGroupGrid extends StatelessWidget {
                 children: [
                   for (int i = 2; i < visibleCount; i++) ...[
                     if (i > 2) gap(),
-                    buildCell(i, colWidth, colWidth),
+                    buildCell(
+                      i,
+                      colWidth,
+                      colWidth,
+                      cellMoreCount: i == 4 ? moreCount : null,
+                    ),
                   ],
                 ],
               ),
