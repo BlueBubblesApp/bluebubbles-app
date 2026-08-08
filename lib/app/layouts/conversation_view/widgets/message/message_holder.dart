@@ -136,7 +136,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
   }
 
   List<MessagePart> _collapseMediaCollectionParts(List<MessagePart> parts) {
-    if (!iOS) return parts;
     final collapsed = <MessagePart>[];
     int i = 0;
     while (i < parts.length) {
@@ -536,17 +535,17 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    enableGestures: !(iOS && e.isMediaCollection),
+                                                                    enableGestures: !e.isMediaCollection,
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          !(iOS && e.isMediaCollection),
+                                                                          !e.isMediaCollection,
                                                                       partIndex: e.part,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
-                                                                          final isCollection = iOS && e.isMediaCollection;
+                                                                          final isCollection = e.isMediaCollection;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
@@ -612,9 +611,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 // Reactions are in the inner Stack so they are always
                                                                 // positioned relative to the bubble, not the sticker.
                                                                 // Collection parts show a reaction per attachment instead
-                                                                // (inside CollectionGroupStack), since a tapback can be
+                                                                // (inside CollectionAttachmentCard), since a tapback can be
                                                                 // associated with just one image/video in the collection.
-                                                                if (!(iOS && e.isMediaCollection))
+                                                                if (!e.isMediaCollection)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
                                                                     part: e,
