@@ -113,7 +113,6 @@ class CollectionGroupCollage extends StatelessWidget {
     );
 
     // Parent owns the 4:3 / 3:4 frame; card expands to fill (same as fan stack).
-    // Tilt stays inside the swipe row so the reply chevron stays upright.
     final framed = SizedBox(
       width: cardWidth,
       height: cardHeight,
