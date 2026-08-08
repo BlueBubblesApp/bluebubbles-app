@@ -51,13 +51,24 @@ class MessagePart {
   int part;
 
   /// For gallery parts created by collapsing consecutive media-only parts,
-  /// maps each attachment (by index) to its original messagePart index.
+  /// maps each attachment (by index) to its original message-part id.
   /// Null for non-gallery parts or single-source-part galleries.
   List<int>? attachmentPartIndices;
 
-  /// Returns the original message part index for the attachment at [index].
+  /// Returns the original message-part id for the attachment at [index].
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIndexForAttachment(int index) => attachmentPartIndices?[index] ?? part;
+
+  /// Whether this bubble covers the raw message-part id [partId].
+  ///
+  /// For collapsed galleries, [attachmentPartIndices] is the span of original
+  /// ids; otherwise only [part] is covered. Collapsed bubbles set [part] to the
+  /// first id in that span.
+  bool coversPartId(int partId) {
+    final span = attachmentPartIndices;
+    if (span != null && span.isNotEmpty) return span.contains(partId);
+    return part == partId;
+  }
 
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);

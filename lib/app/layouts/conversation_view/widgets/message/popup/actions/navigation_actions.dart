@@ -15,7 +15,12 @@ import 'package:flutter/widgets.dart';
 
 void reply(MessagePopupActionContext ctx) {
   ctx.popDetails();
-  ctx.cvController.replyToMessage = MessageReplyContext(ctx.message, ctx.part.part);
+  final part = ctx.part;
+  ctx.cvController.replyToMessage = MessageReplyContext(
+    ctx.message,
+    part.part,
+    attachmentGuid: part.attachments.length == 1 ? part.attachments.first.guid : null,
+  );
 }
 
 void openDm(MessagePopupActionContext ctx) {
@@ -36,8 +41,9 @@ void showThread(MessagePopupActionContext ctx) {
   if (ctx.message.threadOriginatorGuid != null) {
     final mwc = ctx.service.getMessageStateIfExists(ctx.message.threadOriginatorGuid!);
     if (mwc == null) return ctx.showSnack("Error", "Failed to find thread!");
-    showReplyThread(
-        ctx.context, mwc.message, mwc.parts[ctx.message.normalizedThreadPart], ctx.service, ctx.cvController);
+    final originatorPart = mwc.partById(ctx.message.normalizedThreadPart);
+    if (originatorPart == null) return ctx.showSnack("Error", "Failed to find thread!");
+    showReplyThread(ctx.context, mwc.message, originatorPart, ctx.service, ctx.cvController);
   } else {
     showReplyThread(ctx.context, ctx.message, ctx.part, ctx.service, ctx.cvController);
   }
