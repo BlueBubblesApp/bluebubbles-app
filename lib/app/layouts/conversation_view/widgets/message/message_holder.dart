@@ -425,10 +425,13 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                           message.threadOriginatorGuid != null &&
                                                           olderMessage != null) ||
                                                       (index == messageParts.length - 1 &&
-                                                          (e.attachmentPartIndices ?? [e.part]).any((id) => service
-                                                              .struct
-                                                              .threads(message.guid!, id, returnOriginator: false)
-                                                              .isNotEmpty) &&
+                                                          service.struct
+                                                              .threadsForParts(
+                                                                message.guid!,
+                                                                e.attachmentPartIndices ?? [e.part],
+                                                                returnOriginator: false,
+                                                              )
+                                                              .isNotEmpty &&
                                                           newerMessage != null))
                                               ? ReplyLineDecoration(
                                                   isFromMe: message.isFromMe!,
