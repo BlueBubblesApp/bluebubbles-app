@@ -145,10 +145,11 @@ class CollectionGroupGrid extends StatelessWidget {
           if (cellMoreCount != null && cellMoreCount > 0) {
             return const SizedBox.shrink();
           }
+          // Author-edge with a tighter overhang so badges stay nearer their cell.
           return CollectionAttachmentReactions(
             collectionPart: messagePart,
             attachmentIndex: index,
-            alignTrailing: true,
+            tightOverhang: true,
             tailType: SettingsSvc.settings.skin.value == Skins.iOS
                 ? ReactionTailType.inside
                 : ReactionTailType.standard,
