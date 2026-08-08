@@ -84,7 +84,8 @@ class SettingsTile extends StatelessWidget {
                         color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75), height: 1.5),
                   )
                 : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.0, vertical: SettingsSvc.settings.skin.value == Skins.iOS ? 0.0 : 4.0),
           ),
         ),
       ),

@@ -5,22 +5,63 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/services/backend/actions/contact_v2_actions.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:get_it/get_it.dart';
 
 /// ContactV2Interface provides the bridge between the main isolate and the GlobalIsolate
 /// for all ContactV2 operations. This follows the architecture outlined in FR-1.md
 class ContactV2Interface {
+  /// Builds the account-filter portion of the sync data map from the
+  /// user-selected account (Contacts Management page). Empty when unset —
+  /// "all accounts" is the default, unfiltered behavior.
+  static Map<String, dynamic> _accountFilterData() {
+    final accountName = SettingsSvc.settings.contactSyncAccountName.value;
+    final accountType = SettingsSvc.settings.contactSyncAccountType.value;
+    if (accountName == null || accountType == null) return {};
+    return {'accountName': accountName, 'accountType': accountType};
+  }
+
   /// Fetch all contacts from the device and match them to existing handles
   /// This operation is executed in the GlobalIsolate to prevent UI jank
   ///
   /// Returns a list of handle IDs that were affected by the matching
   static Future<List<int>> syncContactsToHandles() async {
+    final data = _accountFilterData();
     if (isIsolate) {
-      return await ContactV2Actions.syncContactsToHandles(<String, dynamic>{});
+      return await ContactV2Actions.syncContactsToHandles(data);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<List<int>>(IsolateRequestType.syncContactsToHandles, input: data);
+    }
+  }
+
+  /// Same as [syncContactsToHandles], but also returns the device contact
+  /// count and matched-contact count for diagnostic display (Contacts
+  /// Management page's manual refresh).
+  static Future<Map<String, dynamic>> syncContactsToHandlesWithStats() async {
+    final data = _accountFilterData();
+    if (isIsolate) {
+      return await ContactV2Actions.syncContactsToHandlesWithStats(data);
     } else {
       return await GetIt.I<GlobalIsolate>()
-          .send<List<int>>(IsolateRequestType.syncContactsToHandles, input: <String, dynamic>{});
+          .send<Map<String, dynamic>>(IsolateRequestType.syncContactsToHandlesWithStats, input: data);
+    }
+  }
+
+  /// Returns each on-device account with contacts, plus a live contact count
+  /// per account (`{'name': String, 'type': String, 'count': int}`), for the
+  /// Contacts Management page's account selector.
+  static Future<List<Map<String, dynamic>>> getAccountContactCounts() async {
+    if (isIsolate) {
+      return await ContactV2Actions.getAccountContactCounts(<String, dynamic>{});
+    } else {
+      // Received as untyped List<dynamic> across the isolate boundary — cast each
+      // entry explicitly rather than requesting List<Map<String, dynamic>> from
+      // send<T>() directly, since a concrete nested-generic type isn't guaranteed
+      // to survive the isolate message copy.
+      final result = await GetIt.I<GlobalIsolate>()
+          .send<List<dynamic>>(IsolateRequestType.getAccountContactCounts, input: <String, dynamic>{});
+      return result.map((e) => Map<String, dynamic>.from(e as Map)).toList();
     }
   }
 

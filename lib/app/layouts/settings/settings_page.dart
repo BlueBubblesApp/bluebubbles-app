@@ -26,10 +26,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
-  final RxBool uploadingContacts = false.obs;
-  final RxnDouble progress = RxnDouble();
-  final RxnInt totalSize = RxnInt();
-
   String searchQuery = "";
 
   List<Widget> _getSettingsItemList(BuildContext context) {
@@ -43,9 +39,6 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       ns: NavigationSvc,
-      progress: progress,
-      totalSize: totalSize,
-      uploadingContacts: uploadingContacts,
     );
   }
 

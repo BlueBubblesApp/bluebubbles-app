@@ -450,23 +450,6 @@ mixin ConnectionPanelHelpersMixin {
                 if (result) SocketSvc.restartSocket();
               },
             ),
-            if (Platform.isAndroid) const SettingsDivider(),
-            if (Platform.isAndroid)
-              Obx(() => SettingsSwitch(
-                    initialVal: SettingsSvc.settings.syncContactsAutomatically.value,
-                    title: "Auto-Sync Contacts",
-                    subtitle: "Automatically re-upload contacts to server when changes are detected",
-                    backgroundColor: tileColor,
-                    onChanged: (bool val) async {
-                      SettingsSvc.settings.syncContactsAutomatically.value = val;
-                      await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
-                    },
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_2,
-                      materialIcon: Icons.people,
-                      containerColor: Colors.green,
-                    ),
-                  )),
             const SettingsDivider(),
             SettingsTile(
               leading: Column(
