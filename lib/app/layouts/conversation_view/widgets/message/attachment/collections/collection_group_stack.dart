@@ -190,6 +190,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         return _buildFanCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
+          collectionController: collectionController,
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -207,6 +208,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         stackChildren.add(_buildPastCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
+          collectionController: collectionController,
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -218,6 +220,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         stackChildren.add(_buildFanCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
+          collectionController: collectionController,
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -228,6 +231,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       stackChildren.add(_buildFanCard(
         attachment: _attachments[_currentIndex],
         attachmentIndex: _currentIndex,
+        collectionController: collectionController,
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
@@ -415,12 +419,14 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int attachmentIndex,
     required bool isCurrent,
     required bool ignorePointer,
+    required CollectionMediaController collectionController,
   }) {
     return CollectionAttachmentCard(
       attachment: attachment,
       attachmentIndex: attachmentIndex,
       messagePart: widget.messagePart,
       galleryAttachments: _attachments,
+      collectionController: collectionController,
       ignorePointer: ignorePointer,
       cvController: widget.cvController,
       isEditing: widget.isEditing,
@@ -432,6 +438,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget _buildFanCard({
     required Attachment attachment,
     required int attachmentIndex,
+    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -457,6 +464,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       attachmentIndex: attachmentIndex,
       isCurrent: isCurrent,
       ignorePointer: !isCurrent,
+      collectionController: collectionController,
     );
 
     return AnimatedPositioned(
@@ -486,6 +494,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget _buildPastCard({
     required Attachment attachment,
     required int attachmentIndex,
+    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -524,6 +533,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 attachmentIndex: attachmentIndex,
                 isCurrent: false,
                 ignorePointer: true,
+                collectionController: collectionController,
               ),
             ),
           ),

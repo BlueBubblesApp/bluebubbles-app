@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
@@ -74,6 +75,7 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.galleryAttachments,
     required this.cvController,
     required this.isEditing,
+    this.collectionController,
     this.ignorePointer = false,
     this.enableGestures = false,
     this.reactionTailType = ReactionTailType.standard,
@@ -89,6 +91,9 @@ class CollectionAttachmentCard extends StatelessWidget {
   final List<Attachment> galleryAttachments;
   final ConversationViewController cvController;
   final bool isEditing;
+
+  /// When set, fullscreen viewers show a collection-grid button (omit when opened from a grid).
+  final CollectionMediaController? collectionController;
 
   /// When true, pointer events pass through to overlapping / background card.
   final bool ignorePointer;
@@ -161,6 +166,7 @@ class CollectionAttachmentCard extends StatelessWidget {
               message: scopedPart,
               fill: true,
               galleryAttachments: galleryAttachments,
+              collectionController: collectionController,
             ),
           ),
         ),
