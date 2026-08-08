@@ -35,6 +35,12 @@ class CollectionGroupCollage extends StatelessWidget {
 
   List<Attachment> get _attachments => messagePart.attachments;
 
+  /// Whether this index should sit inward (away from the author edge).
+  /// ios parity: For 2 items with no subject bubble, the first card is author-flush; otherwise
+  /// (3+, or 2 with a subject above) the first is staggered in.
+  static bool _staggerInward(int index, bool alignFirstToAuthor) =>
+      alignFirstToAuthor ? index.isOdd : index.isEven;
+
   /// Landscape → 4:3; portrait / square / unknown → 3:4.
   double _estimateHeight(Attachment attachment, double cardWidth, MessageState messageState) {
     final guid = attachment.guid;
@@ -67,6 +73,11 @@ class CollectionGroupCollage extends StatelessWidget {
       }
       final totalHeight = tops.isEmpty ? 0.0 : tops.last + heights.last;
       final totalWidth = cardWidth + _horizontalStagger;
+      // Subject bubble (message-level, above leading attachment parts) already
+      // provides author-side alignment - keep the first card staggered in then.
+      final hasSubjectBubble = messageState.isLeadingMessagePart(messagePart) &&
+          !isNullOrEmpty(messageState.subject.value);
+      final alignFirstToAuthor = _attachments.length == 2 && !hasSubjectBubble;
 
       final collage = SizedBox(
         width: totalWidth,
@@ -77,8 +88,12 @@ class CollectionGroupCollage extends StatelessWidget {
             for (int i = 0; i < _attachments.length; i++)
               Positioned(
                 top: tops[i],
-                left: isFromMe ? null : (i.isEven ? _horizontalStagger : 0.0),
-                right: isFromMe ? (i.isEven ? _horizontalStagger : 0.0) : null,
+                left: isFromMe
+                    ? null
+                    : (_staggerInward(i, alignFirstToAuthor) ? _horizontalStagger : 0.0),
+                right: isFromMe
+                    ? (_staggerInward(i, alignFirstToAuthor) ? _horizontalStagger : 0.0)
+                    : null,
                 child: _buildCard(i, cardWidth, heights[i], isFromMe, isIOS),
               ),
           ],
