@@ -1,11 +1,15 @@
+import 'package:bluebubbles/app/components/bb_switch.dart';
 import 'package:bluebubbles/app/components/charts/charts.dart';
 import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/contacts/contacts_management_controller.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/contacts/contacts_management_helpers.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 /// Expressive body shared by the Material and Samsung skins — M3E stat tiles
 /// for permission/sync status, and `M3ESection`-grouped rows for the sync
@@ -69,6 +73,7 @@ class ContactsExpressiveBody extends StatelessWidget with ContactsManagementHelp
           const M3ESectionHeader(label: "Sync", padding: EdgeInsets.only(left: 4, bottom: 8)),
           Obx(() => M3ESection(
                 backgroundColor: context.tileColor,
+                margin: EdgeInsets.zero,
                 children: [
                   M3EListTile(
                     icon: Icons.sync_rounded,
@@ -79,6 +84,41 @@ class ContactsExpressiveBody extends StatelessWidget with ContactsManagementHelp
                         : null,
                     onTap: controller.syncing.value ? null : controller.refreshContactsNow,
                   ),
+                  if (Platform.isAndroid)
+                    Obx(() => M3EListTile(
+                          icon: Icons.people,
+                          iconColor: context.theme.colorScheme.secondary,
+                          title: "Auto-Sync Contacts",
+                          supportingText: "Automatically re-upload contacts to server when changes are detected.",
+                          trailing: BBSwitch(
+                            value: SettingsSvc.settings.syncContactsAutomatically.value,
+                            onChanged: (bool val) async {
+                              SettingsSvc.settings.syncContactsAutomatically.value = val;
+                              await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
+                            },
+                          ),
+                          onTap: () async {
+                            final val = !SettingsSvc.settings.syncContactsAutomatically.value;
+                            SettingsSvc.settings.syncContactsAutomatically.value = val;
+                            await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
+                          },
+                        )),
+                  if (!kIsWeb && !kIsDesktop)
+                    M3EListTile(
+                      icon: Icons.contacts_rounded,
+                      iconColor: context.theme.colorScheme.tertiary,
+                      title: "Export Contacts",
+                      supportingText: "Sync contacts to the desktop app.",
+                      onTap: () => controller.exportContacts(context),
+                    ),
+                ],
+              )),
+          const SizedBox(height: 8),
+          const M3ESectionHeader(label: "Sync Info", padding: EdgeInsets.only(left: 4, bottom: 8)),
+          Obx(() => M3ESection(
+                backgroundColor: context.tileColor,
+                margin: EdgeInsets.zero,
+                children: [
                   M3EListTile(
                     icon: Icons.link_rounded,
                     title: "Matched To Conversations",
@@ -103,6 +143,7 @@ class ContactsExpressiveBody extends StatelessWidget with ContactsManagementHelp
 
             return M3ESection(
               backgroundColor: context.tileColor,
+              margin: EdgeInsets.zero,
               children: [
                 M3EListTile(
                   icon: Icons.select_all_rounded,
@@ -115,7 +156,8 @@ class ContactsExpressiveBody extends StatelessWidget with ContactsManagementHelp
                 ),
                 for (final account in controller.accounts)
                   M3EListTile(
-                    icon: Icons.person_outline_rounded,
+                    icon: accountIcon(account).icon,
+                    iconColor: accountIcon(account).color,
                     title: accountLabel(account),
                     supportingText: "${accountSubtitle(account)} • ${accountCount(account)} contacts",
                     trailing: controller.isAccountSelected(account)

@@ -1,6 +1,8 @@
+import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_items_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -23,6 +25,10 @@ class ContactsManagementController extends GetxController {
   final RxnInt lastDeviceContactCount = RxnInt();
   final RxnInt lastMatchedContactCount = RxnInt();
   final RxnInt lastAffectedHandleCount = RxnInt();
+
+  final RxBool uploadingContacts = false.obs;
+  final RxnDouble exportProgress = RxnDouble();
+  final RxnInt exportTotalSize = RxnInt();
 
   @override
   void onInit() {
@@ -103,5 +109,15 @@ class ContactsManagementController extends GetxController {
     } finally {
       syncing.value = false;
     }
+  }
+
+  /// Uploads device contacts to the server, showing a progress dialog.
+  Future<void> exportContacts(BuildContext context) async {
+    await SettingsItemsActions.exportContacts(
+      context: context,
+      progress: exportProgress,
+      totalSize: exportTotalSize,
+      uploadingContacts: uploadingContacts,
+    );
   }
 }

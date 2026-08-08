@@ -2,10 +2,13 @@ import 'package:bluebubbles/app/layouts/settings/pages/contacts/contacts_managem
 import 'package:bluebubbles/app/layouts/settings/pages/contacts/contacts_management_helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 /// iOS skin — plain `SettingsTile`/`SettingsSection` rows, matching
 /// `troubleshoot_panel.dart`'s style (no M3E, which is Material/Samsung only).
@@ -67,7 +70,41 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                     trailing: controller.syncing.value ? const CupertinoActivityIndicator() : null,
                     onTap: controller.syncing.value ? null : controller.refreshContactsNow,
                   )),
-              const SettingsDivider(),
+              if (Platform.isAndroid) ...[
+                const SettingsDivider(),
+                Obx(() => SettingsSwitch(
+                      initialVal: SettingsSvc.settings.syncContactsAutomatically.value,
+                      title: "Auto-Sync Contacts",
+                      subtitle: "Automatically re-upload contacts to server when changes are detected",
+                      backgroundColor: context.tileColor,
+                      onChanged: (bool val) async {
+                        SettingsSvc.settings.syncContactsAutomatically.value = val;
+                        await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
+                      },
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.person_2,
+                        materialIcon: Icons.people,
+                        containerColor: Colors.green,
+                      ),
+                    )),
+              ],
+              if (!kIsWeb && !kIsDesktop) ...[
+                const SettingsDivider(),
+                SettingsTile(
+                  leading: const SettingsLeadingIcon(
+                    iosIcon: CupertinoIcons.group_solid,
+                    materialIcon: Icons.contacts,
+                    containerColor: Colors.green,
+                  ),
+                  title: "Export Contacts",
+                  subtitle: "Sync contacts to the desktop app",
+                  onTap: () => controller.exportContacts(context),
+                ),
+              ],
+            ]),
+            SettingsHeader(
+                iosSubtitle: context.iosSubtitle, materialSubtitle: context.materialSubtitle, text: "Sync Info"),
+            SettingsSection(backgroundColor: context.tileColor, children: [
               Obx(() => SettingsTile(
                     title: "Device Contacts Found",
                     trailing: Text('${controller.lastDeviceContactCount.value ?? "—"}'),
@@ -97,6 +134,11 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
 
               return SettingsSection(backgroundColor: context.tileColor, children: [
                 SettingsTile(
+                  leading: const SettingsLeadingIcon(
+                    iosIcon: CupertinoIcons.square_grid_2x2,
+                    materialIcon: Icons.select_all_rounded,
+                    containerColor: Colors.blueAccent,
+                  ),
                   title: "All Accounts",
                   subtitle: "Sync contacts from every account on this device (default).",
                   trailing: controller.isAccountSelected(null)
@@ -107,6 +149,11 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                 for (final account in controller.accounts) ...[
                   const SettingsDivider(),
                   SettingsTile(
+                    leading: SettingsLeadingIcon(
+                      iosIcon: accountIcon(account).icon,
+                      materialIcon: accountIcon(account).icon,
+                      containerColor: accountIcon(account).color,
+                    ),
                     title: accountLabel(account),
                     subtitle: "${accountSubtitle(account)} • ${accountCount(account)} contacts",
                     trailing: controller.isAccountSelected(account)

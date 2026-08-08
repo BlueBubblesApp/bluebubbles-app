@@ -13,6 +13,12 @@ class M3EListTile extends StatelessWidget {
   final bool destructive;
   final bool nested;
 
+  /// Overrides the leading icon's tint (icon + tonal container color).
+  /// Defaults to `colorScheme.primary` (or `error` when [destructive]) —
+  /// pass this for rows that carry their own brand/identity color, e.g. a
+  /// per-account icon in the contacts sync selector.
+  final Color? iconColor;
+
   const M3EListTile({
     super.key,
     required this.icon,
@@ -23,12 +29,13 @@ class M3EListTile extends StatelessWidget {
     this.onLongPress,
     this.destructive = false,
     this.nested = false,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.theme.colorScheme;
-    final accent = destructive ? colorScheme.error : colorScheme.primary;
+    final accent = iconColor ?? (destructive ? colorScheme.error : colorScheme.primary);
 
     return Material(
       color: Colors.transparent,
