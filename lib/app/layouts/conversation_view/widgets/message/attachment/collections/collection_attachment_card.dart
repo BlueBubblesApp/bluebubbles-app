@@ -57,6 +57,8 @@ class CollectionAttachmentReactions extends StatelessWidget {
 }
 
 /// Single card slot in an iOS media collection stack.
+///
+/// Owns card shadow and rounded clip around media; reactions sit outside the clip.
 class CollectionAttachmentCard extends StatelessWidget {
   const CollectionAttachmentCard({
     super.key,
@@ -98,14 +100,27 @@ class CollectionAttachmentCard extends StatelessWidget {
     );
   }
 
+  static const _cardRadius = BorderRadius.all(Radius.circular(20));
+
   @override
   Widget build(BuildContext context) {
     final scopedPart = _scopedPart();
-    return Stack(
-      fit: StackFit.expand,
-      clipBehavior: Clip.none,
-      children: [
-        MessagePopupHolder(
+    // Card owns shadow + clip so AttachmentHolder can stay fill-only.
+    // Reactions stay outside the clip so tapbacks can overflow.
+    final media = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: _cardRadius,
+        boxShadow: [
+          BoxShadow(
+            color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: _cardRadius,
+        child: MessagePopupHolder(
           controller: MessageStateScope.of(context),
           cvController: cvController,
           part: scopedPart,
@@ -116,12 +131,21 @@ class CollectionAttachmentCard extends StatelessWidget {
             child: AttachmentHolder(
               message: scopedPart,
               transparentBackground: true,
-              showCardShadow: true,
+              // Shadow/clip live on this card; keep holder from drawing a second shadow.
+              showCardShadow: false,
               fill: true,
               galleryAttachments: galleryAttachments,
             ),
           ),
         ),
+      ),
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      clipBehavior: Clip.none,
+      children: [
+        media,
         CollectionAttachmentReactions(
           collectionPart: messagePart,
           attachmentIndex: attachmentIndex,
