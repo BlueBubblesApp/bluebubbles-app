@@ -159,7 +159,7 @@ class ContactsExpressiveBody extends StatelessWidget with ContactsManagementHelp
                     icon: accountIcon(account).icon,
                     iconColor: accountIcon(account).color,
                     title: accountLabel(account),
-                    supportingText: "${accountSubtitle(account)} • ${accountCount(account)} contacts",
+                    supportingText: "${accountCount(account)} contacts",
                     trailing: controller.isAccountSelected(account)
                         ? Icon(Icons.check_rounded, color: context.theme.colorScheme.primary)
                         : null,
