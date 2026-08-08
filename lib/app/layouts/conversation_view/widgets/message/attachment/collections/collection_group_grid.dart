@@ -120,7 +120,7 @@ class CollectionGroupGrid extends StatelessWidget {
     final gridHeight = _gridHeight(count, gridWidth);
     final moreCount = count > 5 ? count - 5 : null;
 
-    // Media layer: clipped cells with in-card reactions suppressed.
+    // Media layer: outer clip owns the silhouette; cells fill square.
     final imageLayer = _wrapGridCard(
       context,
       width: gridWidth,
@@ -130,41 +130,35 @@ class CollectionGroupGrid extends StatelessWidget {
         count: count,
         gridWidth: gridWidth,
         moreCount: moreCount,
-        cellBuilder: (index, width, height, cellMoreCount) => ClipRRect(
-          borderRadius: _cellBorderRadius(count, index, silhouette),
-          child: CollectionAttachmentCard(
-            attachment: _attachments[index],
-            attachmentIndex: index,
-            messagePart: messagePart,
-            galleryAttachments: _attachments,
-            cvController: cvController,
-            isEditing: isEditing,
-            enableGestures: true,
-            hideReactions: true,
-            showCardShadow: false,
-            // Parent cell ClipRRect owns silhouette corners; keep media square inside.
-            mediaClipBorderRadius: BorderRadius.zero,
-          ),
+        cellBuilder: (index, width, height, cellMoreCount) => CollectionAttachmentCard(
+          attachment: _attachments[index],
+          attachmentIndex: index,
+          messagePart: messagePart,
+          galleryAttachments: _attachments,
+          cvController: cvController,
+          isEditing: isEditing,
+          enableGestures: true,
+          hideReactions: true,
+          showCardShadow: false,
+          // Outer grid ClipRRect owns silhouette corners; keep media square inside.
+          mediaClipBorderRadius: BorderRadius.zero,
         ),
         moreOverlayBuilder: (index, width, height, cellMoreCount) {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
-          return ClipRRect(
-            borderRadius: _cellBorderRadius(count, index, silhouette),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _openSeeMoreFullscreen(context),
-              child: ColoredBox(
-                color: Colors.black54,
-                child: Center(
-                  child: Text(
-                    '+$cellMoreCount',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: SettingsSvc.settings.skin.value == Skins.Material
-                          ? FontWeight.w500
-                          : FontWeight.w300,
-                    ),
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _openSeeMoreFullscreen(context),
+            child: ColoredBox(
+              color: Colors.black54,
+              child: Center(
+                child: Text(
+                  '+$cellMoreCount',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: SettingsSvc.settings.skin.value == Skins.Material
+                        ? FontWeight.w500
+                        : FontWeight.w300,
                   ),
                 ),
               ),
@@ -377,39 +371,12 @@ class CollectionGroupGrid extends StatelessWidget {
                 ]
               : null,
         ),
-        child: child,
+        // Clip media to the silhouette; cells stay square and fill.
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: child,
+        ),
       ),
     );
-  }
-
-  /// Per-cell clip: only silhouette corners get radius from [silhouette]; shared edges stay square.
-  BorderRadius _cellBorderRadius(int count, int index, BorderRadius silhouette) {
-    if (count == 2) {
-      if (index == 0) {
-        return BorderRadius.only(topLeft: silhouette.topLeft, bottomLeft: silhouette.bottomLeft);
-      }
-      return BorderRadius.only(topRight: silhouette.topRight, bottomRight: silhouette.bottomRight);
-    }
-    if (count == 3) {
-      if (index == 0) {
-        return BorderRadius.only(topLeft: silhouette.topLeft, topRight: silhouette.topRight);
-      }
-      if (index == 1) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
-      return BorderRadius.only(bottomRight: silhouette.bottomRight);
-    }
-    if (count == 4) {
-      if (index == 0) return BorderRadius.only(topLeft: silhouette.topLeft);
-      if (index == 1) return BorderRadius.only(topRight: silhouette.topRight);
-      if (index == 2) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
-      return BorderRadius.only(bottomRight: silhouette.bottomRight);
-    }
-    // 5+: hero top + span + stack
-    if (index == 0) {
-      return BorderRadius.only(topLeft: silhouette.topLeft, topRight: silhouette.topRight);
-    }
-    if (index == 1) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
-    final lastVisible = min(count, 5) - 1;
-    if (index == lastVisible) return BorderRadius.only(bottomRight: silhouette.bottomRight);
-    return BorderRadius.zero;
   }
 }
