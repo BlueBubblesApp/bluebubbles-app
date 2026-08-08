@@ -151,6 +151,11 @@ class Settings {
   final RxBool enableUnifiedPush = false.obs;
   final RxString endpointUnifiedPush = RxString("");
 
+  // FCM (Firebase) push delivery — Android's default notification transport. Turn off to
+  // skip Firebase registration when using another provider (e.g. UnifiedPush) or the
+  // background service; the server then drops the device via its inactivity purge.
+  final RxBool enableFcm = true.obs;
+
   // Quick tapback settings
   final RxBool enableQuickTapback = false.obs;
   final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
@@ -395,6 +400,7 @@ class Settings {
       'privateAPIAttachmentSend': privateAPIAttachmentSend.value,
       'enableUnifiedPush': enableUnifiedPush.value,
       'endpointUnifiedPush': endpointUnifiedPush.value,
+      'enableFcm': enableFcm.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -630,6 +636,7 @@ class Settings {
         map['enableUnifiedPush'] ?? SettingsSvc.settings.enableUnifiedPush.value;
     SettingsSvc.settings.endpointUnifiedPush.value =
         map['endpointUnifiedPush'] ?? SettingsSvc.settings.endpointUnifiedPush.value;
+    SettingsSvc.settings.enableFcm.value = map['enableFcm'] ?? SettingsSvc.settings.enableFcm.value;
     SettingsSvc.settings.enableQuickTapback.value =
         map['enableQuickTapback'] ?? SettingsSvc.settings.enableQuickTapback.value;
     SettingsSvc.settings.quickTapbackType.value =
@@ -826,6 +833,7 @@ class Settings {
     s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     s.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
+    s.enableFcm.value = map['enableFcm'] ?? true;
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     s.notificationReactionAction.value = map['notificationReactionAction'] ?? true;
