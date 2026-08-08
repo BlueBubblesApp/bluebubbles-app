@@ -419,9 +419,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
             Obx(
               () => !isPlayingLivePhoto.value
                   ? Positioned(
-                      top: 8,
-                      right: widget.isFromMe ? null : 8,
-                      left: widget.isFromMe ? 8 : null,
+                      top: 12,
+                      right: widget.isFromMe ? null : 10,
+                      left: widget.isFromMe ? 10 : null,
                       child: GestureDetector(
                         onTap: () {
                           if (!isDownloadingLivePhoto.value) {
@@ -429,7 +429,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(4),
