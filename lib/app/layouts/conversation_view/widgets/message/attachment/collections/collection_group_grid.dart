@@ -3,11 +3,10 @@ import 'dart:math';
 import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -34,7 +33,7 @@ class _LayoutSegment {
 ///
 /// Built from three composable shapes on a shared 3-column grid: a wide banner, a tall hero
 /// with a vertical stack of squares beside it, and a row of equal squares. Collections
-/// over 7 tiles show a `+N` overlay — tap opens fullscreen, long-press expands
+/// over 7 tiles show a `+N` overlay — tap opens the collection gallery, long-press expands
 /// the remaining items in place. Expanded layouts keep an alternating hero / row rhythm
 /// (hero facing flips each time) and avoid leaving a single orphan tile.
 class CollectionGroupGrid extends StatefulWidget {
@@ -245,26 +244,15 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
     return _heightForSegments(_segmentsFor(count, expanded: expanded), gridWidth);
   }
 
-  void _openSeeMoreFullscreen(BuildContext context) {
-    final overflowIndex = min(_attachments.length, 7) - 1;
-    final attachment = _attachments[overflowIndex];
-    cvController.focusNode.unfocus();
-    cvController.subjectFocusNode.unfocus();
-    Navigator.of(context).push(
-      ThemeSwitcher.buildPageRoute(
-        builder: (context) => ConversationFullscreenHolder(
-          currentChat: cvController.chat,
-          attachment: attachment,
-          showInteractions: true,
-          galleryAttachments: _attachments,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
+    final collectionController = CollectionMediaController(
+      chat: cvController.chat,
+      media: _attachments,
+      messageState: messageState,
+      collectionPart: messagePart,
+    );
     final isFromMe = messageState.isFromMe.value;
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
@@ -304,7 +292,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => _openSeeMoreFullscreen(context),
+            onTap: () => collectionController.openGallery(context),
             onLongPress: () {
               HapticFeedback.lightImpact();
               setState(() => _expanded = true);
