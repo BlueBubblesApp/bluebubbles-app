@@ -74,6 +74,7 @@ class CollectionAttachmentCard extends StatelessWidget {
     this.reactionTailType = ReactionTailType.standard,
     this.alignTrailing = false,
     this.hideReactions = false,
+    this.showCardShadow = true,
     this.mediaClipBorderRadius,
   });
 
@@ -98,6 +99,9 @@ class CollectionAttachmentCard extends StatelessWidget {
 
   /// When true, omit in-card tapbacks (e.g. grid paints them in an overlay above all cells).
   final bool hideReactions;
+
+  /// Grid passes false so parent/media clip owns corners.
+  final bool showCardShadow;
 
   /// When set, clips media to this radius without clipping overflow tapbacks.
   final BorderRadius? mediaClipBorderRadius;
@@ -128,13 +132,15 @@ class CollectionAttachmentCard extends StatelessWidget {
     final media = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: clipRadius,
-        boxShadow: [
-          BoxShadow(
-            color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        boxShadow: showCardShadow
+            ? [
+                BoxShadow(
+                  color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
       child: ClipRRect(
         borderRadius: clipRadius,

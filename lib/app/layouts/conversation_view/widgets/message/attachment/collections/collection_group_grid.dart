@@ -77,6 +77,7 @@ class CollectionGroupGrid extends StatelessWidget {
             isEditing: isEditing,
             enableGestures: true,
             hideReactions: true,
+            showCardShadow: false,
           ),
         ),
       ),
