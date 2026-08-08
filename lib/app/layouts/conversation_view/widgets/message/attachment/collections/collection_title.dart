@@ -1,33 +1,18 @@
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 
-/// Label row above an iOS media collection stack (icon + "X Items").
+/// Tappable "X Photos" / "X Items" header for media collection layouts.
+///
+/// Callers gate visibility (e.g. iOS skin only). Tap opens the full collection grid.
 class CollectionTitle extends StatefulWidget {
   const CollectionTitle({
     super.key,
-    required this.attachments,
-    required this.isFromMe,
+    required this.label,
     required this.onTap,
   });
 
-  final List<Attachment> attachments;
-  final bool isFromMe;
-  final VoidCallback? onTap;
-
-  static String labelFor(List<Attachment> attachments) {
-    final photoCount = attachments.where((a) => a.mimeStart == 'image').length;
-    final videoCount = attachments.where((a) => a.mimeStart == 'video').length;
-    if (photoCount > 0 && videoCount > 0) {
-      return '${photoCount + videoCount} Items';
-    }
-    if (videoCount > 0) {
-      return '$videoCount ${videoCount == 1 ? 'Video' : 'Videos'}';
-    }
-    return '$photoCount ${photoCount == 1 ? 'Photo' : 'Photos'}';
-  }
-
-  String get label => labelFor(attachments);
+  final String label;
+  final VoidCallback onTap;
 
   @override
   State<CollectionTitle> createState() => _CollectionTitleState();
@@ -42,7 +27,7 @@ class _CollectionTitleState extends State<CollectionTitle> {
       onEnter: kIsDesktop ? (_) => setState(() => _labelHovered = true) : null,
       onExit: kIsDesktop ? (_) => setState(() => _labelHovered = false) : null,
       child: GestureDetector(
-        onTap: kIsDesktop ? widget.onTap : null,
+        onTap: widget.onTap,
         child: Stack(
           clipBehavior: Clip.none,
           children: [

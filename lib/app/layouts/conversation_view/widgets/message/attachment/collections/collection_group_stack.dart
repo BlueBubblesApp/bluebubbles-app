@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_gallery_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
@@ -132,26 +132,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
-  void _showCollectionPopup(BuildContext context, String title) {
-    showBBDialog(
-      useRootNavigator: false,
-      context: context,
-      title: title,
-      content: SizedBox(
-        width: 500,
-        height: 400,
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-          ),
-          itemCount: _attachments.length,
-          itemBuilder: (context, index) {
-            return MediaGalleryCard(attachment: _attachments[index], showSenderAvatar: false);
-          },
-        ),
-      ),
+  CollectionMediaController _collectionController(BuildContext context) {
+    return CollectionMediaController(
+      chat: widget.cvController.chat,
+      media: _attachments,
+      messageState: MessageStateScope.of(context),
+      collectionPart: widget.messagePart,
     );
   }
 
@@ -163,6 +149,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       _maxStackWidth,
     );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
+    final collectionController = _collectionController(context);
 
     // Horizontal spread of fanned cards behind the front card; sizes the canvas.
     final double maxFanDx;
@@ -259,9 +246,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           CollectionTitle(
-            attachments: _attachments,
-            isFromMe: _isFromMe,
-            onTap: () => _showCollectionPopup(context, CollectionTitle.labelFor(_attachments)),
+            label: collectionController.title,
+            onTap: () => collectionController.openGallery(context),
           ),
           // Reserve room for per-card tapbacks (top: -14) so they don't cover the label.
           // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
