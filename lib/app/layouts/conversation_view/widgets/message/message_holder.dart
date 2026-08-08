@@ -420,8 +420,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                       Padding(
                                         padding:
                                             (showAvatar || alwaysShowAvatars) && !(message.isGroupEvent || e.isUnsent)
-                                                ? EdgeInsets.only(
-                                                    left: 35.0 * avatarScale + (e.isMediaCollection ? 12.0 : 0.0))
+                                                ? EdgeInsets.only(left: 35.0 * avatarScale)
                                                 : EdgeInsets.zero,
                                         child: DecoratedBox(
                                           decoration: iOS &&
