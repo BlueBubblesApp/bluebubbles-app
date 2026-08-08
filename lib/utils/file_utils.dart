@@ -1,5 +1,5 @@
 import 'package:bluebubbles/database/global/platform_file.dart';
-import 'package:collection/collection.dart';
+import 'package:bluebubbles/utils/gif_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
@@ -41,18 +41,12 @@ Future<PlatformFile?> loadPathAsFile(String path) async {
 
 /// Changes the delay time of any GIF with 0 delay time.
 /// https://giflib.sourceforge.net/whatsinagif/animation_and_transparency.html
+///
+/// Runs on the calling isolate: [rewriteZeroDelayGifFrames] only reads block
+/// headers and skips the compressed payloads by arithmetic, so it touches a few
+/// hundred bytes regardless of file size. Handing it to [compute] would cost a
+/// full copy of the image across the port — by far the expensive part — to save
+/// work that is already negligible.
 Future<Uint8List> fixSpeedyGifs(Uint8List image) async {
-  return await compute((image) {
-    for (int i = 0; i < image.length - 2; i++) {
-      final slice = image.sublist(i, i + 3);
-      if (const ListEquality().equals(slice, [0x21, 0xF9, 0x04])) {
-        final delay1 = image[i + 4];
-        final delay2 = image[i + 5];
-        if (delay1 == 0x00 && delay2 == 0x00) {
-          image[i + 4] = 0x0A;
-        }
-      }
-    }
-    return image;
-  }, image);
+  return rewriteZeroDelayGifFrames(image);
 }

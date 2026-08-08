@@ -29,7 +29,8 @@ class MediaGalleryCard extends StatefulWidget {
 }
 
 class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepAliveClientMixin, ThemeHelpers {
-  Uint8List? videoPreview;
+  // Path to the generated thumbnail file on disk -- never held as decoded bytes in memory.
+  String? videoPreviewPath;
   bool videoPreviewFailed = false;
   Duration? duration;
   bool _pressed = false;
@@ -105,27 +106,16 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (videoPreview != null || videoPreviewFailed || file.path == null) return;
-    if (attachment.metadata?['thumbnail_status'] == 'error') {
-      videoPreviewFailed = true;
-      if (mounted) setState(() {});
-      return;
-    }
+    if (videoPreviewPath != null || videoPreviewFailed || file.path == null) return;
 
     try {
-      videoPreview = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      videoPreviewPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
       dynamic _file = File(file.path!);
       final tempController = VideoPlayerController.file(_file);
       await tempController.initialize();
       duration = tempController.value.duration;
-    } catch (_) {
+    } catch (ex) {
       videoPreviewFailed = true;
-
-      if (attachment.metadata?['thumbnail_status'] != 'error') {
-        attachment.metadata ??= {};
-        attachment.metadata!['thumbnail_status'] = 'error';
-        await attachment.saveAsync(null);
-      }
     }
 
     if (mounted) setState(() {});
@@ -163,8 +153,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               child: file.path != null
                   ? (attachment.mimeType?.startsWith("image") ?? false)
                       ? ImageDisplay(attachment: attachment, file: file)
-                      : (attachment.mimeType?.startsWith("video") ?? false)
-                          ? ImageDisplay(attachment: attachment, image: videoPreview ?? Uint8List(0))
+                      : (attachment.mimeType?.startsWith("video") ?? false) && videoPreviewPath != null
+                          ? ImageDisplay(attachment: attachment, imagePath: videoPreviewPath)
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
             ),
@@ -336,10 +326,10 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
-          if (videoPreview != null) {
+          if (videoPreviewPath != null) {
             child = ImageDisplay(
                 attachment: attachment,
-                image: videoPreview!,
+                imagePath: videoPreviewPath,
                 duration: duration,
                 showSenderAvatar: widget.showSenderAvatar,
                 onPressChanged: _setPressed);
@@ -391,7 +381,7 @@ class ImageDisplay extends StatefulWidget {
     super.key,
     required this.attachment,
     this.file,
-    this.image,
+    this.imagePath,
     this.duration,
     this.showSenderAvatar = true,
     this.onPressChanged,
@@ -399,7 +389,7 @@ class ImageDisplay extends StatefulWidget {
 
   final Attachment attachment;
   final PlatformFile? file;
-  final Uint8List? image;
+  final String? imagePath;
   final Duration? duration;
   final bool showSenderAvatar;
   final ValueChanged<bool>? onPressChanged;
@@ -413,7 +403,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
 
   Attachment get attachment => widget.attachment;
   PlatformFile? get file => widget.file;
-  Uint8List? get image => widget.image;
+  String? get imagePath => widget.imagePath;
   Duration? get duration => widget.duration;
 
   @override
@@ -446,8 +436,8 @@ class _ImageDisplayState extends State<ImageDisplay> {
                   children: [
                     // Blurred canvas: filled background + centered foreground.
                     ImageBlurCanvas(
-                      filePath: file?.path,
-                      bytes: file?.bytes ?? image,
+                      filePath: file?.path ?? imagePath,
+                      bytes: file?.bytes,
                     ),
                     if ((attachment.mimeType?.contains("video") ?? false) && duration != null)
                       Positioned(

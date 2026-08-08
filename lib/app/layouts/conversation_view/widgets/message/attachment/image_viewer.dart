@@ -251,7 +251,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           gaplessPlayback: true,
           filterQuality: FilterQuality.high,
           width: displayWidth,
-          height: displayHeight,
+          // height: displayHeight,
           // Display space, width only. The decoder already applies EXIF
           // orientation (dimensions it reports, and cacheWidth/cacheHeight it
           // accepts, are post-rotation), so nothing here may re-apply it.
@@ -314,7 +314,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           filterQuality: FilterQuality.high,
           fit: BoxFit.contain,
           width: displayWidth,
-          height: displayHeight,
+          // Commented out because it causes clipping issues
+          // when an image exists in the same message as text.
+          // height: displayHeight,
           cacheWidth: calculatedWidth,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
             if (wasSynchronouslyLoaded) return child;
@@ -339,7 +341,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   gaplessPlayback: true,
                   filterQuality: FilterQuality.high,
                   width: displayWidth,
-                  height: displayHeight,
+                  // Commented out because it causes clipping issues
+                  // when an image exists in the same message as text.
+                  // height: displayHeight,
                   cacheWidth: calculatedWidth,
                   fit: BoxFit.contain,
                   frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
@@ -363,7 +367,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
           gaplessPlayback: true,
           filterQuality: FilterQuality.high,
           width: displayWidth,
-          height: displayHeight,
+          // Commented out because it causes clipping issues
+          // when an image exists in the same message as text.
+          // height: displayHeight,
           cacheWidth: calculatedWidth,
           fit: BoxFit.contain,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

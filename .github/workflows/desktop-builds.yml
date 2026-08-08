@@ -270,7 +270,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libmpv-dev \
             libayatana-appindicator3-dev \
-            libnotify-dev
+            libnotify-dev \
+            libjson-glib-dev
 
       # Also resolves dependencies, so build.sh's own pub get below is a no-op.
       - name: Setup Flutter

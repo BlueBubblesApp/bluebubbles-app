@@ -62,6 +62,7 @@ dependencies:
   encrypter_plus: ^5.1.0
   exif: ^3.3.0
   faker: ^2.2.0
+  ffmpeg_kit_flutter_new_min: ^3.6.2
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
   firebase_dart:
@@ -176,7 +177,6 @@ dependencies:
   vcf_dart: ^1.0.2
   version: ^3.0.2
   video_player: ^2.10.0
-  video_thumbnail: ^0.5.6
   win32: ^5.10.1
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2
@@ -219,6 +219,14 @@ dependency_overrides:
   pointycastle: ^4.0.0 # firebase_dart
   rxdart: ^0.28.0 # firebase_dart
   uuid: ^4.5.1 # firebase_dart
+  # The package will fail to build arm64 linux binaries due to the ffmpeg
+  # build for it not existing in the upstream repo. Instead, we forked the
+  # repository and no-op'd the arm64 linux branch. The app will shell-out
+  # to the existing ffmpeg installation on arm64 linux.
+  ffmpeg_kit_flutter_new_min:
+    git:
+      url: https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git
+      ref: linux-arm64-noop
 
 dev_dependencies:
   build_runner: ^2.7.1

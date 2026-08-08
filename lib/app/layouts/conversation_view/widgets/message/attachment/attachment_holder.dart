@@ -205,8 +205,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   }
 
   /// Reserves [box] around a pre-resolve placeholder so it claims exactly the
-  /// space the image will, with the placeholder centred inside at its own
-  /// natural size.
+  /// space the image will.
   ///
   /// The placeholder is deliberately **not** scaled to the box. Scaling made
   /// every download card a different size and a different text size, since the
@@ -214,8 +213,19 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   /// have. Callers instead switch to the compact layout (see
   /// [_useCompactPlaceholder]) when the box can't host the full one, so the
   /// content always renders at its designed proportions.
-  Widget _reserve(({double width, double height})? box, Widget child) {
+  ///
+  /// [stretch] lets a full-layout child (never smaller than [box] — that's
+  /// what [_useCompactPlaceholder] guarantees) fill the reserved box exactly,
+  /// so its own corner-positioned content (e.g. [DownloadingContent]'s mime
+  /// and status tags) lands at the true corners of the placeholder instead of
+  /// hugging its own natural-size content when that's smaller than [box].
+  /// Compact children still center at natural size with a scaleDown backstop,
+  /// since they don't lay out their content relative to the full box.
+  Widget _reserve(({double width, double height})? box, Widget child, {bool stretch = false}) {
     if (box == null) return child;
+    if (stretch) {
+      return SizedBox(width: box.width, height: box.height, child: child);
+    }
     return SizedBox(
       width: box.width,
       height: box.height,
@@ -293,6 +303,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     // Download in progress — show the download controller's progress UI.
     final download = state.activeDownload.value;
     if (download != null) {
+      final compact = _useCompactPlaceholder(reservedBox, DownloadingContent.fullVariantMinSize);
       return _reserve(
         reservedBox,
         DownloadingContent(
@@ -300,8 +311,12 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isInReply: isInReply,
           isiOS: isiOS,
           isInGallery: widget.transparentBackground,
-          compact: _useCompactPlaceholder(reservedBox, DownloadingContent.fullVariantMinSize),
+          compact: compact,
+          showTail: showTail,
+          isFromMe: message.isFromMe!,
+          hasReservedSize: reservedBox != null,
         ),
+        stretch: !compact,
       );
     }
 

@@ -112,7 +112,6 @@ class SettingsItemsActions {
   static Future<void> resetApp() async {
     Database.reset();
     await FilesystemSvc.deleteCacheDirectories();
-    AttachmentsSvc.clearVideoThumbnailCache();
     SocketSvc.forgetConnection();
 
     await PrefsSvc.admin.clearAll();

@@ -68,7 +68,7 @@ class PreviewImageDownloader {
 
   /// Anything smaller in either dimension is a spacer, a bullet or a tracking
   /// pixel rather than a preview.
-  static const int minDimension = 32;
+  static const int minDimension = 16;
 
   /// A body this small cannot be a real image.
   static const int minBytes = 128;

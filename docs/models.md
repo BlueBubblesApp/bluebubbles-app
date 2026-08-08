@@ -204,7 +204,7 @@ Database.chats.put(chat);
 
 ToOne:
 ```dart
-message.handle.target = handle;
+message.handleRelation.target = handle;
 Database.messages.put(message);
 ```
 

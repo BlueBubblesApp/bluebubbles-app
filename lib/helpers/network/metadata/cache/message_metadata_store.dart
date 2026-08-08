@@ -99,6 +99,19 @@ abstract final class MessageMetadataStore {
     return _string(message.metadata?[key]);
   }
 
+  /// Whether **any** attempt has ever completed for [slot], ignoring
+  /// [retryAfter] entirely.
+  ///
+  /// For callers that want a fetch to run at most once — ever — rather than
+  /// retrying on the usual TTL. `Message.metadata` is the only durable record
+  /// of that: a fresh [UrlPreviewController] (a rebuilt row, a popup clone, a
+  /// cold app start) has no memory of what an earlier instance already tried.
+  /// Cleared by [clear], which is what "Refresh Preview" calls — that is the
+  /// only way to make this `true` flip back to `false`.
+  static bool hasAttempted(Message message, {MetadataCacheSlot slot = MetadataCacheSlot.urlPreview}) {
+    return message.metadata?[slot.attemptedAtKey] != null;
+  }
+
   /// Whether a fresh fetch should run for [slot].
   ///
   /// Returns `false` only while a previous completed attempt is still inside

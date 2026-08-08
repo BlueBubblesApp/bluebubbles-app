@@ -143,6 +143,9 @@ class Message {
   @Transient()
   bool get isGroupPhotoRemoved => itemType == 3 && groupActionType == 2;
 
+  @Transient()
+  bool get isReply => threadOriginatorGuid != null;
+
   Message({
     this.id,
     this.originalROWID,
@@ -624,7 +627,7 @@ class Message {
 
   bool showTail(Message? newer) {
     // if there is no newer, or if the newer is a different sender
-    if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
+    if (newer == null || !sameSender(newer) || newer.isGroupEvent || (threadOriginatorGuid == null && newer.isReply)) return true;
     // if newer is over a minute newer
     return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
   }
