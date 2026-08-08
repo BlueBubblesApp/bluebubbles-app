@@ -43,11 +43,30 @@ class ResolvedFileContent extends StatelessWidget {
   final bool fill;
   final List<Attachment>? galleryAttachments;
 
+  /// Bubble-style media radius, or zero when [fill] (parent owns clip/shadow).
+  BorderRadius _mediaBorderRadius(Message message) {
+    if (fill) return BorderRadius.zero;
+    if (isiOS) {
+      return BorderRadius.only(
+        topLeft: const Radius.circular(20.0),
+        topRight: const Radius.circular(20.0),
+        bottomLeft: forceAllCornersRounded
+            ? const Radius.circular(20.0)
+            : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+        bottomRight: forceAllCornersRounded
+            ? const Radius.circular(20.0)
+            : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+      );
+    }
+    return const BorderRadius.all(Radius.circular(5.0));
+  }
+
   @override
   Widget build(BuildContext context) {
     final message = MessageStateScope.messageOf(context);
     final attachment = AttachmentStateScope.attachmentOf(context);
     final currentChat = ChatStateScope.maybeChatOf(context);
+    final mediaRadius = _mediaBorderRadius(message);
     final tailPadding = EdgeInsets.only(
       left: message.isFromMe! ? 0 : 10,
       right: message.isFromMe! ? 10 : 0,
@@ -58,20 +77,7 @@ class ResolvedFileContent extends StatelessWidget {
         openColor: Colors.black,
         closedColor: Colors.transparent,
         closedElevation: 0,
-        closedShape: isiOS
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20.0),
-                  topRight: const Radius.circular(20.0),
-                  bottomLeft: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                  bottomRight: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                ),
-              )
-            : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0))),
+        closedShape: RoundedRectangleBorder(borderRadius: mediaRadius),
         useRootNavigator: false,
         openBuilder: (context, _) => ConversationFullscreenHolder(
           currentChat: currentChat,
@@ -121,18 +127,7 @@ class ResolvedFileContent extends StatelessWidget {
         fill: fill,
       );
       return ClipRRect(
-        borderRadius: isiOS
-            ? BorderRadius.only(
-                topLeft: const Radius.circular(20.0),
-                topRight: const Radius.circular(20.0),
-                bottomLeft: forceAllCornersRounded
-                    ? const Radius.circular(20.0)
-                    : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                bottomRight: forceAllCornersRounded
-                    ? const Radius.circular(20.0)
-                    : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-              )
-            : const BorderRadius.all(Radius.circular(5.0)),
+        borderRadius: mediaRadius,
         child: fill ? SizedBox.expand(child: video) : video,
       );
     }
