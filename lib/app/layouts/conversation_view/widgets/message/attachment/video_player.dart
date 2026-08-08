@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_corner_badge.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
@@ -52,6 +53,7 @@ class VideoPlayer extends StatefulWidget {
   final Attachment attachment;
   final bool isFromMe;
   final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   /// Cover-expand into a parent-fixed frame (gallery cards).
   final bool fill;
@@ -63,6 +65,7 @@ class VideoPlayer extends StatefulWidget {
       required this.controller,
       required this.isFromMe,
       this.galleryAttachments,
+      this.collectionController,
       this.fill = false});
 
   final ConversationViewController? controller;
@@ -461,6 +464,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                           videoController: videoController,
                           mute: muted,
                           galleryAttachments: widget.galleryAttachments,
+                          collectionController: widget.collectionController,
                         ),
                       ),
                     );
@@ -479,6 +483,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         mute: muted,
                         videoController: videoController,
                         galleryAttachments: widget.galleryAttachments,
+                        collectionController: widget.collectionController,
                       ),
                     ),
                   );
@@ -518,7 +523,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   muted: muted,
                   controller: videoController,
                   isFromMe: widget.isFromMe),
-              if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
+              if (kIsDesktop)
+                FullscreenButton(
+                  attachment: attachment,
+                  isFromMe: widget.isFromMe,
+                  muted: muted,
+                  videoController: videoController,
+                  galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
+                ),
               if (!kIsDesktop && !kIsWeb && thumbnailFailed)
                 Obx(() => firstFrameReady.value
                     ? const SizedBox.shrink()
@@ -544,6 +557,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   mute: muted,
                   videoController: videoController,
                   galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
                 ),
               ),
             );
@@ -639,13 +653,22 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
 }
 
 class FullscreenButton extends StatelessWidget {
-  const FullscreenButton(
-      {super.key, required this.attachment, required this.isFromMe, this.videoController, this.muted});
+  const FullscreenButton({
+    super.key,
+    required this.attachment,
+    required this.isFromMe,
+    this.videoController,
+    this.muted,
+    this.galleryAttachments,
+    this.collectionController,
+  });
 
   final Attachment attachment;
   final bool isFromMe;
   final VideoController? videoController;
   final RxBool? muted;
+  final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
@@ -663,11 +686,14 @@ class FullscreenButton extends StatelessWidget {
               await Navigator.of(Get.context!).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (context) => ConversationFullscreenHolder(
-                      currentChat: currentChat,
-                      attachment: attachment,
-                      showInteractions: true,
-                      videoController: videoController,
-                      mute: muted),
+                    currentChat: currentChat,
+                    attachment: attachment,
+                    showInteractions: true,
+                    videoController: videoController,
+                    mute: muted,
+                    galleryAttachments: galleryAttachments,
+                    collectionController: collectionController,
+                  ),
                 ),
               );
             },

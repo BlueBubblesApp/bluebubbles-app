@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/sending_opacity_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/upload_progress_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/not_loaded_content.dart';
@@ -27,6 +28,7 @@ class AttachmentHolder extends StatefulWidget {
     required this.message,
     this.fill = false,
     this.galleryAttachments,
+    this.collectionController,
   });
 
   final MessagePart message;
@@ -36,6 +38,9 @@ class AttachmentHolder extends StatefulWidget {
   /// Disabled automatically inside [PopupScope].
   final bool fill;
   final List<Attachment>? galleryAttachments;
+
+  /// When set, fullscreen viewers show a collection-grid button (omit when opened from the collections gallery).
+  final CollectionMediaController? collectionController;
 
   @override
   State<StatefulWidget> createState() => _AttachmentHolderState();
@@ -279,6 +284,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           forceAllCornersRounded: forceAllCornersRounded,
           fill: fill,
           galleryAttachments: widget.galleryAttachments,
+          collectionController: widget.collectionController,
         );
       }
     }
@@ -296,6 +302,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         forceAllCornersRounded: forceAllCornersRounded,
         fill: fill,
         galleryAttachments: widget.galleryAttachments,
+        collectionController: widget.collectionController,
       );
     }
 
