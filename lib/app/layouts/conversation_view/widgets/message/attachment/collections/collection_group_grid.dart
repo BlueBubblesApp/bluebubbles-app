@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
+import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -30,6 +31,9 @@ class CollectionGroupGrid extends StatelessWidget {
   static const double _topRowAspect = 4 / 3;
   static const double _bottomRowHeightRatio = 0.45;
 
+  /// Matches [TailClipper] connected corners when a bubble sits flush to a neighbor.
+  static const double _connectedCornerRadius = 5.0;
+
   List<Attachment> get _attachments => messagePart.attachments;
 
   double get _cardRadius {
@@ -41,6 +45,37 @@ class CollectionGroupGrid extends StatelessWidget {
       case Skins.Material:
         return 16.0;
     }
+  }
+
+  /// Subject bubble sits above the leading attachment part (see [MessageHolder]).
+  bool _hasSubjectAbove(MessageState messageState) =>
+      messageState.isLeadingMessagePart(messagePart) && !isNullOrEmpty(messageState.subject.value);
+
+  /// Body text on this part, or a later text part below the collection.
+  bool _hasBodyBelow(MessageState messageState) {
+    if (!isNullOrEmpty(messagePart.text)) return true;
+    return messageState.parts.any(
+      (p) => !messagePart.coversPartId(p.part) && p.part > messagePart.part && !isNullOrEmpty(p.text),
+    );
+  }
+
+  /// Outer silhouette radii — tighten only the author-edge corner that sits against
+  /// subject (top) / body (bottom). Non-author corners keep the full card radius
+  /// (Material connected-bubble parity with [TailClipper]).
+  BorderRadius _silhouetteBorderRadius({
+    required double cardRadius,
+    required bool isFromMe,
+    required bool tightenTop,
+    required bool tightenBottom,
+  }) {
+    final outer = Radius.circular(cardRadius);
+    final connected = const Radius.circular(_connectedCornerRadius);
+    return BorderRadius.only(
+      topLeft: (tightenTop && !isFromMe) ? connected : outer,
+      topRight: (tightenTop && isFromMe) ? connected : outer,
+      bottomLeft: (tightenBottom && !isFromMe) ? connected : outer,
+      bottomRight: (tightenBottom && isFromMe) ? connected : outer,
+    );
   }
 
   /// One column of the 5+ bottom row (3 columns with two gaps).
@@ -70,6 +105,13 @@ class CollectionGroupGrid extends StatelessWidget {
     final isFromMe = messageState.isFromMe.value;
     final count = _attachments.length;
     final cardRadius = _cardRadius;
+    // Subject above / body below: tighten only the author-edge corner against the text bubble.
+    final silhouette = _silhouetteBorderRadius(
+      cardRadius: cardRadius,
+      isFromMe: isFromMe,
+      tightenTop: _hasSubjectAbove(messageState),
+      tightenBottom: _hasBodyBelow(messageState),
+    );
     // Calculated against screen width; maxGridWidth caps size on larger screens.
     final gridWidth = min(
       NavigationSvc.width(context) * _maxGridSizeFactor,
@@ -83,13 +125,13 @@ class CollectionGroupGrid extends StatelessWidget {
       context,
       width: gridWidth,
       height: gridHeight,
-      cardRadius: cardRadius,
+      borderRadius: silhouette,
       child: _buildCellLayout(
         count: count,
         gridWidth: gridWidth,
         moreCount: moreCount,
         cellBuilder: (index, width, height, cellMoreCount) => ClipRRect(
-          borderRadius: _cellBorderRadius(count, index, cardRadius),
+          borderRadius: _cellBorderRadius(count, index, silhouette),
           child: CollectionAttachmentCard(
             attachment: _attachments[index],
             attachmentIndex: index,
@@ -107,7 +149,7 @@ class CollectionGroupGrid extends StatelessWidget {
         moreOverlayBuilder: (index, width, height, cellMoreCount) {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
           return ClipRRect(
-            borderRadius: _cellBorderRadius(count, index, cardRadius),
+            borderRadius: _cellBorderRadius(count, index, silhouette),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _openSeeMoreFullscreen(context),
@@ -315,7 +357,7 @@ class CollectionGroupGrid extends StatelessWidget {
     BuildContext context, {
     required double width,
     required double height,
-    required double cardRadius,
+    required BorderRadius borderRadius,
     required Widget child,
   }) {
     return SizedBox(
@@ -324,7 +366,7 @@ class CollectionGroupGrid extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(cardRadius),
+          borderRadius: borderRadius,
           boxShadow: SettingsSvc.settings.skin.value == Skins.iOS
               ? [
                   BoxShadow(
@@ -340,28 +382,34 @@ class CollectionGroupGrid extends StatelessWidget {
     );
   }
 
-  BorderRadius _cellBorderRadius(int count, int index, double cardRadius) {
-    final r = Radius.circular(cardRadius);
+  /// Per-cell clip: only silhouette corners get radius from [silhouette]; shared edges stay square.
+  BorderRadius _cellBorderRadius(int count, int index, BorderRadius silhouette) {
     if (count == 2) {
-      if (index == 0) return BorderRadius.only(topLeft: r, bottomLeft: r);
-      return BorderRadius.only(topRight: r, bottomRight: r);
+      if (index == 0) {
+        return BorderRadius.only(topLeft: silhouette.topLeft, bottomLeft: silhouette.bottomLeft);
+      }
+      return BorderRadius.only(topRight: silhouette.topRight, bottomRight: silhouette.bottomRight);
     }
     if (count == 3) {
-      if (index == 0) return BorderRadius.only(topLeft: r, topRight: r);
-      if (index == 1) return BorderRadius.only(bottomLeft: r);
-      return BorderRadius.only(bottomRight: r);
+      if (index == 0) {
+        return BorderRadius.only(topLeft: silhouette.topLeft, topRight: silhouette.topRight);
+      }
+      if (index == 1) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
+      return BorderRadius.only(bottomRight: silhouette.bottomRight);
     }
     if (count == 4) {
-      if (index == 0) return BorderRadius.only(topLeft: r);
-      if (index == 1) return BorderRadius.only(topRight: r);
-      if (index == 2) return BorderRadius.only(bottomLeft: r);
-      return BorderRadius.only(bottomRight: r);
+      if (index == 0) return BorderRadius.only(topLeft: silhouette.topLeft);
+      if (index == 1) return BorderRadius.only(topRight: silhouette.topRight);
+      if (index == 2) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
+      return BorderRadius.only(bottomRight: silhouette.bottomRight);
     }
     // 5+: hero top + span + stack
-    if (index == 0) return BorderRadius.only(topLeft: r, topRight: r);
-    if (index == 1) return BorderRadius.only(bottomLeft: r);
+    if (index == 0) {
+      return BorderRadius.only(topLeft: silhouette.topLeft, topRight: silhouette.topRight);
+    }
+    if (index == 1) return BorderRadius.only(bottomLeft: silhouette.bottomLeft);
     final lastVisible = min(count, 5) - 1;
-    if (index == lastVisible) return BorderRadius.only(bottomRight: r);
+    if (index == lastVisible) return BorderRadius.only(bottomRight: silhouette.bottomRight);
     return BorderRadius.zero;
   }
 }
