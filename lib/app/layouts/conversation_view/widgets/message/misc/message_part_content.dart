@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_collage.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_group_stack.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -62,8 +63,7 @@ class MessagePartContent extends StatelessWidget {
 
     // Messages with attachments
     if (messagePart.attachments.isNotEmpty) {
-      final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
-      if (iOS && messagePart.isMediaCollection) {
+      if (messagePart.isMediaCollection) {
         final layout = resolveMediaCollectionLayout(messagePart.attachments.length);
         final Widget collection = switch (layout) {
           MediaCollectionLayout.collage => CollectionGroupCollage(
@@ -72,10 +72,12 @@ class MessagePartContent extends StatelessWidget {
               isEditing: isEditing,
               canSwipeToReply: canSwipeToReply,
             ),
-          MediaCollectionLayout.stack ||
-          MediaCollectionLayout.grid ||
-          MediaCollectionLayout.skinDefault =>
-            CollectionGroupStack(
+          MediaCollectionLayout.stack => CollectionGroupStack(
+              messagePart: messagePart,
+              cvController: cvController,
+              isEditing: isEditing,
+            ),
+          MediaCollectionLayout.grid || MediaCollectionLayout.skinDefault => CollectionGroupGrid(
               messagePart: messagePart,
               cvController: cvController,
               isEditing: isEditing,
