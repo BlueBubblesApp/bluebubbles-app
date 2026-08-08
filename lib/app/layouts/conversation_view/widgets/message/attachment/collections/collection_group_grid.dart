@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -56,7 +57,8 @@ class CollectionGroupGrid extends StatelessWidget {
     );
     final gridHeight = _gridHeight(count, gridWidth);
 
-    final grid = _wrapGridCard(
+    // Media layer: clipped cells with in-card reactions suppressed.
+    final imageLayer = _wrapGridCard(
       context,
       width: gridWidth,
       height: gridHeight,
@@ -74,9 +76,36 @@ class CollectionGroupGrid extends StatelessWidget {
             cvController: cvController,
             isEditing: isEditing,
             enableGestures: true,
+            hideReactions: true,
           ),
         ),
       ),
+    );
+
+    // Reaction overlay paints above every cell so badges aren't covered by neighbors.
+    final reactionLayer = SizedBox(
+      width: gridWidth,
+      height: gridHeight,
+      child: _buildCellLayout(
+        count: count,
+        gridWidth: gridWidth,
+        cellBuilder: (index, width, height) => CollectionAttachmentReactions(
+          collectionPart: messagePart,
+          attachmentIndex: index,
+          alignTrailing: true,
+          tailType: SettingsSvc.settings.skin.value == Skins.iOS
+              ? ReactionTailType.inside
+              : ReactionTailType.standard,
+        ),
+      ),
+    );
+
+    final grid = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        imageLayer,
+        Positioned.fill(child: reactionLayer),
+      ],
     );
 
     return CollectionDownloadButton.wrap(
@@ -116,7 +145,13 @@ class CollectionGroupGrid extends StatelessWidget {
       return SizedBox(
         width: width,
         height: height,
-        child: cellBuilder(index, width, height),
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
+          children: [
+            cellBuilder(index, width, height),
+          ],
+        ),
       );
     }
 
