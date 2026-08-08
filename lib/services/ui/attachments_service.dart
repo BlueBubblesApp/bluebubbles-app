@@ -436,6 +436,20 @@ class AttachmentsService extends GetxService {
     return File(cachedPath).existsSync() ? cachedPath : null;
   }
 
+  /// The filter chain behind every video thumbnail. Shared by the ffmpeg-kit path and the Linux
+  /// shell-out below so the two can't drift apart.
+  ///
+  /// Rotation is left to ffmpeg's default `-autorotate`, which handles iPhone .mov rotation flags
+  /// correctly on its own.
+  /// `thumbnail`: scans a short frame window for a non-blank one (iPhone clips often open on a
+  /// black frame).
+  /// `scale=iw*sar:ih,setsar=1`: bakes sample aspect ratio into pixel dimensions before the
+  /// box-fit -- some .mov clips have non-1:1 SAR, and a plain `scale=W:H` ignores it, unlike real
+  /// playback (mpv/media_kit), producing a wrongly-proportioned thumbnail.
+  /// `scale=512:512:force_original_aspect_ratio=decrease`: the actual box-fit.
+  static const _thumbnailFilter =
+      'thumbnail,scale=iw*sar:ih,setsar=1,scale=512:512:force_original_aspect_ratio=decrease';
+
   /// Generates (or reuses) a video thumbnail and returns the path to it on disk -- never loads
   /// the decoded thumbnail into memory as bytes, so callers must render it via [Image.file].
   ///
@@ -462,28 +476,22 @@ class AttachmentsService extends GetxService {
     bool success;
 
     try {
-      // Rotation: left to ffmpeg's default `-autorotate`, which handles iPhone .mov rotation
-      // flags correctly on its own.
-      // `thumbnail`: scans a short frame window for a non-blank one (iPhone clips often open on
-      // a black frame).
-      // `scale=iw*sar:ih,setsar=1`: bakes sample aspect ratio into pixel dimensions before the
-      // box-fit -- some .mov clips have non-1:1 SAR, and a plain `scale=W:H` ignores it, unlike
-      // real playback (mpv/media_kit), producing a wrongly-proportioned thumbnail.
-      // `scale=512:512:force_original_aspect_ratio=decrease`: the actual box-fit.
-      // `-f mjpeg`: forces the output muxer -- the cached dest path has no image extension for
-      // ffmpeg to infer a format from.
-      final command = '-y '
-          '-i "${_ffmpegEscapePath(filePath)}" '
-          '-vf "thumbnail,scale=iw*sar:ih,setsar=1,scale=512:512:force_original_aspect_ratio=decrease" '
-          '-frames:v 1 -q:v 2 -f mjpeg '
-          '"${_ffmpegEscapePath(destPath)}"';
-      final session = await FFmpegKit.execute(command);
-      final returnCode = await session.getReturnCode();
-      success = ReturnCode.isSuccess(returnCode);
-      if (!success) {
-        final logs = await session.getAllLogsAsString();
-        Logger.warn('ffmpeg thumbnail failed for $filePath (rc=$returnCode) command="$command" logs=$logs',
-            tag: 'VideoThumbnail');
+      if (Platform.isLinux) {
+        success = await _generateThumbnailWithSystemFfmpeg(filePath, destPath);
+      } else {
+        final command = '-y '
+            '-i "${_ffmpegEscapePath(filePath)}" '
+            '-vf "$_thumbnailFilter" '
+            '-frames:v 1 -q:v 2 -f mjpeg '
+            '"${_ffmpegEscapePath(destPath)}"';
+        final session = await FFmpegKit.execute(command);
+        final returnCode = await session.getReturnCode();
+        success = ReturnCode.isSuccess(returnCode);
+        if (!success) {
+          final logs = await session.getAllLogsAsString();
+          Logger.warn('ffmpeg thumbnail failed for $filePath (rc=$returnCode) command="$command" logs=$logs',
+              tag: 'VideoThumbnail');
+        }
       }
     } catch (ex, stacktrace) {
       Logger.error('ffmpeg thumbnail threw for $filePath -> $destPath', error: ex, trace: stacktrace, tag: 'VideoThumbnail');
@@ -501,6 +509,71 @@ class AttachmentsService extends GetxService {
 
   /// Escapes a path for safe interpolation inside a double-quoted ffmpeg command argument.
   String _ffmpegEscapePath(String path) => path.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+
+  /// Runs the thumbnail command against a real ffmpeg binary instead of ffmpeg-kit.
+  ///
+  /// ffmpeg-kit ships no Linux native bundle for anything but x86_64, and its CMake hard-fails on
+  /// other architectures, so an arm64 build can't even configure. Shelling out is both smaller and
+  /// arch-portable: the snap stages ffmpeg and the flatpak manifest builds it, so the packages
+  /// carry a binary that works on every architecture they publish.
+  ///
+  /// [Process.run] bypasses the shell, so arguments are passed as a list and the paths need no
+  /// quoting or escaping.
+  Future<bool> _generateThumbnailWithSystemFfmpeg(String source, String dest) async {
+    final ffmpeg = await _resolveLinuxFfmpeg();
+    if (ffmpeg == null) {
+      Logger.warn('no ffmpeg binary found on PATH -- install ffmpeg to enable video thumbnails',
+          tag: 'VideoThumbnail');
+      return false;
+    }
+
+    final result = await Process.run(ffmpeg, [
+      '-y',
+      '-i', source,
+      // Forces the output muxer -- the cached dest path has no image extension for ffmpeg to
+      // infer a format from.
+      '-vf', _thumbnailFilter,
+      '-frames:v', '1',
+      '-q:v', '2',
+      '-f', 'mjpeg',
+      dest,
+    ]);
+
+    if (result.exitCode != 0) {
+      Logger.warn('ffmpeg thumbnail failed for $source (rc=${result.exitCode}) stderr=${result.stderr}',
+          tag: 'VideoThumbnail');
+      return false;
+    }
+    return true;
+  }
+
+  /// Memoized lookup of the ffmpeg binary to shell out to on Linux. Resolved once per run --
+  /// the answer can't change while the app is open.
+  Future<String?>? _linuxFfmpegPath;
+
+  Future<String?> _resolveLinuxFfmpeg() {
+    return _linuxFfmpegPath ??= () async {
+      // A copy shipped next to the runner wins, so the release tarball can be made
+      // self-contained without depending on what the user's distro has installed.
+      final bundled = join(dirname(Platform.resolvedExecutable), 'ffmpeg');
+      if (await File(bundled).exists()) return bundled;
+
+      // Otherwise take it from PATH: the snap stages ffmpeg into $SNAP/usr/bin and the flatpak
+      // builds it into /app/bin -- neither sandbox can see the host's copy, so each ships its
+      // own, and both directories are already on PATH. A plain tarball install falls through to
+      // the distro package.
+      try {
+        final which = await Process.run('which', ['ffmpeg']);
+        if (which.exitCode == 0) {
+          final path = (which.stdout as String).trim();
+          if (path.isNotEmpty) return path;
+        }
+      } catch (ex) {
+        Logger.debug('ffmpeg PATH lookup failed ($ex)', tag: 'VideoThumbnail');
+      }
+      return null;
+    }();
+  }
 
   /// Thumbnails were historically generated at 128px, which looks blurry now that video previews
   /// render at message-bubble size — treat those disk caches as stale so they get regenerated.
