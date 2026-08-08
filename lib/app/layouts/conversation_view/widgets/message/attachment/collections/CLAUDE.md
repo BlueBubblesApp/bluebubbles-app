@@ -1,31 +1,27 @@
 # attachment/collections/ — Media Collections
 
-iOS multi-attachment media collections (`MessagePart.isMediaCollection`). Material/Samsung stay collection-gated off in `MessagePartContent` (still one `AttachmentHolder` each); `resolveMediaCollectionLayout` already returns `grid` for non-iOS for when that lands.
-
-Routed from `MessagePartContent` when `iOS && messagePart.isMediaCollection`, via `resolveMediaCollectionLayout(attachmentCount)` (`helpers/ui/message_widget_helpers.dart` + `MediaCollectionLayout` in `helpers/types/constants.dart`).
-
-## Routing (skinDefault)
+`MessagePart.isMediaCollection` → `MessagePartContent` → `resolveMediaCollectionLayout`
+(`helpers/ui/message_widget_helpers.dart`).
 
 | Skin | Count | Layout |
 |------|-------|--------|
 | iOS | 2–3 | collage |
 | iOS | 4+ | stack |
-| Material / Samsung | any | grid (not wired yet) |
+| Material / Samsung | 2+ | grid |
 
+## Ownership
 
-## Layout ownership
-
-- Parents (`CollectionGroupCollage` / `CollectionGroupStack`) own frame size and motion (`SizedBox`, tilt, fan transforms).
-- `AttachmentHolder(fill: true)` cover-expands into the parent frame and suppresses bubble chrome (padding, selection tint, holder shadow/radius). Popup disables fill expand.
-- `CollectionAttachmentCard` owns card shadow + uniform `ClipRRect` around media, popup, and reactions (reactions sit outside the clip).
-- Grid passes `fill: true` with no card shadow; outer `ClipRRect` owns the silhouette (cells stay square).
+- Parents size the frame; `AttachmentHolder(fill: true)` fills it (popup skips fill).
+- **Collage / stack:** card owns shadow + rounded clip; reactions outside the clip.
+- **Grid:** no card shadow; outer `ClipRRect` owns silhouette; cells stay square. Reaction overlay above cells (author-edge, `tightOverhang`). `+N` on 6+ → fullscreen index 4 (interim). Author-edge corners tighten when subject/body is adjacent.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `collection_group_collage.dart` | Vertical overlapping collage — parent-sized 4:3 / 3:4 cards, iOS tilt, collage-local swipe-to-reply |
-| `collection_group_stack.dart` | Fan stack — 3:4 cards, drag/swipe between attachments, desktop title dialog |
-| `collection_attachment_card.dart` | Shared card chrome (shadow/clip) + popup + media via `AttachmentHolder(fill: true)` + reactions; used by collage and stack |
-| `collection_title.dart` | Label row above the layout (icon + “X Photos/Videos/Items”) |
-| `collection_download_button.dart` | Circular download control for incoming iOS collections (`CollectionDownloadButton.wrap`) |
+| `collection_group_collage.dart` | Overlapping collage (iOS 2–3) |
+| `collection_group_stack.dart` | Fan stack (iOS 4+) |
+| `collection_group_grid.dart` | Material/Samsung grid |
+| `collection_attachment_card.dart` | Shared card chrome + `fill` media + reactions |
+| `collection_title.dart` | “X Photos/Videos/Items” label |
+| `collection_download_button.dart` | Incoming download control (`CollectionDownloadButton.wrap`) |
