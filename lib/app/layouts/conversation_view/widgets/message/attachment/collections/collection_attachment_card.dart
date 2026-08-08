@@ -9,7 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Tapbacks for a single attachment inside a media collection stack.
+/// Tapbacks for a single attachment inside a media collection (collage or stack).
 class CollectionAttachmentReactions extends StatelessWidget {
   const CollectionAttachmentReactions({
     super.key,
@@ -39,7 +39,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
       if (reactions.isEmpty) return const SizedBox.shrink();
 
       // Stack fans always open right, so inside-tail reactions stay on the trailing
-      // edge for both sides.
+      // edge for both sides. Standard (collage) follows author side like a normal bubble.
       final forceTrailing = alignTrailing || tailType == ReactionTailType.inside;
       final alignRight = forceTrailing || !isFromMe;
       return Positioned(
@@ -56,7 +56,7 @@ class CollectionAttachmentReactions extends StatelessWidget {
   }
 }
 
-/// Single card slot in an iOS media collection stack.
+/// Single card slot in an iOS media collection (collage or stack).
 ///
 /// Owns card shadow and rounded clip around media; reactions sit outside the clip.
 class CollectionAttachmentCard extends StatelessWidget {
@@ -70,6 +70,7 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.isEditing,
     this.ignorePointer = false,
     this.enableGestures = false,
+    this.reactionTailType = ReactionTailType.standard,
   });
 
   final Attachment attachment;
@@ -84,6 +85,9 @@ class CollectionAttachmentCard extends StatelessWidget {
 
   /// When true, long-press / double-tap open the per-card popup menu.
   final bool enableGestures;
+
+  /// Stack uses [ReactionTailType.inside]; collage keeps the default standard bubble.
+  final ReactionTailType reactionTailType;
 
   int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
 
@@ -146,7 +150,7 @@ class CollectionAttachmentCard extends StatelessWidget {
         CollectionAttachmentReactions(
           collectionPart: messagePart,
           attachmentIndex: attachmentIndex,
-          tailType: ReactionTailType.inside,
+          tailType: reactionTailType,
         ),
       ],
     );
