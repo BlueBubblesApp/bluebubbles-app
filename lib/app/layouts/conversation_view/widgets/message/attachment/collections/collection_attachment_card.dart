@@ -72,6 +72,9 @@ class CollectionAttachmentCard extends StatelessWidget {
     this.ignorePointer = false,
     this.enableGestures = false,
     this.reactionTailType = ReactionTailType.standard,
+    this.alignTrailing = false,
+    this.hideReactions = false,
+    this.mediaClipBorderRadius,
   });
 
   final Attachment attachment;
@@ -89,6 +92,15 @@ class CollectionAttachmentCard extends StatelessWidget {
 
   /// Fan stack uses [ReactionTailType.inside]; collage and grid keep the default standard bubble.
   final ReactionTailType reactionTailType;
+
+  /// Pin tapbacks to the top-trailing corner (grid cells).
+  final bool alignTrailing;
+
+  /// When true, omit in-card tapbacks (e.g. grid paints them in an overlay above all cells).
+  final bool hideReactions;
+
+  /// When set, clips media to this radius without clipping overflow tapbacks.
+  final BorderRadius? mediaClipBorderRadius;
 
   int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
 
@@ -112,9 +124,10 @@ class CollectionAttachmentCard extends StatelessWidget {
     final scopedPart = _scopedPart();
     // Card owns shadow + clip so AttachmentHolder can stay fill-only.
     // Reactions stay outside the clip so tapbacks can overflow.
+    final clipRadius = mediaClipBorderRadius ?? _cardRadius;
     final media = DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: _cardRadius,
+        borderRadius: clipRadius,
         boxShadow: [
           BoxShadow(
             color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
@@ -124,7 +137,7 @@ class CollectionAttachmentCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: _cardRadius,
+        borderRadius: clipRadius,
         child: MessagePopupHolder(
           controller: MessageStateScope.of(context),
           cvController: cvController,
@@ -148,11 +161,13 @@ class CollectionAttachmentCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         media,
-        CollectionAttachmentReactions(
-          collectionPart: messagePart,
-          attachmentIndex: attachmentIndex,
-          tailType: reactionTailType,
-        ),
+        if (!hideReactions)
+          CollectionAttachmentReactions(
+            collectionPart: messagePart,
+            attachmentIndex: attachmentIndex,
+            tailType: reactionTailType,
+            alignTrailing: alignTrailing,
+          ),
       ],
     );
   }
