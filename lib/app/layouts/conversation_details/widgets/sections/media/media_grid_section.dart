@@ -135,6 +135,8 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
               children: [
                 MediaGalleryCard(
                   attachment: attachment,
+                  chat: widget.chat,
+                  galleryAttachments: _filteredMedia,
                 ),
                 if (isSelected)
                   Container(
