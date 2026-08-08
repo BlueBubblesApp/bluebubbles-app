@@ -18,7 +18,7 @@ Routed from `MessagePartContent` when `iOS && messagePart.isMediaCollection`, vi
 - Parents (`CollectionGroupCollage` / `CollectionGroupStack`) own frame size and motion (`SizedBox`, tilt, fan transforms).
 - `AttachmentHolder(fill: true)` cover-expands into the parent frame and suppresses bubble chrome (padding, selection tint, holder shadow/radius). Popup disables fill expand.
 - `CollectionAttachmentCard` owns card shadow + uniform `ClipRRect` around media, popup, and reactions (reactions sit outside the clip).
-- Grid should pass `fill: true` and supply its own cell clip (no card shadow).
+- Grid passes `fill: true` with no card shadow; outer `ClipRRect` owns the silhouette (cells stay square).
 
 ## Files
 
