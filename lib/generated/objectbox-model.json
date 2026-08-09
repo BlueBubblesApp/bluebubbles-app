@@ -104,7 +104,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "36:2775254966591031179",
+      "lastPropertyId": "39:738307263391205523",
       "name": "Chat",
       "properties": [
         {
@@ -236,6 +236,21 @@
         {
           "id": "36:2775254966591031179",
           "name": "customThemeDark",
+          "type": 9
+        },
+        {
+          "id": "37:699362128358203439",
+          "name": "wallpaperType",
+          "type": 9
+        },
+        {
+          "id": "38:3728602269935984680",
+          "name": "dynamicWallpaperId",
+          "type": 9
+        },
+        {
+          "id": "39:738307263391205523",
+          "name": "dynamicWallpaperConfig",
           "type": 9
         }
       ],

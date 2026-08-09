@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -47,6 +48,13 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
       children: [
         Positioned.fill(
           child: Obx(() {
+            if (_chatState?.wallpaperType.value == ChatWallpaperType.dynamic) {
+              return DynamicWallpaperView(
+                wallpaperId: _chatState?.dynamicWallpaperId.value,
+                config: _chatState?.dynamicWallpaperConfig.value,
+              );
+            }
+
             final String? bgPath = _chatState?.customBackgroundPath.value;
 
             if (bgPath != null) {

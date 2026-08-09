@@ -170,7 +170,7 @@ class SmartRepliesRow extends StatelessWidget {
   }
 
   Widget _buildReplyWidget(BuildContext context, String suggestion) {
-    final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.customBackgroundPath.value?.isNotEmpty == true;
+    final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
     return Container(
       margin: const EdgeInsets.all(5),
       decoration: hasBackground

@@ -65,6 +65,7 @@ dependencies:
   ffmpeg_kit_flutter_new_min: ^3.6.2
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
+  floating_animation: ^1.1.0
   firebase_dart:
     git:
       url: https://github.com/appsup-dart/firebase_dart.git
@@ -177,6 +178,7 @@ dependencies:
   vcf_dart: ^1.0.2
   version: ^3.0.2
   video_player: ^2.10.0
+  wave: ^0.2.5
   win32: ^5.10.1
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2

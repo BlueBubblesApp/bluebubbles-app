@@ -1,5 +1,7 @@
 import 'dart:async' show unawaited;
 
+import 'package:bluebubbles/app/components/wallpaper/chat_wallpaper_type.dart';
+import 'package:bluebubbles/app/components/wallpaper/wallpaper_config_codec.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -43,6 +45,12 @@ class ChatState {
   final RxnString customThemeLight;
   final RxnString customThemeDark;
   final RxInt themeVersion;
+
+  /// Wallpaper selection. [wallpaperType] governs which of [customBackgroundPath]
+  /// (image) or [dynamicWallpaperId] + [dynamicWallpaperConfig] (dynamic) is active.
+  final Rx<ChatWallpaperType> wallpaperType;
+  final RxnString dynamicWallpaperId;
+  final Rx<Map<String, dynamic>?> dynamicWallpaperConfig;
 
   /// The delivery/read status of the latest outgoing message.  Updated any
   /// time [updateLatestMessageInternal] is called, even when the GUID has not
@@ -103,6 +111,12 @@ class ChatState {
         customThemeLight = RxnString(chat.customThemeLight),
         customThemeDark = RxnString(chat.customThemeDark),
         themeVersion = 0.obs,
+        wallpaperType = Rx<ChatWallpaperType>(ChatWallpaperType.resolve(
+          chat.wallpaperType,
+          FilesystemSvc.getExistingChatBackgroundPath(chat.guid),
+        )),
+        dynamicWallpaperId = RxnString(chat.dynamicWallpaperId),
+        dynamicWallpaperConfig = Rx<Map<String, dynamic>?>(WallpaperConfigCodec.decode(chat.dynamicWallpaperConfig)),
         isActive = false.obs,
         isAlive = false.obs,
         shouldHideAttachments =
@@ -240,6 +254,26 @@ class ChatState {
   void bumpThemeVersion() {
     themeVersion.value++;
   }
+
+  void updateWallpaperTypeInternal(ChatWallpaperType value) {
+    if (wallpaperType.value != value) {
+      wallpaperType.value = value;
+    }
+  }
+
+  void updateDynamicWallpaperInternal(String? id, Map<String, dynamic>? config) {
+    if (dynamicWallpaperId.value != id) {
+      dynamicWallpaperId.value = id;
+    }
+    dynamicWallpaperConfig.value = config;
+  }
+
+  /// True whenever the chat background isn't the default app-wide
+  /// background — a custom image or an animated dynamic wallpaper. Widgets
+  /// that adjust bubble/text contrast for a busy background should check
+  /// this instead of reading [customBackgroundPath] directly.
+  bool get hasCustomWallpaper =>
+      (customBackgroundPath.value?.isNotEmpty ?? false) || wallpaperType.value == ChatWallpaperType.dynamic;
 
   Future<void> _refreshAdaptiveCustomThemes(String imagePath) async {
     await ThemesService.upsertAdaptiveBackgroundThemesFromImage(
@@ -408,6 +442,14 @@ class ChatState {
     updateCustomBackgroundPathInternal(FilesystemSvc.getExistingChatBackgroundPath(updatedChat.guid));
     updateCustomThemeLightInternal(updatedChat.customThemeLight);
     updateCustomThemeDarkInternal(updatedChat.customThemeDark);
+    updateWallpaperTypeInternal(ChatWallpaperType.resolve(
+      updatedChat.wallpaperType,
+      FilesystemSvc.getExistingChatBackgroundPath(updatedChat.guid),
+    ));
+    updateDynamicWallpaperInternal(
+      updatedChat.dynamicWallpaperId,
+      WallpaperConfigCodec.decode(updatedChat.dynamicWallpaperConfig),
+    );
     // Rebuild participants from the fresh DB handles on the incoming chat object so
     // we never read the stale cached ToMany on the original ChatState.chat.
     _updateParticipantsInternal(updatedChat.handles.toList());
@@ -457,6 +499,9 @@ class ChatState {
     chat.customAvatarPath = updatedChat.customAvatarPath;
     chat.customThemeLight = updatedChat.customThemeLight;
     chat.customThemeDark = updatedChat.customThemeDark;
+    chat.wallpaperType = updatedChat.wallpaperType;
+    chat.dynamicWallpaperId = updatedChat.dynamicWallpaperId;
+    chat.dynamicWallpaperConfig = updatedChat.dynamicWallpaperConfig;
     chat.autoSendReadReceipts = updatedChat.autoSendReadReceipts;
     chat.autoSendTypingIndicators = updatedChat.autoSendTypingIndicators;
     chat.lockChatName = updatedChat.lockChatName;

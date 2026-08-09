@@ -137,6 +137,11 @@ class ChatActions {
         chat.customThemeLight = inputChat.customThemeLight;
         chat.customThemeDark = inputChat.customThemeDark;
       }
+      if (updateFlags['updateWallpaperSettings'] == true) {
+        chat.wallpaperType = inputChat.wallpaperType;
+        chat.dynamicWallpaperId = inputChat.dynamicWallpaperId;
+        chat.dynamicWallpaperConfig = inputChat.dynamicWallpaperConfig;
+      }
       if (updateFlags['updateLatestMessage'] == true) {
         final latestMessageId = chatData['dbLatestMessageId'] as int?;
         final latestMessageDateMs = chatData['dbOnlyLatestMessageDate'] as int?;
