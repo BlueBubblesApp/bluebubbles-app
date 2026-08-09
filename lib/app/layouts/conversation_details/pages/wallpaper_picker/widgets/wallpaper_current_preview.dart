@@ -29,7 +29,12 @@ class WallpaperCurrentPreview extends StatelessWidget {
           config: chatState?.dynamicWallpaperConfig.value,
         );
       } else if (type == ChatWallpaperType.image && imagePath != null) {
-        preview = Image.file(File(imagePath), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink());
+        preview = Image.file(
+          File(imagePath),
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        );
       } else {
         preview = Center(
           child: Text(

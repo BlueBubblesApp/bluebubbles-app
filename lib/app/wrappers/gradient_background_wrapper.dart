@@ -63,6 +63,7 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
                   image: DecorationImage(
                     image: FileImage(File(bgPath)),
                     fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
                     onError: (_, __) {},
                   ),
                 ),

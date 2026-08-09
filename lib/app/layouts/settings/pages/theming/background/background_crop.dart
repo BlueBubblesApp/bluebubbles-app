@@ -12,6 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image/image.dart' as img;
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:universal_io/io.dart';
@@ -28,6 +29,17 @@ class BackgroundCrop extends StatefulWidget {
 }
 
 class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
+  /// Longest-side cap for the saved background, in pixels. `BoxFit.cover`
+  /// never shows more detail than the display can — this is still well
+  /// above a 4K screen's effective resolution for a background layer, so
+  /// there's no visible cost, only a much smaller file on disk.
+  static const int _maxBackgroundDimension = 2560;
+
+  /// JPEG quality for the final saved file. Photos don't benefit from PNG's
+  /// losslessness the way graphics do; this is visually indistinguishable
+  /// from the source while being a fraction of the size.
+  static const int _jpegQuality = 92;
+
   final _cropController = CropController();
   _EditStep _currentStep = _EditStep.selectImage;
   Uint8List? _imageData;
@@ -37,6 +49,32 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
   double _blurSigma = 0.0;
 
   Chat get chat => widget.chat;
+
+  /// Downscales [bytes] to [_maxBackgroundDimension] (if larger) using box
+  /// averaging rather than the `image` package's default nearest-neighbor
+  /// interpolation, which aliases badly on a large downscale (see
+  /// `ImageActions.generatePreview` for the same fix applied to attachment
+  /// previews). No-op (returns [bytes] unchanged) when already within the cap.
+  Uint8List _capResolution(Uint8List bytes) {
+    final image = img.decodeImage(bytes);
+    if (image == null) return bytes;
+
+    final longestSide = image.width > image.height ? image.width : image.height;
+    if (longestSide <= _maxBackgroundDimension) return bytes;
+
+    final resized = image.width >= image.height
+        ? img.copyResize(image, width: _maxBackgroundDimension, interpolation: img.Interpolation.average)
+        : img.copyResize(image, height: _maxBackgroundDimension, interpolation: img.Interpolation.average);
+    return Uint8List.fromList(img.encodePng(resized));
+  }
+
+  /// Re-encodes [bytes] as a high-quality JPEG for a reasonable file size.
+  /// Falls back to the original (PNG) bytes if decoding fails for any reason.
+  Uint8List _encodeFinal(Uint8List bytes) {
+    final image = img.decodeImage(bytes);
+    if (image == null) return bytes;
+    return Uint8List.fromList(img.encodeJpg(image, quality: _jpegQuality));
+  }
 
   Future<Uint8List> _applyBlurToImage(Uint8List bytes, double sigma) async {
     if (sigma == 0) return bytes;
@@ -77,18 +115,25 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
 
   Future<void> _saveImage() async {
     _showSavingDialog();
-    final Uint8List finalData = await _applyBlurToImage(_croppedData!, _blurSigma);
+    final Uint8List capped = _capResolution(_croppedData!);
+    final Uint8List blurred = await _applyBlurToImage(capped, _blurSigma);
+    final Uint8List finalData = _encodeFinal(blurred);
     final String sanitizedGuid = FilesystemService.sanitizeGuid(chat.guid);
     final File file =
-        File(p.join(FilesystemSvc.customBackgroundsPath, sanitizedGuid, "background-${finalData.length}.png"));
+        File(p.join(FilesystemSvc.customBackgroundsPath, sanitizedGuid, "background-${finalData.length}.jpg"));
 
     if (!(await file.exists())) {
       await file.create(recursive: true);
     }
 
-    // Delete the old background file if one exists
-    if (chat.customBackgroundPath != null) {
-      final File oldFile = File(chat.customBackgroundPath!);
+    // Delete the old background file if one exists. `Chat.customBackgroundPath`
+    // is never populated for a locally-set background (only by server-synced
+    // data) -- the filesystem scan is the actual source of truth everywhere
+    // else in the app, so it's what's used here too, or every save just
+    // leaves the previous file orphaned on disk.
+    final existingPath = FilesystemSvc.getExistingChatBackgroundPath(chat.guid);
+    if (existingPath != null) {
+      final File oldFile = File(existingPath);
       if (await oldFile.exists()) {
         await oldFile.delete();
       }
@@ -263,6 +308,7 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
                   aspectRatio: _isLocked ? screenAspectRatio : null,
                   baseColor: context.theme.colorScheme.surface,
                   maskColor: context.theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  filterQuality: FilterQuality.high,
                 ),
               ),
               if (_isLoading)
