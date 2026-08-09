@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:bluebubbles/app/components/bb_slider.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
@@ -315,7 +316,7 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
               color: context.theme.colorScheme.onSurfaceVariant,
             ),
             Expanded(
-              child: Slider(
+              child: BBSlider(
                 min: 0,
                 max: 10,
                 value: _blurSigma,
