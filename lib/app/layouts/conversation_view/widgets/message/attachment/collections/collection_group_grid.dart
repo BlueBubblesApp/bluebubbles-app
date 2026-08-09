@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
@@ -66,11 +65,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   bool get isEditing => widget.isEditing;
   List<Attachment> get _attachments => messagePart.attachments;
 
-  double get _cardRadius => switch (SettingsSvc.settings.skin.value) {
-        Skins.Samsung => 25.0,
-        Skins.iOS => 20.0,
-        Skins.Material => M3EShapes.lg,
-      };
+  double get _cardRadius => CollectionAttachmentCard.mediaCardRadius;
 
   double get _connectedCornerRadius =>
       SettingsSvc.settings.skin.value == Skins.Samsung ? 12.0 : 5.0;
