@@ -1,6 +1,8 @@
 import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -78,6 +80,7 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
       child: Obx(() {
         final chatDetailTheme = ChatDetailTheme.resolve(context, widget.chat);
         final collectionController = widget.collectionController;
+        final showReactions = collectionController != null;
 
         Widget scaffold = Theme(
           data: chatDetailTheme.theme,
@@ -123,15 +126,22 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                 isLoading: false,
                 fullPage: true,
                 crossAxisCount: 3,
+                cellOverlayBuilder: showReactions
+                    ? (context, index, _) => CollectionAttachmentReactions(
+                          collectionPart: collectionController.collectionPart,
+                          attachmentIndex: index,
+                          alignTrailing: true,
+                          tailType: ReactionTailType.inside,
+                        )
+                    : null,
               ),
               const SliverPadding(padding: EdgeInsets.only(top: 50)),
             ],
           ),
         );
 
-        if (collectionController != null) {
+        if (showReactions) {
           // ReactionHolder uses DeferPointer; needs a handler outside MessageHolder.
-          // Per-cell tapback overlays land in a later commit; scope is ready now.
           scaffold = DeferredPointerHandler(
             child: MessageStateScope(
               messageState: collectionController.messageState,
