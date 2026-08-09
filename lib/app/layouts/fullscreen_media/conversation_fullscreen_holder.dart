@@ -43,9 +43,11 @@ class ConversationFullscreenHolder extends StatefulWidget {
 
   /// When non-null, the fullscreen carousel is limited to these attachments
   /// instead of all images in the chat. Used when opening from a gallery card.
+  /// CollectionAttachmentCard omits this and scopes via [collectionController].media.
   final List<Attachment>? galleryAttachments;
 
-  /// When set, the collection-grid button becomes available.
+  /// When set, the collection-grid button becomes available. Also scopes paging
+  /// when [galleryAttachments] is null (`galleryAttachments ?? controller.media`).
   final CollectionMediaController? collectionController;
 
   @override
@@ -56,8 +58,12 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   final focusNode = FocusNode();
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : maybeFindMessagesSvc(widget.currentChat!.guid);
-  late List<Attachment> attachments = widget.galleryAttachments != null
-      ? List<Attachment>.from(widget.galleryAttachments!)
+
+  /// Explicit list, else collection controller media, else chat-wide images.
+  List<Attachment>? get _scopedGallery => widget.galleryAttachments ?? widget.collectionController?.media;
+
+  late List<Attachment> attachments = _scopedGallery != null
+      ? List<Attachment>.from(_scopedGallery!)
       : (widget.currentChat == null
           ? [attachment]
           : (messageService?.struct.attachments.where((e) => e.mimeStart == "image").toList() ?? [attachment]));
@@ -96,7 +102,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     if (kIsWeb || !widget.showInteractions) {
       controller = PageController(initialPage: 0);
     } else {
-      if (widget.currentChat != null || widget.galleryAttachments != null) {
+      if (widget.currentChat != null || _scopedGallery != null) {
         final targetGuid = widget.initialAttachmentGuid ?? attachment.guid;
         currentIndex = attachments.indexWhere((e) => e.guid == targetGuid);
         if (currentIndex == -1 && widget.currentChat != null) {

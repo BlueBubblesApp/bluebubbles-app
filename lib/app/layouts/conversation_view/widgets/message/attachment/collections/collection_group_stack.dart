@@ -425,7 +425,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       attachment: attachment,
       attachmentIndex: attachmentIndex,
       messagePart: widget.messagePart,
-      galleryAttachments: _attachments,
       collectionController: collectionController,
       ignorePointer: ignorePointer,
       cvController: widget.cvController,

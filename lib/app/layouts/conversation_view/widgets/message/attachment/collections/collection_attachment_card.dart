@@ -72,10 +72,9 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.attachment,
     required this.attachmentIndex,
     required this.messagePart,
-    required this.galleryAttachments,
     required this.cvController,
     required this.isEditing,
-    this.collectionController,
+    required this.collectionController,
     this.ignorePointer = false,
     this.enableGestures = false,
     this.reactionTailType = ReactionTailType.standard,
@@ -88,12 +87,12 @@ class CollectionAttachmentCard extends StatelessWidget {
   final Attachment attachment;
   final int attachmentIndex;
   final MessagePart messagePart;
-  final List<Attachment> galleryAttachments;
   final ConversationViewController cvController;
   final bool isEditing;
 
-  /// When set, fullscreen viewers show a collection-grid button (omit when opened from a grid).
-  final CollectionMediaController? collectionController;
+  /// Scopes fullscreen paging via [CollectionMediaController.media] and shows the
+  /// collection-grid button. Overview gallery items use MediaGalleryCard instead (no controller).
+  final CollectionMediaController collectionController;
 
   /// When true, pointer events pass through to overlapping / background card.
   final bool ignorePointer;
@@ -165,7 +164,6 @@ class CollectionAttachmentCard extends StatelessWidget {
             child: AttachmentHolder(
               message: scopedPart,
               fill: true,
-              galleryAttachments: galleryAttachments,
               collectionController: collectionController,
             ),
           ),
