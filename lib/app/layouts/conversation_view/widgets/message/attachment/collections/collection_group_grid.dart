@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
@@ -35,19 +36,30 @@ class CollectionGroupGrid extends StatelessWidget {
   static const double _maxGridWidth = 280.0;
   static const double _bannerAspect = 4 / 3;
 
-  /// Matches [TailClipper] connected corners when a bubble sits flush to a neighbor.
-  static const double _connectedCornerRadius = 5.0;
-
   List<Attachment> get _attachments => messagePart.attachments;
 
+  /// Outer silhouette radius by skin (Samsung settings cards use 25; Material M3E `lg`).
   double get _cardRadius {
     switch (SettingsSvc.settings.skin.value) {
       case Skins.Samsung:
         return 25.0;
       case Skins.iOS:
-        return 8.0;
+        // Match iOS attachment / collection card corners (CollectionAttachmentCard).
+        return 20.0;
       case Skins.Material:
-        return 16.0;
+        return M3EShapes.lg;
+    }
+  }
+
+  /// Author-edge radius when the grid sits flush against subject / body.
+  /// Material matches [TailClipper] (5). Samsung stays softer against its 25 outer radius.
+  double get _connectedCornerRadius {
+    switch (SettingsSvc.settings.skin.value) {
+      case Skins.Samsung:
+        return 12.0;
+      case Skins.iOS:
+      case Skins.Material:
+        return 5.0;
     }
   }
 
@@ -64,16 +76,16 @@ class CollectionGroupGrid extends StatelessWidget {
   }
 
   /// Outer silhouette radii — tighten only the author-edge corner that sits against
-  /// subject (top) / body (bottom). Non-author corners keep the full card radius
-  /// (Material connected-bubble parity with [TailClipper]).
+  /// subject (top) / body (bottom). Non-author corners keep the full card radius.
   BorderRadius _silhouetteBorderRadius({
     required double cardRadius,
+    required double connectedRadius,
     required bool isFromMe,
     required bool tightenTop,
     required bool tightenBottom,
   }) {
     final outer = Radius.circular(cardRadius);
-    const connected = Radius.circular(_connectedCornerRadius);
+    final connected = Radius.circular(connectedRadius);
     return BorderRadius.only(
       topLeft: (tightenTop && !isFromMe) ? connected : outer,
       topRight: (tightenTop && isFromMe) ? connected : outer,
@@ -150,6 +162,7 @@ class CollectionGroupGrid extends StatelessWidget {
     // Subject above / body below: tighten only the author-edge corner against the text bubble.
     final silhouette = _silhouetteBorderRadius(
       cardRadius: cardRadius,
+      connectedRadius: _connectedCornerRadius,
       isFromMe: isFromMe,
       tightenTop: _hasSubjectAbove(messageState),
       tightenBottom: _hasBodyBelow(messageState),
