@@ -25,7 +25,7 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
 
   static String _shape(Map<String, dynamic> c) => (c['shape'] as String?) ?? 'circle';
   static int _maxShapes(Map<String, dynamic> c) => (c['maxShapes'] as num?)?.toInt() ?? 60;
-  static double _speed(Map<String, dynamic> c) => (c['speedMultiplier'] as num?)?.toDouble() ?? 1.0;
+  static double _speed(Map<String, dynamic> c) => (c['speedMultiplier'] as num?)?.toDouble() ?? 0.5;
   static double _size(Map<String, dynamic> c) => (c['sizeMultiplier'] as num?)?.toDouble() ?? 1.0;
   static double _spawnRate(Map<String, dynamic> c) => (c['spawnRate'] as num?)?.toDouble() ?? 10.0;
   static bool _rotation(Map<String, dynamic> c) => (c['enableRotation'] as bool?) ?? false;
@@ -48,7 +48,9 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
     return {
       'shape': 'circle',
       'maxShapes': 60.0,
-      'speedMultiplier': 1.0,
+      // Fairly slow by default -- a wallpaper should read as calm background
+      // motion, not something competing for attention with the conversation.
+      'speedMultiplier': 0.5,
       'sizeMultiplier': 1.0,
       'direction': 'up',
       'spawnRate': 10.0,

@@ -24,7 +24,7 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
     return AnimationType.values.firstWhere((e) => e.name == raw, orElse: () => AnimationType.moveAndFade);
   }
 
-  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 1.0;
+  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
   static int _circleCount(Map<String, dynamic> c) => ((c['circleCount'] as num?)?.toInt() ?? 4).clamp(2, 6).toInt();
   static double _circleSize(Map<String, dynamic> c) => (c['circleSize'] as num?)?.toDouble() ?? 1.0;
 
@@ -40,7 +40,9 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
     final colors = palette.take(3).toList();
     return {
       'animationType': 'moveAndFade',
-      'speed': 1.0,
+      // Fairly slow by default -- a wallpaper should read as calm background
+      // motion, not something competing for attention with the conversation.
+      'speed': 0.5,
       'circleCount': colors.isEmpty ? 3.0 : colors.length.clamp(2, 6).toDouble(),
       'circleSize': 1.0,
       'colors': (colors.isEmpty ? [Colors.blue, Colors.purple] : colors).map((c) => c.toARGB32()).toList(),

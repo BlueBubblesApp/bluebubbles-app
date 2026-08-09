@@ -12,7 +12,7 @@ class WaveWallpaperDefinition extends DynamicWallpaperDefinition {
 
   static double _amplitude(Map<String, dynamic> c) => (c['amplitude'] as num?)?.toDouble() ?? 20;
   static double _frequency(Map<String, dynamic> c) => (c['frequency'] as num?)?.toDouble() ?? 1.6;
-  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 1.0;
+  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
   static int _layerCount(Map<String, dynamic> c) => ((c['layerCount'] as num?)?.toInt() ?? 3).clamp(2, 4).toInt();
 
   static List<Color> _colors(Map<String, dynamic> c, List<Color> fallbackPalette) {
@@ -28,7 +28,9 @@ class WaveWallpaperDefinition extends DynamicWallpaperDefinition {
     return {
       'amplitude': 20.0,
       'frequency': 1.6,
-      'speed': 1.0,
+      // Fairly slow by default -- a wallpaper should read as calm background
+      // motion, not something competing for attention with the conversation.
+      'speed': 0.5,
       'layerCount': colors.length.clamp(2, 4).toDouble(),
       'colors': colors.map((c) => c.toARGB32()).toList(),
     };

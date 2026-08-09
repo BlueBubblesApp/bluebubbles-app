@@ -27,19 +27,21 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
 
   /// Sensible density/speed starting points per preset — applied whenever
   /// the preset selector changes so switching effects looks right away
-  /// rather than inheriting an unrelated preset's tuning.
+  /// rather than inheriting an unrelated preset's tuning. Speed defaults to
+  /// a fairly slow 0.5x — a wallpaper should read as calm background motion,
+  /// not something competing for attention with the conversation.
   static const _presetDefaults = <String, Map<String, double>>{
-    'starfield': {'count': 120, 'speed': 1.0},
-    'web': {'count': 70, 'speed': 1.0},
-    'nebula': {'count': 10, 'speed': 1.0},
-    'ghosts': {'count': 45, 'speed': 1.0},
-    'pulse': {'count': 55, 'speed': 1.0},
-    'snow': {'count': 100, 'speed': 1.0},
+    'starfield': {'count': 120, 'speed': 0.5},
+    'web': {'count': 70, 'speed': 0.5},
+    'nebula': {'count': 10, 'speed': 0.5},
+    'ghosts': {'count': 45, 'speed': 0.5},
+    'pulse': {'count': 55, 'speed': 0.5},
+    'snow': {'count': 100, 'speed': 0.5},
   };
 
   static String _preset(Map<String, dynamic> c) => (c['preset'] as String?) ?? 'starfield';
   static int _count(Map<String, dynamic> c) => ((c['count'] as num?)?.toInt() ?? 100).clamp(10, 200).toInt();
-  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 1.0;
+  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
 
   static List<Color> _colors(Map<String, dynamic> c, List<Color> fallbackPalette) {
     final raw = (c['colors'] as List?)?.whereType<num>().map((e) => Color(e.toInt())).toList();
@@ -54,7 +56,7 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
     return {
       'preset': 'starfield',
       'count': 120.0,
-      'speed': 1.0,
+      'speed': 0.5,
       'colors': (colors.isEmpty ? [Colors.white] : colors).map((c) => c.toARGB32()).toList(),
     };
   }
@@ -132,7 +134,7 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
             (i) => CircularParticle(
               radius: rng.nextDouble() * 6 + 2,
               color: colorAt(i).withValues(alpha: 0.8),
-              velocity: Offset((rng.nextDouble() - 0.5) * 20, rng.nextDouble() * 15 + 5),
+              velocity: Offset((rng.nextDouble() - 0.5) * 20 * speed, (rng.nextDouble() * 15 + 5) * speed),
             ),
           ),
         );
@@ -211,7 +213,9 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
           width: size.width,
           height: size.height,
           boundType: BoundType.WrapAround,
-          interaction: ParticleInteraction(awayRadius: 120, enableHover: true),
+          // A wallpaper sits behind the message list -- it must never react
+          // to the user's taps/drags meant for the conversation above it.
+          interaction: ParticleInteraction.none(),
           particles: List.generate(
             count,
             (i) => CircularParticle(
