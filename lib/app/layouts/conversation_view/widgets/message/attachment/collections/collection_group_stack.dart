@@ -241,34 +241,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
     // Listener wraps only the card canvas so pointer-down on the label does not
     // set isGalleryDragging or claim the horizontal swipe for fan navigation.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        CollectionTitle(
-          label: collectionController.title,
-          onTap: () => collectionController.openGallery(context),
-        ),
-        // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
-        // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
-        // from the start-aligned label — no reservation (avoids a large title gap).
-        // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
-        if (_isFromMe)
-          ReactionSpacing(
-            messageParts: const [],
-            part: widget.messagePart,
-            reactionsForPart: (part, reactions) =>
-                reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
-            minHeightWhenNoReactions: 4,
-          )
-        else
-          const SizedBox(height: 4),
-        CollectionDownloadButton.wrap(
-          isFromMe: _isFromMe,
-          contentWidth: fanCanvasWidth,
-          contentHeight: fanCanvasHeight,
-          attachments: _attachments,
-          child: Listener(
+    final fanBody = CollectionDownloadButton.wrap(
+      isFromMe: _isFromMe,
+      contentWidth: fanCanvasWidth,
+      contentHeight: fanCanvasHeight,
+      attachments: _attachments,
+      child: Listener(
             // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
             // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
             // VideoPlayer registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
@@ -415,7 +393,34 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               ),
             ),
           ),
+    );
+
+    // Title is iOS chrome only (same as grid). Material/Samsung forced stack stays cards-only.
+    if (SettingsSvc.settings.skin.value != Skins.iOS) return fanBody;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        CollectionTitle(
+          label: collectionController.title,
+          onTap: () => collectionController.openGallery(context),
         ),
+        // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
+        // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
+        // from the start-aligned label — no reservation (avoids a large title gap).
+        // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
+        if (_isFromMe)
+          ReactionSpacing(
+            messageParts: const [],
+            part: widget.messagePart,
+            reactionsForPart: (part, reactions) =>
+                reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
+            minHeightWhenNoReactions: 4,
+          )
+        else
+          const SizedBox(height: 4),
+        fanBody,
       ],
     );
   }
