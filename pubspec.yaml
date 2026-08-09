@@ -83,6 +83,7 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   flutter_map_marker_popup: ^8.1.0
   flutter_markdown_plus: ^1.0.7
+  flutter_moving_background: ^0.4.0
   flutter_slidable: ^4.0.1
   flutter_sliding_up_panel: ^2.1.1
   flutter_staggered_grid_view: ^0.7.0
@@ -134,7 +135,7 @@ dependencies:
   on_exit: ^1.0.0
   open_filex: ^4.7.0
   package_info_plus: ^9.0.1
-  particles_flutter: ^2.0.2
+  particles_flutter: ^3.2.0
   pasteboard: ^0.5.0
   path_provider: ^2.1.5 # no web support
   path_provider_linux: ^2.2.1 # desktop shared_preferences store path resolution

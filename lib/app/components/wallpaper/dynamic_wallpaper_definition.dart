@@ -1,5 +1,7 @@
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/floating_wallpaper.dart';
+import 'package:bluebubbles/app/components/wallpaper/moving_background_wallpaper.dart';
+import 'package:bluebubbles/app/components/wallpaper/particles_wallpaper.dart';
 import 'package:bluebubbles/app/components/wallpaper/wave_wallpaper.dart';
 import 'package:flutter/material.dart';
 
@@ -47,6 +49,8 @@ abstract final class DynamicWallpaperRegistry {
   static final List<DynamicWallpaperDefinition> _definitions = [
     WaveWallpaperDefinition(),
     FloatingWallpaperDefinition(),
+    MovingBackgroundWallpaperDefinition(),
+    ParticlesWallpaperDefinition(),
   ];
 
   static List<DynamicWallpaperDefinition> get all => List.unmodifiable(_definitions);
