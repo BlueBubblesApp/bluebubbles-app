@@ -15,11 +15,28 @@ import 'package:flutter/material.dart';
 
 typedef _CellBuilder = Widget Function(int index, double width, double height, int? moreCount);
 
+enum _SegmentKind { banner, heroStack, squareRow }
+
+/// Pack units: HS(3)=4 items, HS(2)=3, SR(2)=2.
+enum _Chunk { hs3, hs2, sr2 }
+
+/// One composable shape. [param] is stackCount (hero) or cellCount (square row).
+class _LayoutSegment {
+  const _LayoutSegment(this.kind, this.startIndex, [this.param = 0]);
+
+  final _SegmentKind kind;
+  final int startIndex;
+  final int param;
+}
+
 /// Google Messages–style grid for multi-attachment media collections.
 ///
-/// Layouts are composed from three shapes on a shared 3-column unit:
-/// banner, hero+stack, and square row (see [_buildCellLayout] recipes).
-class CollectionGroupGrid extends StatelessWidget {
+/// Built from three composable shapes on a shared 3-column grid: a wide banner, a tall hero
+/// with a vertical stack of squares beside it, and a row of equal squares. Collections
+/// over 7 tiles show a `+N` overlay — tap opens fullscreen, long-press expands
+/// the remaining items in place. Expanded layouts keep an alternating hero / row rhythm
+/// (hero facing flips each time) and avoid leaving a single orphan tile.
+class CollectionGroupGrid extends StatefulWidget {
   const CollectionGroupGrid({
     super.key,
     required this.messagePart,
@@ -31,43 +48,36 @@ class CollectionGroupGrid extends StatelessWidget {
   final ConversationViewController cvController;
   final bool isEditing;
 
+  @override
+  State<CollectionGroupGrid> createState() => _CollectionGroupGridState();
+}
+
+class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   static const double _gap = 2.0;
   static const double _maxGridSizeFactor = 0.75; // temporary: match bubble width
   static const double _maxGridWidth = 280.0;
   static const double _bannerAspect = 4 / 3;
+  static const Duration _expandAnimDuration = Duration(milliseconds: 320);
 
+  bool _expanded = false;
+
+  MessagePart get messagePart => widget.messagePart;
+  ConversationViewController get cvController => widget.cvController;
+  bool get isEditing => widget.isEditing;
   List<Attachment> get _attachments => messagePart.attachments;
 
-  /// Outer silhouette radius by skin (Samsung settings cards use 25; Material M3E `lg`).
-  double get _cardRadius {
-    switch (SettingsSvc.settings.skin.value) {
-      case Skins.Samsung:
-        return 25.0;
-      case Skins.iOS:
-        // Match iOS attachment / collection card corners (CollectionAttachmentCard).
-        return 20.0;
-      case Skins.Material:
-        return M3EShapes.lg;
-    }
-  }
+  double get _cardRadius => switch (SettingsSvc.settings.skin.value) {
+        Skins.Samsung => 25.0,
+        Skins.iOS => 20.0,
+        Skins.Material => M3EShapes.lg,
+      };
 
-  /// Author-edge radius when the grid sits flush against subject / body.
-  /// Material matches [TailClipper] (5). Samsung stays softer against its 25 outer radius.
-  double get _connectedCornerRadius {
-    switch (SettingsSvc.settings.skin.value) {
-      case Skins.Samsung:
-        return 12.0;
-      case Skins.iOS:
-      case Skins.Material:
-        return 5.0;
-    }
-  }
+  double get _connectedCornerRadius =>
+      SettingsSvc.settings.skin.value == Skins.Samsung ? 12.0 : 5.0;
 
-  /// Subject bubble sits above the leading attachment part (see [MessageHolder]).
   bool _hasSubjectAbove(MessageState messageState) =>
       messageState.isLeadingMessagePart(messagePart) && !isNullOrEmpty(messageState.subject.value);
 
-  /// Body text on this part, or a later text part below the collection.
   bool _hasBodyBelow(MessageState messageState) {
     if (!isNullOrEmpty(messagePart.text)) return true;
     return messageState.parts.any(
@@ -75,8 +85,7 @@ class CollectionGroupGrid extends StatelessWidget {
     );
   }
 
-  /// Outer silhouette radii — tighten only the author-edge corner that sits against
-  /// subject (top) / body (bottom). Non-author corners keep the full card radius.
+  /// Tighten only the author-edge corner against subject (top) / body (bottom).
   BorderRadius _silhouetteBorderRadius({
     required double cardRadius,
     required double connectedRadius,
@@ -104,40 +113,139 @@ class CollectionGroupGrid extends StatelessWidget {
   double _squareRowCellSize(double gridWidth, int cellCount) =>
       (gridWidth - (cellCount - 1) * _gap) / cellCount;
 
-  /// Full-width banner height: always [HeroStack](2) × [_bannerAspect].
   double _bannerHeight(double gridWidth) => _heroStackHeight(gridWidth, 2) * _bannerAspect;
 
-  /// Visible tile count before `+N` overflow (collections are 2+).
-  int _visibleTileCount(int count) => switch (count) {
-        2 || 3 || 4 || 5 || 6 => count,
-        _ => 7,
+  double _segmentHeight(_LayoutSegment segment, double gridWidth) => switch (segment.kind) {
+        _SegmentKind.banner => _bannerHeight(gridWidth),
+        _SegmentKind.heroStack => _heroStackHeight(gridWidth, segment.param),
+        _SegmentKind.squareRow => _squareRowCellSize(gridWidth, segment.param),
       };
 
-  double _gridHeight(int count, double gridWidth) {
-    final banner = _bannerHeight(gridWidth);
+  double _heightForSegments(List<_LayoutSegment> segments, double gridWidth) {
+    if (segments.isEmpty) return 0;
+    return segments.skip(1).fold(
+      _segmentHeight(segments.first, gridWidth),
+      (h, s) => h + _gap + _segmentHeight(s, gridWidth),
+    );
+  }
+
+  static int _chunkSize(_Chunk c) => switch (c) {
+        _Chunk.hs3 => 4,
+        _Chunk.hs2 => 3,
+        _Chunk.sr2 => 2,
+      };
+
+  static bool _isHero(_Chunk? c) => c == _Chunk.hs3 || c == _Chunk.hs2;
+
+  static List<_Chunk>? _packSearch(
+    int remaining,
+    _Chunk? previous,
+    _Chunk? lastHero, {
+    required bool allowAdjacentFlat,
+    required bool allowAdjacentHero,
+  }) {
+    if (remaining == 0) return const [];
+    if (remaining < 0 || remaining == 1) return null;
+
+    final candidates = _isHero(previous)
+        ? const [_Chunk.sr2]
+        : [
+            lastHero == _Chunk.hs3 ? _Chunk.hs2 : _Chunk.hs3,
+            lastHero == _Chunk.hs3 ? _Chunk.hs3 : _Chunk.hs2,
+            _Chunk.sr2,
+          ];
+
+    for (final chunk in candidates) {
+      final take = _chunkSize(chunk);
+      if (take > remaining) continue;
+      if (_isHero(chunk) && _isHero(previous) && !allowAdjacentHero) continue;
+      if (chunk == _Chunk.sr2 && previous == _Chunk.sr2 && !allowAdjacentFlat) continue;
+
+      final rest = _packSearch(
+        remaining - take,
+        chunk,
+        _isHero(chunk) ? chunk : lastHero,
+        allowAdjacentFlat: allowAdjacentFlat,
+        allowAdjacentHero: allowAdjacentHero,
+      );
+      if (rest != null) return [chunk, ...rest];
+    }
+    return null;
+  }
+
+  /// Pack [n] items after a kept SquareRow (so the search starts with a hero).
+  List<_LayoutSegment> _packOverflow(int n, int startIndex) {
+    if (n == 0) return const [];
+    const previous = _Chunk.sr2;
+    final chunks = _packSearch(n, previous, null, allowAdjacentFlat: false, allowAdjacentHero: false) ??
+        _packSearch(n, previous, null, allowAdjacentFlat: true, allowAdjacentHero: false) ??
+        _packSearch(n, previous, null, allowAdjacentFlat: true, allowAdjacentHero: true);
+    assert(chunks != null, 'overflow packer failed for n=$n');
+
+    final out = <_LayoutSegment>[];
+    var index = startIndex;
+    for (final chunk in chunks!) {
+      out.add(chunk == _Chunk.sr2
+          ? _LayoutSegment(_SegmentKind.squareRow, index, 2)
+          : _LayoutSegment(_SegmentKind.heroStack, index, chunk == _Chunk.hs3 ? 3 : 2));
+      index += _chunkSize(chunk);
+    }
+    return out;
+  }
+
+  List<_LayoutSegment> _segmentsFor(int count, {required bool expanded}) {
     return switch (count) {
-      2 => gridWidth / _bannerAspect,
-      3 => banner + _gap + _squareRowCellSize(gridWidth, 2),
-      4 => banner + _gap + _heroStackHeight(gridWidth, 2),
-      5 => banner + _gap + _heroStackHeight(gridWidth, 3),
-      6 => banner +
-          _gap +
-          _heroStackHeight(gridWidth, 2) +
-          _gap +
-          _squareRowCellSize(gridWidth, 2),
-      // 7+: Banner + HeroStack(3) + SquareRow(2)
-      _ => banner +
-          _gap +
-          _heroStackHeight(gridWidth, 3) +
-          _gap +
-          _squareRowCellSize(gridWidth, 2),
+      3 => const [
+          _LayoutSegment(_SegmentKind.banner, 0),
+          _LayoutSegment(_SegmentKind.squareRow, 1, 2),
+        ],
+      4 => const [
+          _LayoutSegment(_SegmentKind.banner, 0),
+          _LayoutSegment(_SegmentKind.heroStack, 1, 2),
+        ],
+      5 => const [
+          _LayoutSegment(_SegmentKind.banner, 0),
+          _LayoutSegment(_SegmentKind.heroStack, 1, 3),
+        ],
+      6 => const [
+          _LayoutSegment(_SegmentKind.banner, 0),
+          _LayoutSegment(_SegmentKind.heroStack, 1, 2),
+          _LayoutSegment(_SegmentKind.squareRow, 4, 2),
+        ],
+      _ when count == 7 || !expanded => const [
+          _LayoutSegment(_SegmentKind.banner, 0),
+          _LayoutSegment(_SegmentKind.heroStack, 1, 3),
+          _LayoutSegment(_SegmentKind.squareRow, 5, 2),
+        ],
+      _ => switch (count - 7) {
+          1 => const [
+              _LayoutSegment(_SegmentKind.banner, 0),
+              _LayoutSegment(_SegmentKind.heroStack, 1, 3),
+              _LayoutSegment(_SegmentKind.heroStack, 5, 2),
+            ],
+          2 => const [
+              _LayoutSegment(_SegmentKind.banner, 0),
+              _LayoutSegment(_SegmentKind.heroStack, 1, 2),
+              _LayoutSegment(_SegmentKind.squareRow, 4, 2),
+              _LayoutSegment(_SegmentKind.heroStack, 6, 2),
+            ],
+          final n => [
+              const _LayoutSegment(_SegmentKind.banner, 0),
+              const _LayoutSegment(_SegmentKind.heroStack, 1, 3),
+              const _LayoutSegment(_SegmentKind.squareRow, 5, 2),
+              ..._packOverflow(n, 7),
+            ],
+        },
     };
   }
 
+  double _gridHeight(int count, double gridWidth, {required bool expanded}) {
+    if (count == 2) return gridWidth / _bannerAspect;
+    return _heightForSegments(_segmentsFor(count, expanded: expanded), gridWidth);
+  }
+
   void _openSeeMoreFullscreen(BuildContext context) {
-    // Interim: open the fullscreen carousel on the covered overflow tile,
-    // not the PR6 overview page.
-    final overflowIndex = _visibleTileCount(_attachments.length) - 1;
+    final overflowIndex = min(_attachments.length, 7) - 1;
     final attachment = _attachments[overflowIndex];
     cvController.focusNode.unfocus();
     cvController.subjectFocusNode.unfocus();
@@ -158,25 +266,17 @@ class CollectionGroupGrid extends StatelessWidget {
     final messageState = MessageStateScope.of(context);
     final isFromMe = messageState.isFromMe.value;
     final count = _attachments.length;
-    final cardRadius = _cardRadius;
-    // Subject above / body below: tighten only the author-edge corner against the text bubble.
     final silhouette = _silhouetteBorderRadius(
-      cardRadius: cardRadius,
+      cardRadius: _cardRadius,
       connectedRadius: _connectedCornerRadius,
       isFromMe: isFromMe,
       tightenTop: _hasSubjectAbove(messageState),
       tightenBottom: _hasBodyBelow(messageState),
     );
-    // Calculated against screen width; maxGridWidth caps size on larger screens.
-    final gridWidth = min(
-      NavigationSvc.width(context) * _maxGridSizeFactor,
-      _maxGridWidth,
-    );
-    final gridHeight = _gridHeight(count, gridWidth);
-    final visibleCount = _visibleTileCount(count);
-    final moreCount = count > visibleCount ? count - visibleCount : null;
+    final gridWidth = min(NavigationSvc.width(context) * _maxGridSizeFactor, _maxGridWidth);
+    final gridHeight = _gridHeight(count, gridWidth, expanded: _expanded);
+    final moreCount = (!_expanded && count > 7) ? count - 7 : null;
 
-    // Media layer: outer clip owns the silhouette; cells fill square.
     final imageLayer = _wrapGridCard(
       context,
       width: gridWidth,
@@ -186,6 +286,7 @@ class CollectionGroupGrid extends StatelessWidget {
         count: count,
         gridWidth: gridWidth,
         moreCount: moreCount,
+        expanded: _expanded,
         cellBuilder: (index, width, height, cellMoreCount) => CollectionAttachmentCard(
           attachment: _attachments[index],
           attachmentIndex: index,
@@ -196,7 +297,6 @@ class CollectionGroupGrid extends StatelessWidget {
           enableGestures: true,
           hideReactions: true,
           showCardShadow: false,
-          // Outer grid ClipRRect owns silhouette corners; keep media square inside.
           mediaClipBorderRadius: BorderRadius.zero,
         ),
         moreOverlayBuilder: (index, width, height, cellMoreCount) {
@@ -204,6 +304,7 @@ class CollectionGroupGrid extends StatelessWidget {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => _openSeeMoreFullscreen(context),
+            onLongPress: () => setState(() => _expanded = true),
             child: ColoredBox(
               color: Colors.black54,
               child: Center(
@@ -224,7 +325,6 @@ class CollectionGroupGrid extends StatelessWidget {
       ),
     );
 
-    // Reaction overlay paints above every cell so badges aren't covered by neighbors.
     final reactionLayer = SizedBox(
       width: gridWidth,
       height: gridHeight,
@@ -232,12 +332,9 @@ class CollectionGroupGrid extends StatelessWidget {
         count: count,
         gridWidth: gridWidth,
         moreCount: moreCount,
+        expanded: _expanded,
         cellBuilder: (index, width, height, cellMoreCount) {
-          // Overflow "+N" cell is a see-more control; hide its tapbacks.
-          if (cellMoreCount != null && cellMoreCount > 0) {
-            return const SizedBox.shrink();
-          }
-          // Author-edge with a tighter overhang so badges stay nearer their cell.
+          if (cellMoreCount != null && cellMoreCount > 0) return const SizedBox.shrink();
           return CollectionAttachmentReactions(
             collectionPart: messagePart,
             attachmentIndex: index,
@@ -250,20 +347,41 @@ class CollectionGroupGrid extends StatelessWidget {
       ),
     );
 
-    final grid = Stack(
-      clipBehavior: Clip.none,
-      children: [
-        imageLayer,
-        Positioned.fill(child: reactionLayer),
-      ],
-    );
-
-    return CollectionDownloadButton.wrap(
-      isFromMe: isFromMe,
-      contentWidth: gridWidth,
-      contentHeight: gridHeight,
-      attachments: _attachments,
-      child: grid,
+    return AnimatedSize(
+      duration: _expandAnimDuration,
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: _expandAnimDuration,
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        // Size to incoming child so AnimatedSize can grow; outgoing floats above.
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.hardEdge,
+          children: [
+            for (final child in previousChildren)
+              Positioned(top: 0, left: 0, right: 0, child: IgnorePointer(child: child)),
+            if (currentChild != null) currentChild,
+          ],
+        ),
+        child: KeyedSubtree(
+          key: ValueKey(_expanded),
+          child: CollectionDownloadButton.wrap(
+            isFromMe: isFromMe,
+            contentWidth: gridWidth,
+            contentHeight: gridHeight,
+            attachments: _attachments,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                imageLayer,
+                Positioned.fill(child: reactionLayer),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -271,6 +389,7 @@ class CollectionGroupGrid extends StatelessWidget {
     required int count,
     required double gridWidth,
     required _CellBuilder cellBuilder,
+    required bool expanded,
     Widget? Function(int index, double width, double height, int? moreCount)? moreOverlayBuilder,
     int? moreCount,
   }) {
@@ -293,44 +412,43 @@ class CollectionGroupGrid extends StatelessWidget {
     Widget hGap() => const SizedBox(width: _gap);
     Widget vGap() => const SizedBox(height: _gap, width: double.infinity);
 
-    // Full-width banner; height is always HeroStack(2) × [_bannerAspect].
-    Widget banner(int index, {int? cellMoreCount}) {
-      return cell(index, gridWidth, _bannerHeight(gridWidth), cellMoreCount: cellMoreCount);
-    }
+    Widget banner(int index, {int? cellMoreCount}) =>
+        cell(index, gridWidth, _bannerHeight(gridWidth), cellMoreCount: cellMoreCount);
 
-    // Left tall hero (2 cols) + right column of [stackCount] 1:1 squares.
-    Widget heroStack(int startIndex, int stackCount, {int? moreOnLast}) {
+    Widget heroStack(int startIndex, int stackCount, {int? moreOnLast, bool mirrored = false}) {
       final col = _columnWidth(gridWidth);
       final heroWidth = 2 * col + _gap;
       final h = _heroStackHeight(gridWidth, stackCount);
+      final heroIndex = mirrored ? startIndex + stackCount : startIndex;
+      final stackBase = mirrored ? startIndex : startIndex + 1;
       final lastIndex = startIndex + stackCount;
+
+      final hero = cell(heroIndex, heroWidth, h, cellMoreCount: heroIndex == lastIndex ? moreOnLast : null);
+      final stack = SizedBox(
+        width: col,
+        height: h,
+        child: Column(
+          children: [
+            for (int i = 0; i < stackCount; i++) ...[
+              if (i > 0) vGap(),
+              cell(
+                stackBase + i,
+                col,
+                col,
+                cellMoreCount: stackBase + i == lastIndex ? moreOnLast : null,
+              ),
+            ],
+          ],
+        ),
+      );
+
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          cell(startIndex, heroWidth, h, cellMoreCount: startIndex == lastIndex ? moreOnLast : null),
-          hGap(),
-          SizedBox(
-            width: col,
-            height: h,
-            child: Column(
-              children: [
-                for (int i = 0; i < stackCount; i++) ...[
-                  if (i > 0) vGap(),
-                  cell(
-                    startIndex + 1 + i,
-                    col,
-                    col,
-                    cellMoreCount: startIndex + 1 + i == lastIndex ? moreOnLast : null,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+        children: mirrored ? [stack, hGap(), hero] : [hero, hGap(), stack],
       );
     }
 
-    // Full-width row of equal cells. [rowHeight] null → square cells.
+    // Count 2 uses taller-than-square cells via [rowHeight].
     Widget squareRow(int startIndex, int cellCount, {double? rowHeight, int? moreOnLast}) {
       final cellWidth = _squareRowCellSize(gridWidth, cellCount);
       final cellHeight = rowHeight ?? cellWidth;
@@ -350,49 +468,29 @@ class CollectionGroupGrid extends StatelessWidget {
       );
     }
 
-    return switch (count) {
-      2 => squareRow(0, 2, rowHeight: gridWidth / _bannerAspect),
-      3 => Column(
-          children: [
-            banner(0),
-            vGap(),
-            squareRow(1, 2),
-          ],
-        ),
-      4 => Column(
-          children: [
-            banner(0),
-            vGap(),
-            heroStack(1, 2),
-          ],
-        ),
-      5 => Column(
-          children: [
-            banner(0),
-            vGap(),
-            heroStack(1, 3),
-          ],
-        ),
-      6 => Column(
-          children: [
-            banner(0),
-            vGap(),
-            heroStack(1, 2),
-            vGap(),
-            squareRow(4, 2),
-          ],
-        ),
-      // 7+: Banner + HeroStack(3) + SquareRow(2); +N on last tile when count > 7.
-      _ => Column(
-          children: [
-            banner(0),
-            vGap(),
-            heroStack(1, 3),
-            vGap(),
-            squareRow(5, 2, moreOnLast: moreCount),
-          ],
-        ),
-    };
+    if (count == 2) return squareRow(0, 2, rowHeight: gridWidth / _bannerAspect);
+
+    final segments = _segmentsFor(count, expanded: expanded);
+    var heroOrdinal = 0;
+    Widget buildSegment(_LayoutSegment segment, {int? moreOnLast}) => switch (segment.kind) {
+          _SegmentKind.banner => banner(segment.startIndex, cellMoreCount: moreOnLast),
+          _SegmentKind.heroStack => heroStack(
+              segment.startIndex,
+              segment.param,
+              moreOnLast: moreOnLast,
+              mirrored: (heroOrdinal++).isOdd,
+            ),
+          _SegmentKind.squareRow => squareRow(segment.startIndex, segment.param, moreOnLast: moreOnLast),
+        };
+
+    return Column(
+      children: [
+        for (var i = 0; i < segments.length; i++) ...[
+          if (i > 0) vGap(),
+          buildSegment(segments[i], moreOnLast: i == segments.length - 1 ? moreCount : null),
+        ],
+      ],
+    );
   }
 
   Widget _wrapGridCard(
@@ -419,11 +517,7 @@ class CollectionGroupGrid extends StatelessWidget {
                 ]
               : null,
         ),
-        // Clip media to the silhouette; cells stay square and fill.
-        child: ClipRRect(
-          borderRadius: borderRadius,
-          child: child,
-        ),
+        child: ClipRRect(borderRadius: borderRadius, child: child),
       ),
     );
   }
