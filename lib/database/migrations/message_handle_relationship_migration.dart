@@ -28,7 +28,7 @@ class MessageHandleRelationshipMigration {
       final allHandles = Database.handles.getAll();
       final handleIdMap = <int, Handle>{};
       for (final handle in allHandles) {
-        if (handle.id != null) {
+        if (handle.id != null && handle.originalROWID != null) {
           // I thought that using handleId would work, but it seems originalROWID is the correct field to use.
           handleIdMap[handle.originalROWID!] = handle;
         }
