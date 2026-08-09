@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -81,6 +82,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   }
 
   /// Tighten only the author-edge corner against subject (top) / body (bottom).
+  /// iOS always keeps a full-radius card (same policy as text bubbles skipping TailClipper connect).
   BorderRadius _silhouetteBorderRadius({
     required double cardRadius,
     required double connectedRadius,
@@ -249,13 +251,16 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
       collectionPart: messagePart,
     );
     final isFromMe = messageState.isFromMe.value;
+    final isIos = SettingsSvc.settings.skin.value == Skins.iOS;
+    // Connected author-edge corners match text-bubble TailClipper: Material/Samsung only.
+    final connectCorners = !isIos;
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
       cardRadius: _cardRadius,
       connectedRadius: _connectedCornerRadius,
       isFromMe: isFromMe,
-      tightenTop: _hasSubjectAbove(messageState),
-      tightenBottom: _hasBodyBelow(messageState),
+      tightenTop: connectCorners && _hasSubjectAbove(messageState),
+      tightenBottom: connectCorners && _hasBodyBelow(messageState),
     );
     final gridWidth = min(NavigationSvc.width(context) * _maxGridSizeFactor, _maxGridWidth);
     final gridHeight = _gridHeight(count, gridWidth, expanded: _expanded);
@@ -334,7 +339,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
       ),
     );
 
-    return AnimatedSize(
+    final gridBody = AnimatedSize(
       duration: _expandAnimDuration,
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
@@ -369,6 +374,22 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           ),
         ),
       ),
+    );
+
+    // iOS stack chrome: title above the card. Material/Samsung stay grid-only.
+    if (!isIos) return gridBody;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        CollectionTitle(
+          label: collectionController.title,
+          onTap: () => collectionController.openGallery(context),
+        ),
+        const SizedBox(height: 4),
+        gridBody,
+      ],
     );
   }
 
