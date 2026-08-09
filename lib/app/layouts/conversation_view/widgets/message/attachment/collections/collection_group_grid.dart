@@ -280,7 +280,6 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           attachment: _attachments[index],
           attachmentIndex: index,
           messagePart: messagePart,
-          galleryAttachments: _attachments,
           collectionController: collectionController,
           cvController: cvController,
           isEditing: isEditing,
