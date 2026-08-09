@@ -186,6 +186,7 @@ class Handle {
 
       if (existing != null) {
         id = existing.id;
+        originalROWID ??= existing.originalROWID;
       }
       // Contact matching is now handled automatically by ContactServiceV2
       if (!updateColor) {
@@ -211,6 +212,7 @@ class Handle {
     // Update this handle with the saved data
     id = savedHandle.id;
     color = savedHandle.color;
+    originalROWID = savedHandle.originalROWID;
 
     return this;
   }
@@ -229,6 +231,7 @@ class Handle {
 
         if (existing != null) {
           h.id = existing.id;
+          h.originalROWID ??= existing.originalROWID;
         }
         // Contact matching is now handled automatically by ContactServiceV2
       }
@@ -257,6 +260,7 @@ class Handle {
       if (i < savedHandles.length) {
         handles[i].id = savedHandles[i].id;
         handles[i].color = savedHandles[i].color;
+        handles[i].originalROWID = savedHandles[i].originalROWID;
       }
     }
 
