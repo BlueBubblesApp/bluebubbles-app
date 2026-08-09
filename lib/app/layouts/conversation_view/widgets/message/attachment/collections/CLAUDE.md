@@ -15,8 +15,9 @@ override when not `skinDefault` (Media Settings → Multi-Attachment Layout).
 ## Ownership
 
 - Parents size the frame; `AttachmentHolder(fill: true)` fills it (popup skips fill).
-- **Collage / stack:** card owns shadow + rounded clip; reactions outside the clip.
-- **Grid:** no card shadow; outer `ClipRRect` owns silhouette; cells stay square. Reaction overlay above cells (author-edge, `tightOverhang`). Author-edge corners tighten when subject/body is adjacent.
+- **Radii:** `CollectionAttachmentCard.mediaCardRadius` — iOS 20 / Material `M3EShapes.lg` / Samsung 25.
+- **Collage / stack:** card owns skin radius + iOS-only soft shadow; collage tilt (~0.75°) is iOS-only. Reactions outside the clip.
+- **Grid:** no card shadow; outer `ClipRRect` owns silhouette (same radius table); cells stay square. Reaction overlay above cells (author-edge, `tightOverhang`). Author-edge corners tighten when subject/body is adjacent.
 - **Overview:** stack title / grid `+N` → `CollectionMediaController.openGallery`; collage only via fullscreen grid button. Cards pass `collectionController` into Fullscreen viewers (paging from `controller.media`); overview cells omit it purposefully so the grid button cannot nest.
 
 ## Grid layout (`collection_group_grid.dart`)

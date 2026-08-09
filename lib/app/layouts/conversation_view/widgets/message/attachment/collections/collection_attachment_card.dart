@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
@@ -109,11 +110,20 @@ class CollectionAttachmentCard extends StatelessWidget {
   /// When true, omit in-card tapbacks (e.g. grid paints them in an overlay above all cells).
   final bool hideReactions;
 
-  /// Grid passes false so parent/media clip owns corners.
+  /// Soft card shadow (iOS only). Grid always passes false - parent owns the shadow.
   final bool showCardShadow;
 
   /// When set, clips media to this radius without clipping overflow tapbacks.
+  /// Grid passes [BorderRadius.zero]; collage/stack omit and use [mediaCardBorderRadius].
   final BorderRadius? mediaClipBorderRadius;
+
+  static double get mediaCardRadius => switch (SettingsSvc.settings.skin.value) {
+        Skins.Samsung => 25.0,
+        Skins.iOS => 20.0,
+        Skins.Material => M3EShapes.lg,
+      };
+
+  static BorderRadius get mediaCardBorderRadius => BorderRadius.all(Radius.circular(mediaCardRadius));
 
   int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
 
@@ -130,18 +140,17 @@ class CollectionAttachmentCard extends StatelessWidget {
     );
   }
 
-  static const _cardRadius = BorderRadius.all(Radius.circular(20));
-
   @override
   Widget build(BuildContext context) {
     final scopedPart = _scopedPart();
     // Card owns shadow + clip so AttachmentHolder can stay fill-only.
     // Reactions stay outside the clip so tapbacks can overflow.
-    final clipRadius = mediaClipBorderRadius ?? _cardRadius;
+    final clipRadius = mediaClipBorderRadius ?? mediaCardBorderRadius;
+    final paintShadow = showCardShadow && SettingsSvc.settings.skin.value == Skins.iOS;
     final media = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: clipRadius,
-        boxShadow: showCardShadow
+        boxShadow: paintShadow
             ? [
                 BoxShadow(
                   color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
