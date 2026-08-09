@@ -23,6 +23,7 @@ class HandleActions {
 
       if (existing != null) {
         handle.id = existing.id;
+        handle.originalROWID ??= existing.originalROWID;
       }
       // Contact matching is now handled automatically by ContactServiceV2
       if (!updateColor) {
@@ -61,6 +62,7 @@ class HandleActions {
 
         if (existing != null) {
           h.id = existing.id;
+          h.originalROWID ??= existing.originalROWID;
         }
         // Contact matching is now handled automatically by ContactServiceV2
       }

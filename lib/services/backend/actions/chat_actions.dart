@@ -602,6 +602,7 @@ class ChatActions {
         final existing = existingHandlesMap[inputHandle.uniqueAddressAndService];
         if (existing != null) {
           inputHandle.id = existing.id;
+          inputHandle.originalROWID ??= existing.originalROWID;
           handlesToSave.add(inputHandle);
         } else {
           // Brand-new handle — track it so we can attempt contact matching after the transaction.

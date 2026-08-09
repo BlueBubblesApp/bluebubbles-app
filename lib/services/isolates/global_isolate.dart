@@ -724,6 +724,7 @@ enum IsolateRequestType {
   saveMessageAsync,
   findOneAsync,
   findAsync,
+  relinkMessagesToHandle,
 
   // CustomGroup actions
   getAllCustomGroups,

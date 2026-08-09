@@ -486,6 +486,17 @@ class Message {
     await MessageInterface.softDeleteMessage(guid: guid);
   }
 
+  /// Re-links messages whose `handleId` (the sender's server-side ROWID)
+  /// matches [handleId] to [localHandleId]'s `handleRelation`. Used by the
+  /// Developer Tools "Handle Auditing" remediation flow, after a handle's
+  /// `originalROWID` is repaired, to re-attach any message that was left
+  /// unlinked because the lookup failed when it was first saved. Returns the
+  /// number of messages relinked.
+  static Future<int> relinkMessagesToHandle({required int handleId, required int localHandleId}) async {
+    if (kIsWeb) return 0;
+    return await MessageInterface.relinkMessagesToHandle(handleId: handleId, localHandleId: localHandleId);
+  }
+
   /// This is purely because some Macs incorrectly report the dateCreated time
   static int sort(Message a, Message b, {bool descending = true}) {
     late DateTime aDateToUse;
