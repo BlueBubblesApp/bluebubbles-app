@@ -60,6 +60,20 @@ class Chat {
   String? customThemeLight;
   String? customThemeDark;
 
+  /// [ChatWallpaperType.name] — "none" (default/absent), "image", or "dynamic".
+  /// Read via `ChatWallpaperType.fromName(chat.wallpaperType)`.
+  @Property(uid: 699362128358203439)
+  String? wallpaperType;
+
+  /// [DynamicWallpaperDefinition.id] of the selected dynamic wallpaper, when
+  /// [wallpaperType] is "dynamic". Null otherwise.
+  @Property(uid: 3728602269935984680)
+  String? dynamicWallpaperId;
+
+  /// JSON-encoded config map for [dynamicWallpaperId], via [WallpaperConfigCodec].
+  @Property(uid: 738307263391205523)
+  String? dynamicWallpaperConfig;
+
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
@@ -126,6 +140,9 @@ class Chat {
     this.lastReadMessageGuid,
     this.customThemeLight,
     this.customThemeDark,
+    this.wallpaperType,
+    this.dynamicWallpaperId,
+    this.dynamicWallpaperConfig,
   }) {
     customAvatarPath = customAvatar;
     customBackgroundPath = customBackground;
@@ -161,6 +178,9 @@ class Chat {
       lastReadMessageGuid: json["lastReadMessageGuid"],
       customThemeLight: json["customThemeLight"],
       customThemeDark: json["customThemeDark"],
+      wallpaperType: json["wallpaperType"],
+      dynamicWallpaperId: json["dynamicWallpaperId"],
+      dynamicWallpaperConfig: json["dynamicWallpaperConfig"],
       textFieldText: json["textFieldText"],
       textFieldAttachments: (json["textFieldAttachments"] as List?)?.cast<String>() ?? const [],
     );
@@ -187,6 +207,7 @@ class Chat {
     bool updateLastReadMessageGuid = false,
     bool updateLatestMessage = false,
     bool updateCustomThemes = false,
+    bool updateWallpaperSettings = false,
   }) async {
     if (kIsWeb) return this;
 
@@ -213,6 +234,7 @@ class Chat {
         'updateLastReadMessageGuid': updateLastReadMessageGuid,
         'updateLatestMessage': updateLatestMessage,
         'updateCustomThemes': updateCustomThemes,
+        'updateWallpaperSettings': updateWallpaperSettings,
       },
     );
 
@@ -791,6 +813,9 @@ class Chat {
     muteArgs ??= other.muteArgs;
     dateDeleted ??= other.dateDeleted;
     style ??= other.style;
+    wallpaperType ??= other.wallpaperType;
+    dynamicWallpaperId ??= other.dynamicWallpaperId;
+    dynamicWallpaperConfig ??= other.dynamicWallpaperConfig;
     return this;
   }
 
@@ -870,6 +895,9 @@ class Chat {
       "lastReadMessageGuid": lastReadMessageGuid,
       "customThemeLight": customThemeLight,
       "customThemeDark": customThemeDark,
+      "wallpaperType": wallpaperType,
+      "dynamicWallpaperId": dynamicWallpaperId,
+      "dynamicWallpaperConfig": dynamicWallpaperConfig,
       "textFieldText": textFieldText,
       "textFieldAttachments": textFieldAttachments,
       "dbOnlyLatestMessageDate": dbOnlyLatestMessageDate?.millisecondsSinceEpoch,

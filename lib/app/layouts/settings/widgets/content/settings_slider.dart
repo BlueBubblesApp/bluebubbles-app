@@ -1,4 +1,4 @@
-import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/components/bb_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -38,11 +38,7 @@ class SettingsSlider extends StatelessWidget {
       leading: leading,
       trailing: Text(value, style: context.theme.textTheme.bodyLarge),
       minLeadingWidth: leadingMinWidth,
-      title: Slider(
-        activeColor: context.theme.colorScheme.primary.oppositeLightenOrDarken(20),
-        secondaryActiveColor: context.theme.colorScheme.primary.withValues(alpha: 0.6),
-        thumbColor: context.theme.colorScheme.primary,
-        inactiveColor: context.theme.colorScheme.primary.withValues(alpha: 0.2),
+      title: BBSlider(
         value: startingVal,
         onChanged: update,
         onChangeEnd: onChangeEnd,
@@ -50,7 +46,6 @@ class SettingsSlider extends StatelessWidget {
         divisions: divisions,
         min: min,
         max: max,
-        mouseCursor: MouseCursor.defer,
       ),
     );
   }

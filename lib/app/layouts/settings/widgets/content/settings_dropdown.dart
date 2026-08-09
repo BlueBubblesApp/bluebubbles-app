@@ -170,7 +170,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                     constraints: BoxConstraints(
                         maxWidth: leading != null
                             ? NavigationSvc.width(context) * 2 / 5 - 80 // Account for leading icon space
-                            : NavigationSvc.width(context) * 2 / 5 - 47),
+                            : NavigationSvc.width(context) * 2 / 5 - 20),
                     child: widget,
                   );
                 } else {

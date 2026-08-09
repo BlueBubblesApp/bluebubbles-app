@@ -134,7 +134,7 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
       tileColor: tileColor,
       headerColor: headerColor,
       actions: [
-        if (qrAction != null) qrAction,
+        ?qrAction,
       ],
       bodySlivers: [
         SliverToBoxAdapter(

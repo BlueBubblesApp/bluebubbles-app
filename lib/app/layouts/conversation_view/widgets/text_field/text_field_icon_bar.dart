@@ -59,7 +59,7 @@ class TextFieldIconBar extends StatelessWidget {
       };
 
   Widget _attachmentButton(BuildContext context) {
-    final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.customBackgroundPath.value?.isNotEmpty == true;
+    final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
     return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: IconButton(

@@ -319,7 +319,7 @@ class ContactV2Actions {
             }
             for (final email in rawContact.emails) {
               final label =
-                  email.label == fc.EmailLabel.custom ? email.label.customLabel ?? '' : email.label.label.name;
+                  email.label.label == fc.EmailLabel.custom ? email.label.customLabel ?? '' : email.label.label.name;
               contactEmails.add(ContactEmail(address: email.address, label: label));
             }
           } else if (rawContact is ContactV2) {
@@ -491,7 +491,7 @@ class ContactV2Actions {
           error: e, trace: stack);
 
       // Complete the completer with an empty result on error
-      final stats = _ContactSyncStats(affectedHandleIds: const [], deviceContactCount: 0, matchedContactCount: 0);
+      const stats = _ContactSyncStats(affectedHandleIds: [], deviceContactCount: 0, matchedContactCount: 0);
       _syncCompleter?.complete(stats);
       return stats;
     }

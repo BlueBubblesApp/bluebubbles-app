@@ -27,7 +27,7 @@ class FindMyMapWidget extends StatelessWidget {
               initialCenter: controller.location.value == null
                   ? const LatLng(0, 0)
                   : LatLng(controller.location.value!.latitude, controller.location.value!.longitude),
-              onTap: (_, __) => controller.popupController.hideAllPopups(),
+              onTap: (_, _) => controller.popupController.hideAllPopups(),
               keepAlive: true,
               interactionOptions: InteractionOptions(
                 flags: InteractiveFlag.all & ~InteractiveFlag.rotate,

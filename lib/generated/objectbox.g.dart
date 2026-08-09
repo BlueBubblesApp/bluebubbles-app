@@ -147,7 +147,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 9017250848141753702),
     name: 'Chat',
-    lastPropertyId: const obx_int.IdUid(36, 2775254966591031179),
+    lastPropertyId: const obx_int.IdUid(39, 738307263391205523),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -301,6 +301,24 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(36, 2775254966591031179),
         name: 'customThemeDark',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(37, 699362128358203439),
+        name: 'wallpaperType',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(38, 3728602269935984680),
+        name: 'dynamicWallpaperId',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(39, 738307263391205523),
+        name: 'dynamicWallpaperConfig',
         type: 9,
         flags: 0,
       ),
@@ -1438,7 +1456,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final customThemeDarkOffset = object.customThemeDark == null
             ? null
             : fbb.writeString(object.customThemeDark!);
-        fbb.startTable(37);
+        final wallpaperTypeOffset = object.wallpaperType == null
+            ? null
+            : fbb.writeString(object.wallpaperType!);
+        final dynamicWallpaperIdOffset = object.dynamicWallpaperId == null
+            ? null
+            : fbb.writeString(object.dynamicWallpaperId!);
+        final dynamicWallpaperConfigOffset =
+            object.dynamicWallpaperConfig == null
+            ? null
+            : fbb.writeString(object.dynamicWallpaperConfig!);
+        fbb.startTable(40);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(2, guidOffset);
         fbb.addOffset(4, chatIdentifierOffset);
@@ -1467,6 +1495,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addInt64(29, object.dbLatestMessage.targetId);
         fbb.addOffset(34, customThemeLightOffset);
         fbb.addOffset(35, customThemeDarkOffset);
+        fbb.addOffset(36, wallpaperTypeOffset);
+        fbb.addOffset(37, dynamicWallpaperIdOffset);
+        fbb.addOffset(38, dynamicWallpaperConfigOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1555,6 +1586,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final customThemeDarkParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 74);
+        final wallpaperTypeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 76);
+        final dynamicWallpaperIdParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 78);
+        final dynamicWallpaperConfigParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 80);
         final object =
             Chat(
                 id: idParam,
@@ -1577,6 +1617,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 lastReadMessageGuid: lastReadMessageGuidParam,
                 customThemeLight: customThemeLightParam,
                 customThemeDark: customThemeDarkParam,
+                wallpaperType: wallpaperTypeParam,
+                dynamicWallpaperId: dynamicWallpaperIdParam,
+                dynamicWallpaperConfig: dynamicWallpaperConfigParam,
               )
               ..dbOnlyLatestMessageDate = dbOnlyLatestMessageDateValue == null
                   ? null
@@ -2814,6 +2857,21 @@ class Chat_ {
   /// See [Chat.customThemeDark].
   static final customThemeDark = obx.QueryStringProperty<Chat>(
     _entities[1].properties[24],
+  );
+
+  /// See [Chat.wallpaperType].
+  static final wallpaperType = obx.QueryStringProperty<Chat>(
+    _entities[1].properties[25],
+  );
+
+  /// See [Chat.dynamicWallpaperId].
+  static final dynamicWallpaperId = obx.QueryStringProperty<Chat>(
+    _entities[1].properties[26],
+  );
+
+  /// See [Chat.dynamicWallpaperConfig].
+  static final dynamicWallpaperConfig = obx.QueryStringProperty<Chat>(
+    _entities[1].properties[27],
   );
 
   /// see [Chat.handles]

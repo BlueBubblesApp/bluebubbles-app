@@ -98,7 +98,7 @@ class Store {
 
   dynamic get reference => throw Exception('Unsupported Platform');
 
-  Store.fromReference(dynamic _, dynamic __);
+  Store.fromReference(dynamic _, dynamic _);
 
   Store.attach(dynamic _, String? directoryPath, {bool queriesCaseSensitiveDefault = true});
 }

@@ -114,7 +114,10 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       int _pageCount = (pinCount / maxOnPage).ceil();
 
                       return SliverPadding(
-                        padding: const EdgeInsets.only(top: 10),
+                        // Bottom padding guarantees visible separation from the regular chat list even if
+                        // totalHeight below slightly underestimates the tiles' real rendered height on a
+                        // given device (font metrics can vary enough to make the estimate come in short).
+                        padding: const EdgeInsets.only(top: 6, bottom: 2),
                         sliver: SliverToBoxAdapter(
                           child: LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
                             // Horizontal overhead per tile: margins (4+4) + padding (11+11) + extra gap
@@ -122,6 +125,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                             // Vertical overhead per tile: AnimatedContainer margins (top:1) + padding (4+2)
                             //   + ChatTitle fixed padding (top:6 + bottom:4)
                             const double tileVOverhead = 17.0;
+                            // Extra per-row safety margin so real-device font/DPI variance can't make the
+                            // estimate come in short and let the last row bleed into the space below it.
+                            const double tileVSafetyBuffer = 4.0;
                             // PageView horizontal padding (10 each side)
                             const double pageHPadding = 20.0;
 
@@ -134,7 +140,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
 
                             final TextStyle style = context.theme.textTheme.bodyMedium!;
                             final double textHeight = (style.height ?? 1.2) * (style.fontSize ?? 14);
-                            final double tileHeight = avatarSize + textHeight + tileVOverhead;
+                            final double tileHeight = avatarSize + textHeight + tileVOverhead + tileVSafetyBuffer;
                             final double totalHeight = usedRowCount * tileHeight;
 
                             // avatar only

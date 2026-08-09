@@ -134,7 +134,7 @@ class NetworkTasks {
         }
         completer.complete();
       },
-      onError: (_, __) {
+      onError: (_, _) {
         setOriginOverride(null);
         completer.complete();
       },

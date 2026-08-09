@@ -135,7 +135,7 @@ class _CupertinoConnectionPanelState
       tileColor: tileColor,
       headerColor: headerColor,
       actions: [
-        if (qrAction != null) qrAction,
+        ?qrAction,
       ],
       bodySlivers: [
         SliverToBoxAdapter(

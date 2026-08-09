@@ -70,7 +70,7 @@ class Handle {
         defaultPhone: json['defaultPhone'],
       );
 
-  Handle save({updateColor = false}) {
+  Handle save({bool updateColor = false}) {
     return this;
   }
 

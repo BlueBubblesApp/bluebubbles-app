@@ -20,7 +20,7 @@ class _InitialWidgetRightState extends State<InitialWidgetRight> {
             : context.theme.colorScheme.surface,
         extendBodyBehindAppBar: true,
         body: Center(
-          child: Container(child: Text("Select a chat from the list", style: context.theme.textTheme.bodyLarge)),
+          child: Text("Select a chat from the list", style: context.theme.textTheme.bodyLarge),
         ),
       ),
     );

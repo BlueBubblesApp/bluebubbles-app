@@ -308,13 +308,13 @@ class CupertinoUrlPreview extends StatelessWidget {
                 File(iconImagePath),
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               )
             : Image.network(
                 webIconUrl!,
                 gaplessPlayback: true,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
       ),
     );
@@ -401,13 +401,13 @@ class CupertinoUrlPreview extends StatelessWidget {
               File(previewImagePath),
               gaplessPlayback: true,
               filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) => _imageErrorText(context),
+              errorBuilder: (_, _, _) => _imageErrorText(context),
             )
           : Image.network(
               webImageUrl ?? '',
               gaplessPlayback: true,
               filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) => _imageErrorText(context),
+              errorBuilder: (_, _, _) => _imageErrorText(context),
             ),
     );
 
@@ -484,7 +484,7 @@ class CupertinoUrlPreview extends StatelessWidget {
       controller.resolvedContent!.bytes!,
       gaplessPlayback: true,
       filterQuality: FilterQuality.none,
-      errorBuilder: (_, __, ___) => _imageErrorText(context),
+      errorBuilder: (_, _, _) => _imageErrorText(context),
     );
   }
 

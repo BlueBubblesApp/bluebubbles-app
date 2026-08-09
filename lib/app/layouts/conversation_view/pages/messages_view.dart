@@ -525,7 +525,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
         builder: (replyContext) {
           final theme = Theme.of(replyContext);
           final hasBackground =
-              ChatsSvc.getChatState(controller.chat.guid)?.customBackgroundPath.value?.isNotEmpty == true;
+              ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
           return Container(
             margin: const EdgeInsets.all(5),
             decoration: hasBackground
