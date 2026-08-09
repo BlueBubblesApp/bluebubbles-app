@@ -48,8 +48,6 @@ class ChatLatestMessageMigration {
         final latest = msgQuery.findFirst();
         msgQuery.close();
 
-        print('Chat ${chat.guid} - Latest Message: ${latest?.guid} - ${latest?.text}');
-
         if (latest == null) continue;
 
         chat.dbLatestMessage.target = latest;
