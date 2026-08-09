@@ -508,7 +508,9 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   isFromMe: widget.isFromMe),
               if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
               if (!kIsDesktop && !kIsWeb && thumbnailFailed)
-                MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe),
+                Obx(() => firstFrameReady.value
+                    ? const SizedBox.shrink()
+                    : MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe)),
             ],
           ),
         ),

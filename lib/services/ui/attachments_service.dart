@@ -553,11 +553,6 @@ class AttachmentsService extends GetxService {
 
   Future<String?> _resolveLinuxFfmpeg() {
     return _linuxFfmpegPath ??= () async {
-      // A copy shipped next to the runner wins, so the release tarball can be made
-      // self-contained without depending on what the user's distro has installed.
-      final bundled = join(dirname(Platform.resolvedExecutable), 'ffmpeg');
-      if (await File(bundled).exists()) return bundled;
-
       // Otherwise take it from PATH: the snap stages ffmpeg into $SNAP/usr/bin and the flatpak
       // builds it into /app/bin -- neither sandbox can see the host's copy, so each ships its
       // own, and both directories are already on PATH. A plain tarball install falls through to

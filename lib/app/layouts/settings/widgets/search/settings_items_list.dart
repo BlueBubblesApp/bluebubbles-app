@@ -76,6 +76,7 @@ List<Widget> buildSettingItemList({
               size: 50,
             ),
             trailing: const NextButton(),
+            minVerticalPadding: 20,
           ),
         ],
       ),

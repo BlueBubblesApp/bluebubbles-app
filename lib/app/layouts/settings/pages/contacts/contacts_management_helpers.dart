@@ -32,8 +32,6 @@ mixin ContactsManagementHelpersMixin {
   /// Display label for an account row: `{'name': String, 'type': String, 'count': int}`.
   String accountLabel(Map<String, dynamic> account) => account['name'] as String? ?? 'Unknown account';
 
-  String accountSubtitle(Map<String, dynamic> account) => account['type'] as String? ?? '';
-
   int accountCount(Map<String, dynamic> account) => account['count'] as int? ?? 0;
 
   static const ContactAccountIcon _defaultAccountIcon = ContactAccountIcon(Icons.person_outline_rounded, Colors.blueGrey);
