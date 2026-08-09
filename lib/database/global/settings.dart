@@ -184,6 +184,10 @@ class Settings {
   final Rx<Skins> skin = Skins.iOS.obs;
   final Rx<ThemeMode> theme = ThemeMode.system.obs;
   final Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
+  final Rx<MediaCollectionLayout> mediaCollectionLayoutSmall =
+      MediaCollectionLayout.skinDefault.obs;
+  final Rx<MediaCollectionLayout> mediaCollectionLayoutLarge =
+      MediaCollectionLayout.skinDefault.obs;
 
   // Pin settings
   final RxInt pinRowsPortrait = RxInt(3);
@@ -436,6 +440,8 @@ class Settings {
       'skin': skin.value.index,
       'theme': theme.value.index,
       'fullscreenViewerSwipeDir': fullscreenViewerSwipeDir.value.index,
+      'mediaCollectionLayoutSmall': mediaCollectionLayoutSmall.value.index,
+      'mediaCollectionLayoutLarge': mediaCollectionLayoutLarge.value.index,
       'pinRowsPortrait': pinRowsPortrait.value,
       'pinColumnsPortrait': pinColumnsPortrait.value,
       'pinRowsLandscape': pinRowsLandscape.value,
@@ -677,6 +683,12 @@ class Settings {
     SettingsSvc.settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
         ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
         : SettingsSvc.settings.fullscreenViewerSwipeDir.value;
+    SettingsSvc.settings.mediaCollectionLayoutSmall.value = map['mediaCollectionLayoutSmall'] != null
+        ? MediaCollectionLayout.values[map['mediaCollectionLayoutSmall']]
+        : SettingsSvc.settings.mediaCollectionLayoutSmall.value;
+    SettingsSvc.settings.mediaCollectionLayoutLarge.value = map['mediaCollectionLayoutLarge'] != null
+        ? MediaCollectionLayout.values[map['mediaCollectionLayoutLarge']]
+        : SettingsSvc.settings.mediaCollectionLayoutLarge.value;
     SettingsSvc.settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? SettingsSvc.settings.pinRowsPortrait.value;
     SettingsSvc.settings.pinColumnsPortrait.value =
         map['pinColumnsPortrait'] ?? SettingsSvc.settings.pinColumnsPortrait.value;
@@ -869,6 +881,12 @@ class Settings {
     s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
         ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
         : SwipeDirection.RIGHT;
+    s.mediaCollectionLayoutSmall.value = map['mediaCollectionLayoutSmall'] != null
+        ? MediaCollectionLayout.values[map['mediaCollectionLayoutSmall']]
+        : MediaCollectionLayout.skinDefault;
+    s.mediaCollectionLayoutLarge.value = map['mediaCollectionLayoutLarge'] != null
+        ? MediaCollectionLayout.values[map['mediaCollectionLayoutLarge']]
+        : MediaCollectionLayout.skinDefault;
     s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
