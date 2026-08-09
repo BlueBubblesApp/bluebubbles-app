@@ -12,6 +12,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 typedef _CellBuilder = Widget Function(int index, double width, double height, int? moreCount);
 
@@ -304,7 +305,10 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => _openSeeMoreFullscreen(context),
-            onLongPress: () => setState(() => _expanded = true),
+            onLongPress: () {
+              HapticFeedback.lightImpact();
+              setState(() => _expanded = true);
+            },
             child: ColoredBox(
               color: Colors.black54,
               child: Center(
