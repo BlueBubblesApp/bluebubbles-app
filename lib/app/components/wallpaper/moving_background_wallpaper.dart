@@ -122,35 +122,58 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
   }
 }
 
-class _MovingBackgroundWallpaperView extends StatelessWidget {
+class _MovingBackgroundWallpaperView extends StatefulWidget {
   final Map<String, dynamic> config;
 
   const _MovingBackgroundWallpaperView({required this.config});
 
   @override
+  State<_MovingBackgroundWallpaperView> createState() => _MovingBackgroundWallpaperViewState();
+}
+
+class _MovingBackgroundWallpaperViewState extends State<_MovingBackgroundWallpaperView> {
+  // `MovingBackground` resets every circle's position (`didUpdateWidget`
+  // compares `circles` by identity) whenever it's handed a new `circles`
+  // list -- rebuilding one fresh with `List.generate` on every build (e.g.
+  // an unrelated ancestor rebuild) reset the animation on every rebuild,
+  // not just an actual config change. Cache it and only build a new one when
+  // the values that actually shape it change.
+  String? _circlesKey;
+  List<MovingCircle>? _circles;
+
+  List<MovingCircle> _circlesFor(List<Color> colors, int circleCount, double sizeMultiplier, double blur) {
+    final key = '$circleCount-$sizeMultiplier-$blur-${colors.map((c) => c.toARGB32()).join(',')}';
+    if (_circlesKey != key) {
+      _circlesKey = key;
+      _circles = List.generate(
+        circleCount,
+        (i) => MovingCircle(
+          color: colors[i % colors.length].withValues(alpha: 0.55),
+          radius: (110 + i * 35) * sizeMultiplier,
+          blurSigma: blur,
+        ),
+      );
+    }
+    return _circles!;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = ThemeWallpaperPalette.fromContext(context, isIMessage: true);
-    final colors = MovingBackgroundWallpaperDefinition._colors(config, palette);
-    final circleCount = MovingBackgroundWallpaperDefinition._circleCount(config);
-    final sizeMultiplier = MovingBackgroundWallpaperDefinition._circleSize(config);
-    final speed = MovingBackgroundWallpaperDefinition._speed(config);
-    final blur = MovingBackgroundWallpaperDefinition._blur(config);
+    final colors = MovingBackgroundWallpaperDefinition._colors(widget.config, palette);
+    final circleCount = MovingBackgroundWallpaperDefinition._circleCount(widget.config);
+    final sizeMultiplier = MovingBackgroundWallpaperDefinition._circleSize(widget.config);
+    final speed = MovingBackgroundWallpaperDefinition._speed(widget.config);
+    final blur = MovingBackgroundWallpaperDefinition._blur(widget.config);
     final durationMs = (14000 / speed).round();
 
     return ColoredBox(
       color: context.theme.colorScheme.surface,
       child: MovingBackground(
         backgroundColor: Colors.transparent,
-        animationType: MovingBackgroundWallpaperDefinition._animationType(config),
+        animationType: MovingBackgroundWallpaperDefinition._animationType(widget.config),
         duration: Duration(milliseconds: durationMs),
-        circles: List.generate(
-          circleCount,
-          (i) => MovingCircle(
-            color: colors[i % colors.length].withValues(alpha: 0.55),
-            radius: (110 + i * 35) * sizeMultiplier,
-            blurSigma: blur,
-          ),
-        ),
+        circles: _circlesFor(colors, circleCount, sizeMultiplier, blur),
       ),
     );
   }

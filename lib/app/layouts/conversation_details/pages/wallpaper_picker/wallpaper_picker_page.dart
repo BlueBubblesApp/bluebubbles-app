@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/cupertino_wallpaper_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/material_wallpaper_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/samsung_wallpaper_picker.dart';
@@ -33,10 +34,23 @@ class _WallpaperPickerPageState extends State<WallpaperPickerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeSwitcher(
-      iOSSkin: CupertinoWallpaperPicker(controller: controller),
-      materialSkin: MaterialWallpaperPicker(controller: controller),
-      samsungSkin: SamsungWallpaperPicker(controller: controller),
-    );
+    // Colors throughout this page (the config screens' color swatches, the
+    // gallery preview tiles) are drawn from `context.theme` -- without this
+    // override they'd only ever see the global theme, ignoring a chat's own
+    // custom theme, since this page is reached via a separate pushed route
+    // rather than as a descendant of the conversation view's per-chat
+    // `Theme`. `ChatDetailTheme.resolve` already falls back to the global
+    // theme when the chat has none of its own.
+    return Obx(() {
+      final chatTheme = ChatDetailTheme.resolve(context, widget.chat);
+      return Theme(
+        data: chatTheme.theme,
+        child: ThemeSwitcher(
+          iOSSkin: CupertinoWallpaperPicker(controller: controller),
+          materialSkin: MaterialWallpaperPicker(controller: controller),
+          samsungSkin: SamsungWallpaperPicker(controller: controller),
+        ),
+      );
+    });
   }
 }

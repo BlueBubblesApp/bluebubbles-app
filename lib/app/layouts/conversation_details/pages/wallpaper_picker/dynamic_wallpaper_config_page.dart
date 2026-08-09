@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/cupertino_dynamic_wallpaper_config_body.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/expressive_dynamic_wallpaper_config_body.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
@@ -37,15 +38,6 @@ class _DynamicWallpaperConfigPageState extends State<DynamicWallpaperConfigPage>
 
   Map<String, dynamic> get config => _config!;
 
-  // `defaultConfig` reads `context.theme`, which depends on the inherited
-  // `Theme` widget — not available yet in `initState()`, so it's computed
-  // here instead (called after `initState()`, with the widget tree mounted).
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _config ??= widget.initialConfig ?? widget.definition.defaultConfig(context, isIMessage: widget.chat.isIMessage);
-  }
-
   void _onConfigChanged(Map<String, dynamic> next) => setState(() => _config = next);
 
   Future<void> _apply() async {
@@ -57,48 +49,70 @@ class _DynamicWallpaperConfigPageState extends State<DynamicWallpaperConfigPage>
 
   @override
   Widget build(BuildContext context) {
-    final fields = widget.definition.buildConfigFields(context, config, _onConfigChanged);
+    // This page is reached via a separate pushed route rather than as a
+    // descendant of the conversation view's per-chat `Theme`, so without
+    // this override every color here (config screen color swatches, the
+    // live preview) would only ever reflect the global theme, ignoring a
+    // chat's own custom theme. `ChatDetailTheme.resolve` already falls back
+    // to the global theme when the chat has none of its own. `Builder` gets
+    // us a context *below* the override to read `context.theme` from --
+    // `defaultConfig`/`buildConfigFields` also need that seeded default
+    // computed here (not in `initState()`/`didChangeDependencies()`, which
+    // run before this subtree -- and its `Theme` -- exists).
+    return Obx(() {
+      final chatTheme = ChatDetailTheme.resolve(context, widget.chat);
+      return Theme(
+        data: chatTheme.theme,
+        child: Builder(
+          builder: (context) {
+            _config ??=
+                widget.initialConfig ?? widget.definition.defaultConfig(context, isIMessage: widget.chat.isIMessage);
+            final fields = widget.definition.buildConfigFields(context, config, _onConfigChanged);
 
-    return BBScaffold(
-      extendBodyBehindAppBar: false,
-      backgroundColor: context.headerColor,
-      appBar: BBAppBar(
-        titleText: widget.definition.displayName,
-        leading: buildBackButton(context),
-        actions: [
-          TextButton(
-            onPressed: _applying ? null : _apply,
-            child: Text(
-              "Apply",
-              style: context.theme.textTheme.bodyLarge!.copyWith(
-                color: _applying ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
+            return BBScaffold(
+              extendBodyBehindAppBar: false,
+              backgroundColor: context.headerColor,
+              appBar: BBAppBar(
+                titleText: widget.definition.displayName,
+                leading: buildBackButton(context),
+                actions: [
+                  TextButton(
+                    onPressed: _applying ? null : _apply,
+                    child: Text(
+                      "Apply",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(
+                        color: _applying ? context.theme.colorScheme.outline : context.theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: SizedBox(
-                height: 220,
-                width: double.infinity,
-                child: DynamicWallpaperView(wallpaperId: widget.definition.id, config: config),
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: SizedBox(
+                        height: 220,
+                        width: double.infinity,
+                        child: DynamicWallpaperView(wallpaperId: widget.definition.id, config: config),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ThemeSwitcher(
+                      iOSSkin: CupertinoDynamicWallpaperConfigBody(fields: fields),
+                      materialSkin: ExpressiveDynamicWallpaperConfigBody(fields: fields),
+                      samsungSkin: ExpressiveDynamicWallpaperConfigBody(fields: fields),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-          Expanded(
-            child: ThemeSwitcher(
-              iOSSkin: CupertinoDynamicWallpaperConfigBody(fields: fields),
-              materialSkin: ExpressiveDynamicWallpaperConfigBody(fields: fields),
-              samsungSkin: ExpressiveDynamicWallpaperConfigBody(fields: fields),
-            ),
-          ),
-        ],
-      ),
-    );
+            );
+          },
+        ),
+      );
+    });
   }
 }

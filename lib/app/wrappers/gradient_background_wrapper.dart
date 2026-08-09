@@ -49,9 +49,31 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
         Positioned.fill(
           child: Obx(() {
             if (_chatState?.wallpaperType.value == ChatWallpaperType.dynamic) {
-              return DynamicWallpaperView(
-                wallpaperId: _chatState?.dynamicWallpaperId.value,
-                config: _chatState?.dynamicWallpaperConfig.value,
+              // The conversation Scaffold shrinks its body to avoid the
+              // keyboard, and some dynamic wallpapers (e.g. the
+              // `flutter_moving_background`-backed one) reset their entire
+              // animation state whenever the space they're laid out in
+              // resizes -- so every keyboard show/hide was visibly
+              // glitching the wallpaper. Pin its height to the full window
+              // instead of the space actually available (which shrinks for
+              // the keyboard) so it never sees that as a resize; the
+              // ancestor `Stack`'s default clip keeps the overflow
+              // invisible.
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return OverflowBox(
+                    alignment: Alignment.topCenter,
+                    minHeight: MediaQuery.sizeOf(context).height,
+                    maxHeight: MediaQuery.sizeOf(context).height,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: DynamicWallpaperView(
+                        wallpaperId: _chatState?.dynamicWallpaperId.value,
+                        config: _chatState?.dynamicWallpaperConfig.value,
+                      ),
+                    ),
+                  );
+                },
               );
             }
 
