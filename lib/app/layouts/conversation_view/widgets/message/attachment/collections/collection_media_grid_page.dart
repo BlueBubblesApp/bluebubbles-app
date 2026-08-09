@@ -126,6 +126,7 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                 isLoading: false,
                 fullPage: true,
                 crossAxisCount: 3,
+                showSenderAvatar: false,
                 cellOverlayBuilder: showReactions
                     ? (context, index, _) => CollectionAttachmentReactions(
                           collectionPart: collectionController.collectionPart,

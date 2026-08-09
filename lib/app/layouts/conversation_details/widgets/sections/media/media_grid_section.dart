@@ -26,6 +26,7 @@ class MediaGridSection extends StatefulWidget {
   final MediaSenderFilter senderFilter;
   final DateTime? sinceDate;
   final ValueChanged<MediaFilter>? onMediaFilterChanged;
+  final bool showSenderAvatar;
 
   /// Optional per-cell overlay (e.g. collection tapbacks); clips thumbnail only so overlays can overflow.
   final Widget Function(BuildContext context, int index, Attachment attachment)? cellOverlayBuilder;
@@ -42,6 +43,7 @@ class MediaGridSection extends StatefulWidget {
     this.senderFilter = const MediaSenderFilter.any(),
     this.sinceDate,
     this.onMediaFilterChanged,
+    this.showSenderAvatar = true,
     this.cellOverlayBuilder,
   });
 
@@ -110,6 +112,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
     Widget thumbnail = MediaGalleryCard(
       attachment: attachment,
+      showSenderAvatar: widget.showSenderAvatar,
       chat: widget.chat,
       galleryAttachments: _filteredMedia,
     );
