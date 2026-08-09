@@ -823,13 +823,14 @@ packages:
     source: hosted
     version: "1.2.0"
   flat_buffers:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: flat_buffers
-      sha256: "7c1de2d6eb5f3e61e5c50040841109f509deaaf2b12ec0d57b92456d9ea50345"
-      url: "https://pub.dev"
-    source: hosted
-    version: "25.9.23"
+      path: dart
+      ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      resolved-ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      url: "https://github.com/google/flatbuffers.git"
+    source: git
+    version: "25.12.19"
   flex_color_picker:
     dependency: "direct main"
     description:

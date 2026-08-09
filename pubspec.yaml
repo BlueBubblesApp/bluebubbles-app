@@ -200,6 +200,11 @@ dependencies:
   uuid: any
 dependency_overrides:
   clock: ^1.1.2 # encrypter_plus
+  flat_buffers: # RangeError on FlexBuffer resize: https://github.com/objectbox/objectbox-dart/issues/786
+    git:
+      url: https://github.com/google/flatbuffers.git
+      ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      path: dart
   flutter_local_notifications_windows: # no identity + crashing fixes + suppressPopup
     git:
       url: https://github.com/jjoelj/flutter_local_notifications.git
