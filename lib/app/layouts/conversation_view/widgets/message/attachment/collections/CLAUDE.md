@@ -1,10 +1,29 @@
-# attachment/collections/ — Media Collections
+# collections/ — Multi-Attachment Media Layouts
 
-`MessagePart.isMediaCollection` → `MessagePartContent` → `resolveMediaCollectionLayout`
-(`helpers/ui/message_widget_helpers.dart`).
+Renders a message part with 2+ media attachments as a collage, fan stack, or grid
+(instead of individual `AttachmentHolder`s). Dispatched from `MessagePartContent`
+when `MessagePart.isMediaCollection`.
 
-User prefs `mediaCollectionLayoutSmall` (2–3) / `mediaCollectionLayoutLarge` (4+)
-override when not `skinDefault` (Media Settings → Multi-Attachment Layout).
+## Files
+
+| File | Purpose |
+|------|---------|
+| `collection_group_collage.dart` | Overlapping collage (skin-default iOS 2–3) |
+| `collection_group_stack.dart` | Fan stack (skin-default iOS 4+) |
+| `collection_group_grid.dart` | Grid (skin-default Material/Samsung 2+; chrome + layout + reactions) |
+| `collection_attachment_card.dart` | Shared card chrome + `fill` media + per-attachment reactions |
+| `collection_title.dart` | Tappable “X Photos/Videos/Items” label (callers gate to iOS) |
+| `collection_download_button.dart` | Incoming download control — iOS only (`CollectionDownloadButton.wrap`) |
+| `collection_media_controller.dart` | `openGallery` → `CollectionMediaGridPage`; passed into Fullscreen from cards only |
+| `collection_media_grid_page.dart` | Full-page collection gallery (`MediaGridSection`; no avatars; tapback overlays) |
+
+## Layout Selection
+
+`MessagePartContent` → `resolveMediaCollectionLayout(count)` in
+`helpers/ui/message_widget_helpers.dart`.
+
+Prefs `mediaCollectionLayoutSmall` (2–3) / `mediaCollectionLayoutLarge` (4+) override
+when not `skinDefault` (Media Settings → Multi-Attachment Layout):
 
 | Skin (Default) | Count | Layout |
 |----------------|-------|--------|
@@ -14,33 +33,20 @@ override when not `skinDefault` (Media Settings → Multi-Attachment Layout).
 
 ## Ownership
 
-- Parents size the frame; `AttachmentHolder(fill: true)` fills it (popup skips fill).
-- **Radii:** `CollectionAttachmentCard.mediaCardRadius` — iOS 20 / Material `M3EShapes.lg` / Samsung 25.
-- **Collage / stack:** card owns skin radius + iOS-only soft shadow; collage tilt (~0.75°) is iOS-only. Reactions outside the clip.
-- **Grid:** no card shadow; outer `ClipRRect` owns silhouette (same radius table); cells stay square. Reaction overlay above cells (author-edge, `tightOverhang`). Material/Samsung tighten author-edge corners when subject/body is adjacent; iOS stays full-radius + title.
-- **Overview:** iOS stack/grid title / grid `+N` → `CollectionMediaController.openGallery`; collage only via fullscreen grid button. Cards pass `collectionController` into Fullscreen viewers (paging from `controller.media`); overview cells omit it purposefully so the grid button cannot nest.
+- Parents size each card frame; `AttachmentHolder(fill: true)` fills it (popup skips fill).
+- Radii: `CollectionAttachmentCard.mediaCardRadius` — iOS 20 / Material `M3EShapes.lg` / Samsung 25.
+- **Collage / stack:** card owns skin radius + iOS-only soft shadow; collage tilt (~0.75°) is iOS-only. Reactions sit outside the clip.
+- **Grid:** no card shadow; outer `ClipRRect` owns the silhouette (same radius table); cells stay square. Reaction overlay sits above cells (author-edge, `tightOverhang`). Material/Samsung tighten author-edge corners when subject/body is adjacent; iOS stays full-radius.
+- **Title:** iOS stack/grid only (`CollectionTitle` → `openGallery`). Material/Samsung stay layout-only even when prefs force stack/grid.
+- **`+N` (grid, count > 7):** tap → gallery; long-press → expand remaining items in place. Segment packing lives in the `CollectionGroupGrid` class doc.
 
-## Grid layout (`collection_group_grid.dart`)
+## Gallery / Fullscreen
 
-Three composable shapes on a shared 3-column grid (details in the `CollectionGroupGrid` class doc):
+- Cards pass `collectionController` into Fullscreen viewers (paging from `controller.media`).
+- Overview gallery cells omit the controller so the fullscreen grid button cannot nest.
 
-| Shape | Geometry |
-|-------|----------|
-| Banner | Full-width; height = `HeroStack(2)` × `4/3` |
-| HeroStack(n) | 2-col hero + column of `n` squares (facing flips each hero) |
-| SquareRow(n) | Full-width row of `n` equal squares |
+## Related
 
-**`+N` (count > 7):** tap → collection gallery; long-press → expand missing items in place.
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `collection_group_collage.dart` | Overlapping collage (iOS 2–3) |
-| `collection_group_stack.dart` | Fan stack (iOS 4+) |
-| `collection_group_grid.dart` | Grid (chrome + layout + reactions) |
-| `collection_attachment_card.dart` | Shared card chrome + `fill` media + reactions |
-| `collection_title.dart` | “X Photos/Videos/Items” label |
-| `collection_download_button.dart` | Incoming download control (`CollectionDownloadButton.wrap`) |
-| `collection_media_controller.dart` | `openGallery` → `CollectionMediaGridPage`; Fullscreen viewers pass-through from cards only |
-| `collection_media_grid_page.dart` | Full-page collection gallery grid (`MediaGridSection`; no avatars; tapback overlays) |
+- Parent dispatcher: `../CLAUDE.md` (attachment/) and `../../misc/CLAUDE.md` (`MessagePartContent`)
+- Layout helper: `lib/helpers/ui/message_widget_helpers.dart` → `resolveMediaCollectionLayout`
+- Fullscreen: `lib/app/layouts/fullscreen_media/CLAUDE.md`
