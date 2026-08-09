@@ -201,6 +201,66 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(
+                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Multi-Attachment Layout"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: SettingsSubtitle(
+                        subtitle: "Choose how multiple images and videos are arranged in conversations",
+                      ),
+                    ),
+                    if (iOS)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Text("2–3 Items", style: context.theme.textTheme.bodyLarge),
+                      ),
+                    Obx(() => SettingsOptions<MediaCollectionLayout>(
+                          initial: SettingsSvc.settings.mediaCollectionLayoutSmall.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            SettingsSvc.settings.mediaCollectionLayoutSmall.value = val;
+                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutSmall');
+                          },
+                          options: MediaCollectionLayout.values,
+                          textProcessing: (val) => switch (val) {
+                            MediaCollectionLayout.skinDefault => "Default",
+                            MediaCollectionLayout.collage => "Collage",
+                            MediaCollectionLayout.stack => "Stack",
+                            MediaCollectionLayout.grid => "Grid",
+                          },
+                          capitalize: false,
+                          title: "2–3 Items",
+                          secondaryColor: headerColor,
+                        )),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    if (iOS)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Text("4+ Items", style: context.theme.textTheme.bodyLarge),
+                      ),
+                    Obx(() => SettingsOptions<MediaCollectionLayout>(
+                          initial: SettingsSvc.settings.mediaCollectionLayoutLarge.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            SettingsSvc.settings.mediaCollectionLayoutLarge.value = val;
+                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutLarge');
+                          },
+                          options: MediaCollectionLayout.values,
+                          textProcessing: (val) => switch (val) {
+                            MediaCollectionLayout.skinDefault => "Default",
+                            MediaCollectionLayout.collage => "Collage",
+                            MediaCollectionLayout.stack => "Stack",
+                            MediaCollectionLayout.grid => "Grid",
+                          },
+                          capitalize: false,
+                          title: "4+ Items",
+                          secondaryColor: headerColor,
+                        )),
+                  ],
+                ),
+                SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Video Mute Behavior"),
                 SettingsSection(
                   backgroundColor: tileColor,

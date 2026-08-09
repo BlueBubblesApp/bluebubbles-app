@@ -3,8 +3,11 @@
 `MessagePart.isMediaCollection` → `MessagePartContent` → `resolveMediaCollectionLayout`
 (`helpers/ui/message_widget_helpers.dart`).
 
-| Skin | Count | Layout |
-|------|-------|--------|
+User prefs `mediaCollectionLayoutSmall` (2–3) / `mediaCollectionLayoutLarge` (4+)
+override when not `skinDefault` (Media Settings → Multi-Attachment Layout).
+
+| Skin (Default) | Count | Layout |
+|----------------|-------|--------|
 | iOS | 2–3 | collage |
 | iOS | 4+ | stack |
 | Material / Samsung | 2+ | grid |
