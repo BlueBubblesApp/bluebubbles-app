@@ -267,6 +267,21 @@ class Handle {
     return handles;
   }
 
+  /// Permanently deletes a handle by its local database [id]. Used by the
+  /// Developer Tools "Handle Auditing" panel to purge orphaned/unrecoverable
+  /// handle records. Does not clean up references from other entities (Chat
+  /// participants, Message.handleRelation) — those simply resolve to null
+  /// afterwards, matching how deleteChat's handle cleanup already behaves.
+  ///
+  /// A single-row delete is cheap enough to run directly on the calling
+  /// thread — no need to round-trip through the isolate for this.
+  static void delete(int id) {
+    if (kIsWeb) return;
+    Database.runInTransaction(TxMode.write, () {
+      Database.handles.remove(id);
+    });
+  }
+
   Handle updateColor(String? newColor) {
     color = newColor;
     save();

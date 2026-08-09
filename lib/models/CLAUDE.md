@@ -16,6 +16,7 @@ Barrel export: `models/models.dart`
 | `contact_search_result.dart` | A single result from a contact search query |
 | `dispatched_event.dart` | Event envelope used by `EventDispatcherSvc` |
 | `fcm_data_info.dart` | Firebase Cloud Messaging token + device info DTO |
+| `handle_audit_result.dart` | Developer Tools "Handle Auditing" scan result for a single handle missing `originalROWID`, plus remediation status |
 | `handle_lookup_key.dart` | Composite key (address + service) for handle deduplication |
 | `handle_sync_page.dart` | Pagination cursor for handle sync requests |
 | `location_attachment_data.dart` | Parsed location payload from a location message |

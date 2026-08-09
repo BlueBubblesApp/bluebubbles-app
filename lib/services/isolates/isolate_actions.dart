@@ -60,6 +60,7 @@ class IsolateActons {
     IsolateRequestType.saveMessageAsync: MessageActions.saveMessageAsync,
     IsolateRequestType.findOneAsync: MessageActions.findOneAsync,
     IsolateRequestType.findAsync: MessageActions.findAsync,
+    IsolateRequestType.relinkMessagesToHandle: MessageActions.relinkMessagesToHandle,
 
     // Chat
     IsolateRequestType.clearNotificationForChat: ChatActions.clearNotificationForChat,

@@ -150,4 +150,25 @@ class MessageInterface {
     final messages = Database.messages.getMany(messageIds).whereType<Message>().toList();
     return messages;
   }
+
+  /// Re-links any message whose `handleId` matches [handleId] (the sender's
+  /// server-side ROWID) to the local handle [localHandleId]. Used by the
+  /// "Handle Auditing" remediation flow to re-attach messages that were left
+  /// unlinked because the handle's `originalROWID` was missing at the time
+  /// the message was originally saved. Returns the number of messages relinked.
+  static Future<int> relinkMessagesToHandle({
+    required int handleId,
+    required int localHandleId,
+  }) async {
+    final data = {
+      'handleId': handleId,
+      'localHandleId': localHandleId,
+    };
+
+    if (isIsolate) {
+      return await MessageActions.relinkMessagesToHandle(data);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<int>(IsolateRequestType.relinkMessagesToHandle, input: data);
+    }
+  }
 }

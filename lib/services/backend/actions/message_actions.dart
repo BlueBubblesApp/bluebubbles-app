@@ -263,4 +263,39 @@ class MessageActions {
       return results.map((e) => e.id!).toList();
     });
   }
+
+  /// Re-links messages whose `handleId` (the sender's server-side ROWID)
+  /// matches `serverHandleId` to `localHandleId`'s `handleRelation`.
+  ///
+  /// Mirrors `MessageHandleRelationshipMigration` — a message never gets a
+  /// `handleRelation` if its `handleId` didn't match a `Handle.originalROWID`
+  /// at save time (see "Handle Auditing" in Developer Tools). Scoped to a
+  /// single server ROWID instead of a full-table scan since this only runs
+  /// right after that one handle's `originalROWID` was repaired.
+  static Future<int> relinkMessagesToHandle(dynamic data) async {
+    final serverHandleId = data['handleId'] as int;
+    final localHandleId = data['localHandleId'] as int;
+
+    return Database.runInTransaction(TxMode.write, () {
+      final messageBox = Database.messages;
+
+      final query = messageBox.query(Message_.handleId.equals(serverHandleId)).build();
+      final matches = query.find();
+      query.close();
+
+      final toUpdate = <Message>[];
+      for (final message in matches) {
+        if (message.isFromMe == true) continue;
+        if (message.handleRelation.targetId == localHandleId) continue;
+        message.handleRelation.targetId = localHandleId;
+        toUpdate.add(message);
+      }
+
+      if (toUpdate.isNotEmpty) {
+        messageBox.putMany(toUpdate);
+      }
+
+      return toUpdate.length;
+    });
+  }
 }
