@@ -253,15 +253,20 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
             label: collectionController.title,
             onTap: () => collectionController.openGallery(context),
           ),
-          // Reserve room for per-card tapbacks (top: -14) so they don't cover the label.
+          // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
+          // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
+          // from the start-aligned label — no reservation (avoids a large title gap).
           // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
-          ReactionSpacing(
-            messageParts: const [],
-            part: widget.messagePart,
-            reactionsForPart: (part, reactions) =>
-                reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
-            minHeightWhenNoReactions: 4,
-          ),
+          if (_isFromMe)
+            ReactionSpacing(
+              messageParts: const [],
+              part: widget.messagePart,
+              reactionsForPart: (part, reactions) =>
+                  reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
+              minHeightWhenNoReactions: 4,
+            )
+          else
+            const SizedBox(height: 4),
           Listener(
             // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
             // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
