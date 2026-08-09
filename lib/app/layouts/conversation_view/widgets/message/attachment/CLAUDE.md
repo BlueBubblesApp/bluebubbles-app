@@ -16,7 +16,7 @@ Multi-attachment **collections** live in `collections/` → [CLAUDE.md](collecti
 | `sticker_holder.dart` | Sticker rendering (full-size emoji-like overlays) |
 | `other_file.dart` | Generic file display for docs, archives, APKs, etc. |
 | `live_photo_mixin.dart` | Mixin for handling Live Photo metadata |
-| `collections/` | media collections for multi-attachment rendering → CLAUDE.md |
+| `collections/` | Multi-attachment collage / stack / grid → CLAUDE.md |
 | `parts/` | Per-transfer-state renderers for a single attachment slot → CLAUDE.md |
 
 ## Key Patterns
