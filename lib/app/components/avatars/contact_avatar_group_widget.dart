@@ -27,6 +27,7 @@ class ContactAvatarGroupWidget extends StatelessWidget {
   const ContactAvatarGroupWidget({
     super.key,
     this.chat,
+    this.handles,
     this.size = 40,
     this.editable = true,
   });
@@ -34,6 +35,11 @@ class ContactAvatarGroupWidget extends StatelessWidget {
   /// Optional chat for scope-less contexts (search, tiles, scheduling panels).
   /// Ignored when a [ChatStateScope] is present above this widget in the tree.
   final Chat? chat;
+
+  /// Optional explicit participant list, e.g. an aggregation across multiple
+  /// chats (custom groups). Ignored when a [ChatStateScope] is present, and
+  /// takes precedence over [chat] otherwise.
+  final List<Handle>? handles;
   final double size;
   final bool editable;
 
@@ -57,9 +63,15 @@ class ContactAvatarGroupWidget extends StatelessWidget {
 
   List<Handle> _sortedHandles(List<Handle> handles) {
     final sorted = List<Handle>.from(handles);
+    // Sort by the reactive HandleState avatar path — reading contactsV2 here
+    // would run a lazy ToMany DB query per handle on every rebuild, and the
+    // registry value is also what the child ContactAvatarWidgets display.
+    final hasAvatar = {
+      for (final h in handles) h: HandleSvc.getOrCreateHandleState(h).avatarPath.value != null,
+    };
     sorted.sort((a, b) {
-      final avatarA = a.contactsV2.firstOrNull?.avatarPath != null;
-      final avatarB = b.contactsV2.firstOrNull?.avatarPath != null;
+      final avatarA = hasAvatar[a] ?? false;
+      final avatarB = hasAvatar[b] ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;
@@ -80,9 +92,9 @@ class ContactAvatarGroupWidget extends StatelessWidget {
         participants = _sortedHandles(chatState.participants.map((hs) => hs.handle).toList());
         customAvatarPath = chatState.customAvatarPath.value;
       } else {
-        // Static path: read once from the chat param — no subscription created.
-        participants = _sortedHandles(chat?.handles.toList() ?? []);
-        customAvatarPath = chat?.customAvatarPath;
+        // Static path: read once from the handles override or chat param — no subscription created.
+        participants = _sortedHandles(handles ?? chat?.handles.toList() ?? []);
+        customAvatarPath = handles != null ? null : chat?.customAvatarPath;
       }
 
       if (participants.isEmpty) {

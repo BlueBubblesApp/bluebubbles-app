@@ -1,20 +1,51 @@
 import 'dart:async';
-import 'dart:math';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_corner_badge.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_size_getter/file_input.dart';
+import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:mime_type/mime_type.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
+
+/// Sizes [child] like [AspectRatio], but never shrinks width to satisfy a
+/// height constraint (mirrors how image_viewer.dart sizes images) — a fixed
+/// parent height (e.g. the gallery fan card) would otherwise force a
+/// narrower box for portrait-ish videos than for images in the same slot.
+Widget _boundedAspectRatio({required double ratio, required Widget child}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      double width;
+      double height;
+      if (constraints.maxWidth.isFinite) {
+        width = constraints.maxWidth;
+        height = width / ratio;
+        if (constraints.maxHeight.isFinite && height > constraints.maxHeight) {
+          height = constraints.maxHeight;
+        }
+      } else if (constraints.maxHeight.isFinite) {
+        height = constraints.maxHeight;
+        width = height * ratio;
+      } else {
+        width = 0;
+        height = 0;
+      }
+      return SizedBox(width: width, height: height, child: child);
+    },
+  );
+}
 
 class VideoPlayer extends StatefulWidget {
   final PlatformFile file;
@@ -203,11 +234,18 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   final RxBool showPlayPauseOverlay = true.obs;
   final RxBool muted = SettingsSvc.settings.startVideosMuted.value.obs;
   final RxDouble aspectRatio = 1.0.obs;
-  Uint8List? thumbnail;
+  final RxBool firstFrameReady = false.obs;
+  // Path to the generated thumbnail file on disk -- deliberately never held as decoded bytes in
+  // memory; always rendered via Image.file.
+  String? thumbnailPath;
+  bool thumbnailFailed = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Seed layout from the DB dimensions so the box doesn't resize once the video decodes
+    aspectRatio.value = attachment.aspectRatio;
 
     // Check for cached controller first
     VideoController? cachedController = cvController?.videoPlayers[attachment.guid];
@@ -215,16 +253,54 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (cachedController != null) {
       // Reuse existing controller
       videoController = cachedController;
-      aspectRatio.value = videoController!.aspectRatio;
-      createListener(videoController!);
-    } else {
-      // Load thumbnail for non-desktop platforms while controller initializes
-      if (!kIsDesktop && !kIsWeb) {
-        getThumbnail();
+      if (cachedController.rect.value != null && aspectRatio.value != cachedController.aspectRatio) {
+        aspectRatio.value = cachedController.aspectRatio;
       }
-      // Initialize new controller
+      // firstFrameReady is set inside createListener via waitUntilFirstFrameRendered --
+      // for an already-rendered cached controller that future is already complete, so
+      // it resolves on the next microtask rather than staying false.
+      createListener(cachedController);
+    } else if (kIsDesktop || kIsWeb) {
+      // Desktop/web: eager init (no thumbnail support there)
       initializeController();
     }
+    // Mobile with no cached controller: stay lazy, the thumbnail renders until the user taps play
+
+    if (!kIsDesktop && !kIsWeb) {
+      if (file.path != null) {
+        thumbnailPath = AttachmentsSvc.getCachedVideoThumbnailSync(file.path!);
+      }
+      if (thumbnailPath == null) {
+        getThumbnail();
+      } else {
+        _seedAspectRatioFromThumbnail();
+      }
+    }
+  }
+
+  Future<void> _playInline() async {
+    await initializeController();
+    await videoController?.player.setVolume(muted.value ? 0.0 : 100.0);
+    await videoController?.player.play();
+    showPlayPauseOverlay.value = false;
+  }
+
+  /// The thumbnail is generated from the video with orientation applied, so its dimensions are
+  /// the ground truth for the box size, DB dimensions can be missing or ignore rotation, and a
+  /// mismatch there causes a visible resize when playback starts.
+  void _seedAspectRatioFromThumbnail() {
+    final path = thumbnailPath;
+    if (path == null || thumbnailFailed) return;
+    if (firstFrameReady.value) return; // the decoded video's rect is authoritative
+    try {
+      final size = isg.ImageSizeGetter.getSizeResult(FileInput(File(path))).size;
+      final width = size.needRotate ? size.height : size.width;
+      final height = size.needRotate ? size.width : size.height;
+      if (width > 0 && height > 0) {
+        final ratio = width / height;
+        if (aspectRatio.value != ratio) aspectRatio.value = ratio;
+      }
+    } catch (_) {}
   }
 
   Future<void> initializeController() async {
@@ -273,8 +349,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       await platform.setProperty('target-peak', '203');
       await platform.setProperty('hdr-compute-peak', 'no');
     } catch (e, s) {
-      debugPrint('VideoPlayer: Failed to apply Android video color pipeline: $e');
-      debugPrint(s.toString());
+      Logger.error('VideoPlayer: Failed to apply Android video color pipeline!', error: e, trace: s);
     }
   }
 
@@ -282,7 +357,22 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (hasListener) return;
 
     controller.rect.addListener(() {
-      aspectRatio.value = controller.aspectRatio;
+      // A null rect reports a 1.0 aspect ratio; don't clobber the DB-seeded value with it
+      if (controller.rect.value == null) return;
+      final ratio = controller.aspectRatio;
+      if (aspectRatio.value != ratio) aspectRatio.value = ratio;
+    });
+
+    // `waitUntilFirstFrameRendered` sounds like the right signal, but on Android (and
+    // desktop) media_kit_video actually completes it from the same native video-geometry
+    // ("first frame rendered" / `VideoOutput.Resize`) event that also updates `rect` -- it
+    // fires once the decoder reports frame dimensions, not once the platform surface has
+    // actually presented a frame. That gap is small but visible as a black flash once the
+    // thumbnail fades. There's no more precise "pixel actually on screen" signal exposed by
+    // the package, so add a short grace delay before trusting it.
+    controller.waitUntilFirstFrameRendered.then((_) async {
+      if (!kIsWeb) await Future.delayed(const Duration(milliseconds: 400));
+      if (mounted && !firstFrameReady.value) firstFrameReady.value = true;
     });
 
     controller.player.stream.completed.listen((completed) async {
@@ -298,33 +388,35 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     hasListener = true;
   }
 
+  /// Renders the current [thumbnail] bytes, or a plain themed background when
+  /// thumbnail generation failed — the corresponding [MediaCornerBadge]
+  /// communicates the "no preview" state instead of drawing a fallback image.
+  Widget _buildThumbnailImage(
+    BuildContext context, {
+    required BoxFit fit,
+    FilterQuality filterQuality = FilterQuality.low,
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
+  }) {
+    if (thumbnailFailed) {
+      return Container(color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3));
+    }
+
+    return Image.file(File(thumbnailPath!),
+        fit: fit, filterQuality: filterQuality, gaplessPlayback: true, frameBuilder: frameBuilder);
+  }
+
   void getThumbnail() async {
     if (kIsWeb || kIsDesktop) return;
 
     try {
-      // If we already errored, use fallback immediately
-      if (attachment.metadata?['thumbnail_status'] == 'error') {
-        thumbnail = FilesystemSvc.noVideoPreviewIcon;
-        if (mounted) setState(() {});
-        return;
-      }
-
-      // Fetch the thumbnail
-      thumbnail = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      // Always retry on mount now; the in-memory `thumbnailFailed`
+      // flag still prevents retrying repeatedly within the same widget lifetime.
+      thumbnailPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      _seedAspectRatioFromThumbnail();
       if (mounted) setState(() {});
-    } catch (ex) {
-      // If an error occurs, set the thumbnail to the cached no preview image
-      thumbnail = FilesystemSvc.noVideoPreviewIcon;
-
-      // Only save error status to DB if not already set
-      if (attachment.metadata?['thumbnail_status'] != 'error') {
-        attachment.metadata ??= {};
-        attachment.metadata!['thumbnail_status'] = 'error';
-        if (attachment.id != null) {
-          attachment.saveAsync(null);
-        }
-      }
-
+    } catch (ex, s) {
+      Logger.error('VideoPlayer: Failed to generate thumbnail for ${file.name}', error: ex, trace: s);
+      thumbnailFailed = true;
       if (mounted) setState(() {});
     }
   }
@@ -349,7 +441,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                     if (attachment.id == null) return;
                     await Navigator.of(Get.context!).push(
                       ThemeSwitcher.buildPageRoute(
-                        builder: (context) => FullscreenMediaHolder(
+                        builder: (context) => ConversationFullscreenHolder(
                           currentChat: currentChat,
                           attachment: attachment,
                           showInteractions: true,
@@ -367,7 +459,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   if (attachment.id == null) return;
                   await Navigator.of(Get.context!).push(
                     ThemeSwitcher.buildPageRoute(
-                      builder: (context) => FullscreenMediaHolder(
+                      builder: (context) => ConversationFullscreenHolder(
                         currentChat: currentChat,
                         attachment: attachment,
                         showInteractions: true,
@@ -386,11 +478,26 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Obx(() => AspectRatio(
-                    aspectRatio: aspectRatio.value,
-                    child: Video(
-                      controller: videoController!,
-                      controls: null,
+              Obx(() => _boundedAspectRatio(
+                    ratio: aspectRatio.value,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Video(
+                          controller: videoController!,
+                          controls: null,
+                          fit: BoxFit.cover,
+                        ),
+                        // Keep the thumbnail painted over the black surface until the first frame decodes
+                        if (!kIsDesktop && !kIsWeb && thumbnailPath != null)
+                          Obx(() => IgnorePointer(
+                                child: AnimatedOpacity(
+                                  opacity: firstFrameReady.value ? 0 : 1,
+                                  duration: const Duration(milliseconds: 150),
+                                  child: _buildThumbnailImage(context, fit: BoxFit.cover),
+                                ),
+                              )),
+                      ],
                     ),
                   )),
               PlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: videoController),
@@ -400,6 +507,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   controller: videoController,
                   isFromMe: widget.isFromMe),
               if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
+              if (!kIsDesktop && !kIsWeb && thumbnailFailed)
+                MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe),
             ],
           ),
         ),
@@ -411,10 +520,10 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           hoverColor: hover.value ? Colors.transparent : null,
           focusColor: hover.value ? Colors.transparent : null,
           onTap: () async {
-            if (attachment.id == null || (!kIsDesktop && !kIsWeb)) return;
+            if (attachment.id == null) return;
             await Navigator.of(Get.context!).push(
               ThemeSwitcher.buildPageRoute(
-                builder: (context) => FullscreenMediaHolder(
+                builder: (context) => ConversationFullscreenHolder(
                   currentChat: currentChat,
                   attachment: attachment,
                   showInteractions: true,
@@ -425,85 +534,82 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
               ),
             );
           },
-          child: thumbnail == null
-              ? Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      PlayPauseButton(
+          // All mobile states (placeholder → thumbnail → playing) share the same
+          // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
+          child: thumbnailPath == null && !thumbnailFailed && !kIsDesktop && !kIsWeb
+              ? Obx(() => _boundedAspectRatio(
+                    ratio: aspectRatio.value,
+                    child: Center(
+                      child: PlayPauseButton(
                         showPlayPauseOverlay: showPlayPauseOverlay,
                         controller: videoController,
-                        hover: hover,
-                        customOnTap: () async {
-                          await initializeController();
-                          await videoController?.player.setVolume(muted.value ? 0.0 : 100.0);
-                          await videoController?.player.play();
-                          showPlayPauseOverlay.value = false;
-                        },
+                        customOnTap: _playInline,
                       ),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              file.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                    ),
+                  ))
+              : thumbnailPath == null && !thumbnailFailed
+                  ? Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          PlayPauseButton(
+                            showPlayPauseOverlay: showPlayPauseOverlay,
+                            controller: videoController,
+                            hover: hover,
+                            customOnTap: _playInline,
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  file.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                                ),
+                                const SizedBox(height: 2.5),
+                                Text(
+                                  "${(mime(file.name)?.split("/").lastOrNull ?? mime(file.name) ?? "file").toUpperCase()} • ${file.size.toDouble().getFriendlySize()}",
+                                  style: context.theme.textTheme.labelMedium!.copyWith(
+                                      fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),
+                                  overflow: TextOverflow.clip,
+                                  maxLines: 1,
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 2.5),
-                            Text(
-                              "${(mime(file.name)?.split("/").lastOrNull ?? mime(file.name) ?? "file").toUpperCase()} • ${file.size.toDouble().getFriendlySize()}",
-                              style: context.theme.textTheme.labelMedium!
-                                  .copyWith(fontWeight: FontWeight.normal, color: context.theme.colorScheme.outline),
-                              overflow: TextOverflow.clip,
-                              maxLines: 1,
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-              : Image.memory(
-                  thumbnail!,
-                  // prevents the image widget from "refreshing" when the provider changes
-                  gaplessPlayback: true,
-                  filterQuality: FilterQuality.none,
-                  cacheWidth: (min((attachment.width ?? 0), NavigationSvc.width(context) * 0.5) * Get.pixelRatio / 2)
-                      .round()
-                      .abs()
-                      .nonZero,
-                  cacheHeight:
-                      (min((attachment.height ?? 0), NavigationSvc.width(context) * 0.5 / attachment.aspectRatio) *
-                              Get.pixelRatio /
-                              2)
-                          .round()
-                          .abs()
-                          .nonZero,
-                  fit: BoxFit.contain,
-                  frameBuilder: (context, widget, frame, wasSyncLoaded) {
-                    return AnimatedCrossFade(
-                        crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-                        alignment: Alignment.center,
-                        duration: const Duration(milliseconds: 150),
-                        secondChild: Stack(
+                    )
+                  : Obx(() => _boundedAspectRatio(
+                        ratio: aspectRatio.value,
+                        child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            widget,
+                            Positioned.fill(
+                              child: _buildThumbnailImage(
+                                context,
+                                fit: BoxFit.cover,
+                                filterQuality: FilterQuality.medium,
+                                frameBuilder: (context, child, frame, wasSyncLoaded) => wasSyncLoaded
+                                    ? child
+                                    : AnimatedOpacity(
+                                        opacity: frame == null ? 0 : 1,
+                                        duration: const Duration(milliseconds: 150),
+                                        child: child,
+                                      ),
+                              ),
+                            ),
+                            if (thumbnailFailed) MediaCornerBadge(label: "Preview Unavailable", alignLeft: isFromMe),
                             PlayPauseButton(
                               showPlayPauseOverlay: showPlayPauseOverlay,
                               controller: videoController,
-                              customOnTap: () async {
-                                await initializeController();
-                                await videoController?.player.setVolume(muted.value ? 0.0 : 100.0);
-                                await videoController?.player.play();
-                                showPlayPauseOverlay.value = false;
-                              },
+                              customOnTap: _playInline,
                             ),
                             MuteButton(
                                 showPlayPauseOverlay: showPlayPauseOverlay,
@@ -512,16 +618,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                                 isFromMe: isFromMe),
                           ],
                         ),
-                        firstChild: SizedBox(
-                          width: min((attachment.width?.toDouble() ?? NavigationSvc.width(context) * 0.5),
-                              NavigationSvc.width(context) * 0.5),
-                          height: min(
-                              (attachment.height?.toDouble() ??
-                                  NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-                              NavigationSvc.width(context) * 0.5 / attachment.aspectRatio),
-                        ));
-                  },
-                )),
+                      ))),
     );
   }
 
@@ -553,7 +650,7 @@ class FullscreenButton extends StatelessWidget {
               if (attachment.id == null) return;
               await Navigator.of(Get.context!).push(
                 ThemeSwitcher.buildPageRoute(
-                  builder: (context) => FullscreenMediaHolder(
+                  builder: (context) => ConversationFullscreenHolder(
                       currentChat: currentChat,
                       attachment: attachment,
                       showInteractions: true,

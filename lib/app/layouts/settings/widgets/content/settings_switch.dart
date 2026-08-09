@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/bb_switch.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/settings_leading_icon.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,7 @@ class SettingsSwitch extends StatelessWidget {
                   padding: EdgeInsets.only(bottom: isThreeLine ? 10 : 0.0, right: 5, left: 5),
                   child: leading,
                 ),
-          trailing: Switch(
+          trailing: BBSwitch(
             value: initialVal,
             activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
             onChanged: onChanged,

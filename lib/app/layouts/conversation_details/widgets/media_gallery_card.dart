@@ -3,9 +3,10 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -28,9 +29,17 @@ class MediaGalleryCard extends StatefulWidget {
 }
 
 class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepAliveClientMixin, ThemeHelpers {
-  Uint8List? videoPreview;
+  // Path to the generated thumbnail file on disk -- never held as decoded bytes in memory.
+  String? videoPreviewPath;
+  bool videoPreviewFailed = false;
   Duration? duration;
+  bool _pressed = false;
   late dynamic content;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
 
   Attachment get attachment => widget.attachment;
 
@@ -97,29 +106,19 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (videoPreview != null || file.path == null) return;
-    if (attachment.metadata?['thumbnail_status'] == 'error') {
-      return;
-    }
+    if (videoPreviewPath != null || videoPreviewFailed || file.path == null) return;
 
     try {
-      videoPreview = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      videoPreviewPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
       dynamic _file = File(file.path!);
       final tempController = VideoPlayerController.file(_file);
       await tempController.initialize();
       duration = tempController.value.duration;
-    } catch (_) {
-      // If an error occurs, set the thumbnail to the cached no preview image
-      videoPreview = FilesystemSvc.noVideoPreviewIcon;
-
-      if (attachment.metadata?['thumbnail_status'] != 'error') {
-        attachment.metadata ??= {};
-        attachment.metadata!['thumbnail_status'] = 'error';
-        await attachment.saveAsync(null);
-      }
+    } catch (ex) {
+      videoPreviewFailed = true;
     }
 
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -154,8 +153,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               child: file.path != null
                   ? (attachment.mimeType?.startsWith("image") ?? false)
                       ? ImageDisplay(attachment: attachment, file: file)
-                      : (attachment.mimeType?.startsWith("video") ?? false)
-                          ? ImageDisplay(attachment: attachment, image: videoPreview ?? Uint8List(0))
+                      : (attachment.mimeType?.startsWith("video") ?? false) && videoPreviewPath != null
+                          ? ImageDisplay(attachment: attachment, imagePath: videoPreviewPath)
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
             ),
@@ -238,6 +237,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         });
       } else if (content is Attachment) {
         // Attachment not downloaded yet
+        addPadding = false;
         final mimeType = attachment.mimeType ?? '';
         final friendlyType = mimeTypeToFriendlyName(mimeType);
         final totalBytes = attachment.totalBytes ?? 0;
@@ -318,16 +318,28 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
       } else if (content is PlatformFile) {
         final file = content as PlatformFile;
         if (attachment.mimeType?.startsWith("image") ?? false) {
-          child = ImageDisplay(attachment: attachment, file: file, showSenderAvatar: widget.showSenderAvatar);
+          child = ImageDisplay(
+            attachment: attachment,
+            file: file,
+            showSenderAvatar: widget.showSenderAvatar,
+            onPressChanged: _setPressed,
+          );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
-          if (videoPreview != null) {
+          if (videoPreviewPath != null) {
             child = ImageDisplay(
                 attachment: attachment,
-                image: videoPreview!,
+                imagePath: videoPreviewPath,
                 duration: duration,
-                showSenderAvatar: widget.showSenderAvatar);
+                showSenderAvatar: widget.showSenderAvatar,
+                onPressChanged: _setPressed);
             addPadding = false;
+          } else if (videoPreviewFailed) {
+            child = Text(
+              "Preview Unavailable",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            );
           } else {
             child = const Text(
               "Loading video preview...",
@@ -345,15 +357,17 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         child = const SizedBox.shrink();
       }
 
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+      return AnimatedContainer(
+        duration: M3EMotion.spatialFast.duration,
+        curve: M3EMotion.spatialFast.curve,
         clipBehavior: Clip.antiAlias,
-        child: Container(
-          alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(_pressed ? M3EShapes.md : M3EShapes.lg),
           color: context.theme.colorScheme.surfaceContainerHighest,
-          padding: addPadding ? const EdgeInsets.all(10) : null,
-          child: child,
         ),
+        alignment: Alignment.center,
+        padding: addPadding ? const EdgeInsets.all(10) : null,
+        child: child,
       );
     }); // end Obx
   }
@@ -367,16 +381,18 @@ class ImageDisplay extends StatefulWidget {
     super.key,
     required this.attachment,
     this.file,
-    this.image,
+    this.imagePath,
     this.duration,
     this.showSenderAvatar = true,
+    this.onPressChanged,
   });
 
   final Attachment attachment;
   final PlatformFile? file;
-  final Uint8List? image;
+  final String? imagePath;
   final Duration? duration;
   final bool showSenderAvatar;
+  final ValueChanged<bool>? onPressChanged;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -387,7 +403,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
 
   Attachment get attachment => widget.attachment;
   PlatformFile? get file => widget.file;
-  Uint8List? get image => widget.image;
+  String? get imagePath => widget.imagePath;
   Duration? get duration => widget.duration;
 
   @override
@@ -395,8 +411,10 @@ class _ImageDisplayState extends State<ImageDisplay> {
     final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
 
     return OpenContainer(
+      transitionDuration: Durations.medium4,
+      closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
-        return FullscreenMediaHolder(
+        return ConversationFullscreenHolder(
           attachment: attachment,
           showInteractions: true,
         );
@@ -409,6 +427,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
               onTap: () {
                 openContainer();
               },
+              onHighlightChanged: widget.onPressChanged,
               child: SizedBox(
                 width: cardSize,
                 height: cardSize,
@@ -417,8 +436,8 @@ class _ImageDisplayState extends State<ImageDisplay> {
                   children: [
                     // Blurred canvas: filled background + centered foreground.
                     ImageBlurCanvas(
-                      filePath: file?.path,
-                      bytes: file?.bytes ?? image,
+                      filePath: file?.path ?? imagePath,
+                      bytes: file?.bytes,
                     ),
                     if ((attachment.mimeType?.contains("video") ?? false) && duration != null)
                       Positioned(
@@ -438,8 +457,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                       ),
                     if (widget.showSenderAvatar &&
                         !(attachment.message.target?.isFromMe ?? true) &&
-                        attachment.message.target?.handleRelation.hasValue == true &&
-                        SettingsSvc.settings.skin.value == Skins.iOS)
+                        attachment.message.target?.handleRelation.hasValue == true)
                       Positioned(
                         top: 10,
                         right: 10,

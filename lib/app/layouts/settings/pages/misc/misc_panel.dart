@@ -166,106 +166,120 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
               if (!kIsWeb && !kIsDesktop || SettingsSvc.canAuthenticate)
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Speed & Responsiveness"),
-              SettingsSection(
+              Obx(() => SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  Obx(() => SettingsSwitch(
-                        onChanged: (bool val) async {
-                          SettingsSvc.settings.highPerfMode.value = val;
-                          await SettingsSvc.settings.saveOneAsync('highPerfMode');
+                  SettingsSwitch(
+                    onChanged: (bool val) async {
+                      SettingsSvc.settings.highPerfMode.value = val;
+                      await SettingsSvc.settings.saveOneAsync('highPerfMode');
+                    },
+                    initialVal: SettingsSvc.settings.highPerfMode.value,
+                    title: "High Performance Mode",
+                    subtitle: "Removes inline images and videos to boost performance on lower-end devices",
+                    isThreeLine: true,
+                    backgroundColor: tileColor,
+                    leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.speedometer,
+                        materialIcon: Icons.speed_outlined,
+                        containerColor: Colors.green),
+                  ),
+                  if (kIsDesktop) const SettingsDivider(),
+                  if (kIsDesktop)
+                    SettingsSwitch(
+                      onChanged: (bool val) async {
+                        SettingsSvc.settings.reduceMotion.value = val;
+                        await SettingsSvc.settings.saveOneAsync('reduceMotion');
+                      },
+                      initialVal: SettingsSvc.settings.reduceMotion.value,
+                      title: "Reduce Motion",
+                      subtitle: "Keeps GIFs paused until you hover over them",
+                      isThreeLine: true,
+                      backgroundColor: tileColor,
+                      leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.pause_circle,
+                          materialIcon: Icons.motion_photos_pause_outlined,
+                          containerColor: Colors.blue),
+                    ),
+                  if (iOS) const SettingsDivider(),
+                  if (iOS)
+                    const SettingsTile(
+                      title: "Scroll Speed Multiplier",
+                      subtitle: "Controls how fast scrolling occurs",
+                      isThreeLine: true,
+                      leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.arrow_up_down_square,
+                          materialIcon: Icons.mouse_outlined,
+                          containerColor: Colors.orange),
+                    ),
+                  if (iOS)
+                    SettingsSlider(
+                        startingVal: SettingsSvc.settings.scrollVelocity.value,
+                        update: (double val) {
+                          SettingsSvc.settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
                         },
-                        initialVal: SettingsSvc.settings.highPerfMode.value,
-                        title: "High Performance Mode",
-                        subtitle: "Removes inline images and videos to boost performance on lower-end devices",
-                        isThreeLine: true,
+                        onChangeEnd: (double val) async {
+                          await SettingsSvc.settings.saveOneAsync('scrollVelocity');
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(2)),
                         backgroundColor: tileColor,
-                        leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.speedometer,
-                            materialIcon: Icons.speed_outlined,
-                            containerColor: Colors.green),
-                      )),
-                  const SettingsDivider(),
-                  Obx(() {
-                    if (iOS) {
-                      return const SettingsTile(
-                        title: "Scroll Speed Multiplier",
-                        subtitle: "Controls how fast scrolling occurs",
-                        isThreeLine: true,
-                        leading: SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.arrow_up_down_square,
-                            materialIcon: Icons.mouse_outlined,
-                            containerColor: Colors.orange),
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  }),
-                  Obx(() {
-                    if (iOS) {
-                      return SettingsSlider(
-                          startingVal: SettingsSvc.settings.scrollVelocity.value,
-                          update: (double val) {
-                            SettingsSvc.settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
-                          },
-                          onChangeEnd: (double val) async {
-                            await SettingsSvc.settings.saveOneAsync('scrollVelocity');
-                          },
-                          formatValue: ((double val) => val.toStringAsFixed(2)),
-                          backgroundColor: tileColor,
-                          min: 0.20,
-                          max: 1,
-                          divisions: 8);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  }),
+                        min: 0.20,
+                        max: 1,
+                        divisions: 8),
                 ],
-              ),
+              )),
               SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Networking"),
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  Obx(() => SettingsTile(
-                        title: "API Timeout Duration",
-                        subtitle:
-                            "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
-                        leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.stopwatch, materialIcon: Icons.timer, containerColor: Colors.red),
-                        trailing: SettingsSvc.settings.apiTimeout.value != 30000
-                            ? ElevatedButton(
-                                onPressed: () async {
-                                  SettingsSvc.settings.apiTimeout.value = 30000;
-                                  await SettingsSvc.settings.saveOneAsync('apiTimeout');
-                                },
-                                child: const Text("Reset"),
-                              )
-                            : null,
-                      )),
-                  Obx(() => SettingsSlider(
-                      startingVal: SettingsSvc.settings.apiTimeout.value / 1000,
-                      update: (double val) {
-                        SettingsSvc.settings.apiTimeout.value = val.toInt() * 1000;
-                      },
-                      onChangeEnd: (double val) async {
-                        await SettingsSvc.settings.saveOneAsync('apiTimeout');
-                        HttpSvc.dio = Dio(BaseOptions(
-                          connectTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-                          receiveTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-                          sendTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-                        ));
-                        HttpSvc.dio.interceptors.add(ApiInterceptor());
-                      },
-                      backgroundColor: tileColor,
-                      min: 5,
-                      max: 60,
-                      divisions: 11)),
-                  Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Obx(() => Text(
-                          "Note: Attachment uploads will timeout after ${SettingsSvc.settings.apiTimeout.value ~/ 1000 * 12} seconds",
-                          style: context.theme.textTheme.bodySmall!
-                              .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                        )),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(() => SettingsTile(
+                            title: "API Timeout Duration",
+                            subtitle:
+                                "Controls the duration (in seconds) until a network request will time out.\nIncrease this setting if you have poor connection.",
+                            leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.stopwatch,
+                                materialIcon: Icons.timer,
+                                containerColor: Colors.red),
+                            trailing: SettingsSvc.settings.apiTimeout.value != 30000
+                                ? ElevatedButton(
+                                    onPressed: () async {
+                                      SettingsSvc.settings.apiTimeout.value = 30000;
+                                      await SettingsSvc.settings.saveOneAsync('apiTimeout');
+                                    },
+                                    child: const Text("Reset"),
+                                  )
+                                : null,
+                          )),
+                      Obx(() => SettingsSlider(
+                          startingVal: SettingsSvc.settings.apiTimeout.value / 1000,
+                          update: (double val) {
+                            SettingsSvc.settings.apiTimeout.value = val.toInt() * 1000;
+                          },
+                          onChangeEnd: (double val) async {
+                            await SettingsSvc.settings.saveOneAsync('apiTimeout');
+                            HttpSvc.dio = Dio(BaseOptions(
+                              connectTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+                              receiveTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+                              sendTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+                            ));
+                            HttpSvc.dio.interceptors.add(ApiInterceptor());
+                          },
+                          backgroundColor: tileColor,
+                          min: 5,
+                          max: 60,
+                          divisions: 11)),
+                      Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Obx(() => Text(
+                              "Note: Attachment uploads will timeout after ${SettingsSvc.settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                              style: context.theme.textTheme.bodySmall!
+                                  .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                            )),
+                      ),
+                    ],
                   ),
                   const SettingsDivider(padding: EdgeInsets.zero),
                   Obx(() => SettingsSwitch(

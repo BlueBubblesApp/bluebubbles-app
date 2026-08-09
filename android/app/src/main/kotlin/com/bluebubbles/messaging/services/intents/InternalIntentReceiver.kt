@@ -10,13 +10,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import com.bluebubbles.messaging.services.network.HttpService
 import com.bluebubbles.messaging.services.notifications.DeleteNotificationHandler
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
 import java.io.BufferedInputStream
 import java.io.DataInputStream
@@ -30,7 +30,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
-        Log.d(Constants.logTag, "Received internal intent ${intent.type}, handling...")
+        PersistentLog.d(context, Constants.logTag, "Received internal intent ${intent.type}, handling...")
         when (intent.type) {
             "DeleteNotification" -> {
                 val notificationId: Int = intent.getIntExtra("notificationId", 0)
@@ -53,10 +53,10 @@ class InternalIntentReceiver: BroadcastReceiver() {
                 DartWorkManager.createWorker(context, intent.type!!, hashMapOf("chatGuid" to chatGuid, "messageGuid" to messageGuid, "text" to replyText)) {
                     val notificationManager = context.getSystemService(NotificationManager::class.java)
                     // this is used to copy the style, since the notification already exists
-                    Log.d(Constants.logTag, "Fetching existing notification values")
+                    PersistentLog.d(context, Constants.logTag, "Fetching existing notification values")
                     val chatNotification = notificationManager.activeNotifications.lastOrNull { it.id == notificationId }
                     if (chatNotification == null) {
-                        Log.e(Constants.logTag, "Could not find notification with ID $notificationId")
+                        PersistentLog.e(context, Constants.logTag, "Could not find notification with ID $notificationId")
                         return@createWorker
                     }
                     val oldBuilder = Notification.Builder.recoverBuilder(context, chatNotification.notification)
@@ -73,20 +73,20 @@ class InternalIntentReceiver: BroadcastReceiver() {
                         } else null
                     }
 
-                    Log.d(Constants.logTag, "Creating sender and message object for the user-created reply")
+                    PersistentLog.d(context, Constants.logTag, "Creating sender and message object for the user-created reply")
                     val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
-                    
+
                     // If we couldn't extract the old style, create a new one so the user still sees their reply
                     val messagingStyle = oldStyle ?: run {
-                        Log.w(Constants.logTag, "Could not extract MessagingStyle, creating new one for reply")
+                        PersistentLog.w(context, Constants.logTag, "Could not extract MessagingStyle, creating new one for reply")
                         Notification.MessagingStyle(Person.Builder()
-                            .setName(prefs.getString("flutter.userName", "You"))
+                            .setName(prefs.getString("userName", "You"))
                             .build()
                         )
                     }
                     val sender = Person.Builder()
-                        .setName(prefs.getString("flutter.userName", "You"))
-                    val avatarPath = prefs.getString("flutter.userAvatarPath", "")
+                        .setName(prefs.getString("userName", "You"))
+                    val avatarPath = prefs.getString("userAvatarPath", "")
                     if (avatarPath!!.isNotEmpty()) {
                         val file = File(avatarPath)
                         val bytes = ByteArray(file.length().toInt())
@@ -105,7 +105,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                         sender.build()
                     ))
 
-                    Log.d(Constants.logTag, "Posting the user-created reply")
+                    PersistentLog.d(context, Constants.logTag, "Posting the user-created reply")
                     oldBuilder.setStyle(messagingStyle)
                     oldBuilder.setOnlyAlertOnce(true)
                     oldBuilder.setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
@@ -123,7 +123,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                 val reactionSent: Boolean = intent.getBooleanExtra("reactionSent", false)
                 
                 if (chatGuid.isNullOrEmpty() || messageGuid.isNullOrEmpty() || messageText.isNullOrEmpty()) {
-                    Log.e(Constants.logTag, "Missing required parameters for LikeMessage")
+                    PersistentLog.e(context, Constants.logTag, "Missing required parameters for LikeMessage")
                     return
                 }
                 
@@ -152,7 +152,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                     reaction = reactionToSend,
                     onSuccess = { response ->
                         val actionName = if (reactionSent) "removed" else "sent"
-                        Log.i(Constants.logTag, "Reaction ($reactionToSend) $actionName successfully")
+                        PersistentLog.i(context, Constants.logTag, "Reaction ($reactionToSend) $actionName successfully")
                         
                         // Update the notification to toggle the button label
                         updateReactionButton(
@@ -168,7 +168,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                         )
                     },
                     onError = { error ->
-                        Log.e(Constants.logTag, "Failed to send reaction: $error")
+                        PersistentLog.e(context, Constants.logTag, "Failed to send reaction: $error")
                         
                         // Show error state, then revert after a delay
                         updateReactionButton(

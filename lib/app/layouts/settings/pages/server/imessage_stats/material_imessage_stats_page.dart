@@ -143,9 +143,9 @@ class _MaterialIMessageStatsPageState
               ),
               segments: [
                 const ButtonSegment(value: IMessageStatsSource.server, label: Text("Server")),
-                ButtonSegment(
+                const ButtonSegment(
                   value: IMessageStatsSource.local,
-                  label: const Text("Local DB"),
+                  label: Text("Local DB"),
                   enabled: !kIsWeb,
                 ),
               ],

@@ -49,9 +49,7 @@ class Chat {
   void setLatestMessage(Message m) {
     dbLatestMessage.target = m;
     dbOnlyLatestMessageDate = m.dateCreated;
-    if (id != null) {
-      unawaited(saveAsync(updateLatestMessage: true));
-    }
+    unawaited(saveAsync(updateLatestMessage: true));
   }
 
   DateTime? dateDeleted;
@@ -86,6 +84,9 @@ class Chat {
 
   @Backlink('chat')
   final messages = ToMany<Message>();
+
+  @Backlink('chats')
+  final customGroups = ToMany<CustomGroup>();
 
   @Transient()
   String? _fakeName;
@@ -379,7 +380,9 @@ class Chat {
 
     // Handle post-save operations on main thread
     if (isNewer) {
-      setLatestMessage(message);
+      // Link the saved (DB-hydrated) message so a freshly-added chat's tile is
+      // built with its subtitle populated on first paint.
+      setLatestMessage(newMessage ?? message);
       if (dateDeleted != null) {
         dateDeleted = null;
         await saveAsync(updateDateDeleted: true);
@@ -870,7 +873,7 @@ class Chat {
       "textFieldText": textFieldText,
       "textFieldAttachments": textFieldAttachments,
       "dbOnlyLatestMessageDate": dbOnlyLatestMessageDate?.millisecondsSinceEpoch,
-      "dbLatestMessageId": dbLatestMessage.target?.id ?? (id != null ? dbLatestMessage.targetId : null),
+      "dbLatestMessageId": dbLatestMessage.targetId,
     };
   }
 }

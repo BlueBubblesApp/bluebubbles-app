@@ -1,10 +1,11 @@
-# services/ui/message/ — Message State & Widget Controllers
+# services/ui/message/ — Message State
 
 ## Files
 | File | Purpose |
 |------|---------|
 | `messages_service.dart` | Per-chat message cache, `MessageState` map, update triggers |
-| `message_widget_controller.dart` | Per-message controller for parts, edits, and audio |
+
+Per-message widget state (parts, edits, audio) lives directly on `MessageState` (`lib/app/state/message_state.dart`) — the old standalone `MessageWidgetController` was merged into it.
 
 ---
 
@@ -16,7 +17,6 @@ One instance per chat GUID. Accessed via `MessagesSvc(chatGuid)`.
 - `messageStates` — `Map<String, MessageState>` keyed by message GUID
 - `messageUpdateTrigger` — `RxMap<String, int>` timestamps; widgets watch a message's entry here to know when to rebuild
 - `struct` — in-memory `MessageStruct` for ordered access and range queries
-- Per-message `MessageWidgetController` map
 
 **Key methods:**
 - `updateMessage(Message, {String? oldGuid})` — the main write path; merges changes into `MessageState` and handles tempGuid → realGuid remapping

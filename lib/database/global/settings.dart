@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/details_menu_action.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
@@ -14,6 +15,25 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:universal_io/io.dart';
+
+/// Reads [Settings.linkPreviewPolicy], honouring the boolean that preceded it.
+///
+/// Installs that saw the interim `fetchUrlPreviews` flag carry their choice
+/// forward: off stays off, on becomes the contacts-only default rather than
+/// silently re-enabling unconditional fetching.
+LinkPreviewPolicy _readLinkPreviewPolicy(Map<String, dynamic> map) {
+  final stored = map['linkPreviewPolicy'];
+  if (stored is int && stored >= 0 && stored < LinkPreviewPolicy.values.length) {
+    return LinkPreviewPolicy.values[stored];
+  }
+
+  final legacy = map['fetchUrlPreviews'];
+  if (legacy is bool) {
+    return legacy ? LinkPreviewPolicy.contactsOnly : LinkPreviewPolicy.never;
+  }
+
+  return LinkPreviewPolicy.contactsOnly;
+}
 
 class Settings {
   final RxString iMessageStatsSource = "server".obs;
@@ -33,8 +53,17 @@ class Settings {
   final RxDouble previewImageQuality = 0.75.obs; // 0.25 to 1.0
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
+
+  /// When the app may contact a linked website to build a preview card.
+  ///
+  /// Defaults to [LinkPreviewPolicy.contactsOnly]: links from people the user
+  /// has saved load automatically, links from unknown senders wait for a tap.
+  /// Previews supplied by the server as part of Apple's payload data are
+  /// unaffected — no outbound request is involved.
+  final Rx<LinkPreviewPolicy> linkPreviewPolicy = LinkPreviewPolicy.contactsOnly.obs;
   final RxBool showIncrementalSync = false.obs;
   final RxBool highPerfMode = false.obs;
+  final RxBool reduceMotion = false.obs;
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt lastIncrementalSyncRowId = 0.obs;
   final RxInt refreshRate = 0.obs;
@@ -51,6 +80,8 @@ class Settings {
   final RxBool recipientAsPlaceholder = false.obs;
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
+  final RxBool showFiltersInHeader = false.obs;
+  final RxBool showCustomGroupFilterChips = false.obs;
   final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
   final RxBool swipeToOpenKeyboard = false.obs;
@@ -67,9 +98,11 @@ class Settings {
   final RxBool colorsFromMedia = false.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
+  /// Dimension name -> enum name (e.g. `{"read": "unread", "type": "group"}`).
+  final Rx<Map<String, String>> savedChatFilters = Rx<Map<String, String>>(<String, String>{});
   final RxBool tabletMode = true.obs;
   final RxBool highlightSelectedChat = true.obs;
-  final RxBool immersiveMode = false.obs;
+  final RxBool immersiveMode = true.obs;
   final RxDouble avatarScale = 1.0.obs;
   final RxBool askWhereToSave = false.obs;
   final RxBool statusIndicatorsOnChats = false.obs;
@@ -83,6 +116,14 @@ class Settings {
   final RxnString receiveSoundPath = RxnString();
   final RxInt soundVolume = 100.obs;
   final RxBool syncContactsAutomatically = false.obs;
+  /// Device account to sync contacts from, e.g. "user@gmail.com" (Android's
+  /// `Account.name`). Null means "all accounts" — the default, unfiltered
+  /// behavior. Must be set together with [contactSyncAccountType].
+  final RxnString contactSyncAccountName = RxnString();
+  /// Device account type to sync contacts from, e.g. "com.google" (Android's
+  /// `Account.type`). Null means "all accounts". Must be set together with
+  /// [contactSyncAccountName].
+  final RxnString contactSyncAccountType = RxnString();
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
   final RxBool keepAppAlive = false.obs;
@@ -160,6 +201,7 @@ class Settings {
   final RxBool desktopNotifications = true.obs;
   final RxInt desktopNotificationSoundVolume = 100.obs;
   final RxnString desktopNotificationSoundPath = RxnString();
+  final RxBool windowsTaskbarBadge = true.obs;
 
   // Troubleshooting settings
   final Rx<Level> logLevel = Level.info.obs;
@@ -176,6 +218,9 @@ class Settings {
     ReactionTypes.DISLIKE,
     ReactionTypes.QUESTION
   ]);
+
+  // Text field buttons — enabled buttons, in display order. Absent = hidden.
+  final RxList<TextFieldButton> textFieldButtons = RxList.from(TextFieldButton.values);
 
   // Message options order
   final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
@@ -286,8 +331,10 @@ class Settings {
       'imageQuality': previewImageQuality.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
+      'linkPreviewPolicy': linkPreviewPolicy.value.index,
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
+      'reduceMotion': reduceMotion.value,
       'lastIncrementalSync': lastIncrementalSync.value,
       'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       'refreshRate': refreshRate.value,
@@ -304,6 +351,8 @@ class Settings {
       'recipientAsPlaceholder': recipientAsPlaceholder.value,
       'hideKeyboardOnScroll': hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': moveChatCreatorToHeader.value,
+      'showFiltersInHeader': showFiltersInHeader.value,
+      'showCustomGroupFilterChips': showCustomGroupFilterChips.value,
       'cameraFAB': cameraFAB.value,
       'swipeToCloseKeyboard': swipeToCloseKeyboard.value,
       'swipeToOpenKeyboard': swipeToOpenKeyboard.value,
@@ -319,6 +368,7 @@ class Settings {
       'notifyReactions': notifyReactions.value,
       'globalTextDetection': globalTextDetection.value,
       'filterUnknownSenders': filterUnknownSenders.value,
+      'savedChatFilters': Map<String, String>.from(savedChatFilters.value),
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
       'avatarScale': avatarScale.value,
@@ -332,6 +382,7 @@ class Settings {
       'selectedActionIndices': List<int>.from(selectedActionIndices),
       'actionList': List<String>.from(actionList),
       'detailsMenuActions': detailsMenuActions.map((action) => action.name).toList(),
+      'textFieldButtons': textFieldButtons.map((button) => button.name).toList(),
       'askWhereToSave': askWhereToSave.value,
       'statusIndicatorsOnChats': statusIndicatorsOnChats.value,
       'apiTimeout': apiTimeout.value,
@@ -342,6 +393,8 @@ class Settings {
       'useLocalIpv6': useLocalIpv6.value,
       'soundVolume': soundVolume.value,
       'syncContactsAutomatically': syncContactsAutomatically.value,
+      'contactSyncAccountName': contactSyncAccountName.value,
+      'contactSyncAccountType': contactSyncAccountType.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
       'keepAppAlive': keepAppAlive.value,
@@ -388,6 +441,7 @@ class Settings {
       'windowEffectCustomOpacityDark': windowEffectCustomOpacityDark.value,
       'desktopNotifications': desktopNotifications.value,
       'desktopNotificationSoundVolume': desktopNotificationSoundVolume.value,
+      'windowsTaskbarBadge': windowsTaskbarBadge.value,
       'useDesktopAccent': useDesktopAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
@@ -444,9 +498,16 @@ class Settings {
         map['autoOpenKeyboard'] ?? SettingsSvc.settings.autoOpenKeyboard.value;
     SettingsSvc.settings.hideTextPreviews.value =
         map['hideTextPreviews'] ?? SettingsSvc.settings.hideTextPreviews.value;
+    // Through the same reader as [fromMap]: a bare `values[map[...]]` throws a
+    // RangeError on an index this build doesn't have, and skips the legacy
+    // `fetchUrlPreviews` migration entirely.
+    final hasLinkPreviewPolicy = map.containsKey('linkPreviewPolicy') || map.containsKey('fetchUrlPreviews');
+    SettingsSvc.settings.linkPreviewPolicy.value =
+        hasLinkPreviewPolicy ? _readLinkPreviewPolicy(map) : SettingsSvc.settings.linkPreviewPolicy.value;
     SettingsSvc.settings.showIncrementalSync.value =
         map['showIncrementalSync'] ?? SettingsSvc.settings.showIncrementalSync.value;
     SettingsSvc.settings.highPerfMode.value = map['highPerfMode'] ?? SettingsSvc.settings.highPerfMode.value;
+    SettingsSvc.settings.reduceMotion.value = map['reduceMotion'] ?? SettingsSvc.settings.reduceMotion.value;
     SettingsSvc.settings.lastIncrementalSync.value =
         map['lastIncrementalSync'] ?? SettingsSvc.settings.lastIncrementalSync.value;
     SettingsSvc.settings.lastIncrementalSyncRowId.value =
@@ -471,6 +532,10 @@ class Settings {
         map['hideKeyboardOnScroll'] ?? SettingsSvc.settings.hideKeyboardOnScroll.value;
     SettingsSvc.settings.moveChatCreatorToHeader.value =
         map['moveChatCreatorToHeader'] ?? SettingsSvc.settings.moveChatCreatorToHeader.value;
+    SettingsSvc.settings.showFiltersInHeader.value =
+        map['showFiltersInHeader'] ?? SettingsSvc.settings.showFiltersInHeader.value;
+    SettingsSvc.settings.showCustomGroupFilterChips.value =
+        map['showCustomGroupFilterChips'] ?? SettingsSvc.settings.showCustomGroupFilterChips.value;
     SettingsSvc.settings.cameraFAB.value = map['cameraFAB'] ?? SettingsSvc.settings.cameraFAB.value;
     SettingsSvc.settings.swipeToCloseKeyboard.value =
         map['swipeToCloseKeyboard'] ?? SettingsSvc.settings.swipeToCloseKeyboard.value;
@@ -499,6 +564,9 @@ class Settings {
         map['globalTextDetection'] ?? SettingsSvc.settings.globalTextDetection.value;
     SettingsSvc.settings.filterUnknownSenders.value =
         map['filterUnknownSenders'] ?? SettingsSvc.settings.filterUnknownSenders.value;
+    if (map.containsKey('savedChatFilters')) {
+      SettingsSvc.settings.savedChatFilters.value = _processSavedChatFilters(map['savedChatFilters']);
+    }
     SettingsSvc.settings.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? SettingsSvc.settings.tabletMode.value);
     SettingsSvc.settings.highlightSelectedChat.value =
         map['highlightSelectedChat'] ?? SettingsSvc.settings.highlightSelectedChat.value;
@@ -530,6 +598,10 @@ class Settings {
     SettingsSvc.settings.soundVolume.value = map['soundVolume'] ?? SettingsSvc.settings.soundVolume.value;
     SettingsSvc.settings.syncContactsAutomatically.value =
         map['syncContactsAutomatically'] ?? SettingsSvc.settings.syncContactsAutomatically.value;
+    SettingsSvc.settings.contactSyncAccountName.value =
+        map['contactSyncAccountName'] ?? SettingsSvc.settings.contactSyncAccountName.value;
+    SettingsSvc.settings.contactSyncAccountType.value =
+        map['contactSyncAccountType'] ?? SettingsSvc.settings.contactSyncAccountType.value;
     SettingsSvc.settings.scrollToBottomOnSend.value =
         map['scrollToBottomOnSend'] ?? SettingsSvc.settings.scrollToBottomOnSend.value;
     SettingsSvc.settings.sendEventsToTasker.value =
@@ -624,6 +696,9 @@ class Settings {
       SettingsSvc.settings._detailsMenuActions.value =
           _processDetailsMenuActions(map['detailsMenuActions'], SettingsSvc.settings.detailsMenuActions);
     }
+    if (map.containsKey('textFieldButtons')) {
+      SettingsSvc.settings.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
+    }
 
     SettingsSvc.settings.windowEffect.value = kIsDesktop && Platform.isWindows
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ??
@@ -637,6 +712,8 @@ class Settings {
         map['desktopNotifications'] ?? SettingsSvc.settings.desktopNotifications.value;
     SettingsSvc.settings.desktopNotificationSoundVolume.value =
         map['desktopNotificationSoundVolume'] ?? SettingsSvc.settings.desktopNotificationSoundVolume.value;
+    SettingsSvc.settings.windowsTaskbarBadge.value =
+        map['windowsTaskbarBadge'] ?? SettingsSvc.settings.windowsTaskbarBadge.value;
     SettingsSvc.settings.desktopNotificationSoundPath.value =
         map['desktopNotificationSoundPath'] ?? SettingsSvc.settings.desktopNotificationSoundPath.value;
     SettingsSvc.settings.useDesktopAccent.value =
@@ -654,6 +731,7 @@ class Settings {
     SettingsSvc.settings.save();
 
     if (!isIsolate) {
+      unawaited(PrefsInterface.syncAllSettings());
       EventDispatcherSvc.emit("theme-update", null);
     }
   }
@@ -676,8 +754,10 @@ class Settings {
     s.previewImageQuality.value = map['imageQuality']?.toDouble() ?? 1.0;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
+    s.linkPreviewPolicy.value = _readLinkPreviewPolicy(map);
     s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     s.highPerfMode.value = map['highPerfMode'] ?? false;
+    s.reduceMotion.value = map['reduceMotion'] ?? false;
     s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     s.lastIncrementalSyncRowId.value = map['lastIncrementalSyncRowId'] ?? 0;
     s.refreshRate.value = map['refreshRate'] ?? 0;
@@ -694,6 +774,8 @@ class Settings {
     s.recipientAsPlaceholder.value = map['recipientAsPlaceholder'] ?? false;
     s.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'] ?? false;
     s.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'] ?? false;
+    s.showFiltersInHeader.value = map['showFiltersInHeader'] ?? false;
+    s.showCustomGroupFilterChips.value = map['showCustomGroupFilterChips'] ?? false;
     s.cameraFAB.value = map['cameraFAB'] ?? false;
     s.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'] ?? false;
     s.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'] ?? false;
@@ -710,9 +792,10 @@ class Settings {
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    s.savedChatFilters.value = _processSavedChatFilters(map['savedChatFilters']);
     s.tabletMode.value = kIsDesktop || (map['tabletMode'] ?? true);
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
-    s.immersiveMode.value = map['immersiveMode'] ?? false;
+    s.immersiveMode.value = map['immersiveMode'] ?? true;
     s.avatarScale.value = map['avatarScale']?.toDouble() ?? 1.0;
     s.launchAtStartup.value = map['launchAtStartup'] ?? false;
     s.launchAtStartupMinimized.value = map['launchAtStartupMinimized'] ?? false;
@@ -732,6 +815,8 @@ class Settings {
     s.receiveSoundPath.value = map['receiveSoundPath'];
     s.soundVolume.value = map['soundVolume'] ?? 100;
     s.syncContactsAutomatically.value = map['syncContactsAutomatically'] ?? false;
+    s.contactSyncAccountName.value = map['contactSyncAccountName'];
+    s.contactSyncAccountType.value = map['contactSyncAccountType'];
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;
@@ -791,6 +876,7 @@ class Settings {
     s.selectedActionIndices.value = _processSelectedActionIndices(map['selectedActionIndices'], s.showReplyField.value);
     s.actionList.value = _processActionList(map['actionList']);
     s._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], DetailsMenuAction.values);
+    s.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
 
     s.windowEffect.value = (kIsDesktop && Platform.isWindows)
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
@@ -801,6 +887,7 @@ class Settings {
     s.desktopNotificationSoundVolume.value = map['desktopNotificationSoundVolume'] ?? 100;
     s.desktopNotificationSoundPath.value = map['desktopNotificationSoundPath'];
     s.useDesktopAccent.value = map['useDesktopAccent'] ?? map['useWindowsAccent'] ?? false;
+    s.windowsTaskbarBadge.value = map['windowsTaskbarBadge'] ?? true;
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
@@ -813,12 +900,26 @@ class Settings {
   void setDetailsMenuActions(List<DetailsMenuAction> actions) {
     SettingsSvc.settings._detailsMenuActions.value =
         _filterDetailsMenuActions(actions, SettingsSvc.settings.detailsMenuActions);
-    SettingsSvc.settings.save();
+    // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too, else it
+    // overwrites this on its next background settings write.
+    unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
+  }
+
+  /// Set the enabled text field buttons, in display order
+  void setTextFieldButtons(List<TextFieldButton> buttons) {
+    SettingsSvc.settings.textFieldButtons.value = buttons;
+    // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too
+    unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
+  }
+
+  void resetTextFieldButtons() {
+    SettingsSvc.settings.textFieldButtons.value = TextFieldButton.values;
+    unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
   }
 
   void resetDetailsMenuActions() {
     SettingsSvc.settings._detailsMenuActions.value = DetailsMenuAction.values;
-    SettingsSvc.settings.save();
+    unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
   }
 }
 
@@ -827,6 +928,17 @@ Map<String, String> _processCustomHeaders(dynamic rawJson) {
     return (rawJson is Map ? rawJson : jsonDecode(rawJson) as Map).cast<String, String>();
   } catch (e) {
     debugPrint("Using default customHeaders");
+    return <String, String>{};
+  }
+}
+
+/// Accepts either an already-decoded [Map] (e.g. synced in-memory to the
+/// GlobalIsolate) or a JSON-encoded [String] (round-tripped through disk
+/// prefs, which only store primitives/strings).
+Map<String, String> _processSavedChatFilters(dynamic rawJson) {
+  try {
+    return (rawJson is Map ? rawJson : jsonDecode(rawJson) as Map).cast<String, String>();
+  } catch (e) {
     return <String, String>{};
   }
 }
@@ -857,6 +969,19 @@ List<String> _processActionList(dynamic rawJson) {
       ReactionTypes.DISLIKE,
       ReactionTypes.QUESTION
     ];
+  }
+}
+
+List<TextFieldButton> _processTextFieldButtons(dynamic rawJson) {
+  try {
+    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List)
+        .cast<String>()
+        .map((s) => TextFieldButton.values.firstWhereOrNull((button) => button.name == s))
+        .nonNulls
+        .toList();
+  } catch (e) {
+    debugPrint("Using default textFieldButtons");
+    return TextFieldButton.values;
   }
 }
 

@@ -46,6 +46,7 @@ class ThemeManagementSection extends StatelessWidget {
                       leading: const SettingsLeadingIcon(
                         iosIcon: Icons.edit_outlined,
                         materialIcon: Icons.edit_outlined,
+                        containerColor: Colors.teal,
                       ),
                       trailing: const NextButton(),
                       onTap: () => _showRenameDialog(context),
@@ -58,6 +59,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.share_outlined,
                       materialIcon: Icons.share_outlined,
+                      containerColor: Colors.green,
                     ),
                     onTap: () => _exportTheme(context),
                   ),
@@ -68,6 +70,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.colorize_outlined,
                       materialIcon: Icons.colorize_outlined,
+                      containerColor: Colors.purple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => _generateFromSeed(context) : null,
@@ -79,6 +82,7 @@ class ThemeManagementSection extends StatelessWidget {
                     leading: const SettingsLeadingIcon(
                       iosIcon: Icons.image_outlined,
                       materialIcon: Icons.image_outlined,
+                      containerColor: Colors.deepPurple,
                     ),
                     trailing: _isCustom ? const NextButton() : null,
                     onTap: _isCustom ? () => controller.generateFromImage(context) : null,
@@ -95,9 +99,9 @@ class ThemeManagementSection extends StatelessWidget {
                       ),
                       trailing: Switch(
                         value: controller.activeTheme.gradientBg,
-                        onChanged: (v) => _toggleGradient(context, v),
+                        onChanged: (v) async => await _toggleGradient(context, v),
                       ),
-                      onTap: () => _toggleGradient(context, !controller.activeTheme.gradientBg),
+                      onTap: () async => await _toggleGradient(context, !controller.activeTheme.gradientBg),
                     ),
                   ],
                 ],
@@ -237,13 +241,13 @@ class ThemeManagementSection extends StatelessWidget {
     }
   }
 
-  void _toggleGradient(BuildContext context, bool value) {
+  Future<void> _toggleGradient(BuildContext context, bool value) async {
     controller.activeTheme.gradientBg = value;
     controller.activeTheme.save();
     if (controller.isDark.value) {
-      ThemeSvc.changeTheme(context, dark: controller.activeTheme);
+      await ThemeSvc.changeTheme(context, dark: controller.activeTheme);
     } else {
-      ThemeSvc.changeTheme(context, light: controller.activeTheme);
+      await ThemeSvc.changeTheme(context, light: controller.activeTheme);
     }
     controller.bump();
   }

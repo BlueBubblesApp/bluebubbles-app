@@ -13,7 +13,6 @@ A singleton `StreamController<Tuple2<String, dynamic>>.broadcast()`. Any backend
 **Emit (from service/backend):**
 ```dart
 EventDispatcherSvc.emit("chat-updated", chatGuid);
-EventDispatcherSvc.emit("update-highlight", null);
 ```
 
 **Subscribe (in a widget's `initState`):**
@@ -31,7 +30,7 @@ _sub = EventDispatcherSvc.stream.listen((event) {
 _sub?.cancel();
 ```
 
-**When to use vs Obx():** Use `EventDispatcher` for one-shot signals that don't represent persistent state (e.g. "scroll to bottom", "highlight this chat", "play effect"). Use `Rx*` + `Obx()` for state that widgets need to render continuously.
+**When to use vs Obx():** Use `EventDispatcher` for one-shot signals that don't represent persistent state (e.g. "scroll to bottom", "play effect"). Use `Rx*` + `Obx()` for state that widgets need to render continuously (e.g. the active-chat highlight reads `ChatsSvc.activeChatGuid`).
 
 ## intents.dart — Flutter Intents
 

@@ -3,6 +3,7 @@ export 'package:bluebubbles/database/io/attachment.dart'
 export 'package:bluebubbles/database/io/chat.dart' if (dart.library.html) 'package:bluebubbles/models/html/chat.dart';
 export 'package:bluebubbles/database/io/contact_v2.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/contact_v2.dart';
+export 'package:bluebubbles/database/io/custom_group.dart';
 export 'package:media_kit/media_kit.dart' if (dart.library.html) 'package:bluebubbles/models/html/media_kit.dart';
 export 'package:media_kit_video/media_kit_video.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/media_kit.dart';
@@ -21,7 +22,6 @@ export 'package:bluebubbles/database/io/theme_entry.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/theme_entry.dart';
 export 'package:bluebubbles/database/io/theme_object.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/theme_object.dart';
-export 'package:bluebubbles/database/io/tenor.dart' if (dart.library.html) 'package:bluebubbles/models/html/tenor.dart';
 export 'package:bluebubbles/database/global/platform_file.dart';
 export 'package:bluebubbles/database/global/settings.dart';
 export 'package:bluebubbles/database/global/attributed_body.dart';

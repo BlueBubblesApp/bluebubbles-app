@@ -17,5 +17,6 @@ export 'ui/oauth_helpers.dart';
 export 'ui/reaction_helpers.dart';
 export 'ui/theme_helpers.dart';
 export 'ui/dialog_helpers.dart';
+export 'ui/findmy_helpers.dart';
 export 'ui/ui_helpers.dart';
 export 'ui/text_direction_helpers.dart';

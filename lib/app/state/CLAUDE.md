@@ -1,11 +1,13 @@
 # lib/app/state/ — Reactive State Wrappers
 
-Three files. These are the bridge between ObjectBox DB entities and the UI.
+These are the bridge between ObjectBox DB entities and the UI.
 
 ## Files
 - `chat_state.dart` — `ChatState`: reactive wrapper for a `Chat` entity
 - `message_state.dart` — `MessageState`: reactive wrapper for a `Message` entity
 - `attachment_state.dart` — `AttachmentState`: reactive wrapper for an `Attachment` entity
+- `handle_state.dart` — `HandleState`: reactive wrapper for a `Handle` entity, owned by `HandleService`
+- `chat_state_scope.dart`, `message_state_scope.dart`, `attachment_state_scope.dart` — `InheritedWidget` scopes exposing the corresponding state via `<X>StateScope.of(context)`
 
 ## Purpose
 ObjectBox entities are heavy (lazy-loaded relations, DB context required). Re-querying the DB on every UI event would be expensive. Instead, `ChatState`/`MessageState`/`AttachmentState` mirror the UI-relevant fields as `Rx*` observables so widgets can rebuild only the sub-tree that cares about a specific field.

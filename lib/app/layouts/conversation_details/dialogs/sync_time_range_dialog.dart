@@ -1,7 +1,7 @@
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-/// A single option in the [SyncTimeRangeDialog] time-range picker.
+/// A single option in the [showSyncTimeRangeDialog] time-range picker.
 class SyncTimeRangeOption {
   const SyncTimeRangeOption({required this.label, required this.duration});
 
@@ -20,6 +20,8 @@ const List<SyncTimeRangeOption> defaultSyncTimeRangeOptions = [
   SyncTimeRangeOption(label: "1 Month", duration: Duration(days: 30)),
   SyncTimeRangeOption(label: "6 Months", duration: Duration(days: 182)),
   SyncTimeRangeOption(label: "1 Year", duration: Duration(days: 365)),
+  SyncTimeRangeOption(label: "3 Years", duration: Duration(days: 365 * 3)),
+  SyncTimeRangeOption(label: "All Time", duration: Duration(days: 365 * 100)),
 ];
 
 /// Shows a dialog for selecting a time range to sync messages.
@@ -33,57 +35,21 @@ Future<DateTimeRange?> showSyncTimeRangeDialog(
   BuildContext context, {
   List<SyncTimeRangeOption>? options,
 }) {
-  return showDialog<DateTimeRange>(
+  final effectiveOptions = options ?? defaultSyncTimeRangeOptions;
+  final now = DateTime.now().toUtc();
+  final epoch = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+
+  return showBBListSelector<DateTimeRange>(
     context: context,
-    builder: (context) => SyncTimeRangeDialog(options: options),
+    title: "How far back?",
+    options: effectiveOptions
+        .map((option) {
+          final start = now.subtract(option.duration);
+          return BBListSelectorOption(
+            label: option.label,
+            value: DateTimeRange(start: start.isBefore(epoch) ? epoch : start, end: now),
+          );
+        })
+        .toList(),
   );
-}
-
-/// A dialog presenting a list of time-range options for syncing messages.
-///
-/// Customise the presented options via [options]; defaults to
-/// [defaultSyncTimeRangeOptions] when omitted.
-class SyncTimeRangeDialog extends StatelessWidget {
-  const SyncTimeRangeDialog({super.key, this.options});
-
-  final List<SyncTimeRangeOption>? options;
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveOptions = options ?? defaultSyncTimeRangeOptions;
-
-    return AlertDialog(
-      title: Text("How far back?", style: context.theme.textTheme.titleLarge),
-      backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: effectiveOptions.map((option) {
-            return ListTile(
-              title: Text(option.label, style: context.theme.textTheme.bodyLarge),
-              onTap: () {
-                final now = DateTime.now().toUtc();
-                Navigator.of(context).pop(
-                  DateTimeRange(
-                    start: now.subtract(option.duration),
-                    end: now,
-                  ),
-                );
-              },
-            );
-          }).toList(),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            "Cancel",
-            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
-          ),
-        ),
-      ],
-    );
-  }
 }

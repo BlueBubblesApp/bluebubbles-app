@@ -24,6 +24,7 @@ class Database {
   static late final Box<Attachment> attachments;
   static late final Box<Chat> chats;
   static late final Box<ContactV2> contactsV2;
+  static late final Box<CustomGroup> customGroups;
   static late final Box<FCMData> fcmData;
   static late final Box<Handle> handles;
   static late final Box<Message> messages;
@@ -52,6 +53,7 @@ class Database {
       Database.attachments = store.box<Attachment>();
       Database.chats = store.box<Chat>();
       Database.contactsV2 = store.box<ContactV2>();
+      Database.customGroups = store.box<CustomGroup>();
       Database.fcmData = store.box<FCMData>();
       Database.handles = store.box<Handle>();
       Database.messages = store.box<Message>();
@@ -317,7 +319,14 @@ class Database {
     return store.runInTransaction(mode, fn);
   }
 
-  static reset() {
+  /// Wipes every ObjectBox box that's actually populated, including theme entries.
+  /// Used for a full app reset — for a messaging-only wipe that preserves
+  /// settings/themes/fcmData, use [resetMessagingData].
+  ///
+  /// Note: scheduled messages are not stored locally — they live server-side and
+  /// are fetched via the API (see `ScheduledMessagesMixin`), so there's nothing to
+  /// clear here for them.
+  static void reset() {
     Database.attachments.removeAll();
     Database.chats.removeAll();
     Database.fcmData.removeAll();
@@ -325,5 +334,20 @@ class Database {
     Database.handles.removeAll();
     Database.messages.removeAll();
     Database.themes.removeAll();
+    Database.themeEntries.removeAll();
+    Database.customGroups.removeAll();
+  }
+
+  /// Wipes messaging-scoped data: attachments, chats, contactsV2, handles, messages, and custom groups.
+  /// Leaves settings, themes, fcmData, and scheduledMessages untouched.
+  static void resetMessagingData() {
+    Database.runInTransaction(TxMode.write, () {
+      Database.attachments.removeAll();
+      Database.chats.removeAll();
+      Database.contactsV2.removeAll();
+      Database.handles.removeAll();
+      Database.messages.removeAll();
+      Database.customGroups.removeAll();
+    });
   }
 }

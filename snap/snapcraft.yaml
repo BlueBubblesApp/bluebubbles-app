@@ -1,6 +1,6 @@
 name: bluebubbles
 title: BlueBubbles
-version: 1.15.100.0
+version: 2.0.0.0
 summary: BlueBubbles client for Linux
 description: BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 license: Apache-2.0
@@ -52,7 +52,6 @@ apps:
       - wayland
       - x11
       - unity7
-      - home
       - opengl
       - alsa
       - audio-playback
@@ -117,8 +116,8 @@ parts:
       - alsa-mixin
       - fmedia
     source:
-      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.0.0%2B85-desktop-b.1/bluebubbles-linux-x86_64.tar.gz
-      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.0.0%2B85-desktop-b.1/bluebubbles-linux-aarch64.tar.gz
+      - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.0.0%2B89/bluebubbles-linux-x86_64.tar.gz
+      - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.0.0%2B89/bluebubbles-linux-aarch64.tar.gz
     plugin: nil
     override-build: |
       set -eux
@@ -126,6 +125,10 @@ parts:
       cp -r ./* $CRAFT_PART_INSTALL/bin/
       mv lib/libobjectbox.so $CRAFT_PART_INSTALL/usr/lib/
     stage-packages:
+      # Video thumbnails shell out to ffmpeg on Linux rather than using the ffmpeg-kit native
+      # bundle, which upstream only builds for x86_64. Strict confinement hides the host's copy,
+      # so it has to be staged here.
+      - ffmpeg
       - libayatana-appindicator3-1
       - libglu1-mesa
       - libmpv2
@@ -133,9 +136,56 @@ parts:
       - libproxy1v5
       - net-tools
       - wmctrl
-      - zenity
     stage:
       - -usr/lib/*/libasound*
+      - -usr/lib/*/libmpv.so*
+      - -usr/lib/*/libgtk-3*
+      - -usr/lib/*/libgdk-3*
+      - -usr/lib/*/libgdk_pixbuf-2.0*
+      - -usr/lib/*/gdk-pixbuf-2.0/**
+      - -usr/lib/*/librsvg-2*
+      - -usr/lib/*/libpango*
+      - -usr/lib/*/libcairo*
+      - -usr/lib/*/libharfbuzz*
+
+  mpv:
+    plugin: meson
+    source: https://github.com/mpv-player/mpv.git
+    source-tag: v0.41.0
+    source-depth: 1
+    meson-parameters:
+      - --prefix=/usr
+      - -Dlibmpv=true
+      - -Dcplayer=false
+      - -Dmanpage-build=disabled
+      - -Dalsa=disabled
+      - -Db_ndebug=true
+    build-packages:
+      - pkg-config
+      - libavcodec-dev
+      - libavfilter-dev
+      - libavformat-dev
+      - libavutil-dev
+      - libswresample-dev
+      - libswscale-dev
+      - libass-dev
+      - libplacebo-dev
+      - libdrm-dev
+      - libegl1-mesa-dev
+      - libgbm-dev
+      - libgl-dev
+      - libx11-dev
+      - libxext-dev
+      - libxkbcommon-dev
+      - libxpresent-dev
+      - libxrandr-dev
+      - libxss-dev
+      - libxv-dev
+      - libpulse-dev
+      - libjpeg-dev
+    prime:
+      - usr/lib/*/libmpv.so*
+      - usr/lib/libmpv.so*
 
   gpu-2404:
     after:

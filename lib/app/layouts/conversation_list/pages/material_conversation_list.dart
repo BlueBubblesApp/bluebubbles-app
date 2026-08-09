@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
@@ -76,8 +77,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
               : const SizedBox.shrink(),
           body: ClipRRect(
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(34),
-              topRight: Radius.circular(34),
+              topLeft: Radius.circular(26),
+              topRight: Radius.circular(26),
             ),
             child: Container(
               color: backgroundColor,
@@ -90,64 +91,73 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 final _chats = ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
+                  filters: ChatsSvc.chatListFilters.value,
                 );
 
+                final Widget content;
                 if (!loaded || _chats.isEmpty) {
-                  return Center(
+                  content = Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 100),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              !loaded
-                                  ? "Loading chats..."
-                                  : showArchived
-                                      ? "You have no archived chats"
-                                      : showUnknown
-                                          ? "You have no messages from unknown senders :)"
-                                          : "You have no chats :(",
-                              style: context.theme.textTheme.labelLarge,
-                              textAlign: TextAlign.center,
+                      child: loaded
+                          ? buildEmptyChatListState(context,
+                              showArchived: showArchived, showUnknown: showUnknown, filters: ChatsSvc.chatListFilters.value)
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "Loading chats...",
+                                    style: context.theme.textTheme.labelLarge,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                buildProgressIndicator(context, size: 15),
+                              ],
                             ),
-                          ),
-                          if (!loaded) buildProgressIndicator(context, size: 15),
-                        ],
-                      ),
+                    ),
+                  );
+                } else {
+                  content = NotificationListener(
+                    onNotification: (notif) {
+                      if (notif is ScrollStartNotification) {
+                        controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                      }
+                      return true;
+                    },
+                    child: ScrollbarWrapper(
+                      showScrollbar: true,
+                      controller: controller.materialScrollController,
+                      child: Obx(() => ListView.builder(
+                            controller: controller.materialScrollController,
+                            physics: ThemeSwitcher.getScrollPhysics(),
+                            padding: const EdgeInsets.only(top: 8),
+                            findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
+                            itemBuilder: (context, index) {
+                              final chat = _chats[index];
+                              return Container(
+                                  key: ValueKey(chat.guid),
+                                  child: ListItem(
+                                      chat: chat,
+                                      controller: controller,
+                                      update: () {
+                                        setState(() {});
+                                      }));
+                            },
+                            itemCount: _chats.length,
+                          )),
                     ),
                   );
                 }
 
-                return NotificationListener(
-                  onNotification: (notif) {
-                    if (notif is ScrollStartNotification) {
-                      controller.materialScrollStartPosition = controller.materialScrollController.offset;
-                    }
-                    return true;
-                  },
-                  child: ScrollbarWrapper(
-                    showScrollbar: true,
-                    controller: controller.materialScrollController,
-                    child: Obx(() => ListView.builder(
-                          controller: controller.materialScrollController,
-                          physics: ThemeSwitcher.getScrollPhysics(),
-                          padding: const EdgeInsets.only(top: 8),
-                          findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
-                          itemBuilder: (context, index) {
-                            final chat = _chats[index];
-                            return Container(
-                                key: ValueKey(chat.guid),
-                                child: ListItem(
-                                    chat: chat,
-                                    controller: controller,
-                                    update: () {
-                                      setState(() {});
-                                    }));
-                          },
-                          itemCount: _chats.length,
-                        )),
-                  ),
+                return Column(
+                  children: [
+                    if (!showArchived && !showUnknown)
+                      const CustomGroupFilterChipRow(
+                        padding: EdgeInsets.only(left: 12, right: 12, top: 16, bottom: 4),
+                      ),
+                    Expanded(child: content),
+                  ],
                 );
               }),
             ),

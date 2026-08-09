@@ -307,7 +307,7 @@ class DragDropOverlay extends StatelessWidget {
                       size: 50,
                     ),
                     Text(
-                      "Attach File(s)",
+                      "Attach Files(s)",
                       style: context.theme.textTheme.headlineLarge!.copyWith(color: context.theme.colorScheme.primary),
                     ),
                   ],

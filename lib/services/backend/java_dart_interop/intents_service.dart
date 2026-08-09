@@ -37,11 +37,19 @@ class IntentsService {
   Future<void> init() async {
     if (kIsWeb || kIsDesktop) return;
 
+    // getInitialIntent() reflects Activity.getIntent() at attach time, which fires
+    // on every new/recreated Activity — including cases where the OS destroyed the
+    // Activity but the Dart isolate (and ChatsSvc.activeChat) survived underneath
+    // (e.g. via the foreground-service keep-alive). The widget tree is starting
+    // fresh either way, so activeChat can't be trusted for the "already open"
+    // shortcut on this path. receivedIntentStream, by contrast, only fires for an
+    // Activity that was already attached and running, where activeChat is
+    // guaranteed to be in sync with what's on screen.
     final intent = await ReceiveIntent.getInitialIntent();
-    handleIntent(intent);
+    handleIntent(intent, isInitialIntent: true);
 
     sub = ReceiveIntent.receivedIntentStream.listen((Intent? intent) {
-      handleIntent(intent);
+      handleIntent(intent, isInitialIntent: false);
     }, onError: (err) {
       Logger.error("Failed to get intent!", error: err);
     });
@@ -51,8 +59,14 @@ class IntentsService {
     await sub.cancel();
   }
 
-  void handleIntent(Intent? intent) async {
+  void handleIntent(Intent? intent, {required bool isInitialIntent}) async {
     if (intent == null) return;
+
+    // Every activity launch tells us whether we're running as a bubble. Set it
+    // for ALL intents, not just chat-opens — otherwise isBubble stays true after
+    // a bubble session when the app is next opened from the launcher or a share
+    // sheet, misrouting lifecycle teardown to closeBubble() indefinitely.
+    LifecycleSvc.isBubble = intent.extra?["bubble"] == true;
 
     switch (intent.action) {
       case "android.intent.action.SEND":
@@ -85,7 +99,7 @@ class IntentsService {
             ));
           }
         }
-        await openChat(id, text: text, attachments: files);
+        await openChat(id, text: text, attachments: files, isInitialIntent: isInitialIntent);
         return;
       default:
         if (intent.data?.startsWith("imessage://") ?? false) {
@@ -105,9 +119,7 @@ class IntentsService {
           }
         } else if (intent.extra?["chatGuid"] != null) {
           final guid = intent.extra!["chatGuid"]!;
-          final bubble = intent.extra!["bubble"] == true;
-          LifecycleSvc.isBubble = bubble;
-          await openChat(guid);
+          await openChat(guid, isInitialIntent: isInitialIntent);
         } else if (intent.extra?["callUuid"] != null) {
           await StartupTasks.waitForUI();
           if (intent.extra?["answer"] == true) {
@@ -165,7 +177,8 @@ class IntentsService {
     }
   }
 
-  Future<void> openChat(String? guid, {String? text, List<PlatformFile> attachments = const []}) async {
+  Future<void> openChat(String? guid,
+      {String? text, List<PlatformFile> attachments = const [], required bool isInitialIntent}) async {
     Logger.info("Handling open chat intent with guid: $guid", tag: "IntentsService");
 
     if (guid == null) {
@@ -213,7 +226,11 @@ class IntentsService {
 
       await StartupTasks.waitForUI();
 
-      bool chatIsOpen = ChatsSvc.activeChat?.chat.guid == guid;
+      // On the initial-intent path the widget tree is starting fresh (see the
+      // comment in init()), so activeChat may be a stale leftover from before the
+      // Activity was torn down — always navigate explicitly in that case rather
+      // than trusting it to already reflect what's on screen.
+      bool chatIsOpen = !isInitialIntent && ChatsSvc.activeChat?.chat.guid == guid;
       Logger.debug("Chat is active: $chatIsOpen", tag: "IntentsService");
 
       setPickedAttachments() {

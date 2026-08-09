@@ -1,8 +1,8 @@
 package com.bluebubbles.messaging.services.network
 
 import android.content.Context
-import android.util.Log
 import com.bluebubbles.messaging.Constants
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.SettingsHelper
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -45,7 +45,7 @@ class HttpService(private val context: Context) {
         
         // Create logging interceptor
         val loggingInterceptor = HttpLoggingInterceptor { message ->
-            Log.d(TAG, message)
+            PersistentLog.d(context, TAG, message)
         }.apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
@@ -61,10 +61,10 @@ class HttpService(private val context: Context) {
             }
             
             val request = requestBuilder.build()
-            Log.d(TAG, "Request: [${request.method}] ${request.url}")
-            
+            PersistentLog.d(context, TAG, "Request: [${request.method}] ${request.url}")
+
             val response = chain.proceed(request)
-            Log.d(TAG, "Response: [${response.code}] ${request.url}")
+            PersistentLog.d(context, TAG, "Response: [${response.code}] ${request.url}")
             
             response
         }
@@ -140,7 +140,7 @@ class HttpService(private val context: Context) {
             ddScan = if (settings.enablePrivateAPI && settings.privateAPISend) ddScan else null
         )
         
-        Log.i(TAG, "Sending message to chat: $chatGuid")
+        PersistentLog.i(context, TAG, "Sending message to chat: $chatGuid")
         
         executeApiCall(
             call = api.sendMessage(settings.guidAuthKey, request),
@@ -205,7 +205,7 @@ class HttpService(private val context: Context) {
             partIndex = partIndex
         )
         
-        Log.i(TAG, "Sending tapback '$reaction' to message: $selectedMessageGuid in chat: $chatGuid")
+        PersistentLog.i(context, TAG, "Sending tapback '$reaction' to message: $selectedMessageGuid in chat: $chatGuid")
         
         executeApiCall(
             call = api.sendTapback(settings.guidAuthKey, request),
@@ -240,12 +240,12 @@ class HttpService(private val context: Context) {
      */
     private fun validateConnection(): Boolean {
         if (!settings.hasServerUrl()) {
-            Log.e(TAG, "No server URL configured")
+            PersistentLog.e(context, TAG, "No server URL configured")
             return false
         }
-        
+
         if (!settings.hasAuthKey()) {
-            Log.e(TAG, "No auth key configured")
+            PersistentLog.e(context, TAG, "No auth key configured")
             return false
         }
         
@@ -265,19 +265,19 @@ class HttpService(private val context: Context) {
         call.enqueue(object : Callback<T> {
             override fun onResponse(call: Call<T>, response: retrofit2.Response<T>) {
                 if (response.isSuccessful && response.body() != null) {
-                    Log.d(TAG, "API call successful: ${response.code()}")
+                    PersistentLog.d(context, TAG, "API call successful: ${response.code()}")
                     onSuccess?.invoke(response.body()!!)
                 } else {
                     val errorMsg = "API call failed: ${response.code()} - ${response.message()}"
-                    Log.e(TAG, errorMsg)
-                    
+                    PersistentLog.e(context, TAG, errorMsg)
+
                     // Retry on 502 for Cloudflare
-                    if (response.code() == 502 
-                        && retryOnCloudflare 
+                    if (response.code() == 502
+                        && retryOnCloudflare
                         && settings.apiRoot.contains("trycloudflare")
                         && attemptNumber < CLOUDFLARE_RETRY_ATTEMPTS
                     ) {
-                        Log.w(TAG, "Retrying Cloudflare request (attempt ${attemptNumber + 1})")
+                        PersistentLog.w(context, TAG, "Retrying Cloudflare request (attempt ${attemptNumber + 1})")
                         executeApiCall(
                             call = call.clone(),
                             onSuccess = onSuccess,
@@ -293,7 +293,7 @@ class HttpService(private val context: Context) {
             
             override fun onFailure(call: Call<T>, t: Throwable) {
                 val errorMsg = "API call failed: ${t.message}"
-                Log.e(TAG, errorMsg, t)
+                PersistentLog.e(context, TAG, errorMsg, t)
                 onError?.invoke(errorMsg)
             }
         })

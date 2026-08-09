@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -17,6 +18,18 @@ import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image/image.dart' as img;
 import 'package:universal_io/io.dart';
+import 'package:window_manager/window_manager.dart';
+
+/// Brings the desktop window to the foreground. On Linux `windowManager.show()` only un-hides a
+/// hidden window; a taskbar-minimized window must be restored (deiconified) first — so any handler
+/// reacting to a user action (notification/tray click) must call this, not bare `show()`.
+Future<void> showAndFocusWindow() async {
+  if (await windowManager.isMinimized()) {
+    await windowManager.restore();
+  }
+  await windowManager.show();
+  await windowManager.focus();
+}
 
 class BackButton extends StatelessWidget {
   final bool Function()? onPressed;
@@ -108,6 +121,82 @@ Widget buildBackButton(BuildContext context,
         ),
       ),
     ),
+  );
+}
+
+/// The empty-state shown in the conversation list when there is nothing to
+/// display for the current filter (all chats, archived, unknown senders, or
+/// an active [ChatListFilters] chip selection).
+Widget buildEmptyChatListState(
+  BuildContext context, {
+  bool showArchived = false,
+  bool showUnknown = false,
+  ChatListFilters? filters,
+}) {
+  final bool hasActiveFilter = filters?.hasActiveFilter ?? false;
+
+  final IconData icon = hasActiveFilter
+      ? Icons.filter_list_off_rounded
+      : showArchived
+          ? Icons.archive_outlined
+          : showUnknown
+              ? Icons.person_search_rounded
+              : Icons.chat_bubble_outline_rounded;
+  final String title = hasActiveFilter
+      ? "No conversations match your filters"
+      : showArchived
+          ? "No archived chats"
+          : showUnknown
+              ? "No messages from unknown senders"
+              : "No conversations yet";
+  final String? subtitle = hasActiveFilter
+      ? null
+      : showArchived || showUnknown
+          ? null
+          : "Tap the compose button to start a new one";
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        icon,
+        size: 48,
+        color: context.theme.colorScheme.outline,
+      ),
+      const SizedBox(height: 12),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Text(
+          title,
+          style: context.theme.textTheme.titleMedium?.copyWith(
+            color: context.theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      if (subtitle != null) ...[
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            subtitle,
+            style: context.theme.textTheme.bodyMedium?.copyWith(
+              color: context.theme.colorScheme.outline,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+      if (hasActiveFilter) ...[
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: () => ChatsSvc.chatListFilters.value = const ChatListFilters(),
+          icon: const Icon(Icons.filter_list_off, size: 18),
+          label: const Text("Clear Filters"),
+        ),
+      ],
+    ],
   );
 }
 
@@ -530,7 +619,10 @@ Future<void> paintGroupAvatar({
   late final ThemeData theme;
   final bool systemDark = PlatformDispatcher.instance.platformBrightness == Brightness.dark;
   final isAlive = GetIt.I.isRegistered<LifecycleService>() ? GetIt.I<LifecycleService>().isAlive : false;
-  if (!isAlive) {
+  // `isAlive` can report true from a headless background isolate (bg_isolate port is
+  // registered process-wide) even though that isolate has no Flutter widget tree, so
+  // `Get.context` is still null there — guard against it explicitly.
+  if (!isAlive || Get.context == null) {
     if (systemDark) {
       theme = ThemeStruct.getDarkTheme().data;
     } else {

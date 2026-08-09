@@ -128,6 +128,15 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     final attachments = List<PlatformFile>.from(data.attachments);
     // text is mutable — reassigned during mention processing below
     String text = data.text;
+    // Hide the smart reply row immediately, before the send animation's target
+    // is computed below. Otherwise the row disappears mid-flight (once the
+    // outgoing message is inserted and messages_view.dart clears the smart
+    // reply suggestions), shrinking _animationBottomOffset while
+    // AnimatedPositioned is still animating toward the old, taller target —
+    // which is what caused the bubble to land too high and snap back down.
+    if (controller.showSmartReplyRow.value) {
+      controller.updateSmartReplyLayout(visible: false, height: 0);
+    }
     if (SettingsSvc.settings.scrollToBottomOnSend.value) {
       await controller.scrollToBottom();
     }
@@ -249,7 +258,6 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
             ),
         ],
       );
-      _message.generateTempGuid();
       OutgoingMsgHandler.queue(
         (_message.attributedBody.isNotEmpty)
             ? OutgoingMultipartMessage(

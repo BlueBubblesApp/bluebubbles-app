@@ -7,7 +7,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 
 class FindMyFriendListTile extends StatelessWidget {
@@ -25,18 +24,30 @@ class FindMyFriendListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final displayLocation = SettingsSvc.settings.redactedMode.value
-          ? "Location"
+      final hideContactInfo = shouldRedactFindMyContactInfo();
+      final lastUpdatedSuffix = item.lastUpdated == null || item.status == LocationStatus.live
+          ? ""
+          : "\nLast updated ${buildDate(item.lastUpdated)}";
+      final displayLocation = hideContactInfo
+          ? (withLocation ? "Location$lastUpdatedSuffix" : "Location")
           : withLocation
-              ? ("${item.shortAddress ?? "No location found"}${item.lastUpdated == null || item.status == LocationStatus.live ? "" : "\nLast updated ${buildDate(item.lastUpdated)}"}")
+              ? ("${item.shortAddress ?? "No location found"}$lastUpdatedSuffix")
               : (item.longAddress ?? "No location found");
+
+      final handleState = item.handle != null ? HandleSvc.getOrCreateHandleState(item.handle!) : null;
+      final displayName = hideContactInfo
+          ? (handleState?.fakeName ?? 'Contact')
+          : (item.handle?.displayName ?? item.title ?? "Unknown Friend");
+
+      final hasLocation = item.latitude != null && item.longitude != null;
+      final markerPoint = hasLocation ? controller.markerPointForFriend(item) : null;
 
       return ListTile(
         mouseCursor: MouseCursor.defer,
         leading: ContactAvatarWidget(handle: item.handle),
-        title: Text(item.handle?.displayName ?? item.title ?? "Unknown Friend"),
+        title: Text(displayName),
         subtitle: Text(displayLocation),
-        trailing: withLocation && item.latitude != null && item.longitude != null
+        trailing: withLocation && hasLocation
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -50,7 +61,8 @@ class FindMyFriendListTile extends StatelessWidget {
                         backgroundColor: context.theme.colorScheme.primaryContainer,
                       ),
                       onPressed: () async {
-                        await MapsLauncher.launchCoordinates(item.latitude!, item.longitude!);
+                        if (markerPoint == null) return;
+                        await MapsLauncher.launchCoordinates(markerPoint.latitude, markerPoint.longitude);
                       },
                       child: const Icon(Icons.directions, size: 20),
                     ),
@@ -58,7 +70,7 @@ class FindMyFriendListTile extends StatelessWidget {
                 ],
               )
             : null,
-        onTap: withLocation
+        onTap: withLocation && markerPoint != null
             ? () async {
                 if (context.isPhone) {
                   await controller.panelController.close();
@@ -67,15 +79,17 @@ class FindMyFriendListTile extends StatelessWidget {
                 final marker = controller.markers[item.stableId];
                 if (marker == null) return;
                 controller.popupController.showPopupsOnlyFor([marker]);
-                controller.mapController.move(LatLng(item.latitude!, item.longitude!), 10);
+                controller.mapController.move(markerPoint, 10);
               }
             : null,
-        onLongPress: () async {
-          showDialog(
-            context: context,
-            builder: (context) => FindMyRawDataDialog(item: item),
-          );
-        },
+        onLongPress: hideContactInfo
+            ? null
+            : () async {
+                showDialog(
+                  context: context,
+                  builder: (context) => FindMyRawDataDialog(item: item),
+                );
+              },
       );
     });
   }

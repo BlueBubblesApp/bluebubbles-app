@@ -1,6 +1,7 @@
 package com.bluebubbles.messaging
 
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -14,7 +15,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.core.os.bundleOf
 
 class UnifiedPushReceiver : MessagingReceiver() {
@@ -23,7 +23,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
     }
 
     override fun onNewEndpoint(context: Context, endpoint: String, instance: String) {
-        Log.d(tag, "New endpoint: $endpoint")
+        PersistentLog.d(context, tag, "New endpoint: $endpoint")
 
         val data = HashMap<String, Any?>();
         data["endpoint"] = endpoint;
@@ -31,14 +31,14 @@ class UnifiedPushReceiver : MessagingReceiver() {
     }
 
     override fun onRegistrationFailed(context: Context, instance: String) {
-        Log.d(tag, "Registration Failed")
+        PersistentLog.d(context, tag, "Registration Failed")
         val data = HashMap<String, Any?>();
         data["endpoint"] = "";
         DartWorkManager.createWorker(context, "unifiedpush-settings", data) {}
     }
 
     override fun onUnregistered(context: Context, instance: String) {
-        Log.d(tag, "Unregistered endpoint")
+        PersistentLog.d(context, tag, "Unregistered endpoint")
         val data = HashMap<String, Any?>();
         data["endpoint"] = "";
         DartWorkManager.createWorker(context, "unifiedpush-settings", data) {}
@@ -55,19 +55,19 @@ class UnifiedPushReceiver : MessagingReceiver() {
         try {
             type = json.get("type")?.getAsString() ?: return
         } catch (e: UnsupportedOperationException) {
-            Log.d(tag, "Invalid message type")
+            PersistentLog.d(applicationContext, tag, "Invalid message type")
             return
         }
 
-        Log.i(tag, "Received new message of type $type from UnifiedPush...")
+        PersistentLog.i(applicationContext, tag, "Received new message of type $type from UnifiedPush...")
         DartWorkManager.createWorker(applicationContext, type, HashMap(json)) {}
 
         // check if the user configured "Send Events to Tasker"
         val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
-        if (prefs.getBoolean("flutter.sendEventsToTasker", false)) {
+        if (prefs.getBoolean("sendEventsToTasker", false)) {
             Utils.getServerUrl(applicationContext, object : MethodChannel.Result {
                 override fun success(result: Any?) {
-                    Log.w(tag, "Got URL: $result - sending to Tasker...")
+                    PersistentLog.w(applicationContext, tag, "Got URL: $result - sending to Tasker...")
                     val intent = Intent()
                     intent.setAction("net.dinglisch.android.taserm.BB_EVENT")
                     intent.putExtra("url", result.toString())

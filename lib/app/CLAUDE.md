@@ -10,6 +10,10 @@
 - `layouts/findmy/` — Find My device locator → `CLAUDE.md` inside
 - `layouts/startup/` — splash screen + boot failure screen → `CLAUDE.md` inside
 - `layouts/fullscreen_media/` — full-screen image/video viewer → `CLAUDE.md` inside
+- `layouts/camera/camera_screen.dart` — in-app camera capture for attachments
+- `layouts/chat_selector_view/` — pick an existing chat (e.g. for forwarding/sharing)
+- `layouts/contact_selector_view/` — pick a contact
+- `layouts/handle_selector_view/` — pick a specific handle/address for a contact
 - `components/` — reusable widgets → `CLAUDE.md` inside
 - `animations/` — send effects → `CLAUDE.md` inside
 - `state/` — `ChatState`, `MessageState` — reactive wrappers around DB models → `CLAUDE.md` inside

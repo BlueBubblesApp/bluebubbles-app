@@ -82,7 +82,9 @@ class EditHistoryObserver extends StatelessWidget {
                           .map((edit) => ClipPath(
                                 clipper: TailClipper(
                                   isFromMe: message.isFromMe!,
-                                  showTail: message.showTail(newerMessage) && part.part == ms.parts.length - 1,
+                                  showTail: !part.isPkPass &&
+                                      message.showTail(newerMessage) &&
+                                      part.part == ms.parts.length - 1,
                                   connectLower: SettingsSvc.settings.skin.value == Skins.iOS
                                       ? false
                                       : (part.part != 0 && part.part != ms.parts.length - 1) ||

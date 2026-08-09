@@ -5,9 +5,9 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.PersistentLog
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
@@ -33,7 +33,7 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             val channelName: String = call.argument("channel_name")!!
             val channelDescription: String = call.argument("channel_description")!!
             val channelId: String = call.argument("channel_id")!!
-            Log.d(Constants.logTag, "Creating channel with name $channelName")
+            PersistentLog.d(context, Constants.logTag, "Creating channel with name $channelName")
             
             // Perform a one-time migration for the 'New Messages' channel.
             // This is because previously, enableVibration wasn't explicitly set to true.
@@ -46,19 +46,19 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
                 val alreadyMigrated = prefs.getBoolean(KEY_NEW_MESSAGES_VIBRATION_MIGRATED, false)
                 val existing = notificationManager.getNotificationChannel(channelId)
                 if (existing != null && !existing.shouldVibrate() && !alreadyMigrated) {
-                    Log.d(Constants.logTag, "New messages channel exists without vibration, recreating once")
+                    PersistentLog.d(context, Constants.logTag, "New messages channel exists without vibration, recreating once")
                     notificationManager.deleteNotificationChannel(channelId)
                     prefs.edit().putBoolean(KEY_NEW_MESSAGES_VIBRATION_MIGRATED, true).apply()
                 } else if (existing != null) {
                     if (!alreadyMigrated) {
                         prefs.edit().putBoolean(KEY_NEW_MESSAGES_VIBRATION_MIGRATED, true).apply()
                     }
-                    Log.d(Constants.logTag, "Notification channel already exists! Ignoring...")
+                    PersistentLog.d(context, Constants.logTag, "Notification channel already exists! Ignoring...")
                     result.success(null)
                     return
                 }
             } else if (notificationManager.getNotificationChannel(channelId) != null) {
-                Log.d(Constants.logTag, "Notification channel already exists! Ignoring...")
+                PersistentLog.d(context, Constants.logTag, "Notification channel already exists! Ignoring...")
                 result.success(null)
                 return
             }
@@ -82,7 +82,7 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             notificationManager.createNotificationChannel(channel)
             result.success(null)
         } catch (e: Exception) {
-            Log.e(Constants.logTag, "Failed to create notification channel", e)
+            PersistentLog.e(context, Constants.logTag, "Failed to create notification channel", e)
             result.error("500", "Failed to create notification channel", e.message)
         }
     }

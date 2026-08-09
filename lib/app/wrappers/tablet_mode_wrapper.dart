@@ -43,10 +43,10 @@ class _TabletModeWrapperState extends State<TabletModeWrapper> with ThemeHelpers
   bool? altLayoutCache;
   StreamSubscription? _eventSub;
 
-  get _width1 => max(
+  double get _width1 => max(
       min(_ratio * _maxWidth!, widget.maxWidthLeft ?? double.infinity), widget.minWidthLeft ?? double.negativeInfinity);
 
-  get _width2 => _maxWidth! - _width1;
+  double get _width2 => _maxWidth! - _width1;
 
   @override
   void initState() {

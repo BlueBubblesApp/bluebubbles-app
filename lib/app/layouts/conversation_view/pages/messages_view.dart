@@ -18,6 +18,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:get/get.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
@@ -98,7 +99,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
     _eventSubscription = EventDispatcherSvc.stream.listen((e) async {
       if (!mounted) return;
-      if (e.type == "refresh-messagebloc" && e.data == chat.guid) {
+      if ((e.type == "refresh-messagebloc" && e.data == chat.guid) || e.type == "storage-attachments-purged") {
         // Clear state items
         noMoreMessages = false;
         _messages = [];
@@ -378,13 +379,32 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
 
     // Update the list without animation (bulk load)
+    final previousMessages = _messages;
     _messages = newMessagesFromService;
     _messages.sort(Message.sort);
     fetching = false;
 
-    // Batch loading: recreate the list key to force rebuild without animation
-    _listKey = GlobalKey<SliverAnimatedListState>();
-    if (mounted) setState(() {});
+    if (!mounted) return;
+
+    // Older (paginated) messages are appended after the already-loaded ones since
+    // the list is sorted newest-first. When that holds, insert only the new items
+    // via the SliverAnimatedList API instead of swapping _listKey, which would tear
+    // down the whole sliver (and its AutomaticKeepAlive cache of loaded images/url
+    // previews), causing them to redecode when scrolling back down.
+    final addedCount = _messages.length - previousLength;
+    final isSimpleAppend = addedCount > 0 &&
+        const ListEquality().equals(_messages.sublist(0, previousLength), previousMessages);
+
+    if (isSimpleAppend) {
+      for (int i = 0; i < addedCount; i++) {
+        _listKey.currentState?.insertItem(previousLength + i, duration: Duration.zero);
+      }
+      _listVersion.value++;
+    } else {
+      // Fallback: structure changed in a way we can't express as a simple append.
+      _listKey = GlobalKey<SliverAnimatedListState>();
+      setState(() {});
+    }
   }
 
   void handleNewMessage(Message message) async {
@@ -566,6 +586,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       child: GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onHorizontalDragUpdate: (details) {
+            if (controller.isGalleryDragging) return;
             if (SettingsSvc.settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
               controller.timestampOffset.value += details.delta.dx * 0.3;
             }
@@ -598,6 +619,13 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
                         controller: scrollController,
                         reverse: true,
                         physics: ThemeSwitcher.getScrollPhysics(),
+                        // MessageHolder implements AutomaticKeepAliveClientMixin, so already-built
+                        // messages survive scrolling arbitrarily far away without needing a large
+                        // cache extent (which forces eager build/layout of everything within its
+                        // window on every layout pass. A 10k px extent visibly stuttered chat open
+                        // for exactly that reason). This is just a small bump over the 250px default
+                        // for minor smoothing of local scroll gestures.
+                        scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                         slivers: <Widget>[
                           SliverToBoxAdapter(
                             child: SmartRepliesRow(

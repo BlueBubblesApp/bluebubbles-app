@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/backend/java_dart_interop/method_channel_service.dart';
 import 'package:characters/characters.dart';
@@ -30,7 +31,6 @@ class FilesystemService {
   late Directory _sysTemp;
   AndroidDeviceInfo? androidInfo;
   late final idb.Database webDb;
-  late final Uint8List noVideoPreviewIcon;
   late final Uint8List unplayableVideoIcon;
   final RxBool fontExistsOnDisk = false.obs;
 
@@ -69,15 +69,27 @@ class FilesystemService {
   String get customBackgroundsPath => join(appDocDir.path, 'custom_backgrounds');
   String get urlPreviewsPath => join(appDocDir.path, 'url_previews');
 
-  /// Returns the path for a cached URL preview image identified by its MD5 hash.
-  String urlPreviewImagePath(String md5) => join(urlPreviewsPath, md5);
+  /// Returns the path for a cached URL preview image identified by its content
+  /// hash. Accepts hashes written by older versions too, since the filename is
+  /// whatever was persisted on the message.
+  String urlPreviewImagePath(String hash) => join(urlPreviewsPath, hash);
 
-  /// Downloads and caches a URL preview image. Computes an MD5 hash of the raw
-  /// bytes and uses it as the filename so that identical images across different
-  /// messages share a single file. Returns the hex MD5 string.
+  /// Caches a URL preview image, keyed by the SHA-256 of its bytes.
+  ///
+  /// Content addressing means identical images shared across messages occupy a
+  /// single file. SHA-256 rather than MD5 because these bytes come from
+  /// attacker-influenced markup: chosen-prefix MD5 collisions are practical, and
+  /// the cache is shared across senders, so a collision would let one sender
+  /// control what renders in another's preview.
+  ///
+  /// Nothing is evicted automatically. A link preview is part of how a message
+  /// reads, so it persists like the message does — the user reclaims the space
+  /// deliberately from the Storage Analyzer, the same way attachments (which
+  /// are far larger) already work. Existing MD5-named files stay valid; they
+  /// are simply content the messages referencing them still point at.
   Future<String> saveUrlPreviewImage(Uint8List bytes) async {
     if (kIsWeb) throw 'saveUrlPreviewImage is not supported on web';
-    final hash = md5.convert(bytes).toString();
+    final hash = sha256.convert(bytes).toString();
     final dir = Directory(urlPreviewsPath);
     await dir.create(recursive: true);
     final file = File(join(urlPreviewsPath, hash));
@@ -133,18 +145,21 @@ class FilesystemService {
       appDocDir = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory());
       if (isMsix) {
         final String appDataRoot = joinAll(split(appDocDir.absolute.path).slice(0, 4));
-        final Directory msStoreLocation = Directory(join(appDataRoot, "Local", "Packages",
-            "23344BlueBubbles.BlueBubbles_2fva2ntdzvhtw", "LocalCache", "Roaming", "BlueBubbles", "bluebubbles"));
+        // Family name (Name_PublisherHash) from the install dir; hash varies per variant.
+        final exeSegments = split(Platform.resolvedExecutable);
+        final fullNameParts = exeSegments[exeSegments.indexOf('WindowsApps') + 1].split('_');
+        final packageFamilyName = '${fullNameParts.first}_${fullNameParts.last}';
+        final Directory msixLocation = Directory(join(appDataRoot, "Local", "Packages", packageFamilyName, "LocalCache",
+            "Roaming", "BlueBubbles", "bluebubbles"));
         // Check if the non-msix directory exists
         final Directory nonMsixLocation = Directory(join(appDataRoot, "Roaming", "BlueBubbles", "bluebubbles"));
-        if (!msStoreLocation.existsSync() && nonMsixLocation.existsSync()) {
-          await copyPath(nonMsixLocation.path, msStoreLocation.path);
+        if (!msixLocation.existsSync() && nonMsixLocation.existsSync()) {
+          if (!headless) await StartupTasks.setSplashStatus("Copying data from previous version...");
+          await copyPath(nonMsixLocation.path, msixLocation.path);
         }
-        appDocDir = msStoreLocation;
+        appDocDir = msixLocation;
       }
       if (!headless) {
-        final file = await rootBundle.load("assets/images/no-video-preview.png");
-        noVideoPreviewIcon = file.buffer.asUint8List();
         final file2 = await rootBundle.load("assets/images/unplayable-video.png");
         unplayableVideoIcon = file2.buffer.asUint8List();
       }
@@ -201,6 +216,18 @@ class FilesystemService {
     if (kIsWeb) return;
     Database.reset();
     // Contacts are now managed by ContactServiceV2 and don't need manual clearing
+  }
+
+  /// Deletes all on-disk cache directories: attachments (originals/thumbnails/live-photo
+  /// .mov), per-chat avatars, per-chat custom backgrounds, per-message balloon bundle
+  /// directories, cached URL preview images, and cached contact avatars.
+  Future<void> deleteCacheDirectories() async {
+    if (kIsWeb) return;
+    final paths = [attachmentsPath, avatarsPath, customBackgroundsPath, messagesPath, urlPreviewsPath, contactAvatarsPath];
+    for (final path in paths) {
+      final dir = Directory(path);
+      if (await dir.exists()) await dir.delete(recursive: true);
+    }
   }
 
   String uriToFilename(String? uri, String? mimeType) {

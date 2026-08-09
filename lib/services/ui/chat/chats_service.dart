@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
+import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -41,7 +43,18 @@ class ChatsService {
   /// The map itself doesn't need to be Rx because the underlying ChatState fields are
   final Map<String, ChatState> chatStates = {};
 
-  ChatState? activeChat;
+  ChatState? _activeChat;
+  ChatState? get activeChat => _activeChat;
+  set activeChat(ChatState? value) {
+    _activeChat = value;
+    final guid = value?.chat.guid;
+    if (activeChatGuid.value != guid) activeChatGuid.value = guid;
+  }
+
+  /// Reactive guid of the active chat. Tiles observe this for highlighting instead
+  /// of a ChatState instance — it survives chatStates being cleared/rebuilt (reset,
+  /// reload) and never diverges from a permanent tile controller's captured state.
+  final RxnString activeChatGuid = RxnString();
 
   /// Sorted list of chats maintained for efficient access
   /// Updated on add/update using binary search insertion O(log n + n)
@@ -52,14 +65,26 @@ class ChatsService {
   /// Used to trigger UI rebuilds when chats are repositioned
   final RxInt chatListVersion = 0.obs;
 
+  /// Currently selected conversation-list filter dimensions. Persisted to
+  /// [Settings] only via an explicit "Save as Default" action in the filter
+  /// sheet — see [saveChatListFiltersAsDefault].
+  final Rx<ChatListFilters> chatListFilters = const ChatListFilters().obs;
+
   /// Timer for debouncing chatListVersion updates to prevent rapid UI rebuilds
   Timer? _listVersionUpdateTimer;
 
   /// Listeners for redacted mode settings to update all ChatStates
   StreamSubscription? _redactedModeListener;
   StreamSubscription? _hideContactInfoListener;
+  StreamSubscription? _hideMessageContentListener;
   StreamSubscription? _generateFakeAvatarsListener;
   StreamSubscription? _hideAttachmentsListener;
+
+  /// Rebuilds the chat list whenever [CustomGroupsSvc.groups] changes (e.g.
+  /// a chat added to/removed from a group via the conversation peek view),
+  /// since the `customGroupIds` filter branch in [getFilteredChats] reads
+  /// membership from there.
+  StreamSubscription? _customGroupsListener;
 
   // ========== Helper Getters (replacing direct chats access) ==========
 
@@ -102,6 +127,7 @@ class ChatsService {
     bool? showUnknown,
     bool? pinnedOnly,
     bool? excludePinned,
+    ChatListFilters? filters,
   }) {
     var chats = allChats;
 
@@ -122,6 +148,67 @@ class ChatsService {
         chats = chats
             .where((e) => e.isGroup || (!e.isGroup && e.handles.firstOrNull?.contactsV2.isNotEmpty == true))
             .toList();
+      }
+    }
+
+    // Apply conversation-list filter dimensions (chip selections) — these combine with AND semantics.
+    if (filters != null) {
+      if (filters.readFilter == ChatReadFilter.unread) {
+        // Read from ChatState rather than the Chat model directly — markAllAsRead()
+        // updates ChatState.hasUnreadMessage instantly but writes the underlying
+        // Chat.hasUnreadMessage field asynchronously via a background DB/HTTP call,
+        // so the model field can briefly lag behind the reactive state.
+        chats = chats.where((e) => getChatState(e.guid)?.hasUnreadMessage.value ?? (e.hasUnreadMessage ?? false)).toList();
+      }
+
+      // The legacy "Filter Unknown Senders" setting already siphons unknown-sender
+      // chats into their own separate list (see the showUnknown block above and
+      // Chat.shouldMuteNotification) — when it's on, it takes precedence over this
+      // chip so the two mechanisms can't fight and produce a confusing empty list.
+      if (!SettingsSvc.settings.filterUnknownSenders.value) {
+        if (filters.senderFilter == ChatSenderFilter.known) {
+          chats = chats
+              .where((e) => e.isGroup || (!e.isGroup && e.handles.firstOrNull?.contactsV2.isNotEmpty == true))
+              .toList();
+        } else if (filters.senderFilter == ChatSenderFilter.unknown) {
+          chats = chats.where((e) => !e.isGroup && e.handles.firstOrNull?.contactsV2.isEmpty != false).toList();
+        }
+      }
+
+      if (filters.typeFilter == ChatTypeFilter.group) {
+        chats = chats.where((e) => e.isGroup).toList();
+      } else if (filters.typeFilter == ChatTypeFilter.direct) {
+        chats = chats.where((e) => !e.isGroup).toList();
+      }
+
+      if (filters.muteFilter == ChatMuteFilter.muted) {
+        chats = chats.where((e) => e.muteType != null).toList();
+      } else if (filters.muteFilter == ChatMuteFilter.unmuted) {
+        chats = chats.where((e) => e.muteType == null).toList();
+      }
+
+      if (filters.serviceFilter == ChatServiceFilter.iMessage) {
+        chats = chats.where((e) => e.isIMessage).toList();
+      } else if (filters.serviceFilter == ChatServiceFilter.other) {
+        chats = chats.where((e) => !e.isIMessage).toList();
+      }
+
+      if (filters.customGroupIds.isNotEmpty) {
+        // Sourced from CustomGroupsSvc.groups (refreshed on every
+        // 'custom-groups-updated' event) rather than `e.customGroups` —
+        // that backlink ToMany is lazily loaded and cached per Chat instance
+        // (e.g. by CustomGroupFilterChipRow's unread-count badges), so it
+        // goes stale as soon as a chat is added to/removed from a group and
+        // never picks up the change without this.
+        final matchingGuids = CustomGroupsSvc.groups
+            .where((g) => filters.customGroupIds.contains(g.id))
+            .expand((g) => g.chats)
+            .map((c) => c.guid)
+            .toSet();
+        chats = chats.where((e) => matchingGuids.contains(e.guid)).toList();
+      } else if (filters.showUngroupedOnly) {
+        final groupedGuids = CustomGroupsSvc.groups.expand((g) => g.chats).map((c) => c.guid).toSet();
+        chats = chats.where((e) => !groupedGuids.contains(e.guid)).toList();
       }
     }
 
@@ -209,6 +296,10 @@ class ChatsService {
 
     reset();
 
+    // Preload the saved default filter selection (if any) — independent of
+    // chat count, so set this up unconditionally.
+    _loadDefaultChatListFilters();
+
     // Get current count from database or server
     currentCount = getChatCount() ??
         (await HttpSvc.chat.getCount().catchError((err) {
@@ -246,8 +337,13 @@ class ChatsService {
       // This maintains proper ordering including pinIndex which DB queries cannot handle
       for (Chat c in chatBatch) {
         // Create ChatState and add to map
-        chatStates[c.guid] = ChatState(c);
-        _setupChatStateListeners(chatStates[c.guid]!);
+        final state = chatStates[c.guid] = ChatState(c);
+        _setupChatStateListeners(state);
+
+        if (activeChatGuid.value == c.guid) {
+          _activeChat = state;
+          state.updateActiveAndAliveInternal(true);
+        }
 
         // Add to sorted list
         _insertChatSorted(c);
@@ -267,11 +363,27 @@ class ChatsService {
     // seed the badge with the correct value before any message is received.
     _recalculateUnreadCount();
 
+    if (kIsDesktop) {
+      unawaited(
+        DesktopNotifications.cancelStale(keepGroups: chatStates.values.where((s) => s.hasUnreadMessage.value).map((s) => s.chat.guid).toList())
+      );
+    }
+
     // Initialize watchers AFTER loading all chats to avoid duplicates
     initDbWatchers();
 
     // Set up global listeners for redacted mode settings
     _setupRedactedModeListeners();
+
+    // Rebuild the chat list whenever custom-group membership changes. Listens
+    // to CustomGroupsSvc.groups directly (rather than the raw
+    // 'custom-groups-updated' event) so it only fires once CustomGroupsSvc has
+    // already re-fetched — no redundant DB query here — and debounces via
+    // _scheduleListVersionUpdate so a burst of changes (e.g. restoring many
+    // groups from a backup, each of which fires its own event) collapses into
+    // a single rebuild instead of one per group.
+    _customGroupsListener?.cancel();
+    _customGroupsListener = CustomGroupsSvc.groups.listen((_) => _scheduleListVersionUpdate());
 
     if (kIsDesktop && Platform.isWindows) {
       /* ----- IMESSAGE:// HANDLER ----- */
@@ -321,11 +433,57 @@ class ChatsService {
     });
   }
 
+  /// The filter selection currently saved as default (see
+  /// [saveChatListFiltersAsDefault]). Falls back to [ChatListFilters]'s
+  /// built-in defaults if nothing has been explicitly saved.
+  ChatListFilters get savedDefaultChatListFilters {
+    final saved = SettingsSvc.settings.savedChatFilters.value;
+    return saved.isEmpty ? const ChatListFilters() : ChatListFilters.fromSettingsMap(saved);
+  }
+
+  /// Loads the saved default filter selection (if one was explicitly saved via
+  /// [saveChatListFiltersAsDefault]). If nothing has been saved, the chat list
+  /// opens with no active filter, same as a fresh install. Also prunes any
+  /// custom-group ids that no longer exist — this runs after
+  /// [CustomGroupsSvc] has already loaded (see [CustomGroupsService.init]),
+  /// unlike [pruneStaleCustomGroupIds]'s other call site during that same
+  /// boot sequence, which runs before this filter is loaded and so has
+  /// nothing yet to prune.
+  void _loadDefaultChatListFilters() {
+    chatListFilters.value = savedDefaultChatListFilters;
+    pruneStaleCustomGroupIds();
+  }
+
+  /// Persists the current [chatListFilters] selection as the default applied on
+  /// every future launch, overriding whatever was previously saved. If nothing
+  /// is actively filtered (every dimension at its default value), clears the
+  /// saved default instead, since there's nothing meaningful to restore.
+  void saveChatListFiltersAsDefault() {
+    final filters = chatListFilters.value;
+    SettingsSvc.settings.savedChatFilters.value = filters.hasActiveFilter ? filters.toSettingsMap() : {};
+    unawaited(SettingsSvc.settings.saveOneAsync('savedChatFilters'));
+  }
+
+  /// Drops any [ChatListFilters.customGroupIds] that no longer correspond to
+  /// an existing [CustomGroup] (e.g. the group was deleted). Called once at
+  /// boot (after [CustomGroupsSvc] has loaded) and every time
+  /// [CustomGroupsSvc] refreshes in response to a `custom-groups-updated`
+  /// event, so a deleted group's id can never sit "active" in the filter.
+  void pruneStaleCustomGroupIds() {
+    final validIds = CustomGroupsSvc.groups.map((g) => g.id!).toSet();
+    final current = chatListFilters.value;
+    final pruned = current.customGroupIds.intersection(validIds);
+    if (pruned.length != current.customGroupIds.length) {
+      chatListFilters.value = current.copyWith(customGroupIds: pruned);
+    }
+  }
+
   /// Set up global listeners for redacted mode settings that update all chat states
   void _setupRedactedModeListeners() {
     // Cancel existing listeners if any
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
+    _hideMessageContentListener?.cancel();
     _generateFakeAvatarsListener?.cancel();
     _hideAttachmentsListener?.cancel();
 
@@ -347,6 +505,17 @@ class ChatsService {
           chatState.redactContactInfo();
         } else {
           chatState.unredactContactInfo();
+        }
+      }
+    });
+
+    // Listen to hideMessageContent toggle - only affects subtitle/message text
+    _hideMessageContentListener = SettingsSvc.settings.hideMessageContent.listen((enabled) {
+      for (final chatState in chatStates.values) {
+        if (enabled) {
+          chatState.redactMessageContent();
+        } else {
+          chatState.unredactMessageContent();
         }
       }
     });
@@ -413,8 +582,10 @@ class ChatsService {
     _listVersionUpdateTimer?.cancel();
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
+    _hideMessageContentListener?.cancel();
     _generateFakeAvatarsListener?.cancel();
     _hideAttachmentsListener?.cancel();
+    _customGroupsListener?.cancel();
   }
 
   /// Get sorted chats (pin index first, then by latest message date)
@@ -565,6 +736,9 @@ class ChatsService {
 
     // Insert into sorted list at correct position
     _insertChatSorted(toAdd);
+
+    // _sortedChats isn't reactive; bump the list version so the UI rebuilds.
+    _scheduleListVersionUpdate(immediate: immediate);
   }
 
   void removeChat(Chat toRemove) {
@@ -574,10 +748,15 @@ class ChatsService {
     _scheduleListVersionUpdate(immediate: true);
   }
 
-  Future<void> markAllAsRead() async {
+  /// Marks unread chats as read. When [chatGuids] is provided, only chats in
+  /// that set are affected (e.g. the currently filtered/visible subset) —
+  /// otherwise every unread chat is marked, regardless of any active filter.
+  Future<void> markAllAsRead({Set<String>? chatGuids}) async {
     try {
       // Phase 1: instant UI update from in-memory state — no DB query needed
-      final unreadStates = chatStates.values.where((s) => s.hasUnreadMessage.value).toList();
+      final unreadStates = chatStates.values
+          .where((s) => s.hasUnreadMessage.value && (chatGuids == null || chatGuids.contains(s.chat.guid)))
+          .toList();
       final chatIds = <int>[];
 
       for (final state in unreadStates) {
@@ -740,12 +919,10 @@ class ChatsService {
         .then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
-      late final dynamic error;
-      if (err is Response) {
-        error = err.data["error"]["message"];
-      } else {
-        error = err.toString();
-      }
+      // completeError rejects null, so this must never resolve to one — a
+      // server error body without a `message` key used to crash here rather
+      // than surfacing the failure.
+      final Object error = (err is Response ? err.data?["error"]?["message"] : null) ?? err?.toString() ?? 'Unknown error';
       if (!completer.isCompleted) completer.completeError(error);
     });
 
@@ -755,8 +932,8 @@ class ChatsService {
   // ========== Chat Lifecycle Management Methods (migrated from ChatManager) ==========
 
   /// Set all chats to inactive synchronously
-  void _setAllInactiveSync({bool clearActive = true}) {
-    Logger.debug('Setting chats to inactive (clearActive: $clearActive)');
+  void setAllInactiveSync({bool save = true, bool clearActive = true}) {
+    Logger.debug('Setting chats to inactive (save: $save, clearActive: $clearActive)');
 
     String? skip;
     if (clearActive) {
@@ -771,41 +948,48 @@ class ChatsService {
       state.updateActiveInternal(false);
       state.updateAliveInternal(false);
     });
+
+    if (save) {
+      unawaited(PrefsSvc.messaging.clearLastOpenedChat());
+    }
   }
 
-  /// Set all chats to inactive
-  void setAllInactive() async {
+  /// Set all chats to inactive asynchronously
+  Future<void> setAllInactive() async {
     Logger.debug('Setting all chats to inactive');
-    _setAllInactiveSync();
+    await PrefsSvc.messaging.clearLastOpenedChat();
+    setAllInactiveSync(save: false);
   }
 
   /// Set a chat as the active chat
-  void setActiveChat(Chat chat, {bool clearNotifications = true}) async {
-    _setActiveChatSync(chat, clearNotifications: clearNotifications);
+  Future<void> setActiveChat(Chat chat, {bool clearNotifications = true}) async {
+    await PrefsSvc.messaging.setLastOpenedChat(chat.guid);
+    setActiveChatSync(chat, clearNotifications: clearNotifications, save: false);
   }
 
-  /// Set a chat as the active chat synchronously.
-  /// This does NOT save the last opened chat to preferences
-  void _setActiveChatSync(Chat chat, {bool clearNotifications = true}) {
-    EventDispatcherSvc.emit("update-highlight", chat.guid);
+  /// Set a chat as the active chat synchronously
+  void setActiveChatSync(Chat chat, {bool clearNotifications = true, bool save = true}) {
     Logger.debug('Setting active chat to ${chat.guid} (${chat.displayName})');
 
     // Get or create the chat state
-    final chatState = getChatState(chat.guid);
-    if (chatState != null) {
-      // Set this chat as active
-      activeChat = chatState;
-      chatState.updateActiveAndAliveInternal(true);
+    final chatState = getOrCreateChatState(chat);
 
-      // Clear all other chats to inactive
-      _setAllInactiveSync(clearActive: false);
+    // Set this chat as active
+    activeChat = chatState;
+    chatState.updateActiveAndAliveInternal(true);
 
-      if (clearNotifications) {
-        // Defer the observable update to avoid updating during build phase
-        Future.microtask(() {
-          setChatHasUnread(chatState.chat, false, force: true);
-        });
-      }
+    // Clear all other chats to inactive
+    setAllInactiveSync(save: false, clearActive: false);
+
+    if (clearNotifications) {
+      // Defer the observable update to avoid updating during build phase
+      Future.microtask(() {
+        setChatHasUnread(chatState.chat, false, force: true);
+      });
+    }
+
+    if (save) {
+      unawaited(PrefsSvc.messaging.setLastOpenedChat(chat.guid));
     }
   }
 
@@ -818,7 +1002,6 @@ class ChatsService {
   /// Set the active chat to alive
   void setActiveToAlive() {
     Logger.info('Setting active chat to alive: ${activeChat?.chat.guid}');
-    EventDispatcherSvc.emit("update-highlight", activeChat?.chat.guid);
     activeChat?.updateAliveInternal(true);
   }
 
@@ -850,7 +1033,7 @@ class ChatsService {
     // Handle active chat cleanup
     if (activeChat?.chat.guid == chat.guid) {
       NavigationSvc.closeAllConversationView(Get.context!);
-      setAllInactive();
+      await setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
 
@@ -876,6 +1059,46 @@ class ChatsService {
     removeChat(chat);
   }
 
+  /// Performs a full messaging reset: wipes all Messages, Attachments, Chats,
+  /// Handles, and Contacts (ContactV2) from the database, deletes all
+  /// associated files from disk, and flushes every in-memory service cache
+  /// tied to that data.
+  ///
+  /// Does NOT touch Settings, themes, FCM data, or scheduled messages. Does
+  /// NOT show any confirmation UI — callers must confirm with the user
+  /// before invoking this.
+  Future<void> deleteAllMessagingData() async {
+    if (kIsWeb) return;
+
+    // Close any active conversation view first (mirrors deleteChat() above).
+    if (activeChat != null) {
+      NavigationSvc.closeAllConversationView(Get.context!);
+      setAllInactive();
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    // Capture currently-registered per-chat MessagesService tags before
+    // init() below clears chatStates — it's our only enumeration source.
+    final chatGuids = chatStates.keys.toList();
+
+    Database.resetMessagingData();
+    await FilesystemSvc.deleteCacheDirectories();
+
+    for (final guid in chatGuids) {
+      maybeFindMessagesSvc(guid)?.close(force: true);
+    }
+    HandleSvc.reset();
+
+    // Use init() rather than reset() so the empty-database case is handled
+    // correctly: reset() alone leaves loadedFirstChatBatch=false forever since
+    // there are no chats left to trigger the "batch loaded" codepath, which
+    // left the conversation list stuck on "Loading chats..." indefinitely.
+    // init(force: true) calls reset() internally and then, for a zero-chat
+    // database, sets loadedFirstChatBatch=true and re-initializes DB watchers
+    // (same codepath FullSyncManager.complete() uses after a full resync).
+    await init(force: true);
+  }
+
   /// Soft delete a chat with full UI cleanup and service state management
   Future<void> softDeleteChat(Chat chat) async {
     if (kIsWeb) return;
@@ -883,7 +1106,7 @@ class ChatsService {
     // Handle active chat cleanup
     if (activeChat?.chat.guid == chat.guid) {
       NavigationSvc.closeAllConversationView(Get.context!);
-      setAllInactive();
+      await setAllInactive();
       await Future.delayed(const Duration(milliseconds: 500));
     }
 
@@ -1247,9 +1470,29 @@ class ChatsService {
   /// Update chat latest message and subtitle in response to a new or updated message.
   /// Called by IncomingMessageHandler and SyncService to keep ChatState as the single
   /// source of truth for the conversation tile subtitle.
-  void updateChatLatestMessage(String chatGuid, Message message) {
+  ///
+  /// Only moves the latest-message pointer forward in time — sync can report an
+  /// older delta message as a chat's latest, which would rewind its sort order.
+  /// The 2s tolerance allows a temp->real GUID swap. [allowOlder] opts out for the
+  /// post-deletion recompute, which must fall back to an older surviving message.
+  void updateChatLatestMessage(String chatGuid, Message message, {bool allowOlder = false}) {
     final state = getChatState(chatGuid);
     if (state == null) return;
+
+    if (!allowOlder) {
+      final current = state.latestMessage.value;
+      final currentDate = current?.dateCreated;
+      final incomingDate = message.dateCreated;
+      const staleTolerance = Duration(seconds: 2);
+      if (current != null &&
+          current.guid != message.guid &&
+          currentDate != null &&
+          currentDate.millisecondsSinceEpoch > 0 &&
+          incomingDate != null &&
+          incomingDate.isBefore(currentDate.subtract(staleTolerance))) {
+        return;
+      }
+    }
 
     state.updateLatestMessageInternal(message);
     final redacted = SettingsSvc.settings.redactedMode.value;
@@ -1302,7 +1545,7 @@ class ChatsService {
   void reset({bool reinitWatchers = false}) {
     currentCount = 0;
     hasChats.value = false;
-    activeChat = null;
+    _activeChat = null;
     chatStates.clear();
     _sortedChats.clear();
     loadedAllChats = Completer();

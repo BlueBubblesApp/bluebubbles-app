@@ -66,6 +66,13 @@ class AttachmentState {
   final RxnString mimeType;
   final RxnString transferName;
   final RxnInt totalBytes;
+
+  /// RAW (decode-native, pre-rotation) pixel dimensions, mirroring
+  /// [Attachment.width] / [Attachment.height].
+  ///
+  /// These are **not** the size to lay an image out at. For that, use
+  /// [Attachment.displayWidth] / [Attachment.displayHeight], which apply the
+  /// EXIF orientation swap.
   final RxnInt width;
   final RxnInt height;
   final RxBool hasLivePhoto;
@@ -234,23 +241,41 @@ class AttachmentState {
         hasError.value = false;
         uploadProgress.value = null;
         downloadProgress.value = null;
-        _progressWorker?.dispose();
-        _progressWorker = null;
-        _fileWorker?.dispose();
-        _fileWorker = null;
+        _disposeTransferWorkers();
       case AttachmentTransferState.error:
         isSending.value = false;
         hasError.value = true;
-        _progressWorker?.dispose();
-        _progressWorker = null;
-        _fileWorker?.dispose();
-        _fileWorker = null;
+        _disposeTransferWorkers();
       case AttachmentTransferState.idle:
         isSending.value = false;
         hasError.value = false;
         uploadProgress.value = null;
         downloadProgress.value = null;
     }
+  }
+
+  /// Tears down the progress and file workers — unless a download is still
+  /// attached, in which case they are the live wiring for it and must survive.
+  ///
+  /// [updateFromAttachment] promotes to [AttachmentTransferState.complete] as
+  /// soon as a refreshed [Attachment] reports `isDownloaded`, and
+  /// [MessageState._syncAttachmentStates] can deliver that in the middle of an
+  /// in-flight download. Disposing [_fileWorker] there drops the only
+  /// completion signal some download paths have — [MessagesService.redownloadAttachment]
+  /// wires up no `completeFuncs` callback at all — leaving [resolvedFile] null
+  /// while [activeDownload] stays set, so the UI is stuck on the downloading
+  /// widget until the message is disposed and rebuilt.
+  ///
+  /// Every legitimate completion path (`_onAttachmentDownloadComplete`,
+  /// `notifyAttachmentDownloadComplete`, `notifyAttachmentSendComplete`) clears
+  /// [activeDownload] before transitioning, so this still disposes there.
+  /// [dispose] tears them down unconditionally regardless.
+  void _disposeTransferWorkers() {
+    if (activeDownload.value != null) return;
+    _progressWorker?.dispose();
+    _progressWorker = null;
+    _fileWorker?.dispose();
+    _fileWorker = null;
   }
 
   /// Sets [activeDownload] to [ctrl].

@@ -55,9 +55,13 @@ class ThemesService {
         .tween("color2", Tween<double>(begin: 0.8, end: 1)));
 
   Future<void> init() async {
-    monetPalette = await DynamicColorPlugin.getCorePalette();
-    if (kIsDesktop) {
-      desktopAccentColor = await DynamicColorPlugin.getAccentColor();
+    // on Linux these block the GTK thread and freeze the splash
+    // spinner; defer to initDynamicColorsDeferred (post-splash) instead.
+    if (!(kIsDesktop && Platform.isLinux)) {
+      monetPalette = await DynamicColorPlugin.getCorePalette();
+      if (kIsDesktop) {
+        desktopAccentColor = await DynamicColorPlugin.getAccentColor();
+      }
     }
 
     // Re-save preset themes so any stale DB values (e.g. old surfaceContainerHighest)
@@ -68,6 +72,14 @@ class ThemesService {
       }
       _refreshMaterialYouThemePresets();
     }
+  }
+
+  /// Linux-only: dynamic-color fetch deferred out of [init]; call post-splash.
+  Future<void> initDynamicColorsDeferred() async {
+    if (!(kIsDesktop && Platform.isLinux)) return;
+    monetPalette = await DynamicColorPlugin.getCorePalette();
+    desktopAccentColor = await DynamicColorPlugin.getAccentColor();
+    _refreshMaterialYouThemePresets();
   }
 
   static final oledDarkTheme = FlexColorScheme(
@@ -517,9 +529,12 @@ class ThemesService {
     }
   }
 
-  bool inDarkMode(BuildContext context) => (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
-      (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
-          PlatformDispatcher.instance.platformBrightness == Brightness.dark));
+  bool inDarkMode(BuildContext context) {
+    final mode = AdaptiveTheme.maybeOf(context)?.mode;
+    if (mode == null) return PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+    return mode == AdaptiveThemeMode.dark ||
+        (mode == AdaptiveThemeMode.system && PlatformDispatcher.instance.platformBrightness == Brightness.dark);
+  }
 
   bool isGradientBg(BuildContext context) {
     if (inDarkMode(context)) {

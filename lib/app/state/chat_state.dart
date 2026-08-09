@@ -78,7 +78,10 @@ class ChatState {
         displayName = RxnString(chat.displayName),
         customAvatarPath = RxnString(chat.customAvatarPath),
         customBackgroundPath = RxnString(FilesystemSvc.getExistingChatBackgroundPath(chat.guid)),
-        title = RxnString(chat.getTitle()),
+        // Placeholder; recomputed from live participant state once [participants]
+        // is populated below, so a contact link resolved concurrently with chat
+        // creation isn't missed by a one-shot snapshot of chat.getTitle().
+        title = RxnString(null),
         chatCreatorSubtitle = RxnString(chat.isGroup
             ? chat.getChatCreatorSubtitle()
             : (chat.handles.isNotEmpty ? (chat.handles.first.formattedAddress ?? chat.handles.first.address) : null)),
@@ -109,9 +112,16 @@ class ChatState {
     participants.addAll(chat.handles.map((h) => HandleSvc.getOrCreateHandleState(h)));
     for (final hs in participants) {
       _participantWorkers.add(
-        ever(hs.displayName, (_) => updateChatCreatorSubtitleInternal(_computeCreatorSubtitle())),
+        ever(hs.displayName, (_) {
+          updateChatCreatorSubtitleInternal(_computeCreatorSubtitle());
+          updateTitleInternal(_computeTitle());
+        }),
       );
     }
+
+    // Now that participants are populated, compute the real title from live
+    // state rather than the one-shot chat.getTitle() snapshot.
+    title.value = _computeTitle();
     // Cache fake name for consistent redacted-mode display.
     _cachedFakeName =
         chat.isGroup ? chat.fakeName : (participants.isNotEmpty ? participants.first.fakeName : 'Unknown');
@@ -279,20 +289,24 @@ class ChatState {
       return participants.first.displayName.value;
     }
     if (count <= 4) {
-      final words =
-          participants.map((p) => (p.reactionDisplayName.value ?? '').firstWord).where((s) => s.isNotEmpty).toList();
+      final words = participants.map(_shortNameFor).where((s) => s.isNotEmpty).toList();
       if (words.isEmpty) return null;
       if (words.length == 1) return words[0];
       return '${words.take(words.length - 1).join(', ')} & ${words.last}';
     } else {
-      final words = participants
-          .take(3)
-          .map((p) => (p.reactionDisplayName.value ?? '').firstWord)
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final words = participants.take(3).map(_shortNameFor).where((s) => s.isNotEmpty).toList();
       if (words.isEmpty) return null;
       return '${words.join(', ')} & ${count - 3} others';
     }
+  }
+
+  /// Short label for a participant in a multi-person subtitle. Only takes the
+  /// first word (e.g. "First" from "First Last") when the handle has a linked
+  /// contact — otherwise the value is a formatted address/phone number, which
+  /// must be shown in full. Mirrors [Handle.shortName].
+  String _shortNameFor(HandleState p) {
+    final name = p.reactionDisplayName.value ?? '';
+    return p.handle.contactsV2.isNotEmpty ? name.firstWord : name;
   }
 
   /// Compute the subtitle for [message] respecting the current redacted-mode settings.
@@ -312,13 +326,28 @@ class ChatState {
   /// then recompute subtitle. Pass [handles] when calling from [updateFromChat] so
   /// the fresh DB handles are used instead of the potentially stale cached [ToMany].
   void _updateParticipantsInternal([List<Handle>? handles]) {
+    final newHandles = (handles ?? chat.handles).toList();
+
+    // Skip the RxList rebuild when the participant set is unchanged — clearing
+    // and re-adding notifies every watching Obx (avatars, titles) even though
+    // nothing changed, causing needless rebuild storms after contact syncs.
+    final unchanged = participants.length == newHandles.length &&
+        listEquals(
+          participants.map((hs) => hs.handle.id).toList(),
+          newHandles.map((h) => h.id).toList(),
+        );
+    if (unchanged) {
+      updateChatCreatorSubtitleInternal(_computeCreatorSubtitle());
+      return;
+    }
+
     for (final w in _participantWorkers) {
       w.dispose();
     }
     _participantWorkers.clear();
     participants
       ..clear()
-      ..addAll((handles ?? chat.handles).map((h) => HandleSvc.getOrCreateHandleState(h)));
+      ..addAll(newHandles.map((h) => HandleSvc.getOrCreateHandleState(h)));
     for (final hs in participants) {
       _participantWorkers.add(
         ever(hs.displayName, (_) => updateChatCreatorSubtitleInternal(_computeCreatorSubtitle())),
@@ -382,11 +411,17 @@ class ChatState {
     // Rebuild participants from the fresh DB handles on the incoming chat object so
     // we never read the stale cached ToMany on the original ChatState.chat.
     _updateParticipantsInternal(updatedChat.handles.toList());
-    updateLatestMessageInternal(updatedChat.dbLatestMessage.target);
-    // Refresh the title & subtitle so it reflects any updated handle display names
+    // Don't blank an existing preview when the incoming chat arrives without its
+    // dbLatestMessage relation loaded (e.g. a bare DB re-query). The latest
+    // message only moves forward; updateChatLatestMessage sets it authoritatively.
+    final incomingLatest = updatedChat.dbLatestMessage.target;
+    if (incomingLatest != null) {
+      updateLatestMessageInternal(incomingLatest);
+      updateSubtitleInternal(_computeSubtitle(incomingLatest));
+    }
+    // Refresh the title so it reflects any updated handle display names
     // (e.g. a group-event whose sender handle was just added to the DB).
     updateTitleInternal(_computeTitle());
-    updateSubtitleInternal(_computeSubtitle(updatedChat.dbLatestMessage.target));
 
     // NOTE: textFieldText and textFieldAttachments are intentionally NOT synced here.
     // They are purely client-side fields managed exclusively by setChatTextFieldText /
@@ -427,6 +462,11 @@ class ChatState {
     chat.lockChatName = updatedChat.lockChatName;
     chat.lockChatIcon = updatedChat.lockChatIcon;
     chat.lastReadMessageGuid = updatedChat.lastReadMessageGuid;
+
+    // Re-apply redaction over the fresh values if redacted mode is active.
+    if (SettingsSvc.settings.redactedMode.value) {
+      redactFields();
+    }
   }
 
   // ========== Internal Lifecycle State Update Methods ==========
@@ -470,6 +510,7 @@ class ChatState {
     if (!SettingsSvc.settings.redactedMode.value) return;
     if (!SettingsSvc.settings.hideContactInfo.value) return;
 
+    updateDisplayNameInternal(_cachedFakeName);
     updateTitleInternal(_cachedFakeName);
     updateChatCreatorSubtitleInternal('');
     // Recompute the message-preview subtitle so contact names and/or message
@@ -481,6 +522,7 @@ class ChatState {
 
   /// Restore contact information to original values from the underlying DB model.
   void unredactContactInfo() {
+    updateDisplayNameInternal(chat.displayName);
     updateTitleInternal(_computeTitle());
     updateChatCreatorSubtitleInternal(_computeCreatorSubtitle());
     // Recompute subtitle — hideMessageContent may still be active even after

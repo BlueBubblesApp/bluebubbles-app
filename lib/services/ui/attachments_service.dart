@@ -6,6 +6,8 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ffmpeg_kit_flutter_new_min/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new_min/return_code.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,11 +23,11 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vcf_dart/vcf_dart.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 // ignore: non_constant_identifier_names
-AttachmentsService AttachmentsSvc =
-    Get.isRegistered<AttachmentsService>() ? Get.find<AttachmentsService>() : Get.put(AttachmentsService());
+AttachmentsService AttachmentsSvc = Get.isRegistered<AttachmentsService>()
+    ? Get.find<AttachmentsService>()
+    : Get.put(AttachmentsService());
 
 /// Wrapper class for attachments being sent that includes both the file and send progress
 class AttachmentWithProgress {
@@ -36,6 +38,26 @@ class AttachmentWithProgress {
 }
 
 class AttachmentsService extends GetxService {
+  /// The already-converted sibling of [basePath], if one is on disk. Checks the
+  /// current format first, then the legacy `.png` older builds wrote for HEIC —
+  /// those files decode fine, so there's no reason to reconvert.
+  /// Null means nothing has been converted yet.
+  String? _existingConvertedPath(Attachment attachment, String basePath) {
+    for (final candidate in {"$basePath.${attachment.convertedExtension}", "$basePath.png"}) {
+      if (File(candidate).existsSync()) return candidate;
+    }
+    return null;
+  }
+
+  /// Whether [attachment] (or its converted sibling) is already on disk at [path]
+  /// (defaults to `attachment.path`). Read-only -- unlike [getContent], this never
+  /// starts a download, so it's safe to call from a `build()`-time visibility check.
+  bool hasLocalFile(Attachment attachment, {String? path}) {
+    if (kIsWeb) return attachment.bytes != null;
+    final pathName = path ?? attachment.path;
+    return File(pathName).existsSync() || _existingConvertedPath(attachment, pathName) != null;
+  }
+
   dynamic getContent(Attachment attachment, {String? path, bool? autoDownload, Function(PlatformFile)? onComplete}) {
     if (attachment.guid?.startsWith("temp") ?? false) {
       final sendProgress = OutgoingMsgHandler.attachmentProgress.firstWhereOrNull((e) => e.guid == attachment.guid);
@@ -44,11 +66,7 @@ class AttachmentsService extends GetxService {
         if (!kIsWeb) {
           final pathName = path ?? attachment.path;
           if (File(pathName).existsSync()) {
-            final file = PlatformFile(
-              name: attachment.transferName!,
-              path: pathName,
-              size: attachment.totalBytes ?? 0,
-            );
+            final file = PlatformFile(name: attachment.transferName!, path: pathName, size: attachment.totalBytes ?? 0);
             // Return both the file and progress so UI can show image with progress overlay
             return AttachmentWithProgress(file, sendProgress);
           }
@@ -62,11 +80,7 @@ class AttachmentsService extends GetxService {
           final pathName = path ?? attachment.path;
           if (File(pathName).existsSync()) {
             // File exists at the temp path, return it
-            return PlatformFile(
-              name: attachment.transferName!,
-              path: pathName,
-              size: attachment.totalBytes ?? 0,
-            );
+            return PlatformFile(name: attachment.transferName!, path: pathName, size: attachment.totalBytes ?? 0);
           }
 
           // If file doesn't exist at temp path, it may have been replaced with a real GUID
@@ -76,19 +90,17 @@ class AttachmentsService extends GetxService {
             try {
               final message = attachment.message.target!;
               final messageAttachments = message.dbAttachments;
-              final match = messageAttachments.firstWhereOrNull((a) =>
-                  !a.guid!.startsWith("temp") &&
-                  a.transferName == attachment.transferName &&
-                  a.totalBytes == attachment.totalBytes);
+              final match = messageAttachments.firstWhereOrNull(
+                (a) =>
+                    !a.guid!.startsWith("temp") &&
+                    a.transferName == attachment.transferName &&
+                    a.totalBytes == attachment.totalBytes,
+              );
 
               if (match != null) {
                 // Found the updated attachment! Check if its file exists
                 if (File(match.path).existsSync()) {
-                  return PlatformFile(
-                    name: match.transferName!,
-                    path: match.path,
-                    size: match.totalBytes ?? 0,
-                  );
+                  return PlatformFile(name: match.transferName!, path: match.path, size: match.totalBytes ?? 0);
                 }
               }
             } catch (e) {
@@ -108,11 +120,7 @@ class AttachmentsService extends GetxService {
                   final potentialFile = File("${dir.path}/$fileName");
                   if (potentialFile.existsSync() &&
                       (attachment.totalBytes == null || potentialFile.lengthSync() == attachment.totalBytes)) {
-                    return PlatformFile(
-                      name: fileName,
-                      path: potentialFile.path,
-                      size: attachment.totalBytes ?? 0,
-                    );
+                    return PlatformFile(name: fileName, path: potentialFile.path, size: attachment.totalBytes ?? 0);
                   }
                 }
               }
@@ -143,11 +151,7 @@ class AttachmentsService extends GetxService {
           return AttachmentDownloader.startDownload(attachment, onComplete: onComplete);
         }
         // No GUID and no bytes — return a PlatformFile with whatever path is available.
-        return PlatformFile(
-          name: attachment.transferName!,
-          path: path,
-          size: attachment.totalBytes ?? 0,
-        );
+        return PlatformFile(name: attachment.transferName!, path: path, size: attachment.totalBytes ?? 0);
       } else {
         return PlatformFile(
           name: attachment.transferName!,
@@ -159,44 +163,27 @@ class AttachmentsService extends GetxService {
     }
 
     final pathName = path ?? attachment.path;
-    final localFile = File(pathName);
-    final convertedFile = File(attachment.convertedPath);
-    final hasLocalFile = localFile.existsSync() || convertedFile.existsSync();
+    final convertedPath = _existingConvertedPath(attachment, pathName);
+    final localFileExists = hasLocalFile(attachment, path: pathName);
 
     // Prefer local file presence over the persisted flag because isDownloaded can
     // drift out of sync with filesystem state (e.g. failed display / stale DB flag).
-    if ((attachment.isDownloaded == true && hasLocalFile) || hasLocalFile) {
-      // For images, check if we need HEIC/TIFF conversion
+    if ((attachment.isDownloaded == true && localFileExists) || localFileExists) {
+      // For images, check if we need HEIC/TIFF conversion. Both fall back to the
+      // original when nothing has been converted yet — iOS/macOS decode HEIC
+      // natively, and everywhere else conversion happens on first display.
       String? compatiblePath = pathName;
-      if (attachment.mimeType?.contains('image/hei') ?? false) {
-        final convertedPath = "$pathName.png";
-        if (File(convertedPath).existsSync()) {
-          compatiblePath = convertedPath;
-        } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
-          // iOS/macOS have native HEIC support
-          compatiblePath = pathName;
-        } else {
-          // Will need conversion on first display
-          compatiblePath = pathName;
-        }
-      } else if (attachment.mimeType?.contains('image/tif') ?? false) {
-        final convertedPath = "$pathName.png";
-        if (File(convertedPath).existsSync()) {
-          compatiblePath = convertedPath;
-        } else {
-          // Will need conversion on first display
-          compatiblePath = pathName;
-        }
-      } else if (!localFile.existsSync() && convertedFile.existsSync()) {
+      final needsConversion =
+          (attachment.mimeType?.contains('image/hei') ?? false) ||
+          (attachment.mimeType?.contains('image/tif') ?? false);
+      if (needsConversion) {
+        compatiblePath = convertedPath ?? pathName;
+      } else if (!File(pathName).existsSync() && convertedPath != null) {
         // Fallback when original file is gone but converted file remains.
-        compatiblePath = attachment.convertedPath;
+        compatiblePath = convertedPath;
       }
 
-      return PlatformFile(
-        name: attachment.transferName!,
-        path: compatiblePath,
-        size: attachment.totalBytes ?? 0,
-      );
+      return PlatformFile(name: attachment.transferName!, path: compatiblePath, size: attachment.totalBytes ?? 0);
       // Check for existing download controller
     } else if (AttachmentDownloader.getController(attachment.guid) != null) {
       return AttachmentDownloader.getController(attachment.guid);
@@ -271,66 +258,20 @@ class AttachmentsService extends GetxService {
 
       if (savePath == null) {
         return showSnackbar('Error', 'You didn\'t select a file path!');
-      } else if (await File(savePath).exists()) {
-        await showBBDialog(
-          context: Get.context!,
-          barrierDismissible: false,
-          title: "Confirm save",
-          body: "This file already exists.\nAre you sure you want to overwrite it?",
-          actions: <BBDialogAction>[
-            BBDialogAction(
-              text: "No",
-              onPressed: () => Navigator.of(Get.context!, rootNavigator: true).pop(),
-            ),
-            BBDialogAction(
-              text: "Yes",
-              isDefault: true,
-              onPressed: () async {
-                if (file.path != null) {
-                  await File(file.path!).copy(savePath);
-                } else {
-                  await File(savePath).writeAsBytes(file.bytes!);
-                }
-                Navigator.of(Get.context!, rootNavigator: true).pop();
-                showSnackbar(
-                  'Success',
-                  'Saved attachment to $savePath!',
-                  durationMs: 3000,
-                  button: TextButton(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Get.theme.colorScheme.surfaceVariant,
-                    ),
-                    onPressed: () {
-                      launchUrl(Uri.file(savePath));
-                    },
-                    child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      } else {
-        if (file.path != null) {
-          await File(file.path!).copy(savePath);
-        } else {
-          await File(savePath).writeAsBytes(file.bytes!);
-        }
-        showSnackbar(
-          'Success',
-          'Saved attachment to $savePath!',
-          durationMs: 3000,
-          button: TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Get.theme.colorScheme.surfaceVariant,
-            ),
-            onPressed: () {
-              launchUrl(Uri.file(savePath));
-            },
-            child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
-          ),
-        );
       }
+
+      showSnackbar(
+        'Success',
+        'Saved attachment to $savePath!',
+        durationMs: 3000,
+        button: TextButton(
+          style: TextButton.styleFrom(backgroundColor: Get.theme.colorScheme.surfaceVariant),
+          onPressed: () {
+            launchUrl(Uri.file(savePath));
+          },
+          child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
+        ),
+      );
     } else {
       String? savePath;
 
@@ -347,17 +288,20 @@ class AttachmentsService extends GetxService {
           if (!isDocument) {
             try {
               if (file.path == null && file.bytes != null) {
-                await SaverGallery.saveImage(file.bytes!,
-                    quality: 100,
-                    fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
-                    skipIfExists: false);
+                await SaverGallery.saveImage(
+                  file.bytes!,
+                  quality: 100,
+                  fileName: file.name,
+                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  skipIfExists: false,
+                );
               } else {
                 await SaverGallery.saveFile(
-                    filePath: file.path!,
-                    fileName: file.name,
-                    androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
-                    skipIfExists: false);
+                  filePath: file.path!,
+                  fileName: file.name,
+                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  skipIfExists: false,
+                );
               }
               return showSnackbar('Success', 'Saved attachment to gallery!');
             } catch (_) {}
@@ -391,8 +335,11 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  Future<void> redownloadAttachment(Attachment attachment,
-      {Function(PlatformFile)? onComplete, Function()? onError}) async {
+  Future<void> redownloadAttachment(
+    Attachment attachment, {
+    Function(PlatformFile)? onComplete,
+    Function()? onError,
+  }) async {
     if (attachment.guid == null || attachment.guid!.startsWith('temp')) {
       return;
     }
@@ -400,18 +347,34 @@ class AttachmentsService extends GetxService {
     // Clear in-memory payload so stale bytes are not treated as a completed file.
     attachment.bytes = null;
 
+    // Drop the cached VideoController -- its decode/aspect ratio is from the file we're
+    // about to replace.
+    final chatGuid = attachment.message.target?.chat.target?.guid;
+    if (chatGuid != null && Get.isRegistered<ConversationViewController>(tag: chatGuid)) {
+      Get.find<ConversationViewController>(tag: chatGuid).invalidateVideoPlayer(attachment.guid!);
+    }
+
     if (!kIsWeb) {
-      final file = File(attachment.path);
-      final pngFile = File(attachment.convertedPath);
-      final thumbnail = File("${attachment.path}.thumbnail");
-      final pngThumbnail = File("${attachment.convertedPath}.thumbnail");
+      // Both conversion paths, since a file converted by an older build still
+      // sits at the legacy `.png` location.
+      final derived = {
+        attachment.path,
+        "${attachment.path}.thumbnail",
+        "${attachment.path}.part",
+        attachment.convertedPath,
+        "${attachment.convertedPath}.thumbnail",
+        attachment.legacyConvertedPath,
+        "${attachment.legacyConvertedPath}.thumbnail",
+      };
 
       try {
-        if (await file.exists()) await file.delete();
-        if (await pngFile.exists()) await pngFile.delete();
-        if (await thumbnail.exists()) await thumbnail.delete();
-        if (await pngThumbnail.exists()) await pngThumbnail.delete();
+        for (final path in derived) {
+          final f = File(path);
+          if (await f.exists()) await f.delete();
+        }
       } catch (_) {}
+      // Sweeps every quality bucket, not just the current one.
+      await deleteImagePreviews(attachment);
     }
 
     bool updateAttachment = false;
@@ -420,9 +383,13 @@ class AttachmentsService extends GetxService {
       updateAttachment = true;
     }
 
-    // Clear metadata processing flag and cached dimensions to force reprocessing
+    // Clear orientation/dimension processing flags and cached values to force reprocessing
     if (attachment.metadata != null) {
       attachment.metadata!.remove('_dimensions_processed');
+      attachment.metadata!.remove('_orientation_processed');
+      attachment.metadata!.remove('_orientation');
+      attachment.metadata!.remove('_raw_width');
+      attachment.metadata!.remove('_raw_height');
       updateAttachment = true;
     }
 
@@ -444,46 +411,181 @@ class AttachmentsService extends GetxService {
 
     // Always clear any stale controller/queue entry so this redownload starts fresh.
     AttachmentDownloader.clearControllerForGuid(attachment.guid!);
-    AttachmentDownloader.startDownload(
-      attachment,
-      onComplete: onComplete,
-      onError: onError,
-      forceFresh: true,
-    );
+    AttachmentDownloader.startDownload(attachment, onComplete: onComplete, onError: onError, forceFresh: true);
   }
 
-  Future<Size> getImageSizing(String filePath, Attachment attachment) async {
+  /// Returns the RAW (decode-native, unrotated) pixel size read straight from
+  /// the container/SOF header. This is the authoritative dimension source —
+  /// EXIF dimension tags are metadata and can disagree with the actual pixels.
+  Future<Size> getImageSizing(String filePath) async {
     try {
       dynamic file = File(filePath);
       final sizeResult = await isg.ImageSizeGetter.getSizeResultAsync(AsyncInput(FileInput(file)));
       final size = sizeResult.size;
-      return Size(size.needRotate ? size.height.toDouble() : size.width.toDouble(),
-          size.needRotate ? size.width.toDouble() : size.height.toDouble());
+      return Size(size.width.toDouble(), size.height.toDouble());
     } catch (ex) {
       return const Size(0, 0);
     }
   }
 
-  Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
-    final cachedFile = File("$filePath.thumbnail");
+  /// Returns the on-disk thumbnail path for [filePath] if one already exists there, else null.
+  /// A plain existence check -- disk is the only source of truth, so there's no cache to
+  /// invalidate when a video gets redownloaded/replaced.
+  String? getCachedVideoThumbnailSync(String filePath) {
+    final cachedPath = "$filePath.thumbnail";
+    return File(cachedPath).existsSync() ? cachedPath : null;
+  }
+
+  /// The filter chain behind every video thumbnail. Shared by the ffmpeg-kit path and the Linux
+  /// shell-out below so the two can't drift apart.
+  ///
+  /// Rotation is left to ffmpeg's default `-autorotate`, which handles iPhone .mov rotation flags
+  /// correctly on its own.
+  /// `thumbnail`: scans a short frame window for a non-blank one (iPhone clips often open on a
+  /// black frame).
+  /// `scale=iw*sar:ih,setsar=1`: bakes sample aspect ratio into pixel dimensions before the
+  /// box-fit -- some .mov clips have non-1:1 SAR, and a plain `scale=W:H` ignores it, unlike real
+  /// playback (mpv/media_kit), producing a wrongly-proportioned thumbnail.
+  /// `scale=512:512:force_original_aspect_ratio=decrease`: the actual box-fit.
+  static const _thumbnailFilter =
+      'thumbnail,scale=iw*sar:ih,setsar=1,scale=512:512:force_original_aspect_ratio=decrease';
+
+  /// Generates (or reuses) a video thumbnail and returns the path to it on disk -- never loads
+  /// the decoded thumbnail into memory as bytes, so callers must render it via [Image.file].
+  ///
+  /// When [useCachedFile] is true (the common case), the thumbnail is written next to the source
+  /// video at `$filePath.thumbnail` and reused across calls. When false (e.g. a picker preview for
+  /// a not-yet-sent attachment), a one-off thumbnail is written to the system temp directory
+  /// instead, since the source file may live in a location that isn't safe/writable to cache
+  /// alongside (e.g. the photo library).
+  Future<String?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
+    final cachedPath = "$filePath.thumbnail";
     if (useCachedFile) {
+      final cachedExists = await File(cachedPath).exists();
+      final cachedLowRes = cachedExists && await _isLowResThumbnailFile(cachedPath);
+      if (cachedExists && !cachedLowRes) {
+        return cachedPath;
+      }
+    }
+
+    final destPath = useCachedFile
+        ? cachedPath
+        : join(FilesystemSvc.sysTempPath,
+            "${basenameWithoutExtension(filePath)}_${DateTime.now().microsecondsSinceEpoch}.thumbnail.jpg");
+
+    bool success;
+
+    try {
+      if (Platform.isLinux) {
+        success = await _generateThumbnailWithSystemFfmpeg(filePath, destPath);
+      } else {
+        final command = '-y '
+            '-i "${_ffmpegEscapePath(filePath)}" '
+            '-vf "$_thumbnailFilter" '
+            '-frames:v 1 -q:v 2 -f mjpeg '
+            '"${_ffmpegEscapePath(destPath)}"';
+        final session = await FFmpegKit.execute(command);
+        final returnCode = await session.getReturnCode();
+        success = ReturnCode.isSuccess(returnCode);
+        if (!success) {
+          final logs = await session.getAllLogsAsString();
+          Logger.warn('ffmpeg thumbnail failed for $filePath (rc=$returnCode) command="$command" logs=$logs',
+              tag: 'VideoThumbnail');
+        }
+      }
+    } catch (ex, stacktrace) {
+      Logger.error('ffmpeg thumbnail threw for $filePath -> $destPath', error: ex, trace: stacktrace, tag: 'VideoThumbnail');
+      rethrow;
+    }
+
+    if (!success) return null;
+    if (useCachedFile) {
+      // FileImage caches decoded bytes by path only, not content -- evict so a thumbnail
+      // regenerated at this same path (redownload, low-res cache-bust) isn't served stale.
+      PaintingBinding.instance.imageCache.evict(FileImage(File(destPath)));
+    }
+    return destPath;
+  }
+
+  /// Escapes a path for safe interpolation inside a double-quoted ffmpeg command argument.
+  String _ffmpegEscapePath(String path) => path.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+
+  /// Runs the thumbnail command against a real ffmpeg binary instead of ffmpeg-kit.
+  ///
+  /// ffmpeg-kit ships no Linux native bundle for anything but x86_64, and its CMake hard-fails on
+  /// other architectures, so an arm64 build can't even configure. Shelling out is both smaller and
+  /// arch-portable: the snap stages ffmpeg and the flatpak manifest builds it, so the packages
+  /// carry a binary that works on every architecture they publish.
+  ///
+  /// [Process.run] bypasses the shell, so arguments are passed as a list and the paths need no
+  /// quoting or escaping.
+  Future<bool> _generateThumbnailWithSystemFfmpeg(String source, String dest) async {
+    final ffmpeg = await _resolveLinuxFfmpeg();
+    if (ffmpeg == null) {
+      Logger.warn('no ffmpeg binary found on PATH -- install ffmpeg to enable video thumbnails',
+          tag: 'VideoThumbnail');
+      return false;
+    }
+
+    final result = await Process.run(ffmpeg, [
+      '-y',
+      '-i', source,
+      // Forces the output muxer -- the cached dest path has no image extension for ffmpeg to
+      // infer a format from.
+      '-vf', _thumbnailFilter,
+      '-frames:v', '1',
+      '-q:v', '2',
+      '-f', 'mjpeg',
+      dest,
+    ]);
+
+    if (result.exitCode != 0) {
+      Logger.warn('ffmpeg thumbnail failed for $source (rc=${result.exitCode}) stderr=${result.stderr}',
+          tag: 'VideoThumbnail');
+      return false;
+    }
+    return true;
+  }
+
+  /// Memoized lookup of the ffmpeg binary to shell out to on Linux. Resolved once per run --
+  /// the answer can't change while the app is open.
+  Future<String?>? _linuxFfmpegPath;
+
+  Future<String?> _resolveLinuxFfmpeg() {
+    return _linuxFfmpegPath ??= () async {
+      // A copy shipped next to the runner wins, so the release tarball can be made
+      // self-contained without depending on what the user's distro has installed.
+      final bundled = join(dirname(Platform.resolvedExecutable), 'ffmpeg');
+      if (await File(bundled).exists()) return bundled;
+
+      // Otherwise take it from PATH: the snap stages ffmpeg into $SNAP/usr/bin and the flatpak
+      // builds it into /app/bin -- neither sandbox can see the host's copy, so each ships its
+      // own, and both directories are already on PATH. A plain tarball install falls through to
+      // the distro package.
       try {
-        return await cachedFile.readAsBytes();
-      } catch (_) {}
+        final which = await Process.run('which', ['ffmpeg']);
+        if (which.exitCode == 0) {
+          final path = (which.stdout as String).trim();
+          if (path.isNotEmpty) return path;
+        }
+      } catch (ex) {
+        Logger.debug('ffmpeg PATH lookup failed ($ex)', tag: 'VideoThumbnail');
+      }
+      return null;
+    }();
+  }
+
+  /// Thumbnails were historically generated at 128px, which looks blurry now that video previews
+  /// render at message-bubble size — treat those disk caches as stale so they get regenerated.
+  Future<bool> _isLowResThumbnailFile(String path) async {
+    try {
+      final sizeResult = await isg.ImageSizeGetter.getSizeResultAsync(AsyncInput(FileInput(File(path))));
+      final size = sizeResult.size;
+      return size.width < 256 && size.height < 256;
+    } catch (ex) {
+      Logger.debug('_isLowResThumbnailFile: could not read header for $path ($ex)', tag: 'VideoThumbnail');
+      return false;
     }
-
-    final thumbnail = await VideoThumbnail.thumbnailData(
-      video: filePath,
-      imageFormat: ImageFormat.PNG,
-      maxWidth: 128, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
-      quality: 25,
-    );
-
-    if (!isNullOrEmpty(thumbnail) && useCachedFile) {
-      await cachedFile.writeAsBytes(thumbnail!);
-    }
-
-    return thumbnail;
   }
 
   /// Converts HEIC/TIFF images to PNG if needed (only on platforms that don't support them natively).
@@ -511,11 +613,13 @@ class AttachmentsService extends GetxService {
 
       // Convert TIFF to PNG
       try {
-        final image = await ImageInterface.convertToPng(PlatformFile(
-          name: attachment.transferName ?? 'image.tiff',
-          path: originalFile.path,
-          size: attachment.totalBytes ?? 0,
-        ));
+        final image = await ImageInterface.convertToPng(
+          PlatformFile(
+            name: attachment.transferName ?? 'image.tiff',
+            path: originalFile.path,
+            size: attachment.totalBytes ?? 0,
+          ),
+        );
 
         if (image != null) {
           await File(convertedPath).writeAsBytes(image);
@@ -530,12 +634,12 @@ class AttachmentsService extends GetxService {
     // HEIC: Only convert on platforms that don't support it natively
     // Android 9+ and iOS have native support
     if (attachment.mimeType!.contains('image/hei')) {
-      final convertedPath = "$filePath.png";
+      // Checks the legacy `.png` too, so files converted by older builds are
+      // reused rather than reconverted.
+      final existing = _existingConvertedPath(attachment, filePath);
+      if (existing != null) return existing;
 
-      // Check if we already converted this file
-      if (await File(convertedPath).exists()) {
-        return convertedPath;
-      }
+      final convertedPath = "$filePath.${attachment.convertedExtension}";
 
       // iOS/macOS: Native HEIC support, use original
       if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
@@ -545,12 +649,20 @@ class AttachmentsService extends GetxService {
       // Android: Check API level (28+ has native support)
       // For now, convert all Android to be safe for older devices
       try {
+        // keepExif: false is load-bearing. autoCorrectionAngle defaults to
+        // true, so the plugin has already rotated the pixels -- copying the
+        // source Orientation tag onto the output would make Flutter's decoder
+        // rotate a second time. This was the original orientation bug.
+        //
+        // JPEG, not PNG: camera photos have no alpha to preserve, and PNG
+        // costs a full-resolution decode on every draw (see
+        // Attachment.convertedExtension).
         final file = await FlutterImageCompress.compressAndGetFile(
           filePath,
           convertedPath,
-          format: CompressFormat.png,
-          keepExif: true,
-          quality: 100, // No quality loss for compatibility conversion
+          format: CompressFormat.jpeg,
+          keepExif: false,
+          quality: 90,
         );
 
         if (file == null) {
@@ -569,6 +681,30 @@ class AttachmentsService extends GetxService {
     return filePath;
   }
 
+  /// Writes freshly-extracted dimensions onto the entity and, when the
+  /// attachment has a live [AttachmentState], through that too — otherwise the
+  /// reactive `width`/`height` pair silently goes stale against the DB record.
+  void _applyDimensions(Attachment attachment, int width, int height) {
+    attachment.width = width;
+    attachment.height = height;
+
+    final message = attachment.message.target;
+    final chatGuid = message?.chat.target?.guid;
+    final messageGuid = message?.guid;
+    final attachmentGuid = attachment.guid;
+    if (chatGuid == null || messageGuid == null || attachmentGuid == null) return;
+
+    maybeFindMessagesSvc(chatGuid)?.getAttachmentState(messageGuid, attachmentGuid)?.updateDimensionsInternal(
+      width,
+      height,
+    );
+  }
+
+  /// Property extractions currently running, keyed by file path. Fast scrolling
+  /// otherwise fires one isolate EXIF read (plus possibly a HEIC conversion)
+  /// per tile, each rebuilding its widget on completion.
+  final Map<String, Future<String?>> _propertyJobs = {};
+
   Future<String?> loadImageProperties(Attachment attachment, {String? actualPath}) async {
     if (kIsWeb || attachment.mimeType == null || attachment.mimeStart != "image") {
       return null;
@@ -576,118 +712,281 @@ class AttachmentsService extends GetxService {
 
     final filePath = actualPath ?? attachment.path;
 
-    // Check if dimensions have already been processed.
+    // Check if orientation/dimensions have already been processed.
     // We don't want to rely on the height/width or metadata alone because
     // it doesn't give the full picture of how to display the image (orientation, etc).
     // We need to "double-check" by reading EXIF and image properties directly.
-    if (attachment.metadata?['_dimensions_processed'] == true) {
+    if (attachment.metadata?['_orientation_processed'] == true) {
       return filePath;
     }
 
-    // Ensure we have a compatible image file first
+    final inFlight = _propertyJobs[filePath];
+    if (inFlight != null) return inFlight;
+
+    final job = _loadImageProperties(attachment, filePath);
+    _propertyJobs[filePath] = job;
+    try {
+      return await job;
+    } finally {
+      _propertyJobs.remove(filePath);
+    }
+  }
+
+  Future<String?> _loadImageProperties(Attachment attachment, String filePath) async {
+    final isGif = attachment.mimeType == "image/gif";
+
+    // Step 1 -- EXIF, read from the ORIGINAL file before any format conversion
+    // runs (in an isolate to avoid UI lag). Conversion can silently drop the
+    // orientation tag, so reading post-conversion would lose it entirely.
+    //
+    // EXIF is the source of truth for ORIENTATION ONLY. Its dimension tags
+    // (`ExifImageWidth`/`ExifImageLength`, `Image ImageWidth`) are metadata:
+    // they go stale when an editor crops without rewriting EXIF, IFD0 often
+    // describes the embedded thumbnail rather than the image, and both are
+    // frequently absent. They are kept only as a last-resort fallback below.
+    int orientation = 1;
+    int? exifWidth;
+    int? exifHeight;
+    if (!isGif) {
+      try {
+        final result = await ImageInterface.readExifOrientation(filePath);
+        if (result != null) {
+          orientation = result['orientation'] as int? ?? 1;
+          exifWidth = result['width'] as int?;
+          exifHeight = result['height'] as int?;
+          final raw = result['raw'];
+          // Crossed an isolate boundary -- copy rather than hard-cast.
+          attachment.exif = raw is Map ? Map<String, String>.from(raw) : <String, String>{};
+        } else {
+          // Null means EXIF has never been loaded. Empty map means we attempted to load it.
+          attachment.exif ??= {};
+        }
+      } catch (ex, stack) {
+        Logger.error('Failed to read EXIF orientation!', error: ex, trace: stack);
+      }
+    } else {
+      // GIFs don't produce EXIF data, but mark as loaded for loaded-vs-unloaded semantics.
+      attachment.exif ??= {};
+    }
+
+    // Step 2 -- resolve the file that will actually be decoded.
     final compatiblePath = await ensureImageCompatibility(attachment, actualPath: filePath);
     if (compatiblePath == null) return null;
 
-    bool dimensionsLoaded = false;
+    // A converted file has already had its rotation baked into the pixels
+    // (flutter_image_compress's autoCorrectionAngle) and carries no
+    // orientation tag, so it is upright. Recording the source's orientation
+    // against those dimensions would swap them a second time.
+    if (compatiblePath != filePath) {
+      orientation = 1;
+      exifWidth = null;
+      exifHeight = null;
+    }
 
-    // Try to get dimensions and metadata from EXIF first (runs in isolate to avoid UI lag)
-    if (attachment.mimeType != "image/gif") {
+    // Step 3 -- dimensions from the container/SOF header of the file we will
+    // decode. This is ground truth; EXIF only fills in if it fails.
+    int? rawWidth;
+    int? rawHeight;
+    if (isGif) {
       try {
-        final exif = await ImageInterface.readExifData(compatiblePath);
-        if (exif != null) {
-          // Extract dimensions from EXIF if available
-          int? exifWidth;
-          int? exifHeight;
-
-          if (exif.containsKey('EXIF ExifImageWidth')) {
-            exifWidth = int.tryParse(exif['EXIF ExifImageWidth']!);
-          } else if (exif.containsKey('Image ImageWidth')) {
-            exifWidth = int.tryParse(exif['Image ImageWidth']!);
-          }
-
-          if (exif.containsKey('EXIF ExifImageLength')) {
-            exifHeight = int.tryParse(exif['EXIF ExifImageLength']!);
-          } else if (exif.containsKey('Image ImageLength')) {
-            exifHeight = int.tryParse(exif['Image ImageLength']!);
-          }
-
-          String? orientationStr;
-          if (exif.containsKey('Image Orientation')) {
-            orientationStr = exif['Image Orientation'];
-          }
-
-          // Check if dimensions need to be swapped based on orientation
-          // Rotations of 90° or 270° require swapping width/height for display
-          bool needsSwap = orientationStr != null &&
-              (orientationStr.contains('90') ||
-                  orientationStr.contains('270') ||
-                  orientationStr.toLowerCase().contains('rotated 90') ||
-                  orientationStr.toLowerCase().contains('rotated 270') ||
-                  orientationStr.toLowerCase().contains('horizontal (normal)') ||
-                  orientationStr.toLowerCase().contains('mirrored horizontal'));
-
-          if (exifWidth != null && exifHeight != null) {
-            if (needsSwap) {
-              attachment.width = exifHeight;
-              attachment.height = exifWidth;
-            } else {
-              attachment.width = exifWidth;
-              attachment.height = exifHeight;
-            }
-            dimensionsLoaded = true;
-          }
-
-          attachment.exif = exif;
-          await attachment.saveAsync(null);
-        } else if (attachment.exif == null) {
-          // Null means EXIF has never been loaded. Empty map means we attempted to load it.
-          attachment.exif = {};
-          await attachment.saveAsync(null);
+        // Read GIF dimensions in isolate (avoids loading full file into memory)
+        final dimensions = await ImageInterface.getGifDimensions(compatiblePath);
+        if (dimensions != null && dimensions['width'] != 0 && dimensions['height'] != 0) {
+          rawWidth = dimensions['width'];
+          rawHeight = dimensions['height'];
         }
       } catch (ex, stack) {
-        Logger.error('Failed to read EXIF data!', error: ex, trace: stack);
+        Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
       }
-    } else if (attachment.exif == null) {
-      // GIFs don't produce EXIF data, but mark as processed for loaded-vs-unloaded semantics.
-      attachment.exif = {};
-      await attachment.saveAsync(null);
-    }
-
-    // Fallback: Get dimensions using image size getter if not loaded from EXIF
-    if (!dimensionsLoaded && (attachment.width == null || attachment.height == null)) {
-      if (attachment.mimeType == "image/gif") {
-        try {
-          // Read GIF dimensions in isolate (avoids loading full file into memory)
-          final dimensions = await ImageInterface.getGifDimensions(compatiblePath);
-          if (dimensions != null && dimensions['width'] != 0 && dimensions['height'] != 0) {
-            attachment.width = dimensions['width'];
-            attachment.height = dimensions['height'];
-            dimensionsLoaded = true;
-          }
-        } catch (ex, stack) {
-          Logger.error('Failed to get GIF dimensions!', error: ex, trace: stack);
+    } else {
+      try {
+        final size = await getImageSizing(compatiblePath);
+        if (size.width != 0 && size.height != 0) {
+          rawWidth = size.width.toInt();
+          rawHeight = size.height.toInt();
         }
-      } else {
-        try {
-          Size size = await getImageSizing(compatiblePath, attachment);
-          if (size.width != 0 && size.height != 0) {
-            attachment.width = size.width.toInt();
-            attachment.height = size.height.toInt();
-            dimensionsLoaded = true;
-          }
-        } catch (ex, stack) {
-          Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
-        }
+      } catch (ex, stack) {
+        Logger.error('Failed to get Image Properties!', error: ex, trace: stack);
       }
     }
 
-    // Mark dimensions as processed to avoid reprocessing
+    // Step 4 -- EXIF dimensions, only if the header read produced nothing.
+    rawWidth ??= exifWidth;
+    rawHeight ??= exifHeight;
+
+    attachment.metadata ??= {};
+    attachment.metadata!['_orientation'] = orientation;
+
+    final dimensionsLoaded = rawWidth != null && rawHeight != null && rawWidth > 0 && rawHeight > 0;
     if (dimensionsLoaded) {
-      attachment.metadata ??= {};
-      attachment.metadata!['_dimensions_processed'] = true;
-      await attachment.saveAsync(null);
+      attachment.metadata!['_raw_width'] = rawWidth;
+      attachment.metadata!['_raw_height'] = rawHeight;
+      _applyDimensions(attachment, rawWidth, rawHeight);
+      // Only mark processed once we actually have dimensions, so a failed
+      // read is retried on the next view rather than cached as "done".
+      attachment.metadata!['_orientation_processed'] = true;
     }
+
+    await attachment.saveAsync(null);
 
     return filePath;
+  }
+
+  /// Paths of previews already confirmed on disk this session, so a widget can
+  /// decide synchronously whether to render the preview or the placeholder
+  /// without an async stat. Only the fact of existence is held here — the
+  /// bytes belong in Flutter's own `imageCache`, which knows how to evict them.
+  final Set<String> _generatedPreviews = {};
+
+  /// Preview generations currently running, keyed by preview path. Scroll churn
+  /// recreates `_ImageViewerState`, so without this two generations can
+  /// interleave writes to the same file.
+  final Map<String, Future<String?>> _previewJobs = {};
+
+  /// The preview path for [attachment] at the current quality setting, but only
+  /// if it is already known to exist. Null means "render the placeholder and
+  /// call [getOrCreateImagePreview]".
+  String? knownPreviewPath(Attachment attachment) {
+    final path = attachment.previewPathForQuality(_imagePreviewQuality);
+    return _generatedPreviews.contains(path) ? path : null;
+  }
+
+  void clearImagePreviewCache() => _generatedPreviews.clear();
+
+  // Preview resolution/quality both track the user's "image preview quality"
+  // setting (0.25-1.0, same knob already used to scale inline cacheWidth
+  // elsewhere), so a lower slider produces a smaller, more compressed -- and
+  // thus faster-loading -- preview file.
+  static const int _imagePreviewBaseMaxDimension = 1080;
+  static const int _imagePreviewMinDimension = 270;
+
+  int get _imagePreviewMaxDimension {
+    final factor = SettingsSvc.settings.previewImageQuality.value;
+    return (_imagePreviewBaseMaxDimension * factor)
+        .round()
+        .clamp(_imagePreviewMinDimension, _imagePreviewBaseMaxDimension)
+        .toInt();
+  }
+
+  int get _imagePreviewQuality {
+    final factor = SettingsSvc.settings.previewImageQuality.value;
+    return (factor * 100).round().clamp(25, 100).toInt();
+  }
+
+  /// Deletes every generated preview for [attachment], across all quality
+  /// buckets, and forgets them. Used when the source file is being replaced.
+  Future<void> deleteImagePreviews(Attachment attachment) async {
+    final prefix = "${attachment.path}.preview.";
+    _generatedPreviews.removeWhere((p) => p.startsWith(prefix));
+    try {
+      final dir = Directory(attachment.directory);
+      if (!await dir.exists()) return;
+      await for (final entity in dir.list()) {
+        if (entity is File && entity.path.startsWith(prefix)) await entity.delete();
+      }
+    } catch (_) {}
+  }
+
+  /// Returns the path to a downsampled preview file for [attachment]
+  /// (resolution/JPEG quality driven by the user's preview image quality
+  /// setting), generating + disk-caching it on first use.
+  /// The original attachment file is never modified. Returns null if
+  /// generation fails or isn't applicable (e.g. GIFs, which play natively
+  /// and don't get a static preview).
+  Future<String?> getOrCreateImagePreview(Attachment attachment, {String? actualPath}) async {
+    if (kIsWeb || attachment.mimeType == null || attachment.mimeStart != "image") return null;
+    if (attachment.mimeType == "image/gif") return null;
+
+    final filePath = actualPath ?? attachment.path;
+    // The filename carries the quality bucket, so moving the slider produces a
+    // different path rather than silently reusing a preview at the old quality.
+    final previewPath = attachment.previewPathForQuality(_imagePreviewQuality);
+
+    final inFlight = _previewJobs[previewPath];
+    if (inFlight != null) return inFlight;
+
+    final job = _generateImagePreview(attachment, filePath, previewPath);
+    _previewJobs[previewPath] = job;
+    try {
+      return await job;
+    } finally {
+      _previewJobs.remove(previewPath);
+    }
+  }
+
+  Future<String?> _generateImagePreview(Attachment attachment, String filePath, String previewPath) async {
+    if (await File(previewPath).exists()) {
+      _generatedPreviews.add(previewPath);
+      return previewPath;
+    }
+    if (!await File(filePath).exists()) return null;
+
+    // Generate into a temp sibling and rename into place. Writing straight to
+    // the final path means a kill mid-write leaves a truncated file that
+    // exists() happily accepts forever.
+    //
+    // The `.jpg` has to stay last: flutter_image_compress asserts the target
+    // filename matches the requested format, so a plain `.tmp` suffix would
+    // throw in debug builds and silently produce no HEIC previews.
+    final tempPath = "${previewPath.substring(0, previewPath.length - '.jpg'.length)}.tmp.jpg";
+    final isHeic = attachment.mimeType!.contains('image/hei');
+    bool ok = false;
+
+    if (isHeic) {
+      // HEIC: the `image` package can't decode HEIC, so use
+      // flutter_image_compress directly -- it handles decode+rotate+resize
+      // +encode in one native call. Not available on Windows/Linux (no
+      // platform implementation for this plugin), so this is expected to
+      // fail gracefully there -- callers fall back to the original file.
+      try {
+        // rotate: 0 -- flutter_image_compress's autoCorrectionAngle defaults
+        // to true and already applies the source's EXIF orientation to the
+        // pixels. Passing a rotation on top of that double-rotates.
+        final result = await FlutterImageCompress.compressAndGetFile(
+          filePath,
+          tempPath,
+          format: CompressFormat.jpeg,
+          quality: _imagePreviewQuality,
+          minWidth: _imagePreviewMaxDimension,
+          minHeight: _imagePreviewMaxDimension,
+          rotate: 0,
+          keepExif: false,
+        );
+        ok = result != null;
+      } catch (ex) {
+        Logger.warn('Failed to generate HEIC image preview (platform may not support it): $ex');
+        ok = false;
+      }
+    } else {
+      try {
+        ok = await ImageInterface.generatePreview(
+          path: filePath,
+          outputPath: tempPath,
+          maxDimension: _imagePreviewMaxDimension,
+          quality: _imagePreviewQuality,
+        );
+      } catch (ex, stack) {
+        Logger.error('Failed to generate image preview!', error: ex, trace: stack);
+        ok = false;
+      }
+    }
+
+    if (!ok) {
+      try {
+        final temp = File(tempPath);
+        if (await temp.exists()) await temp.delete();
+      } catch (_) {}
+      return null;
+    }
+
+    try {
+      await File(tempPath).rename(previewPath);
+    } catch (ex, stack) {
+      Logger.error('Failed to move image preview into place!', error: ex, trace: stack);
+      return null;
+    }
+
+    _generatedPreviews.add(previewPath);
+    return previewPath;
   }
 }

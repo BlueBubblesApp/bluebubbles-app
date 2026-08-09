@@ -47,18 +47,8 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                                     "BlueBubbles' main notification provider is Google Firebase, utilizing Firebase Cloud Messaging (FCM). "),
                             const TextSpan(
                               text:
-                                  "The server has an automated set up process built-in to make it easy to get set up with your very own Firebase Project.",
+                                  "The server has an automated set up process built-in to make it easy to get set up with your very own Firebase Project. ",
                             ),
-                          ],
-                          style: context.theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8, left: 15, top: 0, right: 15),
-                      child: RichText(
-                        text: TextSpan(
-                          children: [
                             const TextSpan(text: "Use this page to manage your Firebase configurations. "),
                           ],
                           style: context.theme.textTheme.bodyMedium,
@@ -85,42 +75,36 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                 ),
                 SettingsHeader(
                     iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Firebase Cloud Messaging"),
-                SettingsSection(
+                Obx(() {
+                  final statusOk = (kIsDesktop || SettingsSvc.settings.firstFcmRegisterDate.value != 0) &&
+                      !SettingsSvc.fcmData.isNull;
+                  final socketReady = SettingsSvc.settings.firstFcmRegisterDate.value != 0 &&
+                      !SettingsSvc.fcmData.isNull &&
+                      (SocketSvc.socket?.connected ?? false);
+                  final fcmRegistered =
+                      SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
+
+                  return SettingsSection(
                   backgroundColor: tileColor,
                   children: [
-                    Obx(() {
-                      final _enabled = (kIsDesktop || SettingsSvc.settings.firstFcmRegisterDate.value != 0) &&
-                          !SettingsSvc.fcmData.isNull;
-                      return SettingsTile(
-                          backgroundColor: tileColor,
-                          title: "Firebase Status",
-                          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Text(
-                              _enabled ? "Configured" : "Not Configured",
-                              style: context.theme.textTheme.bodyMedium!
-                                  .apply(color: context.theme.colorScheme.outline.withValues(alpha: 0.85)),
-                            )
-                          ]),
-                          leading: SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.settings,
-                            materialIcon: Icons.settings,
-                            containerColor: _enabled ? Colors.green : Colors.redAccent,
-                          ));
-                    }),
-                    Obx(() {
-                      final _enabled = SettingsSvc.settings.firstFcmRegisterDate.value != 0 &&
-                          !SettingsSvc.fcmData.isNull &&
-                          (SocketSvc.socket?.connected ?? false);
-                      if (_enabled) return const SizedBox.shrink();
-                      return const SettingsDivider();
-                    }),
-                    Obx(() {
-                      final _enabled = SettingsSvc.settings.firstFcmRegisterDate.value != 0 &&
-                          !SettingsSvc.fcmData.isNull &&
-                          (SocketSvc.socket?.connected ?? false);
-                      if (_enabled) return const SizedBox.shrink();
-
-                      return SettingsTile(
+                    SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Firebase Status",
+                        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(
+                            statusOk ? "Configured" : "Not Configured",
+                            style: context.theme.textTheme.bodyMedium!
+                                .apply(color: context.theme.colorScheme.outline.withValues(alpha: 0.85)),
+                          )
+                        ]),
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.settings,
+                          materialIcon: Icons.settings,
+                          containerColor: statusOk ? Colors.green : Colors.redAccent,
+                        )),
+                    if (!socketReady) const SettingsDivider(),
+                    if (!socketReady)
+                      SettingsTile(
                         backgroundColor: tileColor,
                         title: "Load Configurations from Server",
                         subtitle: 'Download Firebase configurations directly from your server.',
@@ -136,6 +120,7 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                         leading: const SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.cloud_download,
                           materialIcon: Icons.download,
+                          containerColor: Colors.blue,
                         ),
                         onTap: () async {
                           RxBool isLoading = RxBool(true);
@@ -200,24 +185,11 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                                   ]);
                             },
                           );
-
-                          await fdb.fetchFirebaseConfig();
-                          await FirebaseSvc.registerDevice();
                         },
-                      );
-                    }),
-                    Obx(() {
-                      final _enabled =
-                          SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
-                      if (_enabled) return const SizedBox.shrink();
-                      return const SettingsDivider();
-                    }),
-                    Obx(() {
-                      final _enabled =
-                          SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
-                      if (_enabled) return const SizedBox.shrink();
-
-                      return SettingsTile(
+                      ),
+                    if (!fcmRegistered) const SettingsDivider(),
+                    if (!fcmRegistered)
+                      SettingsTile(
                           leading: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                             Obx(() => Material(
                                 shape: SettingsSvc.settings.skin.value == Skins.Samsung
@@ -258,50 +230,39 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                           onTap: () {
                             NavigationSvc.pushSettings(context, const OauthPanel());
                           },
-                          trailing: const NextButton());
-                    }),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        final _enabled =
-                            SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
-                        if (!_enabled) return const SizedBox.shrink();
-                        return const SettingsDivider();
-                      }),
-                    if (!kIsDesktop && !kIsWeb)
-                      Obx(() {
-                        final _enabled =
-                            SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
-                        if (!_enabled) return const SizedBox.shrink();
-
-                        return SettingsTile(
-                          backgroundColor: tileColor,
-                          title: "Re-register Device with Server",
-                          trailing: Obx(() => SettingsSvc.settings.skin.value != Skins.Material
-                              ? Icon(
-                                  SettingsSvc.settings.skin.value != Skins.Material
-                                      ? CupertinoIcons.refresh
-                                      : Icons.refresh_outlined,
-                                  color: context.theme.colorScheme.outline.withValues(alpha: 0.5),
-                                  size: 18,
-                                )
-                              : const SizedBox.shrink()),
-                          leading: const SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.device_phone_portrait,
-                            materialIcon: Icons.devices,
-                          ),
-                          onTap: () async {
-                            try {
-                              await FirebaseSvc.registerDevice();
-                              showSnackbar("Device Registered", "Successfully re-registered device with server!");
-                            } catch (e, s) {
-                              Logger.error("Failed to re-register device with server", error: e, trace: s);
-                              showSnackbar("Error", "Failed to re-register device with server! Error: ${e.toString()}");
-                            }
-                          },
-                        );
-                      })
+                          trailing: const NextButton()),
+                    if (!kIsDesktop && !kIsWeb && fcmRegistered) const SettingsDivider(),
+                    if (!kIsDesktop && !kIsWeb && fcmRegistered)
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Re-register Device with Server",
+                        trailing: Obx(() => SettingsSvc.settings.skin.value != Skins.Material
+                            ? Icon(
+                                SettingsSvc.settings.skin.value != Skins.Material
+                                    ? CupertinoIcons.refresh
+                                    : Icons.refresh_outlined,
+                                color: context.theme.colorScheme.outline.withValues(alpha: 0.5),
+                                size: 18,
+                              )
+                            : const SizedBox.shrink()),
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.device_phone_portrait,
+                          materialIcon: Icons.devices,
+                          containerColor: Colors.blueGrey,
+                        ),
+                        onTap: () async {
+                          try {
+                            await FirebaseSvc.registerDevice();
+                            showSnackbar("Device Registered", "Successfully re-registered device with server!");
+                          } catch (e, s) {
+                            Logger.error("Failed to re-register device with server", error: e, trace: s);
+                            showSnackbar("Error", "Failed to re-register device with server! Error: ${e.toString()}");
+                          }
+                        },
+                      ),
                   ],
-                ),
+                  );
+                }),
                 Obx(() {
                   final _enabled = SettingsSvc.settings.firstFcmRegisterDate.value != 0 && !SettingsSvc.fcmData.isNull;
                   if (!_enabled) return const SizedBox.shrink();
@@ -390,6 +351,11 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
 
                                     SettingsSvc.settings.firstFcmRegisterDate.value = 0;
                                     await SettingsSvc.settings.saveOneAsync('firstFcmRegisterDate');
+                                    // deleteFcmData() clears the FCM config from SharedPreferences via an
+                                    // async write. exit(0) hard-kills the process, which can terminate that
+                                    // background write before it flushes to disk, leaving a stale config that
+                                    // reloads on next launch. Give the write a moment to land before exiting.
+                                    await Future.delayed(const Duration(seconds: 1));
                                     exit(0);
                                   },
                                 ),

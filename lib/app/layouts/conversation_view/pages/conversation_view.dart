@@ -67,7 +67,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     super.initState();
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
-    ChatsSvc.setActiveChat(chat);
+    ChatsSvc.setActiveChatSync(chat);
     ChatsSvc.activeChat?.controller = controller;
     Logger.debug("Conversation View initialized for ${chat.guid}");
 
@@ -268,7 +268,6 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
             child: BBScaffold(
               backgroundColor: windowEffect != WindowEffect.disabled ? Colors.transparent : colorScheme.surface,
               extendBodyBehindAppBar: true,
-              safeAreaBottom: false,
               appBar: _appBar,
               body: Actions(
                 actions: _actionsMap,

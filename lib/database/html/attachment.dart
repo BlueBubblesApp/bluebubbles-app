@@ -132,13 +132,21 @@ class Attachment {
 
   String get path => "$directory/$transferName";
 
-  String get convertedPath => "$path.png";
+  /// Mirrors the io/ implementation — HEIC converts to JPEG, everything else
+  /// to PNG. Web is deprecated; kept in sync for consistency only.
+  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) ? "jpg" : "png";
+
+  String get convertedPath => "$path.$convertedExtension";
+
+  String get legacyConvertedPath => "$path.png";
 
   bool get existsOnDisk => false;
 
   Future<bool> get existsOnDiskAsync async => false;
 
   bool get canCompress => mimeStart == "image" && !mimeType!.contains("gif");
+
+  bool get isPkPass => false;
 
   static Attachment merge(Attachment attachment1, Attachment attachment2) {
     attachment1.id ??= attachment2.id;

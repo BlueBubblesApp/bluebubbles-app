@@ -204,6 +204,24 @@ class ContactV2 {
     });
   }
 
+  /// Formats this contact for the server upload API.
+  /// Field names match what the server expects (and sends back on fetch).
+  Map<String, dynamic> toServerMap() {
+    return {
+      'displayName': displayName,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phoneNumbers': phoneNumbers.map((e) => e.number).toList(),
+      'emails': emailAddresses.map((e) => e.address).toList(),
+      // Server supports avatars, but all we have right now is a path to it.
+      // Fetching it and converting to base64 is a bit too much for now, so we'll skip it.
+      // 'avatar': avatarPath != null ? base64Encode(File(avatarPath!).readAsBytesSync()) : null,
+      // Not supported on server yet
+      // 'middleName': middleName,
+      // 'nickname': nickname,
+    };
+  }
+
   /// Convert to map for cross-isolate serialization
   Map<String, dynamic> toMap() {
     return {

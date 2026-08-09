@@ -27,8 +27,8 @@ class Fireworks extends LeafRenderObjectWidget {
 
 class RenderFireworks extends RenderBox {
   RenderFireworks({
-    required FireworkController controller,
-  }) : _controller = controller;
+    required this._controller,
+  });
 
   /// The controller that manages the fireworks and tells the render box what
   /// and when to paint.

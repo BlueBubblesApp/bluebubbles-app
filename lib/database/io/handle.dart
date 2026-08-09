@@ -141,7 +141,11 @@ class Handle {
 
   factory Handle.fromMap(Map<String, dynamic> json) => Handle(
         id: json["ROWID"] ?? json["id"],
-        originalROWID: json["originalROWID"],
+        // Server participants payloads carry the sender ROWID under "ROWID" and
+        // omit "originalROWID". Falling back preserves that ROWID as the
+        // originalROWID so Message.handleId → Handle lookups succeed for
+        // brand-new chats synced via bulkSyncChats.
+        originalROWID: json["originalROWID"] ?? json["ROWID"],
         address: json["address"],
         formattedAddress: json["formattedAddress"],
         service: json["service"] ?? "iMessage",

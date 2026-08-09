@@ -26,6 +26,8 @@ class MessagePart {
   /// need to check settings directly.
   bool shouldRedact;
 
+  bool get isPkPass => attachments.any((a) => a.isPkPass);
+
   String? subject;
   late final String fakeSubject = faker.lorem.words(subject?.split(" ").length ?? 0).join(" ");
   String? get displaySubject {

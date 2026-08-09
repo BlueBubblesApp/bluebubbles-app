@@ -1,0 +1,356 @@
+name: Desktop Builds
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: "Run SignPath signing on this manual build (test the signing pipeline without a release tag)"
+        type: boolean
+        default: false
+      release_signing:
+        description: "Sign with the release cert instead of the test cert (implies sign). Artifacts are still not attached to any release."
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.44.6"
+  FVM_VERSION: "4.1.2"
+  # Which SignPath policy/cert to use. Tags always sign for release; a manual run
+  # can opt in when a release build needs re-signing outside a tag push.
+  RELEASE_SIGNING: ${{ startsWith(github.ref, 'refs/tags/') || inputs.release_signing }}
+
+jobs:
+  windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+    steps:
+      - name: Support long paths
+        run: git config --system core.longpaths true
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        
+      # Also resolves dependencies, so build.ps1's own pub get below is a no-op.
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
+
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env
+        shell: bash
+
+      # Inno Setup 6 and Rust (for super_native_extensions) are preinstalled
+      # on the windows-latest runner image.
+      - name: Build app (phase 1)
+        run: .\windows\build.ps1 -Phase Build
+        shell: pwsh
+
+      # sign=true when: token present AND (release tag or manual sign/release_signing).
+      - name: Determine signing
+        id: gate
+        shell: bash
+        run: |
+          if [ -n "$SIGNPATH_API_TOKEN" ] && { [ "$RELEASE_SIGNING" = "true" ] || [ "${{ inputs.sign }}" = "true" ]; }; then
+            echo "sign=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sign=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Sign the inner binaries before packaging so both the msix and installer ship them signed.
+      - name: Zip app payload
+        if: ${{ steps.gate.outputs.sign == 'true' }}
+        shell: pwsh
+        run: Compress-Archive -Path 'build\windows\x64\runner\Release\*' -DestinationPath 'windows\bluebubbles-payload-unsigned.zip' -Force
+
+      - name: Upload app payload artifact
+        id: upload-payload
+        if: ${{ steps.gate.outputs.sign == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-payload-unsigned
+          path: windows/bluebubbles-payload-unsigned.zip
+          archive: false
+
+      - name: Sign app payload (SignPath)
+        id: sign-payload
+        if: ${{ steps.gate.outputs.sign == 'true' }}
+        # Keep tag builds running so prereleases can publish the unsigned fallback.
+        # Manual signing runs should still fail fast.
+        continue-on-error: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.RELEASE_SIGNING == 'true' && 'release-signing' || 'test-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_APP }}
+          github-artifact-id: ${{ steps.upload-payload.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/payload
+
+      - name: Replace Release binaries with signed payload
+        if: ${{ steps.sign-payload.outcome == 'success' }}
+        shell: pwsh
+        run: |
+          Remove-Item -Path 'build\windows\x64\runner\Release' -Recurse -Force
+          Move-Item -Path 'out\payload' -Destination 'build\windows\x64\runner\Release' -Force
+
+      - name: Package installer + msix (phase 2)
+        run: .\windows\build.ps1 -Phase Package
+        shell: pwsh
+        env:
+          PACKAGE_MSIX: ${{ steps.sign-payload.outcome == 'success' }}
+          # Must match the signing cert subject: release cert when signing for release, else test cert.
+          # MakeAppx requires ", " (comma-space) between RDNs — bare commas fail with 0x80080204.
+          SIGNED_MSIX_PUBLISHER: "${{ env.RELEASE_SIGNING == 'true' && 'CN=SignPath Foundation, O=SignPath Foundation, L=Lewes, S=Delaware, C=US' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
+          SIGNED_MSIX_IDENTITY: BlueBubbles.BlueBubbles
+
+      - name: Upload unsigned installer artifact
+        id: upload-installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-installer-unsigned
+          path: windows/bluebubbles_installer.exe
+
+      # Only built when SIGNED_MSIX_PUBLISHER is configured.
+      - name: Upload unsigned msix artifact
+        id: upload-msix
+        if: ${{ hashFiles('windows/bluebubbles.msix') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-msix-unsigned
+          path: windows/bluebubbles.msix
+
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-windows-symbols
+          path: build/windows/symbols/
+
+      # Store msix — uploaded for MS Store submission only, never released here.
+      - name: Upload store msix artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-msix-store
+          path: windows/bluebubbles-store.msix
+
+      # Sign the outer wrappers (inner binaries already signed above; msix config is container-only).
+      - name: Sign installer (SignPath)
+        id: sign-installer
+        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' }}
+        # Keep tag builds running so prereleases can publish the unsigned fallback.
+        # Manual signing runs should still fail fast.
+        continue-on-error: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.RELEASE_SIGNING == 'true' && 'release-signing' || 'test-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_INSTALLER }}
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/installer
+
+      - name: Sign release msix (SignPath)
+        id: sign-msix
+        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && env.RELEASE_SIGNING == 'true' && steps.upload-msix.outputs.artifact-id != '' }}
+        continue-on-error: true
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_MSIX }}
+          github-artifact-id: ${{ steps.upload-msix.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/msix
+
+      - name: Sign test msix (SignPath)
+        id: sign-msix-test
+        if: ${{ steps.gate.outputs.sign == 'true' && steps.sign-payload.outcome == 'success' && env.RELEASE_SIGNING != 'true' && steps.upload-msix.outputs.artifact-id != '' }}
+        uses: signpath/github-action-submit-signing-request@b9d91eadd323de506c0c81cf0c7fe7438f3360fd
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: 'test-signing'
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIG_MSIX_TEST }}
+          github-artifact-id: ${{ steps.upload-msix.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/msix
+
+      # Output paths follow the SignPath artifact configuration — adjust if yours nests differently.
+      - name: Upload installer
+        if: ${{ steps.sign-installer.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-installer
+          path: out/installer/bluebubbles_installer.exe
+
+      - name: Upload msix
+        if: ${{ steps.sign-msix.outcome == 'success' || steps.sign-msix-test.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-msix
+          path: out/msix/bluebubbles.msix
+
+      - name: Attach installer to release
+        if: ${{ startsWith(github.ref, 'refs/tags/') && steps.sign-installer.outcome == 'success' }}
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          files: out/installer/bluebubbles_installer.exe
+
+      - name: Attach msix to release
+        if: ${{ startsWith(github.ref, 'refs/tags/') && (steps.sign-msix.outcome == 'success' || steps.sign-msix-test.outcome == 'success') }}
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          files: out/msix/bluebubbles.msix
+
+      # Release metadata, not the tag name, determines whether this is safe to
+      # publish unsigned artifacts for. If a release has not been created yet,
+      # leave the fallback disabled rather than creating a stable release.
+      - name: Check for prerelease fallback
+        id: prerelease
+        if: ${{ startsWith(github.ref, 'refs/tags/') && (steps.sign-payload.outcome == 'failure' || steps.sign-installer.outcome == 'failure') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --json isPrerelease --jq '.isPrerelease' > prerelease.txt 2>/dev/null; then
+            echo "enabled=$(<prerelease.txt)" >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Attach unsigned installer to prerelease
+        if: ${{ steps.prerelease.outputs.enabled == 'true' && (steps.sign-payload.outcome == 'failure' || steps.sign-installer.outcome == 'failure') }}
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          files: windows/bluebubbles_installer.exe
+
+  linux:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libmpv-dev \
+            libayatana-appindicator3-dev \
+            libnotify-dev \
+            libjson-glib-dev
+
+      # Also resolves dependencies, so build.sh's own pub get below is a no-op.
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
+
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env
+
+      - name: Build
+        run: bash linux/build.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-linux-${{ matrix.arch }}
+          path: bluebubbles-linux-${{ matrix.arch }}.tar.gz
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          files: bluebubbles-linux-${{ matrix.arch }}.tar.gz
+
+  # Scans the released downloads with VirusTotal and writes the analysis links to the
+  # job summary. Prefers the released installer/msix when present; falls back to the
+  # unsigned installer otherwise. The store msix is not scanned — Microsoft vets it.
+  virustotal:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          path: artifacts
+
+      - name: Select files to scan
+        id: select
+        run: |
+          files=()
+          if [ -f artifacts/bluebubbles-installer/bluebubbles_installer.exe ]; then
+            files+=("artifacts/bluebubbles-installer/bluebubbles_installer.exe")
+          else
+            files+=("artifacts/bluebubbles-installer-unsigned/bluebubbles_installer.exe")
+          fi
+          [ -f artifacts/bluebubbles-msix/bluebubbles.msix ] && \
+            files+=("artifacts/bluebubbles-msix/bluebubbles.msix")
+          [ -f artifacts/bluebubbles-linux-x86_64/bluebubbles-linux-x86_64.tar.gz ] && \
+            files+=("artifacts/bluebubbles-linux-x86_64/bluebubbles-linux-x86_64.tar.gz")
+          [ -f artifacts/bluebubbles-linux-aarch64/bluebubbles-linux-aarch64.tar.gz ] && \
+            files+=("artifacts/bluebubbles-linux-aarch64/bluebubbles-linux-aarch64.tar.gz")
+          {
+            echo 'files<<EOF'
+            printf '%s\n' "${files[@]}"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: VirusTotal scan
+        id: virustotal
+        if: env.VT_API_KEY != ''
+        uses: crazy-max/ghaction-virustotal@936d8c5c00afe97d3d9a1af26d017cfdf26800a2
+        with:
+          vt_api_key: ${{ env.VT_API_KEY }}
+          files: ${{ steps.select.outputs.files }}
+
+      # analysis output is comma-separated <filename>=<analysisURL> pairs.
+      - name: Format scan links
+        if: steps.virustotal.outputs.analysis != ''
+        env:
+          ANALYSIS: ${{ steps.virustotal.outputs.analysis }}
+        run: |
+          {
+            echo '### VirusTotal scans'
+            tr ',' '\n' <<< "$ANALYSIS" | while IFS='=' read -r file url; do
+              echo "- [\`$(basename "$file")\`]($url)"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

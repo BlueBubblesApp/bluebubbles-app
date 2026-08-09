@@ -3,11 +3,11 @@ package com.bluebubbles.messaging.services.notifications
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
+import com.bluebubbles.messaging.utils.PersistentLog
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
@@ -24,7 +24,7 @@ class NotificationListenerPermissionRequestHandler: MethodCallHandlerImpl() {
     ) {
         val hasPermission = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners").contains(context.packageName)
         if (hasPermission) {
-            Log.d(Constants.logTag, "Notification listener permission already granted, ignoring...")
+            PersistentLog.d(context, Constants.logTag, "Notification listener permission already granted, ignoring...")
             return result.success(true)
         }
         val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")

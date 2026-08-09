@@ -75,23 +75,24 @@ class _ManualEntryDialogState extends State<ManualEntryDialog> {
   }
 
   void retreiveFCMData() {
-    // Get the FCM Client and make sure we have a valid response
-    // If so, save. Let the parent widget know we've connected as long as
-    // we get 200 from the API.
+    // The socket has already connected successfully by the time this runs —
+    // FCM/push registration is a secondary concern, so its failure is
+    // reported as a non-blocking toast rather than a failed connection.
     HttpSvc.fcm.getServiceAccount().then((response) async {
       Map<String, dynamic>? data = response.data["data"];
       if (!isNullOrEmpty(data)) {
         FCMData newData = FCMData.fromMap(data!);
         await SettingsSvc.saveFCMData(newData);
       }
-
-      widget.onConnect();
     }).catchError((err) {
-      if (err is Response) {
-        error.value = err.data["error"]["message"];
+      final String message = err is Response ? err.data["error"]["message"] : err.toString();
+      if (message == 'Google Services file not found.') {
+        showToast('Connected! Firebase is not set up on the server.');
       } else {
-        error.value = err.toString();
+        showToast('Connected, but push notification setup failed', isError: true);
       }
+    }).whenComplete(() {
+      widget.onConnect();
     });
   }
 
@@ -191,11 +192,6 @@ class _ManualEntryDialogState extends State<ManualEntryDialog> {
             ),
           ],
         );
-      } else if (error.value == 'Google Services file not found.') {
-        return const FailedToScanDialog(
-            title: "Connected! However...",
-            exception:
-                'Google Services file not found! If you plan to use Firebase for notifications, please setup Firebase via the BlueBubbles Server.');
       } else if (error.value != null) {
         return FailedToScanDialog(
           title: "An error occured while trying to retreive data!",

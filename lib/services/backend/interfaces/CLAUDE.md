@@ -8,12 +8,13 @@ Interfaces are the **only** public API for triggering backend operations. They r
 | `app_interface.dart` | App update check, FCM data |
 | `attachment_interface.dart` | Save / find / delete attachments |
 | `chat_interface.dart` | Save / delete / mark-read chats |
-| `contact_interface.dart` | Save / find contacts (legacy v1) |
 | `contact_v2_interface.dart` | Contact sync, handle matching (v2) |
 | `handle_interface.dart` | Save / find phone number handles |
 | `image_interface.dart` | PNG conversion, EXIF, GIF dimensions |
+| `log_interface.dart` | Log write/export calls |
 | `message_interface.dart` | Save / find / delete messages |
 | `prefs_interface.dart` | Settings sync, reply state persistence |
+| `send_message_interface.dart` | Outgoing message send pipeline entry point |
 | `server_interface.dart` | Server version check, server details |
 | `sync_interface.dart` | Incremental sync trigger |
 | `test_interface.dart` | Dev/debug test calls |

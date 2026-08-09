@@ -126,6 +126,15 @@ class HandleService {
     });
   }
 
+  /// Clears cached [HandleState]s without tearing down the service's
+  /// listeners (redacted mode, contact info, fake avatars, reaction names).
+  /// Use this for a data reset where the service stays alive for the rest of
+  /// the app session. Contrast with [close], which fully tears down the
+  /// service at app shutdown.
+  void reset() {
+    _handleStates.clear();
+  }
+
   void close() {
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();

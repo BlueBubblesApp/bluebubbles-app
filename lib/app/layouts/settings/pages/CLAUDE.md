@@ -9,17 +9,19 @@ One subdirectory per settings category. Each contains one or more `*_panel.dart`
 | `advanced/` | Firebase, Private API, Redacted Mode, Notification Providers, Tasker, UnifiedPush | 6 |
 | `conversation_list/` | Chat list appearance, pinned order | 2 |
 | `desktop/` | Desktop-specific settings | 1 |
-| `message_view/` | Attachment, conversation, and message options order panels | 3 |
-| `misc/` | About, logging (live + export), misc tweaks, troubleshoot | 5 |
+| `message_view/` | Attachment, conversation, message options order, and text field buttons panels | 4 |
+| `misc/` | About, logging (live + export), misc tweaks, soft-deleted chats, troubleshoot | 6 |
 | `profile/` | Profile / account info panel | 1 |
 | `scheduling/` | Scheduled messages & reminders (tri-platform) | 11 |
-| `server/` | Server connection, backup/restore, OAuth, iMessage stats | 4 + 2 subdirs |
+| `server/` | Server connection, backup/restore, OAuth, iMessage stats | 6 + 2 subdirs |
+| `storage/` | Storage Analyzer — attachment storage usage & cleanup | 4 + 1 subdir |
 | `system/` | System notification settings | 1 |
 | `theming/` | Theming panel + advanced, avatar, background, theme studio | 5 + 4 subdirs |
 
 ## Detailed Subdirectories → own CLAUDE.md
 - `scheduling/` → `CLAUDE.md` inside
 - `server/` → `CLAUDE.md` inside
+- `storage/` → `CLAUDE.md` inside
 - `theming/` → `CLAUDE.md` inside
 - `advanced/` → `CLAUDE.md` inside
 - `misc/` → `CLAUDE.md` inside

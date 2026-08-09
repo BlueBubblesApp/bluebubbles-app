@@ -14,6 +14,8 @@ Detailed coding standards live in `.claude/rules/`:
 - `docs/COMMON_TASKS.md` — step-by-step recipes for frequent development tasks
 - `docs/MESSAGE_RECEIVE_FLOW.md` — end-to-end trace: socket → queue → DB → state → UI
 - `docs/MESSAGE_SEND_FLOW.md` — end-to-end trace: send button → tempGuid → HTTP + socket race → real GUID swap
+- `docs/MODELS.md` — reference for the DB entity / DTO model landscape (`lib/database/`, `lib/models/`)
+- `docs/THEMING_AND_COMPONENTS.md` — reusable `BBScaffold`/`BBAppBar`/`BBChip`/dialog wrappers, skin vs. theme mechanics, color access patterns
 
 ## Before Making Changes
 - Check for `CLAUDE.md` in the target directory

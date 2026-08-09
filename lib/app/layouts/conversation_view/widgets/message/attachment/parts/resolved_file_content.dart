@@ -8,13 +8,12 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/intera
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
-import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_holder.dart';
+import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:passkit_ui/passkit_ui.dart';
 
 /// Fully resolved attachment: dispatches to the appropriate viewer widget.
 /// No reactive state is needed here — the file is static once this is shown.
@@ -53,7 +52,8 @@ class ResolvedFileContent extends StatelessWidget {
       return OpenContainer(
         tappable: false,
         openColor: Colors.black,
-        closedColor: context.theme.colorScheme.surfaceContainerHighest,
+        closedColor: Colors.transparent,
+        closedElevation: 0,
         closedShape: isiOS
             ? RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
@@ -69,7 +69,7 @@ class ResolvedFileContent extends StatelessWidget {
               )
             : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0))),
         useRootNavigator: false,
-        openBuilder: (context, _) => FullscreenMediaHolder(
+        openBuilder: (context, _) => ConversationFullscreenHolder(
           currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,
@@ -83,7 +83,7 @@ class ResolvedFileContent extends StatelessWidget {
             openContainer();
           },
           child: Container(
-            color: context.theme.colorScheme.surfaceContainerHighest,
+            color: Colors.transparent,
             child: ImageViewer(
               file: file,
               attachment: attachment,
@@ -96,13 +96,27 @@ class ResolvedFileContent extends StatelessWidget {
       );
     }
 
-    if (attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value && !isSnap) {
-      return VideoPlayer(
-        attachment: attachment,
-        file: file,
-        controller: cvController,
-        isFromMe: message.isFromMe!,
-        galleryAttachments: galleryAttachments,
+    if (attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value) {
+      return ClipRRect(
+        borderRadius: isiOS
+            ? BorderRadius.only(
+                topLeft: const Radius.circular(20.0),
+                topRight: const Radius.circular(20.0),
+                bottomLeft: forceAllCornersRounded
+                    ? const Radius.circular(20.0)
+                    : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+                bottomRight: forceAllCornersRounded
+                    ? const Radius.circular(20.0)
+                    : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+              )
+            : const BorderRadius.all(Radius.circular(5.0)),
+        child: VideoPlayer(
+          attachment: attachment,
+          file: file,
+          controller: cvController,
+          isFromMe: message.isFromMe!,
+          galleryAttachments: galleryAttachments,
+        ),
       );
     }
 
@@ -135,6 +149,13 @@ class ResolvedFileContent extends StatelessWidget {
       return Padding(
         padding: showTail ? tailPadding : EdgeInsets.zero,
         child: ContactCard(attachment: attachment, file: file),
+      );
+    }
+
+    if (attachment.isPkPass) {
+      return Padding(
+        padding: showTail ? tailPadding : EdgeInsets.zero,
+        child: FittedBox(fit: BoxFit.contain, child: PkPassWidget(pass: attachment.pkPass!)),
       );
     }
 

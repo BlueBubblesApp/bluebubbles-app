@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
@@ -46,35 +45,12 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
 
   Message get message => widget.controller.message;
 
-  Future<void> _waitForKeyboardDismiss() async {
-    final completer = Completer<void>();
-    void check() {
-      if (!mounted) {
-        completer.complete();
-        return;
-      }
-      if (MediaQuery.viewInsetsOf(context).bottom <= 0) {
-        completer.complete();
-      } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) => check());
-      }
-    }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => check());
-    return completer.future;
-  }
-
   void openPopup() async {
     HapticFeedback.lightImpact();
-    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
-    widget.cvController.focusNode.unfocus();
-    widget.cvController.subjectFocusNode.unfocus();
-    if (keyboardHeight > 0) {
-      await _waitForKeyboardDismiss();
-      if (!mounted) return;
-    }
     final size = globalKey.currentContext?.size;
     Offset? childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
+    widget.cvController.focusNode.unfocus();
+    widget.cvController.subjectFocusNode.unfocus();
     if (size == null || childPos == null) return;
     childPos = Offset(
         childPos.dx -

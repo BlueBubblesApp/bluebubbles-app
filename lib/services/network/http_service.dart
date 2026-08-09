@@ -84,8 +84,18 @@ class HttpService implements BaseApi {
     try {
       return await func();
     } catch (e, s) {
-      // try again if 502 error and Cloudflare
-      if (e is Response && e.statusCode == 502 && apiRoot.contains("trycloudflare")) {
+      // try again if 502 error and Cloudflare.
+      //
+      // Both shapes have to be matched: JSON requests surface a `Response`
+      // (ApiInterceptor resolves the failure into one), while binary requests
+      // surface the raw `DioException` — checking only `Response` would silently
+      // drop the retry for attachment downloads on a Cloudflare tunnel.
+      final statusCode = e is Response
+          ? e.statusCode
+          : e is DioException
+              ? e.response?.statusCode
+              : null;
+      if (statusCode == 502 && apiRoot.contains("trycloudflare")) {
         try {
           return await func();
         } catch (e, s) {
@@ -381,17 +391,47 @@ class ApiInterceptor extends Interceptor {
   -> Response Status: ${err.response?.statusCode ?? 'No Response'}
   -> Response Data: ${err.response?.data ?? 'No Data'}""", tag: "HTTP Service");
 
+    // The rewrites below synthesize the BlueBubbles server's JSON error
+    // envelope, which only makes sense for a request that asked for JSON.
+    //
+    // Resolving a bytes/stream/plain request with a Map means dio's
+    // `assureResponse` casts that Map to the caller's `T` and throws
+    // `type '_Map<String, Object>' is not a subtype of type 'List<int>?'` --
+    // burying the real network failure under a TypeError. That affects every
+    // binary path: attachment downloads, embedded media, chat icons, URL
+    // preview images, clipboard paste.
+    //
+    // Non-JSON requests get the untouched DioException instead, so callers see
+    // what actually went wrong.
+    if (err.requestOptions.responseType != ResponseType.json) {
+      return super.onError(err, handler);
+    }
+
+    // `message` is what consumers actually read off these envelopes
+    // (`data["error"]["message"]`, ~10 call sites). Emitting only `error` left
+    // every one of them with null — and ChatsService.getMessages passes that
+    // straight to completeError, which rejects null with
+    // "type 'Null' is not a subtype of type 'Object'".
     if (err.response != null && err.response!.data is Map) return handler.resolve(err.response!);
     if (err.response != null) {
+      final body = err.response!.data.toString();
       return handler.resolve(Response(data: {
         'status': err.response!.statusCode,
-        'error': {'type': 'Error', 'error': err.response!.data.toString()}
+        'error': {
+          'type': 'Error',
+          'error': body,
+          'message': body.isEmpty ? 'Server returned ${err.response!.statusCode}' : body,
+        }
       }, requestOptions: err.requestOptions, statusCode: err.response!.statusCode));
     }
     if (err.type.name.contains("Timeout")) {
       return handler.resolve(Response(data: {
         'status': 500,
-        'error': {'type': 'timeout', 'error': 'Failed to receive response from server.'}
+        'error': {
+          'type': 'timeout',
+          'error': 'Failed to receive response from server.',
+          'message': 'Failed to receive response from server.',
+        }
       }, requestOptions: err.requestOptions, statusCode: 500));
     }
     return super.onError(err, handler);

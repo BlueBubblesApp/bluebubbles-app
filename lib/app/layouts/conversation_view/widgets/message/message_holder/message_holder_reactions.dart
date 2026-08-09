@@ -9,6 +9,12 @@ import 'package:get/get.dart';
 
 /// Isolated widget for reaction display
 /// Only rebuilds when MessageState.associatedMessages changes
+///
+/// Not used for media-gallery parts on iOS skin — those attach a reaction
+/// per attachment inside [MessageImageGallery] instead, since a gallery can
+/// bundle several originally-separate message parts (see
+/// MessageHolder._collapseImageGalleryParts) and a tapback is only ever
+/// associated with one of them.
 class ReactionObserver extends StatelessWidget {
   const ReactionObserver({
     super.key,
@@ -34,6 +40,7 @@ class ReactionObserver extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .toList();
       final reactionList = messageParts.length == 1 ? reactions : reactionsForPart(part.part, reactions).toList();
+
       return Positioned(
         top: -14,
         left: isFromMe ? -20 : null,
@@ -106,7 +113,12 @@ class ReactionSpacing extends StatelessWidget {
           .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
           .cast<Message>()
           .toList();
-      if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part.part, reactions).isNotEmpty) {
+      // A gallery part can bundle several originally-separate message parts
+      // (see MessageHolder._collapseImageGalleryParts), so check every one
+      // of them rather than just part.part.
+      final relevantParts = part.attachmentPartIndices?.toSet() ?? {part.part};
+      final hasReaction = relevantParts.any((p) => reactionsForPart(p, reactions).isNotEmpty);
+      if ((messageParts.length == 1 && reactions.isNotEmpty) || hasReaction) {
         return const SizedBox(height: 12.5);
       }
 

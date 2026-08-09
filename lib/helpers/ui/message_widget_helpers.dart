@@ -8,7 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart' hide Message;
+import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:bluebubbles/models/models.dart' show TextEntityMatch;
 import 'package:url_launcher/url_launcher.dart';
@@ -103,8 +103,9 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     if (!kIsWeb && !kIsDesktop && SettingsSvc.settings.smartReply.value) {
       if (controller.mlKitParsedText["${message.guid!}-${part.part}"] == null) {
         try {
-          controller.mlKitParsedText["${message.guid!}-${part.part}"] =
-              await GoogleMlKit.nlp.entityExtractor(EntityExtractorLanguage.english).annotateText(part.text!);
+          controller.mlKitParsedText["${message.guid!}-${part.part}"] = await EntityExtractor(
+                  language: EntityExtractorLanguage.english)
+              .annotateText(sanitizeForMlKit(part.text!));
         } catch (ex, stack) {
           Logger.warn('Failed to extract entities using mlkit!', error: ex, trace: stack);
         }

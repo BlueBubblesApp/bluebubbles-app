@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/backend/foreground_service_helpers.dart';
 import 'package:bluebubbles/helpers/network/network_helpers.dart';
+import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
@@ -12,6 +13,12 @@ Future<bool> saveNewServerUrl(String newServerUrl,
   String sanitized = sanitizeServerAddress(address: newServerUrl)!;
   if (force || sanitized != SettingsSvc.settings.serverAddress.value) {
     SettingsSvc.settings.serverAddress.value = sanitized;
+
+    // The origin override (if any) was resolved against the previous server's
+    // local network — it's meaningless for the newly configured server, so it
+    // must be cleared or the app will keep silently connecting to the old
+    // address until the next app start or manual re-probe.
+    NetworkTasks.setOriginOverride(null);
 
     await SettingsSvc.settings.saveManyAsync(["serverAddress", ...saveAdditionalSettings]);
 
@@ -37,6 +44,7 @@ Future<bool> saveNewServerUrl(String newServerUrl,
 Future<void> clearServerUrl(
     {bool tryRestartForegroundService = true, List<String> saveAdditionalSettings = const []}) async {
   SettingsSvc.settings.serverAddress.value = "";
+  NetworkTasks.setOriginOverride(null);
   await SettingsSvc.settings.saveManyAsync(["serverAddress", ...saveAdditionalSettings]);
 
   // Don't await because we don't care about the result

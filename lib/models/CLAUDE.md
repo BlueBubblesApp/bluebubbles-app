@@ -1,5 +1,7 @@
 # lib/models/ — Cross-Cutting DTOs & View Models
 
+See `docs/MODELS.md` for the consolidated cross-directory entity/DTO field reference.
+
 Plain data classes used across multiple layers. Not ObjectBox entities — no `@Entity` annotations. All serializable and safe to cross isolate boundaries.
 
 Barrel export: `models/models.dart`
@@ -21,8 +23,10 @@ Barrel export: `models/models.dart`
 | `message_reply_context.dart` | Context for a reply thread entry (parent GUID, part index) |
 | `message_save_result.dart` | Result returned by message save action (id, status) |
 | `message_update_event.dart` | Carries field diffs for a message update notification |
+| `parsed_log_entry.dart` | Parsed structure of a single log file line |
 | `server_details.dart` | Server version, OS, build info returned from `/server/info` |
 | `server_update_info.dart` | Server update availability info |
+| `storage_analysis.dart` | Storage analyzer DTOs — segments, results, age filter, progress state |
 | `text_entity_match.dart` | A matched text entity (phone, email, URL) extracted by ML Kit |
 | `theme_pair.dart` | Light + dark `ThemeData` pair for a named theme |
 

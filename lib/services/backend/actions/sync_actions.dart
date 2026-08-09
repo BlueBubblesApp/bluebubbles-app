@@ -43,6 +43,12 @@ class SyncActions {
     }
 
     for (final msgData in messagesData) {
+      // Persist each message's own sender handle. For multi-handle iMessage
+      // contacts (e.g. phone + email both registered), a received message can
+      // come from a handle that is not a chat participant; without saving it,
+      // the message's handle is unresolvable and it gets culled at display
+      // time by the participant-match filter in ChatActions.getMessagesAsync.
+      collectParticipants([msgData['handle']]);
       for (final chat in (msgData['chats'] as List? ?? const []).whereType<Map>()) {
         collectParticipants(chat.cast<String, dynamic>()['participants'] as List?);
       }

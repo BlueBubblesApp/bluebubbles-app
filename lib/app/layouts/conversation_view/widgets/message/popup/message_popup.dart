@@ -19,13 +19,14 @@ import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide BackButton;
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_svg/svg.dart';
@@ -107,8 +108,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   bool get showDownload =>
       (isSent &&
           part.attachments.isNotEmpty &&
-          part.attachments.where((element) => AttachmentsSvc.getContent(element) is PlatformFile).isNotEmpty) ||
+          part.attachments.where((element) => AttachmentsSvc.hasLocalFile(element)).isNotEmpty) ||
       isEmbeddedMedia;
+
+  bool get showRefreshPreview =>
+      message.isLegacyUrlPreview || message.payloadData?.type == PayloadType.url || message.isPhotoSlideshow;
 
   bool get canOpenInImageViewer =>
       kIsDesktop && !kIsWeb && part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
@@ -180,8 +184,20 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    double narrowWidth = message.isFromMe! || !SettingsSvc.settings.alwaysShowAvatars.value ? 330 : 360;
-    bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
+    // Decide whether the tapback row needs to wrap to a second line by comparing its actual
+    // content width (derived from the fixed per-item padding/icon sizes used below) against the
+    // real horizontal space available at the picker's anchor position, rather than guessing from
+    // overall screen width. widget.childPosition.dx already reflects any avatar space the bubble
+    // was pushed past, so no avatar/group special-casing is needed here.
+    final double screenWidth = NavigationSvc.width(widthContext);
+    const double reactionPickerEdgeMargin = 15;
+    final double reactionPickerAvailableWidth = message.isFromMe!
+        ? screenWidth - reactionPickerEdgeMargin - reactionPickerEdgeMargin
+        : screenWidth - (widget.childPosition.dx + 10) - reactionPickerEdgeMargin;
+    final double reactionItemWidth = iOS ? 47.0 : 44.0; // icon/emoji + its fixed padding, see item build below
+    // + container padding
+    final double reactionRowContentWidth = reactionItemWidth * ReactionTypes.toList().length + 10;
+    bool narrowScreen = reactionRowContentWidth > reactionPickerAvailableWidth;
 
     return Theme(
       data: context.theme.copyWith(
@@ -203,6 +219,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
               extendBodyBehindAppBar: true,
               safeAreaLeft: false,
               safeAreaRight: false,
+              // The popup opens over a still-collapsing keyboard. Keep the body
+              // full-screen and its bottom edge fixed so Positioned offsets are
+              // screen-anchored and don't ride the inset animation down.
+              resizeToAvoidBottomInset: false,
+              safeAreaMaintainBottomViewPadding: true,
               backgroundColor: kIsDesktop && iOS && SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
                   ? context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
                   : Colors.transparent,
@@ -244,7 +265,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                             ? 10
                                             : 30),
                                 child: Container(
-                                  color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                                  color: Colors.transparent.withValues(alpha: 0.1),
                                 ),
                               ))
                         : null,
@@ -268,9 +289,15 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                             child: ConstrainedBox(
                               key: _childKey,
                               constraints: BoxConstraints(maxWidth: widget.size.width),
-                              child: MessageStateScope(
-                                messageState: widget.controller,
-                                child: widget.child,
+                              // Marked as a clone so anything inside that
+                              // reacts to shared state by doing work (URL
+                              // preview refreshes, say) knows not to — this
+                              // copy and the real bubble both see every signal.
+                              child: MessageCloneScope(
+                                child: MessageStateScope(
+                                  messageState: widget.controller,
+                                  child: widget.child,
+                                ),
                               ),
                             ),
                           ),
@@ -640,6 +667,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
         onTap: () => popup_message_actions.messageInfo(_buildActionContext(DetailsMenuAction.MessageInfo)),
         action: DetailsMenuAction.MessageInfo,
       ),
+      if (showRefreshPreview)
+        DetailsMenuActionWidget(
+          onTap: () => popup_media_actions.refreshPreview(_buildActionContext(DetailsMenuAction.RefreshPreview)),
+          action: DetailsMenuAction.RefreshPreview,
+        ),
     ].sorted((a, b) => SettingsSvc.settings.detailsMenuActions
         .indexOf(a.action)
         .compareTo(SettingsSvc.settings.detailsMenuActions.indexOf(b.action)));
@@ -671,6 +703,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                       children: allActions.sublist(numberToShow - 1),
                     );
                     showBBDialog(
+                      useRootNavigator: false,
                       context: context,
                       content: content,
                     );

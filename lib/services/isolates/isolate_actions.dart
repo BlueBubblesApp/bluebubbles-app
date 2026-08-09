@@ -4,11 +4,13 @@ import 'package:bluebubbles/services/backend/actions/log_actions.dart';
 import 'package:bluebubbles/services/backend/actions/send_message_actions.dart';
 import 'package:bluebubbles/services/backend/actions/chat_actions.dart';
 import 'package:bluebubbles/services/backend/actions/contact_v2_actions.dart';
+import 'package:bluebubbles/services/backend/actions/custom_group_actions.dart';
 import 'package:bluebubbles/services/backend/actions/handle_actions.dart';
 import 'package:bluebubbles/services/backend/actions/image_actions.dart';
 import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/services/backend/actions/prefs_actions.dart';
 import 'package:bluebubbles/services/backend/actions/server_actions.dart';
+import 'package:bluebubbles/services/backend/actions/storage_actions.dart';
 import 'package:bluebubbles/services/backend/actions/sync_actions.dart';
 import 'package:bluebubbles/services/backend/actions/test_actions.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
@@ -37,8 +39,11 @@ class IsolateActons {
 
     // Image — convertToPng is sync so wrap as async lambda
     IsolateRequestType.convertImageToPng: (data) async => ImageActions.convertToPng(data as Map<String, dynamic>),
+    IsolateRequestType.convertIcoToPng: (data) async => ImageActions.convertIcoToPng(data as Map<String, dynamic>),
     IsolateRequestType.readExifData: ImageActions.readExifData,
     IsolateRequestType.getGifDimensions: ImageActions.getGifDimensions,
+    IsolateRequestType.readExifOrientation: ImageActions.readExifOrientation,
+    IsolateRequestType.generatePreview: (data) async => ImageActions.generatePreview(data as Map<String, dynamic>),
 
     // Prefs
     IsolateRequestType.saveReplyToMessageState: PrefsActions.saveReplyToMessageState,
@@ -83,6 +88,7 @@ class IsolateActons {
 
     // ContactV2 (new contact service)
     IsolateRequestType.syncContactsToHandles: ContactV2Actions.syncContactsToHandles,
+    IsolateRequestType.syncContactsToHandlesWithStats: ContactV2Actions.syncContactsToHandlesWithStats,
     IsolateRequestType.getStoredContactIds: ContactV2Actions.getStoredContactIds,
     IsolateRequestType.findOneContact: ContactV2Actions.findOneContact,
     IsolateRequestType.getContactsForHandles: ContactV2Actions.getContactsForHandles,
@@ -90,6 +96,7 @@ class IsolateActons {
     IsolateRequestType.getAllContacts: ContactV2Actions.getAllContacts,
     IsolateRequestType.getContactAvatar: ContactV2Actions.getContactAvatar,
     IsolateRequestType.uploadContactsV2: ContactV2Actions.uploadContacts,
+    IsolateRequestType.getAccountContactCounts: ContactV2Actions.getAccountContactCounts,
 
     // Attachment
     IsolateRequestType.saveAttachmentAsync: AttachmentActions.saveAttachmentAsync,
@@ -116,5 +123,19 @@ class IsolateActons {
     IsolateRequestType.sendTapback: SendMessageActions.sendTapback,
     IsolateRequestType.sendMultipartMessage: SendMessageActions.sendMultipartMessage,
     IsolateRequestType.sendAttachmentMessage: SendMessageActions.sendAttachmentMessage,
+
+    // CustomGroup
+    IsolateRequestType.getAllCustomGroups: CustomGroupActions.getAllIds,
+    IsolateRequestType.createCustomGroup: CustomGroupActions.create,
+    IsolateRequestType.renameCustomGroup: CustomGroupActions.rename,
+    IsolateRequestType.updateCustomGroupChats: CustomGroupActions.updateChats,
+    IsolateRequestType.setCustomGroupShowUnreadBadge: CustomGroupActions.setShowUnreadBadge,
+    IsolateRequestType.deleteCustomGroup: CustomGroupActions.delete,
+    IsolateRequestType.reorderCustomGroups: CustomGroupActions.reorder,
+
+    // Storage analyzer
+    IsolateRequestType.analyzeStorage: (data) async => StorageActions.analyze(data as Map<String, dynamic>),
+    IsolateRequestType.deleteStorageAttachments: (data) async =>
+        StorageActions.deleteAttachments(data as Map<String, dynamic>),
   };
 }

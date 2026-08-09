@@ -14,7 +14,7 @@ class BackgroundIsolate {
 }
 
 @pragma('vm:entry-point')
-backgroundIsolateEntrypoint() async {
+Future<void> backgroundIsolateEntrypoint() async {
   // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
   WidgetsFlutterBinding.ensureInitialized();

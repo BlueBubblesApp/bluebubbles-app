@@ -18,6 +18,7 @@ import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
 
 import 'search_models.dart';
 import 'search_query_helper.dart';
+import 'conversation_search_field.dart';
 
 class SearchResult {
   final String search;
@@ -192,64 +193,14 @@ class SearchViewState extends State<SearchView> with ThemeHelpers {
                       padding: const EdgeInsets.only(left: 15, right: 15, top: 5),
                       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Flexible(
-                            child: CupertinoTextField(
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) {
-                            search(textEditingController.text);
-                          },
-                          focusNode: focusNode,
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
-                          controller: textEditingController,
-                          placeholder: "Enter a search term...",
-                          style: context.theme.textTheme.bodyLarge,
-                          placeholderStyle:
-                              context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.outline),
-                          cursorColor: context.theme.colorScheme.primary,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: context.theme.colorScheme.primary),
+                          child: ConversationSearchField(
+                            controller: textEditingController,
+                            focusNode: focusNode,
+                            isSearching: isSearching.value,
+                            onSubmitted: search,
+                            padding: EdgeInsets.zero,
                           ),
-                          maxLines: 1,
-                          prefix: Padding(
-                            padding: const EdgeInsets.only(left: 15),
-                            child: Icon(
-                                SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
-                                color: context.theme.colorScheme.outline),
-                          ),
-                          suffix: Padding(
-                            padding: const EdgeInsets.only(right: 15),
-                            child: !isSearching.value
-                                ? InkWell(
-                                    child: Icon(Icons.arrow_forward, color: context.theme.colorScheme.primary),
-                                    onTap: () {
-                                      search(textEditingController.text);
-                                    })
-                                : Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: SettingsSvc.settings.skin.value == Skins.iOS
-                                        ? Theme(
-                                            data: ThemeData(
-                                              cupertinoOverrideTheme: CupertinoThemeData(
-                                                  brightness: ThemeData.estimateBrightnessForColor(
-                                                      context.theme.colorScheme.surface)),
-                                            ),
-                                            child: const CupertinoActivityIndicator(),
-                                          )
-                                        : SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: Center(
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<Color>(context.theme.colorScheme.primary),
-                                              ),
-                                            ),
-                                          ),
-                                  ),
-                          ),
-                          suffixMode: OverlayVisibilityMode.editing,
-                        )),
+                        ),
                         Container(
                             margin: const EdgeInsets.only(left: 10),
                             width: 35,
@@ -415,7 +366,7 @@ class SearchViewState extends State<SearchView> with ThemeHelpers {
                             title: RichText(
                               text: TextSpan(
                                 children: MessageHelper.buildEmojiText(
-                                  chat.getTitle(),
+                                  ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle(),
                                   context.theme.textTheme.bodyLarge!,
                                 ),
                               ),
@@ -563,7 +514,9 @@ class SearchViewState extends State<SearchView> with ThemeHelpers {
                                         )),
                                   ),
                                   label: selectedChat.value != null
-                                      ? Text(selectedChat.value!.getTitle(),
+                                      ? Text(
+                                          ChatsSvc.getChatState(selectedChat.value!.guid)?.title.value ??
+                                              selectedChat.value!.getTitle(),
                                           style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.normal,

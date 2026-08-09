@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_actions.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_dialogs.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_types.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/custom_groups_backup.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/pinned_chats_backup.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:dio/dio.dart';
@@ -20,7 +23,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' hide context;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class BackupRestorePanel extends StatefulWidget {
   const BackupRestorePanel({super.key});
@@ -153,6 +155,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                               Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
                                               json["description"] = item["description"];
                                               json["timestamp"] = DateTime.now().millisecondsSinceEpoch;
+                                              json["pinnedChats"] = PinnedChatsBackup.exportList();
+                                              json["customGroups"] = await CustomGroupsBackup.exportList();
                                               Response response = await HttpSvc.backup.setSettings(item["name"], json);
                                               Navigator.of(context, rootNavigator: true).pop();
                                               if (response.statusCode != 200) {
@@ -195,11 +199,33 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                       content: const Text(
                                         "Are you sure you want to restore this backup, overwriting your current Settings?",
                                       ),
-                                      onYes: () {
+                                      onYes: () async {
                                         Navigator.of(context, rootNavigator: true).pop();
                                         try {
                                           Settings.updateFromMap(item);
                                           showSnackbar("Success", "Settings restored successfully");
+                                          final pinnedChats = item["pinnedChats"] as List<dynamic>?;
+                                          if (pinnedChats != null) {
+                                            final result = await PinnedChatsBackup.restore(pinnedChats);
+                                            if (result.skipped.isNotEmpty && context.mounted) {
+                                              BackupRestoreDialogs.showRestoreSummary(
+                                                context: context,
+                                                title: "Some Pinned Chats Couldn't Be Restored",
+                                                skipped: result.skipped,
+                                              );
+                                            }
+                                          }
+                                          final customGroups = item["customGroups"] as List<dynamic>?;
+                                          if (customGroups != null) {
+                                            final result = await CustomGroupsBackup.restore(customGroups);
+                                            if (result.skipped.isNotEmpty && context.mounted) {
+                                              BackupRestoreDialogs.showRestoreSummary(
+                                                context: context,
+                                                title: "Some Custom Group Chats Couldn't Be Restored",
+                                                skipped: result.skipped,
+                                              );
+                                            }
+                                          }
                                         } catch (e, s) {
                                           Logger.error("Failed to restore settings backup!", error: e, trace: s);
                                           showSnackbar(
@@ -265,20 +291,26 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                       "Are you sure you want to replace this backup with your current Settings?",
                                     ),
                                     onYes: () {
-                                      Navigator.of(_context).pop();
+                                      // Confirmation dialog is on the root navigator (showBBDialog uses
+                                      // useRootNavigator: true), so it must be popped from there.
+                                      Navigator.of(_context, rootNavigator: true).pop();
                                       yes = true;
                                     },
                                   );
                                   if (!yes) return;
-                                } else {
-                                  Navigator.of(_context).pop();
                                 }
+                                // Dismiss the name-entry dialog (also on the root navigator) before
+                                // performing the backup. Using the non-root navigator here would pop
+                                // the settings page instead, leaving the dialog stuck open.
+                                Navigator.of(_context, rootNavigator: true).pop();
                                 Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
                                 if (desc.isNotEmpty) {
                                   json["description"] = desc;
                                 }
                                 final timestamp = DateTime.now().millisecondsSinceEpoch;
                                 json["timestamp"] = timestamp;
+                                json["pinnedChats"] = PinnedChatsBackup.exportList();
+                                json["customGroups"] = await CustomGroupsBackup.exportList();
                                 if (destination.isCloud) {
                                   var response = await HttpSvc.backup.setSettings(name, json);
                                   if (response.statusCode != 200) {
@@ -304,23 +336,28 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                   }
                                   final downloadsDir = await FilesystemSvc.downloadsDirectory;
                                   String filePath = join(downloadsDir, "BB-Settings-$name.json");
+                                  final String jsonString = jsonEncode(json);
                                   if (kIsDesktop) {
+                                    // Let the portal write the file: passing bytes lands it at the
+                                    // real chosen location (sandbox-safe) so reveal opens the right
+                                    // folder, instead of a separate write to a non-granted path.
                                     String? _filePath = await FilePicker.saveFile(
                                       initialDirectory: downloadsDir,
                                       dialogTitle: 'Choose a location to save this file',
                                       fileName: "BB-Settings-$name.json",
                                       type: FileType.custom,
                                       allowedExtensions: ["json"],
+                                      bytes: utf8.encode(jsonString),
                                     );
                                     if (_filePath == null) {
                                       return showSnackbar('Failed', 'You didn\'t select a file path!');
                                     }
                                     filePath = _filePath;
+                                  } else {
+                                    File file = File(filePath);
+                                    await file.create(recursive: true);
+                                    await file.writeAsString(jsonString);
                                   }
-                                  File file = File(filePath);
-                                  await file.create(recursive: true);
-                                  String jsonString = jsonEncode(json);
-                                  await file.writeAsString(jsonString);
                                   showSnackbar(
                                     "Success",
                                     "Settings exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
@@ -331,7 +368,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                       ),
                                       onPressed: () {
                                         if (kIsDesktop) {
-                                          launchUrl(Uri.file(dirname(filePath)));
+                                          revealInFileManager(filePath);
                                         }
                                         Share.files([filePath]);
                                       },
@@ -459,13 +496,35 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                 content: const Text(
                                   "Are you sure you want to restore this backup, overwriting your current Settings?",
                                 ),
-                                onYes: () {
+                                onYes: () async {
                                   Navigator.of(context, rootNavigator: true).pop();
                                   try {
                                     String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
                                     Map<String, dynamic> json = jsonDecode(jsonString);
                                     Settings.updateFromMap(json);
                                     showSnackbar("Success", "Settings restored successfully");
+                                    final pinnedChats = json["pinnedChats"] as List<dynamic>?;
+                                    if (pinnedChats != null) {
+                                      final result = await PinnedChatsBackup.restore(pinnedChats);
+                                      if (result.skipped.isNotEmpty && context.mounted) {
+                                        BackupRestoreDialogs.showRestoreSummary(
+                                          context: context,
+                                          title: "Some Pinned Chats Couldn't Be Restored",
+                                          skipped: result.skipped,
+                                        );
+                                      }
+                                    }
+                                    final customGroups = json["customGroups"] as List<dynamic>?;
+                                    if (customGroups != null) {
+                                      final result = await CustomGroupsBackup.restore(customGroups);
+                                      if (result.skipped.isNotEmpty && context.mounted) {
+                                        BackupRestoreDialogs.showRestoreSummary(
+                                          context: context,
+                                          title: "Some Custom Group Chats Couldn't Be Restored",
+                                          skipped: result.skipped,
+                                        );
+                                      }
+                                    }
                                   } catch (e, s) {
                                     Logger.error("Failed to restore settings backup!", error: e, trace: s);
                                     showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
@@ -696,21 +755,26 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                 final downloadsDir = await FilesystemSvc.downloadsDirectory;
                                 String filePath = join(downloadsDir, themeFilename);
                                 if (kIsDesktop) {
+                                  // Let the portal write the file: passing bytes lands it at the
+                                  // real chosen location (sandbox-safe) so reveal opens the right
+                                  // folder, instead of a separate write to a non-granted path.
                                   String? _filePath = await FilePicker.saveFile(
                                     initialDirectory: downloadsDir,
                                     dialogTitle: 'Choose a location to save this file',
                                     fileName: themeFilename,
                                     type: FileType.custom,
                                     allowedExtensions: ["json"],
+                                    bytes: utf8.encode(jsonStr),
                                   );
                                   if (_filePath == null) {
                                     return showSnackbar('Failed', 'You didn\'t select a file path!');
                                   }
                                   filePath = _filePath;
+                                } else {
+                                  File file = File(filePath);
+                                  await file.create(recursive: true);
+                                  await file.writeAsString(jsonStr);
                                 }
-                                File file = File(filePath);
-                                await file.create(recursive: true);
-                                await file.writeAsString(jsonStr);
                                 showSnackbar(
                                   "Success",
                                   "Theming exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
@@ -721,7 +785,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                                     ),
                                     onPressed: () {
                                       if (kIsDesktop) {
-                                        launchUrl(Uri.file(dirname(filePath)));
+                                        revealInFileManager(filePath);
                                         return;
                                       }
                                       Share.files([filePath]);

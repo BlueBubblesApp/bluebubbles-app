@@ -10,12 +10,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_auth
   dynamic_color
   emoji_picker_flutter
+  ffmpeg_kit_flutter_new_min
   file_selector_windows
   flutter_acrylic
   flutter_timezone
   geolocator_windows
   local_auth_windows
-  local_notifier
   maps_launcher
   media_kit_libs_windows_video
   media_kit_video
@@ -28,7 +28,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   secure_application
   share_plus
   sqlite3_flutter_libs
-  system_tray
   tray_manager
   url_launcher_windows
   window_manager

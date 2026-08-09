@@ -111,6 +111,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with ThemeHelpers
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               ContactAvatarWidget(
+                                // This is fine to use `.handle` since it's hard-coded above.
                                 handle: message.handle,
                                 size: iOS ? 30 : 35,
                                 fontSize: context.theme.textTheme.bodyLarge!.fontSize!,

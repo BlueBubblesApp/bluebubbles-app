@@ -141,7 +141,7 @@ class CustomErrorWidget extends StatelessWidget {
     if (_flutterError == null) {
       properties.add(StringProperty('message', message, quoted: false));
     } else {
-      properties.add(_flutterError!.toDiagnosticsNode(style: DiagnosticsTreeStyle.whitespace));
+      properties.add(_flutterError.toDiagnosticsNode(style: DiagnosticsTreeStyle.whitespace));
     }
   }
 }
@@ -278,11 +278,11 @@ class RenderErrorBox extends RenderBox {
           width -= padding.left + padding.right;
           left += padding.left;
         }
-        _paragraph!.layout(ui.ParagraphConstraints(width: width));
-        if (size.height > padding.top + _paragraph!.height + padding.bottom) {
+        _paragraph.layout(ui.ParagraphConstraints(width: width));
+        if (size.height > padding.top + _paragraph.height + padding.bottom) {
           top += padding.top;
         }
-        context.canvas.drawParagraph(_paragraph!, offset + Offset(left, top));
+        context.canvas.drawParagraph(_paragraph, offset + Offset(left, top));
       }
     } catch (error) {
       // If an error happens here we're in a terrible state, so we really should
@@ -334,6 +334,7 @@ class _ErrorPanelContentState extends State<_ErrorPanelContent> {
 
   Future<void> _copyText(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger != null) {
       messenger.showSnackBar(

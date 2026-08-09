@@ -18,7 +18,7 @@ import 'package:path/path.dart' as p;
 /// This follows the architecture outlined in FR-1.md
 class ContactV2Actions {
   /// Completer to ensure syncContactsToHandles only runs once at a time
-  static Completer<List<int>>? _syncCompleter;
+  static Completer<_ContactSyncStats>? _syncCompleter;
 
   /// Generate multiple normalized variants of a phone number to handle country code mismatches
   ///
@@ -72,7 +72,24 @@ class ContactV2Actions {
 
   /// Fetch all contacts from device and match them to existing handles
   /// This is the main operation described in Section II.A of FR-1.md
+  ///
+  /// Returns only the affected handle IDs — the shape every existing caller
+  /// depends on. Use [syncContactsToHandlesWithStats] for the fetch/match
+  /// counts as well (e.g. for diagnostic display).
   static Future<List<int>> syncContactsToHandles(dynamic data) async {
+    final stats = await _syncContactsToHandlesInternal(data);
+    return stats.affectedHandleIds;
+  }
+
+  /// Same operation as [syncContactsToHandles], but also returns the device
+  /// contact count and matched-contact count — used by the Contacts
+  /// Management page's manual refresh to show live diagnostic feedback.
+  static Future<Map<String, dynamic>> syncContactsToHandlesWithStats(dynamic data) async {
+    final stats = await _syncContactsToHandlesInternal(data);
+    return stats.toMap();
+  }
+
+  static Future<_ContactSyncStats> _syncContactsToHandlesInternal(dynamic data) async {
     // If already processing, wait for the existing operation to complete
     if (_syncCompleter != null && !_syncCompleter!.isCompleted) {
       Logger.info('[ContactV2] Sync already in progress, waiting for completion...');
@@ -80,10 +97,19 @@ class ContactV2Actions {
     }
 
     // Create a new completer for this sync operation
-    _syncCompleter = Completer<List<int>>();
+    _syncCompleter = Completer<_ContactSyncStats>();
+
+    // Optional account filter — set via the Contacts Management page. Null
+    // means "all accounts" (the default, unfiltered behavior).
+    final dataMap = data is Map ? data : const {};
+    final accountName = dataMap['accountName'] as String?;
+    final accountType = dataMap['accountType'] as String?;
+    final account =
+        (accountName != null && accountType != null) ? fc.Account(id: '', name: accountName, type: accountType) : null;
 
     final startTime = DateTime.now().millisecondsSinceEpoch;
     final affectedHandleIds = <int>[];
+    int matchedContactCount = 0;
 
     try {
       List<fc.Contact> deviceContacts = [];
@@ -108,8 +134,14 @@ class ContactV2Actions {
             final contactId = (map['id'] ?? displayName).toString();
             if (!isNullOrEmpty(map['avatar'])) {
               try {
-                avatarPaths[contactId] = await _saveContactAvatar(contactId, base64Decode(map['avatar'].toString()));
+                final savedPath = await _saveContactAvatar(contactId, base64Decode(map['avatar'].toString()));
+                // A null path means the disk write failed — leave the key unset so
+                // the existing avatarPath is preserved instead of being wiped.
+                if (savedPath != null) avatarPaths[contactId] = savedPath;
               } catch (_) {}
+            } else {
+              // Server reports no avatar for this contact — record the removal explicitly.
+              avatarPaths[contactId] = null;
             }
 
             final nc = ContactV2(
@@ -128,9 +160,22 @@ class ContactV2Actions {
         }
       } else {
         // Step 1: Fetch contacts using flutter_contacts
-        Logger.info('[ContactV2] Starting contact fetch from device (flutter_contacts)...');
-        deviceContacts = await fc.FlutterContacts.getAll(properties: fc.ContactProperties.allProperties);
+        Logger.info('[ContactV2] Starting contact fetch from device (flutter_contacts)'
+            '${account != null ? ' for account ${account.name} (${account.type})' : ''}...');
+        deviceContacts =
+            await fc.FlutterContacts.getAll(properties: fc.ContactProperties.allProperties, account: account);
         Logger.info('[ContactV2] Fetched ${deviceContacts.length} contacts from device');
+        if (deviceContacts.isEmpty) {
+          // The OS permission check passed (we only reach this branch with contacts
+          // access granted), yet the provider returned nothing. This is expected for
+          // a genuinely empty address book, but it's also exactly what a privacy
+          // sandbox that virtualizes the Contacts provider per-app (e.g. GrapheneOS's
+          // Contact Scopes) looks like: the permission reads as granted, but the app
+          // only sees whatever the user explicitly scoped in — zero, until configured.
+          Logger.warn('[ContactV2] Contacts permission is granted but 0 device contacts were returned. '
+              'If contacts are expected to exist, check for a privacy sandbox / contact '
+              'scoping feature (e.g. GrapheneOS Contact Scopes) restricting this app\'s access.');
+        }
 
         // Step 1.5: Pre-fetch and save all contact avatars (async operations must be done BEFORE transaction)
         for (final rawContact in deviceContacts) {
@@ -143,10 +188,16 @@ class ContactV2Actions {
             final avatarData = contactWithPhoto?.photo?.fullSize ?? contactWithPhoto?.photo?.thumbnail;
 
             if (avatarData != null && avatarData.isNotEmpty) {
-              avatarPaths[rawContact.id!] = await _saveContactAvatar(rawContact.id!, avatarData);
+              final savedPath = await _saveContactAvatar(rawContact.id!, avatarData);
+              // A null path means the disk write failed — leave the key unset so
+              // the existing avatarPath is preserved instead of being wiped.
+              if (savedPath != null) avatarPaths[rawContact.id!] = savedPath;
+            } else if (contactWithPhoto != null) {
+              // Fetch succeeded and the contact has no photo — record the removal explicitly.
+              avatarPaths[rawContact.id!] = null;
             }
           } catch (e) {
-            // Avatar fetch failed, continue without it
+            // Avatar fetch failed — leave the key unset so the existing avatarPath is kept.
           }
         }
       }
@@ -295,9 +346,15 @@ class ContactV2Actions {
             // Update existing contact
             contact = existingContact;
             final oldComputedName = contact.computedDisplayName;
+            final oldAvatarPath = contact.avatarPath;
             contact.displayName = displayName;
             contact.addresses = normalizedAddresses.toList();
-            contact.avatarPath = avatarPath;
+            // Only touch avatarPath when the prefetch step produced a definitive
+            // answer (photo saved, or confirmed no photo). An absent key means the
+            // photo fetch failed — keep the existing path instead of wiping it.
+            if (avatarPaths.containsKey(contactId)) {
+              contact.avatarPath = avatarPath;
+            }
             contact.firstName = firstName;
             contact.lastName = lastName;
             contact.middleName = middleName;
@@ -311,8 +368,8 @@ class ContactV2Actions {
             // Track existing handles to detect changes
             existingHandleIds = contact.handles.map((h) => h.id).whereType<int>().toSet();
 
-            if (oldComputedName != contact.computedDisplayName) {
-              // Mark all existing handles for this contact as affected (computed name changed)
+            if (oldComputedName != contact.computedDisplayName || oldAvatarPath != contact.avatarPath) {
+              // Mark all existing handles for this contact as affected (computed name or avatar changed)
               affectedHandleIds.addAll(existingHandleIds);
             }
           } else {
@@ -361,6 +418,8 @@ class ContactV2Actions {
             }
           }
 
+          if (matchedHandles.isNotEmpty) matchedContactCount++;
+
           // Compare new handles with existing handles to detect changes
           final newHandleIds = matchedHandles.map((h) => h.id).whereType<int>().toSet();
           final handlesChanged = existingContact == null ||
@@ -408,18 +467,33 @@ class ContactV2Actions {
       });
 
       final endTime = DateTime.now().millisecondsSinceEpoch;
+      // De-duplicate — a handle can be marked affected by both a name/avatar
+      // change and a handle-link change within the same sync.
+      final uniqueAffected = affectedHandleIds.toSet().toList();
       Logger.info('[ContactV2] Contact fetch and match completed in ${endTime - startTime}ms');
-      Logger.info('[ContactV2] Affected ${affectedHandleIds.length} handles');
+      Logger.info('[ContactV2] Affected ${uniqueAffected.length} handles');
+
+      final stats = _ContactSyncStats(
+        affectedHandleIds: uniqueAffected,
+        deviceContactCount: deviceContacts.length,
+        matchedContactCount: matchedContactCount,
+      );
 
       // Complete the completer with the result
-      _syncCompleter?.complete(affectedHandleIds);
-      return affectedHandleIds;
+      _syncCompleter?.complete(stats);
+      return stats;
     } catch (e, stack) {
-      Logger.error('[ContactV2] Error fetching and matching contacts', error: e, trace: stack);
+      // Logged with the exception's runtimeType called out explicitly so this is
+      // distinguishable in exported logs from the "0 contacts, no exception" case
+      // logged above — both currently end in an empty sync result, but only one
+      // of them is an actual failure.
+      Logger.error('[ContactV2] Error fetching and matching contacts (${e.runtimeType}): $e',
+          error: e, trace: stack);
 
-      // Complete the completer with an empty list on error
-      _syncCompleter?.complete([]);
-      return [];
+      // Complete the completer with an empty result on error
+      final stats = _ContactSyncStats(affectedHandleIds: const [], deviceContactCount: 0, matchedContactCount: 0);
+      _syncCompleter?.complete(stats);
+      return stats;
     }
   }
 
@@ -653,4 +727,48 @@ class ContactV2Actions {
       }
     }
   }
+
+  /// Returns each on-device account with contacts, plus a live contact count
+  /// per account. Used by the Contacts Management page's account selector.
+  /// Mobile only — desktop has no device accounts.
+  static Future<List<Map<String, dynamic>>> getAccountContactCounts(dynamic data) async {
+    if (kIsWeb || kIsDesktop) return [];
+
+    try {
+      final accounts = await fc.FlutterContacts.accounts.getAll();
+      final results = <Map<String, dynamic>>[];
+
+      for (final account in accounts) {
+        final contacts = await fc.FlutterContacts.getAll(account: account);
+        results.add({'name': account.name, 'type': account.type, 'count': contacts.length});
+      }
+
+      return results;
+    } catch (e, stack) {
+      Logger.error('[ContactV2] Error getting account contact counts', error: e, trace: stack);
+      return [];
+    }
+  }
+}
+
+/// Result of a device/network contact fetch-and-match pass. Kept isolate-internal
+/// (not returned directly across the isolate boundary — see
+/// [ContactV2Actions.syncContactsToHandles] vs
+/// [ContactV2Actions.syncContactsToHandlesWithStats]).
+class _ContactSyncStats {
+  final List<int> affectedHandleIds;
+  final int deviceContactCount;
+  final int matchedContactCount;
+
+  const _ContactSyncStats({
+    required this.affectedHandleIds,
+    required this.deviceContactCount,
+    required this.matchedContactCount,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'affectedHandleIds': affectedHandleIds,
+        'deviceContactCount': deviceContactCount,
+        'matchedContactCount': matchedContactCount,
+      };
 }

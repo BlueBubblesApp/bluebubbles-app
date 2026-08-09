@@ -133,6 +133,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                       Icons.search,
                                       color: context.theme.colorScheme.onSurfaceVariant,
                                     )),
+                              if (!showArchived && !showUnknown) const ChatListFilterButton(),
                               if (!showArchived && !showUnknown)
                                 const Padding(
                                   padding: EdgeInsets.only(right: 8.0),

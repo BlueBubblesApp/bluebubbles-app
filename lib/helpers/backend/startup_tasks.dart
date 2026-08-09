@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show AppLifecycleState;
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/env.dart';
@@ -12,6 +11,8 @@ import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:on_exit/init.dart';
@@ -30,8 +31,18 @@ class WindowEntry {
 class StartupTasks {
   static final Completer<void> uiReady = Completer<void>();
 
+  /// User-facing description of the current startup phase, surfaced by the
+  /// desktop splash screen while services initialize. Updated by
+  /// [initStartupServices] (main isolate only — isolate init paths don't drive UI).
+  static final ValueNotifier<String> status = ValueNotifier<String>("Starting...");
+
   static Future<void> waitForUI() async {
     await uiReady.future;
+  }
+
+  static Future<void> setSplashStatus(String value) async {
+    status.value = value;
+    if (kIsDesktop) await Future.delayed(Duration.zero);
   }
 
   static Completer<void> _preRegisterInteropServices({
@@ -120,10 +131,6 @@ class StartupTasks {
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     await ChatsSvc.init(headless: headless);
     Logger.info("ChatsService ready");
-
-    Logger.info("Registering TypingIndicatorService...");
-    GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
-    Logger.info("TypingIndicatorService ready");
   }
 
   static Future<void> _initHttpService() async {
@@ -155,6 +162,7 @@ class StartupTasks {
 
   static Future<void> initStartupServices({bool isBubble = false}) async {
     debugPrint("Initializing startup services...");
+    await setSplashStatus("Loading settings...");
     await _initCoreServices(headless: false);
 
     final startupInteropReady = _preRegisterInteropServices(
@@ -170,9 +178,12 @@ class StartupTasks {
     // The next thing we need to do is initialize the database.
     // If the database is not initialized, we cannot do anything.
     Logger.info("Initializing database...");
+    await setSplashStatus("Opening database...");
     await Database.init();
     Logger.info("Database initialized");
     startupInteropReady.complete();
+
+    await setSplashStatus("Starting services...");
 
     // Register the global isolate
     Logger.info("Registering isolates...");
@@ -219,6 +230,7 @@ class StartupTasks {
 
     // Parallelize independent services for faster startup
     Logger.info("Waiting for services to be ready...");
+    await setSplashStatus("Loading contacts...");
     await Future.wait([
       ThemeSvc.init(),
       IntentsSvc.init(),
@@ -235,11 +247,17 @@ class StartupTasks {
     HandleSvc.init();
 
     Logger.info("Registering ChatsService, SocketService, and NotificationsService...");
+    await setSplashStatus("Loading chats...");
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
+    GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
     GetIt.I.registerSingleton<SocketService>(SocketService());
     await _waitForInterop(notifications: true);
 
     GetIt.I.registerSingleton<EventDispatcher>(EventDispatcher());
+
+    Logger.info("Registering CustomGroupsService...");
+    GetIt.I.registerSingleton<CustomGroupsService>(CustomGroupsService());
+    await CustomGroupsSvc.init();
 
     Logger.info("Registering OutgoingMessageHandler...");
     GetIt.I.registerSingleton<OutgoingMessageHandler>(
@@ -247,13 +265,23 @@ class StartupTasks {
       dispose: (svc) => svc.dispose(),
     );
 
+    await setSplashStatus("Finishing up...");
     Logger.info(
         "Startup services initialization complete! Running localhost detection then starting incremental sync...");
 
+    // Release any notification click that started the app. Deferred to the first frame
+    // because opening the chat needs a widget tree, which doesn't exist yet here.
+    if (kIsDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => DesktopNotifications.markReady());
+    }
+
+    // Nothing network-related should run before setup — no server is configured yet.
     // Don't use the global isolate on startup as it'll likely cause a crash
     // if there is no network connection. The cause is not 100% known, but it likely
     // has to do with processing pressure, stale ports, or port binding exhaustion.
-    unawaited(NetworkTasks.detectLocalhost().then((_) => SyncSvc.startIncrementalSync()));
+    if (SettingsSvc.settings.finishedSetup.value) {
+      unawaited(NetworkTasks.detectLocalhost().then((_) => SyncSvc.startIncrementalSync()));
+    }
   }
 
   static Future<void> initGlobalIsolateServices(RootIsolateToken? rootIsolateToken) async {
@@ -375,10 +403,11 @@ class StartupTasks {
     unawaited(SettingsSvc.refreshServerDetails());
 
     // Only register FCM device on startup
-    // Don't await - let this happen in background
+    // Don't await. Let this happen in background
     Logger.info("Registering FCM device in background...");
     FirebaseSvc.registerDevice().catchError((e, s) {
       Logger.warn("Failed to register FCM device on startup!", error: e, trace: s);
+      showToast("Failed to register FCM device!", isError: true);
       return null; // Return null on error
     });
 
@@ -444,10 +473,28 @@ class StartupTasks {
         // On desktop, always restore focus when the app is resumed (window regains focus).
         // On mobile, only refocus if the user has auto-open keyboard enabled AND the
         // conversation view is the active route (not obscured by ConversationDetails etc.).
-        if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
-          ConversationViewController _cvc = cvc(activeChat.chat);
-          if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+        ConversationViewController _cvc = cvc(activeChat.chat);
+        if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+          if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
             _cvc.lastFocusedNode.requestFocus();
+          } else if (_cvc.lastFocusedNode.hasFocus) {
+            // The field keeps its focus across a background/resume cycle, but
+            // the Android engine fails to restore the keyboard on resume: the
+            // OS shows it briefly, then the engine's input-connection restart
+            // dismisses it without notifying the framework, so focus and
+            // viewInsets are left as if the keyboard were still open (blank
+            // reserved space). Re-show it once the restart settles so the
+            // keyboard comes back exactly as the user left it.
+            //
+            // Workaround for https://github.com/flutter/flutter/issues/52599 —
+            // once the engine fix (https://github.com/flutter/flutter/pull/187778)
+            // ships in the Flutter version we build with, this block becomes a
+            // no-op and can be removed.
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (_cvc.lastFocusedNode.hasFocus && !_cvc.showingOverlays && !_cvc.showingSubRoute) {
+                SystemChannels.textInput.invokeMethod('TextInput.show');
+              }
+            });
           }
         }
       }
@@ -457,13 +504,23 @@ class StartupTasks {
       await NetworkTasks.detectLocalhost();
     }
 
+    // Flush any contact sync deferred while the app was backgrounded
+    // (contact change events are queued instead of synced while cached).
+    if (GetIt.I.isRegistered<ContactServiceV2>() && GetIt.I.isReadySync<ContactServiceV2>()) {
+      unawaited(ContactsSvcV2.runPendingContactSync());
+      unawaited(ContactsSvcV2.refreshPermissionStatusOnResume());
+    }
+
     // On app resume, use the global isolate so it's ready for other tasks.
     if (GetIt.I.isRegistered<SyncService>()) {
       if (!Platform.isAndroid) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       } else if (lifecycle == null ||
           !lifecycle.hasResumed ||
-          (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasPaused)) {
+          // wasBackgrounded (paused/detached, NOT hidden): sync only when the user
+          // actually left the app — not when resuming from an in-app overlay like
+          // the share sheet, which hides the activity without leaving the app.
+          (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasBackgrounded)) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       }
     }

@@ -132,15 +132,15 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
       return a._colors == null
           ? a
           : _CupertinoEdgeShadowDecoration._(
-              a._colors!.map<Color>((Color color) => Color.lerp(null, color, 1.0 - t)!).toList());
+              a._colors.map<Color>((Color color) => Color.lerp(null, color, 1.0 - t)!).toList());
     }
     assert(b._colors != null || a._colors != null);
     // If it ever becomes necessary, we could allow decorations with different
     // length' here, similarly to how it is handled in [LinearGradient.lerp].
-    assert(b._colors == null || a._colors == null || a._colors!.length == b._colors!.length);
+    assert(b._colors == null || a._colors == null || a._colors.length == b._colors.length);
     return _CupertinoEdgeShadowDecoration._(
       <Color>[
-        for (int i = 0; i < b._colors!.length; i += 1) Color.lerp(a._colors?[i], b._colors?[i], t)!,
+        for (int i = 0; i < b._colors!.length; i += 1) Color.lerp(a._colors?[i], b._colors[i], t)!,
       ],
     );
   }
@@ -189,7 +189,7 @@ class _CupertinoEdgeShadowPainter extends BoxPainter {
   _CupertinoEdgeShadowPainter(
     this._decoration,
     VoidCallback? onChange,
-  )   : assert(_decoration._colors == null || _decoration._colors!.length > 1),
+  )   : assert(_decoration._colors == null || _decoration._colors.length > 1),
         super(onChange);
 
   final _CupertinoEdgeShadowDecoration _decoration;

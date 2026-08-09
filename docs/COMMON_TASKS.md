@@ -149,15 +149,71 @@ Step-by-step recipes for the most frequent changes in this codebase. Each recipe
 
 ## 6. Add a New Screen / Page
 
+Full component/theming reference: `docs/CUSTOM_COMPONENTS.md`.
+
 **Files to touch (in order):**
 
-1. **Create the page widget** in the appropriate `lib/app/layouts/<area>/pages/` directory. If it supports multiple skins, use `ThemeSwitcher` and create skin-specific variants.
+1. **Create the page widget** in the appropriate `lib/app/layouts/<area>/pages/` directory.
 
-2. **Register navigation** — Add a route or use `NavigationSvc.push(context, MyNewPage())` from the calling widget.
+2. **Build it on `BBScaffold` + `BBAppBar`, not raw `Scaffold`/`AppBar`.** This gets you, for
+   free, correct behavior you would otherwise have to hand-roll per screen:
+   ```dart
+   @override
+   Widget build(BuildContext context) {
+     return BBScaffold(
+       appBar: BBAppBar(titleText: 'My New Page'),
+       body: YourContent(),
+     );
+   }
+   ```
+   - `BBScaffold` wraps the result in `BBAnnotatedRegion`, so status bar / nav bar styling
+     (`context.systemUiOverlayStyle()`) is applied automatically — don't add your own
+     `AnnotatedRegion`.
+   - `BBScaffold` handles desktop window-effect transparency (Mica/Acrylic) and SafeArea
+     placement (applied to `body`, not the `Scaffold` itself, so backgrounds still fill
+     edge-to-edge). Only override `safeAreaTop`/`safeAreaBottom`/etc. if the default logic in
+     `lib/app/wrappers/bb_scaffold.dart` doesn't fit your layout.
+   - `BBAppBar` bakes in the app's `elevation: 0`, `toolbarHeight` (80 desktop / 50 mobile),
+     `centerTitle` (iOS-only), and header background color conventions — use `titleText` for
+     a plain string title, or `title` for a custom widget.
 
-3. **If it needs a controller** — Create a `StatefulController` subclass, use `CustomStateful<MyController>` + `CustomState<MyPage, MyController, MyController>` as base classes.
+3. **If it needs a dialog, use the skin-aware helpers from `dialog_helpers.dart`** —
+   `showBBDialog()`, `showAreYouSure()`, `showBBListSelector()`, or `BBProgressDialog` — rather
+   than building `AlertDialog`/`CupertinoAlertDialog` directly. They already branch on skin.
 
-4. **If it has settings** — Follow recipe #1 for any new preference fields.
+4. **If it renders chips/tags**, use `BBChip` (`lib/app/components/bb_chip.dart`) instead of a
+   raw `RawChip`/`Chip`.
+
+5. **If the page's layout (not just colors) needs to differ per skin**, wrap the
+   skin-divergent part in `ThemeSwitcher`:
+   ```dart
+   ThemeSwitcher(
+     iOSSkin: CupertinoMyPage(parentController: controller),
+     materialSkin: MaterialMyPage(parentController: controller),
+   )
+   ```
+   Don't reach for `ThemeSwitcher` just to change colors — that should come from theme data
+   instead (see next point).
+
+6. **Never hardcode colors.** Pull everything from theme state:
+   - `context.theme.colorScheme.*` / `context.theme.textTheme.*` for general color/type.
+   - `context.headerColor` / `context.tileColor` for section headers vs. tile backgrounds
+     (these already account for Material-dark-mode inversion and desktop window-effect
+     translucency).
+   - `context.theme.colorScheme.bubble(context, isIMessage)` / `.onBubble(...)` for any
+     message-bubble-adjacent coloring — never `colorScheme.primary`/`secondary` directly.
+   - `ThemeSvc.inDarkMode(context)` for light/dark branching — not
+     `MediaQuery.platformBrightnessOf`, which ignores the user's in-app theme mode override.
+   - `context.iOS` / `context.material` / `context.samsung` for skin-only boolean checks.
+
+7. **Register navigation** — Add a route or use `NavigationSvc.push(context, MyNewPage())`
+   from the calling widget.
+
+8. **If it needs a controller** — Create a `StatefulController` subclass, use
+   `CustomStateful<MyController>` + `CustomState<MyPage, MyController, MyController>` as base
+   classes.
+
+9. **If it has settings** — Follow recipe #1 for any new preference fields.
 
 ---
 

@@ -21,6 +21,13 @@ class ContactAvatarWidget extends StatefulWidget {
       this.scaleSize = true,
       this.preferHighResAvatar = false,
       this.padding = EdgeInsets.zero});
+
+  /// Canonical decode size for avatar images. Every avatar usage shares one
+  /// ImageCache entry per file regardless of on-screen size — one decode per
+  /// contact and a much higher cache-hit rate. The conversation list warm-up
+  /// must use identical ResizeImage params for its precached entry to be hit.
+  static const int avatarDecodeSize = 256;
+
   final Handle? handle;
   final ContactV2? contact;
   final double? size;
@@ -121,6 +128,41 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
     ContactsSvcV2.notifyHandlesUpdated([widget.handle!.id!]);
   }
 
+  /// Shared fallback for the avatar circle: initials when available, otherwise
+  /// a generic person icon. Used by the no-avatar branch, while an avatar image
+  /// is still decoding (frameBuilder), and when the image file fails to load.
+  Widget _buildInitialsOrIcon(double size, bool iOS, String? initials) {
+    if (!isNullOrEmpty(initials)) {
+      return SizedBox(
+        width: size,
+        child: Text(
+          initials!,
+          key: Key("$keyPrefix-avatar-text"),
+          style: TextStyle(
+            fontSize: size * 0.5,
+            height: 1.0,
+            leadingDistribution: TextLeadingDistribution.even,
+            color: material ? context.theme.colorScheme.surface : Colors.white,
+          ),
+          textAlign: TextAlign.center,
+          textHeightBehavior: const TextHeightBehavior(
+            applyHeightToFirstAscent: false,
+            applyHeightToLastDescent: false,
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 1),
+      child: Icon(
+        iOS ? CupertinoIcons.person_fill : Icons.person,
+        color: material ? context.theme.colorScheme.surface : Colors.white,
+        key: Key("$keyPrefix-avatar-icon"),
+        size: size / 2 * (material ? 1.25 : 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tileColor = ThemeSvc.inDarkMode(context)
@@ -214,43 +256,27 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
                   backgroundColor: Colors.transparent,
                 );
               } else if (!hideContactInfo && !genAvatars && contactV2Avatar != null) {
+                final initials = cachedInitials?.substring(0, iOS ? null : 1);
                 // Use ContactV2 avatar (from file path)
                 return SizedBox.expand(
                   child: Image.file(
                     File(contactV2Avatar),
-                    cacheHeight: size.toInt() * 2,
-                    cacheWidth: size.toInt() * 2,
-                    filterQuality: FilterQuality.none,
+                    cacheHeight: ContactAvatarWidget.avatarDecodeSize,
+                    cacheWidth: ContactAvatarWidget.avatarDecodeSize,
+                    // Bilinear so the canonical 256px decode downscales cleanly
+                    // to the small on-screen sizes (nearest-neighbor aliases).
+                    filterQuality: FilterQuality.low,
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
+                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      if (wasSynchronouslyLoaded || frame != null) return child;
+                      // Decode still in flight (cold image cache) — show the
+                      // initials/icon fallback instead of a blank gradient circle.
+                      return Center(child: _buildInitialsOrIcon(size, iOS, initials));
+                    },
                     errorBuilder: (context, error, stackTrace) {
                       // If file doesn't exist, show initials instead
-                      String? initials = cachedInitials?.substring(0, iOS ? null : 1);
-                      if (!isNullOrEmpty(initials)) {
-                        return SizedBox(
-                          width: size,
-                          child: Text(
-                            initials!,
-                            key: Key("$keyPrefix-avatar-text"),
-                            style: TextStyle(
-                              fontSize: size * 0.5,
-                              height: 1.0,
-                              leadingDistribution: TextLeadingDistribution.even,
-                              color: material ? context.theme.colorScheme.surface : Colors.white,
-                            ),
-                            textAlign: TextAlign.center,
-                            textHeightBehavior: const TextHeightBehavior(
-                              applyHeightToFirstAscent: false,
-                              applyHeightToLastDescent: false,
-                            ),
-                          ),
-                        );
-                      }
-                      return Icon(
-                        iOS ? CupertinoIcons.person_fill : Icons.person,
-                        color: material ? context.theme.colorScheme.surface : Colors.white,
-                        size: size / 2 * (material ? 1.25 : 1),
-                      );
+                      return Center(child: _buildInitialsOrIcon(size, iOS, initials));
                     },
                   ),
                 );
@@ -258,37 +284,13 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
                 // Use reactive initials from HandleState
                 String? initials = cachedInitials?.substring(0, iOS ? null : 1);
                 if (!isNullOrEmpty(initials) && !hideContactInfo && !genAvatars) {
-                  return SizedBox(
-                    width: size,
-                    child: Text(
-                      initials!,
-                      key: Key("$keyPrefix-avatar-text"),
-                      style: TextStyle(
-                        fontSize: size * 0.5,
-                        height: 1.0,
-                        leadingDistribution: TextLeadingDistribution.even,
-                        color: material ? context.theme.colorScheme.surface : Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                      textHeightBehavior: const TextHeightBehavior(
-                        applyHeightToFirstAscent: false,
-                        applyHeightToLastDescent: false,
-                      ),
-                    ),
-                  );
+                  return _buildInitialsOrIcon(size, iOS, initials);
                 } else if (genAvatars && widget.handle?.fakeAvatar != null) {
                   return widget.handle!.fakeAvatar;
                 } else if (genAvatars && contactV2?.fakeAvatar != null) {
                   return contactV2!.fakeAvatar;
                 } else {
-                  return Padding(
-                      padding: const EdgeInsets.only(left: 1),
-                      child: Icon(
-                        iOS ? CupertinoIcons.person_fill : Icons.person,
-                        color: material ? context.theme.colorScheme.surface : Colors.white,
-                        key: Key("$keyPrefix-avatar-icon"),
-                        size: size / 2 * (material ? 1.25 : 1),
-                      ));
+                  return _buildInitialsOrIcon(size, iOS, null);
                 }
               }
             }(),

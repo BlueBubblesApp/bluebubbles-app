@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
@@ -9,6 +10,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/initial_widget
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
@@ -26,6 +28,7 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class ConversationListController extends StatefulController {
   final bool showArchivedChats;
@@ -113,7 +116,8 @@ class ConversationList extends CustomStateful<ConversationListController> {
   State<StatefulWidget> createState() => _ConversationListState();
 }
 
-class _ConversationListState extends CustomState<ConversationList, void, ConversationListController> {
+class _ConversationListState extends CustomState<ConversationList, void, ConversationListController>
+    with WidgetsBindingObserver {
   Timer? _initTimer;
 
   @override
@@ -124,6 +128,11 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         : controller.showUnknownSenders
             ? "Unknown"
             : "Messages";
+
+    if (!kIsWeb && !controller.showArchivedChats && !controller.showUnknownSenders) {
+      WidgetsBinding.instance.addObserver(this);
+      ChatsSvc.loadedAllChats.future.then((_) => _precacheAvatars());
+    }
 
     if (!SettingsSvc.settings.reachedConversationList.value) {
       _initTimer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
@@ -143,11 +152,67 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         }
       });
     }
+
+    // Extra safety check to make sure Android doesn't open the last chat when opening the app
+    if (kIsDesktop || kIsWeb) {
+      final lastOpenedChat = PrefsSvc.messaging.getLastOpenedChat();
+      if (lastOpenedChat != null &&
+          showAltLayoutContextless &&
+          ChatsSvc.activeChat?.chat.guid != lastOpenedChat &&
+          !LifecycleSvc.isBubble) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (kIsWeb) {
+            await ChatsSvc.loadedAllChats.future;
+          }
+          NavigationSvc.pushAndRemoveUntil(
+            context,
+            ConversationView(
+                chat: kIsWeb ? (await Chat.findOneWeb(guid: lastOpenedChat))! : Chat.findOne(guid: lastOpenedChat)!),
+            (route) => route.isFirst,
+          );
+        });
+      }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-warm the avatar image cache after a resume — the OS may have cleared
+    // Flutter's ImageCache (memory trim) while the app was backgrounded.
+    if (state == AppLifecycleState.resumed) _precacheAvatars();
+  }
+
+  /// Decodes the avatars for the top chats into Flutter's ImageCache so tiles
+  /// render them synchronously instead of falling back to initials while the
+  /// file decodes. The ResizeImage params must exactly match what
+  /// ContactAvatarWidget passes to Image.file, or the warmed entries are never hit.
+  void _precacheAvatars() {
+    if (!mounted) return;
+    const decodeSize = ContactAvatarWidget.avatarDecodeSize;
+    for (final chat in ChatsSvc.allChats.take(30)) {
+      final state = ChatsSvc.getChatState(chat.guid);
+      if (state == null) continue;
+      final customPath = state.customAvatarPath.value;
+      if (customPath != null) {
+        // Group custom avatars render unresized (CircleAvatar + FileImage).
+        unawaited(precacheImage(FileImage(File(customPath)), context));
+        continue;
+      }
+      for (final hs in state.participants) {
+        final path = hs.avatarPath.value;
+        if (path == null) continue;
+        unawaited(precacheImage(
+          ResizeImage(FileImage(File(path)), width: decodeSize, height: decodeSize),
+          context,
+        ));
+      }
+    }
   }
 
   @override
   void dispose() {
     _initTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -189,7 +254,6 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                           if (ChatsSvc.activeChat != null) {
                             cvc(ChatsSvc.activeChat!.chat).close();
                           }
-                          EventDispatcherSvc.emit('update-highlight', null);
                         }
                         return true;
                       }, id: 2);

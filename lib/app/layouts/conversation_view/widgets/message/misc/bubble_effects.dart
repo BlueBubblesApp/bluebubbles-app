@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -21,12 +20,14 @@ class BubbleEffects extends StatefulWidget {
     required this.part,
     required this.globalKey,
     required this.showTail,
+    required this.messageState,
   });
 
   final Widget child;
   final int part;
   final GlobalKey? globalKey;
   final bool showTail;
+  final MessageState messageState;
 
   @override
   State<StatefulWidget> createState() => _BubbleEffectsState();
@@ -35,12 +36,7 @@ class BubbleEffects extends StatefulWidget {
 class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProviderStateMixin {
   late MovieTween tween;
   final rxControl = Rx<Control>(Control.stop);
-  Worker? _effectWorker;
-
-  /// Cached reference to the nearest [MessageState]. Set in
-  /// [didChangeDependencies] so it is safe to use inside async callbacks
-  /// (e.g. animationStatusListener) where [context] may be deactivated.
-  MessageState? _ms;
+  late final Worker _effectWorker;
 
   /// True while an auto-triggered animation is in-flight. Set to false once
   /// the animation completes and [MessageState.markEffectPlayed] has been
@@ -63,6 +59,36 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
       value: 1.0,
     );
     _fadeAnimation = _fadeController;
+
+    // Auto-play invisible ink on first appearance.
+    final message = widget.messageState.message;
+    final effectStr =
+        effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
+    final effect = stringToMessageEffect[effectStr] ?? MessageEffect.none;
+    if (effect == MessageEffect.invisibleInk) {
+      // Set size first, then flip rxControl so the single Obx rebuild
+      // that fires has the correct dimensions and BackdropFilter covers
+      // the text from the very first animated frame.
+      _whenSized((s) {
+        _size.value = s;
+        _fadeController.value = 1.0;
+        rxControl.value = Control.play;
+      });
+    } else if (effect.isBubble && !widget.messageState.hasEffectPlayed.value) {
+      _pendingAutoPlay = true;
+      _whenSized((s) {
+        _size.value = s;
+        widget.messageState.triggerBubbleEffect(widget.part);
+      });
+    }
+
+    _effectWorker = ever(widget.messageState.playEffectPart, (int? part) {
+      if (part == widget.part) {
+        _size.value = _readSize();
+        _fadeController.value = 1.0;
+        rxControl.value = Control.playFromStart;
+      }
+    });
   }
 
   /// Safely reads the size of [widget.globalKey]'s render object.
@@ -88,48 +114,8 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_effectWorker == null) {
-      final ms = MessageStateScope.maybeOf(context);
-      _ms = ms;
-      if (ms != null) {
-        // Auto-play invisible ink on first appearance.
-        final message = ms.message;
-        final effectStr =
-            effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
-        final effect = stringToMessageEffect[effectStr] ?? MessageEffect.none;
-        if (effect == MessageEffect.invisibleInk) {
-          // Set size first, then flip rxControl so the single Obx rebuild
-          // that fires has the correct dimensions and BackdropFilter covers
-          // the text from the very first animated frame.
-          _whenSized((s) {
-            _size.value = s;
-            _fadeController.value = 1.0;
-            rxControl.value = Control.play;
-          });
-        } else if (effect.isBubble && !ms.hasEffectPlayed.value) {
-          _pendingAutoPlay = true;
-          _whenSized((s) {
-            _size.value = s;
-            ms.triggerBubbleEffect(widget.part);
-          });
-        }
-
-        _effectWorker = ever(ms.playEffectPart, (int? part) {
-          if (part == widget.part) {
-            _size.value = _readSize();
-            _fadeController.value = 1.0;
-            rxControl.value = Control.playFromStart;
-          }
-        });
-      }
-    }
-  }
-
-  @override
   void dispose() {
-    _effectWorker?.dispose();
+    _effectWorker.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -193,7 +179,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final message = MessageStateScope.of(context).message;
+    final message = widget.messageState.message;
     final effectStr =
         effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
     final effect = stringToMessageEffect[effectStr] ?? MessageEffect.none;
@@ -240,7 +226,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
                             connectUpper: false,
                           ),
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                             child: Particles(
                               key: UniqueKey(),
                               height: _size.value.height,
@@ -278,7 +264,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
               rxControl.value = Control.stop;
               if (_pendingAutoPlay) {
                 _pendingAutoPlay = false;
-                _ms?.markEffectPlayed();
+                widget.messageState.markEffectPlayed();
               }
             }
           },

@@ -20,6 +20,11 @@ import 'package:universal_io/io.dart';
 
 const _tag = 'OutgoingMessageHandler';
 
+/// Outgoing-prep retry policy: retry a transient prep failure up to
+/// [_maxPrepAttempts] times, backing off [_retryBackoffMs] ms times the attempt.
+const _maxPrepAttempts = 3;
+const _retryBackoffMs = 250;
+
 // ignore: non_constant_identifier_names
 OutgoingMessageHandler get OutgoingMsgHandler => GetIt.I<OutgoingMessageHandler>();
 
@@ -40,9 +45,10 @@ class _OutgoingEntry {
 /// 1. **Serial send queue** — all sends are queued and processed one at a time
 ///    so messages always arrive in the order the user sent them.
 ///
-/// 2. **Pre-send preparation** — `prepMessage` / `prepAttachment` write the
-///    temp message/attachment to the DB and the MessagesService *before* the
-///    HTTP call is made, so the UI shows the outgoing bubble immediately.
+/// 2. **Pre-send preparation** — `_buildOutgoingMessages` / `_persistOutgoingMessages`
+///    / `prepAttachment` write the temp message/attachment to the DB and the
+///    MessagesService *before* the HTTP call is made, so the UI shows the
+///    outgoing bubble immediately.
 ///
 /// 3. **GUID replacement** — when the HTTP response arrives with the server's
 ///    real GUID, replaces the temp record in the DB and notifies [MessagesService]
@@ -178,13 +184,21 @@ class OutgoingMessageHandler {
   /// [OutgoingQueueItem.completer] resolves — i.e. when the HTTP response arrives
   /// or an error is surfaced.
   Future<void> queue(OutgoingQueueItem item) async {
-    // Prepare items (writes temp messages / copies attachment files to disk).
-    // prepMessage may return multiple Message objects when it splits a URL
-    // message into two parts (pre-Big Sur macOS compatibility).
-    final returned = await _prepItem(item);
+    // Every item must have a stable temp GUID before prep/retry begins — see
+    // [_ensureTempGuid]. Centralized here so individual UI call sites can't
+    // forget it (several did, historically — that's what caused this to be
+    // centralized rather than left to convention).
+    _ensureTempGuid(item);
+
+    // Prep the item (writes temp messages / copies attachment files to disk),
+    // retrying a transient failure and surfacing a terminal one as a failed
+    // message so it is never silently dropped. See [_prepItemWithRetry].
+    final prep = await _prepItemWithRetry(item);
+    if (!prep.ok) return;
+    final returned = prep.result;
 
     if (returned is List<Message>) {
-      // prepMessage already saved each message to the DB; create a queue
+      // _persistOutgoingMessages already saved each message to the DB; create a queue
       // entry for each one with the message that was actually saved.
       for (final m in returned) {
         _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
@@ -196,6 +210,101 @@ class OutgoingMessageHandler {
 
     pendingChatGuids.add(item.chat.guid);
     unawaited(_processNext());
+  }
+
+  /// Ensures [item.message] has a stable temp GUID before prep/retry begins.
+  ///
+  /// A no-op if the caller (or a retry-flow like `retryFailedMessage`, which
+  /// reuses the original failed message's GUID) already set one. Centralizing
+  /// this here — rather than trusting every UI call site to call
+  /// `generateTempGuid()` itself — is deliberate: several call sites forgot to,
+  /// which crashed [_prepItemWithRetry]'s old null-check assertion.
+  void _ensureTempGuid(OutgoingQueueItem item) {
+    if (item.message.guid == null) item.message.generateTempGuid();
+    if (item is OutgoingAttachment) item.attachment.guid = item.message.guid;
+  }
+
+  /// Prep [item] with a bounded retry on transient failure.
+  ///
+  /// The prep phase writes the temp record via the GlobalIsolate, which can
+  /// throw if the isolate is mid-restart. If that escaped [queue] (usually a
+  /// fire-and-forget call) the message would be *silently dropped* — never
+  /// queued, sent, nor marked failed. So retry a transient failure, then surface
+  /// a terminal one as a failed message that is visible + retryable.
+  ///
+  /// The message object(s) this item resolves to are built exactly ONCE (via
+  /// [_buildOutgoingMessages]) before any retry attempt, so every attempt
+  /// retries persistence of the *same* GUID(s) — this is what makes the
+  /// "already saved?" dedup check below sound (previously, `prepMessage`
+  /// regenerated the GUID on every attempt, which desynced it from the GUID
+  /// this loop was checking, so retries could silently duplicate a message).
+  ///
+  /// Returns `(ok: true, result: <prep output>)` on success — result is a
+  /// `List<Message>` for messages and `null` for attachments — or
+  /// `(ok: false, ...)` once a terminal failure has been finalized (the caller
+  /// should stop).
+  Future<({bool ok, dynamic result})> _prepItemWithRetry(OutgoingQueueItem item) async {
+    final isAttachment = item is OutgoingAttachment;
+
+    List<Message>? built;
+    if (!isAttachment) {
+      built = _buildOutgoingMessages(item.chat, item.message, item.reaction, isRetry: item.isRetry);
+      if (built.isEmpty) return (ok: true, result: <Message>[]);
+    }
+
+    Object? lastError;
+    StackTrace? lastStack;
+    int attempts = 0;
+    for (int attempt = 1; attempt <= _maxPrepAttempts; attempt++) {
+      attempts = attempt;
+      try {
+        if (isAttachment) {
+          await prepAttachment(item.chat, item.message, item.attachment);
+          return (ok: true, result: null);
+        } else {
+          return (
+            ok: true,
+            result: await _persistOutgoingMessages(
+              item.chat,
+              built!,
+              item.reaction,
+              clearNotificationsIfFromMe: item.clearNotificationsIfFromMe,
+            ),
+          );
+        }
+      } catch (ex, st) {
+        lastError = ex;
+        lastStack = st;
+        // Only retry while at least one unit of work (the single message, the
+        // attachment, or one of the up-to-2 split messages) is still unsaved.
+        final stillUnsaved = isAttachment
+            ? Message.findOne(guid: item.message.guid) == null
+            : built!.any((m) => Message.findOne(guid: m.guid) == null);
+        if (!stillUnsaved || attempt >= _maxPrepAttempts) break;
+        Logger.warn('Outgoing prep attempt $attempt failed; retrying', error: ex, trace: st, tag: _tag);
+        await Future.delayed(Duration(milliseconds: _retryBackoffMs * attempt));
+      }
+    }
+
+    // Retries exhausted (or nothing left unsaved to retry): surface the
+    // failure(s) as failed messages so they're visible + retryable rather than
+    // silently dropped. For a split send, both halves are failed together —
+    // it's one logical send, so a half-sent result would be confusing and
+    // would strand the successful half in "sending" state forever (queue()
+    // only enqueues what this function returns).
+    final toFail = isAttachment ? [item.message] : built!;
+    for (final m in toFail) {
+      await _finalizeOutgoingFailure(
+        item.chat,
+        m,
+        m.guid!,
+        logMessage: 'Failed to prepare outgoing message after $attempts attempt(s)',
+        error: lastError,
+        stack: lastStack,
+      );
+    }
+    item.completer?.completeError(lastError ?? StateError('Outgoing prep failed'));
+    return (ok: false, result: null);
   }
 
   OutgoingQueueItem _copyWithMessage(OutgoingQueueItem item, Message message) {
@@ -411,74 +520,24 @@ class OutgoingMessageHandler {
 
   // ── Preparation ──────────────────────────────────────────────────────────
 
-  /// Prepares [item] for sending.
+  /// Determines the [Message] object(s) that a text/multipart/reaction send
+  /// resolves to, assigning a temp GUID to any newly-constructed message.
   ///
-  /// For message/multipart sends: calls [prepMessage], which assigns a temp
-  /// GUID and saves the message to the DB and MessagesService, then returns
-  /// the list of [Message]s to enqueue.
+  /// On macOS < Big Sur, long messages containing a URL are split into two
+  /// separate messages to prevent server-side matching glitches — this is the
+  /// only case that produces more than one message.
   ///
-  /// For attachment sends: calls [prepAttachment], which copies the file to
-  /// the local attachment directory and saves the message to the DB.  Returns
-  /// `null` to indicate the item itself should be enqueued without splitting.
-  Future<dynamic> _prepItem(OutgoingQueueItem item) async {
-    switch (item.type) {
-      case QueueType.sendReaction:
-        final typed = item as OutgoingReaction;
-        return prepMessage(
-          typed.chat,
-          typed.message,
-          typed.selectedMessage,
-          typed.reaction,
-          clearNotificationsIfFromMe: typed.clearNotificationsIfFromMe,
-          isRetry: typed.isRetry,
-        );
-      case QueueType.sendMultipart:
-        final typedMultipart = item as OutgoingMultipartMessage;
-        return prepMessage(
-          typedMultipart.chat,
-          typedMultipart.message,
-          null,
-          null,
-          clearNotificationsIfFromMe: typedMultipart.clearNotificationsIfFromMe,
-          isRetry: typedMultipart.isRetry,
-        );
-      case QueueType.sendMessage:
-        final typedMessage = item as OutgoingMessage;
-        return prepMessage(
-          typedMessage.chat,
-          typedMessage.message,
-          null,
-          null,
-          clearNotificationsIfFromMe: typedMessage.clearNotificationsIfFromMe,
-          isRetry: typedMessage.isRetry,
-        );
-      case QueueType.sendAttachment:
-        final typedAttachment = item as OutgoingAttachment;
-        await prepAttachment(typedAttachment.chat, typedAttachment.message, typedAttachment.attachment);
-        return null;
-    }
-  }
-
-  /// Prepares a text message for sending.
-  ///
-  /// On macOS < Big Sur, long messages containing a URL may be split into two
-  /// separate messages to prevent server-side matching glitches.
-  ///
-  /// Each resulting message receives a temp GUID and is saved to the DB via
-  /// [Chat.addMessage].  Returns the list of messages that were saved.
-  Future<List<Message>> prepMessage(
-    Chat c,
-    Message m,
-    Message? selected,
-    String? r, {
-    bool clearNotificationsIfFromMe = true,
-    bool isRetry = false,
-  }) async {
+  /// Pure and synchronous: no DB or file I/O happens here, so it can't itself
+  /// throw a transient error that needs retrying. Must be called exactly ONCE
+  /// per [queue] invocation, never inside a retry loop — it mutates `m.text`
+  /// in place on the split path and hands out a fresh GUID for the secondary
+  /// message, so re-running it would desync message identity from whatever a
+  /// prior attempt already persisted (see [_persistOutgoingMessages]).
+  List<Message> _buildOutgoingMessages(Chat c, Message m, String? r, {required bool isRetry}) {
     // If it's a retry, the message should already be in the correct format
+    // and already carries the GUID of the DB row the caller re-persists.
     if (isRetry) return [m];
     if ((m.text?.isEmpty ?? true) && (m.subject?.isEmpty ?? true) && r == null) return [];
-
-    final List<Message> messages = [];
 
     if (!SettingsSvc.serverDetails.isMinBigSur && r == null) {
       // Split URL messages on OS X to prevent message matching glitches.
@@ -495,9 +554,10 @@ class OutgoingMessageHandler {
         }
       }
 
-      messages.add(m..text = mainText);
+      // m already has a stable GUID, assigned by _ensureTempGuid before prep began.
+      final messages = <Message>[m..text = mainText];
       if (!isNullOrEmpty(secondaryText)) {
-        messages.add(Message(
+        final secondary = Message(
           text: secondaryText,
           threadOriginatorGuid: m.threadOriginatorGuid,
           threadOriginatorPart: '${m.threadOriginatorPart ?? 0}:0:0',
@@ -506,43 +566,55 @@ class OutgoingMessageHandler {
           hasAttachments: false,
           isFromMe: true,
           handleId: 0,
-        ));
+        );
+        secondary.generateTempGuid();
+        messages.add(secondary);
       }
+      return messages;
+    }
 
-      Message? lastSaved;
-      for (final message in messages) {
-        message.generateTempGuid();
-        // r == null is guaranteed by the outer guard, so these are never reactions.
-        final saved = (await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
-        lastSaved = saved;
-        if (Get.isRegistered<MessagesService>(tag: c.guid)) {
-          await MessagesSvc(c.guid).addNewMessage(saved);
-        }
-      }
-      // Update ChatState immediately so the tile reflects the outgoing message
-      // before the queue dispatches the HTTP call.
-      if (lastSaved != null) {
-        ChatsSvc.updateChatLatestMessage(c.guid, lastSaved);
-      }
-    } else {
-      m.generateTempGuid();
-      final saved = (await c.addMessage(m, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
+    // m already has a stable GUID, assigned by _ensureTempGuid before prep began.
+    return [m];
+  }
+
+  /// Persists [messages] (already built by [_buildOutgoingMessages], GUIDs
+  /// stable) to the DB and wires them into [MessagesService]/[ChatState].
+  ///
+  /// Safe to call repeatedly across retry attempts against the same
+  /// [messages] list: each message's DB write is skipped if a row with its
+  /// GUID already exists (a prior attempt saved it), but the UI-wiring calls
+  /// are always (re-)run — they're idempotent (`addNewMessage` no-ops if the
+  /// struct already has the GUID; `addAssociatedMessageInternal` updates an
+  /// existing entry in place rather than duplicating it).
+  Future<List<Message>> _persistOutgoingMessages(
+    Chat c,
+    List<Message> messages,
+    String? r, {
+    required bool clearNotificationsIfFromMe,
+  }) async {
+    final List<Message> saved = [];
+    for (final message in messages) {
+      final existing = Message.findOne(guid: message.guid);
+      final Message hydrated =
+          existing ?? (await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
+      saved.add(hydrated);
+
       final msgSvcRegistered = Get.isRegistered<MessagesService>(tag: c.guid);
-      if (r != null && m.associatedMessageGuid != null && msgSvcRegistered) {
+      if (r != null && message.associatedMessageGuid != null && msgSvcRegistered) {
         // Add temp reaction to UI immediately during prep so it appears without
         // waiting for the serial queue (fixes back-to-back text+reaction send delay).
-        final parentState = MessagesSvc(c.guid).getMessageStateIfExists(m.associatedMessageGuid!);
-        parentState?.addAssociatedMessageInternal(saved);
-      } else if (m.associatedMessageGuid == null && msgSvcRegistered) {
-        await MessagesSvc(c.guid).addNewMessage(saved);
+        final parentState = MessagesSvc(c.guid).getMessageStateIfExists(message.associatedMessageGuid!);
+        parentState?.addAssociatedMessageInternal(hydrated);
+      } else if (message.associatedMessageGuid == null && msgSvcRegistered) {
+        await MessagesSvc(c.guid).addNewMessage(hydrated);
       }
-      messages.add(m);
-
-      // Update ChatState immediately so the tile reflects the outgoing message
-      // before the queue dispatches the HTTP call.
-      ChatsSvc.updateChatLatestMessage(c.guid, saved);
     }
-    return messages;
+    // Update ChatState immediately so the tile reflects the outgoing message(s)
+    // before the queue dispatches the HTTP call.
+    if (saved.isNotEmpty) {
+      ChatsSvc.updateChatLatestMessage(c.guid, saved.last);
+    }
+    return saved;
   }
 
   /// Copies the attachment file to the local storage directory and saves the

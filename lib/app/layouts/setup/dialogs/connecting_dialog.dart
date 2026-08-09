@@ -12,23 +12,32 @@ class ConnectingDialog extends StatefulWidget {
 }
 
 class _ConnectingDialogState extends State<ConnectingDialog> {
+  Worker? _socketStateWorker;
+
   @override
   void initState() {
     super.initState();
 
-    if (SocketSvc.state.value == SocketState.connected) {
-      widget.onConnect(true);
-    } else {
-      // Set up a listener to wait for connect events
-      ever(SocketSvc.state, (event) {
-        if (event == SocketState.connected) {
-          widget.onConnect(true);
-        } else if (event == SocketState.error || event == SocketState.disconnected) {
-          widget.onConnect(false);
-        }
-        if (mounted) setState(() {});
-      });
-    }
+    // Always wait for a fresh connect/error transition rather than trusting
+    // the socket state at mount time — it may still reflect a stale
+    // connection (e.g. to the previously configured server) since the caller
+    // hasn't necessarily kicked off the new connection attempt yet.
+    _socketStateWorker = ever(SocketSvc.state, (event) {
+      if (!mounted) return;
+      if (event == SocketState.connected) {
+        widget.onConnect(true);
+      } else if (event == SocketState.error) {
+        widget.onConnect(false);
+      }
+
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _socketStateWorker?.dispose();
+    super.dispose();
   }
 
   @override

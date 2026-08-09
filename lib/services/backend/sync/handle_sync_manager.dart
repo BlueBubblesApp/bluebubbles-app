@@ -25,7 +25,7 @@ class HandleSyncManager extends SyncManager {
 
   HandleSyncManager({bool saveLogs = false, this.simulateError = false}) : super("Handle", saveLogs: saveLogs);
 
-  flush() {
+  void flush() {
     chatHandleCache = {};
     handlesSynced = 0;
     handleBackup = {};
@@ -167,7 +167,7 @@ class HandleSyncManager extends SyncManager {
     return null;
   }
 
-  backupHandles() {
+  void backupHandles() {
     addToOutput("Backing up handles...");
     List<Handle> existingHandles = Handle.find();
     for (Handle h in existingHandles) {
@@ -185,7 +185,7 @@ class HandleSyncManager extends SyncManager {
     return chats;
   }
 
-  cacheChatHandleRelationships(List<Chat> chats) {
+  void cacheChatHandleRelationships(List<Chat> chats) {
     addToOutput("Caching chat participants...");
     for (Chat c in chats) {
       List<Handle> handles = c.handles;
@@ -194,7 +194,7 @@ class HandleSyncManager extends SyncManager {
     }
   }
 
-  restoreOriginalHandles() {
+  void restoreOriginalHandles() {
     // Don't try and restore if there is nothing backed up to re-create.
     // Or no relationships to recreate.
     if (handleBackup.isEmpty || chatHandleCache.isEmpty) return;
@@ -212,7 +212,7 @@ class HandleSyncManager extends SyncManager {
     rebuildRelationships(handleBackup);
   }
 
-  rebuildRelationships(Map<int, Handle> handleMap) {
+  void rebuildRelationships(Map<int, Handle> handleMap) {
     addToOutput("Re-creating chat <-> handle relationships");
     chatHandleCache.forEach((key, value) {
       List<Handle> relations = value.map((e) => handleMap[e]).nonNulls.toList();

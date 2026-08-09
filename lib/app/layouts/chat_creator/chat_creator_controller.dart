@@ -85,7 +85,7 @@ class ChatCreatorController extends StatefulController {
       // If the user has typed something while a chat is displayed, hide the
       // message view so the filtered search results are shown instead.
       if (text.isNotEmpty && activeController.value != null) {
-        deactivateExistingChat();
+        await deactivateExistingChat();
       }
 
       // If the user cleared the field and contacts are still selected,
@@ -282,7 +282,7 @@ class ChatCreatorController extends StatefulController {
     filteredChats.value = result.chats;
     filteredContacts.value = result.contacts;
     if (selectedContacts.isEmpty) {
-      deactivateExistingChat();
+      await deactivateExistingChat();
     } else {
       await findExistingChat();
     }
@@ -292,13 +292,13 @@ class ChatCreatorController extends StatefulController {
   // Service type toggle
   // ---------------------------------------------------------------------------
 
-  void onServiceChanged(ChatServiceType service) {
+  Future<void> onServiceChanged(ChatServiceType service) async {
     if (selectedService.value == service) return;
     selectedService.value = service;
     selectedContacts.clear();
     addressController.text = '';
     currentQuery.value = '';
-    deactivateExistingChat();
+    await deactivateExistingChat();
     filteredChats.value = _allChats.where(_chatMatchesService).toList();
     filteredContacts.value = _allContacts.where(_contactHasAddressForService).toList();
   }
@@ -309,7 +309,7 @@ class ChatCreatorController extends StatefulController {
 
   Future<Chat?> findExistingChat({bool checkDeleted = false, bool update = true}) async {
     if (selectedContacts.isEmpty) {
-      deactivateExistingChat();
+      await deactivateExistingChat();
       return null;
     }
 
@@ -368,9 +368,9 @@ class ChatCreatorController extends StatefulController {
 
     if (update) {
       if (existingChat != null) {
-        _activateExistingChat(existingChat);
+        await _activateExistingChat(existingChat);
       } else {
-        deactivateExistingChat();
+        await deactivateExistingChat();
       }
     }
 
@@ -382,8 +382,8 @@ class ChatCreatorController extends StatefulController {
     return existingChat;
   }
 
-  void _activateExistingChat(Chat chat, {bool transferText = true}) {
-    ChatsSvc.setActiveChat(chat, clearNotifications: false);
+  Future<void> _activateExistingChat(Chat chat, {bool transferText = true}) async {
+    await ChatsSvc.setActiveChat(chat, clearNotifications: false);
     ChatsSvc.activeChat!.controller = cvc(chat);
 
     // Only create a new MessagesService if necessary.
@@ -417,8 +417,8 @@ class ChatCreatorController extends StatefulController {
     activeController.value = newCVC;
   }
 
-  void deactivateExistingChat() {
-    ChatsSvc.setAllInactive();
+  Future<void> deactivateExistingChat() async {
+    await ChatsSvc.setAllInactive();
     activeController.value = null;
     messagesService = null;
   }
@@ -625,7 +625,7 @@ class ChatCreatorController extends StatefulController {
       // transferText: false — content is captured above and will go into pendingSend;
       // writing it into the CVC's textController would leave stale text visible in
       // the destination ConversationView if the clear races with Flutter rendering.
-      _activateExistingChat(resolvedChat, transferText: false);
+      await _activateExistingChat(resolvedChat, transferText: false);
     }
 
     // Pre-seed the messagesService struct with any messages already synced to the
@@ -681,6 +681,8 @@ class ChatCreatorController extends StatefulController {
     activeCVC.pickedAttachments.clear();
     await ChatsSvc.setChatTextFieldText(chat, '');
     await ChatsSvc.setChatTextFieldAttachments(chat, []);
+
+    FocusManager.instance.primaryFocus?.unfocus();
 
     isHeaderVisible.value = false;
     // Null the active controller so the inline MessagesView is removed from the

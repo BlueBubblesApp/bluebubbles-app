@@ -329,7 +329,7 @@ mixin ConnectionPanelHelpersMixin {
       mainAxisSize: MainAxisSize.min,
       children: [
         SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Connection & Sync"),
-        SettingsSection(
+        Obx(() => SettingsSection(
           backgroundColor: tileColor,
           children: [
             SettingsTile(
@@ -450,23 +450,6 @@ mixin ConnectionPanelHelpersMixin {
                 if (result) SocketSvc.restartSocket();
               },
             ),
-            if (Platform.isAndroid) const SettingsDivider(),
-            if (Platform.isAndroid)
-              Obx(() => SettingsSwitch(
-                    initialVal: SettingsSvc.settings.syncContactsAutomatically.value,
-                    title: "Auto-Sync Contacts",
-                    subtitle: "Automatically re-upload contacts to server when changes are detected",
-                    backgroundColor: tileColor,
-                    onChanged: (bool val) async {
-                      SettingsSvc.settings.syncContactsAutomatically.value = val;
-                      await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
-                    },
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_2,
-                      materialIcon: Icons.people,
-                      containerColor: Colors.green,
-                    ),
-                  )),
             const SettingsDivider(),
             SettingsTile(
               leading: Column(
@@ -598,29 +581,26 @@ mixin ConnectionPanelHelpersMixin {
                       }
                     },
                   )),
-            if (!kIsWeb)
-              Obx(() =>
-                  SettingsSvc.settings.localhostPort.value != null ? const SettingsDivider() : const SizedBox.shrink()),
-            if (!kIsWeb)
-              Obx(() => SettingsSvc.settings.localhostPort.value != null
-                  ? SettingsSwitch(
-                      initialVal: SettingsSvc.settings.useLocalIpv6.value,
-                      title: "Use IPv6",
-                      subtitle: "Do not enable this unless your environment supports IPv6",
-                      isThreeLine: true,
-                      onChanged: (bool val) async {
-                        SettingsSvc.settings.useLocalIpv6.value = val;
-                        await SettingsSvc.settings.saveOneAsync('useLocalIpv6');
-                        NetworkTasks.detectLocalhost(createSnackbar: true);
-                      },
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.globe,
-                        materialIcon: Icons.network_check_outlined,
-                      ),
-                    )
-                  : const SizedBox.shrink()),
+            if (!kIsWeb && SettingsSvc.settings.localhostPort.value != null) const SettingsDivider(),
+            if (!kIsWeb && SettingsSvc.settings.localhostPort.value != null)
+              SettingsSwitch(
+                initialVal: SettingsSvc.settings.useLocalIpv6.value,
+                title: "Use IPv6",
+                subtitle: "Do not enable this unless your environment supports IPv6",
+                isThreeLine: true,
+                onChanged: (bool val) async {
+                  SettingsSvc.settings.useLocalIpv6.value = val;
+                  await SettingsSvc.settings.saveOneAsync('useLocalIpv6');
+                  NetworkTasks.detectLocalhost(createSnackbar: true);
+                },
+                leading: SettingsLeadingIcon(
+                  iosIcon: CupertinoIcons.globe,
+                  materialIcon: Icons.network_check_outlined,
+                  containerColor: Colors.blue,
+                ),
+              ),
           ],
-        ),
+        )),
       ],
     );
   }
@@ -648,9 +628,10 @@ mixin ConnectionPanelHelpersMixin {
                           ? "Tap to fetch logs"
                           : "Disconnected, cannot fetch logs"),
                   backgroundColor: tileColor,
-                  leading: const SettingsLeadingIcon(
+                  leading: SettingsLeadingIcon(
                     iosIcon: CupertinoIcons.doc_plaintext,
                     materialIcon: Icons.article,
+                    containerColor: Colors.lightBlue,
                   ),
                   onTap: () {
                     if (SocketSvc.state.value != SocketState.connected) return;

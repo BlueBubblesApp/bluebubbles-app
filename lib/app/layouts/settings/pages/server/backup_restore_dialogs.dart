@@ -40,6 +40,38 @@ class BackupRestoreDialogs {
     );
   }
 
+  /// Shown only when one or more entries couldn't be matched/restored on
+  /// import — callers should skip this dialog entirely when [skipped] is
+  /// empty. Used by both the Pinned Chats and Custom Groups restore flows.
+  static Future<void> showRestoreSummary({
+    required BuildContext context,
+    required String title,
+    required List<String> skipped,
+  }) {
+    return showBBDialog(
+      context: context,
+      title: title,
+      content: SizedBox(
+        width: NavigationSvc.width(context) * 3 / 5,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final label in skipped) Text("• $label"),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        BBDialogAction(
+          text: "Close",
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        ),
+      ],
+    );
+  }
+
   static Future<void> showJsonData({
     required BuildContext context,
     required String title,

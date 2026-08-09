@@ -7,12 +7,14 @@ All are GetX singletons. Shorthand getters live in `lib/services/services.dart`.
 - `chat/conversation_view_controller.dart` — state for the currently open conversation (text, attachments, reply, scroll position)
 
 ## Messages → `message/CLAUDE.md`
-- `message/messages_service.dart` (`MessagesSvc`) — per-chat service tagged by GUID; owns `MessageState` map for granular widget reactivity
-- `message/message_widget_controller.dart` — per-message reactive state cached by message GUID
+- `message/messages_service.dart` (`MessagesSvc`) — per-chat service tagged by GUID; owns `MessageState` map for granular widget reactivity. Per-message controller state now lives directly on `MessageState` (`lib/app/state/message_state.dart`) — the old `MessageWidgetController` was merged into it.
 
 ## Contacts
-- `contact_service.dart` — legacy V1; avoid for new code
 - `contact_service_v2.dart` (`ContactsSvcV2`) — desktop sync (requires server v42+)
+
+## Handles & Typing
+- `handle_service.dart` — owns the `HandleState` map, mirrors `handle_state.dart` reactive fields
+- `typing_indicator_service.dart` — typing indicator state per chat
 
 ## Other
 - `theme/themes_service.dart` (`ThemeSvc`) — theme switching, custom theme management, preset themes

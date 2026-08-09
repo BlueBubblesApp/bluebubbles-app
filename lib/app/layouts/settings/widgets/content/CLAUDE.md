@@ -7,7 +7,7 @@ These are the **primary building blocks** for all settings pages. Assemble setti
 | Widget | File | Purpose |
 |--------|------|---------|
 | `SettingsTile` | `settings_tile.dart` | Base row: title, subtitle, leading icon, trailing widget, onTap |
-| `SettingsSwitch` | `settings_switch.dart` | Toggle row with a `Switch`; tap toggles |
+| `SettingsSwitch` | `settings_switch.dart` | Toggle row with a `BBSwitch` (skin-aware — `lib/app/components/bb_switch.dart`); tap toggles |
 | `SettingsOptions<T>` | `settings_dropdown.dart` | Dropdown selector (Material) or segmented control (iOS) |
 | `SettingsSlider` | `settings_slider.dart` | Slider input row |
 | `SettingsLeadingIcon` | `settings_leading_icon.dart` | Styled leading icon (colored rounded square) |

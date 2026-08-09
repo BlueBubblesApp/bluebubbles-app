@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/components/bb_chip.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/chat_creator_tile.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
@@ -12,13 +13,26 @@ import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:slugify/slugify.dart';
 
+enum ChatSelectorFilter { all, selected, unselected }
+
 class ChatSelectorView extends StatefulWidget {
   const ChatSelectorView({
     super.key,
-    required this.onSelect,
-  });
+    this.onSelect,
+    this.onMultiSelect,
+    this.multiSelect = false,
+    this.initialSelection = const <String>[],
+  }) : assert(
+          (multiSelect && onMultiSelect != null) || (!multiSelect && onSelect != null),
+          'Provide onSelect for single-select or onMultiSelect for multiSelect mode',
+        );
 
-  final void Function(Chat) onSelect;
+  final void Function(Chat)? onSelect;
+  final void Function(List<Chat>)? onMultiSelect;
+  final bool multiSelect;
+
+  /// Chat guids to pre-select when [multiSelect] is true.
+  final List<String> initialSelection;
 
   @override
   ChatSelectorViewState createState() => ChatSelectorViewState();
@@ -32,6 +46,8 @@ class ChatSelectorViewState extends State<ChatSelectorView> with ThemeHelpers {
   List<Chat> filteredChats = [];
   String? oldSearch;
   Timer? _debounce;
+  late Set<String> selectedGuids = widget.initialSelection.toSet();
+  ChatSelectorFilter selectionFilter = ChatSelectorFilter.all;
 
   @override
   void initState() {
@@ -79,6 +95,18 @@ class ChatSelectorViewState extends State<ChatSelectorView> with ThemeHelpers {
         leading: buildBackButton(context),
         backgroundColor: Colors.transparent,
         toolbarHeight: kIsDesktop ? 90 : 50,
+        actions: widget.multiSelect
+            ? [
+                TextButton(
+                  onPressed: () {
+                    final selected = filteredChats.where((c) => selectedGuids.contains(c.guid)).toList();
+                    widget.onMultiSelect!(selected);
+                    Navigator.of(context).pop(selected);
+                  },
+                  child: const Text("Done"),
+                ),
+              ]
+            : null,
       ),
       body: FocusScope(
         child: Column(
@@ -111,8 +139,49 @@ class ChatSelectorViewState extends State<ChatSelectorView> with ThemeHelpers {
                     filled: false),
               ),
             ),
+            if (widget.multiSelect)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                child: Row(
+                  children: [
+                    for (final entry in {
+                      ChatSelectorFilter.all: "All",
+                      ChatSelectorFilter.selected: "Selected",
+                      ChatSelectorFilter.unselected: "Unselected",
+                    }.entries)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: BBChip(
+                          label: Text(
+                            entry.value,
+                            style: TextStyle(
+                              color: selectionFilter == entry.key ? context.theme.colorScheme.primary : null,
+                              fontWeight: selectionFilter == entry.key ? FontWeight.bold : null,
+                            ),
+                          ),
+                          selected: selectionFilter == entry.key,
+                          showCheckmark: false,
+                          onPressed: () => setState(() => selectionFilter = entry.key),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             Expanded(
               child: Obx(() {
+                final displayedChats = widget.multiSelect
+                    ? filteredChats.where((c) {
+                        final isSelected = selectedGuids.contains(c.guid);
+                        switch (selectionFilter) {
+                          case ChatSelectorFilter.selected:
+                            return isSelected;
+                          case ChatSelectorFilter.unselected:
+                            return !isSelected;
+                          case ChatSelectorFilter.all:
+                            return true;
+                        }
+                      }).toList()
+                    : filteredChats;
                 return Align(
                     alignment: Alignment.topCenter,
                     child: AnimatedSwitcher(
@@ -123,44 +192,82 @@ class ChatSelectorViewState extends State<ChatSelectorView> with ThemeHelpers {
                           slivers: <Widget>[
                             SliverList(
                               delegate: SliverChildBuilderDelegate((context, index) {
-                                if (filteredChats.isEmpty) {
-                                  return Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          "Loading chats...",
-                                          style: context.theme.textTheme.labelLarge,
+                                if (displayedChats.isEmpty) {
+                                  if (!ChatsSvc.loadedAllChats.isCompleted) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            "Loading chats...",
+                                            style: context.theme.textTheme.labelLarge,
+                                          ),
                                         ),
-                                      ),
-                                      buildProgressIndicator(context, size: 15),
-                                    ],
+                                        buildProgressIndicator(context, size: 15),
+                                      ],
+                                    );
+                                  }
+                                  if (filteredChats.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      "No chats match this filter",
+                                      style: context.theme.textTheme.labelLarge,
+                                    ),
                                   );
                                 }
-                                final chat = filteredChats[index];
+                                final chat = displayedChats[index];
                                 final chatState = ChatsSvc.getChatState(chat.guid);
                                 final _title = chatState?.title.value ?? chat.getTitle();
+                                final selected = selectedGuids.contains(chat.guid);
                                 return Material(
                                   color: Colors.transparent,
                                   child: InkWell(
                                     onTap: () {
-                                      widget.onSelect(chat);
-                                      Navigator.of(context).pop();
+                                      if (widget.multiSelect) {
+                                        setState(() {
+                                          if (selected) {
+                                            selectedGuids.remove(chat.guid);
+                                          } else {
+                                            selectedGuids.add(chat.guid);
+                                          }
+                                        });
+                                      } else {
+                                        widget.onSelect!(chat);
+                                        Navigator.of(context).pop();
+                                      }
                                     },
-                                    child: ChatCreatorTile(
-                                      key: ValueKey(chat.guid),
-                                      title: _title,
-                                      subtitle: chatState?.chatCreatorSubtitle.value ?? chat.getChatCreatorSubtitle(),
-                                      chat: chat,
-                                      showTrailing: false,
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: ChatCreatorTile(
+                                            key: ValueKey(chat.guid),
+                                            title: _title,
+                                            subtitle:
+                                                chatState?.chatCreatorSubtitle.value ?? chat.getChatCreatorSubtitle(),
+                                            chat: chat,
+                                            showTrailing: false,
+                                          ),
+                                        ),
+                                        if (widget.multiSelect)
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 16),
+                                            child: Icon(
+                                              selected ? Icons.check_circle : Icons.circle_outlined,
+                                              color: selected
+                                                  ? context.theme.colorScheme.primary
+                                                  : context.theme.colorScheme.outline,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                 );
                               },
-                                  childCount: filteredChats.length
-                                      .clamp(ChatsSvc.loadedAllChats.isCompleted ? 0 : 1, double.infinity)
-                                      .toInt()),
+                                  childCount: displayedChats.isEmpty ? 1 : displayedChats.length),
                             )
                           ],
                         )));

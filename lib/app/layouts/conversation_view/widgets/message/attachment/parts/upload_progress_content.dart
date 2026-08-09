@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/video_player.dart';
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +37,7 @@ class UploadProgressContent extends StatelessWidget {
         ),
       );
     }
-    if (previewFile != null && attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value && !isSnap) {
+    if (previewFile != null && attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value) {
       return VideoPlayer(
         attachment: attachment,
         file: previewFile,

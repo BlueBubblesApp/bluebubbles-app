@@ -8,13 +8,15 @@ Actions are pure functions that run **inside** the background isolate. They perf
 | `app_actions.dart` | App update check, FCM data |
 | `attachment_actions.dart` | Save / find / delete attachments |
 | `chat_actions.dart` | Save / delete / mark-read chats, bulk sync |
-| `contact_actions.dart` | Save / find contacts (legacy v1) |
 | `contact_v2_actions.dart` | Contact sync, handle matching (v2) |
 | `handle_actions.dart` | Save / find phone number handles |
 | `image_actions.dart` | PNG conversion, EXIF, GIF dimensions |
+| `log_actions.dart` | Log write/export actions |
 | `message_actions.dart` | Save / find / delete messages, bulk operations |
 | `prefs_actions.dart` | Settings sync, reply state persistence |
+| `send_message_actions.dart` | Outgoing message send pipeline actions |
 | `server_actions.dart` | Server version check, server details |
+| `storage_actions.dart` | Attachment storage analysis (filesystem walk + DB join), deletion |
 | `sync_actions.dart` | Incremental sync, contact upload |
 | `test_actions.dart` | Dev/debug test actions |
 

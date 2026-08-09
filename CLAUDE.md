@@ -5,6 +5,11 @@ iOS exists but is secondary; the server component runs on macOS only.
 
 ## Code → `lib/CLAUDE.md`
 ## Android native → `android/CLAUDE.md`
+## iOS native → `ios/CLAUDE.md`
+## macOS native → `macos/CLAUDE.md`
+## Windows native → `windows/CLAUDE.md`
+## Linux native → `linux/CLAUDE.md`
+## Dev scripts → `scripts/CLAUDE.md`
 ## Claude workflow → `.claude/CLAUDE.md`
 ## Architecture → `docs/ARCHITECTURE.md`
 ## Design decisions → `docs/DECISIONS.md`

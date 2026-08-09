@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/system_ui_overlay_style_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 
@@ -111,9 +113,6 @@ class BubbleText extends ThemeExtension<BubbleText> {
 /// Mixin to provide settings widgets with easy access to the commonly used
 /// theming values
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
-  // Samsung theme should always use the background color as the "header" color
-  bool get reverseMapping => SettingsSvc.settings.skin.value == Skins.Material && ThemeSvc.inDarkMode(context);
-
   /// iOS skin [ListTile] subtitle [TextStyle]s
   TextStyle get iosSubtitle => context.theme.textTheme.labelLarge!.copyWith(
       color: ThemeSvc.inDarkMode(context)
@@ -129,21 +128,17 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   TextStyle get materialSubtitle => context.theme.textTheme.labelLarge!
       .copyWith(color: context.theme.colorScheme.primary, fontWeight: FontWeight.bold);
 
-  Color get _headerColor => (ThemeSvc.inDarkMode(context)
+  /// Header / background color on settings pages
+  Color get headerColor => (ThemeSvc.inDarkMode(context)
           ? context.theme.colorScheme.surface
           : context.theme.colorScheme.surfaceContainerHighest)
       .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 20 : 255);
 
-  Color get _tileColor => (ThemeSvc.inDarkMode(context)
+  /// Tile / foreground color on settings pages
+  Color get tileColor => (ThemeSvc.inDarkMode(context)
           ? context.theme.colorScheme.surfaceContainerHighest
           : context.theme.colorScheme.surface)
       .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 100 : 255);
-
-  /// Header / background color on settings pages
-  Color get headerColor => reverseMapping ? _tileColor : _headerColor;
-
-  /// Tile / foreground color on settings pages
-  Color get tileColor => reverseMapping ? _headerColor : _tileColor;
 
   /// Whether or not to use tablet mode
   bool get showAltLayout =>
@@ -183,11 +178,26 @@ extension BuildContextThemeHelpers on BuildContext {
       (ThemeSvc.inDarkMode(this) ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.surface)
           .withAlpha(SettingsSvc.settings.windowEffect.value != WindowEffect.disabled ? 100 : 255);
 
-  bool get _reverseMapping => SettingsSvc.settings.skin.value == Skins.Material && ThemeSvc.inDarkMode(this);
+  Color get headerColor => _headerColor;
 
-  Color get headerColor => _reverseMapping ? _tileColor : _headerColor;
+  Color get tileColor => _tileColor;
 
-  Color get tileColor => _reverseMapping ? _headerColor : _tileColor;
+  /// iOS skin [ListTile] subtitle [TextStyle] — mirrors [ThemeHelpers.iosSubtitle]
+  /// for the rare `StatelessWidget` that needs it without a `CustomState`.
+  TextStyle get iosSubtitle => theme.textTheme.labelLarge!.copyWith(
+      color: ThemeSvc.inDarkMode(this)
+          ? (SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
+              ? theme.colorScheme.onSurfaceVariant
+              : theme.colorScheme.onSurface)
+          : (SettingsSvc.settings.windowEffect.value != WindowEffect.disabled
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurfaceVariant),
+      fontWeight: FontWeight.w300);
+
+  /// Material / Samsung skin [ListTile] subtitle [TextStyle] — mirrors
+  /// [ThemeHelpers.materialSubtitle].
+  TextStyle get materialSubtitle =>
+      theme.textTheme.labelLarge!.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold);
 }
 
 extension ColorSchemeHelpers on ColorScheme {
@@ -308,6 +318,26 @@ extension HSLHelpers on HSLColor {
 
 extension OppositeBrightness on Brightness {
   Brightness get opposite => this == Brightness.light ? Brightness.dark : Brightness.light;
+}
+
+extension SystemUiOverlayStyleHelpers on BuildContext {
+  SystemUiOverlayStyle systemUiOverlayStyle({
+    Color? systemNavigationBarColor,
+    Color statusBarColor = Colors.transparent,
+    Brightness? backgroundBrightness,
+    Brightness? systemNavigationBarIconBrightness,
+    Brightness? statusBarIconBrightness,
+  }) {
+    return buildSystemUiOverlayStyle(
+      surfaceColor: theme.colorScheme.surface,
+      immersiveMode: SettingsSvc.settings.immersiveMode.value,
+      systemNavigationBarColor: systemNavigationBarColor,
+      statusBarColor: statusBarColor,
+      backgroundBrightness: backgroundBrightness,
+      systemNavigationBarIconBrightness: systemNavigationBarIconBrightness,
+      statusBarIconBrightness: statusBarIconBrightness,
+    );
+  }
 }
 
 MaterialColor createMaterialColor(Color color) {

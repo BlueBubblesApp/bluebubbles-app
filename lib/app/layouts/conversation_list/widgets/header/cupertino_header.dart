@@ -76,6 +76,7 @@ class CupertinoHeader extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const CupertinoChatListFilterButton(),
                       const SizedBox(width: 10.0),
                       if (SettingsSvc.settings.moveChatCreatorToHeader.value)
                         ClipOval(

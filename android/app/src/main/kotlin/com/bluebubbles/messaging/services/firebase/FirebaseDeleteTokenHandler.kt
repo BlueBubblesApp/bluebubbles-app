@@ -1,7 +1,6 @@
 package com.bluebubbles.messaging.services.firebase
 
 import android.content.Context
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import io.flutter.plugin.common.MethodCall
@@ -17,6 +16,6 @@ class FirebaseDeleteTokenHandler: MethodCallHandlerImpl() {
         result: MethodChannel.Result,
         context: Context
     ) {
-        FirebaseCloudMessagingTokenHandler().deleteToken(result)
+        FirebaseCloudMessagingTokenHandler().deleteToken(context, result)
     }
 }

@@ -21,10 +21,24 @@ abstract class OutgoingQueueItem extends QueueItem {
     required this.chat,
     required this.message,
   });
+
+  /// Whether this item is a user-initiated retry of a previously-failed send.
+  /// Retries reuse the message's existing GUID/DB row rather than generating
+  /// a new one — see `OutgoingMessageHandler._buildOutgoingMessages`.
+  bool get isRetry;
+
+  /// Whether notifications should be cleared for this chat when the message
+  /// is added. Not applicable to attachments (always `true`, unused).
+  bool get clearNotificationsIfFromMe => true;
+
+  /// The tapback/reaction type for [QueueType.sendReaction] items, `null` otherwise.
+  String? get reaction => null;
 }
 
 class OutgoingMessage extends OutgoingQueueItem {
+  @override
   bool isRetry;
+  @override
   bool clearNotificationsIfFromMe;
 
   OutgoingMessage({
@@ -38,8 +52,11 @@ class OutgoingMessage extends OutgoingQueueItem {
 
 class OutgoingReaction extends OutgoingQueueItem {
   Message selectedMessage;
+  @override
   String reaction;
+  @override
   bool isRetry;
+  @override
   bool clearNotificationsIfFromMe;
 
   OutgoingReaction({
@@ -56,6 +73,7 @@ class OutgoingReaction extends OutgoingQueueItem {
 class OutgoingAttachment extends OutgoingQueueItem {
   Attachment attachment;
   bool isAudioMessage;
+  @override
   bool isRetry;
 
   OutgoingAttachment({
@@ -69,7 +87,9 @@ class OutgoingAttachment extends OutgoingQueueItem {
 }
 
 class OutgoingMultipartMessage extends OutgoingQueueItem {
+  @override
   bool isRetry;
+  @override
   bool clearNotificationsIfFromMe;
 
   OutgoingMultipartMessage({

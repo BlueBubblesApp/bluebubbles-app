@@ -5,11 +5,26 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 
 /// A [LogOutput] that writes to [latestFileName] and rotates it once the file
-/// exceeds [maxFileSizeKB].  Rotation closes the write handle before renaming,
-/// which is required on Windows — `AdvancedFileOutput` skips this step and
-/// fails with errno 32 (ERROR_SHARING_VIOLATION).  If rename still fails (e.g.
-/// another handle is open), falls back to copy + truncate.  All rotation
-/// failures are caught silently so the logger never crashes the app.
+/// exceeds [maxFileSizeKB].
+///
+/// Every isolate that logs — main, GlobalIsolate, IncrementalSyncIsolate, the
+/// Android DartWorker — builds its own instance against the same file, so this
+/// has to tolerate concurrent writers in one process:
+///
+///  * An event is written with a single [RandomAccessFile.writeFromSync]. The
+///    handle is opened append-mode (O_APPEND), which makes one write atomic
+///    against the other isolates; writing line by line let another isolate's
+///    line land inside a multi-line event (stack traces, breadcrumb dumps).
+///  * Rotation is decided from the file's real length and truncates in place.
+///    A per-instance byte counter only ever saw its own writes, so every
+///    instance rotated on a wrong total; worse, renaming left the other
+///    isolates' handles on the rotated-away inode, so their lines silently
+///    vanished from the file being collected. Truncating keeps the inode stable
+///    for every writer — and since nothing is renamed while handles are open,
+///    it also sidesteps the Windows errno 32 (ERROR_SHARING_VIOLATION) that the
+///    close-before-rename dance existed to work around.
+///
+/// All failures are swallowed so the logger never crashes the app.
 class RotatingFileOutput extends LogOutput {
   final String dirPath;
   final String latestFileName;
@@ -20,7 +35,6 @@ class RotatingFileOutput extends LogOutput {
 
   File? _file;
   RandomAccessFile? _raf;
-  int _bytesWritten = 0;
 
   RotatingFileOutput({
     required this.dirPath,
@@ -30,6 +44,8 @@ class RotatingFileOutput extends LogOutput {
     this.encoding = utf8,
     required this.fileNameFormatter,
   });
+
+  int get _maxBytes => maxFileSizeKB * 1024;
 
   @override
   Future<void> init() async {
@@ -42,7 +58,6 @@ class RotatingFileOutput extends LogOutput {
       if (!_file!.existsSync()) {
         _file!.createSync(recursive: true);
       }
-      _bytesWritten = _file!.lengthSync();
       _raf = _file!.openSync(mode: FileMode.append);
     } catch (_) {
       _raf = null;
@@ -52,53 +67,25 @@ class RotatingFileOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
     final raf = _raf;
-    if (raf == null) return;
+    if (raf == null || event.lines.isEmpty) return;
     try {
-      for (final line in event.lines) {
-        final bytes = encoding.encode('$line\n');
-        raf.writeFromSync(bytes);
-        _bytesWritten += bytes.length;
-      }
+      // One write per event — never one per line. See the class doc.
+      raf.writeFromSync(encoding.encode('${event.lines.join('\n')}\n'));
+      if (raf.lengthSync() >= _maxBytes) _rotate(raf);
     } catch (_) {}
-    if (_bytesWritten >= maxFileSizeKB * 1024) {
-      _rotate();
-    }
   }
 
-  void _rotate() {
+  void _rotate(RandomAccessFile raf) {
     try {
-      // Close our write handle before renaming — required on Windows.
-      _raf?.closeSync();
-      _raf = null;
+      // Another isolate may have rotated between our write and this check.
+      if (raf.lengthSync() < _maxBytes) return;
 
-      final rotatedPath = join(dirPath, fileNameFormatter(DateTime.now()));
-      bool rotated = false;
-
-      try {
-        _file!.renameSync(rotatedPath);
-        rotated = true;
-      } catch (_) {
-        // Rename failed (another process holds the file open). Try copy + truncate.
-        try {
-          _file!.copySync(rotatedPath);
-          rotated = true;
-        } catch (_) {}
-
-        if (rotated) {
-          try {
-            _file!.writeAsBytesSync([], mode: FileMode.write, flush: true);
-          } catch (_) {
-            // Truncate failed — old content stays. New writes will still append,
-            // causing some duplication with the rotated copy, but no log loss.
-          }
-        }
-      }
-
-      _openFile();
-      if (rotated) _pruneOldFiles();
+      _file!.copySync(join(dirPath, fileNameFormatter(DateTime.now())));
+      raf.truncateSync(0);
+      _pruneOldFiles();
     } catch (_) {
-      // Rotation must never crash the logger.
-      if (_raf == null) _openFile();
+      // Rotation must never crash the logger. The file stays oversized and we
+      // retry on the next event, which is strictly better than losing lines.
     }
   }
 

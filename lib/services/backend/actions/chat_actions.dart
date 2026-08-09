@@ -249,13 +249,44 @@ class ChatActions {
         inputMessage.text ??= existing.text;
       }
 
-      // Prepare handle reference (find or create handle, but don't set relation yet)
+      // Prepare handle reference (find or create handle, but don't set relation yet).
+      // From-me messages have no sender handle to resolve: handleId 0 is Apple's
+      // "from me" marker (and fromMap defaults absent handleIds to 0). Attempting
+      // resolution for them logged bogus "could not resolve handle" errors and, in
+      // 1:1 chats, mislinked the RECIPIENT's handle as the message's sender.
+      final bool hasSenderHandle = !(inputMessage.isFromMe ?? false) && (inputMessage.handleId ?? 0) != 0;
       Handle? handleToLink;
-      if (inputMessage.handle == null && inputMessage.handleId != null) {
+      if (inputMessage.handle == null && hasSenderHandle) {
         final handleQuery = handleBox.query(Handle_.originalROWID.equals(inputMessage.handleId!)).build();
         handleQuery.limit = 1;
         handleToLink = handleQuery.findFirst();
         handleQuery.close();
+
+        // Fallback for brand-new chats: bulkSyncChats may have persisted the
+        // sender handle without an originalROWID (older payloads). If the chat
+        // is a 1:1, we can safely link the message to the sole non-me participant.
+        if (handleToLink == null) {
+          final chatQuery = chatBox.query(Chat_.guid.equals(inputChat.guid)).build();
+          chatQuery.limit = 1;
+          final dbChat = chatQuery.findFirst();
+          chatQuery.close();
+          final chatHandles = dbChat?.handles.toList() ?? const <Handle>[];
+          if (chatHandles.length == 1) {
+            handleToLink = chatHandles.first;
+            Logger.warn(
+              'Linked message ${inputMessage.guid} to sole participant ${handleToLink.address} '
+              '(originalROWID lookup for handleId=${inputMessage.handleId} failed)',
+              tag: 'ChatActions',
+            );
+          } else {
+            Logger.error(
+              'Could not resolve handle for message ${inputMessage.guid} in chat ${inputChat.guid} '
+              '(handleId=${inputMessage.handleId}, chatHandles=${chatHandles.length}) — '
+              'notification will be skipped',
+              tag: 'ChatActions',
+            );
+          }
+        }
       } else if (inputMessage.handle != null) {
         // Try and find existing handle by unique address
         final existingHandleQuery = handleBox

@@ -7,7 +7,6 @@ import android.app.Service
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -17,8 +16,10 @@ import androidx.core.app.ServiceCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
+import com.bluebubbles.messaging.utils.PersistentLog
 import io.socket.client.IO
 import io.socket.client.Socket
+import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
 import org.json.JSONObject
@@ -60,7 +61,7 @@ class SocketIOForegroundService : Service() {
     private val reconnectRunnable = Runnable {
         reconnectScheduled = false
         if (!isBeingDestroyed && mSocket != null && !mSocket!!.connected()) {
-            Log.e(Constants.logTag, "Attempting reconnection now...")
+            PersistentLog.e(applicationContext, Constants.logTag, "Attempting reconnection now...")
             mSocket!!.connect()
         }
     }
@@ -81,14 +82,14 @@ class SocketIOForegroundService : Service() {
 
         try {
             val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
-            val serverUrl: String? = prefs.getString("flutter.serverAddress", null)
-            val keepAppAlive: Boolean = prefs.getBoolean("flutter.keepAppAlive", false)
-            val storedPassword: String? = prefs.getString("flutter.guidAuthKey", null)
-            val customHeaders: String? = prefs.getString("flutter.customHeaders", null)
+            val serverUrl: String? = prefs.getString("serverAddress", null)
+            val keepAppAlive: Boolean = prefs.getBoolean("keepAppAlive", false)
+            val storedPassword: String? = prefs.getString("guidAuthKey", null)
+            val customHeaders: String? = prefs.getString("customHeaders", null)
 
             // Make sure the user has enabled the service
             if (!keepAppAlive) {
-                Log.d(Constants.logTag, DISABLED)
+                PersistentLog.d(applicationContext, Constants.logTag, DISABLED)
                 
                 // Stop the service
                 stopSelf()
@@ -119,7 +120,8 @@ class SocketIOForegroundService : Service() {
             }
 
             // Initialize socket.io connection
-            Log.d(Constants.logTag, "Foreground Service is connecting to: $serverUrl")
+            // Do not log serverUrl — it may contain credentials in query parameters.
+            PersistentLog.d(applicationContext, Constants.logTag, "Foreground Service is connecting to server")
 
             val opts = IO.Options()
 
@@ -133,12 +135,25 @@ class SocketIOForegroundService : Service() {
                 }
                 opts.extraHeaders = extraHeaders
             } catch (e: Exception) {
-                Log.e(Constants.logTag, "Failed to parse custom headers JSON string!", e)
+                PersistentLog.e(applicationContext, Constants.logTag, "Failed to parse custom headers JSON string!", e)
             }
 
-            // Only log the headers if they are not null or empty
+            // Only log the header keys (not values) to avoid leaking auth tokens or API keys.
             if (opts.extraHeaders != null && opts.extraHeaders.isNotEmpty()) {
-                Log.d(Constants.logTag, "Socket.io Custom headers: ${opts.extraHeaders}")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io Custom header keys: ${opts.extraHeaders!!.keys.joinToString(", ")}")
+            }
+
+            // Validate the URL before passing it to socket.io.
+            // socket.io's Java URLDecoder throws IllegalArgumentException in a background
+            // thread if the URL contains bare % characters (e.g. %s%), which crashes the
+            // process and permanently prevents the app from launching (GitHub issue #2845).
+            try {
+                URI(serverUrl)
+            } catch (e: URISyntaxException) {
+                // Do not log serverUrl — it may contain credentials in query parameters.
+                PersistentLog.e(applicationContext, Constants.logTag, "Server URL stored in preferences is malformed", e)
+                updateNotification(MISSING_SERVER_URL)
+                return
             }
 
             val encodedPw = URLEncoder.encode(storedPassword, "UTF-8")
@@ -147,36 +162,36 @@ class SocketIOForegroundService : Service() {
             mSocket!!.connect()
 
             mSocket!!.on(Socket.EVENT_CONNECT) {
-                Log.d(Constants.logTag, "Socket.io connected to your server!")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io connected to your server!")
                 updateNotification(CONNECTED)
             }
 
             mSocket!!.on(Socket.EVENT_CONNECT_ERROR) { args ->
                 val error = args[0] as Exception
-                Log.d(Constants.logTag, "Socket.io failed to connect to $serverUrl! Error: ${error.message}")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io failed to connect to server! Error: ${error.message}")
                 updateNotification(CONNECT_FAILED + error.message)
             }
 
             // with reason, details args
             mSocket!!.on(Socket.EVENT_DISCONNECT) { args ->
                 val reason = args[0] as String
-                Log.d(Constants.logTag, "Socket.io disconnected from server! Reason: $reason")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io disconnected from server! Reason: $reason")
                 if (isBeingDestroyed) {
                     return@on
                 }
 
                 val details = args.getOrNull(1)
-                Log.d(Constants.logTag, "Socket.io disconnected from server! Reason: $reason, Details: $details")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io disconnected from server! Reason: $reason, Details: $details")
                 updateNotification(DISCONNECTED + reason)
             }
 
             mSocket!!.on("reconnecting") {
-                Log.d(Constants.logTag, "Socket.io is reconnecting to your server...")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io is reconnecting to your server...")
                 updateNotification(RECONNECTING)
             }
 
             mSocket!!.on("reconnect_failed") {
-                Log.d(Constants.logTag, "Socket.io failed to reconnect to your server...")
+                PersistentLog.d(applicationContext, Constants.logTag, "Socket.io failed to reconnect to your server...")
                 updateNotification(RECONNECT_FAILED)
             }
 
@@ -185,12 +200,12 @@ class SocketIOForegroundService : Service() {
                     val event = args[0] as String
                     val message = args[1] as JSONObject
 
-                    Log.d(Constants.logTag, "Received event of type $event from Socket.io...")
+                    PersistentLog.d(applicationContext, Constants.logTag, "Received event of type $event from Socket.io...")
                     if (!eventBlacklist.contains(event)) {
-                        Log.d(Constants.logTag, "Received event of type $event from Socket.io...")
+                        PersistentLog.d(applicationContext, Constants.logTag, "Received event of type $event from Socket.io...")
                         DartWorkManager.createWorker(applicationContext, "socket-event", hashMapOf("event" to event, "data" to message.toString())) {}
                     } else {
-                        Log.d(Constants.logTag, "Ignored event of type $event from Socket.io...")
+                        PersistentLog.d(applicationContext, Constants.logTag, "Ignored event of type $event from Socket.io...")
                     }
                 }
             }
@@ -199,7 +214,7 @@ class SocketIOForegroundService : Service() {
                 return
             }
 
-            Log.e(Constants.logTag, "Socket.io unhandled error occurred!", e)
+            PersistentLog.e(applicationContext, Constants.logTag, "Socket.io unhandled error occurred!", e)
             updateNotification(UNHANDLED_ERROR)
 
             if (hasStarted) {
@@ -211,13 +226,13 @@ class SocketIOForegroundService : Service() {
     private fun tryReconnect() {
         // Guard: if a reconnect is already pending, don't schedule another one.
         if (reconnectScheduled) {
-            Log.d(Constants.logTag, "Reconnect already scheduled, skipping.")
+            PersistentLog.d(applicationContext, Constants.logTag, "Reconnect already scheduled, skipping.")
             return
         }
         val socket = mSocket
         if (socket != null && !socket.connected()) {
             reconnectScheduled = true
-            Log.e(Constants.logTag, "Scheduling reconnection in 30 seconds...")
+            PersistentLog.e(applicationContext, Constants.logTag, "Scheduling reconnection in 30 seconds...")
             reconnectHandler.postDelayed(reconnectRunnable, 30_000L)
         }
     }
@@ -287,7 +302,7 @@ class SocketIOForegroundService : Service() {
         hasStarted = false
         reconnectScheduled = false
         reconnectHandler.removeCallbacks(reconnectRunnable)
-        Log.d(Constants.logTag, "BlueBubbles Service is being destroyed!")
+        PersistentLog.d(applicationContext, Constants.logTag, "BlueBubbles Service is being destroyed!")
 
         super.onDestroy()
         mSocket?.disconnect()

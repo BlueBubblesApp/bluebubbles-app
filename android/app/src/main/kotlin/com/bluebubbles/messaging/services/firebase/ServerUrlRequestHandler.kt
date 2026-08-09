@@ -1,9 +1,9 @@
 package com.bluebubbles.messaging.services.firebase
 
 import android.content.Context
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.DataSnapshot
@@ -41,7 +41,7 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
         }
 
         // Get server URL via Firestore or Realtime DB
-        Log.d(Constants.logTag, "Fetching server URL...")
+        PersistentLog.d(context, Constants.logTag, "Fetching server URL...")
         if (firebaseApp.options.databaseUrl == null) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
@@ -52,7 +52,8 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
                     submitData(serverUrl, result)
                 } catch (e: FirebaseFirestoreException) {
                     if (e.code == FirebaseFirestoreException.Code.UNAVAILABLE) {
-                        Log.w(
+                        PersistentLog.w(
+                            context,
                             Constants.logTag,
                             "Firestore is offline/unavailable while fetching server URL. Keeping existing URL.",
                             e,
@@ -60,7 +61,8 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
                         result.error(offlineCode, "Firestore unavailable/offline", null)
                         return@launch
                     }
-                    Log.e(
+                    PersistentLog.e(
+                        context,
                         Constants.logTag,
                         "Failed to fetch Firestore server URL (${e.code}): ${e.message}",
                         e,
@@ -69,7 +71,8 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
                 } catch (e: Exception) {
                     val rootCause = e.cause
                     if (rootCause is FirebaseFirestoreException && rootCause.code == FirebaseFirestoreException.Code.UNAVAILABLE) {
-                        Log.w(
+                        PersistentLog.w(
+                            context,
                             Constants.logTag,
                             "Firestore is offline/unavailable while fetching server URL. Keeping existing URL.",
                             e,
@@ -77,7 +80,7 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
                         result.error(offlineCode, "Firestore unavailable/offline", null)
                         return@launch
                     }
-                    Log.e(Constants.logTag, "Failed to fetch Firestore server URL", e)
+                    PersistentLog.e(context, Constants.logTag, "Failed to fetch Firestore server URL", e)
                     result.error("500", "Failed to get server URL from Firestore", null)
                 }
             }
@@ -90,7 +93,7 @@ class ServerUrlRequestHandler: MethodCallHandlerImpl() {
                     val serverUrl: String? = serverUrlTask.await().getValue(String::class.java)
                     submitData(serverUrl, result)
                 } catch (e: Exception) {
-                    Log.e(Constants.logTag, "Failed to fetch Realtime DB server URL", e)
+                    PersistentLog.e(context, Constants.logTag, "Failed to fetch Realtime DB server URL", e)
                     result.error("500", "Failed to get server URL from Realtime Database", null)
                 }
             }

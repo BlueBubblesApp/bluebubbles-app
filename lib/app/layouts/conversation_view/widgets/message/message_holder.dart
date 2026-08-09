@@ -52,7 +52,10 @@ class MessageHolder extends StatefulWidget {
   State<StatefulWidget> createState() => _MessageHolderState();
 }
 
-class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
+class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveClientMixin, ThemeHelpers {
+  @override
+  bool get wantKeepAlive => true;
+
   MessageState get controller => widget.ms;
 
   Message get message => controller.message;
@@ -124,6 +127,15 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
     }
   }
 
+  @override
+  void didUpdateWidget(MessageHolder old) {
+    super.didUpdateWidget(old);
+    if (!widget.isReplyThread) {
+      controller.oldMessage = widget.oldMessage;
+      controller.newMessage = widget.newMessage;
+    }
+  }
+
   void completeEdit(String newEdit, int part) async {
     widget.cvController.editing.removeWhere((e2) => e2.message.guid == message.guid! && e2.part.part == part);
     if (newEdit.isNotEmpty && newEdit != controller.parts.firstWhere((element) => element.part == part).text) {
@@ -146,19 +158,24 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
 
       final groupedAttachments = <Attachment>[...current.attachments];
       final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
+      int lastPart = current.part;
       int j = i + 1;
       while (j < parts.length) {
         final next = parts[j];
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
+        lastPart = next.part;
         j++;
       }
 
       if (groupedAttachments.length > 1) {
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
-          part: current.part,
+          // Use the last grouped raw part index (not the first) so downstream
+          // "is this the last part of the message" checks (e.g. avatar, tail)
+          // still resolve correctly against controller.parts.length.
+          part: lastPart,
           shouldRedact: current.shouldRedact,
           mentions: const [],
           edits: const [],
@@ -175,6 +192,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     controller.built = true;
 
     // Cache settings values to avoid repeated observable reads
@@ -387,7 +405,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                       Padding(
                                         padding:
                                             (showAvatar || alwaysShowAvatars) && !(message.isGroupEvent || e.isUnsent)
-                                                ? EdgeInsets.only(left: 35.0 * avatarScale)
+                                                ? EdgeInsets.only(
+                                                    left: 35.0 * avatarScale + (e.isMediaGallery ? 12.0 : 0.0))
                                                 : EdgeInsets.zero,
                                         child: DecoratedBox(
                                           decoration: iOS &&
@@ -485,6 +504,7 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
                                                                       e.part == controller.parts.length - 1,
+                                                                  messageState: controller,
                                                                   child: MessagePopupHolder(
                                                                     key: keys.length > index ? keys[index] : null,
                                                                     controller: controller,
@@ -496,7 +516,9 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                             e.part, () => ValueNotifier(0))
                                                                         : null,
                                                                     child: SwipeToReplyWrapper(
-                                                                      enabled: canSwipeToReply && !isEditing(e.part),
+                                                                      enabled: canSwipeToReply &&
+                                                                          !isEditing(e.part) &&
+                                                                          !(iOS && e.isMediaGallery),
                                                                       partIndex: index,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
@@ -544,8 +566,8 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,
-                                                                              showTail: message
-                                                                                      .showTail(newerMessage) &&
+                                                                              showTail: !e.isPkPass &&
+                                                                                  message.showTail(newerMessage) &&
                                                                                   e.part == controller.parts.length - 1,
                                                                               connectLower: iOS
                                                                                   ? false
@@ -565,13 +587,17 @@ class _MessageHolderState extends State<MessageHolder> with ThemeHelpers {
                                                                   ),
                                                                 ),
                                                                 // Reactions are in the inner Stack so they are always
-                                                                // positioned relative to the bubble, not the sticker
-                                                                MessageReactions(
-                                                                  messageParts: messageParts,
-                                                                  part: e,
-                                                                  chatGuid: chat.guid,
-                                                                  reactionsForPart: reactionsForPart,
-                                                                ),
+                                                                // positioned relative to the bubble, not the sticker.
+                                                                // Gallery parts show a reaction per attachment instead
+                                                                // (inside MessageImageGallery), since a tapback can be
+                                                                // associated with just one image/video in the gallery.
+                                                                if (!(iOS && e.isMediaGallery))
+                                                                  MessageReactions(
+                                                                    messageParts: messageParts,
+                                                                    part: e,
+                                                                    chatGuid: chat.guid,
+                                                                    reactionsForPart: reactionsForPart,
+                                                                  ),
                                                               ],
                                                             ),
                                                             // Stickers are in the outer Stack so they contribute to

@@ -71,7 +71,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
     // Each card is wrapped in its own Obx so only the affected card rebuilds
     // when a single observable changes. No LayoutBuilder needed — Row+Expanded
     // gives each card exactly half the available width without a layout pass.
-    final items = ConnectionPanelHelpersMixin.kStatusItems;
+    const items = ConnectionPanelHelpersMixin.kStatusItems;
     final rows = <Widget>[];
     for (int i = 0; i < items.length; i += 2) {
       rows.add(Row(
@@ -84,36 +84,27 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
     return Column(mainAxisSize: MainAxisSize.min, children: rows);
   }
 
-  Widget _buildInfoRow(InfoItemConfig item) {
+  Widget _buildInfoTile(InfoItemConfig item) {
     final value = resolveValue(controller, item.key);
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: tileColor,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: item.containerColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(item.materialIcon, color: Colors.white, size: 20),
-        ),
-        title: Text(item.label, style: context.theme.textTheme.bodyMedium),
-        trailing: Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.textTheme.bodyMedium!.copyWith(
-            color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        onTap: item.onTap != null ? () => item.onTap!(context, controller) : null,
+    return SettingsTile(
+      backgroundColor: tileColor,
+      minVerticalPadding: 20,
+      leading: SettingsLeadingIcon(
+        iosIcon: item.iosIcon,
+        materialIcon: item.materialIcon,
+        containerColor: item.containerColor,
       ),
+      title: item.label,
+      trailing: Text(
+        value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.theme.textTheme.bodyMedium!.copyWith(
+          color: context.theme.colorScheme.outline.withValues(alpha: 0.85),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: item.onTap != null ? () => item.onTap!(context, controller) : null,
     );
   }
 
@@ -170,9 +161,15 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
                   ],
                 ),
               ),
-              ...ConnectionPanelHelpersMixin.kInfoItems.map((item) {
-                return Obx(() => _buildInfoRow(item));
-              }),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
+                  for (int i = 0; i < ConnectionPanelHelpersMixin.kInfoItems.length; i++) ...[
+                    Obx(() => _buildInfoTile(ConnectionPanelHelpersMixin.kInfoItems[i])),
+                    if (i < ConnectionPanelHelpersMixin.kInfoItems.length - 1) const SettingsDivider(),
+                  ],
+                ],
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 12, 15, 4),

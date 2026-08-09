@@ -7,7 +7,7 @@
 1. `pages/welcome/welcome_page.dart`
 2. `pages/setup_checks/mac_setup_check.dart` — macOS permission checks
 3. `pages/setup_checks/battery_optimization.dart` — Android battery optimization warning
-4. `pages/contacts/request_contacts.dart` — contact permission request
+4. `pages/permissions/request_permissions.dart` — contact/notification permission request
 5. `pages/sync/qr_code_scanner.dart` OR `pages/sync/server_credentials.dart` — connect to server
 6. `pages/sync/sync_settings.dart` — configure what to sync
 7. `pages/sync/sync_progress.dart` — live progress during initial sync

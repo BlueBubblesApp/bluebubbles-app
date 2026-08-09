@@ -1,9 +1,9 @@
 package com.bluebubbles.messaging.services.firebase
 
 import android.content.Context
-import android.util.Log
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.PersistentLog
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,7 +31,7 @@ class UpdateNextRestartHandler: MethodCallHandlerImpl() {
         }
 
         val nextRestart: Long = call.argument("value")!!
-        Log.d(Constants.logTag, "Updating next restart value...")
+        PersistentLog.d(context, Constants.logTag, "Updating next restart value...")
         // null databaseUrl indicates Cloud Firestore setup
         if (firebaseApp.options.databaseUrl == null) {
             val newData = hashMapOf("nextRestart" to nextRestart)

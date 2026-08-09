@@ -35,6 +35,10 @@ class MessageState extends StatefulController {
   /// [MessagesService.notifyAttachmentSendComplete].  Used by
   /// [_syncAttachmentStates] to promote the correct state key when the real
   /// GUID arrives.  Entries are consumed (removed) after promotion.
+  ///
+  /// Keyed by **real** GUID with the temp GUID as the value: the lookup site
+  /// only has the real GUID in hand (it's iterating the updated attachments),
+  /// and needs the temp key the state is currently filed under.
   final Map<String, String> _pendingGuidPromotions = {};
 
   /// Observable fields for granular UI updates
@@ -87,6 +91,13 @@ class MessageState extends StatefulController {
   /// Increment to trigger a re-fetch of embedded media in this message.
   /// [EmbeddedMedia] registers `ever()` on this key to call getContent().
   final RxInt embeddedMediaRefreshKey = 0.obs;
+
+  /// Increment to trigger a refresh of web-loaded preview content (URL
+  /// previews, Photos app previews, etc). [UrlPreview] and [PhotoSlideshow]
+  /// register `ever()` on this key to clear their cached preview image and
+  /// re-fetch. The "refresh preview" popup action clears `message.metadata`
+  /// and bumps this key - each widget owns how it re-fetches its own content.
+  final RxInt previewRefreshKey = 0.obs;
 
   // ========== Widget Controller Fields (merged from MessageWidgetController) ==========
 
@@ -235,7 +246,7 @@ class MessageState extends StatefulController {
   /// Called by [MessagesService.notifyAttachmentSendComplete] so the promotion
   /// is deterministic even when the message has multiple attachments.
   void registerGuidPromotion(String tempGuid, String realGuid) {
-    _pendingGuidPromotions[tempGuid] = realGuid;
+    _pendingGuidPromotions[realGuid] = tempGuid;
   }
 
   /// Returns the [AttachmentState] for [attachmentGuid], creating one backed
@@ -273,7 +284,7 @@ class MessageState extends StatefulController {
       // Promote the state for this attachment if it has a pending temp -> real promotion registered.
       String? tempKey = _pendingGuidPromotions[guid];
       if (tempKey != null && attachmentStates.containsKey(tempKey)) {
-        _pendingGuidPromotions.remove(tempKey);
+        _pendingGuidPromotions.remove(guid);
         final promoted = attachmentStates.remove(tempKey)!;
         promoted.updateFromAttachment(attachment);
         promoted.updateGuidInternal(guid);
