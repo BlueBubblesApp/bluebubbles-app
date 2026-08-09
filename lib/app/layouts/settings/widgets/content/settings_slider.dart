@@ -1,5 +1,4 @@
 import 'package:bluebubbles/app/components/bb_slider.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

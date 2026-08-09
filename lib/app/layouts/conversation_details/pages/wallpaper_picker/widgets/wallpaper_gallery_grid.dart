@@ -1,6 +1,5 @@
 import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -54,67 +53,86 @@ class _GalleryTile extends StatelessWidget {
 
   const _GalleryTile({required this.definition, required this.selected, required this.onTap});
 
+  static final _radius = BorderRadius.circular(20);
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? context.theme.colorScheme.primary : Colors.transparent,
-            width: 3,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ColoredBox(
-              color: context.theme.colorScheme.surfaceContainerHighest,
-              child: DynamicWallpaperView(wallpaperId: definition.id, config: null),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
-                  ),
+      child: Stack(
+        children: [
+          // Content is clipped by its own `ClipRRect` rather than relying on
+          // the border `Container`'s `clipBehavior` -- a `BoxDecoration`
+          // border paints *behind* its child, so a child filling the full
+          // box (as this one does) painted on top would cover the border
+          // right up to its edge, leaving the rounded corners looking
+          // unclipped/square. Painting the border as a separate layer on top
+          // avoids that entirely.
+          ClipRRect(
+            borderRadius: _radius,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(
+                  color: context.theme.colorScheme.surfaceContainerHighest,
+                  child: DynamicWallpaperView(wallpaperId: definition.id, config: null),
                 ),
-                child: Row(
-                  children: [
-                    Icon(definition.icon, size: 16, color: Colors.white),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        definition.displayName,
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
                       ),
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        Icon(definition.icon, size: 16, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            definition.displayName,
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (selected)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: context.theme.colorScheme.primary, shape: BoxShape.circle),
+                      child: Icon(Icons.check, size: 14, color: context.theme.colorScheme.onPrimary),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  borderRadius: _radius,
+                  border: Border.all(
+                    color: selected ? context.theme.colorScheme.primary : Colors.transparent,
+                    width: 3,
+                  ),
                 ),
               ),
             ),
-            if (selected)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: context.theme.colorScheme.primary, shape: BoxShape.circle),
-                  child: Icon(Icons.check, size: 14, color: context.theme.colorScheme.onPrimary),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

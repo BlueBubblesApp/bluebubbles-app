@@ -63,7 +63,7 @@ class StorageAnalyzerController extends GetxController {
     // priority in the UI while `stage != null`, but clearing this too means
     // a failed refresh can't fall through and silently re-show stale numbers.
     result.value = null;
-    progress.value = StorageAnalysisProgress(
+    progress.value = const StorageAnalysisProgress(
       stage: StorageAnalysisStage.indexing,
       processed: 0,
       total: 0,

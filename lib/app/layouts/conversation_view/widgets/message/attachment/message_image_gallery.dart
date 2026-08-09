@@ -217,7 +217,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           }
           stream.removeListener(listener);
         },
-        onError: (dynamic _, StackTrace? __) {
+        onError: (dynamic _, StackTrace? _) {
           if (!completer.isCompleted) completer.complete(null);
           stream.removeListener(listener);
         },

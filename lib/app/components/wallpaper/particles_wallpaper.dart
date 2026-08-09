@@ -3,11 +3,23 @@ import 'dart:math';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_definition.dart';
 import 'package:bluebubbles/app/components/wallpaper/theme_wallpaper_palette.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:particles_flutter/engine.dart';
 import 'package:particles_flutter/interactions.dart';
 import 'package:particles_flutter/physics.dart';
+
+/// Per-preset density/speed defaults and slider ranges -- see
+/// [ParticlesWallpaperDefinition._presetTuning].
+typedef _PresetTuning = ({
+  double count,
+  double countMin,
+  double countMax,
+  int countDivisions,
+  double speed,
+  double speedMin,
+  double speedMax,
+});
 
 /// Dynamic wallpaper backed by the `particles_flutter` package. Only exposes
 /// a curated set of presets built from the package's documented example
@@ -25,23 +37,37 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
     ConfigChoiceOption(value: 'snow', label: 'Snow', icon: Icons.ac_unit_rounded),
   ];
 
-  /// Sensible density/speed starting points per preset — applied whenever
-  /// the preset selector changes so switching effects looks right away
-  /// rather than inheriting an unrelated preset's tuning. Speed defaults to
-  /// a fairly slow 0.5x — a wallpaper should read as calm background motion,
-  /// not something competing for attention with the conversation.
-  static const _presetDefaults = <String, Map<String, double>>{
-    'starfield': {'count': 120, 'speed': 0.5},
-    'web': {'count': 70, 'speed': 0.5},
-    'nebula': {'count': 10, 'speed': 0.5},
-    'ghosts': {'count': 45, 'speed': 0.5},
-    'pulse': {'count': 55, 'speed': 0.5},
-    'snow': {'count': 100, 'speed': 0.5},
+  /// Density/speed starting points *and* slider ranges, per preset --
+  /// applied whenever the preset selector changes so switching effects
+  /// looks right away rather than inheriting an unrelated preset's tuning,
+  /// and so e.g. "Web" (small, thin dots) can cap out at a much lower count
+  /// than "Snow" (wants density) without either one having to share a
+  /// single compromise range. Speed defaults to a fairly slow 0.5x -- a
+  /// wallpaper should read as calm background motion, not something
+  /// competing for attention with the conversation.
+  static const _presetTuning = <String, _PresetTuning>{
+    'starfield':
+        (count: 120, countMin: 10, countMax: 200, countDivisions: 38, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
+    'web': (count: 25, countMin: 10, countMax: 50, countDivisions: 40, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
+    'nebula': (count: 10, countMin: 5, countMax: 30, countDivisions: 25, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
+    'ghosts': (count: 45, countMin: 10, countMax: 90, countDivisions: 40, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
+    'pulse': (count: 55, countMin: 10, countMax: 110, countDivisions: 40, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
+    'snow': (count: 100, countMin: 10, countMax: 200, countDivisions: 38, speed: 0.5, speedMin: 0.2, speedMax: 2.0),
   };
 
   static String _preset(Map<String, dynamic> c) => (c['preset'] as String?) ?? 'starfield';
-  static int _count(Map<String, dynamic> c) => ((c['count'] as num?)?.toInt() ?? 100).clamp(10, 200).toInt();
-  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
+  static _PresetTuning _tuningFor(String preset) => _presetTuning[preset] ?? _presetTuning['starfield']!;
+
+  static int _count(Map<String, dynamic> c) {
+    final tuning = _tuningFor(_preset(c));
+    return ((c['count'] as num?)?.toInt() ?? tuning.count.toInt())
+        .clamp(tuning.countMin.toInt(), tuning.countMax.toInt());
+  }
+
+  static double _speed(Map<String, dynamic> c) {
+    final tuning = _tuningFor(_preset(c));
+    return ((c['speed'] as num?)?.toDouble() ?? tuning.speed).clamp(tuning.speedMin, tuning.speedMax);
+  }
 
   static List<Color> _colors(Map<String, dynamic> c, List<Color> fallbackPalette) {
     final raw = (c['colors'] as List?)?.whereType<num>().map((e) => Color(e.toInt())).toList();
@@ -53,10 +79,11 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
   Map<String, dynamic> defaultConfig(BuildContext context, {required bool isIMessage}) {
     final palette = ThemeWallpaperPalette.fromContext(context, isIMessage: isIMessage);
     final colors = palette.take(2).toList();
+    final tuning = _tuningFor('starfield');
     return {
       'preset': 'starfield',
-      'count': 120.0,
-      'speed': 0.5,
+      'count': tuning.count,
+      'speed': tuning.speed,
       'colors': (colors.isEmpty ? [Colors.white] : colors).map((c) => c.toARGB32()).toList(),
     };
   }
@@ -74,6 +101,7 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
   ) {
     final palette = ThemeWallpaperPalette.fromContext(context, isIMessage: true);
     final selected = _colors(config, palette).take(3).toList();
+    final tuning = _tuningFor(_preset(config));
 
     return [
       ConfigChoiceField(
@@ -81,25 +109,25 @@ class ParticlesWallpaperDefinition extends DynamicWallpaperDefinition {
         value: _preset(config),
         options: _presets,
         onChanged: (preset) {
-          final tuning = _presetDefaults[preset];
-          onConfigChanged({...config, 'preset': preset, if (tuning != null) ...tuning});
+          final next = _tuningFor(preset);
+          onConfigChanged({...config, 'preset': preset, 'count': next.count, 'speed': next.speed});
         },
       ),
       ConfigSliderField(
         label: "Density",
         value: _count(config).toDouble(),
-        min: 10,
-        max: 200,
-        divisions: 38,
+        min: tuning.countMin,
+        max: tuning.countMax,
+        divisions: tuning.countDivisions,
         format: (v) => v.toStringAsFixed(0),
         onChanged: (v) => onConfigChanged({...config, 'count': v}),
       ),
       ConfigSliderField(
         label: "Speed",
         value: _speed(config),
-        min: 0.2,
-        max: 3.0,
-        divisions: 28,
+        min: tuning.speedMin,
+        max: tuning.speedMax,
+        divisions: 18,
         format: (v) => "${v.toStringAsFixed(1)}x",
         onChanged: (v) => onConfigChanged({...config, 'speed': v}),
       ),
@@ -251,7 +279,19 @@ class _ParticlesWallpaperView extends StatelessWidget {
               constraints.maxWidth.isFinite ? constraints.maxWidth : 300,
               constraints.maxHeight.isFinite ? constraints.maxHeight : 300,
             );
-            return ParticlesWallpaperDefinition._build(preset, count, speed, colors, size);
+            // `Particles` only reads its `particles` list once, in
+            // `initState()` -- it never regenerates them on rebuild, so
+            // switching presets (a completely different particle profile:
+            // radius, physics, boundary behavior) would otherwise keep
+            // animating the old preset's particles under the new preset's
+            // live-updating physics, producing visibly broken motion.
+            // Keying on every field that shapes the particle set forces a
+            // fresh instance whenever any of them change.
+            final colorKey = colors.map((c) => c.toARGB32()).join(',');
+            return KeyedSubtree(
+              key: ValueKey('$preset-$count-$speed-$colorKey'),
+              child: ParticlesWallpaperDefinition._build(preset, count, speed, colors, size),
+            );
           },
         ),
       ),

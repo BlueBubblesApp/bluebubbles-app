@@ -1,5 +1,5 @@
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Material 3 Expressive slider theming — a thicker track, an oversized round
 /// thumb, and dotted stop indicators for discrete steps, built from the app's

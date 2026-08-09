@@ -1,8 +1,9 @@
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/bb_switch.dart';
+import 'package:bluebubbles/app/components/bb_vertical_select.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Renders one [ConfigField] as a row. Shared by the Cupertino and
 /// Material/Samsung-expressive config bodies — [expressive] only changes
@@ -34,20 +35,33 @@ Widget buildConfigFieldRow(BuildContext context, ConfigField field, {required bo
           ),
         ],
       ),
+    // `BBVerticalSelect` only has an iOS implementation so far -- keep the
+    // Material/Samsung expressive body on the dropdown until it grows one.
+    // The dropdown puts its own title next to the trigger on one row (via
+    // `SettingsOptions`'s built-in `title`), so it skips the shared
+    // above-the-control `label()` that the other field types use.
+    ConfigChoiceField f when expressive => SettingsOptions<String>(
+        title: f.label,
+        initial: f.value,
+        options: f.options.map((o) => o.value).toList(),
+        capitalize: false,
+        useModernMenu: true,
+        textProcessing: (v) => f.options.firstWhere((o) => o.value == v).label,
+        onChanged: (v) {
+          if (v != null) f.onChanged(v);
+        },
+      ),
     ConfigChoiceField f => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           label(),
-          SettingsOptions<String>(
-            title: "",
-            initial: f.value,
+          BBVerticalSelect<String>(
             options: f.options.map((o) => o.value).toList(),
-            capitalize: false,
-            textProcessing: (v) => f.options.firstWhere((o) => o.value == v).label,
-            onChanged: (v) {
-              if (v != null) f.onChanged(v);
-            },
+            value: f.value,
+            labelBuilder: (v) => f.options.firstWhere((o) => o.value == v).label,
+            iconBuilder: (v) => f.options.firstWhere((o) => o.value == v).icon,
+            onChanged: f.onChanged,
           ),
         ],
       ),
@@ -103,34 +117,42 @@ class _ColorSwatchPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: field.palette.map((color) {
-        final selected = field.selected.any((c) => c.toARGB32() == color.toARGB32());
-        return GestureDetector(
-          onTap: () => _tap(color),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? context.theme.colorScheme.primary : Colors.transparent,
-                width: 3,
+    // A bare `Wrap` only claims as much width as its widest run needs, so
+    // the enclosing `SettingsSection`/`M3ESection` card shrinks to fit --
+    // inconsistent with every other field's card, which fills the row.
+    // Forcing this to full width keeps the card width consistent regardless
+    // of how many rows the swatches wrap onto.
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: field.palette.map((color) {
+          final selected = field.selected.any((c) => c.toARGB32() == color.toARGB32());
+          return GestureDetector(
+            onTap: () => _tap(color),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? context.theme.colorScheme.primary : Colors.transparent,
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 3, offset: const Offset(0, 1)),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 3, offset: const Offset(0, 1)),
-              ],
+              child: selected
+                  ? Icon(Icons.check, size: 16, color: color.computeLuminance() > 0.5 ? Colors.black87 : Colors.white)
+                  : null,
             ),
-            child: selected
-                ? Icon(Icons.check, size: 16, color: color.computeLuminance() > 0.5 ? Colors.black87 : Colors.white)
-                : null,
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

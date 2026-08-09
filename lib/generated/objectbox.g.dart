@@ -1456,11 +1456,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final customThemeDarkOffset = object.customThemeDark == null
             ? null
             : fbb.writeString(object.customThemeDark!);
-        final wallpaperTypeOffset =
-            object.wallpaperType == null ? null : fbb.writeString(object.wallpaperType!);
-        final dynamicWallpaperIdOffset =
-            object.dynamicWallpaperId == null ? null : fbb.writeString(object.dynamicWallpaperId!);
-        final dynamicWallpaperConfigOffset = object.dynamicWallpaperConfig == null
+        final wallpaperTypeOffset = object.wallpaperType == null
+            ? null
+            : fbb.writeString(object.wallpaperType!);
+        final dynamicWallpaperIdOffset = object.dynamicWallpaperId == null
+            ? null
+            : fbb.writeString(object.dynamicWallpaperId!);
+        final dynamicWallpaperConfigOffset =
+            object.dynamicWallpaperConfig == null
             ? null
             : fbb.writeString(object.dynamicWallpaperConfig!);
         fbb.startTable(40);

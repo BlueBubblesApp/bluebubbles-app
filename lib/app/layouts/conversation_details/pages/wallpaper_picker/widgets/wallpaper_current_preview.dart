@@ -33,7 +33,7 @@ class WallpaperCurrentPreview extends StatelessWidget {
           File(imagePath),
           fit: BoxFit.cover,
           filterQuality: FilterQuality.high,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          errorBuilder: (_, _, _) => const SizedBox.shrink(),
         );
       } else {
         preview = Center(
@@ -44,14 +44,21 @@ class WallpaperCurrentPreview extends StatelessWidget {
         );
       }
 
+      // Empty state reads as a settings tile (same fill + corner radius as
+      // `SettingsSection` on this skin) rather than the plain preview
+      // surface used once an actual wallpaper is set.
+      final isEmpty = type == ChatWallpaperType.none;
+      final borderRadius = isEmpty && context.iOS ? BorderRadius.circular(10) : BorderRadius.circular(20);
+      final boxColor = isEmpty && context.iOS ? context.tileColor : context.theme.colorScheme.surfaceContainerHighest;
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: borderRadius,
             child: Container(
               height: 180,
-              color: context.theme.colorScheme.surfaceContainerHighest,
+              color: boxColor,
               child: preview,
             ),
           ),

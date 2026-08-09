@@ -1,16 +1,16 @@
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_definition.dart';
 import 'package:bluebubbles/app/components/wallpaper/theme_wallpaper_palette.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_moving_background/flutter_moving_background.dart';
+import 'package:get/get.dart';
 
 /// Dynamic wallpaper backed by the `flutter_moving_background` package —
 /// soft, blurred, slowly drifting circles in colors drawn from the chat's
 /// theme palette.
 class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
   MovingBackgroundWallpaperDefinition()
-      : super(id: 'moving_background', displayName: 'Moving Background', icon: Icons.gradient_rounded);
+      : super(id: 'moving_background', displayName: 'Drifting Circles', icon: Icons.gradient_rounded);
 
   static const _animationTypes = <ConfigChoiceOption>[
     ConfigChoiceOption(value: 'moveAndFade', label: 'Move & fade', icon: Icons.blur_on_rounded),
@@ -27,6 +27,7 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
   static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
   static int _circleCount(Map<String, dynamic> c) => ((c['circleCount'] as num?)?.toInt() ?? 4).clamp(2, 6).toInt();
   static double _circleSize(Map<String, dynamic> c) => (c['circleSize'] as num?)?.toDouble() ?? 1.0;
+  static double _blur(Map<String, dynamic> c) => (c['blur'] as num?)?.toDouble() ?? 2.0;
 
   static List<Color> _colors(Map<String, dynamic> c, List<Color> fallbackPalette) {
     final raw = (c['colors'] as List?)?.whereType<num>().map((e) => Color(e.toInt())).toList();
@@ -45,6 +46,9 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
       'speed': 0.5,
       'circleCount': colors.isEmpty ? 3.0 : colors.length.clamp(2, 6).toDouble(),
       'circleSize': 1.0,
+      // Almost no blur by default -- the circles read as soft shapes with a
+      // gentle edge rather than a hazy, indistinct glow.
+      'blur': 2.0,
       'colors': (colors.isEmpty ? [Colors.blue, Colors.purple] : colors).map((c) => c.toARGB32()).toList(),
     };
   }
@@ -98,6 +102,15 @@ class MovingBackgroundWallpaperDefinition extends DynamicWallpaperDefinition {
         format: (v) => "${v.toStringAsFixed(1)}x",
         onChanged: (v) => onConfigChanged({...config, 'circleSize': v}),
       ),
+      ConfigSliderField(
+        label: "Blur",
+        value: _blur(config),
+        min: 0,
+        max: 20,
+        divisions: 40,
+        format: (v) => v.toStringAsFixed(1),
+        onChanged: (v) => onConfigChanged({...config, 'blur': v}),
+      ),
       ConfigColorField(
         label: "Colors",
         palette: palette,
@@ -121,6 +134,7 @@ class _MovingBackgroundWallpaperView extends StatelessWidget {
     final circleCount = MovingBackgroundWallpaperDefinition._circleCount(config);
     final sizeMultiplier = MovingBackgroundWallpaperDefinition._circleSize(config);
     final speed = MovingBackgroundWallpaperDefinition._speed(config);
+    final blur = MovingBackgroundWallpaperDefinition._blur(config);
     final durationMs = (14000 / speed).round();
 
     return ColoredBox(
@@ -134,7 +148,7 @@ class _MovingBackgroundWallpaperView extends StatelessWidget {
           (i) => MovingCircle(
             color: colors[i % colors.length].withValues(alpha: 0.55),
             radius: (110 + i * 35) * sizeMultiplier,
-            blurSigma: 30,
+            blurSigma: blur,
           ),
         ),
       ),

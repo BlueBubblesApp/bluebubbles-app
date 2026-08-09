@@ -8,6 +8,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Config screen for a single dynamic wallpaper. Fully generic — it doesn't
 /// know anything about "wave" or "floating shapes" specifically, it just
@@ -31,16 +32,21 @@ class DynamicWallpaperConfigPage extends StatefulWidget {
 }
 
 class _DynamicWallpaperConfigPageState extends State<DynamicWallpaperConfigPage> with ThemeHelpers {
-  late Map<String, dynamic> config;
+  Map<String, dynamic>? _config;
   bool _applying = false;
 
+  Map<String, dynamic> get config => _config!;
+
+  // `defaultConfig` reads `context.theme`, which depends on the inherited
+  // `Theme` widget — not available yet in `initState()`, so it's computed
+  // here instead (called after `initState()`, with the widget tree mounted).
   @override
-  void initState() {
-    super.initState();
-    config = widget.initialConfig ?? widget.definition.defaultConfig(context, isIMessage: widget.chat.isIMessage);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _config ??= widget.initialConfig ?? widget.definition.defaultConfig(context, isIMessage: widget.chat.isIMessage);
   }
 
-  void _onConfigChanged(Map<String, dynamic> next) => setState(() => config = next);
+  void _onConfigChanged(Map<String, dynamic> next) => setState(() => _config = next);
 
   Future<void> _apply() async {
     if (_applying) return;
@@ -54,6 +60,8 @@ class _DynamicWallpaperConfigPageState extends State<DynamicWallpaperConfigPage>
     final fields = widget.definition.buildConfigFields(context, config, _onConfigChanged);
 
     return BBScaffold(
+      extendBodyBehindAppBar: false,
+      backgroundColor: context.headerColor,
       appBar: BBAppBar(
         titleText: widget.definition.displayName,
         leading: buildBackButton(context),
@@ -72,7 +80,7 @@ class _DynamicWallpaperConfigPageState extends State<DynamicWallpaperConfigPage>
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: SizedBox(

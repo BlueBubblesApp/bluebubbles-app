@@ -50,7 +50,7 @@ class BBSlider extends StatelessWidget {
         min: min,
         max: max,
         divisions: divisions,
-        activeColor: activeColor ?? context.theme.colorScheme.primary,
+        activeColor: activeColor ?? Theme.of(context).colorScheme.primary,
         thumbColor: thumbColor ?? CupertinoColors.white,
       );
     }

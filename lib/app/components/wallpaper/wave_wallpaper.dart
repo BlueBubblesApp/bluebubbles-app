@@ -1,8 +1,8 @@
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_definition.dart';
 import 'package:bluebubbles/app/components/wallpaper/theme_wallpaper_palette.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:wave/wave.dart';
 
 /// Dynamic wallpaper backed by the `wave` package — a stack of animated,
@@ -12,7 +12,8 @@ class WaveWallpaperDefinition extends DynamicWallpaperDefinition {
 
   static double _amplitude(Map<String, dynamic> c) => (c['amplitude'] as num?)?.toDouble() ?? 20;
   static double _frequency(Map<String, dynamic> c) => (c['frequency'] as num?)?.toDouble() ?? 1.6;
-  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.5;
+  static double _speed(Map<String, dynamic> c) => (c['speed'] as num?)?.toDouble() ?? 0.2;
+  static double _opacity(Map<String, dynamic> c) => (c['opacity'] as num?)?.toDouble() ?? 0.5;
   static int _layerCount(Map<String, dynamic> c) => ((c['layerCount'] as num?)?.toInt() ?? 3).clamp(2, 4).toInt();
 
   static List<Color> _colors(Map<String, dynamic> c, List<Color> fallbackPalette) {
@@ -30,7 +31,8 @@ class WaveWallpaperDefinition extends DynamicWallpaperDefinition {
       'frequency': 1.6,
       // Fairly slow by default -- a wallpaper should read as calm background
       // motion, not something competing for attention with the conversation.
-      'speed': 0.5,
+      'speed': 0.2,
+      'opacity': 0.5,
       'layerCount': colors.length.clamp(2, 4).toDouble(),
       'colors': colors.map((c) => c.toARGB32()).toList(),
     };
@@ -73,11 +75,20 @@ class WaveWallpaperDefinition extends DynamicWallpaperDefinition {
       ConfigSliderField(
         label: "Speed",
         value: _speed(config),
-        min: 0.2,
-        max: 3.0,
-        divisions: 28,
+        min: 0.1,
+        max: 0.5,
+        divisions: 4,
         format: (v) => "${v.toStringAsFixed(1)}x",
         onChanged: (v) => onConfigChanged({...config, 'speed': v}),
+      ),
+      ConfigSliderField(
+        label: "Opacity",
+        value: _opacity(config),
+        min: 0.2,
+        max: 1.0,
+        divisions: 16,
+        format: (v) => "${(v * 100).round()}%",
+        onChanged: (v) => onConfigChanged({...config, 'opacity': v}),
       ),
       ConfigSliderField(
         label: "Wave layers",
@@ -110,8 +121,10 @@ class _WaveWallpaperView extends StatelessWidget {
     final colors = WaveWallpaperDefinition._colors(config, palette);
     final layerCount = WaveWallpaperDefinition._layerCount(config);
     final speed = WaveWallpaperDefinition._speed(config);
+    final opacity = WaveWallpaperDefinition._opacity(config);
 
-    final layerColors = List.generate(layerCount, (i) => colors[i % colors.length]);
+    final layerColors =
+        List.generate(layerCount, (i) => colors[i % colors.length].withValues(alpha: opacity));
     final durations = List.generate(layerCount, (i) => ((9000 - i * 1500) / speed).round());
     final heightPercentages = List.generate(layerCount, (i) => 0.16 + i * 0.07);
 

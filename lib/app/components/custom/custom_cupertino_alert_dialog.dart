@@ -457,16 +457,10 @@ class _CupertinoDialogRenderElement extends RenderObjectElement {
 // section is given whatever height remains.
 class _RenderCupertinoDialog extends RenderBox {
   _RenderCupertinoDialog({
-    RenderBox? contentSection,
-    RenderBox? actionsSection,
-    double dividerThickness = 0.0,
-    bool isInAccessibilityMode = false,
+    this._dividerThickness = 0.0,
+    this._isInAccessibilityMode = false,
     required Color dividerColor,
-  })  : _contentSection = contentSection,
-        _actionsSection = actionsSection,
-        _dividerThickness = dividerThickness,
-        _isInAccessibilityMode = isInAccessibilityMode,
-        _dividerPaint = Paint()
+  })  : _contentSection = null, _actionsSection = null, _dividerPaint = Paint()
           ..color = dividerColor
           ..style = PaintingStyle.fill;
 
@@ -1211,11 +1205,10 @@ class CupertinoDialogAction extends StatelessWidget {
 class _CupertinoDialogActionsRenderWidget extends MultiChildRenderObjectWidget {
   const _CupertinoDialogActionsRenderWidget({
     required List<Widget> actionButtons,
-    double dividerThickness = 0.0,
+    this._dividerThickness = 0.0,
     required this.dialogColor,
     required this.pressedDialogColor,
-  })  : _dividerThickness = dividerThickness,
-        super(children: actionButtons);
+  })  : super(children: actionButtons);
 
   final double _dividerThickness;
   final Color dialogColor;
@@ -1283,13 +1276,12 @@ class _RenderCupertinoDialogActions extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, MultiChildLayoutParentData> {
   _RenderCupertinoDialogActions({
     List<RenderBox>? children,
-    required double dialogWidth,
-    double dividerThickness = 0.0,
+    required this._dialogWidth,
+    this._dividerThickness = 0.0,
     required Color dialogColor,
     required Color dialogPressedColor,
     required Color dividerColor,
-  })  : _dialogWidth = dialogWidth,
-        _buttonBackgroundPaint = Paint()
+  })  : _buttonBackgroundPaint = Paint()
           ..color = dialogColor
           ..style = PaintingStyle.fill,
         _pressedButtonBackgroundPaint = Paint()
@@ -1297,8 +1289,7 @@ class _RenderCupertinoDialogActions extends RenderBox
           ..style = PaintingStyle.fill,
         _dividerPaint = Paint()
           ..color = dividerColor
-          ..style = PaintingStyle.fill,
-        _dividerThickness = dividerThickness {
+          ..style = PaintingStyle.fill {
     addAll(children);
   }
 

@@ -537,7 +537,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                                 closeActiveChat: false,
                                 // only used in non-tablet mode context
                                 customRoute: PageRouteBuilder(
-                                  pageBuilder: (_, __, ___) => TitleBarWrapper(
+                                  pageBuilder: (_, _, _) => TitleBarWrapper(
                                       child: ConversationView(
                                     chat: existingChat,
                                     customService: messagesService,
@@ -620,7 +620,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                                   ConversationView(chat: newChat),
                                   (route) => route.isFirst,
                                   customRoute: PageRouteBuilder(
-                                    pageBuilder: (_, __, ___) => TitleBarWrapper(
+                                    pageBuilder: (_, _, _) => TitleBarWrapper(
                                       child: ConversationView(
                                         chat: newChat,
                                         fromChatCreator: true,

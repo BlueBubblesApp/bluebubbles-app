@@ -14,14 +14,15 @@ class WallpaperExpressiveBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
       children: [
-        WallpaperCurrentPreview(chatState: controller.chatState, onRemove: controller.removeWallpaper),
-        const SizedBox(height: 16),
-        const M3ESectionHeader(label: "Choose an image", padding: EdgeInsets.only(left: 4, bottom: 8)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: WallpaperCurrentPreview(chatState: controller.chatState, onRemove: controller.removeWallpaper),
+        ),
+        const M3ESectionHeader(label: "Choose an image"),
         M3ESection(
           backgroundColor: context.tileColor,
-          margin: EdgeInsets.zero,
           children: [
             M3EListTile(
               icon: Icons.photo_outlined,
@@ -31,8 +32,7 @@ class WallpaperExpressiveBody extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        const M3ESectionHeader(label: "Dynamic wallpapers", padding: EdgeInsets.only(left: 4, bottom: 8)),
+        const M3ESectionHeader(label: "Dynamic wallpapers"),
         WallpaperGalleryGrid(
           chatState: controller.chatState,
           onSelect: (definition) => controller.openDynamicConfig(context, definition),

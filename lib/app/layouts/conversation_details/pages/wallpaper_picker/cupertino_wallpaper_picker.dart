@@ -17,12 +17,16 @@ class CupertinoWallpaperPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BBScaffold(
+      extendBodyBehindAppBar: false,
+      backgroundColor: context.headerColor,
       appBar: BBAppBar(titleText: "Wallpaper", leading: buildBackButton(context)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
         children: [
-          WallpaperCurrentPreview(chatState: controller.chatState, onRemove: controller.removeWallpaper),
-          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: WallpaperCurrentPreview(chatState: controller.chatState, onRemove: controller.removeWallpaper),
+          ),
           SettingsHeader(
             iosSubtitle: context.iosSubtitle,
             materialSubtitle: context.materialSubtitle,
@@ -43,13 +47,11 @@ class CupertinoWallpaperPicker extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
           SettingsHeader(
             iosSubtitle: context.iosSubtitle,
             materialSubtitle: context.materialSubtitle,
             text: "Dynamic Wallpapers",
           ),
-          const SizedBox(height: 8),
           WallpaperGalleryGrid(
             chatState: controller.chatState,
             onSelect: (definition) => controller.openDynamicConfig(context, definition),

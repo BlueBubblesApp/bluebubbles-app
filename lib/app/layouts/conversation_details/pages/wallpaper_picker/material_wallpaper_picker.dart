@@ -14,6 +14,8 @@ class MaterialWallpaperPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BBScaffold(
+      extendBodyBehindAppBar: false,
+      backgroundColor: context.headerColor,
       appBar: BBAppBar(titleText: "Wallpaper", leading: buildBackButton(context)),
       body: WallpaperExpressiveBody(controller: controller),
     );

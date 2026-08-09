@@ -70,7 +70,7 @@ class SetupPageTemplate extends StatelessWidget {
                     subtitleWrapper: subtitleWrapper,
                     contentWrapper: contentWrapper,
                   ),
-                  if (customMiddle != null) customMiddle!,
+                  ?customMiddle,
                   if (buttonWrapper != null) buttonWrapper!.call(buttons),
                   if (buttonWrapper == null) buttons,
                 ],
@@ -141,13 +141,13 @@ class PageContent extends StatelessWidget {
         );
     final content = Column(
       children: [
-        if (aboveTitle != null) aboveTitle!,
+        ?aboveTitle,
         if (aboveTitle != null) const SizedBox(height: 10),
         if (titleWrapper != null) titleWrapper!.call(titleW),
         if (titleWrapper == null) titleW,
         if (subtitleWrapper != null) subtitleWrapper!.call(subtitleW),
         if (subtitleWrapper == null) subtitleW,
-        if (belowSubtitle != null) belowSubtitle!,
+        ?belowSubtitle,
       ],
     );
     if (contentWrapper != null) {

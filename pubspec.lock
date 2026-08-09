@@ -854,6 +854,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.1"
+  floating_animation:
+    dependency: "direct main"
+    description:
+      name: floating_animation
+      sha256: "090747c3aba98133b61a7cbb804fb6e2c157331a8df9a3898396921ca2dcca25"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -1077,6 +1085,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.7"
+  flutter_moving_background:
+    dependency: "direct main"
+    description:
+      name: flutter_moving_background
+      sha256: bcb6a5360a579e8415000622b2dd4215db8c8a8ebe26e616648cf2769e05366c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   flutter_native_splash:
     dependency: "direct main"
     description:
@@ -2124,10 +2140,10 @@ packages:
     dependency: "direct main"
     description:
       name: particles_flutter
-      sha256: "74057830f0526902cc36325b5feefbbeda88b5f8f9958cf8f24ec98eeeab36c2"
+      sha256: "9d592a19327bb4e1a8e865e45e42ef71c3788f6dd3ac95bd93b34a6ef1e0e98e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "3.2.0"
   passkit:
     dependency: "direct main"
     description:
@@ -3326,6 +3342,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  wave:
+    dependency: "direct main"
+    description:
+      name: wave
+      sha256: "3a22d3122de63888e70c88920bdf686e360e5ec3e3bdb037d4da228d68d3556e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5"
   web:
     dependency: transitive
     description:

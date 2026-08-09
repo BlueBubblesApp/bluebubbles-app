@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Derives a small set of candidate colors for dynamic wallpaper config
 /// screens from the chat's currently active theme, so a wave/floating

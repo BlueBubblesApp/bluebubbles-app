@@ -1,9 +1,9 @@
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_definition.dart';
 import 'package:bluebubbles/app/components/wallpaper/theme_wallpaper_palette.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:floating_animation/floating_animation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Dynamic wallpaper backed by the `floating_animation` package — a stream
 /// of slowly floating shapes/icons in a color drawn from the chat's theme.
@@ -24,10 +24,10 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
   ];
 
   static String _shape(Map<String, dynamic> c) => (c['shape'] as String?) ?? 'circle';
-  static int _maxShapes(Map<String, dynamic> c) => (c['maxShapes'] as num?)?.toInt() ?? 60;
+  static int _maxShapes(Map<String, dynamic> c) => (c['maxShapes'] as num?)?.toInt() ?? 25;
   static double _speed(Map<String, dynamic> c) => (c['speedMultiplier'] as num?)?.toDouble() ?? 0.5;
   static double _size(Map<String, dynamic> c) => (c['sizeMultiplier'] as num?)?.toDouble() ?? 1.0;
-  static double _spawnRate(Map<String, dynamic> c) => (c['spawnRate'] as num?)?.toDouble() ?? 10.0;
+  static double _spawnRate(Map<String, dynamic> c) => (c['spawnRate'] as num?)?.toDouble() ?? 5.0;
   static bool _rotation(Map<String, dynamic> c) => (c['enableRotation'] as bool?) ?? false;
   static bool _pulse(Map<String, dynamic> c) => (c['enablePulse'] as bool?) ?? false;
 
@@ -47,13 +47,13 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
     final palette = ThemeWallpaperPalette.fromContext(context, isIMessage: isIMessage);
     return {
       'shape': 'circle',
-      'maxShapes': 60.0,
+      'maxShapes': 25.0,
       // Fairly slow by default -- a wallpaper should read as calm background
       // motion, not something competing for attention with the conversation.
       'speedMultiplier': 0.5,
       'sizeMultiplier': 1.0,
       'direction': 'up',
-      'spawnRate': 10.0,
+      'spawnRate': 5.0,
       'enableRotation': false,
       'enablePulse': true,
       'colors': [palette.isNotEmpty ? palette.first.toARGB32() : Colors.blue.toARGB32()],
@@ -91,8 +91,8 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
         label: "Count",
         value: _maxShapes(config).toDouble(),
         min: 5,
-        max: 150,
-        divisions: 29,
+        max: 50,
+        divisions: 45,
         format: (v) => v.toStringAsFixed(0),
         onChanged: (v) => onConfigChanged({...config, 'maxShapes': v}),
       ),
@@ -100,17 +100,17 @@ class FloatingWallpaperDefinition extends DynamicWallpaperDefinition {
         label: "Spawn rate",
         value: _spawnRate(config),
         min: 1,
-        max: 30,
-        divisions: 29,
+        max: 20,
+        divisions: 19,
         format: (v) => v.toStringAsFixed(0),
         onChanged: (v) => onConfigChanged({...config, 'spawnRate': v}),
       ),
       ConfigSliderField(
         label: "Speed",
         value: _speed(config),
-        min: 0.2,
-        max: 3.0,
-        divisions: 28,
+        min: 0.1,
+        max: 1.0,
+        divisions: 9,
         format: (v) => "${v.toStringAsFixed(1)}x",
         onChanged: (v) => onConfigChanged({...config, 'speedMultiplier': v}),
       ),
@@ -154,19 +154,29 @@ class _FloatingWallpaperView extends StatelessWidget {
     final palette = ThemeWallpaperPalette.fromContext(context, isIMessage: true);
     final shape = FloatingWallpaperDefinition._shape(config);
     final color = FloatingWallpaperDefinition._color(config, palette);
+    final speed = FloatingWallpaperDefinition._speed(config);
+    final size = FloatingWallpaperDefinition._size(config);
+    final rotation = FloatingWallpaperDefinition._rotation(config);
+    final pulse = FloatingWallpaperDefinition._pulse(config);
 
     return ColoredBox(
       color: context.theme.colorScheme.surface,
       child: FloatingAnimation(
+        // `FloatingAnimation` only reads speed/size/rotation/pulse once, in
+        // its own `initState()` -- it never re-reads them on rebuild, so
+        // those sliders would otherwise silently do nothing after the first
+        // frame. Keying on them forces a fresh instance (and a fresh
+        // `initState()`) whenever one changes.
+        key: ValueKey('$speed-$size-$rotation-$pulse'),
         maxShapes: FloatingWallpaperDefinition._maxShapes(config),
-        speedMultiplier: FloatingWallpaperDefinition._speed(config),
-        sizeMultiplier: FloatingWallpaperDefinition._size(config),
+        speedMultiplier: speed,
+        sizeMultiplier: size,
         selectedShape: shape,
         shapeColors: {shape: color},
         direction: FloatingWallpaperDefinition._direction(config),
         spawnRate: FloatingWallpaperDefinition._spawnRate(config),
-        enableRotation: FloatingWallpaperDefinition._rotation(config),
-        enablePulse: FloatingWallpaperDefinition._pulse(config),
+        enableRotation: rotation,
+        enablePulse: pulse,
       ),
     );
   }

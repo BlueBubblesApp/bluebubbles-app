@@ -20,8 +20,8 @@ class WallpaperPickerController extends GetxController {
   /// Opens the existing image-crop flow. `BackgroundCrop` persists the
   /// result itself (via `ChatsSvc.setChatCustomBackgroundPath`), which also
   /// flips `wallpaperType` to "image" — nothing further to do here.
-  Future<void> pickImage(BuildContext context) async {
-    await NavigationSvc.push(context, BackgroundCrop(chat: chat));
+  void pickImage(BuildContext context) {
+    NavigationSvc.push(context, BackgroundCrop(chat: chat));
   }
 
   Future<void> removeWallpaper() async {
@@ -31,10 +31,10 @@ class WallpaperPickerController extends GetxController {
   /// Opens the config screen for [definition] — pre-filled with the chat's
   /// current config when it's already the active dynamic wallpaper, or the
   /// definition's defaults otherwise.
-  Future<void> openDynamicConfig(BuildContext context, DynamicWallpaperDefinition definition) async {
+  void openDynamicConfig(BuildContext context, DynamicWallpaperDefinition definition) {
     final state = chatState;
     final isCurrent = state?.wallpaperType.value == ChatWallpaperType.dynamic && state?.dynamicWallpaperId.value == definition.id;
-    await NavigationSvc.push(
+    NavigationSvc.push(
       context,
       DynamicWallpaperConfigPage(
         chat: chat,
