@@ -12,7 +12,12 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
+typedef _CellBuilder = Widget Function(int index, double width, double height, int? moreCount);
+
 /// Google Messages–style grid for multi-attachment media collections.
+///
+/// Layouts are composed from three shapes on a shared 3-column unit:
+/// banner, hero+stack, and square row (see [_buildCellLayout] recipes).
 class CollectionGroupGrid extends StatelessWidget {
   const CollectionGroupGrid({
     super.key,
@@ -26,10 +31,9 @@ class CollectionGroupGrid extends StatelessWidget {
   final bool isEditing;
 
   static const double _gap = 2.0;
-  static const double _maxGridSizeFactor = 0.62;
+  static const double _maxGridSizeFactor = 0.75; // temporary: match bubble width
   static const double _maxGridWidth = 280.0;
-  static const double _topRowAspect = 4 / 3;
-  static const double _bottomRowHeightRatio = 0.45;
+  static const double _bannerAspect = 4 / 3;
 
   /// Matches [TailClipper] connected corners when a bubble sits flush to a neighbor.
   static const double _connectedCornerRadius = 5.0;
@@ -69,7 +73,7 @@ class CollectionGroupGrid extends StatelessWidget {
     required bool tightenBottom,
   }) {
     final outer = Radius.circular(cardRadius);
-    final connected = const Radius.circular(_connectedCornerRadius);
+    const connected = Radius.circular(_connectedCornerRadius);
     return BorderRadius.only(
       topLeft: (tightenTop && !isFromMe) ? connected : outer,
       topRight: (tightenTop && isFromMe) ? connected : outer,
@@ -78,13 +82,51 @@ class CollectionGroupGrid extends StatelessWidget {
     );
   }
 
-  /// One column of the 5+ bottom row (3 columns with two gaps).
   double _columnWidth(double gridWidth) => (gridWidth - 2 * _gap) / 3;
 
+  double _heroStackHeight(double gridWidth, int stackCount) {
+    final col = _columnWidth(gridWidth);
+    return stackCount * col + (stackCount - 1) * _gap;
+  }
+
+  double _squareRowCellSize(double gridWidth, int cellCount) =>
+      (gridWidth - (cellCount - 1) * _gap) / cellCount;
+
+  /// Full-width banner height: always [HeroStack](2) × [_bannerAspect].
+  double _bannerHeight(double gridWidth) => _heroStackHeight(gridWidth, 2) * _bannerAspect;
+
+  /// Visible tile count before `+N` overflow (collections are 2+).
+  int _visibleTileCount(int count) => switch (count) {
+        2 || 3 || 4 || 5 || 6 => count,
+        _ => 7,
+      };
+
+  double _gridHeight(int count, double gridWidth) {
+    final banner = _bannerHeight(gridWidth);
+    return switch (count) {
+      2 => gridWidth / _bannerAspect,
+      3 => banner + _gap + _squareRowCellSize(gridWidth, 2),
+      4 => banner + _gap + _heroStackHeight(gridWidth, 2),
+      5 => banner + _gap + _heroStackHeight(gridWidth, 3),
+      6 => banner +
+          _gap +
+          _heroStackHeight(gridWidth, 2) +
+          _gap +
+          _squareRowCellSize(gridWidth, 2),
+      // 7+: Banner + HeroStack(3) + SquareRow(2)
+      _ => banner +
+          _gap +
+          _heroStackHeight(gridWidth, 3) +
+          _gap +
+          _squareRowCellSize(gridWidth, 2),
+    };
+  }
+
   void _openSeeMoreFullscreen(BuildContext context) {
-    // Interim: open the fullscreen carousel on the covered 5th tile (index 4),
+    // Interim: open the fullscreen carousel on the covered overflow tile,
     // not the PR6 overview page.
-    final attachment = _attachments[4];
+    final overflowIndex = _visibleTileCount(_attachments.length) - 1;
+    final attachment = _attachments[overflowIndex];
     cvController.focusNode.unfocus();
     cvController.subjectFocusNode.unfocus();
     Navigator.of(context).push(
@@ -118,7 +160,8 @@ class CollectionGroupGrid extends StatelessWidget {
       _maxGridWidth,
     );
     final gridHeight = _gridHeight(count, gridWidth);
-    final moreCount = count > 5 ? count - 5 : null;
+    final visibleCount = _visibleTileCount(count);
+    final moreCount = count > visibleCount ? count - visibleCount : null;
 
     // Media layer: outer clip owns the silhouette; cells fill square.
     final imageLayer = _wrapGridCard(
@@ -177,7 +220,7 @@ class CollectionGroupGrid extends StatelessWidget {
         gridWidth: gridWidth,
         moreCount: moreCount,
         cellBuilder: (index, width, height, cellMoreCount) {
-          // Overflow "+N" cell is a see-more control, not attachment 4; hide its tapbacks.
+          // Overflow "+N" cell is a see-more control; hide its tapbacks.
           if (cellMoreCount != null && cellMoreCount > 0) {
             return const SizedBox.shrink();
           }
@@ -211,33 +254,14 @@ class CollectionGroupGrid extends StatelessWidget {
     );
   }
 
-  double _gridHeight(int count, double gridWidth) {
-    if (count == 2) return gridWidth;
-    if (count == 3) {
-      return gridWidth / _topRowAspect + _gap + gridWidth * _bottomRowHeightRatio;
-    }
-    if (count == 4) {
-      final cellSize = (gridWidth - _gap) / 2;
-      return 2 * cellSize + _gap;
-    }
-    final stackCount = min(count, 5) - 2;
-    final colWidth = _columnWidth(gridWidth);
-    final bottomHeight = stackCount * colWidth + (stackCount - 1) * _gap;
-    return gridWidth / _topRowAspect + _gap + bottomHeight;
-  }
-
   Widget _buildCellLayout({
     required int count,
     required double gridWidth,
-    required Widget Function(int index, double width, double height, int? moreCount) cellBuilder,
+    required _CellBuilder cellBuilder,
     Widget? Function(int index, double width, double height, int? moreCount)? moreOverlayBuilder,
     int? moreCount,
   }) {
-    Widget gap({bool horizontal = false}) {
-      return horizontal ? const SizedBox(width: _gap) : const SizedBox(height: _gap, width: double.infinity);
-    }
-
-    Widget buildCell(int index, double width, double height, {int? cellMoreCount}) {
+    Widget cell(int index, double width, double height, {int? cellMoreCount}) {
       final overlay = moreOverlayBuilder?.call(index, width, height, cellMoreCount);
       return SizedBox(
         width: width,
@@ -253,98 +277,109 @@ class CollectionGroupGrid extends StatelessWidget {
       );
     }
 
-    if (count == 2) {
-      final cellWidth = (gridWidth - _gap) / 2;
-      final cellHeight = gridWidth;
+    Widget hGap() => const SizedBox(width: _gap);
+    Widget vGap() => const SizedBox(height: _gap, width: double.infinity);
+
+    // Full-width banner; height is always HeroStack(2) × [_bannerAspect].
+    Widget banner(int index, {int? cellMoreCount}) {
+      return cell(index, gridWidth, _bannerHeight(gridWidth), cellMoreCount: cellMoreCount);
+    }
+
+    // Left tall hero (2 cols) + right column of [stackCount] 1:1 squares.
+    Widget heroStack(int startIndex, int stackCount, {int? moreOnLast}) {
+      final col = _columnWidth(gridWidth);
+      final heroWidth = 2 * col + _gap;
+      final h = _heroStackHeight(gridWidth, stackCount);
+      final lastIndex = startIndex + stackCount;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          cell(startIndex, heroWidth, h, cellMoreCount: startIndex == lastIndex ? moreOnLast : null),
+          hGap(),
+          SizedBox(
+            width: col,
+            height: h,
+            child: Column(
+              children: [
+                for (int i = 0; i < stackCount; i++) ...[
+                  if (i > 0) vGap(),
+                  cell(
+                    startIndex + 1 + i,
+                    col,
+                    col,
+                    cellMoreCount: startIndex + 1 + i == lastIndex ? moreOnLast : null,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Full-width row of equal cells. [rowHeight] null → square cells.
+    Widget squareRow(int startIndex, int cellCount, {double? rowHeight, int? moreOnLast}) {
+      final cellWidth = _squareRowCellSize(gridWidth, cellCount);
+      final cellHeight = rowHeight ?? cellWidth;
+      final lastIndex = startIndex + cellCount - 1;
       return Row(
         children: [
-          buildCell(0, cellWidth, cellHeight),
-          gap(horizontal: true),
-          buildCell(1, cellWidth, cellHeight),
-        ],
-      );
-    }
-
-    if (count == 3) {
-      final topHeight = gridWidth / _topRowAspect;
-      final bottomHeight = gridWidth * _bottomRowHeightRatio;
-      final bottomCellWidth = (gridWidth - _gap) / 2;
-      return Column(
-        children: [
-          buildCell(0, gridWidth, topHeight),
-          gap(),
-          Row(
-            children: [
-              buildCell(1, bottomCellWidth, bottomHeight),
-              gap(horizontal: true),
-              buildCell(2, bottomCellWidth, bottomHeight),
-            ],
-          ),
-        ],
-      );
-    }
-
-    if (count == 4) {
-      final cellSize = (gridWidth - _gap) / 2;
-      return Column(
-        children: [
-          Row(
-            children: [
-              buildCell(0, cellSize, cellSize),
-              gap(horizontal: true),
-              buildCell(1, cellSize, cellSize),
-            ],
-          ),
-          gap(),
-          Row(
-            children: [
-              buildCell(2, cellSize, cellSize),
-              gap(horizontal: true),
-              buildCell(3, cellSize, cellSize),
-            ],
-          ),
-        ],
-      );
-    }
-
-    // 5+: hero top + 3-column bottom (item 1 spans 2 cols; stack is 1:1 squares).
-    final visibleCount = min(count, 5);
-    final stackCount = visibleCount - 2;
-    final colWidth = _columnWidth(gridWidth);
-    final bottomHeight = stackCount * colWidth + (stackCount - 1) * _gap;
-    final spanWidth = 2 * colWidth + _gap;
-    final topHeight = gridWidth / _topRowAspect;
-
-    return Column(
-      children: [
-        buildCell(0, gridWidth, topHeight),
-        gap(),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            buildCell(1, spanWidth, bottomHeight),
-            gap(horizontal: true),
-            SizedBox(
-              width: colWidth,
-              height: bottomHeight,
-              child: Column(
-                children: [
-                  for (int i = 2; i < visibleCount; i++) ...[
-                    if (i > 2) gap(),
-                    buildCell(
-                      i,
-                      colWidth,
-                      colWidth,
-                      cellMoreCount: i == 4 ? moreCount : null,
-                    ),
-                  ],
-                ],
-              ),
+          for (int i = 0; i < cellCount; i++) ...[
+            if (i > 0) hGap(),
+            cell(
+              startIndex + i,
+              cellWidth,
+              cellHeight,
+              cellMoreCount: startIndex + i == lastIndex ? moreOnLast : null,
             ),
           ],
+        ],
+      );
+    }
+
+    return switch (count) {
+      2 => squareRow(0, 2, rowHeight: gridWidth / _bannerAspect),
+      3 => Column(
+          children: [
+            banner(0),
+            vGap(),
+            squareRow(1, 2),
+          ],
         ),
-      ],
-    );
+      4 => Column(
+          children: [
+            banner(0),
+            vGap(),
+            heroStack(1, 2),
+          ],
+        ),
+      5 => Column(
+          children: [
+            banner(0),
+            vGap(),
+            heroStack(1, 3),
+          ],
+        ),
+      6 => Column(
+          children: [
+            banner(0),
+            vGap(),
+            heroStack(1, 2),
+            vGap(),
+            squareRow(4, 2),
+          ],
+        ),
+      // 7+: Banner + HeroStack(3) + SquareRow(2); +N on last tile when count > 7.
+      _ => Column(
+          children: [
+            banner(0),
+            vGap(),
+            heroStack(1, 3),
+            vGap(),
+            squareRow(5, 2, moreOnLast: moreCount),
+          ],
+        ),
+    };
   }
 
   Widget _wrapGridCard(
