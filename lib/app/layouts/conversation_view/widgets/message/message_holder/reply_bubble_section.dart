@@ -68,7 +68,7 @@ class ReplyBubbleSection extends StatelessWidget {
       );
     } else {
       // Android/Material style - separate decorative box
-      final hasBackground = ChatStateScope.maybeOf(context)?.customBackgroundPath.value?.isNotEmpty == true;
+      final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
       return Padding(
         padding: showAvatar || alwaysShowAvatars
             ? const EdgeInsets.only(left: 45.0, right: 10)

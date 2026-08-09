@@ -144,7 +144,7 @@ class DownloadingContent extends StatelessWidget {
       // 10pt gives the tag some visual breathing room from the curved corner
       // instead of sitting exactly on the clip boundary.
       final basePadding = isInGallery ? 10.0 : (hasReservedSize ? 8.0 : 0);
-      final topPadding = hasReservedSize ? 14.0 : 4.0;
+      final topPadding = hasReservedSize ? 14.0 : isInGallery ? 10.0 : 4.0;
       final tailInset = showTail ? (hasReservedSize ? 14.0 : 0.0) : 0.0;
 
       return Stack(

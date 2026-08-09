@@ -67,7 +67,7 @@ class MethodChannelActions {
   Future<void> deleteNotification({required int notificationId, String? tag}) async {
     await service.invokeMethod('delete-notification', {
       'notification_id': notificationId,
-      if (tag != null) 'tag': tag,
+      'tag': ?tag,
     });
   }
 

@@ -289,7 +289,7 @@ class _CupertinoCreateScheduledMessageState extends State<CupertinoCreateSchedul
                     padding: const EdgeInsets.all(15),
                     child: ValueListenableBuilder(
                       valueListenable: messageController,
-                      builder: (context, _, __) {
+                      builder: (context, _, _) {
                         if (error != null) return Text(error, style: const TextStyle(color: Colors.red));
                         final chat = ChatsSvc.findChatByGuid(selectedChat.value);
                         return Text(

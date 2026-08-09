@@ -20,7 +20,7 @@ class MessageSender extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 25).add(const EdgeInsets.only(bottom: 3)),
       // Obx makes the sender name reactive: updates when contact data syncs.
       child: Obx(() {
-        final hasCustomBackground = chatState?.customBackgroundPath.value != null;
+        final hasCustomBackground = chatState?.hasCustomWallpaper ?? false;
         final text = Text(
           state.senderDisplayName,
           style: context.theme.textTheme.labelMedium!.copyWith(

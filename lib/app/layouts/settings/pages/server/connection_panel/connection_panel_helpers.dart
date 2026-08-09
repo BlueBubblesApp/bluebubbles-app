@@ -593,7 +593,7 @@ mixin ConnectionPanelHelpersMixin {
                   await SettingsSvc.settings.saveOneAsync('useLocalIpv6');
                   NetworkTasks.detectLocalhost(createSnackbar: true);
                 },
-                leading: SettingsLeadingIcon(
+                leading: const SettingsLeadingIcon(
                   iosIcon: CupertinoIcons.globe,
                   materialIcon: Icons.network_check_outlined,
                   containerColor: Colors.blue,
@@ -628,7 +628,7 @@ mixin ConnectionPanelHelpersMixin {
                           ? "Tap to fetch logs"
                           : "Disconnected, cannot fetch logs"),
                   backgroundColor: tileColor,
-                  leading: SettingsLeadingIcon(
+                  leading: const SettingsLeadingIcon(
                     iosIcon: CupertinoIcons.doc_plaintext,
                     materialIcon: Icons.article,
                     containerColor: Colors.lightBlue,

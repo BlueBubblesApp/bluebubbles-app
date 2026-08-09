@@ -155,7 +155,7 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                       containerColor: accountIcon(account).color,
                     ),
                     title: accountLabel(account),
-                    subtitle: "${accountSubtitle(account)} • ${accountCount(account)} contacts",
+                    subtitle: "${accountCount(account)} contacts",
                     trailing: controller.isAccountSelected(account)
                         ? const Icon(CupertinoIcons.check_mark, color: Colors.blueAccent)
                         : null,

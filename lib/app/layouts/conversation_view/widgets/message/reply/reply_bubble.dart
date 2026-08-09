@@ -59,7 +59,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   @override
   Widget build(BuildContext context) {
     final chatGuid = widget.cvController.chat.guid;
-    final hasBackground = ChatStateScope.maybeOf(context)?.customBackgroundPath.value?.isNotEmpty == true;
+    final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
     if (!iOS) {
       final messageText = controller.text.value;
       String text = Message(text: messageText, subject: controller.subject.value).getNotificationText();

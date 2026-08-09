@@ -76,6 +76,7 @@ List<Widget> buildSettingItemList({
               size: 50,
             ),
             trailing: const NextButton(),
+            minVerticalPadding: 20,
           ),
         ],
       ),
@@ -681,12 +682,12 @@ List<Widget> buildSettingItemList({
         ),
 
         // About & Links Section
-        SearchableSettingItem(
+        const SearchableSettingItem(
           title: "Leave Us a Review", // Title to search
           child: SettingsTile(
             title: "Leave Us a Review",
             onTap: SettingsItemsActions.openStoreReview,
-            leading: const SettingsLeadingIcon(
+            leading: SettingsLeadingIcon(
               iosIcon: CupertinoIcons.star_fill,
               materialIcon: Icons.star,
               containerColor: Colors.blue,

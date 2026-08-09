@@ -164,10 +164,10 @@ class Share {
                           url!,
                           gaplessPlayback: true,
                           filterQuality: FilterQuality.none,
-                          errorBuilder: (_, __, ___) {
+                          errorBuilder: (_, _, _) {
                             return const SizedBox.shrink();
                           },
-                          frameBuilder: (_, child, frame, __) {
+                          frameBuilder: (_, child, frame, _) {
                             if (frame == null) {
                               return Center(
                                 heightFactor: 1,

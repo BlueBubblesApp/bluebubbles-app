@@ -65,6 +65,7 @@ dependencies:
   ffmpeg_kit_flutter_new_min: ^3.6.2
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
+  floating_animation: ^1.1.0
   firebase_dart:
     git:
       url: https://github.com/appsup-dart/firebase_dart.git
@@ -82,6 +83,7 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   flutter_map_marker_popup: ^8.1.0
   flutter_markdown_plus: ^1.0.7
+  flutter_moving_background: ^0.4.0
   flutter_slidable: ^4.0.1
   flutter_sliding_up_panel: ^2.1.1
   flutter_staggered_grid_view: ^0.7.0
@@ -133,7 +135,7 @@ dependencies:
   on_exit: ^1.0.0
   open_filex: ^4.7.0
   package_info_plus: ^9.0.1
-  particles_flutter: ^2.0.2
+  particles_flutter: ^3.2.0
   pasteboard: ^0.5.0
   path_provider: ^2.1.5 # no web support
   path_provider_linux: ^2.2.1 # desktop shared_preferences store path resolution
@@ -177,6 +179,7 @@ dependencies:
   vcf_dart: ^1.0.2
   version: ^3.0.2
   video_player: ^2.10.0
+  wave: ^0.2.5
   win32: ^5.10.1
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2

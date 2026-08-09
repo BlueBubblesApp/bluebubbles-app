@@ -69,7 +69,7 @@ class StorageExpressiveResultsSection extends StatelessWidget with StorageAnalyz
             ),
           if (visibleSegments.isNotEmpty) ...[
             const SizedBox(height: 24),
-            M3ESectionHeader(label: "Breakdown"),
+            const M3ESectionHeader(label: "Breakdown"),
             Obx(() => M3ESection(
                   backgroundColor: context.tileColor,
                   margin: EdgeInsets.zero,
