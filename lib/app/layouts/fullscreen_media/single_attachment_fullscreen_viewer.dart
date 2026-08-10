@@ -103,6 +103,7 @@ class _SingleAttachmentFullscreenViewerState extends State<SingleAttachmentFulls
                       file: widget.file,
                       attachment: widget.attachment,
                       showInteractions: widget.showInteractions,
+                      showOverlay: showAppBar,
                       updatePhysics: (_) {},
                       onOverlayToggle: (show) {
                         if (showAppBar != show) {
