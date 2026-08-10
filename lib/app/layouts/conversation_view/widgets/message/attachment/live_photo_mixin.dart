@@ -28,6 +28,9 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   final List<StreamSubscription<dynamic>> _livePhotoSubscriptions = [];
   bool _livePhotoHideInProgress = false;
 
+  static const Duration _livePhotoFadeDuration = Duration(milliseconds: 450);
+  static const Duration _livePhotoFirstFrameGrace = Duration(milliseconds: 80);
+
   // Must be implemented by the using class
   Attachment get livePhotoAttachment;
 
@@ -49,6 +52,31 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     await player?.dispose();
   }
 
+  /// Mount [Video] at opacity 0, wait for a presentable first frame, then crossfade in.
+  Future<void> _revealLivePhotoOverlay(int generation) async {
+    if (!_isLivePhotoPlayActive(generation)) return;
+
+    livePhotoOpacity.value = 0.0;
+    isPlayingLivePhoto.value = true;
+
+    final controller = livePhotoController;
+    if (controller == null) return;
+
+    await controller.waitUntilFirstFrameRendered;
+    if (!_isLivePhotoPlayActive(generation)) return;
+
+    // media_kit completes waitUntilFirstFrameRendered on geometry, not surface present.
+    await Future.delayed(_livePhotoFirstFrameGrace);
+    if (!_isLivePhotoPlayActive(generation)) return;
+
+    // Commit at least one opacity-0 frame so AnimatedOpacity tweens instead of jumping.
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!_isLivePhotoPlayActive(generation)) return;
+
+    livePhotoOpacity.value = 1.0;
+  }
+
   Future<void> _hideLivePhotoOverlay(int generation) async {
     if (!_isLivePhotoPlayActive(generation) || !isPlayingLivePhoto.value || _livePhotoHideInProgress) {
       return;
@@ -57,7 +85,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     // Cancel timer/subs so duration + completed cannot double-fire the fade.
     _cancelLivePhotoAsyncWork();
     livePhotoOpacity.value = 0.0;
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(_livePhotoFadeDuration);
     if (!_isLivePhotoPlayActive(generation)) {
       _livePhotoHideInProgress = false;
       return;
@@ -125,7 +153,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         _livePhotoHideInProgress = false;
         _cancelLivePhotoAsyncWork();
         livePhotoOpacity.value = 0.0;
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(_livePhotoFadeDuration);
         if (mounted) {
           isPlayingLivePhoto.value = false;
           await livePhotoPlayer?.pause();
@@ -145,20 +173,11 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         await livePhotoPlayer!.seek(Duration.zero);
         if (!_isLivePhotoPlayActive(generation)) return;
 
-        // Start playing (but keep hidden while loading)
         await livePhotoPlayer!.play();
         if (!_isLivePhotoPlayActive(generation)) return;
 
-        // Wait a bit for the video to buffer the first frame
-        await Future.delayed(const Duration(milliseconds: 100));
+        await _revealLivePhotoOverlay(generation);
         if (!_isLivePhotoPlayActive(generation)) return;
-
-        isPlayingLivePhoto.value = true;
-
-        // Fade in
-        await Future.delayed(const Duration(milliseconds: 50));
-        if (!_isLivePhotoPlayActive(generation)) return;
-        livePhotoOpacity.value = 1.0;
 
         // Auto-hide after video ends with fade out
         _armLivePhotoAutoHide(generation);
@@ -202,24 +221,14 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
           return;
         }
 
-        // Start playing and wait for first frame to be ready
         await livePhotoPlayer!.play();
         if (!_isLivePhotoPlayActive(generation)) {
           await _disposeLivePhotoPlayer();
           return;
         }
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (!_isLivePhotoPlayActive(generation)) {
-          await _disposeLivePhotoPlayer();
-          return;
-        }
 
-        isPlayingLivePhoto.value = true;
-
-        // Fade in
-        await Future.delayed(const Duration(milliseconds: 50));
+        await _revealLivePhotoOverlay(generation);
         if (!_isLivePhotoPlayActive(generation)) return;
-        livePhotoOpacity.value = 1.0;
 
         // Auto-hide after video ends with fade out
         _armLivePhotoAutoHide(generation);
@@ -286,24 +295,14 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
       isDownloadingLivePhoto.value = false;
 
-      // Start playback and wait for first frame to be ready
       await livePhotoPlayer!.play();
       if (!_isLivePhotoPlayActive(generation)) {
         await _disposeLivePhotoPlayer();
         return;
       }
-      await Future.delayed(const Duration(milliseconds: 100));
-      if (!_isLivePhotoPlayActive(generation)) {
-        await _disposeLivePhotoPlayer();
-        return;
-      }
 
-      isPlayingLivePhoto.value = true;
-
-      // Fade in
-      await Future.delayed(const Duration(milliseconds: 50));
+      await _revealLivePhotoOverlay(generation);
       if (!_isLivePhotoPlayActive(generation)) return;
-      livePhotoOpacity.value = 1.0;
 
       // Auto-hide after video ends with fade out
       _armLivePhotoAutoHide(generation);
@@ -360,19 +359,24 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
   /// Build the live photo video overlay
   Widget buildLivePhotoOverlay() {
+    // Outer Obx: mount/unmount. Inner Obx: opacity only — avoids remounting Video on 0→1.
     return Obx(() {
       if (!isPlayingLivePhoto.value || livePhotoController == null) {
         return const SizedBox.shrink();
       }
 
       return Positioned.fill(
-        child: AnimatedOpacity(
-          opacity: livePhotoOpacity.value,
-          duration: const Duration(milliseconds: 200),
-          child: Video(
-            controller: livePhotoController!,
-            fit: BoxFit.contain,
-            controls: null,
+        child: Obx(
+          () => AnimatedOpacity(
+            opacity: livePhotoOpacity.value,
+            duration: _livePhotoFadeDuration,
+            curve: Curves.easeInOut,
+            child: Video(
+              controller: livePhotoController!,
+              fit: BoxFit.contain,
+              fill: Colors.transparent,
+              controls: null,
+            ),
           ),
         ),
       );
