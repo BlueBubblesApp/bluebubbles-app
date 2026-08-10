@@ -5,10 +5,10 @@ import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_items_l
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_search_bar.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_search_empty_result.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
@@ -253,11 +253,10 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                           return false;
                         },
                         pages: [
-                          CupertinoPage(
+                          MaterialPage(
                               name: "initial",
-                              child: Scaffold(
-                                  backgroundColor:
-                                      SettingsSvc.settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                              child: BBScaffold(
+                                  backgroundColor: headerColor,
                                   body: Center(
                                     child: Text("Select a settings page from the list",
                                         style: context.theme.textTheme.bodyLarge),

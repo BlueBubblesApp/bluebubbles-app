@@ -17,6 +17,7 @@ import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
@@ -274,7 +275,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                       return false;
                     },
                     pages: [
-                      CupertinoPage(
+                      MaterialPage(
                         name: "initial",
                         child: child,
                       )
@@ -296,7 +297,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                   return false;
                 },
                 pages: [
-                  const CupertinoPage(
+                  const MaterialPage(
                     name: "initial",
                     child: InitialWidgetRight(),
                   ),
