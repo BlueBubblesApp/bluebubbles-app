@@ -736,7 +736,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: linux-arm64-noop
+      ref: bef0c248842d156153d041c810a53641fdb553c4
       resolved-ref: bef0c248842d156153d041c810a53641fdb553c4
       url: "https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git"
     source: git
