@@ -365,9 +365,11 @@ class AttachmentDownloadController extends GetxController {
 
       // Atomically move the completed file into its final path. Only now does
       // attachment.path exist, so readers can never observe partial content.
+      // (moveFile drops to a copy when the two paths are on different volumes —
+      // a save location on another drive — which readers can observe partially.)
       if (tempPath != null && savePath != null) {
         try {
-          await File(tempPath).rename(savePath);
+          await moveFile(File(tempPath), savePath);
         } on PathNotFoundException {
           // The `.part` file is gone. cancel() closes most of this race, but a
           // download that had already finished writing (just not renamed yet)
