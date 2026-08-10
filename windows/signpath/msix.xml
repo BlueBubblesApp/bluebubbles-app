@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+    <zip-file>
+        <msix-file path="bluebubbles.msix">
+            <pe-file-set>
+                <include path="*.dll" max-matches="unbounded" />
+                <include path="*.exe" max-matches="unbounded" />
+                <for-each>
+                    <authenticode-verify />
+                </for-each>
+            </pe-file-set>
+            <authenticode-sign />
+        </msix-file>
+    </zip-file>
+</artifact-configuration>
