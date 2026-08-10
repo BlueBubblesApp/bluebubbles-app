@@ -24,22 +24,6 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
         result: MethodChannel.Result,
         context: Context
     ) {
-        // Don't auth multiple times, but still return the (cached) FCM token
-        // so callers relying on the return value don't see a false failure.
-        try {
-            FirebaseApp.getInstance()
-            PersistentLog.d(context, Constants.logTag, "Firebase has already been initialized!")
-            FirebaseCloudMessagingTokenHandler().getToken(context, result)
-            return
-        } catch (_: IllegalStateException) {}
-        // Make sure Google Services are available
-        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
-            val error = "Google Play Services is not available!"
-            PersistentLog.e(context, Constants.logTag, error)
-            result.error("500", error, null)
-            return
-        }
-
         // Fetch Firebase details directly from preferences
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", 0)
         val projectId: String? = prefs.getString("projectID", null)
@@ -48,6 +32,40 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
         val databaseUrl: String? = prefs.getString("firebaseURL", null)
         val gcmSenderId: String? = prefs.getString("clientID", null)
         val applicationId: String = prefs.getString("applicationID", null)!!
+
+        // Don't auth multiple times, unless the stored config no longer matches what the
+        // existing FirebaseApp was initialized with (e.g. the user pointed at a different
+        // server backed by a different Firebase project). FirebaseApp is a process-wide
+        // singleton that Firebase's own APIs never re-configure in place, so a stale
+        // instance has to be explicitly torn down before we can initialize a fresh one
+        // with the current config.
+        try {
+            val existing = FirebaseApp.getInstance()
+            val options = existing.options
+            val unchanged = options.apiKey == apiKey &&
+                    options.applicationId == applicationId &&
+                    options.projectId == projectId &&
+                    options.storageBucket == storageBucket &&
+                    options.databaseUrl == databaseUrl &&
+                    options.gcmSenderId == gcmSenderId
+            if (unchanged) {
+                PersistentLog.d(context, Constants.logTag, "Firebase has already been initialized with the current config!")
+                FirebaseCloudMessagingTokenHandler().getToken(context, result)
+                return
+            }
+
+            PersistentLog.d(context, Constants.logTag, "Firebase config has changed since the last init, reinitializing...")
+            existing.delete()
+            firebaseApp = null
+        } catch (_: IllegalStateException) {}
+
+        // Make sure Google Services are available
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
+            val error = "Google Play Services is not available!"
+            PersistentLog.e(context, Constants.logTag, error)
+            result.error("500", error, null)
+            return
+        }
 
         PersistentLog.d(context, Constants.logTag, "Authenticating client $applicationId with Firebase...")
         // Get a FirebaseApp (manually provide config since we fetch it dynamically)
