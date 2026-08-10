@@ -74,7 +74,7 @@ class ChatEvent extends StatelessWidget {
           },
           child: Obx(() {
             final chatState = ChatStateScope.maybeOf(context);
-            final hasBackground = chatState?.customBackgroundPath.value?.isNotEmpty == true;
+            final hasBackground = chatState?.hasCustomWallpaper ?? false;
             final senderName = state.senderDisplayName;
             final text = part.isUnsent
                 ? (message.isFromMe!

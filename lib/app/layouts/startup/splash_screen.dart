@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.of(context).pushAndRemoveUntil(
           PageRouteBuilder(
               transitionDuration: const Duration(seconds: 1),
-              pageBuilder: (_, __, ___) => const TitleBarWrapper(child: SetupView())),
+              pageBuilder: (_, _, _) => const TitleBarWrapper(child: SetupView())),
           (route) => route.isFirst);
     }
   }

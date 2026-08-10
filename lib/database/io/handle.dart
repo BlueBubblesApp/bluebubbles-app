@@ -186,6 +186,7 @@ class Handle {
 
       if (existing != null) {
         id = existing.id;
+        originalROWID ??= existing.originalROWID;
       }
       // Contact matching is now handled automatically by ContactServiceV2
       if (!updateColor) {
@@ -211,6 +212,7 @@ class Handle {
     // Update this handle with the saved data
     id = savedHandle.id;
     color = savedHandle.color;
+    originalROWID = savedHandle.originalROWID;
 
     return this;
   }
@@ -229,6 +231,7 @@ class Handle {
 
         if (existing != null) {
           h.id = existing.id;
+          h.originalROWID ??= existing.originalROWID;
         }
         // Contact matching is now handled automatically by ContactServiceV2
       }
@@ -257,10 +260,26 @@ class Handle {
       if (i < savedHandles.length) {
         handles[i].id = savedHandles[i].id;
         handles[i].color = savedHandles[i].color;
+        handles[i].originalROWID = savedHandles[i].originalROWID;
       }
     }
 
     return handles;
+  }
+
+  /// Permanently deletes a handle by its local database [id]. Used by the
+  /// Developer Tools "Handle Auditing" panel to purge orphaned/unrecoverable
+  /// handle records. Does not clean up references from other entities (Chat
+  /// participants, Message.handleRelation) — those simply resolve to null
+  /// afterwards, matching how deleteChat's handle cleanup already behaves.
+  ///
+  /// A single-row delete is cheap enough to run directly on the calling
+  /// thread — no need to round-trip through the isolate for this.
+  static void delete(int id) {
+    if (kIsWeb) return;
+    Database.runInTransaction(TxMode.write, () {
+      Database.handles.remove(id);
+    });
   }
 
   Handle updateColor(String? newColor) {

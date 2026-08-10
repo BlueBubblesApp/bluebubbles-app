@@ -119,7 +119,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
       tileColor: tileColor,
       headerColor: headerColor,
       actions: [
-        if (qrAction != null) qrAction,
+        ?qrAction,
       ],
       bodySlivers: [
         SliverToBoxAdapter(

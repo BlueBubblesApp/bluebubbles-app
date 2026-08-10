@@ -1,7 +1,18 @@
 # settings/pages/storage/ — Storage Analyzer
 
-Measures attachment storage usage (by media type, filterable by chat and age) and lets the user
+Measures on-disk storage usage (by media type, filterable by chat and age) and lets the user
 reclaim it. See `docs/feature-planning/storage-analyzer/STORAGE_ANALYZER_PLAN.md` for the full design.
+
+## Global Segments
+Most segments live under `attachments/<guid>/` and can be narrowed by chat and age.
+`StorageSegmentType.orphaned` and `StorageSegmentType.urlPreviews` cannot — orphan folders map to no
+DB row, and link preview images are content-addressed and shared by every message linking the same
+page. Both are marked `isGlobal`, skipped entirely on a filtered scan, and reported via
+`StorageAnalysisResult.globalScanValid` so the results view can explain their absence.
+
+Link previews are never evicted automatically; clearing them here is the only way they go. A cleared
+preview reloads on demand the next time its message is shown, subject to the same
+`LinkPreviewPolicy` sender gate as any other fetch — see `lib/helpers/network/metadata/CLAUDE.md`.
 
 ## Files
 

@@ -6,17 +6,19 @@ import 'package:get/get.dart';
 class M3ESectionHeader extends StatelessWidget {
   final String label;
   final Widget? trailing;
+  final EdgeInsetsGeometry padding;
 
   const M3ESectionHeader({
     super.key,
     required this.label,
     this.trailing,
+    this.padding = const EdgeInsets.only(left: 16, right: 8, top: 16, bottom: 8),
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 8, top: 16, bottom: 8),
+      padding: padding,
       child: Row(
         children: [
           Expanded(

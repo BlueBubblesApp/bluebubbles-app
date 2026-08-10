@@ -165,7 +165,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
           valueListenable: isRecordingNotifier,
           builder: (context, isRecording, child) {
             final hasBackground = chat != null
-                ? (ChatsSvc.getChatState(chat!.guid)?.customBackgroundPath.value?.isNotEmpty == true)
+                ? (ChatsSvc.getChatState(chat!.guid)?.hasCustomWallpaper ?? false)
                 : false;
             return Container(
               // Border is placed in the foregroundDecoration so it paints on top of

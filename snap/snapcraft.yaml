@@ -125,6 +125,10 @@ parts:
       cp -r ./* $CRAFT_PART_INSTALL/bin/
       mv lib/libobjectbox.so $CRAFT_PART_INSTALL/usr/lib/
     stage-packages:
+      # Video thumbnails shell out to ffmpeg on Linux rather than using the ffmpeg-kit native
+      # bundle, which upstream only builds for x86_64. Strict confinement hides the host's copy,
+      # so it has to be staged here.
+      - ffmpeg
       - libayatana-appindicator3-1
       - libglu1-mesa
       - libmpv2

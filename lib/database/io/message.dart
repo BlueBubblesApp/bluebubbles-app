@@ -13,7 +13,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
-import 'package:metadata_fetch/metadata_fetch.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
@@ -143,6 +142,9 @@ class Message {
 
   @Transient()
   bool get isGroupPhotoRemoved => itemType == 3 && groupActionType == 2;
+
+  @Transient()
+  bool get isReply => threadOriginatorGuid != null;
 
   Message({
     this.id,
@@ -379,13 +381,6 @@ class Message {
     );
   }
 
-  Message updateMetadata(Metadata? metadata) {
-    if (kIsWeb || id == null) return this;
-    this.metadata = metadata!.toJson();
-    save();
-    return this;
-  }
-
   Message setPlayedDate({DateTime? timestamp}) {
     datePlayed = timestamp ?? DateTime.now().toUtc();
     save();
@@ -489,6 +484,17 @@ class Message {
   static Future<void> softDelete(String guid) async {
     if (kIsWeb) return;
     await MessageInterface.softDeleteMessage(guid: guid);
+  }
+
+  /// Re-links messages whose `handleId` (the sender's server-side ROWID)
+  /// matches [handleId] to [localHandleId]'s `handleRelation`. Used by the
+  /// Developer Tools "Handle Auditing" remediation flow, after a handle's
+  /// `originalROWID` is repaired, to re-attach any message that was left
+  /// unlinked because the lookup failed when it was first saved. Returns the
+  /// number of messages relinked.
+  static Future<int> relinkMessagesToHandle({required int handleId, required int localHandleId}) async {
+    if (kIsWeb) return 0;
+    return await MessageInterface.relinkMessagesToHandle(handleId: handleId, localHandleId: localHandleId);
   }
 
   /// This is purely because some Macs incorrectly report the dateCreated time
@@ -632,7 +638,7 @@ class Message {
 
   bool showTail(Message? newer) {
     // if there is no newer, or if the newer is a different sender
-    if (newer == null || !sameSender(newer) || newer.isGroupEvent) return true;
+    if (newer == null || !sameSender(newer) || newer.isGroupEvent || (threadOriginatorGuid == null && newer.isReply)) return true;
     // if newer is over a minute newer
     return newer.dateCreated!.difference(dateCreated!).inMinutes.abs() > 1;
   }

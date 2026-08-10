@@ -115,7 +115,7 @@ class Attachment {
   /// Delete an attachment and remove all instances of that attachment in the DB
   static void delete(String guid) {}
 
-  String getFriendlySize({decimals = 2}) {
+  String getFriendlySize({int decimals = 2}) {
     return (totalBytes ?? 0.0).toDouble().getFriendlySize();
   }
 
@@ -132,7 +132,13 @@ class Attachment {
 
   String get path => "$directory/$transferName";
 
-  String get convertedPath => "$path.png";
+  /// Mirrors the io/ implementation — HEIC converts to JPEG, everything else
+  /// to PNG. Web is deprecated; kept in sync for consistency only.
+  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) ? "jpg" : "png";
+
+  String get convertedPath => "$path.$convertedExtension";
+
+  String get legacyConvertedPath => "$path.png";
 
   bool get existsOnDisk => false;
 

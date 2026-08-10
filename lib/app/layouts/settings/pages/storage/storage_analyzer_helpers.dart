@@ -40,6 +40,11 @@ mixin StorageAnalyzerHelpersMixin {
       iosIcon: CupertinoIcons.trash,
       materialIcon: Icons.delete_sweep_outlined,
     ),
+    StorageSegmentType.urlPreviews: (
+      label: 'Link Previews',
+      iosIcon: CupertinoIcons.link,
+      materialIcon: Icons.link_outlined,
+    ),
   };
 
   /// Segment color, derived from the *currently selected* theme's
@@ -58,6 +63,7 @@ mixin StorageAnalyzerHelpersMixin {
       StorageSegmentType.other => cs.outlineVariant,
       StorageSegmentType.thumbnailsAndConversions => cs.primary.themeLightenOrDarken(context, 20),
       StorageSegmentType.orphaned => cs.error,
+      StorageSegmentType.urlPreviews => cs.secondary.themeLightenOrDarken(context, 20),
     };
   }
 

@@ -45,7 +45,7 @@ class TimestampSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     final message = MessageStateScope.messageOf(context);
     final timestamp = buildTimeStamp(message);
-    final hasBackground = ChatStateScope.maybeOf(context)?.customBackgroundPath.value?.isNotEmpty == true;
+    final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
 
     if (timestamp == null) return const SizedBox.shrink();
 

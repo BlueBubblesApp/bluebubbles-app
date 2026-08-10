@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 2.0.0+88
+version: 2.1.0+90
 publish_to: none
 
 environment:
@@ -62,8 +62,10 @@ dependencies:
   encrypter_plus: ^5.1.0
   exif: ^3.3.0
   faker: ^2.2.0
+  ffmpeg_kit_flutter_new_min: ^3.6.2
   flutter_contacts: ^2.0.2  # mobile only
   file_picker: ^11.0.2
+  floating_animation: ^1.1.0
   firebase_dart:
     git:
       url: https://github.com/appsup-dart/firebase_dart.git
@@ -81,6 +83,7 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   flutter_map_marker_popup: ^8.1.0
   flutter_markdown_plus: ^1.0.7
+  flutter_moving_background: ^0.4.0
   flutter_slidable: ^4.0.1
   flutter_sliding_up_panel: ^2.1.1
   flutter_staggered_grid_view: ^0.7.0
@@ -116,7 +119,6 @@ dependencies:
   media_kit: ^1.2.2 # Primary package.
   media_kit_video: ^2.0.0 # For video rendering.
   media_kit_libs_video: ^1.0.7 # Native video dependencies.
-  metadata_fetch: ^0.4.2
   mime_type: ^1.0.1
   mobile_scanner: ^7.2.0 # no desktop support
   msix: ^3.18.0
@@ -133,7 +135,7 @@ dependencies:
   on_exit: ^1.0.0
   open_filex: ^4.7.0
   package_info_plus: ^9.0.1
-  particles_flutter: ^2.0.2
+  particles_flutter: ^3.2.0
   pasteboard: ^0.5.0
   path_provider: ^2.1.5 # no web support
   path_provider_linux: ^2.2.1 # desktop shared_preferences store path resolution
@@ -177,7 +179,7 @@ dependencies:
   vcf_dart: ^1.0.2
   version: ^3.0.2
   video_player: ^2.10.0
-  video_thumbnail: ^0.5.6
+  wave: ^0.2.5
   win32: ^5.10.1
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2
@@ -198,6 +200,11 @@ dependencies:
   uuid: any
 dependency_overrides:
   clock: ^1.1.2 # encrypter_plus
+  flat_buffers: # RangeError on FlexBuffer resize: https://github.com/objectbox/objectbox-dart/issues/786
+    git:
+      url: https://github.com/google/flatbuffers.git
+      ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      path: dart
   flutter_local_notifications_windows: # no identity + crashing fixes + suppressPopup
     git:
       url: https://github.com/jjoelj/flutter_local_notifications.git
@@ -220,6 +227,14 @@ dependency_overrides:
   pointycastle: ^4.0.0 # firebase_dart
   rxdart: ^0.28.0 # firebase_dart
   uuid: ^4.5.1 # firebase_dart
+  # The package will fail to build arm64 linux binaries due to the ffmpeg
+  # build for it not existing in the upstream repo. Instead, we forked the
+  # repository and no-op'd the arm64 linux branch. The app will shell-out
+  # to the existing ffmpeg installation on arm64 linux.
+  ffmpeg_kit_flutter_new_min:
+    git:
+      url: https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git
+      ref: linux-arm64-noop
 
 dev_dependencies:
   build_runner: ^2.7.1

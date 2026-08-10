@@ -5,10 +5,11 @@ import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_p
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_thread_popup.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/storage/storage_analyzer_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theme_studio/theme_studio_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/theming/background/background_crop.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/wallpaper_picker_page.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -87,10 +88,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb,
         build: (context) => SettingsTile(
           title: "Change Chat Avatar",
-          subtitle: "Set a custom avatar for this chat, or reset it back to the default",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(SettingsSvc.settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person_outlined),
+          subtitle: "Set or reset a custom avatar for this chat",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.person_fill,
+            materialIcon: Icons.person_outlined,
+            containerColor: Colors.blue,
           ),
           onTap: () async {
             if (chat.customAvatarPath != null) {
@@ -131,46 +133,15 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
       _OptionRow(
         enabled: !kIsWeb,
         build: (context) => SettingsTile(
-          title: "Custom Background",
-          subtitle: "Set a custom background for this chat, or reset it back to the default",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.photo : Icons.wallpaper),
+          title: "Wallpaper",
+          subtitle: "Set an image or animated wallpaper for this chat",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.photo_fill,
+            materialIcon: Icons.wallpaper,
+            containerColor: Colors.deepPurple,
           ),
-          onTap: () {
-            final backgroundPath = FilesystemSvc.getExistingChatBackgroundPath(chat.guid);
-            if (backgroundPath != null) {
-              showBBDialog(
-                context: context,
-                title: "Custom Background",
-                body: "You already have a custom background for this chat. What would you like to do?",
-                actions: [
-                  BBDialogAction(text: "Cancel", onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
-                  BBDialogAction(
-                    text: "Remove",
-                    isDestructive: true,
-                    color: context.theme.colorScheme.error,
-                    onPressed: () async {
-                      final File bgFile = File(backgroundPath);
-                      if (await bgFile.exists()) bgFile.delete();
-                      await ChatsSvc.setChatCustomBackgroundPath(chat, null);
-                      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-                    },
-                  ),
-                  BBDialogAction(
-                    text: "Set New",
-                    isDefault: true,
-                    onPressed: () {
-                      Navigator.of(context, rootNavigator: true).pop();
-                      Get.to(() => BackgroundCrop(chat: chat));
-                    },
-                  ),
-                ],
-              );
-            } else {
-              Get.to(() => BackgroundCrop(chat: chat));
-            }
-          },
+          trailing: const NextButton(),
+          onTap: () => NavigationSvc.push(context, WallpaperPickerPage(chat: chat)),
         ),
       ),
       _OptionRow(
@@ -179,10 +150,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           title: "Set Custom Theme",
           subtitle: "Choose light and dark chat themes in Theme Studio",
           backgroundColor: tileColor,
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.paintbrush : Icons.palette_outlined),
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.paintbrush_fill,
+            materialIcon: Icons.palette,
+            containerColor: Colors.purple,
           ),
+          trailing: const NextButton(),
           onTap: () {
             final lightThemeName = chat.customThemeLight ?? ThemeStruct.getLightTheme().name;
             final darkThemeName = chat.customThemeDark ?? ThemeStruct.getDarkTheme().name;
@@ -222,11 +195,13 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb && !kIsDesktop && (FilesystemSvc.androidInfo?.version.sdkInt ?? 0) >= 30,
         build: (context) => SettingsTile(
           title: "Notification Settings",
-          subtitle: "Customize notification sounds, importance, and more for this specific chat",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.bell : Icons.notifications_on),
+          subtitle: "Customize sounds, importance, and more for this chat",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.bell_fill,
+            materialIcon: Icons.notifications_on,
+            containerColor: Colors.deepOrange,
           ),
+          trailing: const NextButton(),
           isThreeLine: true,
           onTap: () async {
             await MethodChannelSvc.actions.openConversationNotificationSettings(
@@ -240,7 +215,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: chat.isGroup,
         build: (context) => SettingsSwitch(
           title: "Lock Chat Name",
-          subtitle: "Keep the current chat name on this device, even if someone else in the chat changes it",
+          subtitle: "Keep this device's chat name even if others change it",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.lock_fill,
+            materialIcon: Icons.lock_outline,
+            containerColor: Colors.blueGrey,
+          ),
           initialVal: chatState?.lockChatName.value ?? chat.lockChatName,
           onChanged: (value) {
             if (chatState != null) {
@@ -256,7 +236,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: chat.isGroup,
         build: (context) => SettingsSwitch(
           title: "Lock Chat Icon",
-          subtitle: "Keep the current chat icon on this device, even if someone else in the chat changes it",
+          subtitle: "Keep this device's chat icon even if others change it",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.photo_fill_on_rectangle_fill,
+            materialIcon: Icons.image_outlined,
+            containerColor: Colors.brown,
+          ),
           initialVal: chatState?.lockChatIcon.value ?? chat.lockChatIcon,
           onChanged: (value) {
             if (chatState != null) {
@@ -273,6 +258,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         build: (context) => SettingsSwitch(
           title: "Pin Conversation",
           subtitle: "Keep this chat pinned to the top of your conversation list",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.pin_fill,
+            materialIcon: Icons.push_pin_outlined,
+            containerColor: Colors.blue,
+          ),
           initialVal: chatState?.isPinned.value ?? chat.isPinned!,
           onChanged: (value) {
             ChatsSvc.setChatPinned(chatState?.chat ?? chat, !(chatState?.isPinned.value ?? chat.isPinned!));
@@ -285,6 +275,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         build: (context) => SettingsSwitch(
           title: "Mute Conversation",
           subtitle: "Silence notifications for this chat",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.bell_slash_fill,
+            materialIcon: Icons.notifications_off_outlined,
+            containerColor: Colors.grey,
+          ),
           initialVal: (chatState?.muteType.value ?? chat.muteType) == "mute",
           onChanged: (value) {
             if (chatState != null) {
@@ -301,6 +296,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         build: (context) => SettingsSwitch(
           title: "Archive Conversation",
           subtitle: "Hide this chat from your main conversation list",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.archivebox_fill,
+            materialIcon: Icons.archive_outlined,
+            containerColor: Colors.orange,
+          ),
           initialVal: chatState?.isArchived.value ?? chat.isArchived!,
           onChanged: (value) {
             ChatsSvc.setChatArchived(chatState?.chat ?? chat, value);
@@ -312,7 +312,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb && !chat.isGroup && SettingsSvc.settings.enablePrivateAPI.value,
         build: (context) => SettingsSwitch(
           title: "Send Typing Indicators",
-          subtitle: "Send typing indicators for this chat, overriding the global setting",
+          subtitle: "Overrides the global typing indicator setting",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.keyboard_chevron_compact_down,
+            materialIcon: Icons.keyboard_alt_outlined,
+            containerColor: Colors.green,
+          ),
           initialVal:
               chatState?.autoSendTypingIndicators.value ?? SettingsSvc.settings.privateSendTypingIndicators.value,
           onChanged: (value) {
@@ -331,6 +336,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           title: "Follow Global Setting",
           subtitle:
               "Typing Indicators ${SettingsSvc.settings.privateSendTypingIndicators.value ? "Enabled" : "Disabled"}",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.arrow_2_circlepath,
+            materialIcon: Icons.sync,
+            containerColor: Colors.teal,
+          ),
           initialVal: chatState?.autoSendTypingIndicators.value == null,
           onChanged: (value) {
             if (chatState != null) {
@@ -348,7 +358,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb && !chat.isGroup && SettingsSvc.settings.enablePrivateAPI.value,
         build: (context) => SettingsSwitch(
           title: "${SettingsSvc.settings.privateManualMarkAsRead.value ? "Automatically " : ""}Send Read Receipts",
-          subtitle: "Send read receipts for this chat, overriding the global setting",
+          subtitle: "Overrides the global read receipt setting",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.checkmark_circle_fill,
+            materialIcon: Icons.done_all,
+            containerColor: Colors.blueAccent,
+          ),
           initialVal: chatState?.autoSendReadReceipts.value ?? SettingsSvc.settings.privateMarkChatAsRead.value,
           onChanged: (value) {
             if (chatState != null) {
@@ -366,6 +381,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           title: "Follow Global Setting",
           subtitle:
               "${SettingsSvc.settings.privateManualMarkAsRead.value ? "Automatic " : ""}Read Receipts ${SettingsSvc.settings.privateMarkChatAsRead.value ? "Enabled" : "Disabled"}",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.arrow_2_circlepath,
+            materialIcon: Icons.sync,
+            containerColor: Colors.teal,
+          ),
           initialVal: chatState?.autoSendReadReceipts.value == null,
           onChanged: (value) {
             if (chatState != null) {
@@ -390,11 +410,13 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb,
         build: (context) => SettingsTile(
           title: "Chat Stats",
-          subtitle: "See your texting patterns, response times, and activity for this chat",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.chart_bar_alt_fill : Icons.insights),
+          subtitle: "View texting patterns, response times, and activity",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.chart_bar_alt_fill,
+            materialIcon: Icons.insights,
+            containerColor: Colors.blue,
           ),
+          trailing: const NextButton(),
           isThreeLine: true,
           onTap: () => NavigationSvc.push(context, ChatStatsPage(chat: chat)),
         ),
@@ -403,12 +425,14 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: !kIsWeb,
         build: (context) => SettingsTile(
           title: "Storage",
-          subtitle: "See attachment storage usage for this chat and free up space",
+          subtitle: "View and free up attachment storage for this chat",
           backgroundColor: tileColor,
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.chart_pie : Icons.pie_chart_outline),
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.chart_pie_fill,
+            materialIcon: Icons.pie_chart_outline,
+            containerColor: Colors.orange,
           ),
+          trailing: const NextButton(),
           isThreeLine: true,
           onTap: () => NavigationSvc.push(context, StorageAnalyzerPanel(initialChat: chat)),
         ),
@@ -419,10 +443,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           title: "View Bookmarks",
           subtitle: "See your bookmarked messages",
           backgroundColor: tileColor,
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.bookmark : Icons.bookmark),
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.bookmark_fill,
+            materialIcon: Icons.bookmark,
+            containerColor: Colors.indigo,
           ),
+          trailing: const NextButton(),
           onTap: () async {
             showBookmarksThread(cvc(widget.chat), context);
           },
@@ -432,11 +458,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: true,
         build: (context) => SettingsTile(
           title: "Fetch Chat Details",
-          subtitle: "Get the latest chat title and participants from the server",
+          subtitle: "Get the latest chat title and participants",
           backgroundColor: tileColor,
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.chat_bubble : Icons.sms),
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.chat_bubble_fill,
+            materialIcon: Icons.sms,
+            containerColor: Colors.green,
           ),
           onTap: () async {
             final updatedChat = await ChatsSvc.fetchChat(chat.guid);
@@ -455,10 +482,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: true,
         build: (context) => SettingsTile(
           title: "Sync Messages",
-          subtitle: "Fetch and sync messages from the server for a selected time range",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay),
+          subtitle: "Sync messages from the server for a selected time range",
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.arrow_counterclockwise,
+            materialIcon: Icons.replay,
+            containerColor: Colors.teal,
           ),
           onTap: () async {
             final range = await showSyncTimeRangeDialog(context);
@@ -480,9 +508,10 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
               ? "Left click for a plaintext transcript\nRight click for a PDF transcript"
               : "Tap for a plaintext transcript\nTap and hold for a PDF transcript",
           isThreeLine: true,
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.doc_text : Icons.note_outlined),
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.doc_text_fill,
+            materialIcon: Icons.note_outlined,
+            containerColor: Colors.brown,
           ),
           onTap: () async {
             final date = await showTimeframePicker("Select Timeframe", context, additionalTimeframes: {"6 Hours": 6});
@@ -664,9 +693,10 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         build: (context) => SettingsTile(
           title: "Clear Transcript",
           subtitle: "Delete all messages for this chat on this device",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.trash : Icons.delete_outlined),
+          leading: SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.trash_fill,
+            materialIcon: Icons.delete_outlined,
+            containerColor: context.theme.colorScheme.error,
           ),
           onTap: () {
             showBBDialog(
@@ -694,13 +724,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         enabled: OutgoingMsgHandler.pendingChatGuids.contains(chat.guid),
         build: (context) => SettingsTile(
           title: "Cancel Outgoing Messages",
-          subtitle: "Cancel all messages currently queued to be sent in this chat",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(
-              iOS ? CupertinoIcons.xmark_circle : Icons.cancel_outlined,
-              color: context.theme.colorScheme.error,
-            ),
+          subtitle: "Cancel all messages queued to send in this chat",
+          leading: SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.xmark_circle_fill,
+            materialIcon: Icons.cancel_outlined,
+            containerColor: context.theme.colorScheme.error,
           ),
           onTap: () => _showCancelConfirmation(context),
         ),
@@ -713,9 +741,10 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         build: (context) => SettingsTile(
           title: "Leave Chat",
           subtitle: "You will no longer receive messages from this group",
-          trailing: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Icon(iOS ? CupertinoIcons.arrow_right_square : Icons.logout, color: context.theme.colorScheme.error),
+          leading: SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.arrow_right_square_fill,
+            materialIcon: Icons.logout,
+            containerColor: context.theme.colorScheme.error,
           ),
           onTap: () => _leaveChat(context),
         ),

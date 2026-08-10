@@ -22,8 +22,12 @@ Future<void> showStorageCleanupSheet(BuildContext context, StorageAnalyzerContro
   if (segments.isEmpty) return;
   final bytes = controller.selectedBytes;
 
-  final onlyDerivedOrOrphaned = segments.every(
-      (s) => s == StorageSegmentType.thumbnailsAndConversions || s == StorageSegmentType.orphaned);
+  // Link previews belong here too: they are regenerated on demand from the URL
+  // in the message, and nothing about them lives on the server.
+  final onlyDerivedOrOrphaned = segments.every((s) =>
+      s == StorageSegmentType.thumbnailsAndConversions ||
+      s == StorageSegmentType.orphaned ||
+      s == StorageSegmentType.urlPreviews);
 
   await showAreYouSure(
     context,

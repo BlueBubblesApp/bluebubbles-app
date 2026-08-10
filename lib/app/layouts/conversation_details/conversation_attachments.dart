@@ -127,26 +127,26 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
 
         return Theme(
           data: chatDetailTheme.theme,
-          child: Obx(() => SettingsScaffold(
-                headerColor: chatDetailTheme.headerColor,
-                title: widget.section.pageTitle,
-                tileColor: chatDetailTheme.tileColor,
-                initialHeader: null,
-                iosSubtitle: iosSubtitle,
-                materialSubtitle: materialSubtitle,
-                actions: _buildAppBarActions(context, chatDetailTheme.tileColor),
-                bodySlivers: [
-                  if (isLoadingAttachments)
-                    SliverToBoxAdapter(
-                      child: AttachmentsLoader(
-                        chat: widget.chat,
-                        onAttachmentsLoaded: onAttachmentsLoaded,
-                      ),
-                    ),
-                  ..._buildSectionSlivers(),
-                  const SliverPadding(padding: EdgeInsets.only(top: 50)),
-                ],
-              )),
+          child: SettingsScaffold(
+            headerColor: chatDetailTheme.headerColor,
+            title: widget.section.pageTitle,
+            tileColor: chatDetailTheme.tileColor,
+            initialHeader: null,
+            iosSubtitle: iosSubtitle,
+            materialSubtitle: materialSubtitle,
+            actions: _buildAppBarActions(context, chatDetailTheme.tileColor),
+            bodySlivers: [
+              if (isLoadingAttachments)
+                SliverToBoxAdapter(
+                  child: AttachmentsLoader(
+                    chat: widget.chat,
+                    onAttachmentsLoaded: onAttachmentsLoaded,
+                  ),
+                ),
+              ..._buildSectionSlivers(),
+              const SliverPadding(padding: EdgeInsets.only(top: 50)),
+            ],
+          ),
         );
       }),
     );

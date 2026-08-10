@@ -382,152 +382,150 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Expanded(
-                              child: Container(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    if (Platform.isWindows)
-                                      SettingsSwitch(
-                                        initialVal: SettingsSvc.settings.showReplyField.value,
-                                        onChanged: (value) async {
-                                          SettingsSvc.settings.showReplyField.value = value;
-                                          maxActions.value = value ? 4 : 5;
-                                          if (SettingsSvc.settings.selectedActionIndices.length > maxActions.value) {
-                                            SettingsSvc.settings.selectedActionIndices.removeLast();
-                                          }
-                                          await SettingsSvc.settings.saveOneAsync('showReplyField');
-                                        },
-                                        leading: const SettingsLeadingIcon(
-                                          iosIcon: CupertinoIcons.arrowshape_turn_up_left,
-                                          materialIcon: Icons.reply_outlined,
-                                          containerColor: Colors.orange,
-                                        ),
-                                        title: "Show Reply Field",
-                                        subtitle:
-                                            "Show a reply field in the notification. This counts as one of your actions.",
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  if (Platform.isWindows)
+                                    SettingsSwitch(
+                                      initialVal: SettingsSvc.settings.showReplyField.value,
+                                      onChanged: (value) async {
+                                        SettingsSvc.settings.showReplyField.value = value;
+                                        maxActions.value = value ? 4 : 5;
+                                        if (SettingsSvc.settings.selectedActionIndices.length > maxActions.value) {
+                                          SettingsSvc.settings.selectedActionIndices.removeLast();
+                                        }
+                                        await SettingsSvc.settings.saveOneAsync('showReplyField');
+                                      },
+                                      leading: const SettingsLeadingIcon(
+                                        iosIcon: CupertinoIcons.arrowshape_turn_up_left,
+                                        materialIcon: Icons.reply_outlined,
+                                        containerColor: Colors.orange,
                                       ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(15),
-                                      child: Center(
-                                        child: ReorderableWrap(
-                                          needsLongPressDraggable: false,
-                                          spacing: 10,
-                                          alignment: WrapAlignment.center,
-                                          buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
-                                              duration: const Duration(milliseconds: 250), scale: 1.1, child: child),
-                                          onReorder: (int oldIndex, int newIndex) async {
-                                            List<String> selected = SettingsSvc.settings.selectedActionIndices
-                                                .map((index) => SettingsSvc.settings.actionList[index])
-                                                .toList();
-                                            String? temp = SettingsSvc.settings.actionList[oldIndex];
-                                            // If dragging to the right
-                                            for (int i = oldIndex; i <= newIndex - 1; i++) {
-                                              SettingsSvc.settings.actionList[i] =
-                                                  SettingsSvc.settings.actionList[i + 1];
-                                            }
-                                            // If dragging to the left
-                                            for (int i = oldIndex; i >= newIndex + 1; i--) {
-                                              SettingsSvc.settings.actionList[i] =
-                                                  SettingsSvc.settings.actionList[i - 1];
-                                            }
-                                            SettingsSvc.settings.actionList[newIndex] = temp;
-
-                                            List<int> selectedIndices = selected
-                                                .map((s) => SettingsSvc.settings.actionList.indexOf(s))
-                                                .toList();
-                                            selectedIndices.sort();
-                                            SettingsSvc.settings.selectedActionIndices.value = selectedIndices;
-                                            await SettingsSvc.settings.saveOneAsync('selectedActionIndices');
-                                          },
-                                          children: List.generate(
-                                            ReactionTypes.toList().length + 1,
-                                            (int index) => MouseRegion(
-                                              cursor: MouseCursor.defer,
-                                              onEnter: (event) => showButtons[index] = true,
-                                              onExit: (event) => showButtons[index] = false,
-                                              child: Obx(
-                                                () {
-                                                  bool selected =
-                                                      SettingsSvc.settings.selectedActionIndices.contains(index);
-
-                                                  String value = SettingsSvc.settings.actionList[index];
-
-                                                  bool disabled = (!SettingsSvc.settings.enablePrivateAPI.value &&
-                                                      value != "Mark Read");
-
-                                                  bool hardDisabled = (!selected &&
-                                                      (SettingsSvc.settings.selectedActionIndices.length ==
-                                                          maxActions.value));
-
-                                                  Color color = selected
-                                                      ? context.theme.colorScheme.primary
-                                                      : context.theme.colorScheme.surfaceContainerHighest
-                                                          .lightenOrDarken(10);
-
-                                                  return MouseRegion(
-                                                    cursor: hardDisabled ? SystemMouseCursors.basic : MouseCursor.defer,
-                                                    child: GestureDetector(
-                                                      behavior: HitTestBehavior.translucent,
-                                                      onTap: () async {
-                                                        if (hardDisabled) return;
-                                                        if (!SettingsSvc.settings.selectedActionIndices.remove(index)) {
-                                                          SettingsSvc.settings.selectedActionIndices.add(index);
-                                                          SettingsSvc.settings.selectedActionIndices.sort();
-                                                        }
-
-                                                        await SettingsSvc.settings
-                                                            .saveOneAsync('selectedActionIndices');
-                                                      },
-                                                      child: AnimatedContainer(
-                                                        margin: const EdgeInsets.symmetric(vertical: 5),
-                                                        height: 56,
-                                                        width: 90,
-                                                        padding: const EdgeInsets.symmetric(horizontal: 9),
-                                                        decoration: BoxDecoration(
-                                                          borderRadius: BorderRadius.circular(8),
-                                                          border: Border.all(
-                                                              color: color.withValues(alpha: selected ? 1 : 0.5),
-                                                              width: selected ? 1.5 : 1),
-                                                          color: color.withValues(
-                                                              alpha: disabled
-                                                                  ? 0.2
-                                                                  : selected
-                                                                      ? 0.8
-                                                                      : 0.7),
-                                                        ),
-                                                        foregroundDecoration: BoxDecoration(
-                                                          color: color.withValues(
-                                                              alpha: hardDisabled || disabled ? 0.7 : 0),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        curve: Curves.linear,
-                                                        duration: const Duration(milliseconds: 150),
-                                                        child: Center(
-                                                          child: Material(
-                                                            color: Colors.transparent,
-                                                            child: Text(
-                                                              ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
-                                                              style: TextStyle(
-                                                                  fontSize: 16,
-                                                                  color: (hardDisabled && value == "Mark Read")
-                                                                      ? context.textTheme.titleMedium!.color
-                                                                      : null),
-                                                              textAlign: TextAlign.center,
-                                                            ),
+                                      title: "Show Reply Field",
+                                      subtitle:
+                                          "Show a reply field in the notification. This counts as one of your actions.",
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(15),
+                                    child: Center(
+                                      child: ReorderableWrap(
+                                        needsLongPressDraggable: false,
+                                        spacing: 10,
+                                        alignment: WrapAlignment.center,
+                                        buildDraggableFeedback: (context, constraints, child) => AnimatedScale(
+                                            duration: const Duration(milliseconds: 250), scale: 1.1, child: child),
+                                        onReorder: (int oldIndex, int newIndex) async {
+                                          List<String> selected = SettingsSvc.settings.selectedActionIndices
+                                              .map((index) => SettingsSvc.settings.actionList[index])
+                                              .toList();
+                                          String? temp = SettingsSvc.settings.actionList[oldIndex];
+                                          // If dragging to the right
+                                          for (int i = oldIndex; i <= newIndex - 1; i++) {
+                                            SettingsSvc.settings.actionList[i] =
+                                                SettingsSvc.settings.actionList[i + 1];
+                                          }
+                                          // If dragging to the left
+                                          for (int i = oldIndex; i >= newIndex + 1; i--) {
+                                            SettingsSvc.settings.actionList[i] =
+                                                SettingsSvc.settings.actionList[i - 1];
+                                          }
+                                          SettingsSvc.settings.actionList[newIndex] = temp;
+                              
+                                          List<int> selectedIndices = selected
+                                              .map((s) => SettingsSvc.settings.actionList.indexOf(s))
+                                              .toList();
+                                          selectedIndices.sort();
+                                          SettingsSvc.settings.selectedActionIndices.value = selectedIndices;
+                                          await SettingsSvc.settings.saveOneAsync('selectedActionIndices');
+                                        },
+                                        children: List.generate(
+                                          ReactionTypes.toList().length + 1,
+                                          (int index) => MouseRegion(
+                                            cursor: MouseCursor.defer,
+                                            onEnter: (event) => showButtons[index] = true,
+                                            onExit: (event) => showButtons[index] = false,
+                                            child: Obx(
+                                              () {
+                                                bool selected =
+                                                    SettingsSvc.settings.selectedActionIndices.contains(index);
+                              
+                                                String value = SettingsSvc.settings.actionList[index];
+                              
+                                                bool disabled = (!SettingsSvc.settings.enablePrivateAPI.value &&
+                                                    value != "Mark Read");
+                              
+                                                bool hardDisabled = (!selected &&
+                                                    (SettingsSvc.settings.selectedActionIndices.length ==
+                                                        maxActions.value));
+                              
+                                                Color color = selected
+                                                    ? context.theme.colorScheme.primary
+                                                    : context.theme.colorScheme.surfaceContainerHighest
+                                                        .lightenOrDarken(10);
+                              
+                                                return MouseRegion(
+                                                  cursor: hardDisabled ? SystemMouseCursors.basic : MouseCursor.defer,
+                                                  child: GestureDetector(
+                                                    behavior: HitTestBehavior.translucent,
+                                                    onTap: () async {
+                                                      if (hardDisabled) return;
+                                                      if (!SettingsSvc.settings.selectedActionIndices.remove(index)) {
+                                                        SettingsSvc.settings.selectedActionIndices.add(index);
+                                                        SettingsSvc.settings.selectedActionIndices.sort();
+                                                      }
+                              
+                                                      await SettingsSvc.settings
+                                                          .saveOneAsync('selectedActionIndices');
+                                                    },
+                                                    child: AnimatedContainer(
+                                                      margin: const EdgeInsets.symmetric(vertical: 5),
+                                                      height: 56,
+                                                      width: 90,
+                                                      padding: const EdgeInsets.symmetric(horizontal: 9),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        border: Border.all(
+                                                            color: color.withValues(alpha: selected ? 1 : 0.5),
+                                                            width: selected ? 1.5 : 1),
+                                                        color: color.withValues(
+                                                            alpha: disabled
+                                                                ? 0.2
+                                                                : selected
+                                                                    ? 0.8
+                                                                    : 0.7),
+                                                      ),
+                                                      foregroundDecoration: BoxDecoration(
+                                                        color: color.withValues(
+                                                            alpha: hardDisabled || disabled ? 0.7 : 0),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      curve: Curves.linear,
+                                                      duration: const Duration(milliseconds: 150),
+                                                      child: Center(
+                                                        child: Material(
+                                                          color: Colors.transparent,
+                                                          child: Text(
+                                                            ReactionTypes.reactionToEmoji[value] ?? "Mark Read",
+                                                            style: TextStyle(
+                                                                fontSize: 16,
+                                                                color: (hardDisabled && value == "Mark Read")
+                                                                    ? context.textTheme.titleMedium!.color
+                                                                    : null),
+                                                            textAlign: TextAlign.center,
                                                           ),
                                                         ),
                                                       ),
                                                     ),
-                                                  );
-                                                },
-                                              ),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                             if (Platform.isWindows)

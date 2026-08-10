@@ -8,6 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_auth
   dynamic_color
   emoji_picker_flutter
+  ffmpeg_kit_flutter_new_min
   file_selector_linux
   flutter_acrylic
   flutter_timezone

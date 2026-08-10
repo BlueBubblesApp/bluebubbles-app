@@ -508,6 +508,7 @@ class StartupTasks {
     // (contact change events are queued instead of synced while cached).
     if (GetIt.I.isRegistered<ContactServiceV2>() && GetIt.I.isReadySync<ContactServiceV2>()) {
       unawaited(ContactsSvcV2.runPendingContactSync());
+      unawaited(ContactsSvcV2.refreshPermissionStatusOnResume());
     }
 
     // On app resume, use the global isolate so it's ready for other tasks.

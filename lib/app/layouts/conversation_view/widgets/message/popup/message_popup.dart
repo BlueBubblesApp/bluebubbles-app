@@ -19,6 +19,7 @@ import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -107,7 +108,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   bool get showDownload =>
       (isSent &&
           part.attachments.isNotEmpty &&
-          part.attachments.where((element) => AttachmentsSvc.getContent(element) is PlatformFile).isNotEmpty) ||
+          part.attachments.where((element) => AttachmentsSvc.hasLocalFile(element)).isNotEmpty) ||
       isEmbeddedMedia;
 
   bool get showRefreshPreview =>
@@ -183,8 +184,20 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    double narrowWidth = message.isFromMe! || !SettingsSvc.settings.alwaysShowAvatars.value ? 330 : 360;
-    bool narrowScreen = NavigationSvc.width(widthContext) < narrowWidth;
+    // Decide whether the tapback row needs to wrap to a second line by comparing its actual
+    // content width (derived from the fixed per-item padding/icon sizes used below) against the
+    // real horizontal space available at the picker's anchor position, rather than guessing from
+    // overall screen width. widget.childPosition.dx already reflects any avatar space the bubble
+    // was pushed past, so no avatar/group special-casing is needed here.
+    final double screenWidth = NavigationSvc.width(widthContext);
+    const double reactionPickerEdgeMargin = 15;
+    final double reactionPickerAvailableWidth = message.isFromMe!
+        ? screenWidth - reactionPickerEdgeMargin - reactionPickerEdgeMargin
+        : screenWidth - (widget.childPosition.dx + 10) - reactionPickerEdgeMargin;
+    final double reactionItemWidth = iOS ? 47.0 : 44.0; // icon/emoji + its fixed padding, see item build below
+    // + container padding
+    final double reactionRowContentWidth = reactionItemWidth * ReactionTypes.toList().length + 10;
+    bool narrowScreen = reactionRowContentWidth > reactionPickerAvailableWidth;
 
     return Theme(
       data: context.theme.copyWith(
@@ -276,9 +289,15 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                             child: ConstrainedBox(
                               key: _childKey,
                               constraints: BoxConstraints(maxWidth: widget.size.width),
-                              child: MessageStateScope(
-                                messageState: widget.controller,
-                                child: widget.child,
+                              // Marked as a clone so anything inside that
+                              // reacts to shared state by doing work (URL
+                              // preview refreshes, say) knows not to — this
+                              // copy and the real bubble both see every signal.
+                              child: MessageCloneScope(
+                                child: MessageStateScope(
+                                  messageState: widget.controller,
+                                  child: widget.child,
+                                ),
                               ),
                             ),
                           ),

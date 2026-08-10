@@ -450,23 +450,6 @@ mixin ConnectionPanelHelpersMixin {
                 if (result) SocketSvc.restartSocket();
               },
             ),
-            if (Platform.isAndroid) const SettingsDivider(),
-            if (Platform.isAndroid)
-              Obx(() => SettingsSwitch(
-                    initialVal: SettingsSvc.settings.syncContactsAutomatically.value,
-                    title: "Auto-Sync Contacts",
-                    subtitle: "Automatically re-upload contacts to server when changes are detected",
-                    backgroundColor: tileColor,
-                    onChanged: (bool val) async {
-                      SettingsSvc.settings.syncContactsAutomatically.value = val;
-                      await SettingsSvc.settings.saveOneAsync("syncContactsAutomatically");
-                    },
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_2,
-                      materialIcon: Icons.people,
-                      containerColor: Colors.green,
-                    ),
-                  )),
             const SettingsDivider(),
             SettingsTile(
               leading: Column(
@@ -610,7 +593,7 @@ mixin ConnectionPanelHelpersMixin {
                   await SettingsSvc.settings.saveOneAsync('useLocalIpv6');
                   NetworkTasks.detectLocalhost(createSnackbar: true);
                 },
-                leading: SettingsLeadingIcon(
+                leading: const SettingsLeadingIcon(
                   iosIcon: CupertinoIcons.globe,
                   materialIcon: Icons.network_check_outlined,
                   containerColor: Colors.blue,
@@ -645,7 +628,7 @@ mixin ConnectionPanelHelpersMixin {
                           ? "Tap to fetch logs"
                           : "Disconnected, cannot fetch logs"),
                   backgroundColor: tileColor,
-                  leading: SettingsLeadingIcon(
+                  leading: const SettingsLeadingIcon(
                     iosIcon: CupertinoIcons.doc_plaintext,
                     materialIcon: Icons.article,
                     containerColor: Colors.lightBlue,

@@ -137,6 +137,11 @@ class ChatActions {
         chat.customThemeLight = inputChat.customThemeLight;
         chat.customThemeDark = inputChat.customThemeDark;
       }
+      if (updateFlags['updateWallpaperSettings'] == true) {
+        chat.wallpaperType = inputChat.wallpaperType;
+        chat.dynamicWallpaperId = inputChat.dynamicWallpaperId;
+        chat.dynamicWallpaperConfig = inputChat.dynamicWallpaperConfig;
+      }
       if (updateFlags['updateLatestMessage'] == true) {
         final latestMessageId = chatData['dbLatestMessageId'] as int?;
         final latestMessageDateMs = chatData['dbOnlyLatestMessageDate'] as int?;
@@ -597,6 +602,7 @@ class ChatActions {
         final existing = existingHandlesMap[inputHandle.uniqueAddressAndService];
         if (existing != null) {
           inputHandle.id = existing.id;
+          inputHandle.originalROWID ??= existing.originalROWID;
           handlesToSave.add(inputHandle);
         } else {
           // Brand-new handle — track it so we can attempt contact matching after the transaction.

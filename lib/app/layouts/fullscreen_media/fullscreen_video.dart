@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/dialogs/metadata_dialog.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -129,8 +130,7 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
       await platform.setProperty('target-peak', '203');
       await platform.setProperty('hdr-compute-peak', 'no');
     } catch (e, s) {
-      debugPrint('FullscreenVideo: Failed to apply Android video color pipeline: $e');
-      debugPrint(s.toString());
+      Logger.error('FullscreenVideo: Failed to apply Android video color pipeline!', error: e, trace: s);
     }
   }
 

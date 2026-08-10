@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/handle_audit_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/soft_deleted_chats_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selector.dart';
@@ -422,6 +423,21 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       title: "Delete All Messaging Data",
                       subtitle:
                           "Permanently deletes ALL messages, chats, attachments, participants, and contacts on this device."),
+                ]),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Audit"),
+                SettingsSection(backgroundColor: tileColor, children: [
+                  SettingsTile(
+                    onTap: () => NavigationSvc.pushSettings(context, const HandleAuditPanel()),
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.person_crop_circle_badge_exclam,
+                      materialIcon: Icons.person_search,
+                      containerColor: Colors.deepPurpleAccent,
+                    ),
+                    title: "Audit Handles",
+                    subtitle: "Scans local handles for a missing originalROWID (the server-side ID used to link "
+                        "messages to their sender) and lets you try to repair the affected ones.",
+                    trailing: const NextButton(),
+                  ),
                 ]),
                 if (kIsDesktop) const SizedBox(height: 100),
               ],

@@ -95,25 +95,31 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 5.0, right: 10.0),
                 child: leading,
               ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.theme.textTheme.bodyLarge,
-                ),
-                (subtitle != null)
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 3.0),
-                        child: Text(
-                          subtitle ?? "",
-                          style: context.theme.textTheme.bodySmall!
-                              .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-            ]),
+            // Omitted entirely rather than rendered empty: a caller that already
+            // shows its own title/description above this control (so the field
+            // reads as one tile instead of two) passes "", and an empty `Text`
+            // would still have reserved a blank line here.
+            if (title.isNotEmpty)
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: context.theme.textTheme.bodyLarge,
+                  ),
+                  (subtitle != null)
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 3.0),
+                          child: Text(
+                            subtitle ?? "",
+                            style: context.theme.textTheme.bodySmall!
+                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ],
+              ),
             Builder(
               builder: (context) {
                 final widget = useModernMenu
@@ -164,7 +170,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                     constraints: BoxConstraints(
                         maxWidth: leading != null
                             ? NavigationSvc.width(context) * 2 / 5 - 80 // Account for leading icon space
-                            : NavigationSvc.width(context) * 2 / 5 - 47),
+                            : NavigationSvc.width(context) * 2 / 5 - 20),
                     child: widget,
                   );
                 } else {

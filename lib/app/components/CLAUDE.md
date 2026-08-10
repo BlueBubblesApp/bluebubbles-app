@@ -15,14 +15,28 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 
 ## Other Components
 - `bb_chip.dart` — chip/tag widget (used for labels, selected contacts, etc.)
+- `bb_switch.dart` — `BBSwitch`, skin-aware toggle (`CupertinoSwitch` on iOS skin, Material `Switch` otherwise). Used internally by `SettingsSwitch`; prefer it over raw `Switch`/`CupertinoSwitch` for any new toggle.
+- `bb_slider.dart` — `BBSlider`, skin-aware slider (`CupertinoSlider` on iOS skin, Material 3 Expressive-styled `Slider` via `m3e/m3e_slider.dart` on Material/Samsung). Supports `divisions` (steps). Used internally by `SettingsSlider`; prefer it over raw `Slider`/`CupertinoSlider` for any new slider/number-picker.
 - `circle_progress_bar.dart` — circular progress indicator
 - `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`
 
 ## Material 3 Expressive (`m3e/`)
-Opt-in Material-3-Expressive primitives (shape scale, motion tokens, tonal section containment,
-list tile, tonal button, button group) used by the **Material and Samsung** skins only — leaf-level,
-skin-agnostic building blocks. Import via barrel: `package:bluebubbles/app/components/m3e/m3e.dart`.
+Opt-in Material-3-Expressive primitives (shape scale, spacing scale, motion tokens, tonal section
+containment, list tile, tonal button, button group) used by the **Material and Samsung** skins only
+— leaf-level, skin-agnostic building blocks. Import via barrel:
+`package:bluebubbles/app/components/m3e/m3e.dart`.
+
+`M3EShapes` is corner radii; `M3ESpacing` is padding/gaps. They are separate scales that share
+several values today — never feed a shape token to an `EdgeInsets` or a `SizedBox`, or retuning a
+corner silently reflows layout.
+
+`M3ETonalButton` takes a nullable `onPressed`; pass null for a busy/unavailable state rather than
+an empty callback, and it handles the dimming, the inert ink, and the semantics.
+
+`M3ESlider.themeData(context, ...)` returns a `SliderThemeData` (thick track, oversized thumb,
+dotted step indicators) built from the active `ColorScheme` — consumed by `BBSlider`, not used
+directly by feature code.
 
 ## Charts (`charts/`)
 Thin `fl_chart` wrappers and stat-display primitives, shared across any feature that needs simple

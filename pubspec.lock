@@ -732,6 +732,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  ffmpeg_kit_flutter_new_min:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: linux-arm64-noop
+      resolved-ref: bef0c248842d156153d041c810a53641fdb553c4
+      url: "https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git"
+    source: git
+    version: "3.6.2"
+  ffmpeg_kit_flutter_platform_interface:
+    dependency: transitive
+    description:
+      name: ffmpeg_kit_flutter_platform_interface
+      sha256: addf046ae44e190ad0101b2fde2ad909a3cd08a2a109f6106d2f7048b7abedee
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   file:
     dependency: transitive
     description:
@@ -806,13 +823,14 @@ packages:
     source: hosted
     version: "1.2.0"
   flat_buffers:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: flat_buffers
-      sha256: "7c1de2d6eb5f3e61e5c50040841109f509deaaf2b12ec0d57b92456d9ea50345"
-      url: "https://pub.dev"
-    source: hosted
-    version: "25.9.23"
+      path: dart
+      ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      resolved-ref: e7c6874192a643c50b10cb90f81c0ed84fd7f53a
+      url: "https://github.com/google/flatbuffers.git"
+    source: git
+    version: "25.12.19"
   flex_color_picker:
     dependency: "direct main"
     description:
@@ -837,6 +855,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.1"
+  floating_animation:
+    dependency: "direct main"
+    description:
+      name: floating_animation
+      sha256: "090747c3aba98133b61a7cbb804fb6e2c157331a8df9a3898396921ca2dcca25"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -1060,6 +1086,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.7"
+  flutter_moving_background:
+    dependency: "direct main"
+    description:
+      name: flutter_moving_background
+      sha256: bcb6a5360a579e8415000622b2dd4215db8c8a8ebe26e616648cf2769e05366c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   flutter_native_splash:
     dependency: "direct main"
     description:
@@ -1895,14 +1929,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.2"
-  metadata_fetch:
-    dependency: "direct main"
-    description:
-      name: metadata_fetch
-      sha256: "24a713eaddbebea3dc3036a6c1d6f7c57e187fff5f0ef07be3e3ebbb7820c3e7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.2"
   mgrs_dart:
     dependency: transitive
     description:
@@ -2115,10 +2141,10 @@ packages:
     dependency: "direct main"
     description:
       name: particles_flutter
-      sha256: "74057830f0526902cc36325b5feefbbeda88b5f8f9958cf8f24ec98eeeab36c2"
+      sha256: "9d592a19327bb4e1a8e865e45e42ef71c3788f6dd3ac95bd93b34a6ef1e0e98e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "3.2.0"
   passkit:
     dependency: "direct main"
     description:
@@ -2949,14 +2975,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
-  string_validator:
-    dependency: transitive
-    description:
-      name: string_validator
-      sha256: "240f4c98027dfbe8639c8271ef18cc9de735b47067aa15a720cfed9576a512b1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   supercharged:
     dependency: "direct main"
     description:
@@ -3293,14 +3311,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
-  video_thumbnail:
-    dependency: "direct main"
-    description:
-      name: video_thumbnail
-      sha256: "181a0c205b353918954a881f53a3441476b9e301641688a581e0c13f00dc588b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.5.6"
   vm_service:
     dependency: transitive
     description:
@@ -3333,6 +3343,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  wave:
+    dependency: "direct main"
+    description:
+      name: wave
+      sha256: "3a22d3122de63888e70c88920bdf686e360e5ec3e3bdb037d4da228d68d3556e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5"
   web:
     dependency: transitive
     description:

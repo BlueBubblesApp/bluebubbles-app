@@ -20,6 +20,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/misc/troubleshoot_panel.d
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/contacts/contacts_management_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/storage/storage_analyzer_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/system/notification_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/theming_panel.dart';
@@ -45,9 +46,6 @@ List<Widget> buildSettingItemList({
   required TextStyle iosSubtitle,
   required TextStyle materialSubtitle,
   required NavigatorService ns,
-  required RxnDouble progress,
-  required RxnInt totalSize,
-  required RxBool uploadingContacts,
 }) {
   // return searchable items, headers, tiles, or sections
   return [
@@ -67,7 +65,6 @@ List<Widget> buildSettingItemList({
             title: SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideContactInfo.value
                 ? "User Name"
                 : SettingsSvc.settings.userName.value,
-            subtitle: "Tap to view more details",
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const ProfilePanel(), (Route route) => route.isFirst);
             },
@@ -79,6 +76,7 @@ List<Widget> buildSettingItemList({
               size: 50,
             ),
             trailing: const NextButton(),
+            minVerticalPadding: 20,
           ),
         ],
       ),
@@ -563,6 +561,58 @@ List<Widget> buildSettingItemList({
           ),
         ),
 
+        // Contacts Management Tile
+        if (!kIsWeb)
+          SearchableSettingItem(
+            title: "Contacts Management",
+            searchTags: const [
+              "Contacts Permission",
+              "Refresh Contacts",
+              "Sync From Account",
+              "Contact Accounts",
+              "GrapheneOS",
+            ],
+            onTap: () {
+              ns.pushAndRemoveSettingsUntil(context, const ContactsManagementPanel(), (Route route) => route.isFirst);
+            },
+            child: SettingsTile(
+              backgroundColor: tileColor,
+              onTap: () {
+                ns.pushAndRemoveSettingsUntil(context, const ContactsManagementPanel(), (Route route) => route.isFirst);
+              },
+              leading: const SettingsLeadingIcon(
+                iosIcon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                materialIcon: Icons.contacts_rounded,
+                containerColor: Colors.green,
+              ),
+              title: "Contacts Management",
+              trailing: const NextButton(),
+            ),
+          ),
+
+        // Storage Analyzer Tile
+        if (!kIsWeb)
+          SearchableSettingItem(
+            title: "Storage Analyzer",
+            searchTags: const ["Delete Attachments", "Free Up Space", "Manage Storage", "Clear Cache"],
+            onTap: () {
+              ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
+            },
+            child: SettingsTile(
+              backgroundColor: tileColor,
+              onTap: () {
+                ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
+              },
+              leading: SettingsLeadingIcon(
+                iosIcon: CupertinoIcons.chart_pie_fill,
+                materialIcon: Icons.pie_chart_outline,
+                containerColor: Colors.red[700],
+              ),
+              title: "Storage Analyzer",
+              trailing: const NextButton(),
+            ),
+          ),
+
         // Developer Tools Tile
         SearchableSettingItem(
           title: "Developer Tools", // Title to search
@@ -591,15 +641,14 @@ List<Widget> buildSettingItemList({
               containerColor: Colors.lightBlue,
             ),
             title: "Developer Tools",
-            subtitle: "View logs, troubleshoot bugs, and more",
             trailing: const NextButton(),
           ),
         ),
       ],
     ),
     SearchableSettingItem(
-      title: "Backup and restore",
-      child: SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Backup and Restore"),
+      title: "More",
+      child: SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "More"),
     ),
     SettingsSection(
       backgroundColor: tileColor,
@@ -629,43 +678,20 @@ List<Widget> buildSettingItemList({
               containerColor: Colors.blueGrey,
             ),
             title: "Backup & Restore",
-            subtitle: "Settings and custom themes",
           ),
         ),
 
-        if (!kIsWeb && !kIsDesktop)
-          SearchableSettingItem(
-            title: "Export Contacts", // Title to search
-            child: SettingsTile(
-              backgroundColor: tileColor,
-              onTap: () => SettingsItemsActions.exportContacts(
-                context: context,
-                progress: progress,
-                totalSize: totalSize,
-                uploadingContacts: uploadingContacts,
-              ),
-              leading: const SettingsLeadingIcon(
-                iosIcon: CupertinoIcons.group_solid,
-                materialIcon: Icons.contacts,
-                containerColor: Colors.green,
-              ),
-              title: "Export Contacts",
-              subtitle: "Sync contacts to the desktop app",
-            ),
-          ),
         // About & Links Section
-        SearchableSettingItem(
+        const SearchableSettingItem(
           title: "Leave Us a Review", // Title to search
           child: SettingsTile(
             title: "Leave Us a Review",
-            subtitle: "Rate us on the ${Platform.isAndroid ? 'Play Store' : 'Microsoft Store'}",
             onTap: SettingsItemsActions.openStoreReview,
-            leading: const SettingsLeadingIcon(
+            leading: SettingsLeadingIcon(
               iosIcon: CupertinoIcons.star_fill,
               materialIcon: Icons.star,
               containerColor: Colors.blue,
             ),
-            isThreeLine: false,
           ),
         ),
 
@@ -674,14 +700,12 @@ List<Widget> buildSettingItemList({
             title: "Make a Donation", // Title to search
             child: SettingsTile(
               title: "Make a Donation",
-              subtitle: "Support the BlueBubbles team",
               onTap: SettingsItemsActions.openDonationPage,
               leading: SettingsLeadingIcon(
                 iosIcon: CupertinoIcons.money_dollar_circle,
                 materialIcon: Icons.attach_money,
                 containerColor: Colors.green,
               ),
-              isThreeLine: false,
             ),
           ),
 
@@ -689,7 +713,6 @@ List<Widget> buildSettingItemList({
           title: "Join Our Discord", // Title to search
           child: SettingsTile(
             title: "Join Our Discord",
-            subtitle: "Chat with other users and the developers",
             onTap: SettingsItemsActions.openDiscord,
             leading: SettingsLeadingIcon(
               iosIcon: Icons.discord,
@@ -717,7 +740,6 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "About & More",
-            subtitle: "Links, Changelog, & More",
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const AboutPanel(), (Route route) => route.isFirst);
             },
@@ -731,29 +753,6 @@ List<Widget> buildSettingItemList({
         ),
 
         // Danger Zone Section
-        if (!kIsWeb)
-          SearchableSettingItem(
-            title: "Storage Analyzer",
-            searchTags: const ["Delete Attachments", "Free Up Space", "Manage Storage", "Clear Cache"],
-            onTap: () {
-              ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
-            },
-            child: SettingsTile(
-              backgroundColor: tileColor,
-              onTap: () {
-                ns.pushAndRemoveSettingsUntil(context, const StorageAnalyzerPanel(), (Route route) => route.isFirst);
-              },
-              leading: SettingsLeadingIcon(
-                iosIcon: CupertinoIcons.chart_pie_fill,
-                materialIcon: Icons.pie_chart_outline,
-                containerColor: Colors.red[700],
-              ),
-              title: "Storage Analyzer",
-              subtitle: "View and free up attachment storage",
-              trailing: const NextButton(),
-            ),
-          ),
-
         if (!kIsWeb)
           SearchableSettingItem(
             title: "Reset App", // Title to search
@@ -782,7 +781,6 @@ List<Widget> buildSettingItemList({
                 containerColor: Colors.red[700],
               ),
               title: kIsWeb ? "Logout" : "Reset App",
-              subtitle: kIsWeb ? null : "Resets the app to default settings",
             ),
           ),
       ],

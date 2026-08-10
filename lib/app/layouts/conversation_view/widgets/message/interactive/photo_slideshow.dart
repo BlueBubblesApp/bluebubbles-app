@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -38,6 +38,16 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
   bool _previewFetchStarted = false;
   bool _previewFetchFailed = false;
 
+  /// True when the policy declines to fetch this sender's preview
+  /// automatically, so the placeholder becomes a tap target instead.
+  bool _needsManualLoad = false;
+
+  /// Set when the reset came from "Refresh Preview", so the refetch it triggers
+  /// counts as user-initiated. Picking the action out of a menu is consent, the
+  /// same as tapping the placeholder; without this a refresh on a gated sender
+  /// just replaces the preview with the tap-to-load prompt.
+  bool _refreshRequested = false;
+
   late MessageState _ms;
   Worker? _refreshWorker;
   Message get message => _ms.message;
@@ -49,12 +59,17 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
   void initState() {
     super.initState();
     _ms = MessageStateScope.readStateOnce(context);
+    // The popup's decorative copy shares this MessageState, so a subscribed
+    // clone would make every "Refresh Preview" run twice. See MessageCloneScope.
+    if (MessageCloneScope.of(context)) return;
     _refreshWorker = ever(_ms.previewRefreshKey, (_) {
       if (!mounted) return;
       setState(() {
         _previewImagePath = null;
         _previewFetchStarted = false;
         _previewFetchFailed = false;
+        _needsManualLoad = false;
+        _refreshRequested = true;
       });
     });
   }
@@ -65,19 +80,25 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
     super.dispose();
   }
 
-  /// Fetches the Open Graph preview image from the share URL (e.g. an
-  /// iCloud shared-album link). Reuses [MetadataHelper]'s disk-caching so the
-  /// image is only ever downloaded once per unique preview image. This never
-  /// touches the underlying photo/video itself - only the small preview
-  /// thumbnail the share page exposes for link unfurling.
-  Future<void> _resolvePreviewImage(Message message) async {
+  /// Fetches the preview image from the share URL (e.g. an iCloud
+  /// shared-album link). Reuses [MetadataHelper]'s disk caching so the image
+  /// is only ever downloaded once per unique preview image. This never touches
+  /// the underlying photo/video itself - only the small preview thumbnail the
+  /// share page exposes for link unfurling.
+  ///
+  /// Set [manual] when the user tapped to load: that bypasses the automatic
+  /// fetch policy and the previously-attempted guard, since a tap is an
+  /// explicit request.
+  Future<void> _resolvePreviewImage(Message message, {bool manual = false}) async {
     if (kIsWeb) {
       if (mounted) setState(() => _previewFetchFailed = true);
       return;
     }
 
+    const slot = MetadataCacheSlot.photoSlideshow;
+
     // Already cached on disk from a previous fetch.
-    final storedMd5 = message.metadata?['photoPreviewImageMd5'] as String?;
+    final storedMd5 = MessageMetadataStore.imageHash(message, slot);
     if (storedMd5 != null) {
       final cachedPath = FilesystemSvc.urlPreviewImagePath(storedMd5);
       if (await File(cachedPath).exists()) {
@@ -86,8 +107,10 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
       }
     }
 
-    // A previous attempt already ran and found no image to cache - don't retry every build.
-    if (message.metadata?['photoPreviewImageFetched'] == true) {
+    // A previous attempt already ran and found no image to cache. Unlike the
+    // old permanent flag this ages out, so a share page that was temporarily
+    // unreachable is retried rather than left blank forever.
+    if (!manual && !MessageMetadataStore.shouldFetch(message, slot: slot)) {
       if (mounted) setState(() => _previewFetchFailed = true);
       return;
     }
@@ -97,20 +120,27 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
       return;
     }
 
-    try {
-      final metadata = await MetadataHelper.fetchMetadata(message, urlOverride: data.url);
-      if (metadata?.image != null) {
-        final result = await MetadataHelper.resolveCachedImage(message, 'photoPreviewImageMd5', metadata!.image!);
-        if (result != null) {
-          if (mounted) setState(() => _previewImagePath = result.$1);
-          return;
-        }
-      }
-      message.metadata = {...?message.metadata, 'photoPreviewImageFetched': true};
-      if (message.id != null) message.save();
-    } catch (ex, stack) {
-      Logger.warn('Failed to fetch Photos preview image', error: ex, trace: stack, tag: 'PhotoSlideshow');
+    // Offer tap-to-load rather than reaching out on this sender's behalf.
+    // Skipped when [manual] is set, because a tap is the user's consent.
+    if (!manual && !await MetadataHelper.shouldAutoFetch(message)) {
+      if (mounted) setState(() => _needsManualLoad = true);
+      return;
     }
+
+    final result = await MetadataHelper.fetchForMessage(message, urlOverride: data.url, manual: manual);
+    final imageUrl = result.metadata?.imageUrl;
+
+    if (imageUrl != null) {
+      final image = await MetadataHelper.resolveCachedImage(message, imageUrl, slot: slot);
+      if (image != null) {
+        MessageMetadataStore.write(message, result.metadata!, slot: slot, imageHash: image.hash);
+        if (mounted) setState(() => _previewImagePath = image.path);
+        return;
+      }
+    }
+
+    // Only record the attempt when retrying could not help.
+    if (result.shouldMarkAttempted) MessageMetadataStore.markAttempted(message, slot: slot);
     if (mounted) setState(() => _previewFetchFailed = true);
   }
 
@@ -119,9 +149,11 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
     super.build(context);
     if (_previewImagePath == null && !_previewFetchStarted) {
       _previewFetchStarted = true;
+      final manual = _refreshRequested;
+      _refreshRequested = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_resolvePreviewImage(message));
+        unawaited(_resolvePreviewImage(message, manual: manual));
       });
     }
     return Column(
@@ -144,7 +176,37 @@ class _PhotoSlideshowState extends State<PhotoSlideshow> with AutomaticKeepAlive
                   ),
                 ),
               ),
-            if (_previewImagePath == null)
+            if (_previewImagePath == null && _needsManualLoad)
+              SizedBox(
+                width: 200,
+                height: 150,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _needsManualLoad = false;
+                      _previewFetchFailed = false;
+                    });
+                    unawaited(_resolvePreviewImage(message, manual: true));
+                  },
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.cloud_download, size: 28, color: context.theme.colorScheme.primary),
+                        const SizedBox(height: 6),
+                        Text(
+                          "Load Preview",
+                          style: context.theme.textTheme.labelMedium!.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: context.theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (_previewImagePath == null && !_needsManualLoad)
               SizedBox(
                 width: 200,
                 height: 150,

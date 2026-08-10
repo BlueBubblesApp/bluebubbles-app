@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:bluebubbles/models/models.dart' show LocationAttachmentData;
 import 'package:universal_io/io.dart';
@@ -104,12 +103,19 @@ class Share {
       String fileName = "$_attachmentGuid-CL.loc.vcf";
       Uint8List bytes = Uint8List.fromList(utf8.encode(vcfString));
 
-      Metadata meta = await MetadataHelper.getLocationMetadata(_locationData);
-      String url = meta.image!;
-      String? title = meta.title;
+      // Apple Maps does not always serve a preview image; the location is
+      // still perfectly sendable without one, so this is not treated as a
+      // failure the way the old force-unwrap did (which left the dialog stuck
+      // on "Loading Location..." forever).
+      final meta = await MetadataHelper.getLocationMetadata(_locationData);
 
       return LocationAttachmentData(
-          guid: _attachmentGuid, fileName: fileName, bytes: bytes, mapImageUrl: url, title: title);
+        guid: _attachmentGuid,
+        fileName: fileName,
+        bytes: bytes,
+        mapImageUrl: meta?.imageUrl,
+        title: meta?.title,
+      );
     }
 
     bool send = false;
@@ -128,12 +134,20 @@ class Share {
                 url = snapshot.data!.mapImageUrl;
                 title = snapshot.data!.title;
               }
-              if (url == null) {
+              // Gate on the attachment itself rather than on the preview
+              // image: a location with no thumbnail is still sendable.
+              if (bytes == null) {
                 return AbsorbPointer(
                   child: AlertDialog(
                     backgroundColor: Get.theme.colorScheme.surfaceContainerHighest,
-                    title: Text("Loading Location...", style: Get.textTheme.titleLarge),
-                    content: buildProgressIndicator(context),
+                    title: Text(
+                      snapshot.hasError ? "Couldn't Get Location" : "Loading Location...",
+                      style: Get.textTheme.titleLarge,
+                    ),
+                    content: snapshot.hasError
+                        ? Text("Check that location permissions are granted and try again.",
+                            style: Get.textTheme.bodyMedium)
+                        : buildProgressIndicator(context),
                   ),
                 );
               }
@@ -145,25 +159,26 @@ class Share {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.network(
-                        url!,
-                        gaplessPlayback: true,
-                        filterQuality: FilterQuality.none,
-                        errorBuilder: (_, __, ___) {
-                          return const SizedBox.shrink();
-                        },
-                        frameBuilder: (_, child, frame, __) {
-                          if (frame == null) {
-                            return Center(
-                              heightFactor: 1,
-                              child: buildProgressIndicator(context),
-                            );
-                          } else {
-                            return child;
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 15),
+                      if (url != null)
+                        Image.network(
+                          url!,
+                          gaplessPlayback: true,
+                          filterQuality: FilterQuality.none,
+                          errorBuilder: (_, _, _) {
+                            return const SizedBox.shrink();
+                          },
+                          frameBuilder: (_, child, frame, _) {
+                            if (frame == null) {
+                              return Center(
+                                heightFactor: 1,
+                                child: buildProgressIndicator(context),
+                              );
+                            } else {
+                              return child;
+                            }
+                          },
+                        ),
+                      if (url != null) const SizedBox(height: 15),
                       Text(
                         title ?? "No location details found",
                         style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),

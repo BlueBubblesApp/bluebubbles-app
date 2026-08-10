@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/bb_slider.dart';
 import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/page_template.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
@@ -251,7 +252,7 @@ class _NumberOfMessagesSliderState extends CustomState<NumberOfMessagesSlider, i
           ),
         ),
         const SizedBox(height: 10),
-        Slider(
+        BBSlider(
           value: numberOfMessages,
           onChanged: (double value) {
             controller.updateNumberToDownload(value.toInt());

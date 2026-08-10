@@ -88,6 +88,59 @@ Wraps `RawChip` with the app's standard chip styling: rounded-rectangle shape
 
 Used for things like filter chips and selected-contact tags in chat creation.
 
+## `BBSwitch`
+
+`lib/app/components/bb_switch.dart`
+
+Skin-aware toggle: renders `CupertinoSwitch` under the iOS skin (`context.iOS`) and Material
+`Switch` otherwise. Drop-in replacement for either — takes `value`, `onChanged`, and an optional
+`activeColor` (mapped to `activeTrackColor` on the Cupertino side).
+
+```dart
+BBSwitch(
+  value: someFlag,
+  activeColor: context.theme.colorScheme.primary.lightenOrDarken(15),
+  onChanged: (val) => setState(() => someFlag = val),
+)
+```
+
+`SettingsSwitch` (`lib/app/layouts/settings/widgets/content/settings_switch.dart`) uses this
+internally, so every settings toggle built on top of it is skin-aware for free. Prefer `BBSwitch`
+over raw `Switch`/`CupertinoSwitch` for any new toggle outside of `SettingsSwitch`.
+
+## `BBSlider`
+
+`lib/app/components/bb_slider.dart`
+
+Skin-aware slider: renders `CupertinoSlider` under the iOS skin (`context.iOS`) and a Material 3
+Expressive-styled `Slider` under Material/Samsung. Drop-in replacement for either — takes `value`,
+`onChanged`, `onChangeStart`, `onChangeEnd`, `min`, `max`, an optional `divisions` (step count),
+`label` (Material discrete-drag tooltip), and optional `activeColor` / `inactiveColor` /
+`thumbColor` overrides. Colors default to the active `ColorScheme` (`primary` / `secondaryContainer`)
+when omitted — never hardcode slider colors at the call site.
+
+```dart
+BBSlider(
+  value: currentValue,
+  min: 0,
+  max: 10,
+  divisions: 10,
+  label: currentValue.toStringAsFixed(1),
+  onChanged: (val) => setState(() => currentValue = val),
+)
+```
+
+The Material/Samsung styling comes from `M3ESlider.themeData()` (`lib/app/components/m3e/m3e_slider.dart`)
+— part of the `m3e/` Material 3 Expressive primitive set (`lib/app/components/CLAUDE.md`): a 16dp
+track, an oversized (14dp radius) round thumb, and dotted stop-indicators for discrete steps, all
+colored from the active `ColorScheme` rather than hardcoded.
+
+`SettingsSlider` (`lib/app/layouts/settings/widgets/content/settings_slider.dart`) uses `BBSlider`
+internally, so every settings slider built on top of it is skin-aware for free. Prefer `BBSlider`
+over raw `Slider`/`CupertinoSlider` for any new numeric picker outside of `SettingsSlider` — the
+in-app camera scrubber and audio-message playback scrubber are the two intentional exceptions
+(they overlay media and are deliberately theme-independent).
+
 ## Dialogs (`dialog_helpers.dart`)
 
 `lib/helpers/ui/dialog_helpers.dart`

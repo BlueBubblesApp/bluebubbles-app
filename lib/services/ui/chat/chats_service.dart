@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:bluebubbles/app/components/wallpaper/chat_wallpaper_type.dart';
+import 'package:bluebubbles/app/components/wallpaper/wallpaper_config_codec.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
@@ -919,12 +921,10 @@ class ChatsService {
         .then((response) {
       if (!completer.isCompleted) completer.complete(response.data["data"]);
     }).catchError((err) {
-      late final dynamic error;
-      if (err is Response) {
-        error = err.data["error"]["message"];
-      } else {
-        error = err.toString();
-      }
+      // completeError rejects null, so this must never resolve to one — a
+      // server error body without a `message` key used to crash here rather
+      // than surfacing the failure.
+      final Object error = (err is Response ? err.data?["error"]?["message"] : null) ?? err?.toString() ?? 'Unknown error';
       if (!completer.isCompleted) completer.completeError(error);
     });
 
@@ -1089,7 +1089,6 @@ class ChatsService {
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
     }
-    AttachmentsSvc.clearVideoThumbnailCache();
     HandleSvc.reset();
 
     // Use init() rather than reset() so the empty-database case is handled
@@ -1409,12 +1408,19 @@ class ChatsService {
     }
   }
 
-  /// Set chat custom background path
+  /// Set chat custom background path. Also updates [Chat.wallpaperType] to
+  /// "image" (a path was set) or "none" (cleared) — use
+  /// [setChatDynamicWallpaper] to switch to an animated wallpaper instead.
   Future<void> setChatCustomBackgroundPath(Chat chat, String? value) async {
     final state = getChatState(chat.guid);
     final resolvedPath = value ?? FilesystemSvc.getExistingChatBackgroundPath(chat.guid);
     final oldPath = state?.customBackgroundPath.value ?? FilesystemSvc.getExistingChatBackgroundPath(chat.guid);
-    if (state != null && state.customBackgroundPath.value == resolvedPath) return;
+    final newWallpaperType = resolvedPath != null ? ChatWallpaperType.image : ChatWallpaperType.none;
+    if (state != null &&
+        state.customBackgroundPath.value == resolvedPath &&
+        state.wallpaperType.value == newWallpaperType) {
+      return;
+    }
 
     if (oldPath != null && oldPath != resolvedPath) {
       ThemesService.clearAdaptiveThemeCache(oldPath);
@@ -1430,6 +1436,61 @@ class ChatsService {
     }
 
     state?.updateCustomBackgroundPathInternal(resolvedPath);
+    state?.updateWallpaperTypeInternal(newWallpaperType);
+    if (newWallpaperType == ChatWallpaperType.image) {
+      state?.updateDynamicWallpaperInternal(null, null);
+    }
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.wallpaperType = newWallpaperType == ChatWallpaperType.none ? null : newWallpaperType.name;
+    if (newWallpaperType == ChatWallpaperType.image) {
+      chatToUpdate.dynamicWallpaperId = null;
+      chatToUpdate.dynamicWallpaperConfig = null;
+    }
+    await chatToUpdate.saveAsync(updateWallpaperSettings: true);
+  }
+
+  /// Selects a dynamic (animated) wallpaper for [chat] — sets
+  /// [Chat.wallpaperType] to "dynamic" and stores [wallpaperId] +
+  /// JSON-encoded [config]. Leaves any existing custom background image file
+  /// on disk untouched (switching back to "image" reuses it).
+  Future<void> setChatDynamicWallpaper(Chat chat, String wallpaperId, Map<String, dynamic> config) async {
+    final state = getChatState(chat.guid);
+
+    state?.updateWallpaperTypeInternal(ChatWallpaperType.dynamic);
+    state?.updateDynamicWallpaperInternal(wallpaperId, config);
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.wallpaperType = ChatWallpaperType.dynamic.name;
+    chatToUpdate.dynamicWallpaperId = wallpaperId;
+    chatToUpdate.dynamicWallpaperConfig = WallpaperConfigCodec.encode(config);
+    await chatToUpdate.saveAsync(updateWallpaperSettings: true);
+  }
+
+  /// Clears any wallpaper (image or dynamic) back to the default app-wide
+  /// background. Deletes the on-disk custom background file, if any.
+  Future<void> clearChatWallpaper(Chat chat) async {
+    final state = getChatState(chat.guid);
+    final existingImagePath =
+        state?.customBackgroundPath.value ?? FilesystemSvc.getExistingChatBackgroundPath(chat.guid);
+
+    if (existingImagePath != null) {
+      ThemesService.clearAdaptiveThemeCache(existingImagePath);
+      final file = File(existingImagePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+
+    state?.updateCustomBackgroundPathInternal(null);
+    state?.updateWallpaperTypeInternal(ChatWallpaperType.none);
+    state?.updateDynamicWallpaperInternal(null, null);
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.wallpaperType = null;
+    chatToUpdate.dynamicWallpaperId = null;
+    chatToUpdate.dynamicWallpaperConfig = null;
+    await chatToUpdate.saveAsync(updateWallpaperSettings: true);
   }
 
   /// Set the custom light and dark themes for a specific chat.

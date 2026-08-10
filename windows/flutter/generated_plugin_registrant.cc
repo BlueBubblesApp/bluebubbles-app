@@ -13,6 +13,7 @@
 #include <desktop_webview_auth/desktop_webview_auth_plugin.h>
 #include <dynamic_color/dynamic_color_plugin_c_api.h>
 #include <emoji_picker_flutter/emoji_picker_flutter_plugin_c_api.h>
+#include <ffmpeg_kit_flutter_new_min/f_fmpeg_kit_flutter_plugin.h>
 #include <file_selector_windows/file_selector_windows.h>
 #include <flutter_acrylic/flutter_acrylic_plugin.h>
 #include <flutter_timezone/flutter_timezone_plugin_c_api.h>
@@ -50,6 +51,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("DynamicColorPluginCApi"));
   EmojiPickerFlutterPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("EmojiPickerFlutterPluginCApi"));
+  FFmpegKitFlutterPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FFmpegKitFlutterPlugin"));
   FileSelectorWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FileSelectorWindows"));
   FlutterAcrylicPluginRegisterWithRegistrar(

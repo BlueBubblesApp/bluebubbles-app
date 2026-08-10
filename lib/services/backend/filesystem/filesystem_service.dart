@@ -69,15 +69,27 @@ class FilesystemService {
   String get customBackgroundsPath => join(appDocDir.path, 'custom_backgrounds');
   String get urlPreviewsPath => join(appDocDir.path, 'url_previews');
 
-  /// Returns the path for a cached URL preview image identified by its MD5 hash.
-  String urlPreviewImagePath(String md5) => join(urlPreviewsPath, md5);
+  /// Returns the path for a cached URL preview image identified by its content
+  /// hash. Accepts hashes written by older versions too, since the filename is
+  /// whatever was persisted on the message.
+  String urlPreviewImagePath(String hash) => join(urlPreviewsPath, hash);
 
-  /// Downloads and caches a URL preview image. Computes an MD5 hash of the raw
-  /// bytes and uses it as the filename so that identical images across different
-  /// messages share a single file. Returns the hex MD5 string.
+  /// Caches a URL preview image, keyed by the SHA-256 of its bytes.
+  ///
+  /// Content addressing means identical images shared across messages occupy a
+  /// single file. SHA-256 rather than MD5 because these bytes come from
+  /// attacker-influenced markup: chosen-prefix MD5 collisions are practical, and
+  /// the cache is shared across senders, so a collision would let one sender
+  /// control what renders in another's preview.
+  ///
+  /// Nothing is evicted automatically. A link preview is part of how a message
+  /// reads, so it persists like the message does — the user reclaims the space
+  /// deliberately from the Storage Analyzer, the same way attachments (which
+  /// are far larger) already work. Existing MD5-named files stay valid; they
+  /// are simply content the messages referencing them still point at.
   Future<String> saveUrlPreviewImage(Uint8List bytes) async {
     if (kIsWeb) throw 'saveUrlPreviewImage is not supported on web';
-    final hash = md5.convert(bytes).toString();
+    final hash = sha256.convert(bytes).toString();
     final dir = Directory(urlPreviewsPath);
     await dir.create(recursive: true);
     final file = File(join(urlPreviewsPath, hash));

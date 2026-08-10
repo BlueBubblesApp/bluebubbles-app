@@ -47,7 +47,8 @@ class _PickedAttachmentState extends State<PickedAttachment> with AutomaticKeepA
     final mimeType = mime(widget.data.name) ?? "";
     if (mimeType.startsWith("video/") && !kIsWeb && !kIsDesktop) {
       try {
-        imageBytes = await AttachmentsSvc.getVideoThumbnail(file.path!, useCachedFile: false);
+        imagePath = await AttachmentsSvc.getVideoThumbnail(file.path!, useCachedFile: false);
+        if (imagePath == null) thumbnailFailed = true;
       } catch (ex) {
         thumbnailFailed = true;
       }

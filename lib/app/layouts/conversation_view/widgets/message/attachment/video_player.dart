@@ -8,14 +8,17 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:mime_type/mime_type.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 /// Sizes [child] like [AspectRatio], but never shrinks width to satisfy a
 /// height constraint (mirrors how image_viewer.dart sizes images) — a fixed
@@ -232,7 +235,9 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   final RxBool muted = SettingsSvc.settings.startVideosMuted.value.obs;
   final RxDouble aspectRatio = 1.0.obs;
   final RxBool firstFrameReady = false.obs;
-  Uint8List? thumbnail;
+  // Path to the generated thumbnail file on disk -- deliberately never held as decoded bytes in
+  // memory; always rendered via Image.file.
+  String? thumbnailPath;
   bool thumbnailFailed = false;
 
   @override
@@ -248,12 +253,12 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (cachedController != null) {
       // Reuse existing controller
       videoController = cachedController;
-      if (cachedController.rect.value != null) {
-        firstFrameReady.value = true;
-        if (aspectRatio.value != cachedController.aspectRatio) {
-          aspectRatio.value = cachedController.aspectRatio;
-        }
+      if (cachedController.rect.value != null && aspectRatio.value != cachedController.aspectRatio) {
+        aspectRatio.value = cachedController.aspectRatio;
       }
+      // firstFrameReady is set inside createListener via waitUntilFirstFrameRendered --
+      // for an already-rendered cached controller that future is already complete, so
+      // it resolves on the next microtask rather than staying false.
       createListener(cachedController);
     } else if (kIsDesktop || kIsWeb) {
       // Desktop/web: eager init (no thumbnail support there)
@@ -263,9 +268,9 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
 
     if (!kIsDesktop && !kIsWeb) {
       if (file.path != null) {
-        thumbnail = AttachmentsSvc.getCachedVideoThumbnailSync(file.path!);
+        thumbnailPath = AttachmentsSvc.getCachedVideoThumbnailSync(file.path!);
       }
-      if (thumbnail == null) {
+      if (thumbnailPath == null) {
         getThumbnail();
       } else {
         _seedAspectRatioFromThumbnail();
@@ -284,11 +289,11 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   /// the ground truth for the box size, DB dimensions can be missing or ignore rotation, and a
   /// mismatch there causes a visible resize when playback starts.
   void _seedAspectRatioFromThumbnail() {
-    final bytes = thumbnail;
-    if (bytes == null || thumbnailFailed) return;
+    final path = thumbnailPath;
+    if (path == null || thumbnailFailed) return;
     if (firstFrameReady.value) return; // the decoded video's rect is authoritative
     try {
-      final size = isg.ImageSizeGetter.getSizeResult(isg.MemoryInput(bytes)).size;
+      final size = isg.ImageSizeGetter.getSizeResult(FileInput(File(path))).size;
       final width = size.needRotate ? size.height : size.width;
       final height = size.needRotate ? size.width : size.height;
       if (width > 0 && height > 0) {
@@ -344,8 +349,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       await platform.setProperty('target-peak', '203');
       await platform.setProperty('hdr-compute-peak', 'no');
     } catch (e, s) {
-      debugPrint('VideoPlayer: Failed to apply Android video color pipeline: $e');
-      debugPrint(s.toString());
+      Logger.error('VideoPlayer: Failed to apply Android video color pipeline!', error: e, trace: s);
     }
   }
 
@@ -357,7 +361,18 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
       if (controller.rect.value == null) return;
       final ratio = controller.aspectRatio;
       if (aspectRatio.value != ratio) aspectRatio.value = ratio;
-      if (!firstFrameReady.value) firstFrameReady.value = true;
+    });
+
+    // `waitUntilFirstFrameRendered` sounds like the right signal, but on Android (and
+    // desktop) media_kit_video actually completes it from the same native video-geometry
+    // ("first frame rendered" / `VideoOutput.Resize`) event that also updates `rect` -- it
+    // fires once the decoder reports frame dimensions, not once the platform surface has
+    // actually presented a frame. That gap is small but visible as a black flash once the
+    // thumbnail fades. There's no more precise "pixel actually on screen" signal exposed by
+    // the package, so add a short grace delay before trusting it.
+    controller.waitUntilFirstFrameRendered.then((_) async {
+      if (!kIsWeb) await Future.delayed(const Duration(milliseconds: 400));
+      if (mounted && !firstFrameReady.value) firstFrameReady.value = true;
     });
 
     controller.player.stream.completed.listen((completed) async {
@@ -385,36 +400,23 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
     if (thumbnailFailed) {
       return Container(color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3));
     }
-    return Image.memory(thumbnail!, fit: fit, filterQuality: filterQuality, gaplessPlayback: true, frameBuilder: frameBuilder);
+
+    return Image.file(File(thumbnailPath!),
+        fit: fit, filterQuality: filterQuality, gaplessPlayback: true, frameBuilder: frameBuilder);
   }
 
   void getThumbnail() async {
     if (kIsWeb || kIsDesktop) return;
 
     try {
-      // If we already errored, use fallback immediately
-      if (attachment.metadata?['thumbnail_status'] == 'error') {
-        thumbnailFailed = true;
-        if (mounted) setState(() {});
-        return;
-      }
-
-      // Fetch the thumbnail
-      thumbnail = await AttachmentsSvc.getVideoThumbnail(file.path!);
+      // Always retry on mount now; the in-memory `thumbnailFailed`
+      // flag still prevents retrying repeatedly within the same widget lifetime.
+      thumbnailPath = await AttachmentsSvc.getVideoThumbnail(file.path!);
       _seedAspectRatioFromThumbnail();
       if (mounted) setState(() {});
-    } catch (ex) {
+    } catch (ex, s) {
+      Logger.error('VideoPlayer: Failed to generate thumbnail for ${file.name}', error: ex, trace: s);
       thumbnailFailed = true;
-
-      // Only save error status to DB if not already set
-      if (attachment.metadata?['thumbnail_status'] != 'error') {
-        attachment.metadata ??= {};
-        attachment.metadata!['thumbnail_status'] = 'error';
-        if (attachment.id != null) {
-          attachment.saveAsync(null);
-        }
-      }
-
       if (mounted) setState(() {});
     }
   }
@@ -487,7 +489,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                           fit: BoxFit.cover,
                         ),
                         // Keep the thumbnail painted over the black surface until the first frame decodes
-                        if (!kIsDesktop && !kIsWeb && thumbnail != null)
+                        if (!kIsDesktop && !kIsWeb && thumbnailPath != null)
                           Obx(() => IgnorePointer(
                                 child: AnimatedOpacity(
                                   opacity: firstFrameReady.value ? 0 : 1,
@@ -506,7 +508,9 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   isFromMe: widget.isFromMe),
               if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
               if (!kIsDesktop && !kIsWeb && thumbnailFailed)
-                MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe),
+                Obx(() => firstFrameReady.value
+                    ? const SizedBox.shrink()
+                    : MediaCornerBadge(label: "Preview Unavailable", alignLeft: widget.isFromMe)),
             ],
           ),
         ),
@@ -534,7 +538,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           },
           // All mobile states (placeholder → thumbnail → playing) share the same
           // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
-          child: thumbnail == null && !thumbnailFailed && !kIsDesktop && !kIsWeb
+          child: thumbnailPath == null && !thumbnailFailed && !kIsDesktop && !kIsWeb
               ? Obx(() => _boundedAspectRatio(
                     ratio: aspectRatio.value,
                     child: Center(
@@ -545,7 +549,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                       ),
                     ),
                   ))
-              : thumbnail == null && !thumbnailFailed
+              : thumbnailPath == null && !thumbnailFailed
                   ? Padding(
                       padding: const EdgeInsets.all(15.0),
                       child: Row(

@@ -1,6 +1,7 @@
 export 'dispatched_event.dart';
 export 'message_receipt_info.dart';
 export 'handle_lookup_key.dart';
+export 'handle_audit_result.dart';
 export 'message_reply_context.dart';
 export 'message_save_result.dart';
 export 'contact_search_result.dart';
