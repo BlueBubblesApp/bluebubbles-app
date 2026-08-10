@@ -378,6 +378,16 @@ class StartupTasks {
       dispose: (svc) => svc.dispose(),
     );
 
+    // Required for any send initiated while the app is killed — notably replying
+    // from a notification, which routes through OutgoingMsgHandler.queue(). Without
+    // it the send throws "OutgoingMessageHandler is not registered inside GetIt"
+    // and the reply is silently lost.
+    Logger.info("Registering OutgoingMessageHandler...");
+    GetIt.I.registerSingleton<OutgoingMessageHandler>(
+      OutgoingMessageHandler(),
+      dispose: (svc) => svc.dispose(),
+    );
+
     await _waitForInterop(methodChannel: true);
 
     Logger.info("Background isolate services initialization complete");

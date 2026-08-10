@@ -136,8 +136,18 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
                     suspendCancellableCoroutine { cont ->
                         MethodChannel(engineToUse.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
                             override fun success(result: Any?) {
-                                PersistentLog.d(applicationContext, Constants.logTag, "Worker with method $method completed successfully")
-                                if (cont.isActive) cont.resume(Result.success())
+                                // A handler that returns false is asking to be retried (see
+                                // MethodChannelService._callHandler). That is still a *successful*
+                                // method-channel call, so it arrives here rather than in error() —
+                                // ignoring the value silently converted every "retry me" into
+                                // "done", permanently dropping the event.
+                                if (result == false) {
+                                    PersistentLog.w(applicationContext, Constants.logTag, "Worker with method $method asked to be retried")
+                                    if (cont.isActive) cont.resume(retryOrFail(method, "Dart requested a retry"))
+                                } else {
+                                    PersistentLog.d(applicationContext, Constants.logTag, "Worker with method $method completed successfully")
+                                    if (cont.isActive) cont.resume(Result.success())
+                                }
                                 closeEngineIfNeeded()
                             }
 

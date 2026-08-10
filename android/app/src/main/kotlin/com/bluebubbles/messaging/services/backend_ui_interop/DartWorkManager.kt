@@ -19,7 +19,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object DartWorkManager {
-    fun createWorker(context: Context, method: String, arguments: HashMap<String, Any?>, callback: () -> (Unit)) {
+    /// [callback] receives whether the Dart work actually SUCCEEDED. Callers must not
+    /// treat completion as success: WorkManager also reaches a finished state on FAILED
+    /// and CANCELLED, which is exactly what happens when a cold engine boot fails while
+    /// the app is killed. Reporting those as success makes the UI claim work was done
+    /// that never happened (e.g. a notification reply that was never sent).
+    fun createWorker(context: Context, method: String, arguments: HashMap<String, Any?>, callback: (Boolean) -> (Unit)) {
         PersistentLog.d(context, Constants.logTag, "Creating new ${Constants.dartWorkerTag} for method $method")
         val gson = GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
@@ -58,9 +63,13 @@ object DartWorkManager {
                         PersistentLog.w(context, Constants.logTag, "Work record for method $method was pruned before completion was observed")
                         return@Observer
                     }
+                    val succeeded = workInfo.state == WorkInfo.State.SUCCEEDED
+                    if (!succeeded) {
+                        PersistentLog.e(context, Constants.logTag, "Worker for method $method finished unsuccessfully (state: ${workInfo.state})")
+                    }
                     PersistentLog.d(context, Constants.logTag, "Running callback after worker with method $method completed (state: ${workInfo.state})")
                     try {
-                        callback()
+                        callback(succeeded)
                     } catch (e: Exception) {
                         PersistentLog.e(context, Constants.logTag, "Error running callback for worker $method", e)
                     }

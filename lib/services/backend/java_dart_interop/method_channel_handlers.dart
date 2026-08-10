@@ -245,37 +245,64 @@ class MethodChannelHandlers {
     final Map<String, dynamic>? data = arguments;
     if (data == null) return _ok();
 
+    // Guards against the same reply being delivered twice (e.g. WorkManager
+    // redelivering the event). This is a duplicate, not a failure — return _ok() so
+    // the worker stops, rather than _retry() which would burn the retry budget
+    // re-discovering the same duplicate.
     final recentReply = PrefsSvc.messaging.getRecentReply();
     final recentReplyGuid = recentReply?.messageGuid;
     final recentReplyText = recentReply?.text;
-    if (recentReplyGuid == data['messageGuid'] && recentReplyText == data['text']) return _retry();
-
-    await PrefsSvc.messaging.setRecentReply(
-      messageGuid: data['messageGuid'],
-      text: data['text'],
-    );
-    Logger.info('Updated recent reply cache to ${PrefsSvc.messaging.getRecentReplyRaw()}');
+    if (recentReplyGuid == data['messageGuid'] && recentReplyText == data['text']) {
+      Logger.info('Ignoring duplicate reply for message ${data['messageGuid']}');
+      return _ok();
+    }
 
     final Chat? chat = Chat.findOne(guid: data['chatGuid']);
     if (chat == null) return _retry();
+
+    // Held so the temp GUID assigned during queueing can be used to check the
+    // send outcome below.
+    final replyMessage = Message(
+      text: data['text'],
+      dateCreated: DateTime.now(),
+      hasAttachments: false,
+      isFromMe: true,
+      handleId: 0,
+    );
 
     final Completer<void> completer = Completer();
     OutgoingMsgHandler.queue(
       OutgoingMessage(
         completer: completer,
         chat: chat,
-        message: Message(
-          text: data['text'],
-          dateCreated: DateTime.now(),
-          hasAttachments: false,
-          isFromMe: true,
-          handleId: 0,
-        ),
+        message: replyMessage,
         clearNotificationsIfFromMe: false,
       ),
     );
 
     await completer.future;
+
+    // A failed send is finalized inside the handler — the message is persisted with
+    // an error code — and the completer still completes *normally*, so waiting on it
+    // says nothing about success. Re-read the queued message to find out. On success
+    // the temp GUID is swapped for the real one and this lookup finds nothing.
+    final tempGuid = replyMessage.guid;
+    final sent = tempGuid == null ? null : Message.findOne(guid: tempGuid);
+    if (sent != null && sent.error != 0) {
+      Logger.error('Reply failed to send (error ${sent.error}); requesting retry');
+      return _retry();
+    }
+
+    // Only now that the send has actually resolved is it safe to record this reply
+    // as "recent". Writing it earlier meant a failed send poisoned its own retry:
+    // the retry saw the cache entry, treated itself as a duplicate, and dropped the
+    // message while reporting success.
+    await PrefsSvc.messaging.setRecentReply(
+      messageGuid: data['messageGuid'],
+      text: data['text'],
+    );
+    Logger.info('Updated recent reply cache to ${PrefsSvc.messaging.getRecentReplyRaw()}');
+
     return _ok();
   }
 
