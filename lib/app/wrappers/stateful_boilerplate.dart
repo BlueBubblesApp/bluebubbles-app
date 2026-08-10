@@ -51,6 +51,7 @@ abstract class CustomState<T extends CustomStateful, R, S extends StatefulContro
   /// Force delete the [GetxController] when the page has disposed (unless we
   /// don't want to)
   void dispose() {
+    widget.parentController.updateWidgetFunctions[T]?.remove(updateWidget);
     if (_forceDelete) Get.delete<S>(tag: _tag);
     super.dispose();
   }

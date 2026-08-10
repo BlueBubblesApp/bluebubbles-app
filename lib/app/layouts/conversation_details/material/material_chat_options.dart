@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/theming/theme_studio/them
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/wallpaper_picker_page.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
@@ -105,7 +106,9 @@ class ExpressiveChatOptions extends StatelessWidget {
                     isDefault: true,
                     onPressed: () async {
                       Navigator.of(context, rootNavigator: true).pop();
-                      final result = await Get.to<String?>(() => AvatarCrop(chat: chat));
+                      final result = await Navigator.of(context).push<String?>(
+                        ThemeSwitcher.buildPageRoute(builder: (context) => AvatarCrop(chat: chat)),
+                      );
                       if (result != null) {
                         await ChatsSvc.setChatCustomAvatarPath(chat, result);
                       }
@@ -114,7 +117,9 @@ class ExpressiveChatOptions extends StatelessWidget {
                 ],
               );
             } else {
-              final result = await Get.to<String?>(() => AvatarCrop(chat: chat));
+              final result = await Navigator.of(context).push<String?>(
+                ThemeSwitcher.buildPageRoute(builder: (context) => AvatarCrop(chat: chat)),
+              );
               if (result == null) return;
               await ChatsSvc.setChatCustomAvatarPath(chat, result);
             }
@@ -140,8 +145,9 @@ class ExpressiveChatOptions extends StatelessWidget {
             final lightThemeName = chat.customThemeLight ?? ThemeStruct.getLightTheme().name;
             final darkThemeName = chat.customThemeDark ?? ThemeStruct.getDarkTheme().name;
 
-            Get.to(
-              () => ThemeStudioPanel(
+            NavigationSvc.push(
+              context,
+              ThemeStudioPanel(
                 config: ThemeStudioPanelConfig(
                   initialLightThemeName: lightThemeName,
                   initialDarkThemeName: darkThemeName,
