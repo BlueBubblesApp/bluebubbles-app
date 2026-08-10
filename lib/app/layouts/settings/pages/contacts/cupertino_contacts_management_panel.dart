@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 /// iOS skin — plain `SettingsTile`/`SettingsSection` rows, matching
 /// `troubleshoot_panel.dart`'s style (no M3E, which is Material/Samsung only).
@@ -19,9 +18,11 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
 
   @override
   Widget build(BuildContext context) {
+    final deviceContacts = !kIsWeb && !kIsDesktop;
+
     return SettingsScaffold(
       title: "Contacts Management",
-      initialHeader: "Permission",
+      initialHeader: deviceContacts ? "Permission" : "Sync",
       iosSubtitle: context.iosSubtitle,
       materialSubtitle: context.materialSubtitle,
       tileColor: context.tileColor,
@@ -29,35 +30,38 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
       bodySlivers: [
         SliverList(
           delegate: SliverChildListDelegate([
-            SettingsSection(backgroundColor: context.tileColor, children: [
-              Obx(() {
-                final status = controller.permissionStatus.value;
-                return SettingsTile(
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.person_crop_circle_badge_checkmark,
-                    materialIcon: Icons.contacts_rounded,
-                    containerColor: status.isGranted ? Colors.green : context.theme.colorScheme.error,
-                  ),
-                  title: "Contacts Permission: ${permissionStatusLabel(status)}",
-                  subtitle: permissionStatusDescription(status),
-                  isThreeLine: true,
-                  trailing: controller.checkingPermission.value
-                      ? const CupertinoActivityIndicator()
-                      : CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: status.isPermanentlyDenied
-                              ? openAppSettings
-                              : status.isGranted
-                                  ? controller.refreshPermissionStatus
-                                  : controller.requestPermission,
-                          child: Text(
-                            status.isPermanentlyDenied ? "Open Settings" : status.isGranted ? "Refresh" : "Grant",
+            if (deviceContacts) ...[
+              SettingsSection(backgroundColor: context.tileColor, children: [
+                Obx(() {
+                  final status = controller.permissionStatus.value;
+                  return SettingsTile(
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                      materialIcon: Icons.contacts_rounded,
+                      containerColor: status.isGranted ? Colors.green : context.theme.colorScheme.error,
+                    ),
+                    title: "Contacts Permission: ${permissionStatusLabel(status)}",
+                    subtitle: permissionStatusDescription(status),
+                    isThreeLine: true,
+                    trailing: controller.checkingPermission.value
+                        ? const CupertinoActivityIndicator()
+                        : CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: status.isPermanentlyDenied
+                                ? openAppSettings
+                                : status.isGranted
+                                    ? controller.refreshPermissionStatus
+                                    : controller.requestPermission,
+                            child: Text(
+                              status.isPermanentlyDenied ? "Open Settings" : status.isGranted ? "Refresh" : "Grant",
+                            ),
                           ),
-                        ),
-                );
-              }),
-            ]),
-            SettingsHeader(iosSubtitle: context.iosSubtitle, materialSubtitle: context.materialSubtitle, text: "Sync"),
+                  );
+                }),
+              ]),
+              SettingsHeader(
+                  iosSubtitle: context.iosSubtitle, materialSubtitle: context.materialSubtitle, text: "Sync"),
+            ],
             SettingsSection(backgroundColor: context.tileColor, children: [
               Obx(() => SettingsTile(
                     leading: const SettingsLeadingIcon(
@@ -70,7 +74,7 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                     trailing: controller.syncing.value ? const CupertinoActivityIndicator() : null,
                     onTap: controller.syncing.value ? null : controller.refreshContactsNow,
                   )),
-              if (Platform.isAndroid) ...[
+              if (deviceContacts) ...[
                 const SettingsDivider(),
                 Obx(() => SettingsSwitch(
                       initialVal: SettingsSvc.settings.syncContactsAutomatically.value,
@@ -87,8 +91,6 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                         containerColor: Colors.green,
                       ),
                     )),
-              ],
-              if (!kIsWeb && !kIsDesktop) ...[
                 const SettingsDivider(),
                 SettingsTile(
                   leading: const SettingsLeadingIcon(
@@ -105,11 +107,13 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
             SettingsHeader(
                 iosSubtitle: context.iosSubtitle, materialSubtitle: context.materialSubtitle, text: "Sync Info"),
             SettingsSection(backgroundColor: context.tileColor, children: [
-              Obx(() => SettingsTile(
-                    title: "Device Contacts Found",
-                    trailing: Text('${controller.lastDeviceContactCount.value ?? "—"}'),
-                  )),
-              const SettingsDivider(),
+              if (deviceContacts) ...[
+                Obx(() => SettingsTile(
+                      title: "Device Contacts Found",
+                      trailing: Text('${controller.lastDeviceContactCount.value ?? "—"}'),
+                    )),
+                const SettingsDivider(),
+              ],
               Obx(() => SettingsTile(
                     title: "Matched To Conversations",
                     trailing: Text('${controller.lastMatchedContactCount.value ?? "—"}'),
@@ -120,50 +124,52 @@ class CupertinoContactsManagementPanel extends StatelessWidget with ContactsMana
                     trailing: Text('${controller.lastAffectedHandleCount.value ?? "—"}'),
                   )),
             ]),
-            SettingsHeader(
-                iosSubtitle: context.iosSubtitle,
-                materialSubtitle: context.materialSubtitle,
-                text: "Sync From Account"),
-            Obx(() {
-              if (controller.loadingAccounts.value && controller.accounts.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CupertinoActivityIndicator()),
-                );
-              }
+            if (deviceContacts) ...[
+              SettingsHeader(
+                  iosSubtitle: context.iosSubtitle,
+                  materialSubtitle: context.materialSubtitle,
+                  text: "Sync From Account"),
+              Obx(() {
+                if (controller.loadingAccounts.value && controller.accounts.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
+                }
 
-              return SettingsSection(backgroundColor: context.tileColor, children: [
-                SettingsTile(
-                  leading: const SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.square_grid_2x2,
-                    materialIcon: Icons.select_all_rounded,
-                    containerColor: Colors.blueAccent,
-                  ),
-                  title: "All Accounts",
-                  subtitle: "Sync contacts from every account on this device (default).",
-                  trailing: controller.isAccountSelected(null)
-                      ? const Icon(CupertinoIcons.check_mark, color: Colors.blueAccent)
-                      : null,
-                  onTap: () => controller.selectAccount(null),
-                ),
-                for (final account in controller.accounts) ...[
-                  const SettingsDivider(),
+                return SettingsSection(backgroundColor: context.tileColor, children: [
                   SettingsTile(
-                    leading: SettingsLeadingIcon(
-                      iosIcon: accountIcon(account).icon,
-                      materialIcon: accountIcon(account).icon,
-                      containerColor: accountIcon(account).color,
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.square_grid_2x2,
+                      materialIcon: Icons.select_all_rounded,
+                      containerColor: Colors.blueAccent,
                     ),
-                    title: accountLabel(account),
-                    subtitle: "${accountCount(account)} contacts",
-                    trailing: controller.isAccountSelected(account)
+                    title: "All Accounts",
+                    subtitle: "Sync contacts from every account on this device (default).",
+                    trailing: controller.isAccountSelected(null)
                         ? const Icon(CupertinoIcons.check_mark, color: Colors.blueAccent)
                         : null,
-                    onTap: () => controller.selectAccount(account),
+                    onTap: () => controller.selectAccount(null),
                   ),
-                ],
-              ]);
-            }),
+                  for (final account in controller.accounts) ...[
+                    const SettingsDivider(),
+                    SettingsTile(
+                      leading: SettingsLeadingIcon(
+                        iosIcon: accountIcon(account).icon,
+                        materialIcon: accountIcon(account).icon,
+                        containerColor: accountIcon(account).color,
+                      ),
+                      title: accountLabel(account),
+                      subtitle: "${accountCount(account)} contacts",
+                      trailing: controller.isAccountSelected(account)
+                          ? const Icon(CupertinoIcons.check_mark, color: Colors.blueAccent)
+                          : null,
+                      onTap: () => controller.selectAccount(account),
+                    ),
+                  ],
+                ]);
+              }),
+            ],
           ]),
         ),
       ],
