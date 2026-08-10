@@ -32,9 +32,10 @@ void main(List<String> args) {
   final positional = args.where((a) => a != '--beta').toList();
   final version = positional.length == 1 ? positional.single : '';
 
-  if (!RegExp(r'^\d+\.\d+\.\d+\.\d+$').hasMatch(version)) {
-    stderr.writeln('usage: dart run scripts/bump_desktop_versions.dart [--beta] <major.minor.patch.revision>');
+  if (!RegExp(r'^\d+\.\d+\.\d+\.0$').hasMatch(version)) {
+    stderr.writeln('usage: dart run scripts/bump_desktop_versions.dart [--beta] <major.minor.patch.0>');
     stderr.writeln('   eg: dart run scripts/bump_desktop_versions.dart --beta 2.1.0.0');
+    stderr.writeln('       (the 4th digit must be 0)');
     exit(1);
   }
 
