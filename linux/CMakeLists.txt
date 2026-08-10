@@ -92,6 +92,12 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# The plugin dlopen()s libffmpegkit.so from bundle/lib, but install(FILES) leaves it with a
+# build-tree RUNPATH. RPATH, not RUNPATH: glibc only inherits RPATH when resolving libffmpegkit's
+# own NEEDED libav* libs. Belongs in the fork, here to avoid a repin.
+set_target_properties(ffmpeg_kit_flutter_new_min_plugin PROPERTIES BUILD_RPATH "$ORIGIN")
+target_link_options(ffmpeg_kit_flutter_new_min_plugin PRIVATE "-Wl,--disable-new-dtags")
+
 # media_kit builds mimalloc with MI_OVERRIDE=ON so that its malloc/free symbols
 # interpose process-wide. The same object also exports C++ new/delete overrides,
 # which trips Flutter's hardened libc++ check. Remove only those C++ symbols:
