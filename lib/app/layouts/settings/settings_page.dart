@@ -256,7 +256,8 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                           CupertinoPage(
                               name: "initial",
                               child: Scaffold(
-                                  backgroundColor: Colors.transparent,
+                                  backgroundColor:
+                                      SettingsSvc.settings.skin.value != Skins.iOS ? tileColor : headerColor,
                                   body: Center(
                                     child: Text("Select a settings page from the list",
                                         style: context.theme.textTheme.bodyLarge),
