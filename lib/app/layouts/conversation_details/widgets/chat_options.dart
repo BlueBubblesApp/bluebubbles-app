@@ -10,6 +10,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/theming/avatar/avatar_crop.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/wallpaper_picker_page.dart';
+import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -106,7 +107,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                     text: "Reset",
                     onPressed: () async {
                       await ChatsSvc.setChatCustomAvatarPath(chat, null);
-                      Navigator.of(context, rootNavigator: true).pop();
+                      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
                     },
                   ),
                   BBDialogAction(
@@ -114,7 +115,9 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                     isDefault: true,
                     onPressed: () async {
                       Navigator.of(context, rootNavigator: true).pop();
-                      final result = await Get.to<String?>(() => AvatarCrop(chat: chat));
+                      final result = await Navigator.of(context).push<String?>(
+                        ThemeSwitcher.buildPageRoute(builder: (context) => AvatarCrop(chat: chat)),
+                      );
                       if (result != null) {
                         await ChatsSvc.setChatCustomAvatarPath(chat, result);
                       }
@@ -123,7 +126,9 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
                 ],
               );
             } else {
-              final result = await Get.to<String?>(() => AvatarCrop(chat: chat));
+              final result = await Navigator.of(context).push<String?>(
+                ThemeSwitcher.buildPageRoute(builder: (context) => AvatarCrop(chat: chat)),
+              );
               if (result == null) return;
               await ChatsSvc.setChatCustomAvatarPath(chat, result);
             }
@@ -160,8 +165,9 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             final lightThemeName = chat.customThemeLight ?? ThemeStruct.getLightTheme().name;
             final darkThemeName = chat.customThemeDark ?? ThemeStruct.getDarkTheme().name;
 
-            Get.to(
-              () => ThemeStudioPanel(
+            NavigationSvc.push(
+              context,
+              ThemeStudioPanel(
                 config: ThemeStudioPanelConfig(
                   initialLightThemeName: lightThemeName,
                   initialDarkThemeName: darkThemeName,
