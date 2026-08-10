@@ -1,19 +1,14 @@
-import 'dart:io';
-import 'dart:math';
-
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:get/get.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutPanel extends StatefulWidget {
@@ -355,106 +350,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                     SettingsTile(
                       title: "About",
                       subtitle: "Version and other information",
-                      onTap: () {
-                        showDialog<void>(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return FutureBuilder<PackageInfo>(
-                                future: PackageInfo.fromPlatform(),
-                                builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
-                                  return AlertDialog(
-                                    contentPadding: const EdgeInsets.only(
-                                      top: 24,
-                                      left: 24,
-                                      right: 24,
-                                    ),
-                                    elevation: 10.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        10.0,
-                                      ),
-                                    ),
-                                    scrollable: true,
-                                    backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-                                    content: ListBody(
-                                      children: <Widget>[
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            IconTheme(
-                                              data: context.theme.iconTheme,
-                                              child: Image.asset(
-                                                "assets/icon/icon.png",
-                                                width: 30,
-                                                height: 30,
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                                                child: ListBody(
-                                                  children: <Widget>[
-                                                    Text(
-                                                      "BlueBubbles",
-                                                      style: context.theme.textTheme.titleLarge,
-                                                    ),
-                                                    if (!kIsDesktop)
-                                                      Text(
-                                                          "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
-                                                          style: context.theme.textTheme.bodyLarge),
-                                                    if (!kIsDesktop)
-                                                      Text(
-                                                          "Version Code: ${snapshot.hasData ? snapshot.data!.buildNumber.toString().lastChars(min(4, snapshot.data!.buildNumber.length)) : "N/A"}",
-                                                          style: context.theme.textTheme.bodyLarge),
-                                                    if (kIsDesktop)
-                                                      Text(
-                                                        "${FilesystemSvc.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}${isSnap ? "_Snap" : isFlatpak ? "_Flatpak" : isMsix ? "_Msix" : ""}",
-                                                        style: context.theme.textTheme.bodyLarge,
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: Text("View Licenses",
-                                            style: context.theme.textTheme.bodyLarge!
-                                                .copyWith(color: context.theme.colorScheme.primary)),
-                                        onPressed: () {
-                                          Navigator.of(context).push(MaterialPageRoute<void>(
-                                            builder: (BuildContext context) => Theme(
-                                              data: context.theme,
-                                              child: LicensePage(
-                                                applicationName: "BlueBubbles",
-                                                applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
-                                                applicationIcon: Image.asset(
-                                                  "assets/icon/icon.png",
-                                                  width: 30,
-                                                  height: 30,
-                                                ),
-                                              ),
-                                            ),
-                                          ));
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: Text("Close",
-                                            style: context.theme.textTheme.bodyLarge!
-                                                .copyWith(color: context.theme.colorScheme.primary)),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                });
-                          },
-                        );
-                      },
+                      onTap: () => showVersion(context),
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info,
