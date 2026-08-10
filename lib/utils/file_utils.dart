@@ -1,5 +1,6 @@
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/utils/gif_utils.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
@@ -24,6 +25,62 @@ Future<void> revealInFileManager(String path) async {
   } else {
     await Process.start('xdg-open', [dirname(path)]);
   }
+}
+
+/// Moves [source] onto [targetPath], by rename where the filesystem allows it.
+Future<void> moveFile(File source, String targetPath, {int renameAttempts = 5}) async {
+  for (int attempt = 1; attempt <= renameAttempts; attempt++) {
+    try {
+      await source.rename(targetPath);
+      return;
+    } on PathNotFoundException {
+      rethrow;
+    } on FileSystemException catch (e) {
+      if (isCrossDeviceError(e) || attempt >= renameAttempts) break;
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+  }
+  await source.copy(targetPath);
+  try {
+    await source.delete();
+  } on FileSystemException {
+    // Whatever
+  }
+}
+
+/// Win32 ERROR_NOT_SAME_DEVICE (17) on Windows, POSIX EXDEV (18) everywhere
+/// else — Dart reports Win32 codes there and errno elsewhere, so the two can't
+/// be checked together: 17 is EEXIST on POSIX.
+bool isCrossDeviceError(FileSystemException e) => e.osError?.errorCode == (Platform.isWindows ? 17 : 18);
+
+/// Desktop "Save As": asks where to put the file, then puts it there. Returns
+/// the path it was saved to, or null if the user cancelled the dialog.
+Future<String?> saveFileAs({
+  required String fileName,
+  String? initialDirectory,
+  String? sourcePath,
+  Uint8List? bytes,
+  List<String>? allowedExtensions,
+}) async {
+  assert(sourcePath != null || bytes != null, 'saveFileAs needs either a sourcePath or bytes');
+  final String? savePath = await FilePicker.saveFile(
+    initialDirectory: initialDirectory,
+    dialogTitle: 'Choose a location to save this file',
+    fileName: fileName,
+    lockParentWindow: true,
+    type: allowedExtensions != null ? FileType.custom : FileType.any,
+    allowedExtensions: allowedExtensions,
+  );
+  // Cancelled. Overwrite confirmation is the native dialog's job, so anything
+  // that comes back here is a location the user has agreed to write to.
+  if (savePath == null) return null;
+
+  if (sourcePath != null) {
+    await File(sourcePath).copy(savePath);
+  } else {
+    await File(savePath).writeAsBytes(bytes!);
+  }
+  return savePath;
 }
 
 Future<PlatformFile?> loadPathAsFile(String path) async {

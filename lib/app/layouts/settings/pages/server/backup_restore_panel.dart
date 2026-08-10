@@ -429,16 +429,11 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         String filePath = join(downloadsDir, "BB-Settings-$name.json");
         final String jsonString = jsonEncode(json);
         if (kIsDesktop) {
-          // Let the portal write the file: passing bytes lands it at the
-          // real chosen location (sandbox-safe) so reveal opens the right
-          // folder, instead of a separate write to a non-granted path.
-          String? _filePath = await FilePicker.saveFile(
-            initialDirectory: downloadsDir,
-            dialogTitle: 'Choose a location to save this file',
+          String? _filePath = await saveFileAs(
             fileName: "BB-Settings-$name.json",
-            type: FileType.custom,
-            allowedExtensions: ["json"],
+            initialDirectory: downloadsDir,
             bytes: utf8.encode(jsonString),
+            allowedExtensions: ["json"],
           );
           if (_filePath == null) {
             return showSnackbar('Failed', 'You didn\'t select a file path!');
@@ -678,16 +673,11 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       final downloadsDir = await FilesystemSvc.downloadsDirectory;
       String filePath = join(downloadsDir, themeFilename);
       if (kIsDesktop) {
-        // Let the portal write the file: passing bytes lands it at the
-        // real chosen location (sandbox-safe) so reveal opens the right
-        // folder, instead of a separate write to a non-granted path.
-        String? _filePath = await FilePicker.saveFile(
-          initialDirectory: downloadsDir,
-          dialogTitle: 'Choose a location to save this file',
+        String? _filePath = await saveFileAs(
           fileName: themeFilename,
-          type: FileType.custom,
-          allowedExtensions: ["json"],
+          initialDirectory: downloadsDir,
           bytes: utf8.encode(jsonStr),
+          allowedExtensions: ["json"],
         );
         if (_filePath == null) {
           return showSnackbar('Failed', 'You didn\'t select a file path!');

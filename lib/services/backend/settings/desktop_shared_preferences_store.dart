@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
@@ -47,7 +48,6 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   static const String _backupSuffix = '.bak';
   static const Duration _staleLockTimeout = Duration(seconds: 10);
   static const Duration _lockRetryDelay = Duration(milliseconds: 5);
-  static const int _renameAttempts = 5;
 
   String? _cachedDirectoryPath;
   Future<void> _writeQueue = Future.value();
@@ -247,7 +247,9 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       } finally {
         raf.closeSync();
       }
-      await _renameWithRetry(tmp, file.path);
+      // Not atomic if it has to fall back to a copy — the `.bak` refreshed
+      // below and the corrupt-file recovery are what cover that.
+      await moveFile(tmp, file.path);
     } on FileSystemException catch (e) {
       _log('Failed to save preferences: $e');
       return;
@@ -256,21 +258,6 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       file.copySync((await _getBackupFile()).path);
     } on FileSystemException catch (e) {
       _log('Failed to refresh preferences backup: $e');
-    }
-  }
-
-  /// Renaming over the data file fails on Windows while a concurrent reader
-  /// (e.g. the stock legacy store reading at startup) briefly holds it open,
-  /// so retry a few times before giving up.
-  Future<void> _renameWithRetry(File tmp, String targetPath) async {
-    for (int attempt = 1;; attempt++) {
-      try {
-        tmp.renameSync(targetPath);
-        return;
-      } on FileSystemException {
-        if (attempt >= _renameAttempts) rethrow;
-        await Future.delayed(const Duration(milliseconds: 10));
-      }
     }
   }
 
@@ -289,7 +276,7 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
           if (file.existsSync()) {
             final String quarantinePath = '${file.path}.corrupt-${DateTime.now().millisecondsSinceEpoch}';
             _log('Quarantining corrupt preferences file to $quarantinePath');
-            file.renameSync(quarantinePath);
+            await moveFile(file, quarantinePath);
           }
           if (_parseFile(backup) != null) {
             _log('Restoring preferences from backup');

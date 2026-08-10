@@ -17,6 +17,7 @@ import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:path/path.dart';
 import 'package:bluebubbles/models/models.dart' show AttachmentUploadProgress;
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:universal_html/html.dart' as html;
@@ -247,18 +248,30 @@ class AttachmentsService extends GetxService {
         ..setAttribute("download", file.name)
         ..click();
     } else if (kIsDesktop) {
-      String? savePath = await FilePicker.saveFile(
-        initialDirectory: await FilesystemSvc.downloadsDirectory,
-        dialogTitle: 'Choose a location to save this file',
-        fileName: file.name,
-        lockParentWindow: true,
-        type: file.extension != null ? FileType.custom : FileType.any,
-        allowedExtensions: file.extension != null ? [file.extension!] : null,
-      );
+      if (file.path == null && file.bytes == null) {
+        return showSnackbar('Error', 'That attachment has no data to save!');
+      }
 
-      if (savePath == null) {
+      final String? picked;
+      try {
+        picked = await saveFileAs(
+          fileName: file.name,
+          initialDirectory: await FilesystemSvc.downloadsDirectory,
+          sourcePath: file.path,
+          bytes: file.path == null ? file.bytes : null,
+          allowedExtensions: file.extension != null ? [file.extension!] : null,
+        );
+      } catch (ex, stack) {
+        Logger.error('Failed to save attachment!', error: ex, trace: stack);
+        return showSnackbar('Error', 'Failed to save attachment!');
+      }
+
+      if (picked == null) {
         return showSnackbar('Error', 'You didn\'t select a file path!');
       }
+      // Non-nullable copy: the null check above doesn't promote inside the
+      // snackbar's callback.
+      final String savePath = picked;
 
       showSnackbar(
         'Success',
@@ -975,7 +988,7 @@ class AttachmentsService extends GetxService {
     }
 
     try {
-      await File(tempPath).rename(previewPath);
+      await moveFile(File(tempPath), previewPath);
     } catch (ex, stack) {
       Logger.error('Failed to move image preview into place!', error: ex, trace: stack);
       return null;
