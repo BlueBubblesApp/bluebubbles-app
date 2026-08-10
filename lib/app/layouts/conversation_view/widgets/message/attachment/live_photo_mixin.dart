@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubbles/database/models.dart';
@@ -21,12 +22,50 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   final RxBool isPlayingLivePhoto = false.obs;
   final RxDouble livePhotoOpacity = 0.0.obs;
 
+  /// Bumped on dispose and each new play so in-flight awaits no-op after teardown.
+  int _livePhotoPlayGeneration = 0;
+  Timer? _livePhotoHideTimer;
+  final List<StreamSubscription<dynamic>> _livePhotoSubscriptions = [];
+
   // Must be implemented by the using class
   Attachment get livePhotoAttachment;
 
+  bool _isLivePhotoPlayActive(int generation) => mounted && generation == _livePhotoPlayGeneration;
+
+  void _cancelLivePhotoAsyncWork() {
+    _livePhotoHideTimer?.cancel();
+    _livePhotoHideTimer = null;
+    for (final sub in _livePhotoSubscriptions) {
+      sub.cancel();
+    }
+    _livePhotoSubscriptions.clear();
+  }
+
+  Future<void> _disposeLivePhotoPlayer() async {
+    final player = livePhotoPlayer;
+    livePhotoPlayer = null;
+    livePhotoController = null;
+    await player?.dispose();
+  }
+
+  void _scheduleLivePhotoHide(int generation, Duration delay) {
+    _livePhotoHideTimer?.cancel();
+    _livePhotoHideTimer = Timer(delay, () async {
+      if (!_isLivePhotoPlayActive(generation) || !isPlayingLivePhoto.value) return;
+      livePhotoOpacity.value = 0.0;
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (!_isLivePhotoPlayActive(generation)) return;
+      isPlayingLivePhoto.value = false;
+    });
+  }
+
   @override
   void dispose() {
+    _livePhotoPlayGeneration++;
+    _cancelLivePhotoAsyncWork();
     livePhotoPlayer?.dispose();
+    livePhotoPlayer = null;
+    livePhotoController = null;
     super.dispose();
   }
 
@@ -42,6 +81,8 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     if (isDownloadingLivePhoto.value || isPlayingLivePhoto.value) {
       // If already playing, stop it with fade out
       if (isPlayingLivePhoto.value) {
+        _livePhotoPlayGeneration++;
+        _cancelLivePhotoAsyncWork();
         livePhotoOpacity.value = 0.0;
         await Future.delayed(const Duration(milliseconds: 200));
         if (mounted) {
@@ -52,39 +93,41 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       return;
     }
 
+    final generation = ++_livePhotoPlayGeneration;
+    _cancelLivePhotoAsyncWork();
+
     // Check if we already have the live photo cached in memory
     if (livePhotoFile != null && livePhotoPlayer != null) {
-      // Seek to start and wait for player to be ready
-      await livePhotoPlayer!.seek(Duration.zero);
+      try {
+        // Seek to start and wait for player to be ready
+        await livePhotoPlayer!.seek(Duration.zero);
+        if (!_isLivePhotoPlayActive(generation)) return;
 
-      // Start playing (but keep hidden while loading)
-      await livePhotoPlayer!.play();
+        // Start playing (but keep hidden while loading)
+        await livePhotoPlayer!.play();
+        if (!_isLivePhotoPlayActive(generation)) return;
 
-      // Wait a bit for the video to buffer the first frame
-      await Future.delayed(const Duration(milliseconds: 100));
+        // Wait a bit for the video to buffer the first frame
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (!_isLivePhotoPlayActive(generation)) return;
 
-      if (mounted) {
         isPlayingLivePhoto.value = true;
 
         // Fade in
         await Future.delayed(const Duration(milliseconds: 50));
-        if (mounted) {
-          livePhotoOpacity.value = 1.0;
-        }
-      }
+        if (!_isLivePhotoPlayActive(generation)) return;
+        livePhotoOpacity.value = 1.0;
 
-      // Auto-hide after video ends with fade out
-      Future.delayed(Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100), () async {
-        if (mounted && isPlayingLivePhoto.value) {
-          // Fade out
-          livePhotoOpacity.value = 0.0;
-          // Wait for fade animation to complete
-          await Future.delayed(const Duration(milliseconds: 200));
-          if (mounted) {
-            isPlayingLivePhoto.value = false;
-          }
-        }
-      });
+        // Auto-hide after video ends with fade out
+        _scheduleLivePhotoHide(
+          generation,
+          Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
+        );
+      } catch (ex) {
+        if (!_isLivePhotoPlayActive(generation)) return;
+        Logger.error("Failed to play live photo", error: ex);
+        showSnackbar("Error", "Failed to play live photo");
+      }
       return;
     }
 
@@ -94,9 +137,13 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
     // Check if live photo already exists on disk
     if (await livePhotoFileOnDisk.exists()) {
+      if (!_isLivePhotoPlayActive(generation)) return;
+
       // Initialize and play existing file
       try {
         final fileInfo = await livePhotoFileOnDisk.stat();
+        if (!_isLivePhotoPlayActive(generation)) return;
+
         livePhotoFile = PlatformFile(
           name: p.basename(livePhotoPath),
           size: fileInfo.size,
@@ -106,35 +153,42 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         livePhotoPlayer = Player();
         livePhotoController = VideoController(livePhotoPlayer!);
         await livePhotoPlayer!.setPlaylistMode(PlaylistMode.none);
+        if (!_isLivePhotoPlayActive(generation)) {
+          await _disposeLivePhotoPlayer();
+          return;
+        }
         await livePhotoPlayer!.open(Media(livePhotoPath), play: false);
+        if (!_isLivePhotoPlayActive(generation)) {
+          await _disposeLivePhotoPlayer();
+          return;
+        }
 
         // Start playing and wait for first frame to be ready
         await livePhotoPlayer!.play();
+        if (!_isLivePhotoPlayActive(generation)) {
+          await _disposeLivePhotoPlayer();
+          return;
+        }
         await Future.delayed(const Duration(milliseconds: 100));
-
-        if (mounted) {
-          isPlayingLivePhoto.value = true;
-
-          // Fade in
-          await Future.delayed(const Duration(milliseconds: 50));
-          if (mounted) {
-            livePhotoOpacity.value = 1.0;
-          }
+        if (!_isLivePhotoPlayActive(generation)) {
+          await _disposeLivePhotoPlayer();
+          return;
         }
 
+        isPlayingLivePhoto.value = true;
+
+        // Fade in
+        await Future.delayed(const Duration(milliseconds: 50));
+        if (!_isLivePhotoPlayActive(generation)) return;
+        livePhotoOpacity.value = 1.0;
+
         // Auto-hide after video ends with fade out
-        Future.delayed(Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100), () async {
-          if (mounted && isPlayingLivePhoto.value) {
-            // Fade out
-            livePhotoOpacity.value = 0.0;
-            // Wait for fade animation to complete
-            await Future.delayed(const Duration(milliseconds: 200));
-            if (mounted) {
-              isPlayingLivePhoto.value = false;
-            }
-          }
-        });
+        _scheduleLivePhotoHide(
+          generation,
+          Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
+        );
       } catch (ex) {
+        if (!_isLivePhotoPlayActive(generation)) return;
         Logger.error("Failed to play existing live photo", error: ex);
         showSnackbar("Error", "Failed to play live photo", type: SnackbarType.error);
       }
@@ -149,16 +203,28 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       final response = await HttpSvc.attachment.downloadLivePhoto(
         livePhotoAttachment.guid!,
         onReceiveProgress: (count, total) {
-          if (mounted) {
+          if (_isLivePhotoPlayActive(generation)) {
             livePhotoProgress.value = total > 0 ? count / total : 0.0;
           }
         },
       );
+      if (!_isLivePhotoPlayActive(generation)) {
+        isDownloadingLivePhoto.value = false;
+        return;
+      }
 
       // Save to persistent location alongside attachment
       // Create directory if it doesn't exist
       await livePhotoFileOnDisk.parent.create(recursive: true);
+      if (!_isLivePhotoPlayActive(generation)) {
+        isDownloadingLivePhoto.value = false;
+        return;
+      }
       await livePhotoFileOnDisk.writeAsBytes(response.data);
+      if (!_isLivePhotoPlayActive(generation)) {
+        isDownloadingLivePhoto.value = false;
+        return;
+      }
 
       livePhotoFile = PlatformFile(
         name: p.basename(livePhotoPath),
@@ -170,41 +236,48 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       livePhotoPlayer = Player();
       livePhotoController = VideoController(livePhotoPlayer!);
       await livePhotoPlayer!.setPlaylistMode(PlaylistMode.none);
+      if (!_isLivePhotoPlayActive(generation)) {
+        isDownloadingLivePhoto.value = false;
+        await _disposeLivePhotoPlayer();
+        return;
+      }
       await livePhotoPlayer!.open(Media(livePhotoPath), play: false);
+      if (!_isLivePhotoPlayActive(generation)) {
+        isDownloadingLivePhoto.value = false;
+        await _disposeLivePhotoPlayer();
+        return;
+      }
 
       isDownloadingLivePhoto.value = false;
 
       // Start playback and wait for first frame to be ready
       await livePhotoPlayer!.play();
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      if (mounted) {
-        isPlayingLivePhoto.value = true;
-
-        // Fade in
-        await Future.delayed(const Duration(milliseconds: 50));
-        if (mounted) {
-          livePhotoOpacity.value = 1.0;
-        }
+      if (!_isLivePhotoPlayActive(generation)) {
+        await _disposeLivePhotoPlayer();
+        return;
       }
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!_isLivePhotoPlayActive(generation)) {
+        await _disposeLivePhotoPlayer();
+        return;
+      }
+
+      isPlayingLivePhoto.value = true;
+
+      // Fade in
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (!_isLivePhotoPlayActive(generation)) return;
+      livePhotoOpacity.value = 1.0;
 
       // Auto-hide after video ends with fade out
-      Future.delayed(Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100), () async {
-        if (mounted && isPlayingLivePhoto.value) {
-          // Fade out
-          livePhotoOpacity.value = 0.0;
-          // Wait for fade animation to complete
-          await Future.delayed(const Duration(milliseconds: 200));
-          if (mounted) {
-            isPlayingLivePhoto.value = false;
-          }
-        }
-      });
+      _scheduleLivePhotoHide(
+        generation,
+        Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
+      );
     } catch (ex) {
+      if (!_isLivePhotoPlayActive(generation)) return;
       Logger.error("Failed to download/play live photo", error: ex);
-      if (mounted) {
-        isDownloadingLivePhoto.value = false;
-      }
+      isDownloadingLivePhoto.value = false;
       showSnackbar("Error", "Failed to load live photo", type: SnackbarType.error);
     }
   }
