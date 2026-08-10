@@ -19,14 +19,19 @@ Sets the 4-digit desktop version in every spot it's hardcoded:
 | `pubspec.yaml` | `msix_version` |
 | `snap/snapcraft.yaml` | `version` + both arch release-download URLs |
 | `linux/build.sh` | the `jq '.version = ...'` injection |
-| `flatpak/…metainfo.xml` | prepends a `<release>` entry dated today |
+| `flatpak/…metainfo.xml` | prepends a `<release>` entry dated today + repoints the tag-pinned screenshot URLs |
 
 Everything but the flatpak entry is a straight substitution; the flatpak entry differs by release type.
 
 ```bash
 dart run scripts/bump_desktop_versions.dart --beta 2.1.0.0   # flatpak entry gets type="development"
 dart run scripts/bump_desktop_versions.dart 2.1.0.0          # full release; warns you to write the changelog
+dart run scripts/bump_desktop_versions.dart --tag 2.1.0+91 2.1.0.0   # desktop-only release tag
 ```
+
+`--tag` (also `--tag=…`) overrides the release tag the snapcraft download URLs and the flatpak
+`<url>` point at — use it when the desktop build gets its own tag instead of riding the pubspec one.
+A leading `v` and any `+` are normalised for you.
 
 Dart rather than shell so there's one implementation for both PowerShell and bash. It runs from any
 cwd and preserves each file's existing line endings (the working tree is CRLF under `core.autocrlf`
@@ -37,9 +42,11 @@ release entry pre-filled with a `<url>` (derived from pubspec's `version: X.Y.Z+
 the git tag keys off) and a `<description>` skeleton in the usual Big Stuff / Small Stuff shape. The
 script warns you to replace its `TODO` items — Flathub ships a blank changelog otherwise.
 
-Idempotent — re-running with the same version won't add a duplicate flatpak release entry. Exits 1
-if any expected line stops matching, so a renamed field fails loudly instead of silently skipping.
+Idempotent — re-running with the same version won't add a duplicate flatpak release entry, though it
+does repoint that entry's `<url>` if the tag changed, so a corrected `--tag` can be applied by just
+re-running. Exits 1 if any expected line stops matching, so a renamed field fails loudly instead of
+silently skipping.
 
 `pubspec.yaml`'s `version:` (Flutter version+build) is bumped separately, by hand. The snapcraft
 download URLs and the flatpak `<url>` key off *that* value, not the 4-digit desktop version, so bump
-pubspec first and this script will pick it up.
+pubspec first and this script will pick it up — or pass `--tag` when the desktop release has its own.
