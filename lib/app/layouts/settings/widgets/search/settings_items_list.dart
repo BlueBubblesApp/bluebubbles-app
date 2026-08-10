@@ -4,6 +4,7 @@ import '../../pages/scheduling/scheduled_messages_panel.dart';
 import '../tiles/connection_server_tile.dart';
 import '../tiles/private_api_tile.dart';
 import '../tiles/redacted_mode_tile.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/version_dialog.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
@@ -790,7 +791,7 @@ List<Widget> buildSettingItemList({
       title: "App Version: $appVersion",
       searchTags: ["Version"],
       child: Container(),
-      onTap: () => showVersion(context),
+      onTap: () => showVersionDialog(context),
     ),
     SettingsSection(
       backgroundColor: tileColor,

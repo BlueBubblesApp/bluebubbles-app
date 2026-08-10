@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/settings/dialogs/version_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -350,7 +351,7 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                     SettingsTile(
                       title: "About",
                       subtitle: "Version and other information",
-                      onTap: () => showVersion(context),
+                      onTap: () => showVersionDialog(context),
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.info_circle,
                         materialIcon: Icons.info,

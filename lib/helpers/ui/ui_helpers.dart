@@ -17,7 +17,6 @@ import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image/image.dart' as img;
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -959,105 +958,4 @@ int? findChildIndexByKey<T>(List<T> input, Key key, Function(T) getField) {
   }
 
   return index == -1 ? null : index;
-}
-
-void showVersion(BuildContext context) {
-  showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return FutureBuilder<PackageInfo>(
-          future: PackageInfo.fromPlatform(),
-          builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
-            return AlertDialog(
-              contentPadding: const EdgeInsets.only(
-                top: 24,
-                left: 24,
-                right: 24,
-              ),
-              elevation: 10.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  10.0,
-                ),
-              ),
-              scrollable: true,
-              backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-              content: ListBody(
-                children: <Widget>[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      IconTheme(
-                        data: context.theme.iconTheme,
-                        child: Image.asset(
-                          "assets/icon/icon.png",
-                          width: 30,
-                          height: 30,
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          child: ListBody(
-                            children: <Widget>[
-                              Text(
-                                "BlueBubbles",
-                                style: context.theme.textTheme.titleLarge,
-                              ),
-                              if (!kIsDesktop)
-                                Text(
-                                    "Version Number: ${snapshot.hasData ? snapshot.data!.version : "N/A"}",
-                                    style: context.theme.textTheme.bodyLarge),
-                              if (!kIsDesktop)
-                                Text(
-                                    "Version Code: ${snapshot.hasData ? snapshot.data!.buildNumber.toString().lastChars(min(4, snapshot.data!.buildNumber.length)) : "N/A"}",
-                                    style: context.theme.textTheme.bodyLarge),
-                              if (kIsDesktop)
-                                Text(
-                                  appVersion,
-                                  style: context.theme.textTheme.bodyLarge,
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text("View Licenses",
-                      style: context.theme.textTheme.bodyLarge!
-                          .copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (BuildContext context) => Theme(
-                        data: context.theme,
-                        child: LicensePage(
-                          applicationName: "BlueBubbles",
-                          applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
-                          applicationIcon: Image.asset(
-                            "assets/icon/icon.png",
-                            width: 30,
-                            height: 30,
-                          ),
-                        ),
-                      ),
-                    ));
-                  },
-                ),
-                TextButton(
-                  child: Text("Close",
-                      style: context.theme.textTheme.bodyLarge!
-                          .copyWith(color: context.theme.colorScheme.primary)),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          });
-    },
-  );
 }
