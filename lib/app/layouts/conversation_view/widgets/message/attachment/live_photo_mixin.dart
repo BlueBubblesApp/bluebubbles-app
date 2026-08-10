@@ -26,6 +26,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   int _livePhotoPlayGeneration = 0;
   Timer? _livePhotoHideTimer;
   final List<StreamSubscription<dynamic>> _livePhotoSubscriptions = [];
+  bool _livePhotoHideInProgress = false;
 
   // Must be implemented by the using class
   Attachment get livePhotoAttachment;
@@ -48,20 +49,59 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     await player?.dispose();
   }
 
-  void _scheduleLivePhotoHide(int generation, Duration delay) {
-    _livePhotoHideTimer?.cancel();
-    _livePhotoHideTimer = Timer(delay, () async {
-      if (!_isLivePhotoPlayActive(generation) || !isPlayingLivePhoto.value) return;
-      livePhotoOpacity.value = 0.0;
-      await Future.delayed(const Duration(milliseconds: 200));
+  Future<void> _hideLivePhotoOverlay(int generation) async {
+    if (!_isLivePhotoPlayActive(generation) || !isPlayingLivePhoto.value || _livePhotoHideInProgress) {
+      return;
+    }
+    _livePhotoHideInProgress = true;
+    // Cancel timer/subs so duration + completed cannot double-fire the fade.
+    _cancelLivePhotoAsyncWork();
+    livePhotoOpacity.value = 0.0;
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (!_isLivePhotoPlayActive(generation)) {
+      _livePhotoHideInProgress = false;
+      return;
+    }
+    isPlayingLivePhoto.value = false;
+    _livePhotoHideInProgress = false;
+  }
+
+  /// Schedule auto-hide from a known non-zero duration, or fall back to [Player.stream.completed].
+  void _armLivePhotoAutoHide(int generation) {
+    final player = livePhotoPlayer;
+    if (player == null) return;
+
+    void scheduleFromDuration(Duration duration) {
+      if (!_isLivePhotoPlayActive(generation) || duration <= Duration.zero) return;
+      // Already armed from duration — keep the first schedule (or completed may still fire).
+      if (_livePhotoHideTimer != null) return;
+      final remaining = duration - player.state.position + const Duration(milliseconds: 100);
+      _livePhotoHideTimer = Timer(
+        remaining > Duration.zero ? remaining : Duration.zero,
+        () => _hideLivePhotoOverlay(generation),
+      );
+    }
+
+    scheduleFromDuration(player.state.duration);
+
+    _livePhotoSubscriptions.add(player.stream.duration.listen(scheduleFromDuration));
+
+    // Rising-edge guard: media_kit can emit `true` while still settling after seek/play.
+    var wasCompleted = player.state.completed;
+    _livePhotoSubscriptions.add(player.stream.completed.listen((completed) {
       if (!_isLivePhotoPlayActive(generation)) return;
-      isPlayingLivePhoto.value = false;
-    });
+      final risingEdge = completed && !wasCompleted;
+      wasCompleted = completed;
+      if (risingEdge) {
+        _hideLivePhotoOverlay(generation);
+      }
+    }));
   }
 
   @override
   void dispose() {
     _livePhotoPlayGeneration++;
+    _livePhotoHideInProgress = false;
     _cancelLivePhotoAsyncWork();
     livePhotoPlayer?.dispose();
     livePhotoPlayer = null;
@@ -82,6 +122,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       // If already playing, stop it with fade out
       if (isPlayingLivePhoto.value) {
         _livePhotoPlayGeneration++;
+        _livePhotoHideInProgress = false;
         _cancelLivePhotoAsyncWork();
         livePhotoOpacity.value = 0.0;
         await Future.delayed(const Duration(milliseconds: 200));
@@ -94,6 +135,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     }
 
     final generation = ++_livePhotoPlayGeneration;
+    _livePhotoHideInProgress = false;
     _cancelLivePhotoAsyncWork();
 
     // Check if we already have the live photo cached in memory
@@ -119,10 +161,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         livePhotoOpacity.value = 1.0;
 
         // Auto-hide after video ends with fade out
-        _scheduleLivePhotoHide(
-          generation,
-          Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
-        );
+        _armLivePhotoAutoHide(generation);
       } catch (ex) {
         if (!_isLivePhotoPlayActive(generation)) return;
         Logger.error("Failed to play live photo", error: ex);
@@ -183,10 +222,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         livePhotoOpacity.value = 1.0;
 
         // Auto-hide after video ends with fade out
-        _scheduleLivePhotoHide(
-          generation,
-          Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
-        );
+        _armLivePhotoAutoHide(generation);
       } catch (ex) {
         if (!_isLivePhotoPlayActive(generation)) return;
         Logger.error("Failed to play existing live photo", error: ex);
@@ -270,10 +306,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       livePhotoOpacity.value = 1.0;
 
       // Auto-hide after video ends with fade out
-      _scheduleLivePhotoHide(
-        generation,
-        Duration(milliseconds: livePhotoPlayer!.state.duration.inMilliseconds + 100),
-      );
+      _armLivePhotoAutoHide(generation);
     } catch (ex) {
       if (!_isLivePhotoPlayActive(generation)) return;
       Logger.error("Failed to download/play live photo", error: ex);
