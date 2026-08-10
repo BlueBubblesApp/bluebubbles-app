@@ -66,6 +66,50 @@
   </screenshots>
 
   <releases>
+    <release date="2026-08-10" version="2.1.0.0">
+      <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.0%2B90</url>
+      <description>
+        <p>The desktop app catches up to v2.1.0, bringing the full set of v2.1.0 features to Linux, plus a batch of desktop-only fixes.</p>
+        <p>New Features</p>
+        <ul>
+          <li>Chat Stats - See tons of interesting stats about your chats (groups &amp; DMs)</li>
+          <li>Dynamic Wallpapers - Choose between 4 different animated wallpapers, based on the conversation's current theme</li>
+          <li>Storage Analyzer - Visualize how the app is using storage and take action by selectively clearing older messages</li>
+          <li>Material 3 Expressive - The Material &amp; Samsung skins got a bit of a revamp to better align with the M3E design language</li>
+          <li>Contact Management Page - New settings page to visualize the app's connection to your device's contacts &amp; matching to iMessage handles</li>
+        </ul>
+        <p>Desktop Improvements</p>
+        <ul>
+          <li>The splash screen now gets a close button after 3 seconds, plus a button to open a GitHub issue if startup is taking too long</li>
+          <li>The app version now lives in a more obvious spot and turns up in settings search</li>
+          <li>Saving and renaming files is far more robust inside the Flatpak and Snap sandboxes, fixing images &amp; videos refusing to download and preferences silently failing to save</li>
+          <li>Notifications now clear properly</li>
+          <li>Ffmpeg-based video thumbnail generation</li>
+        </ul>
+        <p>Enhancements &amp; Improvements</p>
+        <ul>
+          <li>Adds a way to sync all messages for a particular chat</li>
+          <li>URL Preview widget has been redesigned to improve its reliability &amp; efficiency</li>
+          <li>Improved image processing pipeline to optimize image previews in the messages view, improving performance</li>
+          <li>Improved video processing pipeline &amp; preview image generation (now uses ffmpeg)</li>
+          <li>Improved custom chat wallpaper processing pipeline</li>
+          <li>Improved attachment downloading content widget</li>
+          <li>Additional iOS (Cupertino) widgets to improve skin's cohesiveness</li>
+          <li>Dedicated iCloud Photos interactive message widget</li>
+          <li>Improved video unavailable widget</li>
+        </ul>
+        <p>Fixes</p>
+        <ul>
+          <li>Fixes contact pins not resizing</li>
+          <li>Fixes issue with the v2 migration if orphaned handle records exist</li>
+          <li>Improvements to how we manage Firebase state</li>
+          <li>Fixes chat subtitle redacted mode issue</li>
+          <li>Fixes image gallery swipe interference with reply swipe</li>
+          <li>Adds an "ungrouped" icon to represent chats not in any groups, when using the Custom Groups feature</li>
+          <li>Tons of other fixes &amp; small improvements</li>
+        </ul>
+      </description>
+    </release>
     <release date="2026-07-24" version="2.0.0.0">
       <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.0.0%2B89</url>
       <description>
