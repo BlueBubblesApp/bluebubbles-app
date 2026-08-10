@@ -19,6 +19,7 @@ class PrivateAPITile extends StatelessWidget {
       () => SettingsTile(
         backgroundColor: tileColor,
         title: "Private API Features",
+        activePage: PrivateAPIPanel,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -25,8 +25,19 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+/// Drops the settings list's highlight once the right pane is back on its
+/// placeholder route — nothing is open, so nothing should look selected.
+/// Page switches remove routes rather than popping them, so they don't hit this.
+class _SettingsPaneObserver extends NavigatorObserver {
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    if (previousRoute?.settings.name == "initial") NavigationSvc.activeSettingsPage.value = null;
+  }
+}
+
 class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   String searchQuery = "";
+  final _paneObserver = _SettingsPaneObserver();
 
   List<Widget> _getSettingsItemList(BuildContext context) {
     return buildSettingItemList(
@@ -233,6 +244,7 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                       },
                       child: Navigator(
                         key: Get.nestedKey(3),
+                        observers: [_paneObserver],
                         onPopPage: (route, _) {
                           route.didPop(false);
                           return false;

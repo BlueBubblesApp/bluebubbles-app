@@ -44,6 +44,7 @@ class ConnectionServerTile extends StatelessWidget {
       return SettingsTile(
         backgroundColor: tileColor,
         title: "Connection & Server",
+        activePage: ServerManagementPanel,
         onTap: () {
           NavigationSvc.pushAndRemoveSettingsUntil(
             context,
