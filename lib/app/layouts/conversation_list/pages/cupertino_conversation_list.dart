@@ -134,8 +134,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                             // Derive a clean, capped avatar size from the actual available width
                             final double rawAvatarSize =
                                 (constraints.maxWidth - pageHPadding - colCount * tileHOverhead) / colCount;
-                            final double avatarSize =
-                                clampDouble(rawAvatarSize, 70.0, Platform.isAndroid ? 120.0 : 140.0);
+                            final double avatarSize = min(rawAvatarSize, Platform.isAndroid ? 120.0 : 140.0);
                             final double tileWidth = avatarSize + tileHOverhead;
 
                             final TextStyle style = context.theme.textTheme.bodyMedium!;
