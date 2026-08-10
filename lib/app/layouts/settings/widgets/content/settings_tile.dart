@@ -37,7 +37,8 @@ class SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activePage == null) return _build(context, false);
-    return Obx(() => _build(context, NavigationSvc.activeSettingsPage.value == activePage));
+    return Obx(() => _build(
+        context, NavigationSvc.isTabletMode(context) && NavigationSvc.activeSettingsPage.value == activePage));
   }
 
   Widget _build(BuildContext context, bool active) {

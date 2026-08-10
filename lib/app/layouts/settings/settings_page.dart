@@ -77,6 +77,9 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
+    if (!showAltLayout && NavigationSvc.activeSettingsPage.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => NavigationSvc.activeSettingsPage.value = null);
+    }
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
