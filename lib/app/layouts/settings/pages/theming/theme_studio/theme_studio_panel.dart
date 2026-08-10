@@ -374,9 +374,19 @@ class ThemeStudioPanel extends CustomStateful<ThemeStudioController> {
   ThemeStudioPanel({
     super.key,
     this.config,
-  }) : super(parentController: Get.put(ThemeStudioController(config: config)));
+  }) : super(
+          parentController: Get.put(
+            ThemeStudioController(config: config),
+            tag: controllerTag(config),
+          ),
+        );
 
   final ThemeStudioPanelConfig? config;
+
+  /// Separates the global (settings) and per-chat entry points, which have
+  /// different configs. Must match the `tag` set in the state's initState.
+  static String controllerTag(ThemeStudioPanelConfig? config) =>
+      config == null ? 'global' : (config.adaptiveThemeScopeKey ?? 'scoped');
 
   @override
   State<StatefulWidget> createState() => _ThemeStudioPanelState();
@@ -384,6 +394,12 @@ class ThemeStudioPanel extends CustomStateful<ThemeStudioController> {
 
 class _ThemeStudioPanelState extends CustomState<ThemeStudioPanel, void, ThemeStudioController> {
   bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    tag = ThemeStudioPanel.controllerTag(widget.config);
+  }
 
   /// False until the first frame is committed. Colors / Typography / Manage
   /// sections are deferred behind this flag so the visible content (preview +
