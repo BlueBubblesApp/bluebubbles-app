@@ -24,11 +24,12 @@ class FirebaseAuthHandler: MethodCallHandlerImpl() {
         result: MethodChannel.Result,
         context: Context
     ) {
-        // Don't auth multiple times
+        // Don't auth multiple times, but still return the (cached) FCM token
+        // so callers relying on the return value don't see a false failure.
         try {
             FirebaseApp.getInstance()
             PersistentLog.d(context, Constants.logTag, "Firebase has already been initialized!")
-            result.success(null)
+            FirebaseCloudMessagingTokenHandler().getToken(context, result)
             return
         } catch (_: IllegalStateException) {}
         // Make sure Google Services are available
