@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Custom notification sounds are looked up by name at runtime (Resources.getIdentifier
+  via flutter_local_notifications / the platform channel), so shrinkResources' static
+  reference analysis can't see they're used and will strip them without this.
+  https://developer.android.com/build/shrink-code#keep-resources
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/raspberry,@raw/sugarfree,@raw/twig,@raw/walrus" />
