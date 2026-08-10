@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:universal_io/io.dart';
 
 class CupertinoConversationList extends StatefulWidget {
   const CupertinoConversationList({super.key, required this.parentController});
@@ -112,6 +111,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       int maxOnPage = rowCount * colCount;
                       PageController _controller = PageController();
                       int _pageCount = (pinCount / maxOnPage).ceil();
+                      bool singleRow = usedRowCount == 1;
 
                       return SliverPadding(
                         // Bottom padding guarantees visible separation from the regular chat list even if
@@ -134,7 +134,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                             // Derive a clean, capped avatar size from the actual available width
                             final double rawAvatarSize =
                                 (constraints.maxWidth - pageHPadding - colCount * tileHOverhead) / colCount;
-                            final double avatarSize = min(rawAvatarSize, Platform.isAndroid ? 120.0 : 140.0);
+                            final double avatarSize = min(rawAvatarSize, 120.0);
                             final double tileWidth = avatarSize + tileHOverhead;
 
                             final TextStyle style = context.theme.textTheme.bodyMedium!;
@@ -194,14 +194,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 10),
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.start,
                                           children: List.generate(usedRowCount, (rowIndex) {
                                             final int rowStart = rowIndex * colCount;
                                             final List<Chat> rowChats =
                                                 pageChats.skip(rowStart).take(colCount).toList();
-                                            final bool singleRow = usedRowCount == 1;
 
                                             return Row(
+                                              mainAxisSize: MainAxisSize.min,
                                               mainAxisAlignment:
                                                   singleRow ? MainAxisAlignment.center : MainAxisAlignment.start,
                                               children: [
