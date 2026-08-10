@@ -732,7 +732,7 @@ List<Widget> buildSettingItemList({
             "Changelog",
             "Developers",
             "Keyboard Shortcuts",
-            "About",
+            "About"
           ],
           onTap: () {
             ns.pushAndRemoveSettingsUntil(context, const AboutPanel(), (Route route) => route.isFirst);
@@ -786,6 +786,12 @@ List<Widget> buildSettingItemList({
       ],
     ),
     const SizedBox(height: 16.0),
+    SearchableSettingItem(
+      title: "App Version: $appVersion",
+      searchTags: ["Version"],
+      child: Container(),
+      onTap: () => showVersion(context),
+    ),
     SettingsSection(
       backgroundColor: tileColor,
       children: [
