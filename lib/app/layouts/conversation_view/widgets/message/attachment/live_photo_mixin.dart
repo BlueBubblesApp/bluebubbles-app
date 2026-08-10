@@ -22,11 +22,23 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   final RxBool isPlayingLivePhoto = false.obs;
   final RxDouble livePhotoOpacity = 0.0.obs;
 
+  /// True once a [Video] texture is mounted (opacity may still be 0).
+  /// Fullscreen pre-mounts this so hold-to-play does not create a platform view
+  /// mid-gesture (Android cancels the active pointer when that happens).
+  final RxBool isLivePhotoSurfaceReady = false.obs;
+
   /// Bumped on dispose and each new play so in-flight awaits no-op after teardown.
   int _livePhotoPlayGeneration = 0;
+  int _livePhotoPrepareGeneration = 0;
   Timer? _livePhotoHideTimer;
   final List<StreamSubscription<dynamic>> _livePhotoSubscriptions = [];
   bool _livePhotoHideInProgress = false;
+
+  /// True while a fullscreen press-and-hold session is active.
+  bool _livePhotoHoldActive = false;
+
+  /// When true, stop keeps the player/surface for the next hold.
+  bool _livePhotoKeepSurface = false;
 
   static const Duration _livePhotoFadeDuration = Duration(milliseconds: 450);
   static const Duration _livePhotoFirstFrameGrace = Duration(milliseconds: 80);
@@ -49,7 +61,23 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     final player = livePhotoPlayer;
     livePhotoPlayer = null;
     livePhotoController = null;
-    await player?.dispose();
+    isLivePhotoSurfaceReady.value = false;
+    if (player == null) return;
+    try {
+      await player.dispose();
+    } catch (_) {
+      // Already disposed by a concurrent teardown.
+    }
+  }
+
+  Future<void> _disposeOwnedPlayer(Player player) async {
+    if (identical(livePhotoPlayer, player)) {
+      await _disposeLivePhotoPlayer();
+    } else {
+      try {
+        await player.dispose();
+      } catch (_) {}
+    }
   }
 
   /// Mount [Video] at opacity 0, wait for a presentable first frame, then crossfade in.
@@ -58,6 +86,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
     livePhotoOpacity.value = 0.0;
     isPlayingLivePhoto.value = true;
+    isLivePhotoSurfaceReady.value = true;
 
     final controller = livePhotoController;
     if (controller == null) return;
@@ -82,7 +111,6 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       return;
     }
     _livePhotoHideInProgress = true;
-    // Cancel timer/subs so duration + completed cannot double-fire the fade.
     _cancelLivePhotoAsyncWork();
     livePhotoOpacity.value = 0.0;
     await Future.delayed(_livePhotoFadeDuration);
@@ -94,33 +122,62 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     _livePhotoHideInProgress = false;
   }
 
-  /// Schedule auto-hide from a known non-zero duration, or fall back to [Player.stream.completed].
-  void _armLivePhotoAutoHide(int generation) {
+  Future<void> _stopLivePhotoPlayback({required bool disposePlayer}) async {
+    _livePhotoHoldActive = false;
+    _livePhotoPlayGeneration++;
+    _livePhotoHideInProgress = false;
+    _cancelLivePhotoAsyncWork();
+    isDownloadingLivePhoto.value = false;
+
+    final wasPlaying = isPlayingLivePhoto.value;
+    if (wasPlaying) {
+      livePhotoOpacity.value = 0.0;
+      await Future.delayed(_livePhotoFadeDuration);
+      if (mounted) {
+        isPlayingLivePhoto.value = false;
+      }
+    }
+
+    if (disposePlayer) {
+      await _disposeLivePhotoPlayer();
+    } else {
+      try {
+        await livePhotoPlayer?.pause();
+        await livePhotoPlayer?.seek(Duration.zero);
+      } catch (_) {}
+    }
+  }
+
+  /// On clip end: tap mode fades out; hold mode freezes on the last frame until release.
+  void _armLivePhotoPlaybackEnd(int generation, {required bool holdMode}) {
     final player = livePhotoPlayer;
     if (player == null) return;
 
-    void scheduleFromDuration(Duration duration) {
-      if (!_isLivePhotoPlayActive(generation) || duration <= Duration.zero) return;
-      // Already armed from duration — keep the first schedule (or completed may still fire).
-      if (_livePhotoHideTimer != null) return;
-      final remaining = duration - player.state.position + const Duration(milliseconds: 100);
-      _livePhotoHideTimer = Timer(
-        remaining > Duration.zero ? remaining : Duration.zero,
-        () => _hideLivePhotoOverlay(generation),
-      );
+    if (!holdMode) {
+      void scheduleFromDuration(Duration duration) {
+        if (!_isLivePhotoPlayActive(generation) || duration <= Duration.zero) return;
+        if (_livePhotoHideTimer != null) return;
+        final remaining = duration - player.state.position + const Duration(milliseconds: 100);
+        _livePhotoHideTimer = Timer(
+          remaining > Duration.zero ? remaining : Duration.zero,
+          () => _hideLivePhotoOverlay(generation),
+        );
+      }
+
+      scheduleFromDuration(player.state.duration);
+      _livePhotoSubscriptions.add(player.stream.duration.listen(scheduleFromDuration));
     }
 
-    scheduleFromDuration(player.state.duration);
-
-    _livePhotoSubscriptions.add(player.stream.duration.listen(scheduleFromDuration));
-
-    // Rising-edge guard: media_kit can emit `true` while still settling after seek/play.
     var wasCompleted = player.state.completed;
     _livePhotoSubscriptions.add(player.stream.completed.listen((completed) {
       if (!_isLivePhotoPlayActive(generation)) return;
       final risingEdge = completed && !wasCompleted;
       wasCompleted = completed;
-      if (risingEdge) {
+      if (!risingEdge) return;
+
+      if (holdMode) {
+        livePhotoPlayer?.pause();
+      } else {
         _hideLivePhotoOverlay(generation);
       }
     }));
@@ -128,7 +185,9 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
   @override
   void dispose() {
+    _livePhotoHoldActive = false;
     _livePhotoPlayGeneration++;
+    _livePhotoPrepareGeneration++;
     _livePhotoHideInProgress = false;
     _cancelLivePhotoAsyncWork();
     livePhotoPlayer?.dispose();
@@ -139,136 +198,52 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
   /// Get the persistent path for the live photo stored alongside the attachment
   String getLivePhotoPath() {
-    // Store in same directory as attachment: {appDocDir}/attachments/{guid}/{name}.mov
     final nameSplit = livePhotoAttachment.transferName!.split(".");
     final fileName = "${nameSplit.take(nameSplit.length - 1).join(".")}.mov";
     return "${livePhotoAttachment.directory}/$fileName";
   }
 
-  Future<void> handleLivePhotoTap() async {
-    if (isDownloadingLivePhoto.value || isPlayingLivePhoto.value) {
-      // If already playing, stop it with fade out
-      if (isPlayingLivePhoto.value) {
-        _livePhotoPlayGeneration++;
-        _livePhotoHideInProgress = false;
-        _cancelLivePhotoAsyncWork();
-        livePhotoOpacity.value = 0.0;
-        await Future.delayed(_livePhotoFadeDuration);
-        if (mounted) {
-          isPlayingLivePhoto.value = false;
-          await livePhotoPlayer?.pause();
-        }
-      }
-      return;
-    }
-
-    final generation = ++_livePhotoPlayGeneration;
-    _livePhotoHideInProgress = false;
-    _cancelLivePhotoAsyncWork();
-
-    // Check if we already have the live photo cached in memory
-    if (livePhotoFile != null && livePhotoPlayer != null) {
-      try {
-        // Seek to start and wait for player to be ready
-        await livePhotoPlayer!.seek(Duration.zero);
-        if (!_isLivePhotoPlayActive(generation)) return;
-
-        await livePhotoPlayer!.play();
-        if (!_isLivePhotoPlayActive(generation)) return;
-
-        await _revealLivePhotoOverlay(generation);
-        if (!_isLivePhotoPlayActive(generation)) return;
-
-        // Auto-hide after video ends with fade out
-        _armLivePhotoAutoHide(generation);
-      } catch (ex) {
-        if (!_isLivePhotoPlayActive(generation)) return;
-        Logger.error("Failed to play live photo", error: ex);
-        showSnackbar("Error", "Failed to play live photo");
-      }
-      return;
-    }
-
-    // Get persistent storage path
+  /// Ensure the `.mov` is on disk (download if needed). Returns the path, or null on failure.
+  Future<String?> _ensureLivePhotoOnDisk({required int prepareGeneration}) async {
     final livePhotoPath = getLivePhotoPath();
     final livePhotoFileOnDisk = File(livePhotoPath);
 
-    // Check if live photo already exists on disk
     if (await livePhotoFileOnDisk.exists()) {
-      if (!_isLivePhotoPlayActive(generation)) return;
-
-      // Initialize and play existing file
-      try {
-        final fileInfo = await livePhotoFileOnDisk.stat();
-        if (!_isLivePhotoPlayActive(generation)) return;
-
-        livePhotoFile = PlatformFile(
-          name: p.basename(livePhotoPath),
-          size: fileInfo.size,
-          path: livePhotoPath,
-        );
-
-        livePhotoPlayer = Player();
-        livePhotoController = VideoController(livePhotoPlayer!);
-        await livePhotoPlayer!.setPlaylistMode(PlaylistMode.none);
-        if (!_isLivePhotoPlayActive(generation)) {
-          await _disposeLivePhotoPlayer();
-          return;
-        }
-        await livePhotoPlayer!.open(Media(livePhotoPath), play: false);
-        if (!_isLivePhotoPlayActive(generation)) {
-          await _disposeLivePhotoPlayer();
-          return;
-        }
-
-        await livePhotoPlayer!.play();
-        if (!_isLivePhotoPlayActive(generation)) {
-          await _disposeLivePhotoPlayer();
-          return;
-        }
-
-        await _revealLivePhotoOverlay(generation);
-        if (!_isLivePhotoPlayActive(generation)) return;
-
-        // Auto-hide after video ends with fade out
-        _armLivePhotoAutoHide(generation);
-      } catch (ex) {
-        if (!_isLivePhotoPlayActive(generation)) return;
-        Logger.error("Failed to play existing live photo", error: ex);
-        showSnackbar("Error", "Failed to play live photo", type: SnackbarType.error);
-      }
-      return;
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return null;
+      final fileInfo = await livePhotoFileOnDisk.stat();
+      livePhotoFile = PlatformFile(
+        name: p.basename(livePhotoPath),
+        size: fileInfo.size,
+        path: livePhotoPath,
+      );
+      return livePhotoPath;
     }
 
-    // Download the live photo
     isDownloadingLivePhoto.value = true;
     livePhotoProgress.value = 0.0;
-
     try {
       final response = await HttpSvc.attachment.downloadLivePhoto(
         livePhotoAttachment.guid!,
         onReceiveProgress: (count, total) {
-          if (_isLivePhotoPlayActive(generation)) {
+          if (mounted && prepareGeneration == _livePhotoPrepareGeneration) {
             livePhotoProgress.value = total > 0 ? count / total : 0.0;
           }
         },
       );
-      if (!_isLivePhotoPlayActive(generation)) {
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) {
         isDownloadingLivePhoto.value = false;
-        return;
+        return null;
       }
 
-      // Save to persistent location alongside attachment
-      // Create directory if it doesn't exist
       await livePhotoFileOnDisk.parent.create(recursive: true);
-      if (!_isLivePhotoPlayActive(generation)) {
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) {
         isDownloadingLivePhoto.value = false;
-        return;
+        return null;
       }
       await livePhotoFileOnDisk.writeAsBytes(response.data);
-      if (!_isLivePhotoPlayActive(generation)) {
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) {
         isDownloadingLivePhoto.value = false;
-        return;
+        return null;
       }
 
       livePhotoFile = PlatformFile(
@@ -276,41 +251,188 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         size: response.data.length,
         path: livePhotoPath,
       );
-
-      // Initialize video player
-      livePhotoPlayer = Player();
-      livePhotoController = VideoController(livePhotoPlayer!);
-      await livePhotoPlayer!.setPlaylistMode(PlaylistMode.none);
-      if (!_isLivePhotoPlayActive(generation)) {
-        isDownloadingLivePhoto.value = false;
-        await _disposeLivePhotoPlayer();
-        return;
-      }
-      await livePhotoPlayer!.open(Media(livePhotoPath), play: false);
-      if (!_isLivePhotoPlayActive(generation)) {
-        isDownloadingLivePhoto.value = false;
-        await _disposeLivePhotoPlayer();
-        return;
-      }
-
       isDownloadingLivePhoto.value = false;
+      return livePhotoPath;
+    } catch (ex, st) {
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return null;
+      Logger.error("Failed to download live photo", error: ex, trace: st);
+      isDownloadingLivePhoto.value = false;
+      return null;
+    }
+  }
 
-      await livePhotoPlayer!.play();
+  /// Open the player and mount a [Video] at opacity 0 *before* any hold gesture.
+  /// Avoids Android cancelling the active pointer when a platform view is inserted mid-press.
+  Future<void> prepareLivePhotoSurface() async {
+    if (livePhotoController != null && livePhotoPlayer != null) {
+      isLivePhotoSurfaceReady.value = true;
+      _livePhotoKeepSurface = true;
+      return;
+    }
+
+    final prepareGeneration = ++_livePhotoPrepareGeneration;
+    _livePhotoKeepSurface = true;
+
+    try {
+      final path = await _ensureLivePhotoOnDisk(prepareGeneration: prepareGeneration);
+      if (path == null || !mounted || prepareGeneration != _livePhotoPrepareGeneration) return;
+
+      await _disposeLivePhotoPlayer();
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return;
+
+      final player = Player();
+      livePhotoPlayer = player;
+      livePhotoController = VideoController(player);
+      await player.setPlaylistMode(PlaylistMode.none);
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) {
+        await _disposeOwnedPlayer(player);
+        return;
+      }
+      await player.open(Media(path), play: false);
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) {
+        await _disposeOwnedPlayer(player);
+        return;
+      }
+
+      // Mount Video at opacity 0 so the texture exists before the user holds.
+      livePhotoOpacity.value = 0.0;
+      isPlayingLivePhoto.value = false;
+      isLivePhotoSurfaceReady.value = true;
+
+      await player.play();
+      await Future.delayed(_livePhotoFirstFrameGrace);
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return;
+      await player.pause();
+      await player.seek(Duration.zero);
+    } catch (ex, st) {
+      if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return;
+      Logger.error("Failed to prepare live photo surface", error: ex, trace: st);
+      await _disposeLivePhotoPlayer();
+    }
+  }
+
+  /// Tap-to-toggle playback (in-bubble LIVE badge / popup autoplay).
+  Future<void> handleLivePhotoTap() async {
+    if (isDownloadingLivePhoto.value || isPlayingLivePhoto.value) {
+      if (isPlayingLivePhoto.value) {
+        await _stopLivePhotoPlayback(disposePlayer: !_livePhotoKeepSurface);
+      }
+      return;
+    }
+
+    _livePhotoHoldActive = false;
+    await _playLivePhoto(holdMode: false);
+  }
+
+  /// Begin press-and-hold playback (fullscreen). Plays only while held.
+  Future<void> startLivePhotoHold() async {
+    if (_livePhotoHoldActive || isDownloadingLivePhoto.value) return;
+
+    _livePhotoHoldActive = true;
+    _livePhotoKeepSurface = true;
+
+    // Surface should already be mounted from [prepareLivePhotoSurface].
+    if (livePhotoPlayer == null || livePhotoController == null) {
+      await prepareLivePhotoSurface();
+      if (!_livePhotoHoldActive || !mounted) return;
+    }
+
+    await _playLivePhoto(holdMode: true);
+  }
+
+  /// End press-and-hold: fade out early, or dismiss the frozen last frame.
+  Future<void> endLivePhotoHold() async {
+    if (!_livePhotoHoldActive) return;
+    await _stopLivePhotoPlayback(disposePlayer: false);
+  }
+
+  Future<void> _playLivePhoto({required bool holdMode}) async {
+    final generation = ++_livePhotoPlayGeneration;
+    _livePhotoHideInProgress = false;
+    _cancelLivePhotoAsyncWork();
+
+    if (holdMode && !_livePhotoHoldActive) return;
+
+    void clearHoldOnFailure() {
+      if (holdMode && _isLivePhotoPlayActive(generation)) {
+        _livePhotoHoldActive = false;
+      }
+    }
+
+    Future<bool> playExistingSurface(Player player) async {
+      try {
+        await player.seek(Duration.zero);
+        if (!_isLivePhotoPlayActive(generation) || !identical(livePhotoPlayer, player)) return false;
+
+        await player.play();
+        if (!_isLivePhotoPlayActive(generation) || !identical(livePhotoPlayer, player)) return false;
+
+        await _revealLivePhotoOverlay(generation);
+        if (!_isLivePhotoPlayActive(generation) || !identical(livePhotoPlayer, player)) return false;
+
+        _armLivePhotoPlaybackEnd(generation, holdMode: holdMode);
+        return true;
+      } catch (ex, st) {
+        if (!_isLivePhotoPlayActive(generation)) return false;
+        Logger.warn("Live photo surface play failed, recreating", error: ex, trace: st);
+        return false;
+      }
+    }
+
+    // Prefer the pre-mounted fullscreen surface (no new platform view mid-gesture).
+    if (holdMode && livePhotoPlayer != null && livePhotoController != null) {
+      final ok = await playExistingSurface(livePhotoPlayer!);
+      if (ok || !_isLivePhotoPlayActive(generation) || !_livePhotoHoldActive) return;
+      await _disposeLivePhotoPlayer();
+      if (!_isLivePhotoPlayActive(generation) || !_livePhotoHoldActive) return;
+    }
+
+    // Tap mode (or hold fallback): open a fresh player.
+    if (!holdMode) {
+      await _disposeLivePhotoPlayer();
+      if (!_isLivePhotoPlayActive(generation)) return;
+    }
+
+    final prepareGeneration = _livePhotoPrepareGeneration;
+    final path = await _ensureLivePhotoOnDisk(prepareGeneration: prepareGeneration);
+    if (!_isLivePhotoPlayActive(generation)) return;
+    if (path == null) {
+      clearHoldOnFailure();
+      showSnackbar("Error", "Failed to load live photo");
+      return;
+    }
+
+    try {
+      final player = Player();
+      livePhotoPlayer = player;
+      livePhotoController = VideoController(player);
+      await player.setPlaylistMode(PlaylistMode.none);
       if (!_isLivePhotoPlayActive(generation)) {
-        await _disposeLivePhotoPlayer();
+        await _disposeOwnedPlayer(player);
+        return;
+      }
+      await player.open(Media(path), play: false);
+      if (!_isLivePhotoPlayActive(generation)) {
+        await _disposeOwnedPlayer(player);
+        return;
+      }
+
+      await player.play();
+      if (!_isLivePhotoPlayActive(generation) || !identical(livePhotoPlayer, player)) {
+        await _disposeOwnedPlayer(player);
         return;
       }
 
       await _revealLivePhotoOverlay(generation);
-      if (!_isLivePhotoPlayActive(generation)) return;
+      if (!_isLivePhotoPlayActive(generation) || !identical(livePhotoPlayer, player)) return;
 
-      // Auto-hide after video ends with fade out
-      _armLivePhotoAutoHide(generation);
-    } catch (ex) {
+      _armLivePhotoPlaybackEnd(generation, holdMode: holdMode);
+    } catch (ex, st) {
       if (!_isLivePhotoPlayActive(generation)) return;
-      Logger.error("Failed to download/play live photo", error: ex);
-      isDownloadingLivePhoto.value = false;
-      showSnackbar("Error", "Failed to load live photo", type: SnackbarType.error);
+      clearHoldOnFailure();
+      await _disposeLivePhotoPlayer();
+      Logger.error("Failed to play live photo", error: ex, trace: st);
+      showSnackbar("Error", "Failed to play live photo");
     }
   }
 
@@ -357,25 +479,30 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
-  /// Build the live photo video overlay
+  /// Build the live photo video overlay.
+  /// Mounts whenever the surface is ready (including opacity 0 pre-warm) so hold
+  /// playback never inserts a new platform view under an active pointer.
   Widget buildLivePhotoOverlay() {
-    // Outer Obx: mount/unmount. Inner Obx: opacity only — avoids remounting Video on 0→1.
     return Obx(() {
-      if (!isPlayingLivePhoto.value || livePhotoController == null) {
+      final mountedSurface = isLivePhotoSurfaceReady.value && livePhotoController != null;
+      final playing = isPlayingLivePhoto.value && livePhotoController != null;
+      if (!mountedSurface && !playing) {
         return const SizedBox.shrink();
       }
 
       return Positioned.fill(
-        child: Obx(
-          () => AnimatedOpacity(
-            opacity: livePhotoOpacity.value,
-            duration: _livePhotoFadeDuration,
-            curve: Curves.easeInOut,
-            child: Video(
-              controller: livePhotoController!,
-              fit: BoxFit.contain,
-              fill: Colors.transparent,
-              controls: null,
+        child: IgnorePointer(
+          child: Obx(
+            () => AnimatedOpacity(
+              opacity: livePhotoOpacity.value,
+              duration: _livePhotoFadeDuration,
+              curve: Curves.easeInOut,
+              child: Video(
+                controller: livePhotoController!,
+                fit: BoxFit.contain,
+                fill: Colors.transparent,
+                controls: null,
+              ),
             ),
           ),
         ),

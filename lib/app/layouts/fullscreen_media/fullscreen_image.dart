@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/live_photo_mixin.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/dialogs/metadata_dialog.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:photo_view/photo_view.dart';
-import 'dart:io';
 
 class FullscreenImage extends StatefulWidget {
   const FullscreenImage({
@@ -47,6 +47,17 @@ class _FullscreenImageState extends State<FullscreenImage>
   Uint8List? bytes;
   String? compatiblePath; // For converted HEIC/TIFF files
 
+  /// Pointer-based hold (not LongPressGestureRecognizer) so PhotoView/PageView
+  /// cannot steal the arena. Tiny moves before activation cancel the pending hold.
+  Timer? _livePhotoHoldTimer;
+  int? _livePhotoHoldPointer;
+  Offset? _livePhotoHoldDownPos;
+  bool _livePhotoHolding = false;
+  /// Locks PhotoView zoom/pan without setState (setState would rebuild the hold Listener).
+  final RxBool _livePhotoLockPhotoView = false.obs;
+  static const Duration _livePhotoHoldDelay = Duration(milliseconds: 400);
+  static const double _livePhotoHoldMoveSlop = 18;
+
   PlatformFile get file => widget.file;
   Attachment get attachment => widget.attachment;
   Message? get message => attachment.message.target;
@@ -60,6 +71,11 @@ class _FullscreenImageState extends State<FullscreenImage>
     super.initState();
     _setFullscreen(true);
     initBytes();
+    // Pre-mount the Video texture before any hold — Android cancels the active
+    // pointer when a platform view is inserted mid-gesture.
+    if (attachment.hasLivePhoto) {
+      prepareLivePhotoSurface();
+    }
   }
 
   void _setFullscreen(bool fullscreen) {
@@ -90,9 +106,60 @@ class _FullscreenImageState extends State<FullscreenImage>
 
   @override
   void dispose() {
+    _livePhotoHoldTimer?.cancel();
     _setFullscreen(false);
     controller.dispose();
     super.dispose();
+  }
+
+  void _setPhotoViewLocked(bool locked) {
+    _livePhotoLockPhotoView.value = locked;
+    // Also stop PageView from stealing tiny horizontal jitter during hold.
+    if (locked) {
+      widget.updatePhysics(const NeverScrollableScrollPhysics());
+    } else if (controller.scale == null || controller.scale! <= 1.0) {
+      widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
+    }
+  }
+
+  void _onLivePhotoPointerDown(PointerDownEvent event) {
+    if (!attachment.hasLivePhoto) return;
+    _livePhotoHoldPointer = event.pointer;
+    _livePhotoHoldDownPos = event.position;
+    _livePhotoHoldTimer?.cancel();
+    _livePhotoHoldTimer = Timer(_livePhotoHoldDelay, () {
+      if (!mounted || _livePhotoHoldPointer != event.pointer) return;
+      _livePhotoHolding = true;
+      _setPhotoViewLocked(true);
+      HapticFeedback.lightImpact();
+      startLivePhotoHold();
+    });
+  }
+
+  void _onLivePhotoPointerMove(PointerMoveEvent event) {
+    if (_livePhotoHoldPointer != event.pointer) return;
+    if (_livePhotoHolding) return;
+    final down = _livePhotoHoldDownPos;
+    if (down == null) return;
+    if ((event.position - down).distance > _livePhotoHoldMoveSlop) {
+      _livePhotoHoldTimer?.cancel();
+      _livePhotoHoldTimer = null;
+      _livePhotoHoldPointer = null;
+      _livePhotoHoldDownPos = null;
+    }
+  }
+
+  void _onLivePhotoPointerUpOrCancel(PointerEvent event) {
+    if (_livePhotoHoldPointer != event.pointer) return;
+    _livePhotoHoldTimer?.cancel();
+    _livePhotoHoldTimer = null;
+    _livePhotoHoldPointer = null;
+    _livePhotoHoldDownPos = null;
+    if (_livePhotoHolding) {
+      _livePhotoHolding = false;
+      _setPhotoViewLocked(false);
+      endLivePhotoHold();
+    }
   }
 
   void refreshAttachment() {
@@ -130,30 +197,35 @@ class _FullscreenImageState extends State<FullscreenImage>
     // No orientation handling here: the decoder applies EXIF orientation
     // itself, so the provider's reported size is already display-space and
     // PhotoViewComputedScale.contained reads it correctly.
-    return PhotoView(
-      gaplessPlayback: true,
-      minScale: PhotoViewComputedScale.contained,
-      maxScale: PhotoViewComputedScale.contained * 10,
-      controller: controller,
-      imageProvider: bytes != null
-          ? MemoryImage(bytes!) as ImageProvider
-          : FileImage(File(compatiblePath ?? file.path!)),
-      loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
-        return Center(child: buildProgressIndicator(context));
-      },
-      scaleStateChangedCallback: (scale) {
-        if (scale == PhotoViewScaleState.zoomedIn ||
-            scale == PhotoViewScaleState.covering ||
-            scale == PhotoViewScaleState.originalSize) {
-          widget.updatePhysics(const NeverScrollableScrollPhysics());
-        } else {
-          widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
-        }
-      },
-      errorBuilder: (context, object, stacktrace) =>
-          Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
-      filterQuality: FilterQuality.high,
-    );
+    return Obx(() {
+      final lockGestures = _livePhotoLockPhotoView.value;
+      return PhotoView(
+        gaplessPlayback: true,
+        minScale: PhotoViewComputedScale.contained,
+        maxScale: PhotoViewComputedScale.contained * 10,
+        controller: controller,
+        // Lock zoom/pan while holding so tiny jitter is not treated as a resize.
+        disableGestures: lockGestures,
+        imageProvider: bytes != null
+            ? MemoryImage(bytes!) as ImageProvider
+            : FileImage(File(compatiblePath ?? file.path!)),
+        loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
+          return Center(child: buildProgressIndicator(context));
+        },
+        scaleStateChangedCallback: (scale) {
+          if (scale == PhotoViewScaleState.zoomedIn ||
+              scale == PhotoViewScaleState.covering ||
+              scale == PhotoViewScaleState.originalSize) {
+            widget.updatePhysics(const NeverScrollableScrollPhysics());
+          } else {
+            widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
+          }
+        },
+        errorBuilder: (context, object, stacktrace) =>
+            Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
+        filterQuality: FilterQuality.high,
+      );
+    });
   }
 
   @override
@@ -175,16 +247,22 @@ class _FullscreenImageState extends State<FullscreenImage>
 
           // eventDispatcher.emit('overlay-toggle', newVal);
         },
-        onLongPress: () {
-          if (attachment.hasLivePhoto && !isDownloadingLivePhoto.value) {
-            handleLivePhotoTap();
-          }
-        },
         child: Stack(
           children: [
             _buildPhotoView(context),
-            // Live photo video overlay
             if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
+            // Pointer hold catcher — no gesture arena, so PhotoView cannot abort it.
+            if (attachment.hasLivePhoto)
+              Positioned.fill(
+                child: Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: _onLivePhotoPointerDown,
+                  onPointerMove: _onLivePhotoPointerMove,
+                  onPointerUp: _onLivePhotoPointerUpOrCancel,
+                  onPointerCancel: _onLivePhotoPointerUpOrCancel,
+                  child: const SizedBox.expand(),
+                ),
+              ),
             if (!iOS)
               AnimatedOpacity(
                 opacity: showOverlay ? 1.0 : 0.0,
