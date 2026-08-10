@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/live_photo_mixin.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_unavailable_placeholder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -55,6 +56,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   // Rotation-corrected, downsampled preview used for fast inline display.
   Future<String?>? _previewPathFuture;
 
+  /// Popup clone only — prevents rebuilds / didChangeDependencies from re-triggering autoplay.
+  bool _didAutoPlayLivePhoto = false;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +68,16 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     if (!kIsWeb && file.path != null && attachment.metadata?['_orientation_processed'] != true) {
       AttachmentsSvc.loadImageProperties(attachment, actualPath: file.path).then((_) {
         if (mounted) setState(() {});
+      });
+    }
+
+    // Autoplay Live Photo once when this ImageViewer is the long-press popup clone.
+    if (attachment.hasLivePhoto && !widget.isInReply && MessageCloneScope.of(context) && !_didAutoPlayLivePhoto) {
+      _didAutoPlayLivePhoto = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 150));
+        if (!mounted) return;
+        await handleLivePhotoTap();
       });
     }
   }
