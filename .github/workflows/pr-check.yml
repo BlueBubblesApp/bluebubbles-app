@@ -104,6 +104,15 @@ jobs:
         run: fvm flutter build windows --release --no-pub
         shell: pwsh
 
+      # Catch a plugin whose DLL isn't in the SignPath artifact configuration here,
+      # rather than at release time when it would ship unsigned. Regenerate with
+      # .\windows\signpath\generate.ps1 and commit the result.
+      - name: Check SignPath config covers every DLL
+        shell: pwsh
+        run: |
+          .\windows\signpath\generate.ps1 -ReleaseDir build\windows\x64\runner\Release
+          git diff --exit-code --ignore-cr-at-eol -- windows/signpath
+
   build-linux:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze

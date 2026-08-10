@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+    <zip-file>
+        <msix-file path="bluebubbles.msix">
+            <pe-file-set>
+                <include path="d3dcompiler_47.dll" />
+                <include path="libEGL.dll" />
+                <include path="libGLESv2.dll" />
+                <include path="vk_swiftshader.dll" />
+                <include path="vulkan-1.dll" />
+                <include path="WebView2Loader.dll" />
+                <for-each>
+                    <authenticode-verify />
+                </for-each>
+            </pe-file-set>
+            <authenticode-sign />
+        </msix-file>
+    </zip-file>
+</artifact-configuration>

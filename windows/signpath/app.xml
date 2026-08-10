@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="bluebubbles_app.exe">
+      <authenticode-sign />
+    </pe-file>
+    <pe-file-set>
+      <include path="d3dcompiler_47.dll" />
+      <include path="libEGL.dll" />
+      <include path="libGLESv2.dll" />
+      <include path="vk_swiftshader.dll" />
+      <include path="vulkan-1.dll" />
+      <include path="WebView2Loader.dll" />
+      <for-each>
+        <authenticode-verify />
+      </for-each>
+    </pe-file-set>
+    <pe-file-set>
+      <include path="app_links_plugin.dll" />
+      <include path="avcodec-62.dll" />
+      <include path="avdevice-62.dll" />
+      <include path="avfilter-11.dll" />
+      <include path="avformat-62.dll" />
+      <include path="avutil-60.dll" />
+      <include path="connectivity_plus_plugin.dll" />
+      <include path="dartjni.dll" />
+      <include path="desktop_drop_plugin.dll" />
+      <include path="desktop_webview_auth_plugin.dll" />
+      <include path="dynamic_color_plugin.dll" />
+      <include path="emoji_picker_flutter_plugin.dll" />
+      <include path="ffmpeg_kit_flutter_new_min_plugin.dll" />
+      <include path="file_selector_windows_plugin.dll" />
+      <include path="flutter_acrylic_plugin.dll" />
+      <include path="flutter_local_notifications_windows.dll" />
+      <include path="flutter_timezone_plugin.dll" />
+      <include path="flutter_windows.dll" />
+      <include path="geolocator_windows_plugin.dll" />
+      <include path="libbz2-1.dll" />
+      <include path="libffmpegkit.dll" />
+      <include path="libgcc_s_seh-1.dll" />
+      <include path="libiconv-2.dll" />
+      <include path="liblzma-5.dll" />
+      <include path="libmpv-2.dll" />
+      <include path="libstdc++-6.dll" />
+      <include path="libva_win32.dll" />
+      <include path="libva.dll" />
+      <include path="libwinpthread-1.dll" />
+      <include path="local_auth_windows_plugin.dll" />
+      <include path="maps_launcher_plugin.dll" />
+      <include path="media_kit_libs_windows_video_plugin.dll" />
+      <include path="media_kit_video_plugin.dll" />
+      <include path="objectbox_flutter_libs_plugin.dll" />
+      <include path="objectbox.dll" />
+      <include path="pasteboard_plugin.dll" />
+      <include path="pdfium.dll" />
+      <include path="permission_handler_windows_plugin.dll" />
+      <include path="printing_plugin.dll" />
+      <include path="record_windows_plugin.dll" />
+      <include path="screen_retriever_windows_plugin.dll" />
+      <include path="secure_application_plugin.dll" />
+      <include path="share_plus_plugin.dll" />
+      <include path="sqlite3_flutter_libs_plugin.dll" />
+      <include path="sqlite3.dll" />
+      <include path="swresample-6.dll" />
+      <include path="swscale-9.dll" />
+      <include path="tray_manager_plugin.dll" />
+      <include path="url_launcher_windows_plugin.dll" />
+      <include path="window_manager_plugin.dll" />
+      <include path="windows_taskbar_plugin.dll" />
+      <include path="zlib.dll" />
+      <include path="zlib1.dll" />
+      <for-each>
+        <authenticode-sign />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>
