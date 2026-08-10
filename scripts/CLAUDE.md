@@ -17,7 +17,7 @@ Sets the 4-digit desktop version in every spot it's hardcoded:
 | `windows/runner/Runner.rc` | `VERSION_AS_NUMBER` (comma form) + `VERSION_AS_STRING` |
 | `windows/bluebubbles_installer_script.iss` | `MyAppVersion` |
 | `pubspec.yaml` | `msix_version` |
-| `snap/snapcraft.yaml` | `version` |
+| `snap/snapcraft.yaml` | `version` + both arch release-download URLs |
 | `linux/build.sh` | the `jq '.version = ...'` injection |
 | `flatpak/…metainfo.xml` | prepends a `<release>` entry dated today |
 
@@ -40,5 +40,6 @@ script warns you to replace its `TODO` items — Flathub ships a blank changelog
 Idempotent — re-running with the same version won't add a duplicate flatpak release entry. Exits 1
 if any expected line stops matching, so a renamed field fails loudly instead of silently skipping.
 
-`pubspec.yaml`'s `version:` (Flutter version+build) and the release-tag URLs in `snapcraft.yaml` /
-the flatpak screenshot links are bumped separately — they key off the git tag, not this number.
+`pubspec.yaml`'s `version:` (Flutter version+build) is bumped separately, by hand. The snapcraft
+download URLs and the flatpak `<url>` key off *that* value, not the 4-digit desktop version, so bump
+pubspec first and this script will pick it up.

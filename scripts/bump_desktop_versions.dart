@@ -21,7 +21,7 @@ void substitute(String relative, RegExp pattern, String replacement) {
     stderr.writeln('error: nothing matched /${pattern.pattern}/ in $relative — did the file change shape?');
     exit(1);
   }
-  file.writeAsStringSync(text.replaceFirst(pattern, replacement));
+  file.writeAsStringSync(text.replaceAll(pattern, replacement));
   stdout.writeln('$relative: $replacement');
 }
 
@@ -46,6 +46,8 @@ void main(List<String> args) {
       '#define MyAppVersion "$version"');
   substitute('pubspec.yaml', line('  msix_version: '), '  msix_version: $version');
   substitute('snap/snapcraft.yaml', line('version: '), 'version: $version');
+  // Both arch download URLs point at the release tag, which keys off pubspec's `version:`.
+  substitute('snap/snapcraft.yaml', RegExp(r'/releases/download/v[^/]*/'), '/releases/download/v${releaseTag()}/');
   substitute('linux/build.sh', RegExp(r"""jq '\.version = "[^"]*"'"""), """jq '.version = "$version"'""");
 
   stdout.writeln(addFlatpakRelease(version, beta: beta));
@@ -91,16 +93,19 @@ String addFlatpakRelease(String version, {required bool beta}) {
       '         Replace the TODO items in its <description>, or Flathub will ship a blank changelog.';
 }
 
-/// The GitHub release-tag URL for the current pubspec version, eg `.../tag/v2.1.0%2B90`.
+/// The URL-encoded release tag for the current pubspec version, eg `2.1.0%2B90`.
 ///
 /// The tag tracks pubspec's `version: X.Y.Z+build`, not the 4-digit desktop version.
-String releaseTagUrl() {
+String releaseTag() {
   final pubspec = repoFile('pubspec.yaml').readAsStringSync();
   final match = RegExp(r'^version: (\S+)', multiLine: true).firstMatch(pubspec);
   if (match == null) {
     stderr.writeln('error: no `version:` line in pubspec.yaml — cannot build the release URL');
     exit(1);
   }
-  final tag = match.group(1)!.replaceAll('+', '%2B');
-  return 'https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v$tag';
+  return match.group(1)!.replaceAll('+', '%2B');
 }
+
+/// The GitHub release-tag URL for the current pubspec version, eg `.../tag/v2.1.0%2B90`.
+String releaseTagUrl() =>
+    'https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v${releaseTag()}';
