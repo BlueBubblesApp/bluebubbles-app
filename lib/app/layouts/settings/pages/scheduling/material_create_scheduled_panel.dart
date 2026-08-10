@@ -33,37 +33,6 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
     initForm();
   }
 
-  Future<void> _pickDateTime(BuildContext context) async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: date.value.isAfter(DateTime.now()) ? date.value : DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-    );
-    if (pickedDate == null) return;
-
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(date.value),
-    );
-    if (pickedTime == null) return;
-
-    final combined = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
-
-    if (combined.isBefore(DateTime.now())) {
-      showSnackbar("Error", "Pick a date in the future!");
-      return;
-    }
-
-    date.value = combined;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -260,7 +229,7 @@ class _MaterialCreateScheduledMessageState extends State<MaterialCreateScheduled
                       containerColor: Colors.orange,
                     ),
                     subtitle: "${buildSeparatorDateSamsung(date.value)} at ${buildTime(date.value)}",
-                    onTap: () => _pickDateTime(context),
+                    onTap: () => pickDateTime(context),
                     trailing: Icon(Icons.chevron_right, color: context.theme.colorScheme.outline),
                   ),
                 ],
