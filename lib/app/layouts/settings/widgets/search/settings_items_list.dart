@@ -1,5 +1,3 @@
-import 'package:bluebubbles/database/global/settings.dart';
-
 import '../../pages/misc/misc_panel.dart';
 import '../../pages/scheduling/message_reminders_panel.dart';
 import '../../pages/scheduling/scheduled_messages_panel.dart';
