@@ -253,13 +253,11 @@ Future<T?> _showCupertinoActionSheetSelector<T>(
   required List<BBListSelectorOption<T>> options,
   required String cancelText,
 }) {
+  final brightness = Theme.of(context).brightness;
   return showCupertinoModalPopup<T>(
     context: context,
     builder: (ctx) => CupertinoTheme(
-      // Bridge Material theme brightness into the Cupertino color system so
-      // CupertinoDynamicColor.resolve picks the correct light/dark variant
-      // instead of falling back to the system platform brightness.
-      data: CupertinoThemeData(brightness: Theme.of(ctx).brightness),
+      data: CupertinoThemeData(brightness: brightness),
       child: CupertinoActionSheet(
         title: title != null ? Text(title) : null,
         message: message != null ? Text(message) : null,
@@ -287,14 +285,10 @@ Future<T?> _showCupertinoWheelSelector<T>(
   required String cancelText,
 }) {
   var selectedIndex = 0;
+  final cupertinoTheme = CupertinoThemeData(brightness: Theme.of(context).brightness);
   return showCupertinoModalPopup<T>(
     context: context,
     builder: (ctx) {
-      // Bridge Material theme brightness into the Cupertino color system so
-      // CupertinoDynamicColor.resolve (and CupertinoTheme.of() lookups below)
-      // pick the correct light/dark variant instead of falling back to the
-      // system platform brightness.
-      final cupertinoTheme = CupertinoThemeData(brightness: Theme.of(ctx).brightness);
       return CupertinoTheme(
         data: cupertinoTheme,
         child: Container(
