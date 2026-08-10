@@ -1,4 +1,5 @@
 import 'package:async_task/async_task.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/task_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +53,8 @@ bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment.containsK
 bool get isFlatpak => !kIsWeb && Platform.isLinux && Platform.environment.containsKey('FLATPAK_ID');
 
 bool get isMsix => !kIsWeb && Platform.isWindows && Platform.resolvedExecutable.contains('WindowsApps');
+
+String get appVersion => "${FilesystemSvc.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}${isSnap ? "_Snap" : isFlatpak ? "_Flatpak" : isMsix ? "_Msix" : ""}";
 
 /// From https://github.com/modulovalue/dart_intersperse/blob/master/lib/src/intersperse.dart
 Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {

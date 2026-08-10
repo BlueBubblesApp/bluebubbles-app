@@ -1,3 +1,5 @@
+import 'package:bluebubbles/database/global/settings.dart';
+
 import '../../pages/misc/misc_panel.dart';
 import '../../pages/scheduling/message_reminders_panel.dart';
 import '../../pages/scheduling/scheduled_messages_panel.dart';
@@ -783,6 +785,16 @@ List<Widget> buildSettingItemList({
               title: kIsWeb ? "Logout" : "Reset App",
             ),
           ),
+      ],
+    ),
+    const SizedBox(height: 16.0),
+    SettingsSection(
+      backgroundColor: tileColor,
+      children: [
+        SettingsSubtitle(
+          subtitle: "App Version: $appVersion",
+          bottomPadding: false,
+        ),
       ],
     ),
   ];
