@@ -270,6 +270,13 @@ class IntentsService {
       } else {
         Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
         setPickedAttachments();
+
+        // No navigation means the composer is never rebuilt, so its own auto-focus
+        // never runs. Re-opening a chat the user had dismissed the keyboard in should
+        // still bring it back, exactly as if the view had been pushed fresh.
+        if (SettingsSvc.settings.autoOpenKeyboard.value) {
+          cvc(chat).ensureComposerKeyboard?.call();
+        }
       }
     }
   }

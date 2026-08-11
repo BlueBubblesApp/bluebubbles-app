@@ -21,6 +21,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
@@ -75,12 +76,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     // Save state
     localController.oldTextFieldSelection.value = controller.textController.selection;
 
+    // Let callers that don't rebuild this widget (re-entering an already-open chat,
+    // app resume) drive the keyboard through the same retry-until-visible path.
+    controller.ensureComposerKeyboard = focusComposerAndShowKeyboard;
+
     if (controller.fromChatCreator) {
       controller.focusNode.requestFocus();
     } else if (SettingsSvc.settings.autoOpenKeyboard.value && !controller.fromSearchResult) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.focusNode.requestFocus();
-      });
+      _autoFocusWhenSettled();
     }
 
     controller.focusNode.addListener(() => focusListener(false));
@@ -311,8 +314,72 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     }
   }
 
+  /// Focuses the composer and makes sure the keyboard actually appears.
+  ///
+  /// `requestFocus()` alone is enough when the user taps a chat from the list, but not
+  /// when the app is launched straight into a conversation from a launcher shortcut or
+  /// an `imessage://` URI. In that case the node does take focus, yet the platform
+  /// never raises the keyboard: the engine's input connection is still being set up
+  /// (and is restarted during startup), which swallows the show request without
+  /// telling the framework — the same engine behaviour the resume path works around in
+  /// [StartupTasks], see https://github.com/flutter/flutter/issues/52599.
+  ///
+  /// So ask for the keyboard explicitly once the connection has settled.
+  void _autoFocusWhenSettled() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      focusComposerAndShowKeyboard();
+    });
+  }
+
+  /// Focuses the message field and drives the keyboard up, retrying until it is
+  /// actually visible. Exposed on the controller for callers that re-enter an
+  /// already-open conversation, where this widget is never rebuilt.
+  void focusComposerAndShowKeyboard() {
+    if (!mounted) return;
+    controller.focusNode.requestFocus();
+    unawaited(_ensureKeyboardShown());
+  }
+
+  /// Keeps asking the platform for the keyboard until it is actually on screen.
+  ///
+  /// A single show request is unreliable during startup: the engine tears down and
+  /// re-creates its input connection several times, and a request that lands in one
+  /// of those gaps is dropped without any error. Retrying blindly a fixed number of
+  /// times still loses the race intermittently, so poll until the keyboard reports
+  /// itself visible via the bottom view inset and stop as soon as it does.
+  Future<void> _ensureKeyboardShown() async {
+    const interval = Duration(milliseconds: 400);
+    const maxAttempts = 12; // ~5s, well past the startup churn
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      await Future.delayed(interval);
+      if (!mounted) return;
+
+      // Stop if the composer no longer owns focus — the user may have navigated
+      // away, or an overlay/sub-route may have taken over. Continuing here would
+      // fight whatever took over.
+      if (!controller.focusNode.hasFocus) return;
+      if (controller.showingOverlays || controller.showingSubRoute) return;
+
+      if (MediaQuery.of(context).viewInsets.bottom > 0) {
+        Logger.debug('Composer keyboard visible after $attempt attempt(s)', tag: 'ConversationTextField');
+        return;
+      }
+
+      SystemChannels.textInput.invokeMethod('TextInput.show');
+    }
+
+    Logger.warn('Composer keyboard never appeared after $maxAttempts attempts', tag: 'ConversationTextField');
+  }
+
   @override
   void dispose() {
+    // Only clear the hook if it still points at this instance — a replacement
+    // composer may already have registered itself during a rebuild.
+    if (identical(controller.ensureComposerKeyboard, focusComposerAndShowKeyboard)) {
+      controller.ensureComposerKeyboard = null;
+    }
+
     final draftText = controller.textController.text.trim().isNotEmpty ? controller.textController.text : '';
     final draftAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     // Update ChatState synchronously and fire DB save in the background.

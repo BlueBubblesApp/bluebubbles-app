@@ -67,6 +67,16 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   /// True while any route is pushed on top of the conversation view route (e.g.
   /// ConversationDetails). Used by onAppResume to skip keyboard auto-focus on mobile.
   bool showingSubRoute = false;
+
+  /// Set by the composer while it is mounted. Focuses the message field and keeps
+  /// asking the platform for the keyboard until it is actually on screen.
+  ///
+  /// Needed because a plain `requestFocus()` is not enough to raise the keyboard in
+  /// several situations (cold start, engine input-connection churn), and because
+  /// callers that re-enter an already-open conversation never rebuild the composer,
+  /// so its own initState-time handling does not run for them.
+  void Function()? ensureComposerKeyboard;
+
   bool _subjectWasLastFocused = false; // If this is false, then message field was last focused (default)
 
   FocusNode get lastFocusedNode => _subjectWasLastFocused ? subjectFocusNode : focusNode;
