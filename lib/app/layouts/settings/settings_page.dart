@@ -5,10 +5,10 @@ import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_items_l
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_search_bar.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/search/settings_search_empty_result.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
@@ -25,8 +25,19 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+/// Drops the settings list's highlight once the right pane is back on its
+/// placeholder route — nothing is open, so nothing should look selected.
+/// Page switches remove routes rather than popping them, so they don't hit this.
+class _SettingsPaneObserver extends NavigatorObserver {
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    if (previousRoute?.settings.name == "initial") NavigationSvc.activeSettingsPage.value = null;
+  }
+}
+
 class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   String searchQuery = "";
+  final _paneObserver = _SettingsPaneObserver();
 
   List<Widget> _getSettingsItemList(BuildContext context) {
     return buildSettingItemList(
@@ -66,6 +77,9 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
 
   @override
   Widget build(BuildContext context) {
+    if (!showAltLayout && NavigationSvc.activeSettingsPage.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => NavigationSvc.activeSettingsPage.value = null);
+    }
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
@@ -233,16 +247,16 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                       },
                       child: Navigator(
                         key: Get.nestedKey(3),
+                        observers: [_paneObserver],
                         onPopPage: (route, _) {
                           route.didPop(false);
                           return false;
                         },
                         pages: [
-                          CupertinoPage(
+                          MaterialPage(
                               name: "initial",
-                              child: Scaffold(
-                                  backgroundColor:
-                                      SettingsSvc.settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                              child: BBScaffold(
+                                  backgroundColor: headerColor,
                                   body: Center(
                                     child: Text("Select a settings page from the list",
                                         style: context.theme.textTheme.bodyLarge),

@@ -62,6 +62,7 @@ List<Widget> buildSettingItemList({
         children: [
           SettingsTile(
             backgroundColor: tileColor,
+            activePage: ProfilePanel,
             title: SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideContactInfo.value
                 ? "User Name"
                 : SettingsSvc.settings.userName.value,
@@ -125,6 +126,7 @@ List<Widget> buildSettingItemList({
               child: SettingsTile(
                 backgroundColor: tileColor,
                 title: "Scheduled Messages",
+                activePage: ScheduledMessagesPanel,
                 onTap: () {
                   ns.pushAndRemoveSettingsUntil(
                     context,
@@ -149,6 +151,7 @@ List<Widget> buildSettingItemList({
               child: SettingsTile(
                 backgroundColor: tileColor,
                 title: "Message Reminders",
+                activePage: MessageRemindersPanel,
                 onTap: () {
                   ns.pushAndRemoveSettingsUntil(context, const MessageRemindersPanel(), (Route route) => route.isFirst);
                 },
@@ -192,6 +195,7 @@ List<Widget> buildSettingItemList({
           SettingsTile(
             backgroundColor: tileColor,
             title: "Appearance Settings",
+            activePage: ThemingPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, ThemingPanel(), (Route route) => route.isFirst);
             },
@@ -246,6 +250,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "Media Settings",
+            activePage: AttachmentPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const AttachmentPanel(), (Route route) => route.isFirst);
             },
@@ -278,6 +283,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "Notification Settings",
+            activePage: NotificationPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const NotificationPanel(), (Route route) => route.isFirst);
             },
@@ -319,6 +325,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "Chat List Settings",
+            activePage: ChatListPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const ChatListPanel(), (Route route) => route.isFirst);
             },
@@ -361,6 +368,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "Conversation Settings",
+            activePage: ConversationPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const ConversationPanel(), (Route route) => route.isFirst);
             },
@@ -383,6 +391,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "Custom Groups",
+            activePage: CustomGroupsPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const CustomGroupsPanel(), (Route route) => route.isFirst);
             },
@@ -417,6 +426,7 @@ List<Widget> buildSettingItemList({
             child: SettingsTile(
               backgroundColor: tileColor,
               title: "Desktop Settings",
+              activePage: DesktopPanel,
               onTap: () {
                 ns.pushAndRemoveSettingsUntil(context, const DesktopPanel(), (Route route) => route.isFirst);
               },
@@ -454,6 +464,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "More Settings",
+            activePage: MiscPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const MiscPanel(), (Route route) => route.isFirst);
             },
@@ -523,6 +534,7 @@ List<Widget> buildSettingItemList({
             child: SettingsTile(
               backgroundColor: tileColor,
               title: "Tasker Integration",
+              activePage: TaskerPanel,
               trailing: const NextButton(),
               onTap: () async {
                 ns.pushAndRemoveSettingsUntil(context, const TaskerPanel(), (Route route) => route.isFirst);
@@ -557,6 +569,7 @@ List<Widget> buildSettingItemList({
               containerColor: Colors.cyan,
             ),
             title: "Notification Providers",
+            activePage: NotificationProvidersPanel,
             trailing: const NextButton(),
           ),
         ),
@@ -586,6 +599,7 @@ List<Widget> buildSettingItemList({
                 containerColor: Colors.green,
               ),
               title: "Contacts Management",
+              activePage: ContactsManagementPanel,
               trailing: const NextButton(),
             ),
           ),
@@ -609,6 +623,7 @@ List<Widget> buildSettingItemList({
                 containerColor: Colors.red[700],
               ),
               title: "Storage Analyzer",
+              activePage: StorageAnalyzerPanel,
               trailing: const NextButton(),
             ),
           ),
@@ -641,6 +656,7 @@ List<Widget> buildSettingItemList({
               containerColor: Colors.lightBlue,
             ),
             title: "Developer Tools",
+            activePage: TroubleshootPanel,
             trailing: const NextButton(),
           ),
         ),
@@ -678,6 +694,7 @@ List<Widget> buildSettingItemList({
               containerColor: Colors.blueGrey,
             ),
             title: "Backup & Restore",
+            activePage: BackupRestorePanel,
           ),
         ),
 
@@ -740,6 +757,7 @@ List<Widget> buildSettingItemList({
           child: SettingsTile(
             backgroundColor: tileColor,
             title: "About & More",
+            activePage: AboutPanel,
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const AboutPanel(), (Route route) => route.isFirst);
             },

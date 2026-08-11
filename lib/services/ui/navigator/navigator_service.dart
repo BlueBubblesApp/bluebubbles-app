@@ -21,6 +21,10 @@ class NavigatorService {
   final GlobalKey<NavigatorState> key = GlobalKey<NavigatorState>();
   final Rxn listener = Rxn();
 
+  /// Runtime type of the settings page open in the split view's right pane —
+  /// settings list tiles highlight themselves when it matches their destination.
+  final Rxn<Type> activeSettingsPage = Rxn<Type>();
+
   /// width of left side of split screen view
   double? _widthChatListLeft;
 
@@ -125,6 +129,7 @@ class NavigatorService {
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {Bindings? binding}) {
     if (Get.keys.containsKey(3) && isTabletMode(context)) {
+      activeSettingsPage.value = widget.runtimeType;
       // we only want to offUntil when in landscape, otherwise when the user presses back, the previous page will be the chat list
       Get.offUntil(
           GetPageRoute(

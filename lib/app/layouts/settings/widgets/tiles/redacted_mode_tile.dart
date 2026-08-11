@@ -19,6 +19,7 @@ class RedactedModeTile extends StatelessWidget {
       () => SettingsTile(
         backgroundColor: tileColor,
         title: "Redacted Mode",
+        activePage: RedactedModePanel,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
