@@ -492,7 +492,13 @@ class NotificationsService {
   Future<(String, bool)> _chatAvatarPath(Chat chat) async {
     if (chat.handles.length == 1 && chat.customAvatarPath == null) {
       final contactV2 = chat.handles.first.contactsV2.firstOrNull;
-      if (contactV2?.avatarPath != null && await File(contactV2!.avatarPath!).exists()) {
+      // A reserved character in the file name means a row written before avatar
+      // names were sanitized (macOS contact IDs end in `:ABPerson`). Windows can
+      // neither build a file URI for it nor read it back reliably, so regenerate
+      // a composite instead of handing the toast a path it will choke on.
+      if (contactV2?.avatarPath != null &&
+          !hasReservedFileNameChars(basename(contactV2!.avatarPath!)) &&
+          await File(contactV2.avatarPath!).exists()) {
         return (contactV2.avatarPath!, false);
       }
     }
