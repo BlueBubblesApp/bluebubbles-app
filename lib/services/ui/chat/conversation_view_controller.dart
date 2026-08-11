@@ -22,14 +22,29 @@ class MessageEditEntry {
   const MessageEditEntry({required this.message, required this.part, required this.controller});
 }
 
-ConversationViewController cvc(Chat chat, {String? tag}) =>
-    Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
-        ? Get.find<ConversationViewController>(tag: tag ?? chat.guid)
-        : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
+ConversationViewController cvc(Chat chat, {String? tag}) {
+  final resolvedTag = tag ?? chat.guid;
+  if (Get.isRegistered<ConversationViewController>(tag: resolvedTag)) {
+    final existing = Get.find<ConversationViewController>(tag: resolvedTag);
+    // Never hand back a controller that has already been closed: its FocusNodes,
+    // animation tickers and text controllers are disposed, and a freshly-mounted
+    // composer that added listeners to them would crash with "used after disposed".
+    // This happens under rapid navigation, where a new view can resolve the controller
+    // in the window between close() and GetX finishing the eviction.
+    if (!existing.disposed) return existing;
+    Get.delete<ConversationViewController>(tag: resolvedTag, force: true);
+  }
+  return Get.put(ConversationViewController(chat, tag_: tag), tag: resolvedTag);
+}
 
 class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
   final Chat chat;
   late final String tag;
+
+  /// True once [onClose] has run. A closed controller's FocusNodes/tickers/text
+  /// controllers are disposed, so [cvc] must not hand it back to a new view.
+  bool disposed = false;
+
   bool fromChatCreator = false;
   bool fromSearchResult = false;
   bool addedRecentPhotoReply = false;
@@ -216,6 +231,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   @override
   void onClose() {
+    disposed = true;
     unawaited(_keyboardSub?.cancel());
     updateSmartReplyLayout(visible: false, height: 0);
     for (PlayerController a in audioPlayers.values) {
@@ -230,6 +246,14 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.dispose();
     }
     scrollController.dispose();
+    // These are owned by this controller, not by the composer widget. The composer only
+    // adds/removes listeners; disposing them here (once, when the controller is actually
+    // closed) avoids leaving a reused controller with a dead FocusNode — which crashed a
+    // freshly-mounted composer with "A FocusNode was used after being disposed."
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
     super.onClose();
   }
 

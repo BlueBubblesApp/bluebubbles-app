@@ -12,6 +12,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/window_effect.dart';
@@ -207,6 +208,20 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void dispose() {
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
+    // Free the controller when its view is permanently gone. close() only runs on an
+    // explicit Back (PopScope); a route torn down another way — a shortcut replacing the
+    // view, rapid navigation — would otherwise leave the controller (and its FocusNodes,
+    // KeyboardVisibility subscription and animation listeners) registered forever, to be
+    // reused after disposal by a later open and crash the render tree. Skip if this chat
+    // is still the foreground one (the view is being rebuilt, not left) or if a newer
+    // controller already replaced ours. Desktop/web keep chats alive out-of-route.
+    if (!kIsDesktop &&
+        !kIsWeb &&
+        ChatsSvc.activeChatGuid.value != chat.guid &&
+        Get.isRegistered<ConversationViewController>(tag: controller.tag) &&
+        identical(Get.find<ConversationViewController>(tag: controller.tag), controller)) {
+      Get.delete<ConversationViewController>(tag: controller.tag);
+    }
     super.dispose();
   }
 
