@@ -383,6 +383,33 @@ class StartupTasks {
     Logger.info("Background isolate services initialization complete");
   }
 
+  /// Registers this device with FCM, retrying transient failures before bothering the
+  /// user. The old code showed a "Failed to register FCM device!" error toast on the
+  /// first failure, so a momentary network hiccup during startup (server briefly
+  /// unreachable, token not ready) flashed the toast on nearly every launch even though
+  /// registration is not user-actionable and usually succeeds on a retry. Only surface it
+  /// if it keeps failing across the whole backoff.
+  static Future<void> _registerFcmDeviceWithRetry() async {
+    const backoff = [Duration(seconds: 3), Duration(seconds: 10), Duration(seconds: 30)];
+    for (int attempt = 0; attempt <= backoff.length; attempt++) {
+      try {
+        await FirebaseSvc.registerDevice();
+        if (attempt > 0) {
+          Logger.info("FCM device registered after ${attempt + 1} attempt(s)");
+        }
+        return;
+      } catch (e, s) {
+        final lastAttempt = attempt == backoff.length;
+        Logger.warn("Failed to register FCM device on startup (attempt ${attempt + 1})", error: e, trace: s);
+        if (lastAttempt) {
+          showToast("Failed to register FCM device!", isError: true);
+          return;
+        }
+        await Future.delayed(backoff[attempt]);
+      }
+    }
+  }
+
   static Future<void> onStartup() async {
     Logger.info("Running onStartup tasks...");
 
@@ -405,11 +432,7 @@ class StartupTasks {
     // Only register FCM device on startup
     // Don't await. Let this happen in background
     Logger.info("Registering FCM device in background...");
-    FirebaseSvc.registerDevice().catchError((e, s) {
-      Logger.warn("Failed to register FCM device on startup!", error: e, trace: s);
-      showToast("Failed to register FCM device!", isError: true);
-      return null; // Return null on error
-    });
+    unawaited(_registerFcmDeviceWithRetry());
 
     // We don't need to check for updates immediately, so delay it so other
     // code has a chance to run and we don't block the UI thread.
