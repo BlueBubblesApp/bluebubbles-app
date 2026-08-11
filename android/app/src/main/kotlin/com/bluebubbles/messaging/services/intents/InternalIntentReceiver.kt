@@ -50,7 +50,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                 val messageGuid: String? = intent.getStringExtra("messageGuid")
                 val replyText = RemoteInput.getResultsFromIntent(intent)?.getString("text_reply") ?: return
 
-                DartWorkManager.createWorker(context, intent.type!!, hashMapOf("chatGuid" to chatGuid, "messageGuid" to messageGuid, "text" to replyText)) {
+                DartWorkManager.createWorker(context, intent.type!!, hashMapOf("chatGuid" to chatGuid, "messageGuid" to messageGuid, "text" to replyText)) { succeeded ->
                     val notificationManager = context.getSystemService(NotificationManager::class.java)
                     // this is used to copy the style, since the notification already exists
                     PersistentLog.d(context, Constants.logTag, "Fetching existing notification values")
@@ -99,8 +99,11 @@ class InternalIntentReceiver: BroadcastReceiver() {
                             e.printStackTrace()
                         }
                     }
+                    // Render the reply as undelivered when the Dart work did not succeed.
+                    // Showing it as a normal sent message would tell the user their reply
+                    // went through when it never left the device — silent message loss.
                     messagingStyle.addMessage(Notification.MessagingStyle.Message(
-                        replyText,
+                        if (succeeded) replyText else "⚠ Not sent: $replyText",
                         System.currentTimeMillis(),
                         sender.build()
                     ))
