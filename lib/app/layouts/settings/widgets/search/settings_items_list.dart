@@ -4,6 +4,7 @@ import '../../pages/scheduling/scheduled_messages_panel.dart';
 import '../tiles/connection_server_tile.dart';
 import '../tiles/private_api_tile.dart';
 import '../tiles/redacted_mode_tile.dart';
+import 'package:bluebubbles/app/layouts/settings/dialogs/version_dialog.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
@@ -749,7 +750,7 @@ List<Widget> buildSettingItemList({
             "Changelog",
             "Developers",
             "Keyboard Shortcuts",
-            "About",
+            "About"
           ],
           onTap: () {
             ns.pushAndRemoveSettingsUntil(context, const AboutPanel(), (Route route) => route.isFirst);
@@ -801,6 +802,22 @@ List<Widget> buildSettingItemList({
               title: kIsWeb ? "Logout" : "Reset App",
             ),
           ),
+      ],
+    ),
+    const SizedBox(height: 16.0),
+    SearchableSettingItem(
+      title: "App Version: $appVersion",
+      searchTags: ["Version"],
+      child: Container(),
+      onTap: () => showVersionDialog(context),
+    ),
+    SettingsSection(
+      backgroundColor: tileColor,
+      children: [
+        SettingsSubtitle(
+          subtitle: "App Version: $appVersion",
+          bottomPadding: false,
+        ),
       ],
     ),
   ];
