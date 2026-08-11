@@ -351,6 +351,12 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     const interval = Duration(milliseconds: 400);
     const maxAttempts = 12; // ~5s, well past the startup churn
 
+    // Once the keyboard has been up even once, we must NOT keep re-showing it: the user
+    // pressing Back hides the IME but leaves the field focused, so re-issuing the show
+    // would fight them and the keyboard would "keep coming back". So only retry the show
+    // until it first appears; after that, stop for good.
+    bool everShown = false;
+
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       await Future.delayed(interval);
       if (!mounted) return;
@@ -361,15 +367,24 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (!controller.focusNode.hasFocus) return;
       if (controller.showingOverlays || controller.showingSubRoute) return;
 
-      if (MediaQuery.of(context).viewInsets.bottom > 0) {
-        Logger.debug('Composer keyboard visible after $attempt attempt(s)', tag: 'ConversationTextField');
-        return;
+      final keyboardUp = MediaQuery.of(context).viewInsets.bottom > 0;
+      if (keyboardUp) {
+        if (!everShown) {
+          Logger.debug('Composer keyboard visible after $attempt attempt(s)', tag: 'ConversationTextField');
+        }
+        everShown = true;
+        // Keep observing (cheaply) so we can detect a user dismissal below, but never
+        // force it back up once it has appeared.
+        continue;
       }
+
+      // Insets are zero. If the keyboard had already come up, the user just dismissed
+      // it (e.g. Back) — respect that and stop. Only force a show while it has never
+      // appeared yet (the cold-start engine race this method exists for).
+      if (everShown) return;
 
       SystemChannels.textInput.invokeMethod('TextInput.show');
     }
-
-    Logger.warn('Composer keyboard never appeared after $maxAttempts attempts', tag: 'ConversationTextField');
   }
 
   @override
