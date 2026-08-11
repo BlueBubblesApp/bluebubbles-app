@@ -26,6 +26,15 @@ class CloudMessagingService {
 
   /// Register this device with FCM
   Future<void> registerDevice() async {
+    // On mobile the user can disable FCM (e.g. they rely on UnifiedPush or the background service).
+    // Skip registration entirely in that case: nothing is attempted, so a transient Firebase failure
+    // can't surface the "Failed to register FCM device!" banner for a transport they aren't using.
+    // The server drops the device via its inactivity purge, so FCM stops being a delivery route.
+    if (!kIsDesktop && !kIsWeb && !SettingsSvc.settings.enableFcm.value) {
+      Logger.debug("FCM is disabled in settings, skipping registration", tag: 'FCM-Auth');
+      return;
+    }
+
     // Make sure setup is complete, and that we aren't currently registering with FCM
     // Users can also choose to disable FCM in settings
     if (!SettingsSvc.settings.finishedSetup.value || SettingsSvc.settings.keepAppAlive.value) return;
