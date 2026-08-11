@@ -487,6 +487,14 @@ class StartupTasks {
         if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
           if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
             _cvc.lastFocusedNode.requestFocus();
+            // Focus alone frequently fails to raise the keyboard on Android (the
+            // engine's input-connection restart swallows the show request), so drive
+            // it through the composer's retry-until-visible path when available.
+            // Skip when the subject field was the last focused one — the composer
+            // helper focuses the message field and would move focus off the subject.
+            if (!kIsDesktop && identical(_cvc.lastFocusedNode, _cvc.focusNode)) {
+              _cvc.ensureComposerKeyboard?.call();
+            }
           } else if (_cvc.lastFocusedNode.hasFocus) {
             // The field keeps its focus across a background/resume cycle, but
             // the Android engine fails to restore the keyboard on resume: the
