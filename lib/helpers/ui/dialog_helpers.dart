@@ -253,13 +253,11 @@ Future<T?> _showCupertinoActionSheetSelector<T>(
   required List<BBListSelectorOption<T>> options,
   required String cancelText,
 }) {
+  final brightness = Theme.of(context).brightness;
   return showCupertinoModalPopup<T>(
     context: context,
     builder: (ctx) => CupertinoTheme(
-      // Bridge Material theme brightness into the Cupertino color system so
-      // CupertinoDynamicColor.resolve picks the correct light/dark variant
-      // instead of falling back to the system platform brightness.
-      data: CupertinoThemeData(brightness: Theme.of(ctx).brightness),
+      data: CupertinoThemeData(brightness: brightness),
       child: CupertinoActionSheet(
         title: title != null ? Text(title) : null,
         message: message != null ? Text(message) : null,
@@ -280,6 +278,101 @@ Future<T?> _showCupertinoActionSheetSelector<T>(
   );
 }
 
+/// The iOS bottom-modal shell shared by the wheel selector and the date/time
+/// picker: a Cancel/[title]/Done toolbar above [child], themed to the app's
+/// brightness rather than the system's.
+///
+/// Returns `onDone()` if the user taps Done, or `null` if they cancel or
+/// dismiss.
+Future<T?> _showWheelModal<T>({
+  required BuildContext context,
+  required Widget child,
+  required T Function() onDone,
+  String? title,
+  String cancelText = "Cancel",
+  double height = 260,
+}) {
+  // Bridge Material theme brightness into the Cupertino color system so
+  // CupertinoDynamicColor.resolve (and CupertinoTheme.of() lookups below) pick
+  // the correct light/dark variant instead of falling back to the system
+  // platform brightness. Read from the caller's context — the popup builder's
+  // context sits above the app theme.
+  final cupertinoTheme = CupertinoThemeData(brightness: Theme.of(context).brightness);
+  return showCupertinoModalPopup<T>(
+    context: context,
+    builder: (ctx) => CupertinoTheme(
+      data: cupertinoTheme,
+      child: Container(
+        height: height,
+        color: cupertinoTheme.scaffoldBackgroundColor,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CupertinoButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(cancelText),
+                ),
+                if (title != null) Text(title, style: cupertinoTheme.textTheme.navTitleTextStyle),
+                CupertinoButton(
+                  onPressed: () => Navigator.of(ctx).pop(onDone()),
+                  child: const Text("Done"),
+                ),
+              ],
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Shows a skin-aware date + time picker.
+///
+/// On the iOS skin this is a [CupertinoDatePicker] wheel inside a
+/// the shared wheel modal; on Material/Samsung it's the native date dialog
+/// followed by the native time dialog.
+///
+/// Returns the picked [DateTime], or `null` if the user cancels (on
+/// Material/Samsung, cancelling either step). [initialDate] is clamped into
+/// `[firstDate, lastDate]`, which default to now and five years out.
+Future<DateTime?> showBBDateTimePicker({
+  required BuildContext context,
+  DateTime? initialDate,
+  DateTime? firstDate,
+  DateTime? lastDate,
+}) async {
+  final first = firstDate ?? DateTime.now();
+  final last = lastDate ?? first.add(const Duration(days: 365 * 5));
+  final initial = (initialDate?.isAfter(first) ?? false) ? initialDate! : first.add(const Duration(minutes: 1));
+
+  if (SettingsSvc.settings.skin.value == Skins.iOS) {
+    var picked = initial;
+    return _showWheelModal<DateTime>(
+      context: context,
+      height: 300,
+      onDone: () => picked,
+      child: CupertinoDatePicker(
+        initialDateTime: initial,
+        minimumDate: first,
+        maximumDate: last,
+        mode: CupertinoDatePickerMode.dateAndTime,
+        onDateTimeChanged: (dt) => picked = dt,
+      ),
+    );
+  }
+
+  final date = await showDatePicker(context: context, initialDate: initial, firstDate: first, lastDate: last);
+  if (date == null || !context.mounted) return null;
+
+  final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
+  if (time == null) return null;
+
+  return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+}
+
 Future<T?> _showCupertinoWheelSelector<T>(
   BuildContext context, {
   String? title,
@@ -287,47 +380,16 @@ Future<T?> _showCupertinoWheelSelector<T>(
   required String cancelText,
 }) {
   var selectedIndex = 0;
-  return showCupertinoModalPopup<T>(
+  return _showWheelModal<T>(
     context: context,
-    builder: (ctx) {
-      // Bridge Material theme brightness into the Cupertino color system so
-      // CupertinoDynamicColor.resolve (and CupertinoTheme.of() lookups below)
-      // pick the correct light/dark variant instead of falling back to the
-      // system platform brightness.
-      final cupertinoTheme = CupertinoThemeData(brightness: Theme.of(ctx).brightness);
-      return CupertinoTheme(
-        data: cupertinoTheme,
-        child: Container(
-          height: 260,
-          color: cupertinoTheme.scaffoldBackgroundColor,
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CupertinoButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(cancelText),
-                  ),
-                  if (title != null) Text(title, style: cupertinoTheme.textTheme.navTitleTextStyle),
-                  CupertinoButton(
-                    onPressed: () => Navigator.of(ctx).pop(options[selectedIndex].value),
-                    child: const Text("Done"),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: CupertinoPicker(
-                  itemExtent: 36,
-                  onSelectedItemChanged: (index) => selectedIndex = index,
-                  children: options.map((o) => Center(child: Text(o.label))).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
+    title: title,
+    cancelText: cancelText,
+    onDone: () => options[selectedIndex].value,
+    child: CupertinoPicker(
+      itemExtent: 36,
+      onSelectedItemChanged: (index) => selectedIndex = index,
+      children: options.map((o) => Center(child: Text(o.label))).toList(),
+    ),
   );
 }
 

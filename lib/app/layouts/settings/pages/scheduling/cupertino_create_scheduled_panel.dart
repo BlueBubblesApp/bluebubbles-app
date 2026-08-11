@@ -32,50 +32,6 @@ class _CupertinoCreateScheduledMessageState extends State<CupertinoCreateSchedul
     initForm();
   }
 
-  Future<void> _pickDateTime(BuildContext context) async {
-    DateTime picked = date.value;
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (ctx) => Container(
-        height: 300,
-        color: ctx.theme.colorScheme.surfaceContainerHighest,
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoButton(
-                  child: Text("Cancel", style: TextStyle(color: ctx.theme.colorScheme.outline)),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-                CupertinoButton(
-                  child: Text("Done", style: TextStyle(color: ctx.theme.colorScheme.primary)),
-                  onPressed: () {
-                    if (picked.isBefore(DateTime.now())) {
-                      showSnackbar("Error", "Pick a date in the future!");
-                    } else {
-                      date.value = picked;
-                    }
-                    Navigator.pop(ctx);
-                  },
-                ),
-              ],
-            ),
-            Expanded(
-              child: CupertinoDatePicker(
-                initialDateTime:
-                    date.value.isAfter(DateTime.now()) ? date.value : DateTime.now().add(const Duration(minutes: 1)),
-                minimumDate: DateTime.now(),
-                mode: CupertinoDatePickerMode.dateAndTime,
-                onDateTimeChanged: (dt) => picked = dt,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -270,7 +226,7 @@ class _CupertinoCreateScheduledMessageState extends State<CupertinoCreateSchedul
                       containerColor: Colors.orange,
                     ),
                     subtitle: "${buildSeparatorDateSamsung(date.value)} at ${buildTime(date.value)}",
-                    onTap: () => _pickDateTime(context),
+                    onTap: () => pickDateTime(context),
                     trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: context.theme.colorScheme.outline),
                   ),
                 ],

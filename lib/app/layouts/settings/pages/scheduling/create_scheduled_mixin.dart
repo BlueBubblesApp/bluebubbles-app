@@ -51,6 +51,16 @@ mixin CreateScheduledMixin<T extends StatefulWidget> on State<T> {
     });
   }
 
+  Future<void> pickDateTime(BuildContext context) async {
+    final picked = await showBBDateTimePicker(context: context, initialDate: date.value);
+    if (picked == null) return;
+    if (picked.isBefore(DateTime.now())) {
+      showSnackbar("Error", "Pick a date in the future!");
+      return;
+    }
+    date.value = picked;
+  }
+
   Future<void> saveScheduledMessage(BuildContext context) async {
     if (date.value.isBefore(DateTime.now())) {
       showSnackbar("Error", "Pick a date in the future!");
