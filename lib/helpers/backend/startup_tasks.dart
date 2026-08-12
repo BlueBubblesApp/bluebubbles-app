@@ -40,8 +40,21 @@ class StartupTasks {
     await uiReady.future;
   }
 
+  /// Completion of the current determinate step (0..1), or -1 when there isn't
+  /// one — the splash shows its indeterminate spinner instead.
+  static final ValueNotifier<double> progress = ValueNotifier<double>(-1);
+
   static Future<void> setSplashStatus(String value) async {
     status.value = value;
+    if (kIsDesktop) await Future.delayed(Duration.zero);
+  }
+
+  /// Drives the splash progress bar. The yield matters as much as the value:
+  /// the platform thread can't deliver either to the native splash while a long
+  /// synchronous step is hogging the isolate, so callers must reach this between
+  /// chunks of work rather than around the whole of it.
+  static Future<void> setSplashProgress(double value) async {
+    progress.value = value;
     if (kIsDesktop) await Future.delayed(Duration.zero);
   }
 

@@ -90,9 +90,17 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         }
       }
 
+      void pushProgress() {
+        splashChannel.invokeMethod('setProgress', StartupTasks.progress.value).catchError((_) => null);
+      }
+
       StartupTasks.status.addListener(pushStatus);
+      StartupTasks.progress.addListener(pushProgress);
       pushStatus();
-      detachSplashStatus = () => StartupTasks.status.removeListener(pushStatus);
+      detachSplashStatus = () {
+        StartupTasks.status.removeListener(pushStatus);
+        StartupTasks.progress.removeListener(pushProgress);
+      };
     }
 
     await StartupTasks.initStartupServices(isBubble: bubble);

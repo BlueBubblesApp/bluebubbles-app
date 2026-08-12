@@ -56,6 +56,10 @@ constexpr int kSpinner = 26;
 constexpr int kSpinnerStroke = 3;
 constexpr int kVersionFont = 12;
 
+// Progress bar, drawn in the spinner's row while a determinate step runs.
+constexpr int kBarWidth = 180;
+constexpr int kBarHeight = 6;
+
 // Rolling log of startup steps: bottom-aligned, oldest dimmest. Grows downward
 // into the space below the spinner — kContentH stays 300 so everything above it
 // keeps its position.
@@ -65,13 +69,19 @@ constexpr int kLogLine = 15;
 constexpr int kLogFont = 11;
 
 // Close button, pinned to the top-right corner (not part of the centered box).
-// Held back for a moment so a normal fast launch never flashes it.
+//
+// Revealed by silence rather than by a wall clock: startup names every step it
+// enters, and the slow ones (database migrations) report progress per batch, so
+// a gap this long means startup is wedged, not merely busy. Work in progress
+// therefore never offers the user a way to interrupt it. A hard crash takes
+// this window down with it, so "stopped reporting" is the only failure mode the
+// splash can observe — and it's the one that otherwise needs Task Manager.
 constexpr int kCloseSize = 28;
 constexpr int kCloseMargin = 6;
 constexpr int kCloseGlyph = 10;
-constexpr ULONGLONG kCloseDelayMs = 3000;
+constexpr ULONGLONG kStallCloseMs = 30000;
 
-constexpr ULONGLONG kSlowMs = 10000;
+constexpr ULONGLONG kStallReportMs = 15000;
 constexpr int kSlowTop = 318;
 constexpr int kSlowHeight = 18;
 constexpr int kSlowFont = 11;
@@ -93,7 +103,16 @@ double g_scale = 1.0;
 int g_angle = 0;
 bool g_close_hot = false;
 bool g_url_hot = false;
-ULONGLONG g_start_tick = 0;
+
+// Last sign of life from the Dart side — any status or progress push, whether
+// or not it changed what's drawn. Written from the platform thread, read by the
+// splash thread. Seeded when the splash opens so a startup that dies before its
+// first push still counts as stalled.
+std::atomic<ULONGLONG> g_last_activity_tick{0};
+
+// 0..1 while a long determinate step is running, < 0 the rest of the time. The
+// spinner gives way to a progress bar whenever this is set.
+std::atomic<double> g_progress{-1.0};
 
 // Bounds of the drawn issues-URL line, measured during Paint so the click and
 // hover tests match exactly what is on screen. Empty while the line is hidden.
@@ -155,7 +174,8 @@ std::wstring BuildVersionLine() {
 
 int S(int logical) { return static_cast<int>(logical * g_scale); }
 
-ULONGLONG ElapsedMs() { return GetTickCount64() - g_start_tick; }
+// How long the Dart side has been silent.
+ULONGLONG StalledMs() { return GetTickCount64() - g_last_activity_tick.load(); }
 
 RECT CloseButtonRect(int client_w) {
   int size = S(kCloseSize);
@@ -186,6 +206,19 @@ Gdiplus::RectF DrawCenteredText(Gdiplus::Graphics& g, const std::wstring& text, 
   Gdiplus::RectF bounds;
   g.MeasureString(text.c_str(), -1, &font, rect, &fmt, &bounds);
   return bounds;
+}
+
+// Rounded-end rectangle — GDI+ has no primitive for one.
+void FillPill(Gdiplus::Graphics& g, Gdiplus::Brush& brush, int x, int y, int width, int height,
+              Gdiplus::REAL radius) {
+  Gdiplus::GraphicsPath path;
+  Gdiplus::REAL d = radius * 2;
+  path.AddArc(static_cast<Gdiplus::REAL>(x), static_cast<Gdiplus::REAL>(y), d,
+              static_cast<Gdiplus::REAL>(height), 90.0f, 180.0f);
+  path.AddArc(static_cast<Gdiplus::REAL>(x + width) - d, static_cast<Gdiplus::REAL>(y), d,
+              static_cast<Gdiplus::REAL>(height), 270.0f, 180.0f);
+  path.CloseFigure();
+  g.FillPath(&brush, &path);
 }
 
 // What both the close button and Escape do, once the close button is showing.
@@ -241,18 +274,37 @@ void Paint(HWND hwnd) {
       DrawCenteredText(g, log[i], top + oy, kLogLine, kLogFont, alpha, w);
     }
 
-    // Rotating arc spinner in the BlueBubbles brand blue.
-    Gdiplus::Pen pen(Gdiplus::Color(255, 25, 130, 252), static_cast<Gdiplus::REAL>(S(kSpinnerStroke)));
-    pen.SetStartCap(Gdiplus::LineCapRound);
-    pen.SetEndCap(Gdiplus::LineCapRound);
-    int spin = S(kSpinner);
-    g.DrawArc(&pen, (w - spin) / 2, S(kSpinnerTop + oy), spin, spin,
-              static_cast<Gdiplus::REAL>(g_angle), 270.0f);
-
-    ULONGLONG elapsed = ElapsedMs();
     BYTE channel = g_dark ? 255 : 0;
+    double progress = g_progress.load();
 
-    if (elapsed >= kSlowMs) {
+    if (progress >= 0.0) {
+      // A determinate step (database migration) is running, so the spinner
+      // gives up its row to a real bar — same slot, no layout shift.
+      int bar_w = S(kBarWidth);
+      int bar_h = S(kBarHeight);
+      int bar_x = (w - bar_w) / 2;
+      int bar_y = S(kSpinnerTop + oy) + (S(kSpinner) - bar_h) / 2;
+      Gdiplus::REAL radius = bar_h / 2.0f;
+      Gdiplus::SolidBrush track(Gdiplus::Color(46, channel, channel, channel));
+      Gdiplus::SolidBrush fill(Gdiplus::Color(255, 25, 130, 252));
+      FillPill(g, track, bar_x, bar_y, bar_w, bar_h, radius);
+      // Never narrower than the cap: a sliver of pill reads as "starting",
+      // where a clipped one reads as a rendering bug.
+      int fill_w = static_cast<int>(bar_w * std::min(1.0, progress));
+      FillPill(g, fill, bar_x, bar_y, std::max(fill_w, bar_h), bar_h, radius);
+    } else {
+      // Rotating arc spinner in the BlueBubbles brand blue.
+      Gdiplus::Pen pen(Gdiplus::Color(255, 25, 130, 252), static_cast<Gdiplus::REAL>(S(kSpinnerStroke)));
+      pen.SetStartCap(Gdiplus::LineCapRound);
+      pen.SetEndCap(Gdiplus::LineCapRound);
+      int spin = S(kSpinner);
+      g.DrawArc(&pen, (w - spin) / 2, S(kSpinnerTop + oy), spin, spin,
+                static_cast<Gdiplus::REAL>(g_angle), 270.0f);
+    }
+
+    ULONGLONG stalled = StalledMs();
+
+    if (stalled >= kStallReportMs) {
       DrawCenteredText(g, kSlowLine1, kSlowTop + oy, kSlowHeight, kSlowFont, 130, w);
       Gdiplus::RectF url = DrawCenteredText(g, kSlowLine2, kSlowTop + kSlowHeight + oy, kSlowHeight,
                                             kSlowFont, g_url_hot ? 255 : 205, w, true);
@@ -264,7 +316,7 @@ void Paint(HWND hwnd) {
     }
 
     // Close button "x", with a subtle disc behind it while hovered.
-    if (elapsed >= kCloseDelayMs) {
+    if (stalled >= kStallCloseMs) {
       RECT cb = CloseButtonRect(w);
       if (g_close_hot) {
         Gdiplus::SolidBrush disc(Gdiplus::Color(38, channel, channel, channel));
@@ -299,7 +351,7 @@ LRESULT CALLBACK SplashWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
       ScreenToClient(hwnd, &pt);
       GetClientRect(hwnd, &rc);
       RECT close = CloseButtonRect(rc.right);
-      g_close_hot = ElapsedMs() >= kCloseDelayMs && PtInRect(&close, pt);
+      g_close_hot = StalledMs() >= kStallCloseMs && PtInRect(&close, pt);
       g_url_hot = PtInRect(&g_url_rect, pt) != FALSE;
       InvalidateRect(hwnd, nullptr, FALSE);
       return 0;
@@ -317,7 +369,7 @@ LRESULT CALLBACK SplashWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
       POINT pt{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
       if (PtInRect(&g_url_rect, pt)) {
         ShellExecuteW(nullptr, L"open", kSlowUrl, nullptr, nullptr, SW_SHOWNORMAL);
-      } else if (ElapsedMs() >= kCloseDelayMs && PtInRect(&close, pt)) {
+      } else if (StalledMs() >= kStallCloseMs && PtInRect(&close, pt)) {
         Dismiss();
       }
       return 0;
@@ -326,7 +378,7 @@ LRESULT CALLBACK SplashWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
       // Escape is the keyboard equivalent of the close button, held back by the
       // same delay — it is a topmost tool window with no titlebar or taskbar
       // entry, so the x must not be the only way out.
-      if (wparam == VK_ESCAPE && ElapsedMs() >= kCloseDelayMs) Dismiss();
+      if (wparam == VK_ESCAPE && StalledMs() >= kStallCloseMs) Dismiss();
       return 0;
     case WM_DESTROY:
       KillTimer(hwnd, kTimerId);
@@ -339,7 +391,7 @@ LRESULT CALLBACK SplashWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 // Runs the splash window on its own thread with its own message loop so the
 // spinner keeps animating while the main thread blocks initializing Flutter.
 DWORD WINAPI SplashThreadProc(LPVOID) {
-  g_start_tick = GetTickCount64();
+  g_last_activity_tick.store(GetTickCount64());
   Gdiplus::GdiplusStartupInput startup_input;
   Gdiplus::GdiplusStartup(&g_gdiplus_token, &startup_input, nullptr);
 
@@ -418,12 +470,24 @@ void ShowSplashScreen(HINSTANCE instance) {
 }
 
 void SetSplashStatus(const std::wstring& status) {
+  // Stamped before the dedupe below: a repeated status is still proof the Dart
+  // side is running, even though it changes nothing on screen.
+  g_last_activity_tick.store(GetTickCount64());
   {
     std::lock_guard<std::mutex> lock(g_status_mutex);
     if (!g_log_lines.empty() && g_log_lines.back() == status) return;  // nothing changed
     g_log_lines.push_back(status);
     if (g_log_lines.size() > kLogLines) g_log_lines.erase(g_log_lines.begin());
   }
+  HWND hwnd = g_splash_hwnd;
+  if (hwnd) {
+    PostMessageW(hwnd, WM_SPLASH_STATUS, 0, 0);
+  }
+}
+
+void SetSplashProgress(double progress) {
+  g_last_activity_tick.store(GetTickCount64());
+  g_progress.store(progress);
   HWND hwnd = g_splash_hwnd;
   if (hwnd) {
     PostMessageW(hwnd, WM_SPLASH_STATUS, 0, 0);

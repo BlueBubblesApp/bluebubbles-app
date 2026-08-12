@@ -20,6 +20,12 @@ constexpr int kVersionTop = 124;
 constexpr int kVersionHeight = 18;
 constexpr int kVersionFont = 12;
 
+// Progress bar for determinate steps, in the gap between the version line and
+// the log. Absent (not an empty track) the rest of the time.
+constexpr int kBarTop = 150;
+constexpr int kBarWidth = 180;
+constexpr int kBarHeight = 6;
+
 // Rolling log of startup steps: bottom-aligned, oldest dimmest. Grows downward
 // into the space below the version line — kWindowH stays 300 so everything
 // above it keeps its position.
@@ -29,14 +35,20 @@ constexpr int kLogLine = 15;
 constexpr int kLogFont = 11;
 
 // Close button, pinned to the top-right corner (not part of the centered box).
-// Held back for a moment so a normal fast launch never flashes it.
+//
+// Revealed by silence rather than by a wall clock: startup names every step it
+// enters, and the slow ones (database migrations) report progress per batch, so
+// a gap this long means startup is wedged, not merely busy. Work in progress
+// therefore never offers the user a way to interrupt it. A hard crash takes
+// this window down with it, so "stopped reporting" is the only failure mode the
+// splash can observe — and it's the one that otherwise needs a kill(1).
 constexpr int kCloseSize = 28;
 constexpr int kCloseMargin = 6;
 constexpr int kCloseGlyph = 10;
-constexpr int kCloseDelayMs = 3000;
+constexpr int kStallCloseMs = 30000;
 
-// "This is not normal, here's where to complain" line.
-constexpr int kSlowMs = 10000;
+constexpr int kStallReportMs = 15000;
+constexpr int kStallPollMs = 500;
 constexpr int kSlowTop = 270;
 constexpr int kSlowHeight = 18;
 constexpr int kSlowFont = 11;
@@ -46,8 +58,12 @@ constexpr char kSlowUrl[] = "https://github.com/BlueBubblesApp/bluebubbles-app/i
 
 GtkWidget* g_area = nullptr;
 GdkPixbuf* g_icon = nullptr;
-guint g_close_reveal_id = 0;
-guint g_slow_reveal_id = 0;
+guint g_stall_poll_id = 0;
+
+// Last sign of life from the Dart side — any status or progress push, whether
+// or not it changed what's drawn. Set when the splash is created so a startup
+// that dies before its first push still counts as stalled.
+gint64 g_last_activity_us = 0;
 bool g_dark = true;
 bool g_close_hot = false;
 bool g_show_close = false;
@@ -63,6 +79,9 @@ double g_url_x = 0, g_url_y = 0, g_url_w = 0;
 char g_log_lines[kLogLines][256] = {"Starting..."};
 int g_log_count = 1;
 char g_version_line[128] = "";
+
+// 0..1 while a long determinate step is running, < 0 the rest of the time.
+double g_progress = -1.0;
 
 // Reads the app's persisted theme choice from shared_preferences.json, which
 // path_provider puts under the XDG data dir in a folder named for the app id —
@@ -191,6 +210,15 @@ GdkPixbuf* LoadIcon() {
   return pixbuf;
 }
 
+// Rounded-end rectangle — cairo has no primitive for one.
+void FillPill(cairo_t* cr, double x, double y, double width, double height, double radius) {
+  cairo_new_sub_path(cr);
+  cairo_arc(cr, x + width - radius, y + radius, radius, -G_PI / 2, G_PI / 2);
+  cairo_arc(cr, x + radius, y + radius, radius, G_PI / 2, 3 * G_PI / 2);
+  cairo_close_path(cr);
+  cairo_fill(cr);
+}
+
 // Draws the text and returns its rendered pixel width, for hit-testing.
 int DrawCenteredText(cairo_t* cr, const char* text, int top, int height,
                      int font_size, double alpha, int width, bool link = false) {
@@ -258,6 +286,19 @@ gboolean OnDraw(GtkWidget* widget, cairo_t* cr, gpointer user_data) {
   }
 
   DrawCenteredText(cr, g_version_line, kVersionTop, kVersionHeight, kVersionFont, 0.47, w);
+
+  if (g_progress >= 0.0) {
+    double channel = g_dark ? 1.0 : 0.0;
+    double x = (w - kBarWidth) / 2.0;
+    double radius = kBarHeight / 2.0;
+    cairo_set_source_rgba(cr, channel, channel, channel, 0.18);
+    FillPill(cr, x, kBarTop, kBarWidth, kBarHeight, radius);
+    cairo_set_source_rgb(cr, 25 / 255.0, 130 / 255.0, 252 / 255.0);
+    // Never narrower than the cap: a sliver of pill reads as "starting", where
+    // a clipped one reads as a rendering bug.
+    double fill_w = kBarWidth * (g_progress > 1.0 ? 1.0 : g_progress);
+    FillPill(cr, x, kBarTop, fill_w < kBarHeight ? kBarHeight : fill_w, kBarHeight, radius);
+  }
 
   // Bottom-aligned so the current step holds one spot and older ones stack
   // upward as they dim, rather than the live line crawling down the block.
@@ -387,20 +428,20 @@ void OnRealize(GtkWidget* widget, gpointer user_data) {
                           static_cast<GConnectFlags>(0));
 }
 
-gboolean OnRevealClose(gpointer user_data) {
+// Polls how long the Dart side has been quiet. Both affordances hide again if
+// startup recovers and starts reporting: the app isn't stuck after all.
+gboolean OnStallPoll(gpointer user_data) {
   (void)user_data;
-  g_close_reveal_id = 0;
-  g_show_close = true;
+  gint64 stalled_ms = (g_get_monotonic_time() - g_last_activity_us) / 1000;
+  bool show_close = stalled_ms >= kStallCloseMs;
+  bool show_slow = stalled_ms >= kStallReportMs;
+  if (show_close == g_show_close && show_slow == g_show_slow) return G_SOURCE_CONTINUE;
+  g_show_close = show_close;
+  g_show_slow = show_slow;
+  if (!g_show_close) g_close_hot = false;
+  if (!g_show_slow) g_url_hot = false;
   if (g_area != nullptr) gtk_widget_queue_draw(g_area);
-  return G_SOURCE_REMOVE;
-}
-
-gboolean OnRevealSlow(gpointer user_data) {
-  (void)user_data;
-  g_slow_reveal_id = 0;
-  g_show_slow = true;
-  if (g_area != nullptr) gtk_widget_queue_draw(g_area);
-  return G_SOURCE_REMOVE;
+  return G_SOURCE_CONTINUE;
 }
 
 }  // namespace
@@ -425,13 +466,16 @@ GtkWidget* create_splash_widget() {
   g_signal_connect(G_OBJECT(g_area), "realize", G_CALLBACK(OnRealize), nullptr);
   gtk_widget_show(g_area);
 
-  g_close_reveal_id = g_timeout_add(kCloseDelayMs, OnRevealClose, nullptr);
-  g_slow_reveal_id = g_timeout_add(kSlowMs, OnRevealSlow, nullptr);
+  g_last_activity_us = g_get_monotonic_time();
+  g_stall_poll_id = g_timeout_add(kStallPollMs, OnStallPoll, nullptr);
   return g_area;
 }
 
 void set_splash_status(const char* status) {
   if (status == nullptr) return;
+  // Stamped before the dedupe below: a repeated status is still proof the Dart
+  // side is running, even though it changes nothing on screen.
+  g_last_activity_us = g_get_monotonic_time();
   if (g_log_count > 0 && strcmp(g_log_lines[g_log_count - 1], status) == 0) return;  // nothing changed
   if (g_log_count == kLogLines) {
     memmove(g_log_lines[0], g_log_lines[1], sizeof(g_log_lines) - sizeof(g_log_lines[0]));
@@ -441,14 +485,16 @@ void set_splash_status(const char* status) {
   if (g_area != nullptr) gtk_widget_queue_draw(g_area);
 }
 
+void set_splash_progress(double progress) {
+  g_last_activity_us = g_get_monotonic_time();
+  g_progress = progress;
+  if (g_area != nullptr) gtk_widget_queue_draw(g_area);
+}
+
 void close_splash_screen() {
-  if (g_close_reveal_id != 0) {
-    g_source_remove(g_close_reveal_id);
-    g_close_reveal_id = 0;
-  }
-  if (g_slow_reveal_id != 0) {
-    g_source_remove(g_slow_reveal_id);
-    g_slow_reveal_id = 0;
+  if (g_stall_poll_id != 0) {
+    g_source_remove(g_stall_poll_id);
+    g_stall_poll_id = 0;
   }
   if (g_area != nullptr) {
     gtk_widget_destroy(g_area);

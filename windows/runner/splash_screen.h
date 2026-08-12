@@ -14,6 +14,10 @@ void ShowSplashScreen(HINSTANCE instance);
 // platform (UI) thread; the splash repaints on its own thread.
 void SetSplashStatus(const std::wstring& status);
 
+// Swaps the spinner for a determinate progress bar at [progress] (0..1), or
+// back to the spinner when negative. Same threading rules as SetSplashStatus.
+void SetSplashProgress(double progress);
+
 // Closes the native splash window if it is open. Safe to call multiple times
 // and from the platform (UI) thread once Flutter has shown its own window.
 void CloseSplashScreen();
