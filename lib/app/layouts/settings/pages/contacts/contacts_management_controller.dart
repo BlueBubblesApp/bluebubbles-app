@@ -71,9 +71,31 @@ class ContactsManagementController extends GetxController {
     try {
       final result = await ContactsSvcV2.getAccountContactCounts();
       accounts.assignAll(result);
+      await _clearSelectionIfMissing();
     } finally {
       loadingAccounts.value = false;
     }
+  }
+
+  /// Drops a persisted account selection that no longer corresponds to any
+  /// account holding contacts — an account removed from the device, or one
+  /// saved before the account list was derived from the contacts provider
+  /// (and so stored under a tuple the provider never matches). Leaving it in
+  /// place would filter every future sync down to zero contacts.
+  Future<void> _clearSelectionIfMissing() async {
+    if (selectedAccountName.value == null) return;
+    if (accounts.any(isAccountSelected)) return;
+
+    await _persistSelection(null);
+  }
+
+  Future<void> _persistSelection(Map<String, dynamic>? account) async {
+    selectedAccountName.value = account?['name'] as String?;
+    selectedAccountType.value = account?['type'] as String?;
+
+    SettingsSvc.settings.contactSyncAccountName.value = selectedAccountName.value;
+    SettingsSvc.settings.contactSyncAccountType.value = selectedAccountType.value;
+    await SettingsSvc.settings.saveManyAsync(['contactSyncAccountName', 'contactSyncAccountType']);
   }
 
   bool isAccountSelected(Map<String, dynamic>? account) {
@@ -85,13 +107,7 @@ class ContactsManagementController extends GetxController {
   /// accounts" (the default). Persists the choice and immediately re-syncs
   /// so the change takes effect right away.
   Future<void> selectAccount(Map<String, dynamic>? account) async {
-    selectedAccountName.value = account?['name'] as String?;
-    selectedAccountType.value = account?['type'] as String?;
-
-    SettingsSvc.settings.contactSyncAccountName.value = selectedAccountName.value;
-    SettingsSvc.settings.contactSyncAccountType.value = selectedAccountType.value;
-    await SettingsSvc.settings.saveManyAsync(['contactSyncAccountName', 'contactSyncAccountType']);
-
+    await _persistSelection(account);
     await refreshContactsNow();
   }
 
@@ -103,6 +119,12 @@ class ContactsManagementController extends GetxController {
       lastDeviceContactCount.value = stats['deviceContactCount'] as int?;
       lastMatchedContactCount.value = stats['matchedContactCount'] as int?;
       lastAffectedHandleCount.value = (stats['affectedHandleIds'] as List).length;
+      // The sync ignored the saved account filter because it matched nothing
+      // and fell back to every account. Drop the selection so the selector
+      // reflects what actually ran, and so future syncs skip the dead filter.
+      if (stats['accountFilterFellBack'] == true) {
+        await _persistSelection(null);
+      }
       // Per-account counts may have shifted since the last check (e.g. new
       // contacts synced onto an account) — keep the selector's numbers fresh.
       await refreshAccounts();

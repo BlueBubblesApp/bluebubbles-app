@@ -141,7 +141,12 @@ class ContactServiceV2 {
   /// count and matched-contact count — used by the Contacts Management
   /// page's manual refresh for diagnostic display.
   Future<Map<String, dynamic>> syncContactsToHandlesWithStats() async {
-    const Map<String, dynamic> empty = {'affectedHandleIds': <int>[], 'deviceContactCount': 0, 'matchedContactCount': 0};
+    const Map<String, dynamic> empty = {
+      'affectedHandleIds': <int>[],
+      'deviceContactCount': 0,
+      'matchedContactCount': 0,
+      'accountFilterFellBack': false,
+    };
 
     final access = await hasContactAccess;
     if (!access) return empty;
@@ -154,6 +159,7 @@ class ContactServiceV2 {
         'affectedHandleIds': affectedHandleIds,
         'deviceContactCount': raw['deviceContactCount'] as int? ?? 0,
         'matchedContactCount': raw['matchedContactCount'] as int? ?? 0,
+        'accountFilterFellBack': raw['accountFilterFellBack'] as bool? ?? false,
       };
     } catch (e, stack) {
       Logger.error('[ContactServiceV2] Error syncing contacts with stats', error: e, trace: stack);

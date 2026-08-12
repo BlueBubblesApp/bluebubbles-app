@@ -110,6 +110,7 @@ class ContactV2Actions {
     final startTime = DateTime.now().millisecondsSinceEpoch;
     final affectedHandleIds = <int>[];
     int matchedContactCount = 0;
+    bool accountFilterFellBack = false;
 
     try {
       List<fc.Contact> deviceContacts = [];
@@ -159,12 +160,31 @@ class ContactV2Actions {
           Logger.info('[ContactV2] No server contacts found!');
         }
       } else {
-        // Step 1: Fetch contacts using flutter_contacts
+        // Step 1: Fetch contacts using flutter_contacts. Thumbnails come along in
+        // this single sweep so the avatar step below only has to make a
+        // per-contact call for contacts that actually have a photo.
+        final properties = {...fc.ContactProperties.allProperties, fc.ContactProperty.photoThumbnail};
         Logger.info('[ContactV2] Starting contact fetch from device (flutter_contacts)'
             '${account != null ? ' for account ${account.name} (${account.type})' : ''}...');
-        deviceContacts =
-            await fc.FlutterContacts.getAll(properties: fc.ContactProperties.allProperties, account: account);
+        deviceContacts = await fc.FlutterContacts.getAll(properties: properties, account: account);
         Logger.info('[ContactV2] Fetched ${deviceContacts.length} contacts from device');
+
+        if (deviceContacts.isEmpty && account != null) {
+          // The saved account filter matched nothing. That's a real possibility
+          // for a legitimately empty account, but it's also what a stale or
+          // never-valid selection looks like — an account whose Contacts
+          // Provider `(ACCOUNT_TYPE, ACCOUNT_NAME)` differs from the tuple we
+          // stored, or one that has since been removed from the device. Either
+          // way, syncing zero contacts leaves every handle unmatched and the
+          // whole app contact-less, so fall back to an unfiltered fetch rather
+          // than honoring a filter that can only produce nothing.
+          Logger.warn('[ContactV2] Account filter ${account.name} (${account.type}) matched 0 contacts — '
+              'falling back to an unfiltered fetch. The saved account selection will be cleared.');
+          accountFilterFellBack = true;
+          deviceContacts = await fc.FlutterContacts.getAll(properties: properties);
+          Logger.info('[ContactV2] Fetched ${deviceContacts.length} contacts from device (unfiltered)');
+        }
+
         if (deviceContacts.isEmpty) {
           // The OS permission check passed (we only reach this branch with contacts
           // access granted), yet the provider returned nothing. This is expected for
@@ -180,24 +200,39 @@ class ContactV2Actions {
         // Step 1.5: Pre-fetch and save all contact avatars (async operations must be done BEFORE transaction)
         for (final rawContact in deviceContacts) {
           if (rawContact.id == null) continue;
+          final thumbnail = rawContact.photo?.thumbnail;
+
+          // The bulk fetch above is authoritative on whether a contact has a photo
+          // at all — the provider always writes a thumbnail alongside a full-res
+          // photo. No thumbnail means no photo, so record the removal without
+          // spending a per-contact provider round-trip on it. Skipping these is
+          // what keeps a large address book from costing one query per contact
+          // on every sync.
+          if (thumbnail == null || thumbnail.isEmpty) {
+            avatarPaths[rawContact.id!] = null;
+            continue;
+          }
+
+          Uint8List avatarData = thumbnail;
           try {
             final contactWithPhoto = await fc.FlutterContacts.get(
               rawContact.id!,
-              properties: {fc.ContactProperty.photoFullRes, fc.ContactProperty.photoThumbnail},
+              properties: {fc.ContactProperty.photoFullRes},
             );
-            final avatarData = contactWithPhoto?.photo?.fullSize ?? contactWithPhoto?.photo?.thumbnail;
-
-            if (avatarData != null && avatarData.isNotEmpty) {
-              final savedPath = await _saveContactAvatar(rawContact.id!, avatarData);
-              // A null path means the disk write failed — leave the key unset so
-              // the existing avatarPath is preserved instead of being wiped.
-              if (savedPath != null) avatarPaths[rawContact.id!] = savedPath;
-            } else if (contactWithPhoto != null) {
-              // Fetch succeeded and the contact has no photo — record the removal explicitly.
-              avatarPaths[rawContact.id!] = null;
-            }
+            final fullSize = contactWithPhoto?.photo?.fullSize;
+            if (fullSize != null && fullSize.isNotEmpty) avatarData = fullSize;
           } catch (e) {
-            // Avatar fetch failed — leave the key unset so the existing avatarPath is kept.
+            // Full-res fetch failed — fall through and save the thumbnail we
+            // already have rather than losing the avatar entirely.
+          }
+
+          try {
+            final savedPath = await _saveContactAvatar(rawContact.id!, avatarData);
+            // A null path means the disk write failed — leave the key unset so
+            // the existing avatarPath is preserved instead of being wiped.
+            if (savedPath != null) avatarPaths[rawContact.id!] = savedPath;
+          } catch (e) {
+            // Avatar save failed — leave the key unset so the existing avatarPath is kept.
           }
         }
       }
@@ -466,6 +501,23 @@ class ContactV2Actions {
         }
       });
 
+      if (deviceContacts.isNotEmpty && matchedContactCount == 0) {
+        // Contacts were read but none of their addresses lined up with a handle.
+        // Break the fetch down by contacts-provider account so an exported log
+        // shows which accounts were actually read — the account the user expects
+        // their contacts to come from being absent here (or present with a
+        // surprising type) is the tell for an account-filter problem.
+        final byAccount = <String, int>{};
+        for (final contact in deviceContacts) {
+          for (final account in contact.metadata?.accounts ?? const <fc.Account>[]) {
+            final key = '${account.name} (${account.type})';
+            byAccount[key] = (byAccount[key] ?? 0) + 1;
+          }
+        }
+        Logger.warn('[ContactV2] Read ${deviceContacts.length} device contacts but matched none to a handle. '
+            'Contacts by account: ${byAccount.isEmpty ? 'none — local-only contacts' : byAccount}');
+      }
+
       final endTime = DateTime.now().millisecondsSinceEpoch;
       // De-duplicate — a handle can be marked affected by both a name/avatar
       // change and a handle-link change within the same sync.
@@ -477,6 +529,7 @@ class ContactV2Actions {
         affectedHandleIds: uniqueAffected,
         deviceContactCount: deviceContacts.length,
         matchedContactCount: matchedContactCount,
+        accountFilterFellBack: accountFilterFellBack,
       );
 
       // Complete the completer with the result
@@ -491,7 +544,12 @@ class ContactV2Actions {
           error: e, trace: stack);
 
       // Complete the completer with an empty result on error
-      const stats = _ContactSyncStats(affectedHandleIds: [], deviceContactCount: 0, matchedContactCount: 0);
+      final stats = _ContactSyncStats(
+        affectedHandleIds: const [],
+        deviceContactCount: 0,
+        matchedContactCount: 0,
+        accountFilterFellBack: accountFilterFellBack,
+      );
       _syncCompleter?.complete(stats);
       return stats;
     }
@@ -731,21 +789,53 @@ class ContactV2Actions {
     }
   }
 
-  /// Returns each on-device account with contacts, plus a live contact count
-  /// per account. Used by the Contacts Management page's account selector.
-  /// Mobile only — desktop has no device accounts.
+  /// Returns each on-device account that holds contacts, plus a live contact
+  /// count per account. Used by the Contacts Management page's account
+  /// selector. Mobile only — desktop has no device accounts.
+  ///
+  /// Accounts are derived from the contacts themselves (each contact carries
+  /// the Contacts Provider's own account tuples in `metadata.accounts`) rather
+  /// than from `FlutterContacts.accounts.getAll()`, which wraps Android's
+  /// `AccountManager`. Two reasons the AccountManager list was wrong:
+  ///
+  ///  1. Since Android 8, `AccountManager.getAccounts()` only returns accounts
+  ///     the caller has *visibility* of. An authenticator has to opt in to
+  ///     being visible to third-party apps; Google's does not. Whole accounts'
+  ///     worth of contacts were therefore missing from the selector while
+  ///     showing up fine in the system Contacts app.
+  ///  2. An AccountManager account's `(type, name)` is not necessarily the
+  ///     `(ACCOUNT_TYPE, ACCOUNT_NAME)` its contacts are stored under in the
+  ///     Contacts Provider — the sign-in account an app registers and the sync
+  ///     adapter account its contacts land in can differ while sharing a
+  ///     display name. The provider filter then matches zero rows, which is
+  ///     how an account could list "0 contacts" while actually holding all of
+  ///     them.
+  ///
+  /// Aggregating `metadata.accounts` avoids both: it yields exactly the
+  /// accounts that hold contacts, keyed identically to what the sync's account
+  /// filter queries against, in one provider sweep instead of 1 + N.
   static Future<List<Map<String, dynamic>>> getAccountContactCounts(dynamic data) async {
     if (kIsWeb || kIsDesktop) return [];
 
     try {
-      final accounts = await fc.FlutterContacts.accounts.getAll();
-      final results = <Map<String, dynamic>>[];
+      // No properties requested — IDs, display names and account metadata only.
+      final contacts = await fc.FlutterContacts.getAll();
+      final counts = <String, Map<String, dynamic>>{};
 
-      for (final account in accounts) {
-        final contacts = await fc.FlutterContacts.getAll(account: account);
-        results.add({'name': account.name, 'type': account.type, 'count': contacts.length});
+      for (final contact in contacts) {
+        for (final account in contact.metadata?.accounts ?? const <fc.Account>[]) {
+          // Local/device-only raw contacts have no account name or type. They're
+          // covered by the default "All Accounts" option and can't be expressed
+          // as a provider filter, so they get no row of their own.
+          if (account.name.isEmpty || account.type.isEmpty) continue;
+          final key = '${account.type}\u0000${account.name}';
+          final entry = counts.putIfAbsent(key, () => {'name': account.name, 'type': account.type, 'count': 0});
+          entry['count'] = (entry['count'] as int) + 1;
+        }
       }
 
+      final results = counts.values.toList()..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+      Logger.info('[ContactV2] Found ${results.length} contact accounts across ${contacts.length} device contacts');
       return results;
     } catch (e, stack) {
       Logger.error('[ContactV2] Error getting account contact counts', error: e, trace: stack);
@@ -763,15 +853,22 @@ class _ContactSyncStats {
   final int deviceContactCount;
   final int matchedContactCount;
 
+  /// True when the saved account filter matched zero contacts and the sync
+  /// fell back to an unfiltered fetch — the signal the UI uses to clear the
+  /// stale selection.
+  final bool accountFilterFellBack;
+
   const _ContactSyncStats({
     required this.affectedHandleIds,
     required this.deviceContactCount,
     required this.matchedContactCount,
+    this.accountFilterFellBack = false,
   });
 
   Map<String, dynamic> toMap() => {
         'affectedHandleIds': affectedHandleIds,
         'deviceContactCount': deviceContactCount,
         'matchedContactCount': matchedContactCount,
+        'accountFilterFellBack': accountFilterFellBack,
       };
 }
