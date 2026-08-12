@@ -11,6 +11,9 @@ import 'package:uuid/uuid.dart';
 
 /// A base isolate manager for handling background tasks
 /// This class can be extended to create specialized isolates with different entry points
+/// Marker key for the "services initialised" message sent by the spawned isolate.
+const String _isolateReadyKey = '__isolateReady__';
+
 class GlobalIsolate {
   Isolate? _isolate;
   ReceivePort? _receivePort;
@@ -28,6 +31,16 @@ class GlobalIsolate {
 
   /// Completer resolved when the spawned isolate sends back its SendPort.
   Completer<void>? _sendPortCompleter;
+
+  /// Completer resolved when the spawned isolate finishes initialising its services.
+  ///
+  /// The isolate sends its SendPort *before* running init, so between the handshake
+  /// and this completer the isolate looks idle to us while it still has plugin calls
+  /// in flight on its background messenger (path_provider, package_info_plus,
+  /// flutter_contacts). Killing it in that window is fatal to the whole process: the
+  /// plugin reply lands on a dead port and the engine aborts with
+  /// "platform_message_response_dart_port.cc(53) Check failed: did_send".
+  Completer<void>? _initCompleter;
   final List<Future<void> Function()> _onStartedCallbacks = [];
 
   /// Timer for tracking isolate inactivity
@@ -98,8 +111,9 @@ class GlobalIsolate {
     // Clear any stale SendPort left over from a previous failed/timed-out attempt so
     // that _waitForSendPort does not complete prematurely on a dead port.
     _sendPort = null;
-    // Fresh completer for this startup attempt.
+    // Fresh completers for this startup attempt.
     _sendPortCompleter = Completer<void>();
+    _initCompleter = Completer<void>();
 
     _isStarting = true;
     // Only clear the shutdown flag if we're not in the middle of a requested drain —
@@ -231,6 +245,10 @@ class GlobalIsolate {
     _pendingRequests.clear();
     _shutdownPending = false;
 
+    // Unblock anything waiting on init — the isolate is gone, it will never signal.
+    if (_initCompleter != null && !_initCompleter!.isCompleted) _initCompleter!.complete();
+    _initCompleter = null;
+
     // Resolve any awaiter of drainAndStop() so they aren't left hanging.
     final drainCompleter = _drainCompleter;
     _drainCompleter = null;
@@ -269,9 +287,9 @@ class GlobalIsolate {
     _drainCompleter = Completer<void>();
 
     if (_pendingRequests.isEmpty) {
-      Logger.info('$isolateDebugName draining complete (0 pending). Stopping now.');
-      stop(); // clears _drainCompleter and completes it
-      return Future.value();
+      Logger.info('$isolateDebugName draining complete (0 pending). Stopping once initialised.');
+      unawaited(_stopWhenInitialised()); // clears _drainCompleter and completes it
+      return _drainCompleter!.future;
     }
 
     Logger.info(
@@ -397,6 +415,14 @@ class GlobalIsolate {
     }
 
     if (message is Map<String, dynamic>) {
+      if (message.containsKey(_isolateReadyKey)) {
+        Logger.debug('$isolateDebugName finished initialising services');
+        if (_initCompleter != null && !_initCompleter!.isCompleted) {
+          _initCompleter!.complete();
+        }
+        return;
+      }
+
       // Check if this is an event message
       if (message.containsKey('event')) {
         try {
@@ -456,6 +482,32 @@ class GlobalIsolate {
     }
   }
 
+  /// Waits for service init to finish before stopping, so we never kill an isolate
+  /// that still has plugin replies in flight. Bails out if the drain was cancelled or
+  /// new work arrived while we waited.
+  Future<void> _stopWhenInitialised() async {
+    await _awaitInit();
+    if (_drainCompleter == null) return; // drain was cancelled — isolate stays alive
+    if (_pendingRequests.isNotEmpty) return; // work arrived; _maybeStopAfterDrain takes over
+    stop();
+  }
+
+  /// Resolves once the isolate has signalled that init finished. Capped at
+  /// [startupTimeout] so a hung init can't leak the isolate forever — init normally
+  /// takes well under a second, so the cap should never be hit in practice.
+  Future<void> _awaitInit() async {
+    final completer = _initCompleter;
+    if (completer == null || completer.isCompleted) return;
+    try {
+      await completer.future.timeout(startupTimeout);
+    } catch (_) {
+      Logger.warn(
+        '$isolateDebugName did not signal ready within ${startupTimeout.inSeconds}s — '
+        'stopping anyway, which risks a platform reply-port abort.',
+      );
+    }
+  }
+
   void _maybeStopAfterDrain() {
     if (!_shutdownPending) return;
     if (_pendingRequests.isNotEmpty) return;
@@ -469,11 +521,19 @@ class GlobalIsolate {
     if (idleTimeout == null) return;
 
     _idleTimer?.cancel();
-    _idleTimer = Timer(idleTimeout!, () {
+    _idleTimer = Timer(idleTimeout!, () async {
       if (!_isRunning) return;
 
       // Never stop while work is in flight. Re-schedule from "now" and check again.
       if (_pendingRequests.isNotEmpty) {
+        _scheduleIdleShutdown();
+        return;
+      }
+
+      // Nor while services are still initialising — the isolate looks idle here but
+      // has plugin calls in flight, and killing it aborts the process.
+      await _awaitInit();
+      if (!_isRunning || _pendingRequests.isNotEmpty) {
         _scheduleIdleShutdown();
         return;
       }
@@ -518,6 +578,10 @@ class GlobalIsolate {
       }
     }
     _pendingRequests.clear();
+
+    // Unblock anything waiting on init — the isolate is dead, it will never signal.
+    if (_initCompleter != null && !_initCompleter!.isCompleted) _initCompleter!.complete();
+    _initCompleter = null;
 
     _isolate = null;
     _sendPort = null;
@@ -581,6 +645,10 @@ class GlobalIsolate {
     sendPort.send(receivePort.sendPort);
 
     await initServices(rootIsolateToken);
+
+    // Tell the manager init is done and no plugin calls are left in flight, so it is
+    // now safe to kill this isolate. See [_initCompleter].
+    sendPort.send(const {_isolateReadyKey: true});
 
     receivePort.listen((message) async {
       if (message is! Map<String, dynamic>) return;
