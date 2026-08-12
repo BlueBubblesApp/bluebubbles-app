@@ -204,6 +204,11 @@ class SocketService {
           (data) => MessageHandlerSvc.handleEvent("chat-read-status-changed", data, 'DartSocket')),
       s.on("imessage-aliases-removed",
           (data) => MessageHandlerSvc.handleEvent("imessage-aliases-removed", data, 'DartSocket')),
+      // Live Find My updates. Re-broadcast through the event dispatcher rather than
+      // letting the Find My controller hook the raw socket: the socket object is
+      // replaced on every restart, so a listener attached directly to it silently
+      // stops firing the first time the connection is cycled.
+      s.on("new-findmy-location", (data) => EventDispatcherSvc.emit('new-findmy-location', data)),
     ]);
 
     // Re-arm connectivity monitoring — closeSocket()/disconnect() tear it down, and
@@ -409,6 +414,7 @@ class SocketService {
         return;
       }
 
+      bool restartFailed = false;
       _isScheduledRestartInProgress = true;
       try {
         Logger.info("Attempting to fetch new URL and restart socket...");
@@ -429,8 +435,19 @@ class SocketService {
         }
 
         restartSocket();
+      } catch (e, stack) {
+        Logger.error("Scheduled socket restart failed", error: e, trace: stack, tag: "SocketService");
+        restartFailed = true;
       } finally {
         _isScheduledRestartInProgress = false;
+      }
+
+      // This timer is the only thing that revives the connection once socket.io
+      // has exhausted its own attempts. If the restart threw there is no socket
+      // left to emit reconnect_failed, so re-arm the loop by hand — otherwise a
+      // single failure leaves the app offline until it's reopened.
+      if (restartFailed && connectionDesired && state.value != SocketState.connected) {
+        _handleReconnectFailed(null);
       }
     });
   }
