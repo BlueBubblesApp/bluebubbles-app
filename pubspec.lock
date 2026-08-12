@@ -880,10 +880,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_contacts
-      sha256: be8e6de65fa7ae4332c812bcd4e8b90c0d74093fbda972ce3ca2f9f34f65e93c
+      sha256: "3a018a04ffc88f8555068f86b7750c7cbc758e9ebccafa985f91353bcb6df496"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "2.3.1"
   flutter_displaymode:
     dependency: "direct main"
     description:
@@ -3457,4 +3457,4 @@ packages:
     version: "3.1.3"
 sdks:
   dart: ">=3.12.2 <4.0.0"
-  flutter: ">=3.41.0"
+  flutter: ">=3.44.0"
