@@ -63,13 +63,8 @@ dependencies:
   exif: ^3.3.0
   faker: ^2.2.0
   ffmpeg_kit_flutter_new_min: ^3.6.2
-  flutter_contacts: ^2.3.1  # mobile only. Must be >=2.3.0:
-  # Earlier versions filter getAll() on IN_VISIBLE_GROUP = 1,
-  # which drops contacts stored in accounts that don't mark
-  # their groups visible (e.g. Exchange/MS365)
-  # 2.3.0 queries the provider's default directory instead,
-  # matching what the system Contacts app shows.
-  # See: https://github.com/QuisApp/flutter_contacts/issues/240
+  # Must be >=2.3.0: https://github.com/QuisApp/flutter_contacts/issues/240
+  flutter_contacts: ^2.3.1  # mobile only.
   file_picker: ^11.0.2
   floating_animation: ^1.1.0
   firebase_dart:
