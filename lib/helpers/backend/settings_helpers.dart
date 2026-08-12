@@ -22,10 +22,16 @@ Future<bool> saveNewServerUrl(String newServerUrl,
     //
     // Only on a real change, though. `force` means "run the side effects even if
     // the address is identical" (re-persisting guidAuthKey, cycling the socket),
-    // and an unchanged address means a still-valid override — dropping it there
-    // would silently move the app off localhost onto the remote URL until the
-    // next resume re-probes. SocketService's URL rediscovery calls this on a
-    // timer while the connection is failing, so that would happen routinely.
+    // and an unchanged address means the override is probably still valid —
+    // dropping it here would silently move the app off localhost onto the remote
+    // URL. SocketService's URL rediscovery calls this on a timer while the
+    // connection is failing, so that would happen routinely.
+    //
+    // A stale override still has to be caught somewhere, and this is the wrong
+    // place for it: blanket-clearing can't tell "wrong network" from "unchanged
+    // address". That case belongs to _runUrlDiscovery(), which re-probes via
+    // NetworkTasks.detectLocalhost() when the address hasn't moved and an override
+    // is set — and falls back to the remote URL when the probe fails.
     if (addressChanged) {
       NetworkTasks.setOriginOverride(null);
     }

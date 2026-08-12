@@ -68,8 +68,26 @@ class SocketService {
   /// each check is a Firebase auth + read, so this backs off hard.
   static const Duration _urlDiscoveryMaxDelay = Duration(minutes: 15);
 
+  /// Ceiling on a single discovery round.
+  ///
+  /// Neither leg of the fetch has a timeout of its own — on desktop it awaits a
+  /// Firebase RTDB stream (`ref.onValue.first`), on Android two method-channel
+  /// round trips. Without this a hung read leaves [_urlDiscoveryInProgress] set
+  /// for the rest of the process, which silently disables rediscovery — and
+  /// rediscovery is the only recovery from [_socketGaveUp].
+  static const Duration _urlDiscoveryTimeout = Duration(seconds: 60);
+
   /// Collapse window for repeated identical error logs.
   static const Duration _errorLogThrottle = Duration(minutes: 1);
+
+  /// Upper bound on tracked error signatures. Signatures embed OS error codes and
+  /// messages, so a flapping network can mint new ones indefinitely.
+  static const int _maxTrackedErrorSignatures = 32;
+
+  /// Collapse window for connectivity-triggered reconnects. One network
+  /// transition emits several events (`[none]`, then `[wifi]`), and each rebuild
+  /// is expensive, so only the last event in a burst is acted on.
+  static const Duration _connectivityReconnectDebounce = Duration(seconds: 3);
 
   /// `SocketException.address` is null for DNS failures — the hostname only ever
   /// appears inside the message, e.g.
@@ -103,10 +121,17 @@ class SocketService {
   /// must not silently bring the connection back up, so every path that can start
   /// a socket checks this — including after its own awaits.
   ///
-  /// Only those two methods may change it: the flag is what makes an intentional
-  /// background disconnect stick, so it must not be settable from elsewhere.
+  /// Route writes through [_setConnectionDesired] rather than assigning directly:
+  /// this flag is what makes an intentional background disconnect stick, and a
+  /// stray write is close to impossible to diagnose without the transition log.
   bool _connectionDesired = true;
   bool get connectionDesired => _connectionDesired;
+
+  void _setConnectionDesired(bool value) {
+    if (_connectionDesired == value) return;
+    _connectionDesired = value;
+    Logger.debug(tag: _tag, "Connection is now ${value ? "wanted" : "unwanted"}");
+  }
 
   // ── URL rediscovery state ──────────────────────────────────────────────────
 
@@ -116,13 +141,20 @@ class SocketService {
 
   // ── Error log throttling state ─────────────────────────────────────────────
 
-  DateTime? _lastErrorLogAt;
-  String? _lastErrorSignature;
-  int _suppressedErrorCount = 0;
+  /// Throttle bookkeeping per error signature, ordered least-recently-logged
+  /// first so [_pruneErrorLog] can evict from the front.
+  ///
+  /// Deliberately not a single "last signature" pair: socket.io emits more than
+  /// one error per failed attempt, and when the payloads differ (a `SocketException`
+  /// from the engine, the bare String `'timeout'` from `Manager.open`, the
+  /// synthetic message from the Windows connectivity probe) a single-slot throttle
+  /// alternates and suppresses nothing at all.
+  final Map<String, _ErrorLogState> _errorLog = {};
 
   InternetConnection? internetConnection;
   StreamSubscription<InternetStatus>? internetConnectionListener;
   StreamSubscription? _connectivitySubscription;
+  Timer? _connectivityReconnectTimer;
 
   String get serverAddress => HttpSvc.origin;
   String get password => SettingsSvc.settings.guidAuthKey.value;
@@ -146,8 +178,42 @@ class SocketService {
         Logger.info("Detected switch off wifi, removing localhost address...");
         NetworkTasks.setOriginOverride(null);
       }
+
+      if (event.any((result) => result != ConnectivityResult.none)) {
+        _scheduleConnectivityReconnect();
+      }
     });
   }
+
+  /// Cuts short socket.io's backoff wait when the network comes back.
+  ///
+  /// A network change is the only cheap signal that a retry might now succeed, and
+  /// with the backoff ceiling at [_reconnectDelayMax] the next scheduled attempt
+  /// can be a minute out. `Socket.connect()` can't shorten that — it no-ops while
+  /// `Manager.reconnecting` is set — so the connection has to be rebuilt.
+  ///
+  /// Windows is excluded along with the rest of this subscription; there the
+  /// `InternetConnection` probe in [startSocket] is the better signal, since it
+  /// checks the server itself rather than the interface.
+  void _scheduleConnectivityReconnect() {
+    if (!_shouldReconnectOnNetworkChange) return;
+    _connectivityReconnectTimer?.cancel();
+    _connectivityReconnectTimer = Timer(_connectivityReconnectDebounce, () {
+      _connectivityReconnectTimer = null;
+      if (!_shouldReconnectOnNetworkChange) return;
+      Logger.info(tag: _tag, "Network changed while disconnected — rebuilding socket");
+      restartSocket();
+    });
+  }
+
+  /// Only worth rebuilding from the states that are *waiting* on socket.io's backoff.
+  ///
+  /// `connecting`/`reconnecting` mean an attempt is already in flight, and there is no
+  /// delay to cut short — tearing those down would throw away a handshake that may
+  /// well be about to succeed. A doomed in-flight attempt needs no help either: it
+  /// fails into `error`, and socket.io's next attempt re-resolves DNS on its own.
+  bool get _shouldReconnectOnNetworkChange =>
+      connectionDesired && (state.value == SocketState.error || state.value == SocketState.disconnected);
 
   // ── Connection lifecycle ───────────────────────────────────────────────────
 
@@ -169,18 +235,14 @@ class SocketService {
 
     // Validate server address before attempting to connect
     if (isNullOrEmpty(serverAddress)) {
-      Logger.warn("Cannot start socket: server address is empty");
-      lastError.value = "Server address not configured";
-      state.value = SocketState.error;
+      _failToStart("Server address not configured");
       return;
     }
 
     // Validate that server address is a valid URL
     Uri? uri = Uri.tryParse(serverAddress);
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
-      Logger.error("Invalid server address: $serverAddress");
-      lastError.value = "Invalid server URL format";
-      state.value = SocketState.error;
+      _failToStart("Invalid server URL format: $serverAddress");
       return;
     }
 
@@ -267,6 +329,10 @@ class SocketService {
     // restart, silently stranding the localhost origin override on a cellular switch.
     _startConnectivitySubscription();
 
+    // Report the attempt before making it. closeSocket() leaves the state at
+    // `disconnected`, so without this a deliberate rebuild reads as "offline"
+    // rather than "connecting" for the whole handshake.
+    handleStatusUpdate(SocketState.connecting, null);
     s.connect();
 
     if (kIsDesktop && Platform.isWindows) {
@@ -317,9 +383,14 @@ class SocketService {
   /// service when the app is backgrounded. Nothing brings it back until
   /// [resumeConnection] (or an explicit user action) flips [connectionDesired].
   void disconnect() {
-    _connectionDesired = false;
+    _setConnectionDesired(false);
     _cancelUrlDiscovery();
-    if (isNullOrEmpty(serverAddress)) return;
+    // No isNullOrEmpty(serverAddress) guard: every call below is null-safe, and
+    // bailing early here used to leave a live, listening socket behind while
+    // connectionDesired said the connection was down — a state nothing recovers
+    // from, since every restart path now refuses to run.
+    _connectivityReconnectTimer?.cancel();
+    _connectivityReconnectTimer = null;
     socket?.disconnect();
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
@@ -328,8 +399,13 @@ class SocketService {
 
   /// Marks the connection as wanted again and clears the rediscovery backoff, so a
   /// returning user isn't left waiting out a long timer. Called on app resume.
+  ///
+  /// Deliberately does not clear [_urlDiscoveryInProgress]: that flag belongs to an
+  /// in-flight future which clears it in its own `finally`, and [_urlDiscoveryTimeout]
+  /// bounds how long that can take. Clearing it here would let a second discovery
+  /// run start alongside the first and race it to `restartSocket()`.
   void resumeConnection() {
-    _connectionDesired = true;
+    _setConnectionDesired(true);
     _cancelUrlDiscovery();
   }
 
@@ -340,7 +416,12 @@ class SocketService {
   /// should be running.
   void closeSocket() {
     _cancelUrlDiscovery();
-    if (isNullOrEmpty(serverAddress)) return;
+    // No isNullOrEmpty(serverAddress) guard — see [disconnect]. The guard used to
+    // sit above this teardown, so restartSocket() with an unresolvable origin left
+    // the old socket connected and listening while startSocket() bailed out on
+    // validation, contradicting this method's entire contract.
+    _connectivityReconnectTimer?.cancel();
+    _connectivityReconnectTimer = null;
     internetConnectionListener?.cancel();
     internetConnectionListener = null;
     _connectivitySubscription?.cancel();
@@ -395,6 +476,10 @@ class SocketService {
   /// run completes.
   void _noteConnectionFailure() {
     if (!connectionDesired) return;
+    // fetchNewUrl() returns immediately without finishedSetup, so there is nothing
+    // to discover — and arming anyway would log a failure per cycle throughout
+    // first-run setup, when having no server address yet is the expected state.
+    if (!SettingsSvc.settings.finishedSetup.value) return;
     if (_urlDiscoveryTimer != null || _urlDiscoveryInProgress) return;
     _scheduleUrlDiscovery();
   }
@@ -422,12 +507,18 @@ class SocketService {
     // connectionDesired before acting on the result.
   }
 
-  /// Asks Firebase for the current server URL and rebuilds the socket if the
-  /// address moved, or if socket.io is no longer retrying on its own.
+  /// Asks Firebase for the current server URL and rebuilds the socket if what we
+  /// dial has changed, or if socket.io is no longer retrying on its own.
   ///
   /// A Manager's URI and auth options are fixed at construction, so a new address
   /// cannot be picked up without a rebuild. Otherwise the existing reconnect loop
   /// is already doing the right thing and is left alone.
+  ///
+  /// The rebuild deliberately happens *after* the `finally` rather than inside the
+  /// `try`: [startSocket] can fail synchronously (an unusable address), and its
+  /// attempt to re-arm this loop is dropped on the floor while
+  /// [_urlDiscoveryInProgress] is still set — which left the app permanently
+  /// offline with no socket, no retry loop and no pending timer.
   Future<void> _runUrlDiscovery() async {
     _urlDiscoveryTimer = null;
 
@@ -438,6 +529,7 @@ class SocketService {
       return;
     }
 
+    bool rebuild = false;
     _urlDiscoveryInProgress = true;
     try {
       final String previousOrigin = serverAddress;
@@ -446,7 +538,7 @@ class SocketService {
       // fetchNewUrl() persists whatever it finds via saveNewServerUrl(force: true).
       // restartSocket: false stops that from cycling the connection as a side
       // effect, keeping the decision to restart here, next to the comparison.
-      await fdb.fetchNewUrl(restartSocket: false);
+      await fdb.fetchNewUrl(restartSocket: false).timeout(_urlDiscoveryTimeout);
 
       // The fetch is a network round trip; the app can be backgrounded during it.
       if (!connectionDesired) {
@@ -455,31 +547,45 @@ class SocketService {
       }
 
       // Compare the resolved origin rather than the returned string — that is what
-      // the socket actually dials, so it also catches saveNewServerUrl dropping a
-      // localhost override that belonged to the old address.
+      // the socket actually dials.
       if (serverAddress != previousOrigin) {
         Logger.info(tag: _tag, "Server URL changed from $previousOrigin to $serverAddress — rebuilding socket");
-        restartSocket();
-        return;
-      }
-
-      // Same address, but socket.io has stopped retrying it — a rebuild is the
-      // only thing that will bring the connection back.
-      if (_socketGaveUp) {
+        rebuild = true;
+      } else if (_socketGaveUp) {
+        // Same address, but socket.io has stopped retrying it — a rebuild is the
+        // only thing that will bring the connection back.
         Logger.info(tag: _tag, "Server URL unchanged but socket.io is no longer retrying — rebuilding socket");
-        restartSocket();
-        return;
+        rebuild = true;
+      } else if (HttpSvc.originOverride != null) {
+        // The remote address didn't move, but we're dialing a LAN override that was
+        // resolved against a network we may have since left — and a wifi-to-wifi
+        // change never fires the connectivity listener that would drop it. Re-probe
+        // instead of trusting it indefinitely. detectLocalhost() clears the override
+        // before probing, so a failed probe falls back to the remote URL rather than
+        // leaving us pinned to a dead local address.
+        Logger.info(tag: _tag, "Server URL unchanged — re-probing the local address override");
+        await NetworkTasks.detectLocalhost().timeout(_urlDiscoveryTimeout);
+        if (!connectionDesired) return;
+        if (serverAddress != previousOrigin) {
+          Logger.info(tag: _tag, "Local address changed from $previousOrigin to $serverAddress — rebuilding socket");
+          rebuild = true;
+        }
+      } else {
+        Logger.debug(tag: _tag, "Server URL unchanged — leaving socket.io to keep retrying");
       }
-
-      Logger.debug(tag: _tag, "Server URL unchanged — leaving socket.io to keep retrying");
     } catch (e, stack) {
       Logger.warn("Failed to check for a new server URL", error: e, trace: stack, tag: _tag);
     } finally {
       _urlDiscoveryInProgress = false;
     }
 
-    // Still failing on the same address — check again later, backing off.
-    if (connectionDesired && state.value != SocketState.connected) {
+    if (!connectionDesired) return;
+    if (rebuild) restartSocket();
+
+    // Still failing — check again later, backing off. Skipped when the rebuild's
+    // own failure path already armed the timer, so the backoff advances once per
+    // round rather than twice.
+    if (state.value != SocketState.connected && _urlDiscoveryTimer == null) {
       _scheduleUrlDiscovery();
     }
   }
@@ -517,7 +623,7 @@ class SocketService {
         if (stateChanged) {
           state.value = SocketState.connected;
           _cancelUrlDiscovery();
-          _resetErrorLogThrottle();
+          _resetErrorLog();
           NetworkTasks.onConnect();
           Logger.info("Socket connected successfully to $serverAddress");
         }
@@ -604,32 +710,55 @@ class SocketService {
   /// produce a steady stream of identical lines for as long as it stays down.
   void _logSocketError({required String signature, required String message, Object? error}) {
     final DateTime now = DateTime.now();
-    final bool isSameError = signature == _lastErrorSignature;
-    final bool isWithinThrottle = _lastErrorLogAt != null && now.difference(_lastErrorLogAt!) < _errorLogThrottle;
+    // Removed rather than read so the re-insert below moves this signature to the
+    // back, leaving iteration order least-recently-seen first for _pruneErrorLog().
+    final _ErrorLogState? previous = _errorLog.remove(signature);
 
-    if (isSameError && isWithinThrottle) {
-      _suppressedErrorCount++;
+    if (previous != null && now.difference(previous.lastLoggedAt) < _errorLogThrottle) {
+      previous.suppressed++;
+      _errorLog[signature] = previous;
       return;
     }
 
     String summary = '';
-    if (isSameError && _suppressedErrorCount > 0) {
+    if (previous != null && previous.suppressed > 0) {
       // Report the window actually covered, not the throttle duration: the next log
       // only happens once an error arrives after the throttle expires, which can be
       // much later, and printing the throttle made a slow trickle look like a burst.
-      final int elapsed = now.difference(_lastErrorLogAt!).inSeconds;
-      summary = ' (suppressed $_suppressedErrorCount similar errors over the last ${elapsed}s)';
+      final int elapsed = now.difference(previous.lastLoggedAt).inSeconds;
+      summary = ' (suppressed ${previous.suppressed} similar errors over the last ${elapsed}s)';
     }
 
     Logger.error("$message$summary", error: error, tag: _tag);
-    _suppressedErrorCount = 0;
-    _lastErrorSignature = signature;
-    _lastErrorLogAt = now;
+    _errorLog[signature] = _ErrorLogState(now);
+    _pruneErrorLog();
   }
 
-  void _resetErrorLogThrottle() {
-    _suppressedErrorCount = 0;
-    _lastErrorLogAt = null;
-    _lastErrorSignature = null;
+  void _pruneErrorLog() {
+    while (_errorLog.length > _maxTrackedErrorSignatures) {
+      _errorLog.remove(_errorLog.keys.first);
+    }
   }
+
+  void _resetErrorLog() => _errorLog.clear();
+
+  /// Reports a socket that could not even be constructed.
+  ///
+  /// Goes through the same throttle as connection errors — this path repeats on the
+  /// rediscovery schedule — and arms rediscovery, since an unusable address is
+  /// exactly the case where asking Firebase for a new one is the only way out.
+  void _failToStart(String reason) {
+    lastError.value = reason;
+    state.value = SocketState.error;
+    _logSocketError(signature: 'start|$reason', message: "Cannot start socket: $reason");
+    _noteConnectionFailure();
+  }
+}
+
+/// Throttle bookkeeping for one error signature. See [SocketService._errorLog].
+class _ErrorLogState {
+  _ErrorLogState(this.lastLoggedAt);
+
+  DateTime lastLoggedAt;
+  int suppressed = 0;
 }
