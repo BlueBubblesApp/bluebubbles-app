@@ -157,7 +157,11 @@ class ActionHandler extends GetxService {
         final chat = ChatsSvc.findChatByGuid(data["guid"]);
         if (chat != null) {
           final controller = cvc(chat);
-          controller.showTypingIndicator.value = data["display"];
+          // Gated: the typing indicator row sits between the message list and
+          // the text field, so toggling it mid-send moves the target
+          // SendAnimation is flying toward. Runs inline when no send is in
+          // flight, which is the overwhelmingly common case.
+          controller.messageListGate.run(() => controller.showTypingIndicator.value = data["display"]);
         }
         return;
       case "incoming-facetime":

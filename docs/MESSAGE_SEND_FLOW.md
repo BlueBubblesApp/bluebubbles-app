@@ -78,7 +78,9 @@ The tempGuid format is always `temp-` followed by 8 random alphanumeric characte
 
 Queue item types are explicit and compile-time safe: `OutgoingMessage` (plain text), `OutgoingReaction` (tapbacks, with required `selectedMessage` + `reaction`), `OutgoingAttachment` (file/audio, with required `attachment` + `isAudioMessage`), `OutgoingMultipartMessage` (attributed/mention text).
 
-**Key file:** `lib/app/layouts/conversation_view/widgets/message/send_animation.dart`
+Immediately before the text/multipart item is queued, `send()` also closes `ConversationViewController.messageListGate` and holds it until the animated bubble is torn down (~650ms later). This keeps incoming messages, and the typing indicator, from mutating the message list while the bubble is flying toward a target derived from the current layout. The gate never delays the send — the outgoing message queued on the very next line bypasses it. See **Step 8b** of `docs/MESSAGE_RECEIVE_FLOW.md` for the full semantics.
+
+**Key files:** `lib/app/layouts/conversation_view/widgets/message/send_animation.dart`, `lib/services/ui/chat/message_list_gate.dart`
 
 ---
 

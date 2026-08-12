@@ -194,9 +194,33 @@ When a `ChatState` does exist:
 5. **If `oldGuid != null`** (tempGuid → realGuid swap): removes `messageStates[oldGuid]` and inserts `messageStates[realGuid]` pointing to the same state object
 6. Sets `messageUpdateTrigger[realGuid]` to the current timestamp — widgets that observe the trigger rather than individual fields are notified to rebuild
 
-**`MessagesSvc(chatGuid).addNewMessage(Message message)`** is the counterpart used for genuinely new messages (see Step 4's `_dispatchNewMessage` three-way branch) — it's a no-op if the GUID is already known to the struct.
+**`MessagesSvc(chatGuid).addNewMessage(Message message)`** is the counterpart used for genuinely new messages (see Step 4's `_dispatchNewMessage` three-way branch) — it's a no-op if the GUID is already known to the struct. It funnels into `_handleNewMessage()`, which updates the struct and `MessageState` map and then calls `newFunc` — the callback `MessagesView` registered as `handleNewMessage` (see Step 8b).
 
 **Key file:** `lib/services/ui/message/messages_service.dart`
+
+---
+
+### Step 8b — Message List Gate (`message_list_gate.dart`)
+
+`MessagesView.handleNewMessage` does not insert into the list directly. It submits the insertion to `ConversationViewController.messageListGate`, a per-conversation FIFO gate that `SendAnimation` holds while its bubble is in flight.
+
+The send animation flies a bubble from the text field to the bottom of the message list, and computes its landing target (`_animationBottomOffset`) from the live layout of everything below the list — text field, typing indicator row, smart reply row. A message landing mid-flight inserts into the `SliverAnimatedList`, can trigger smart reply generation, and can shift the typing indicator; each of those moves the target while `AnimatedPositioned` is still animating toward the old one, so the bubble lands short and snaps.
+
+**Gate semantics:**
+
+- **Open (the normal case):** work runs inline, synchronously — identical to not having a gate.
+- **Held:** work is queued and replayed in submission order the instant the gate opens. Nothing ever blocks or awaits on it; it cannot delay a send.
+- **Held by:** `SendAnimation.send()`, from just before the outgoing text message is queued until the animated bubble is torn down (~650ms: 450ms flight + 200ms hold). Also released by `SendAnimation.dispose()`, and by a watchdog timer if a release is ever lost.
+
+**Bypasses the gate:**
+
+- **Messages this device is sending** (`Message.isSending` — outgoing with a `temp-` GUID). The animation lands *on* the real bubble, so it must already be in the list when the flight ends, and a second send fired mid-animation must never be deferred. Insertion is order-independent — `_applyNewMessage` re-sorts `_messages` and derives `insertIndex` from the sorted position — so a bypassing insert and a deferred one produce the same final list regardless of arrival order.
+- **`handleUpdatedMessage`** — changes a list entry in place without changing list structure, and deferring it would delay the tempGuid → realGuid swap that ends the sending state.
+- **`handleDeletedMessage`** — deliberately ungated. `retryFailedMessage` calls `removeFunc` immediately followed by `newFunc` on the same message, which by then carries a temp GUID and bypasses; deferring only the removal would invert that pair and drop the retried message from the list.
+
+Also gated: the `typing-indicator` socket event in `action_handler.dart`, since that row sits between the list and the text field and feeds the same offset calculation.
+
+**Key files:** `lib/services/ui/chat/message_list_gate.dart`, `lib/app/layouts/conversation_view/pages/messages_view.dart`, `lib/app/layouts/conversation_view/widgets/message/send_animation.dart`
 
 ---
 
@@ -225,5 +249,7 @@ Because each field is its own observable, `Obx()` rebuilds only the widget that 
 | Isolate actions | `lib/services/backend/actions/chat_actions.dart` | `addMessageToChat()` (runs in isolate) |
 | Chat state update | `lib/services/ui/chat/chats_service.dart` | `updateChat()`, `addChat()`, `updateChatLatestMessage()` |
 | Message state update | `lib/services/ui/message/messages_service.dart` | `updateMessage()`, `addNewMessage()` |
+| Message list gate | `lib/services/ui/chat/message_list_gate.dart` | `hold()`, `run()`, `release()` |
+| List insertion | `lib/app/layouts/conversation_view/pages/messages_view.dart` | `handleNewMessage()` → `_applyNewMessage()` |
 | Reactive state | `lib/app/state/chat_state.dart` | `updateFromChat()`, `update*Internal()` |
 | Reactive state | `lib/app/state/message_state.dart` | `updateFromMessage()`, `update*Internal()` |

@@ -139,6 +139,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   /// Future that resolves once [MessagesView] has fully initialized.
   Future<void> get messagesViewReady => _messagesViewReady.future;
 
+  /// Coordinates message list mutations against the in-flight send animation.
+  ///
+  /// [SendAnimation] holds this for the duration of its flight so that a
+  /// message arriving at the same moment can't insert into the list (or toggle
+  /// the smart reply / typing indicator rows) and move the animation's landing
+  /// target out from under it. Held work replays as soon as the gate opens.
+  /// The send itself is never gated — see [MessageListGate].
+  final MessageListGate messageListGate = MessageListGate();
+
   @override
   void onInit() {
     super.onInit();
@@ -189,6 +198,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   @override
   void onClose() {
+    messageListGate.dispose();
     updateSmartReplyLayout(visible: false, height: 0);
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();

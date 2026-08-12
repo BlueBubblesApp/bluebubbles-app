@@ -123,6 +123,15 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     }
   }
 
+  @override
+  void dispose() {
+    // The widget can be torn down mid-flight (user leaves the chat while the
+    // bubble is travelling), in which case onEnd never runs. Open the gate here
+    // so anything deferred behind this send still reaches the list.
+    controller.messageListGate.release();
+    super.dispose();
+  }
+
   Future<void> send(SendData data) async {
     // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(data.attachments);
@@ -258,6 +267,17 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
             ),
         ],
       );
+      // Close the message list gate before the outgoing message is queued, so
+      // that a message arriving during the flight can't insert into the list or
+      // toggle the rows below it and move the landing target computed by
+      // _animationBottomOffset. Nothing waits on this — deferred work replays
+      // as soon as the bubble is torn down below (or on dispose, or via the
+      // gate's watchdog if this frame's onEnd never fires).
+      //
+      // The outgoing message this animation lands on is queued *after* the hold
+      // but bypasses the gate in MessagesView.handleNewMessage, so the send is
+      // never delayed by its own hold.
+      controller.messageListGate.hold();
       OutgoingMsgHandler.queue(
         (_message.attributedBody.isNotEmpty)
             ? OutgoingMultipartMessage(
@@ -298,11 +318,17 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       onEnd: () async {
         if (message != null) {
           await Future.delayed(const Duration(milliseconds: 200));
+          // If we were disposed during the delay, dispose() has already opened
+          // the gate — bail before touching state.
+          if (!mounted) return;
           setState(() {
             tween = Tween<double>(begin: 1, end: 0);
             control = Control.stop;
             message = null;
           });
+          // Released only once the animated bubble is gone, not when it lands,
+          // so nothing shifts underneath it while it is still overlaid.
+          controller.messageListGate.release();
         }
       },
       child: Visibility(
