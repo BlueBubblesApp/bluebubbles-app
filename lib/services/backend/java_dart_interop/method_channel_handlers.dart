@@ -82,11 +82,18 @@ class MethodChannelHandlers {
     }
 
     try {
+      // Only drop the push copy when the UI is genuinely in the foreground with a
+      // live socket, i.e. when the socket really is going to deliver this message.
+      // `isAlive` is not good enough here: it also returns true whenever the
+      // process-global `bg_isolate` marker is registered, which outlives the app
+      // being backgrounded if Android never delivers `paused`. Dropping on a stale
+      // marker means neither transport delivers the message and the user simply
+      // never sees the notification.
       if (!service.headless &&
-          LifecycleSvc.isAlive &&
+          LifecycleSvc.isForeground &&
           (SocketSvc.socket?.connected ?? false) &&
           SettingsSvc.settings.endpointUnifiedPush.value == '') {
-        Logger.debug('App is alive, ignoring new message...');
+        Logger.debug('App is in the foreground with a connected socket, ignoring new message...');
         return _ok();
       } else if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
         Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
