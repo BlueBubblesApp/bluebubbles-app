@@ -124,9 +124,10 @@ class LifecycleService with WidgetsBindingObserver {
 
       if (GetIt.I.isRegistered<SocketService>()) {
         // Undo the background disconnect before StartupTasks.onAppResume() tries to
-        // restart the socket — startSocket() refuses to run while this is false.
-        GetIt.I<SocketService>().connectionDesired = true;
-        GetIt.I<SocketService>().resetScheduledRestartBackoff(cancelPendingTimer: true);
+        // start the socket — startSocket() refuses to run while the connection is
+        // marked as unwanted. Also clears any URL-rediscovery backoff so a returning
+        // user isn't left waiting out a timer that grew while they were away.
+        GetIt.I<SocketService>().resumeConnection();
       }
 
       open();
