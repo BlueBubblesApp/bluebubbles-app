@@ -35,10 +35,26 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 See `.claude/rules/api.md` for full HTTP conventions.
 
 ## WebSocket (`socket_service.dart`)
-socket_io_client connection to the BlueBubbles server.
-- State: `Rx<SocketState>` — `connected / disconnected / error / connecting`
-- Auto-reconnect on connectivity change (monitors `Connectivity()` stream)
-- Don't create additional `Socket` instances — one connection managed here
+socket_io_client connection to the BlueBubbles server. Don't create additional
+`Socket` instances — one connection is managed here.
+
+- State: `Rx<SocketState>` — `connected / disconnected / error / connecting / reconnecting`.
+  `state` is the single source of truth; `handleStatusUpdate()` compares against it,
+  so anything that changes the connection must write to it.
+- **Three separate concerns, one owner each** (see ADR-014 in `docs/DECISIONS.md`):
+  1. Retrying a transient failure → socket.io's own reconnect (unlimited attempts,
+     backoff capped at 60s). **Never call `setReconnectionAttempts()`** — a finite cap
+     makes socket.io stop permanently.
+  2. Rebuilding the connection → `restartSocket()`, driven by `_runUrlDiscovery()`.
+     Only for things a `Manager` can't re-read at runtime: the URL, auth guid, headers.
+  3. Staying down while backgrounded → `connectionDesired`, via
+     `disconnect()` / `resumeConnection()`.
+- `enableForceNew()` is **required**. Without it `io()` returns the same cached
+  `Socket`/`Manager`, pinned to the auth query and headers it was first built with.
+- Restarts must clear Manager-level listeners (`onError`, `onReconnect*`) by hand —
+  `Socket.dispose()` only clears socket-level ones. `_eventUnsubscribers` handles this.
+- Connectivity changes (`Connectivity()` stream) only drop a stale localhost origin
+  override; on Windows an `InternetConnection` probe also triggers a restart.
 
 ## TLS / Certificates
 - `websocket_adapter.dart` — custom `HttpClientAdapter` for self-signed cert support

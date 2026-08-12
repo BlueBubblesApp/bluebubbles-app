@@ -82,13 +82,10 @@ class MethodChannelHandlers {
     }
 
     try {
-      // Only drop the push copy when the UI is genuinely in the foreground with a
-      // live socket, i.e. when the socket really is going to deliver this message.
-      // `isAlive` is not good enough here: it also returns true whenever the
-      // process-global `bg_isolate` marker is registered, which outlives the app
-      // being backgrounded if Android never delivers `paused`. Dropping on a stale
-      // marker means neither transport delivers the message and the user simply
-      // never sees the notification.
+      // Only drop the push copy when the socket really is going to deliver this
+      // message. `isAlive` is not good enough: it also returns true on a stale
+      // `bg_isolate` marker, and dropping then means neither transport delivers and
+      // the notification is silently lost.
       if (!service.headless &&
           LifecycleSvc.isForeground &&
           (SocketSvc.socket?.connected ?? false) &&

@@ -11,14 +11,24 @@ Future<bool> saveNewServerUrl(String newServerUrl,
     bool force = false,
     List<String> saveAdditionalSettings = const []}) async {
   String sanitized = sanitizeServerAddress(address: newServerUrl)!;
-  if (force || sanitized != SettingsSvc.settings.serverAddress.value) {
+  final bool addressChanged = sanitized != SettingsSvc.settings.serverAddress.value;
+  if (force || addressChanged) {
     SettingsSvc.settings.serverAddress.value = sanitized;
 
     // The origin override (if any) was resolved against the previous server's
     // local network — it's meaningless for the newly configured server, so it
     // must be cleared or the app will keep silently connecting to the old
     // address until the next app start or manual re-probe.
-    NetworkTasks.setOriginOverride(null);
+    //
+    // Only on a real change, though. `force` means "run the side effects even if
+    // the address is identical" (re-persisting guidAuthKey, cycling the socket),
+    // and an unchanged address means a still-valid override — dropping it there
+    // would silently move the app off localhost onto the remote URL until the
+    // next resume re-probes. SocketService's URL rediscovery calls this on a
+    // timer while the connection is failing, so that would happen routinely.
+    if (addressChanged) {
+      NetworkTasks.setOriginOverride(null);
+    }
 
     await SettingsSvc.settings.saveManyAsync(["serverAddress", ...saveAdditionalSettings]);
 

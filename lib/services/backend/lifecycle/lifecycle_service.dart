@@ -36,11 +36,9 @@ class LifecycleService with WidgetsBindingObserver {
 
   /// Whether *this* isolate's UI is actually in the foreground right now.
   ///
-  /// Unlike [isAlive], this never consults the process-global `bg_isolate` port
-  /// marker. That marker is registered on resume and removed on pause, so it goes
-  /// stale whenever Android backgrounds the app without delivering `paused` (some
-  /// OEMs skip it, and `hidden` alone doesn't count as backgrounded) — leaving
-  /// [isAlive] reporting true long after the user left the app.
+  /// Unlike [isAlive], never consults the process-global `bg_isolate` port marker,
+  /// which goes stale whenever Android backgrounds the app without delivering
+  /// `paused` and leaves [isAlive] reporting true after the user has left.
   ///
   /// Use this for decisions that must not be wrong in the "app is still up"
   /// direction, e.g. dropping a push notification because the UI is expected to

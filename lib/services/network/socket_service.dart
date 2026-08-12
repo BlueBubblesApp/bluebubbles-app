@@ -32,16 +32,16 @@ enum SocketState {
 /// Three distinct concerns are deliberately kept separate here, because
 /// conflating them is what previously made this class hard to reason about:
 ///
-///  1. **Reconnecting after a transient failure** — owned entirely by socket.io.
-///     It is configured with unlimited attempts and a capped exponential backoff,
-///     and this class does not schedule retries of its own. socket.io reuses its
-///     Manager and re-resolves DNS on each attempt, which covers every case where
-///     the server is simply unreachable for a while.
+///  1. **Reconnecting after a transient failure** — owned by socket.io. It is
+///     configured with unlimited attempts and a capped exponential backoff, and
+///     this class schedules no retries of its own. socket.io reuses its Manager and
+///     re-resolves DNS on each attempt, which covers every case where the server is
+///     simply unreachable for a while. The one gap is a disconnect socket.io
+///     initiated itself, which stops its retry loop for good — see [_socketGaveUp].
 ///
-///  2. **Rediscovering a server that has moved** — owned here, because socket.io
-///     cannot know the URL changed. A Manager's URI and auth options are fixed at
-///     construction, so a genuinely new address is the one situation that needs
-///     the socket torn down and rebuilt. See [_runUrlDiscovery].
+///  2. **Rebuilding the connection** — owned here, because a Manager's URI and auth
+///     options are fixed at construction. Needed when the server moved, or when
+///     socket.io has given up on the current one. See [_runUrlDiscovery].
 ///
 ///  3. **Not running at all while the app is backgrounded** — owned here via
 ///     [connectionDesired]. See [disconnect] / [resumeConnection].
@@ -78,18 +78,20 @@ class SocketService {
 
   // ── Connection state ───────────────────────────────────────────────────────
 
+  /// The single source of truth for connection status. Everything that changes
+  /// the connection — including [disconnect] and [closeSocket] — writes here, and
+  /// [handleStatusUpdate] compares against it rather than keeping a shadow copy
+  /// that could drift out of sync with those direct writes.
   final Rx<SocketState> state = SocketState.connecting.obs;
-  SocketState _lastState = SocketState.connecting;
   RxString lastError = "".obs;
   Socket? socket;
 
   /// Unsubscribe callbacks for every listener registered in [startSocket].
   ///
-  /// `Socket.dispose()` only clears listeners registered on the socket itself.
-  /// The reconnect/error events (`onError`, `onReconnect`, `onReconnectAttempt`,
-  /// `onReconnectError`, `onReconnectFailed`) are registered on the underlying
-  /// socket.io *Manager*, which `dispose()` never touches — so they have to be
-  /// removed by hand or every restart stacks another copy of every handler.
+  /// `Socket.dispose()` only clears listeners on the socket itself. The
+  /// reconnect/error events (`onError`, `onReconnect`, `onReconnectAttempt`,
+  /// `onReconnectError`, `onReconnectFailed`) live on the underlying socket.io
+  /// *Manager*, which `dispose()` never touches, so they must be removed by hand.
   final List<Function()> _eventUnsubscribers = [];
 
   // ── 3. Lifecycle gating ────────────────────────────────────────────────────
@@ -100,7 +102,11 @@ class SocketService {
   /// and true again by [resumeConnection]. Async work that outlives a disconnect
   /// must not silently bring the connection back up, so every path that can start
   /// a socket checks this — including after its own awaits.
-  bool connectionDesired = true;
+  ///
+  /// Only those two methods may change it: the flag is what makes an intentional
+  /// background disconnect stick, so it must not be settable from elsewhere.
+  bool _connectionDesired = true;
+  bool get connectionDesired => _connectionDesired;
 
   // ── URL rediscovery state ──────────────────────────────────────────────────
 
@@ -146,11 +152,9 @@ class SocketService {
   // ── Connection lifecycle ───────────────────────────────────────────────────
 
   void startSocket() {
-    // The lifecycle service takes the socket down when the app is backgrounded.
-    // Anything that tries to bring it back up from a background task — a URL save,
-    // a discovery run that was still in flight — has to be ignored, or the socket
-    // is resurrected behind the user's back and reconnects against an unreachable
-    // server until the app is reopened.
+    // Background tasks that can start a socket — a URL save, an in-flight discovery
+    // run — must not resurrect it behind the user's back after the lifecycle
+    // service intentionally took it down.
     if (!connectionDesired) {
       Logger.info(tag: _tag, "Not starting socket — the app is backgrounded");
       return;
@@ -191,28 +195,18 @@ class SocketService {
         .setHttpClientAdapter(WebsocketAdapter())
         // Disable so that we can create the listeners first
         .disableAutoConnect()
-        // Always build a fresh Manager instead of reusing socket.io's global one.
-        //
-        // `io()` caches Managers by `scheme://host:port` and only bypasses that
-        // cache when the requested namespace already exists on the cached Manager.
-        // It computes the namespace from `Uri.parse(url).path` for the cache check
-        // but from `path.isEmpty ? '/' : path` when actually creating the socket —
-        // so for a URL with no path (which is exactly what `HttpSvc.origin` gives
-        // us) the check looks for '' while the socket is stored under '/', never
-        // matches, and every startSocket() silently returns the *same* Socket from
-        // the *same* Manager. That made the connection un-restartable: the Manager
-        // kept the auth query and headers it was first built with, and each restart
-        // stacked another copy of every Manager-level listener.
+        // Required for the socket to be restartable at all. Without it, `io()`
+        // reuses its cached Manager for this scheme://host:port and hands back the
+        // *same* Socket — pinned to the auth query and headers it was first built
+        // with. (Its cache check looks up the namespace as '' while the socket is
+        // stored under '/', so the miss that would bypass the cache never happens.)
         .enableForceNew()
-        // Reconnection is socket.io's job, not ours. Attempts are deliberately left
-        // unlimited (the library default) so its exponential backoff can grow to
-        // _reconnectDelayMax and stay there.
-        //
-        // Do NOT call setReconnectionAttempts() here. A finite limit makes socket.io
-        // emit `reconnect_failed` and stop forever, and nothing in this class will
-        // revive the connection — the app just goes quietly offline until it is
-        // restarted. An earlier version capped it at 3 purely to get a hook for URL
-        // rediscovery; that now has its own timer and does not need the cap.
+        // Reconnection is socket.io's job — concern 1 above. Attempts are left
+        // unlimited (the library default) so the backoff can grow to
+        // _reconnectDelayMax and settle there. Do NOT call
+        // setReconnectionAttempts(): a finite cap makes socket.io emit
+        // `reconnect_failed` and stop for good, which only [_socketGaveUp] recovers
+        // from, and then only on the rediscovery timer's schedule.
         .enableReconnection()
         .setReconnectionDelay(_reconnectDelay.inMilliseconds)
         .setReconnectionDelayMax(_reconnectDelayMax.inMilliseconds);
@@ -229,10 +223,9 @@ class SocketService {
       s.onConnectError((data) => handleStatusUpdate(SocketState.error, data)),
       s.onReconnectError((data) => handleStatusUpdate(SocketState.error, data)),
       s.onError((data) => handleStatusUpdate(SocketState.error, data)),
-      // Unreachable while reconnection attempts are unlimited — socket.io only
-      // emits this when it hits a finite cap. Registered anyway so that if the
-      // policy above is ever changed, "the client gave up" shows up in the logs
-      // instead of presenting as an app that mysteriously stopped receiving.
+      // Unreachable while attempts are unlimited; socket.io only emits this on a
+      // finite cap. Kept so that a future cap surfaces in the logs rather than as
+      // an app that mysteriously stopped receiving.
       s.onReconnectFailed((_) => Logger.warn(
           tag: _tag,
           "socket.io stopped reconnecting — reconnection attempts are capped somewhere, "
@@ -277,6 +270,12 @@ class SocketService {
     s.connect();
 
     if (kIsDesktop && Platform.isWindows) {
+      // closeSocket() cancels this, but startSocket() can also be reached with a
+      // live listener still attached — don't stack a second one on the old
+      // InternetConnection instance.
+      internetConnectionListener?.cancel();
+      internetConnectionListener = null;
+
       internetConnection = InternetConnection.createInstance(
         customCheckOptions: [
           InternetCheckOption(
@@ -318,7 +317,7 @@ class SocketService {
   /// service when the app is backgrounded. Nothing brings it back until
   /// [resumeConnection] (or an explicit user action) flips [connectionDesired].
   void disconnect() {
-    connectionDesired = false;
+    _connectionDesired = false;
     _cancelUrlDiscovery();
     if (isNullOrEmpty(serverAddress)) return;
     socket?.disconnect();
@@ -330,23 +329,8 @@ class SocketService {
   /// Marks the connection as wanted again and clears the rediscovery backoff, so a
   /// returning user isn't left waiting out a long timer. Called on app resume.
   void resumeConnection() {
-    connectionDesired = true;
+    _connectionDesired = true;
     _cancelUrlDiscovery();
-  }
-
-  /// Ensures the socket is up. Safe to call at any time — if socket.io is already
-  /// retrying, this is a no-op.
-  void reconnect() {
-    if (isNullOrEmpty(serverAddress)) return;
-    connectionDesired = true;
-    if (socket == null) {
-      startSocket();
-      return;
-    }
-    if (state.value == SocketState.connected) return;
-    state.value = SocketState.connecting;
-    socket?.connect();
-    _startConnectivitySubscription();
   }
 
   /// Tears the connection down completely, including its Manager.
@@ -363,10 +347,12 @@ class SocketService {
     _connectivitySubscription = null;
     _clearEventHandlers();
     socket?.dispose();
-    // Drop the reference too. Callers such as the FCM handler use
-    // `socket?.connected` to decide whether the socket will deliver a message for
-    // them — a disposed-but-still-referenced socket makes that answer a guess.
+    // Drop the reference too: the FCM handler reads `socket?.connected` to decide
+    // whether the socket will deliver a message, and a disposed-but-still-
+    // referenced socket makes that answer a guess.
     socket = null;
+    // Set directly rather than through handleStatusUpdate — the disconnect event
+    // that would normally report this was just unsubscribed above.
     state.value = SocketState.disconnected;
   }
 
@@ -388,8 +374,21 @@ class SocketService {
 
   // ── URL rediscovery ────────────────────────────────────────────────────────
 
-  /// Called on every connection error. socket.io is already retrying on its own
-  /// schedule, so all this does is start the clock on "maybe the server moved".
+  /// Whether socket.io has stopped retrying the current connection on its own.
+  ///
+  /// A DISCONNECT packet from the server (or any explicit close) sets
+  /// `skipReconnect` on the Manager, which permanently ends its retry loop no
+  /// matter how many attempts are left. That is the one failure socket.io will not
+  /// recover from, so it needs a rebuild rather than patience.
+  bool get _socketGaveUp {
+    final Socket? s = socket;
+    if (s == null) return true;
+    return s.io.skipReconnect ?? false;
+  }
+
+  /// Called on every connection error, and on a disconnect socket.io won't retry.
+  /// socket.io is normally already retrying on its own schedule, so all this does
+  /// is start the clock on "maybe the server moved".
   ///
   /// Errors arrive several times per failed attempt, so this is deliberately
   /// idempotent: the first one arms the timer and the rest are ignored until that
@@ -423,13 +422,12 @@ class SocketService {
     // connectionDesired before acting on the result.
   }
 
-  /// Asks Firebase for the current server URL and rebuilds the socket only if the
-  /// address actually moved.
+  /// Asks Firebase for the current server URL and rebuilds the socket if the
+  /// address moved, or if socket.io is no longer retrying on its own.
   ///
   /// A Manager's URI and auth options are fixed at construction, so a new address
-  /// is the one failure mode socket.io's reconnect cannot recover from by itself.
-  /// If the URL is unchanged, the existing reconnect loop is already doing the
-  /// right thing and is left alone.
+  /// cannot be picked up without a rebuild. Otherwise the existing reconnect loop
+  /// is already doing the right thing and is left alone.
   Future<void> _runUrlDiscovery() async {
     _urlDiscoveryTimer = null;
 
@@ -456,11 +454,19 @@ class SocketService {
         return;
       }
 
-      // Compare the resolved origin rather than the returned string: that is what
-      // the socket actually dials, and it also moves when saveNewServerUrl clears
-      // a stale localhost origin override.
+      // Compare the resolved origin rather than the returned string — that is what
+      // the socket actually dials, so it also catches saveNewServerUrl dropping a
+      // localhost override that belonged to the old address.
       if (serverAddress != previousOrigin) {
         Logger.info(tag: _tag, "Server URL changed from $previousOrigin to $serverAddress — rebuilding socket");
+        restartSocket();
+        return;
+      }
+
+      // Same address, but socket.io has stopped retrying it — a rebuild is the
+      // only thing that will bring the connection back.
+      if (_socketGaveUp) {
+        Logger.info(tag: _tag, "Server URL unchanged but socket.io is no longer retrying — rebuilding socket");
         restartSocket();
         return;
       }
@@ -504,8 +510,7 @@ class SocketService {
 
   void handleStatusUpdate(SocketState status, dynamic data) {
     // Don't skip state updates entirely - we need to process errors even if state hasn't changed
-    bool stateChanged = _lastState != status;
-    _lastState = status;
+    final bool stateChanged = state.value != status;
 
     switch (status) {
       case SocketState.connected:
@@ -526,6 +531,11 @@ class SocketService {
           Logger.info("Disconnected from socket at $serverAddress");
           state.value = SocketState.disconnected;
         }
+
+        // Concern 1 (socket.io retries) does not cover a disconnect it initiated
+        // itself — see [_socketGaveUp]. Hand those to the rediscovery timer, which
+        // rebuilds the connection whether or not the URL moved.
+        if (_socketGaveUp) _noteConnectionFailure();
       case SocketState.connecting:
         if (stateChanged) {
           Logger.info("Attempting to connect to socket at $serverAddress");
@@ -604,11 +614,9 @@ class SocketService {
 
     String summary = '';
     if (isSameError && _suppressedErrorCount > 0) {
-      // Report the window actually covered rather than the throttle duration.
-      // Suppression starts at the previous log, but the next one only happens once
-      // an error arrives after the throttle expires — which can be much later than
-      // the throttle itself if errors are sporadic. Printing the throttle duration
-      // made a slow trickle look like a burst.
+      // Report the window actually covered, not the throttle duration: the next log
+      // only happens once an error arrives after the throttle expires, which can be
+      // much later, and printing the throttle made a slow trickle look like a burst.
       final int elapsed = now.difference(_lastErrorLogAt!).inSeconds;
       summary = ' (suppressed $_suppressedErrorCount similar errors over the last ${elapsed}s)';
     }
