@@ -63,7 +63,8 @@ dependencies:
   exif: ^3.3.0
   faker: ^2.2.0
   ffmpeg_kit_flutter_new_min: ^3.6.2
-  flutter_contacts: ^2.0.2  # mobile only
+  # Must be >=2.3.0: https://github.com/QuisApp/flutter_contacts/issues/240
+  flutter_contacts: ^2.3.1  # mobile only.
   file_picker: ^11.0.2
   floating_animation: ^1.1.0
   firebase_dart:
