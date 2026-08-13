@@ -8,12 +8,12 @@ name: PR Check
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  # Warm the SDK/pub caches in master's scope (see warm-cache job below).
+  # Warm the SDK, pub and native-download caches in master's scope (see the jobs below).
   push:
     branches: [master]
   workflow_dispatch:
 
-# Cancel superseded runs when a PR is pushed again.
+# Cancel superseded runs when a PR or master is pushed again.
 concurrency:
   group: pr-check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -27,30 +27,9 @@ env:
   FVM_VERSION: "4.1.2"
 
 jobs:
-  # Populate the SDK + pub caches in master's scope on every merge. PR runs can only
-  # restore caches from their own ref or the base branch (master); without this job
-  # that shared scope stays empty and each PR redownloads the SDK. Just installs the
-  # SDK and resolves packages — no compile — so it's cheap.
-  warm-cache:
-    if: github.event_name == 'push'
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [ubuntu-latest, ubuntu-24.04-arm, windows-latest]
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 20
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - name: Setup Flutter
-        uses: ./.github/actions/setup-flutter
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          fvm-version: ${{ env.FVM_VERSION }}
-
+  # These also run on pushes to master to populate master's cache scope — the only scope PR
+  # runs can read besides their own.
   analyze:
-    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -78,7 +57,7 @@ jobs:
   build-windows:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
-    if: ${{ github.event_name != 'push' && !github.event.pull_request.draft }}
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -98,10 +77,14 @@ jobs:
         run: echo "KLIPY_API_KEY=" > .env
         shell: bash
 
+      - name: Cache native build downloads
+        uses: ./.github/actions/cache-native-deps
+
       # Compile only — no msix/installer packaging (that's the release workflow).
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
+      # -v: flutter otherwise hides the CMake configure output, where the downloads show up.
       - name: Build Windows (unsigned)
-        run: fvm flutter build windows --release --no-pub
+        run: fvm flutter build windows --release -v --no-pub
         shell: pwsh
 
       # Catch a plugin whose DLL isn't in the SignPath artifact configuration here,
@@ -116,7 +99,7 @@ jobs:
   build-linux:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
-    if: ${{ github.event_name != 'push' && !github.event.pull_request.draft }}
+    if: ${{ !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
@@ -151,7 +134,10 @@ jobs:
       - name: Write .env
         run: echo "KLIPY_API_KEY=" > .env
 
+      - name: Cache native build downloads
+        uses: ./.github/actions/cache-native-deps
+
       # Compile only — no tarball packaging (that's the release workflow).
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
       - name: Build Linux (unsigned)
-        run: fvm flutter build linux --release --no-pub
+        run: fvm flutter build linux --release -v --no-pub

@@ -14,9 +14,10 @@ if [ -z ${FLUTTER_CMD+x} ]; then
     FLUTTER_CMD="fvm flutter"
 fi
 
-# Clean the bundle output first: the tarball packages it wholesale, so
-# leftover libs from removed plugins would get shipped.
-rm -rf build/linux
+# Clean the bundle output first: the tarball packages it wholesale, so leftover libs from
+# removed plugins would get shipped. Only the bundle — the rest of the CMake tree holds the
+# archives the plugins download during configure.
+rm -rf build/linux/*/release/bundle
 
 $FLUTTER_CMD pub get --enforce-lockfile
 # --no-pub: reuse the lockfile-enforced resolution above (build otherwise re-runs
