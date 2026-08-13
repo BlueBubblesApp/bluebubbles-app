@@ -57,7 +57,7 @@ apps:
       - audio-playback
       - audio-record
     environment:
-      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/blas:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/lapack:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/samba:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/vdpau:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/dri:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/bin/lib:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/blas:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/lapack:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/samba:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/vdpau:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/dri:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
       ALWAYS_USE_PULSEAUDIO: '1'
       GIO_USE_PROXY_RESOLVER: libproxy
 
@@ -107,7 +107,6 @@ parts:
       set -eux
       mkdir -p $CRAFT_PART_INSTALL/bin
       cp -r ./* $CRAFT_PART_INSTALL/bin/
-      mv lib/libobjectbox.so $CRAFT_PART_INSTALL/usr/lib/
     stage-packages:
       - ffmpeg
       - libayatana-appindicator3-1
