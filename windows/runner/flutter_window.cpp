@@ -49,6 +49,11 @@ bool FlutterWindow::OnCreate() {
             SetSplashStatus(wide);
           }
           result->Success();
+        } else if (call.method_name() == "setProgress") {
+          if (const auto* progress = std::get_if<double>(call.arguments())) {
+            SetSplashProgress(*progress);
+          }
+          result->Success();
         } else if (call.method_name() == "closeSplash") {
           CloseSplashScreen();
           result->Success();

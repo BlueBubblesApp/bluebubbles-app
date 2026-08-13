@@ -18,31 +18,79 @@ constexpr int kIcon = 72;
 constexpr int kIconTop = 40;
 constexpr int kVersionTop = 124;
 constexpr int kVersionHeight = 18;
-constexpr int kStatusTop = 168;
-constexpr int kStatusHeight = 40;
 constexpr int kVersionFont = 12;
-constexpr int kStatusFont = 12;
 
-// Safety: if closeSplash never arrives, tear the splash down anyway.
-constexpr int kAutoCloseSeconds = 20;
+// Progress bar for determinate steps, in the gap between the version line and
+// the log. Absent (not an empty track) the rest of the time.
+constexpr int kBarTop = 150;
+constexpr int kBarWidth = 180;
+constexpr int kBarHeight = 6;
+
+// Rolling log of startup steps: bottom-aligned, oldest dimmest. Grows downward
+// into the space below the version line — kWindowH stays 300 so everything
+// above it keeps its position.
+constexpr int kLogTop = 168;
+constexpr int kLogLines = 6;
+constexpr int kLogLine = 15;
+constexpr int kLogFont = 11;
+
+// Close button, pinned to the top-right corner (not part of the centered box).
+//
+// Revealed by silence rather than by a wall clock: startup names every step it
+// enters, and the slow ones (database migrations) report progress per batch, so
+// a gap this long means startup is wedged, not merely busy. Work in progress
+// therefore never offers the user a way to interrupt it. A hard crash takes
+// this window down with it, so "stopped reporting" is the only failure mode the
+// splash can observe — and it's the one that otherwise needs a kill(1).
+constexpr int kCloseSize = 28;
+constexpr int kCloseMargin = 6;
+constexpr int kCloseGlyph = 10;
+constexpr int kStallCloseMs = 30000;
+
+constexpr int kStallReportMs = 15000;
+constexpr int kStallPollMs = 500;
+constexpr int kSlowTop = 270;
+constexpr int kSlowHeight = 18;
+constexpr int kSlowFont = 11;
+constexpr char kSlowLine1[] = "Taking longer than usual?";
+constexpr char kSlowLine2[] = "Click here to report it.";
+constexpr char kSlowUrl[] = "https://github.com/BlueBubblesApp/bluebubbles-app/issues/new/choose";
 
 GtkWidget* g_area = nullptr;
 GdkPixbuf* g_icon = nullptr;
-guint g_autoclose_id = 0;
+guint g_stall_poll_id = 0;
+
+// Last sign of life from the Dart side — any status or progress push, whether
+// or not it changed what's drawn. Set when the splash is created so a startup
+// that dies before its first push still counts as stalled.
+gint64 g_last_activity_us = 0;
 bool g_dark = true;
+bool g_close_hot = false;
+bool g_show_close = false;
+bool g_show_slow = false;
+bool g_url_hot = false;
+
+// Bounds of the drawn issues-URL line, in widget coordinates, measured during
+// the draw so the click and hover tests match what is on screen.
+double g_url_x = 0, g_url_y = 0, g_url_w = 0;
 
 // Fixed buffers keep the pre-engine splash independent of the C++ runtime and
 // avoid heap work while the allocator and Flutter engine are starting up.
-char g_status[256] = "Starting...";
+char g_log_lines[kLogLines][256] = {"Starting..."};
+int g_log_count = 1;
 char g_version_line[128] = "";
 
-// Reads the app's persisted theme choice from shared_preferences.json (next to
-// the DB, under the same XDG data dir path_provider uses). Returns 1 dark,
+// 0..1 while a long determinate step is running, < 0 the rest of the time.
+double g_progress = -1.0;
+
+// Reads the app's persisted theme choice from shared_preferences.json, which
+// path_provider puts under the XDG data dir in a folder named for the app id —
+// not the "bluebubbles" folder next to it that holds the DB. Returns 1 dark,
 // 0 light, -1 system/unknown (caller falls back to GTK detection).
 int ReadPrefsDark() {
   char path[PATH_MAX];
-  g_snprintf(path, sizeof(path), "%s/bluebubbles/shared_preferences.json",
-             g_get_user_data_dir());
+  g_snprintf(path, sizeof(path), "%s/%s/shared_preferences.json", g_get_user_data_dir(),
+             APPLICATION_ID);
   gchar* contents = nullptr;
   if (!g_file_get_contents(path, &contents, nullptr, nullptr)) return -1;
   int result = -1;
@@ -162,8 +210,18 @@ GdkPixbuf* LoadIcon() {
   return pixbuf;
 }
 
-void DrawCenteredText(cairo_t* cr, const char* text, int top, int height,
-                      int font_size, double alpha, int width) {
+// Rounded-end rectangle — cairo has no primitive for one.
+void FillPill(cairo_t* cr, double x, double y, double width, double height, double radius) {
+  cairo_new_sub_path(cr);
+  cairo_arc(cr, x + width - radius, y + radius, radius, -G_PI / 2, G_PI / 2);
+  cairo_arc(cr, x + radius, y + radius, radius, G_PI / 2, 3 * G_PI / 2);
+  cairo_close_path(cr);
+  cairo_fill(cr);
+}
+
+// Draws the text and returns its rendered pixel width, for hit-testing.
+int DrawCenteredText(cairo_t* cr, const char* text, int top, int height,
+                     int font_size, double alpha, int width, bool link = false) {
   PangoLayout* layout = pango_cairo_create_layout(cr);
   PangoFontDescription* desc = pango_font_description_from_string("Sans");
   pango_font_description_set_absolute_size(desc, font_size * PANGO_SCALE);
@@ -175,14 +233,22 @@ void DrawCenteredText(cairo_t* cr, const char* text, int top, int height,
   pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
   pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
 
+  int text_w = 0;
   int text_h = 0;
-  pango_layout_get_pixel_size(layout, nullptr, &text_h);
+  pango_layout_get_pixel_size(layout, &text_w, &text_h);
 
+  // Links get the brand blue so they read as clickable; everything else is the
+  // foreground color at some alpha.
   double channel = g_dark ? 1.0 : 0.0;
-  cairo_set_source_rgba(cr, channel, channel, channel, alpha);
+  if (link) {
+    cairo_set_source_rgba(cr, 25 / 255.0, 130 / 255.0, 252 / 255.0, alpha);
+  } else {
+    cairo_set_source_rgba(cr, channel, channel, channel, alpha);
+  }
   cairo_move_to(cr, 0, top + (height - text_h) / 2.0);
   pango_cairo_show_layout(cr, layout);
   g_object_unref(layout);
+  return text_w;
 }
 
 gboolean OnDraw(GtkWidget* widget, cairo_t* cr, gpointer user_data) {
@@ -220,17 +286,162 @@ gboolean OnDraw(GtkWidget* widget, cairo_t* cr, gpointer user_data) {
   }
 
   DrawCenteredText(cr, g_version_line, kVersionTop, kVersionHeight, kVersionFont, 0.47, w);
-  DrawCenteredText(cr, g_status, kStatusTop, kStatusHeight, kStatusFont, 0.65, w);
+
+  if (g_progress >= 0.0) {
+    double channel = g_dark ? 1.0 : 0.0;
+    double x = (w - kBarWidth) / 2.0;
+    double radius = kBarHeight / 2.0;
+    cairo_set_source_rgba(cr, channel, channel, channel, 0.18);
+    FillPill(cr, x, kBarTop, kBarWidth, kBarHeight, radius);
+    cairo_set_source_rgb(cr, 25 / 255.0, 130 / 255.0, 252 / 255.0);
+    // Never narrower than the cap: a sliver of pill reads as "starting", where
+    // a clipped one reads as a rendering bug.
+    double fill_w = kBarWidth * (g_progress > 1.0 ? 1.0 : g_progress);
+    FillPill(cr, x, kBarTop, fill_w < kBarHeight ? kBarHeight : fill_w, kBarHeight, radius);
+  }
+
+  // Bottom-aligned so the current step holds one spot and older ones stack
+  // upward as they dim, rather than the live line crawling down the block.
+  for (int i = 0; i < g_log_count; i++) {
+    int age = g_log_count - 1 - i;  // 0 == newest
+    double alpha = 0.78 - age * (0.78 - 0.27) / (kLogLines > 1 ? kLogLines - 1 : 1);
+    int top = kLogTop + (kLogLines - g_log_count + i) * kLogLine;
+    DrawCenteredText(cr, g_log_lines[i], top, kLogLine, kLogFont, alpha, w);
+  }
+
+  if (g_show_slow) {
+    DrawCenteredText(cr, kSlowLine1, kSlowTop, kSlowHeight, kSlowFont, 0.51, w);
+    g_url_w = DrawCenteredText(cr, kSlowLine2, kSlowTop + kSlowHeight, kSlowHeight, kSlowFont,
+                               g_url_hot ? 1.0 : 0.8, w, true);
+    g_url_x = (w - g_url_w) / 2.0;
+    g_url_y = oy + kSlowTop + kSlowHeight;
+  } else {
+    g_url_w = 0;
+  }
 
   cairo_restore(cr);
+
+  if (!g_show_close) return FALSE;
+
+  // Close button "x", with a subtle disc behind it while hovered.
+  double cx = w - kCloseMargin - kCloseSize / 2.0;
+  double cy = kCloseMargin + kCloseSize / 2.0;
+  double a = kCloseGlyph / 2.0;
+  double channel = g_dark ? 1.0 : 0.0;
+  if (g_close_hot) {
+    cairo_set_source_rgba(cr, channel, channel, channel, 0.15);
+    cairo_arc(cr, cx, cy, kCloseSize / 2.0, 0, 2 * G_PI);
+    cairo_fill(cr);
+  }
+  cairo_set_source_rgba(cr, channel, channel, channel, g_close_hot ? 0.92 : 0.59);
+  cairo_set_line_width(cr, 2);
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  cairo_move_to(cr, cx - a, cy - a);
+  cairo_line_to(cr, cx + a, cy + a);
+  cairo_move_to(cr, cx - a, cy + a);
+  cairo_line_to(cr, cx + a, cy - a);
+  cairo_stroke(cr);
+
   return FALSE;
 }
 
-gboolean OnAutoClose(gpointer user_data) {
+bool InCloseButton(GtkWidget* widget, double x, double y) {
+  if (!g_show_close) return false;
+  double left = gtk_widget_get_allocated_width(widget) - kCloseMargin - kCloseSize;
+  return x >= left && x <= left + kCloseSize && y >= kCloseMargin &&
+         y <= kCloseMargin + kCloseSize;
+}
+
+bool InUrl(double x, double y) {
+  return g_url_w > 0 && x >= g_url_x - 4 && x <= g_url_x + g_url_w + 4 && y >= g_url_y - 3 &&
+         y <= g_url_y + kSlowHeight + 3;
+}
+
+void SetHot(GtkWidget* widget, bool close_hot, bool url_hot) {
+  if (g_close_hot == close_hot && g_url_hot == url_hot) return;
+  g_close_hot = close_hot;
+  g_url_hot = url_hot;
+  GdkWindow* win = gtk_widget_get_window(widget);
+  if (win != nullptr) {
+    GdkCursor* cursor = close_hot || url_hot
+                            ? gdk_cursor_new_from_name(gdk_window_get_display(win), "pointer")
+                            : nullptr;
+    gdk_window_set_cursor(win, cursor);
+    if (cursor != nullptr) g_object_unref(cursor);
+  }
+  gtk_widget_queue_draw(widget);
+}
+
+// What both the close button and Escape do, once the close button is showing.
+// The user gave up, and startup may be wedged — exit hard rather than asking it
+// to unwind.
+void Dismiss() { _exit(0); }
+
+gboolean OnButtonPress(GtkWidget* widget, GdkEventButton* event, gpointer user_data) {
   (void)user_data;
-  g_autoclose_id = 0;
-  close_splash_screen();
-  return G_SOURCE_REMOVE;
+  if (InUrl(event->x, event->y)) {
+    // gtk_show_uri_on_window rather than g_app_info_launch_default_for_uri: it
+    // goes through the desktop portal where there is one, instead of picking a
+    // handler straight out of the mime database.
+    GtkWidget* top = gtk_widget_get_toplevel(widget);
+    gtk_show_uri_on_window(GTK_IS_WINDOW(top) ? GTK_WINDOW(top) : nullptr, kSlowUrl, event->time,
+                           nullptr);
+    return TRUE;
+  }
+  if (InCloseButton(widget, event->x, event->y)) {
+    Dismiss();
+    return TRUE;
+  }
+  return FALSE;
+}
+
+gboolean OnMotion(GtkWidget* widget, GdkEventMotion* event, gpointer user_data) {
+  (void)user_data;
+  SetHot(widget, InCloseButton(widget, event->x, event->y), InUrl(event->x, event->y));
+  return FALSE;
+}
+
+gboolean OnLeave(GtkWidget* widget, GdkEventCrossing* event, gpointer user_data) {
+  (void)event;
+  (void)user_data;
+  SetHot(widget, false, false);
+  return FALSE;
+}
+
+gboolean OnKeyPress(GtkWidget* widget, GdkEventKey* event, gpointer user_data) {
+  (void)widget;
+  (void)user_data;
+  // Held back by the same reveal the close button waits on.
+  if (event->keyval != GDK_KEY_Escape || !g_show_close) return FALSE;
+  Dismiss();
+  return TRUE;
+}
+
+// The splash is a widget rather than a window, so Escape has to be caught on
+// the toplevel — which it only has once realized. Connected with
+// connect_object so the handler dies with the drawing area.
+void OnRealize(GtkWidget* widget, gpointer user_data) {
+  (void)user_data;
+  GtkWidget* top = gtk_widget_get_toplevel(widget);
+  if (!GTK_IS_WINDOW(top)) return;
+  g_signal_connect_object(top, "key-press-event", G_CALLBACK(OnKeyPress), widget,
+                          static_cast<GConnectFlags>(0));
+}
+
+// Polls how long the Dart side has been quiet. Both affordances hide again if
+// startup recovers and starts reporting: the app isn't stuck after all.
+gboolean OnStallPoll(gpointer user_data) {
+  (void)user_data;
+  gint64 stalled_ms = (g_get_monotonic_time() - g_last_activity_us) / 1000;
+  bool show_close = stalled_ms >= kStallCloseMs;
+  bool show_slow = stalled_ms >= kStallReportMs;
+  if (show_close == g_show_close && show_slow == g_show_slow) return G_SOURCE_CONTINUE;
+  g_show_close = show_close;
+  g_show_slow = show_slow;
+  if (!g_show_close) g_close_hot = false;
+  if (!g_show_slow) g_url_hot = false;
+  if (g_area != nullptr) gtk_widget_queue_draw(g_area);
+  return G_SOURCE_CONTINUE;
 }
 
 }  // namespace
@@ -246,21 +457,44 @@ GtkWidget* create_splash_widget() {
   gtk_widget_set_hexpand(g_area, TRUE);
   gtk_widget_set_vexpand(g_area, TRUE);
   g_signal_connect(G_OBJECT(g_area), "draw", G_CALLBACK(OnDraw), nullptr);
+  // A drawing area gets no pointer events unless it asks for them.
+  gtk_widget_add_events(g_area, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK |
+                                    GDK_LEAVE_NOTIFY_MASK);
+  g_signal_connect(G_OBJECT(g_area), "button-press-event", G_CALLBACK(OnButtonPress), nullptr);
+  g_signal_connect(G_OBJECT(g_area), "motion-notify-event", G_CALLBACK(OnMotion), nullptr);
+  g_signal_connect(G_OBJECT(g_area), "leave-notify-event", G_CALLBACK(OnLeave), nullptr);
+  g_signal_connect(G_OBJECT(g_area), "realize", G_CALLBACK(OnRealize), nullptr);
   gtk_widget_show(g_area);
 
-  g_autoclose_id = g_timeout_add_seconds(kAutoCloseSeconds, OnAutoClose, nullptr);
+  g_last_activity_us = g_get_monotonic_time();
+  g_stall_poll_id = g_timeout_add(kStallPollMs, OnStallPoll, nullptr);
   return g_area;
 }
 
 void set_splash_status(const char* status) {
-  if (status != nullptr) g_strlcpy(g_status, status, sizeof(g_status));
+  if (status == nullptr) return;
+  // Stamped before the dedupe below: a repeated status is still proof the Dart
+  // side is running, even though it changes nothing on screen.
+  g_last_activity_us = g_get_monotonic_time();
+  if (g_log_count > 0 && strcmp(g_log_lines[g_log_count - 1], status) == 0) return;  // nothing changed
+  if (g_log_count == kLogLines) {
+    memmove(g_log_lines[0], g_log_lines[1], sizeof(g_log_lines) - sizeof(g_log_lines[0]));
+    g_log_count--;
+  }
+  g_strlcpy(g_log_lines[g_log_count++], status, sizeof(g_log_lines[0]));
+  if (g_area != nullptr) gtk_widget_queue_draw(g_area);
+}
+
+void set_splash_progress(double progress) {
+  g_last_activity_us = g_get_monotonic_time();
+  g_progress = progress;
   if (g_area != nullptr) gtk_widget_queue_draw(g_area);
 }
 
 void close_splash_screen() {
-  if (g_autoclose_id != 0) {
-    g_source_remove(g_autoclose_id);
-    g_autoclose_id = 0;
+  if (g_stall_poll_id != 0) {
+    g_source_remove(g_stall_poll_id);
+    g_stall_poll_id = 0;
   }
   if (g_area != nullptr) {
     gtk_widget_destroy(g_area);

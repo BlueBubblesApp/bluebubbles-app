@@ -38,6 +38,11 @@ static void splash_method_call_cb(FlMethodChannel* channel, FlMethodCall* method
       set_splash_status(fl_value_get_string(args));
     }
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
+  } else if (strcmp(method, "setProgress") == 0) {
+    if (args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_FLOAT) {
+      set_splash_progress(fl_value_get_float(args));
+    }
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
   } else if (strcmp(method, "closeSplash") == 0) {
     close_splash_screen();
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));

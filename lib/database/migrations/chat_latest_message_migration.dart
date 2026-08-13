@@ -1,14 +1,15 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 /// Migration that backfills [Chat.dbLatestMessage] and [Chat.dbOnlyLatestMessageDate]
 /// for all existing chats by querying each chat's most recent non-deleted message.
 class ChatLatestMessageMigration {
-  static void migrate() {
+  static Future<void> migrate() async {
     try {
       Logger.info("Starting chat latest message migration...", tag: "DB-Migration");
-      _migrateChats();
+      await _migrateChats();
       Logger.info("Chat latest message migration completed successfully", tag: "DB-Migration");
     } catch (e, stack) {
       Logger.error("Failed to complete chat latest message migration!", error: e, trace: stack, tag: "DB-Migration");
@@ -16,7 +17,7 @@ class ChatLatestMessageMigration {
     }
   }
 
-  static void _migrateChats() {
+  static Future<void> _migrateChats() async {
     const int batchSize = 100;
     final chatBox = Database.chats;
     final messageBox = Database.messages;
@@ -60,6 +61,8 @@ class ChatLatestMessageMigration {
       }
 
       processed += batch.length;
+      // the await is what gets this to the splash while the migration owns the isolate.
+      await StartupTasks.setSplashProgress(processed / totalChats);
       Logger.info("Backfilled $processed / $totalChats chats...", tag: "DB-Migration");
     }
   }

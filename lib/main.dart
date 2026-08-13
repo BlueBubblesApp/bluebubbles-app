@@ -33,6 +33,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:get/get.dart';
+import 'package:get_it/get_it.dart';
 import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
@@ -76,8 +77,9 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       void pushStatus() {
         splashChannel.invokeMethod('setStatus', StartupTasks.status.value).catchError((_) => null);
 
-        final phase = StartupTasks.status.value;
-        if (Platform.isLinux && !titleBarApplied && phase != "Starting..." && phase != "Loading settings...") {
+        // Keyed on the service being ready rather than on a status string, so
+        // adding or renaming startup steps can't make this fire too early.
+        if (Platform.isLinux && !titleBarApplied && GetIt.I.isRegistered<SettingsService>()) {
           titleBarApplied = true;
           unawaited(() async {
             await windowManager.ensureInitialized();
@@ -88,9 +90,17 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
         }
       }
 
+      void pushProgress() {
+        splashChannel.invokeMethod('setProgress', StartupTasks.progress.value).catchError((_) => null);
+      }
+
       StartupTasks.status.addListener(pushStatus);
+      StartupTasks.progress.addListener(pushProgress);
       pushStatus();
-      detachSplashStatus = () => StartupTasks.status.removeListener(pushStatus);
+      detachSplashStatus = () {
+        StartupTasks.status.removeListener(pushStatus);
+        StartupTasks.progress.removeListener(pushProgress);
+      };
     }
 
     await StartupTasks.initStartupServices(isBubble: bubble);
