@@ -82,11 +82,15 @@ class MethodChannelHandlers {
     }
 
     try {
+      // Only drop the push copy when the socket really is going to deliver this
+      // message. `isAlive` is not good enough: it also returns true on a stale
+      // `bg_isolate` marker, and dropping then means neither transport delivers and
+      // the notification is silently lost.
       if (!service.headless &&
-          LifecycleSvc.isAlive &&
+          LifecycleSvc.isForeground &&
           (SocketSvc.socket?.connected ?? false) &&
           SettingsSvc.settings.endpointUnifiedPush.value == '') {
-        Logger.debug('App is alive, ignoring new message...');
+        Logger.debug('App is in the foreground with a connected socket, ignoring new message...');
         return _ok();
       } else if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
         Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');

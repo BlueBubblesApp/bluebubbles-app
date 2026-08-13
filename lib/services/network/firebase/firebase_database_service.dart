@@ -67,7 +67,11 @@ class FirebaseDatabaseService extends GetxService {
   }
 
   /// Fetch the new server URL from the Firebase Database
-  Future<String?> fetchNewUrl() async {
+  ///
+  /// The fetched URL is always saved with `force: true`, which restarts the socket
+  /// as a side effect. Callers that restart the socket themselves should pass
+  /// [restartSocket] as false so the connection isn't torn down twice in a row.
+  Future<String?> fetchNewUrl({bool restartSocket = true}) async {
     // Make sure setup is complete and we have valid data
     if (!SettingsSvc.settings.finishedSetup.value) return null;
     if (SettingsSvc.fcmData.isNull) {
@@ -116,7 +120,8 @@ class FirebaseDatabaseService extends GetxService {
         url = sanitizeServerAddress(address: await MethodChannelSvc.actions.getServerUrl());
       }
 
-      await saveNewServerUrl(url ?? SettingsSvc.settings.serverAddress.value, force: true);
+      await saveNewServerUrl(url ?? SettingsSvc.settings.serverAddress.value,
+          force: true, restartSocket: restartSocket);
       return url;
     } catch (e, s) {
       Logger.error("Failed to fetch URL!", error: e, trace: s);

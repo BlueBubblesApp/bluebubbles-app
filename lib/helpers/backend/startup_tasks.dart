@@ -510,8 +510,40 @@ class StartupTasks {
       }
     }
 
+    // Get the connection moving before anything that can block.
+    //
+    // On Android, always restart the socket rather than just reconnecting. Some OEMs
+    // (e.g. Samsung One UI) fire lifecycle events that skip `paused`, so
+    // `disconnect()` is never called and the socket stays `connected` even though its
+    // TCP connection went stale while the app was away. `restartSocket()` rebuilds
+    // from scratch, which is reliable regardless of what lifecycle sequence arrived.
+    //
+    // This used to run *after* detectLocalhost() below, which can take tens of
+    // seconds when the server is unreachable — a serverInfo() call that runs to the
+    // full apiTimeout, then a 255-address subnet scan — leaving the connection
+    // indicator red for that entire window on every resume.
+    final String originBeforeProbe = HttpSvc.origin;
+    if (Platform.isAndroid) {
+      // Also restore the alive marker early: until it is back, LifecycleService.isAlive
+      // reports false for a foreground app, which makes the method-channel handlers
+      // treat incoming pushes as belonging to the headless isolate.
+      if (!(lifecycle?.isBubble ?? false)) {
+        lifecycle?.createFakePort();
+      }
+
+      SocketSvc.restartSocket();
+    }
+
     if (HttpSvc.originOverride == null && SettingsSvc.settings.localhostPort.value != null) {
       await NetworkTasks.detectLocalhost();
+
+      // The probe changes what the socket dials, and setting the override doesn't
+      // cycle the connection on its own. Rebuild only when the resolved origin
+      // actually moved — same rule SocketService applies for URL rediscovery.
+      if (Platform.isAndroid && HttpSvc.origin != originBeforeProbe) {
+        Logger.info("Local address changed to ${HttpSvc.origin} on resume, rebuilding socket");
+        SocketSvc.restartSocket();
+      }
     }
 
     // Flush any contact sync deferred while the app was backgrounded
@@ -533,20 +565,6 @@ class StartupTasks {
           (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasBackgrounded)) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       }
-    }
-
-    if (Platform.isAndroid) {
-      if (!(lifecycle?.isBubble ?? false)) {
-        lifecycle?.createFakePort();
-      }
-
-      // On Android, always restart the socket rather than just reconnecting.
-      // Some OEMs (e.g. Samsung One UI) fire lifecycle events that skip `paused`,
-      // meaning `disconnect()` is never called and `state` stays `connected` even
-      // though the underlying TCP connection may be stale after a network change.
-      // `restartSocket()` disposes the old socket and builds a fresh one, which is
-      // reliable regardless of what lifecycle sequence the device sent.
-      SocketSvc.restartSocket();
     }
 
     if (kIsDesktop && lifecycle != null) {

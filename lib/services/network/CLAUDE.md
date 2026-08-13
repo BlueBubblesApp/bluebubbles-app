@@ -35,10 +35,38 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 See `.claude/rules/api.md` for full HTTP conventions.
 
 ## WebSocket (`socket_service.dart`)
-socket_io_client connection to the BlueBubbles server.
-- State: `Rx<SocketState>` — `connected / disconnected / error / connecting`
-- Auto-reconnect on connectivity change (monitors `Connectivity()` stream)
-- Don't create additional `Socket` instances — one connection managed here
+socket_io_client connection to the BlueBubbles server. Don't create additional
+`Socket` instances — one connection is managed here.
+
+- State: `Rx<SocketState>` — `connected / disconnected / error / connecting / reconnecting`.
+  `state` is the single source of truth; `handleStatusUpdate()` compares against it,
+  so anything that changes the connection must write to it.
+- **Three separate concerns, one owner each** (see ADR-014 in `docs/DECISIONS.md`):
+  1. Retrying a transient failure → socket.io's own reconnect (unlimited attempts,
+     backoff capped at 60s). **Never call `setReconnectionAttempts()`** — a finite cap
+     makes socket.io stop permanently.
+  2. Rebuilding the connection → `restartSocket()`, driven by `_runUrlDiscovery()`,
+     a connectivity change, or an explicit config change. Only for things a `Manager`
+     can't re-read at runtime: the URL, auth guid, headers.
+  3. Staying down while backgrounded → `connectionDesired`, via
+     `disconnect()` / `resumeConnection()`. Write it through `_setConnectionDesired()`.
+- `enableForceNew()` is **required**. Without it `io()` returns the same cached
+  `Socket`/`Manager`, pinned to the auth query and headers it was first built with.
+- Restarts must clear Manager-level listeners (`onError`, `onReconnect*`) by hand —
+  `Socket.dispose()` only clears socket-level ones. `_eventUnsubscribers` handles this.
+- Every await in a discovery round is bounded by `_urlDiscoveryTimeout`, and the
+  rebuild runs after the `finally`. Rediscovery is the only recovery from
+  `_socketGaveUp`, so a wedged `_urlDiscoveryInProgress` disables it for the process.
+- Connectivity changes (`Connectivity()` stream) drop a stale localhost origin
+  override **and** rebuild (debounced) when the network returns — socket.io's backoff
+  can be a minute out and `Socket.connect()` can't shorten it. On Windows an
+  `InternetConnection` probe against the server drives this instead.
+- A stale LAN override is re-probed by `_runUrlDiscovery()` via
+  `NetworkTasks.detectLocalhost()`, not cleared by `saveNewServerUrl()`.
+- Error logs are throttled per signature (`_errorLog`); a single-slot throttle would
+  alternate between the differing payloads socket.io emits per failed attempt.
+- On resume, `StartupTasks.onAppResume()` rebuilds the socket **before**
+  `detectLocalhost()`, then again only if the resolved origin actually moved.
 
 ## TLS / Certificates
 - `websocket_adapter.dart` — custom `HttpClientAdapter` for self-signed cert support

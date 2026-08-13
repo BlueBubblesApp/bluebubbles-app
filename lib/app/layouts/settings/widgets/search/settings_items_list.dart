@@ -301,7 +301,6 @@ List<Widget> buildSettingItemList({
         SearchableSettingItem(
           title: "Chat List Settings", // Title to search
           searchTags: [
-            "Show Connection Indicator",
             "Show Sync Indicator in Chat List",
             "Message Status Indicators",
             "Filtered Chat List",

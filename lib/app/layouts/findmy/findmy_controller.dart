@@ -52,14 +52,19 @@ class FindMyController extends GetxController {
   Timer? _refreshTimer;
   StreamSubscription? _redactedModeListener;
   StreamSubscription? _hideContactInfoListener;
+  StreamSubscription? _findMyLocationListener;
 
   @override
   void onInit() {
     super.onInit();
     getLocations();
 
-    // Setup socket listener
-    SocketSvc.socket?.on("new-findmy-location", _handleNewFindMyLocation);
+    // Listen via the event dispatcher rather than the socket itself — the socket is
+    // torn down and rebuilt on every restart (backgrounding, a server URL refresh),
+    // and a listener bound to the old instance would just stop receiving updates.
+    _findMyLocationListener = EventDispatcherSvc.stream.listen((event) {
+      if (event.type == 'new-findmy-location') _handleNewFindMyLocation(event.data);
+    });
 
     _scheduleRefreshGate();
     _setupRedactionListeners();
@@ -385,11 +390,11 @@ class FindMyController extends GetxController {
     _refreshTimer?.cancel();
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
+    _findMyLocationListener?.cancel();
     locationSub?.cancel();
     mapController.dispose();
     popupController.dispose();
     tabController?.dispose();
-    SocketSvc.socket?.off("new-findmy-location");
     itemsController.dispose();
     devicesController.dispose();
     friendsController.dispose();

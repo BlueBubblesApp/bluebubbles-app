@@ -518,7 +518,7 @@ mixin ConnectionPanelHelpersMixin {
               backgroundColor: tileColor,
               onTap: () async {
                 await fdb.fetchFirebaseConfig();
-                String? newUrl = await fdb.fetchNewUrl();
+                String? newUrl = await fdb.fetchNewUrl(restartSocket: false);
                 showSnackbar("Notice", "Fetched URL: $newUrl");
                 SocketSvc.restartSocket();
               },
