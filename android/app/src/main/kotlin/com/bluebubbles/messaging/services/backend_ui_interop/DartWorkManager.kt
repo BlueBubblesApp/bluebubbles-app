@@ -10,6 +10,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import java.util.concurrent.TimeUnit
+import java.io.File
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.google.gson.GsonBuilder
@@ -19,6 +20,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object DartWorkManager {
+    // WorkManager input data is capped at ~10 KB total; attachment pushes can exceed that,
+    // so spill oversized payloads to a cache file and pass a marker path instead.
+    private const val WORKER_DATA_MAX_BYTES = 9_000
+    const val DATA_FILE_MARKER = "@file:"
+
     /// [callback] receives whether the Dart work actually SUCCEEDED. Callers must not
     /// treat completion as success: WorkManager also reaches a finished state on FAILED
     /// and CANCELLED, which is exactly what happens when a cold engine boot fails while
@@ -29,6 +35,25 @@ object DartWorkManager {
         val gson = GsonBuilder()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create()
+        val json = gson.toJson(arguments)
+
+        val dataBuilder = Data.Builder().putString("method", method)
+        if (json.length <= WORKER_DATA_MAX_BYTES) {
+            dataBuilder.putString("data", json)
+        } else {
+            val payloadFile = File(
+                context.cacheDir,
+                "dart_worker_${System.currentTimeMillis()}_${method.hashCode()}.json",
+            )
+            payloadFile.writeText(json)
+            dataBuilder.putString("data", DATA_FILE_MARKER + payloadFile.absolutePath)
+            PersistentLog.w(
+                context,
+                Constants.logTag,
+                "Worker payload exceeds WorkManager limit; spilling ${json.length} bytes to ${payloadFile.absolutePath}",
+            )
+        }
+
         val work = OneTimeWorkRequest.Builder(DartWorker::class.java)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             // Retries redeliver dropped events (e.g. notifications). Exponential from the
@@ -36,12 +61,19 @@ object DartWorkManager {
             // long enough to outlast a memory-pressure spike that makes cold engine boots
             // fail repeatedly, while the first retry still lands within seconds.
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
-            .setInputData(Data.Builder()
-                .putString("method", method)
-                .putString("data", gson.toJson(arguments).toString()).build())
+            .setInputData(dataBuilder.build())
             .addTag(Constants.dartWorkerTag)
             .build()
-        WorkManager.getInstance(context).enqueue(work)
+        try {
+            WorkManager.getInstance(context).enqueue(work)
+        } catch (e: Exception) {
+            PersistentLog.e(context, Constants.logTag, "Failed to enqueue worker for method $method (${json.length} bytes)", e)
+            val spilledPath = dataBuilder.build().getString("data")
+            if (spilledPath?.startsWith(DATA_FILE_MARKER) == true) {
+                File(spilledPath.removePrefix(DATA_FILE_MARKER)).delete()
+            }
+            return
+        }
 
         // Observe when the worker is finished and run the provided callback.
         // Everything runs on the main thread (LiveData requirement), and we must hold
