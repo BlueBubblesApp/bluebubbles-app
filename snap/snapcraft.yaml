@@ -57,7 +57,7 @@ apps:
       - audio-playback
       - audio-record
     environment:
-      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/bin/lib:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/blas:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/lapack:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/samba:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/vdpau:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/dri:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/bin/lib:$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/blas:$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/lapack
       ALWAYS_USE_PULSEAUDIO: '1'
       GIO_USE_PROXY_RESOLVER: libproxy
 
@@ -74,12 +74,11 @@ parts:
     stage:
       - etc/asound.conf
       - snap/command-chain/alsa-launch
-      - usr/bin/yad*
+      - usr/bin/yad
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/alsa-lib
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libasound*
-      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libdnsfile*
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libFLAC*
-      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libjack*
+      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libjack.so*
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libpulse*
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libsamplerate*
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libspeex*
@@ -105,6 +104,10 @@ parts:
       - pulseaudio-utils
       - wmctrl
     stage:
+      - -usr/bin/ffplay
+      - -usr/bin/ffprobe
+      - -usr/bin/qt-faststart
+      - -usr/share/libmysofa
       - -usr/share/doc
       - -usr/share/man
       - -usr/share/lintian
@@ -113,6 +116,22 @@ parts:
       - -usr/share/icons/Humanity*
       - -usr/share/icons/ubuntu-mono*
       - -usr/share/icons/LoginIcons
+      - -usr/lib/*/libflite_cmu_time_awb*
+      - -usr/lib/*/libflite_cmu_grapheme*
+      - -usr/lib/*/libflite_cmu_indic*
+      - -usr/lib/*/liblua5.2*
+      - -usr/lib/*/libmujs*
+      - -usr/lib/*/libsixel*
+      - -usr/lib/*/libuchardet*
+      - -usr/lib/*/libdvdnav*
+      - -usr/lib/*/libdvdread*
+      - -usr/lib/*/libpsl*
+      - -usr/lib/*/libpixman-1*
+      - -usr/lib/*/libfftw3_threads*
+      - -usr/lib/*/libfftw3_omp*
+      - -usr/lib/*/libsphinxad*
+      - -usr/lib/*/libjacknet*
+      - -usr/lib/*/libjackserver*
       - -usr/lib/*/libasound*
       - -usr/lib/*/libmpv.so*
       - -usr/lib/*/libgtk-3*

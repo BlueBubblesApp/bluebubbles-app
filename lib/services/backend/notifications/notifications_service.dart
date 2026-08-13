@@ -72,8 +72,23 @@ class NotificationsService {
   /// resolves when it matches the guid (flutter_local_notifications#2738), so one
   /// value serves as both.
   ///
-  /// DO NOT CHANGE THIS
-  static const String windowsNotificationGuid = '1c09a4af-0327-4a79-a0f3-a1404df74ed1';
+  /// One value per distributable: the guid doubles as the toast activator CLSID, and a
+  /// packaged manifest registration outranks the unpackaged HKCU one, so a shared value
+  /// sends actions to the wrong app
+  ///
+  /// Store value must equal msix_config.toast_activator.clsid (pubspec.yaml), sideload
+  /// value --toast-activator-clsid (windows/build.ps1).
+  ///
+  /// DO NOT CHANGE THESE
+  static const String _storeMsixNotificationGuid = '1c09a4af-0327-4a79-a0f3-a1404df74ed1';
+  static const String _sideloadMsixNotificationGuid = '68c6675d-9acf-4098-b539-20b5792427b5';
+  static const String _exeNotificationGuid = '5963a68d-695e-4b6e-9596-421c0053a055';
+
+  static String get windowsNotificationGuid => isStoreMsix
+      ? _storeMsixNotificationGuid
+      : isSideloadMsix
+          ? _sideloadMsixNotificationGuid
+          : _exeNotificationGuid;
 
   bool get hideContent => SettingsSvc.settings.hideTextPreviews.value;
 
