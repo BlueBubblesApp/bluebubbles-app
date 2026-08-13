@@ -62,15 +62,6 @@ apps:
       GIO_USE_PROXY_RESOLVER: libproxy
 
 parts:
-  desktop-glib-only:
-    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
-    source-subdir: glib-only
-    plugin: make
-    build-packages:
-      - libglib2.0-dev
-    stage-packages:
-      - libglib2.0-bin
-
   alsa-mixin:
     plugin: dump
     source: https://github.com/diddlesnaps/snapcraft-alsa.git
@@ -95,26 +86,9 @@ parts:
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libvorbis*
       - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio
 
-  fmedia:
-    source:
-      - on amd64: https://master.dl.sourceforge.net/project/fmedia/v1.23.1/fmedia-1.23.1-linux-amd64.tar.xz
-      - on arm64: ""
-    plugin: dump
-    override-build: |
-      arch=$(uname -i)
-      if [ "$arch" == 'x86_64' ]; then
-        set -eux
-        rm mod/libwavpack-ff.so mod/wavpack.so
-        mkdir -p $CRAFT_PART_INSTALL/bin/fmedia-1
-        cp -r . $CRAFT_PART_INSTALL/bin/fmedia-1/
-        ln -s fmedia-1/fmedia $CRAFT_PART_INSTALL/bin/fmedia
-      fi
-
   bluebubbles:
     after:
-      - desktop-glib-only
       - alsa-mixin
-      - fmedia
     source:
       - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.1.0%2B90/bluebubbles-linux-x86_64.tar.gz
       - on arm64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.1.0%2B90/bluebubbles-linux-aarch64.tar.gz
@@ -124,16 +98,21 @@ parts:
       mkdir -p $CRAFT_PART_INSTALL/bin
       cp -r ./* $CRAFT_PART_INSTALL/bin/
     stage-packages:
-      - on arm64:
-          - ffmpeg
+      - ffmpeg
       - libayatana-appindicator3-1
-      - libglu1-mesa
       - libmpv2
-      - libnotify4
       - libproxy1v5
-      - net-tools
+      - pulseaudio-utils
       - wmctrl
     stage:
+      - -usr/share/doc
+      - -usr/share/man
+      - -usr/share/lintian
+      - -usr/share/bug
+      - -usr/share/icons/Adwaita
+      - -usr/share/icons/Humanity*
+      - -usr/share/icons/ubuntu-mono*
+      - -usr/share/icons/LoginIcons
       - -usr/lib/*/libasound*
       - -usr/lib/*/libmpv.so*
       - -usr/lib/*/libgtk-3*
@@ -201,10 +180,11 @@ parts:
     plugin: nil
     build-snaps:
       - core24
+      - gnome-46-2404
       - gtk-common-themes
     override-prime: |
       set -eux
-      for snap in "core24" "gtk-common-themes"; do
+      for snap in "core24" "gnome-46-2404" "gtk-common-themes"; do
           cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 

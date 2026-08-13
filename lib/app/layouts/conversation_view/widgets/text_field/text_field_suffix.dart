@@ -16,7 +16,6 @@ import 'package:get/get.dart';
 import 'package:multi_value_listenable_builder/multi_value_listenable_builder.dart';
 import 'package:path/path.dart';
 import 'package:record/record.dart';
-import 'package:system_info2/system_info2.dart';
 import 'package:universal_io/io.dart';
 
 class TextFieldSuffix extends StatefulWidget {
@@ -59,8 +58,6 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
   // Cache these values at init to avoid repeated platform checks
   late final bool _isWeb = kIsWeb;
   late final bool _isDesktop = kIsDesktop;
-  late final bool _isLinuxArm64 =
-      kIsDesktop && Platform.isLinux && SysInfo.kernelArchitecture == ProcessorArchitecture.arm64;
 
   bool get isChatCreator => widget.isChatCreator;
   bool get alwaysShowSend => widget.alwaysShowSend;
@@ -124,7 +121,6 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
               firstChild: _RecordingButton(
                 isWeb: _isWeb,
                 isDesktop: _isDesktop,
-                isLinuxArm64: _isLinuxArm64,
                 isChatCreator: isChatCreator,
                 alwaysShowSend: alwaysShowSend,
                 showRecording: showRecording,
@@ -173,7 +169,6 @@ class _RecordingButton extends StatelessWidget {
   const _RecordingButton({
     required this.isWeb,
     required this.isDesktop,
-    required this.isLinuxArm64,
     required this.isChatCreator,
     required this.alwaysShowSend,
     required this.showRecording,
@@ -185,7 +180,6 @@ class _RecordingButton extends StatelessWidget {
 
   final bool isWeb;
   final bool isDesktop;
-  final bool isLinuxArm64;
   final bool isChatCreator;
   final bool alwaysShowSend;
   final bool showRecording;
@@ -216,25 +210,23 @@ class _RecordingButton extends StatelessWidget {
           minimumSize: isDesktop ? const Size(40, 40) : const Size(32, 32),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        child: isLinuxArm64
-            ? const SizedBox(height: 40)
-            : !isChatCreator && !showRecording
-                ? CupertinoIconWrapper(
-                    icon: Icon(
-                      isIOS ? CupertinoIcons.mic_fill : Icons.mic_none,
-                      color: isIOS
-                          ? context.theme.colorScheme.outline.withValues(alpha: 0.8)
-                          : context.theme.colorScheme.onSurfaceVariant,
-                      size: 20,
-                    ),
-                  )
-                : CupertinoIconWrapper(
-                    icon: Icon(
-                      isIOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
-                      color: isIOS ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
-                      size: 15,
-                    ),
-                  ),
+        child: !isChatCreator && !showRecording
+            ? CupertinoIconWrapper(
+                icon: Icon(
+                  isIOS ? CupertinoIcons.mic_fill : Icons.mic_none,
+                  color: isIOS
+                      ? context.theme.colorScheme.outline.withValues(alpha: 0.8)
+                      : context.theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              )
+            : CupertinoIconWrapper(
+                icon: Icon(
+                  isIOS ? CupertinoIcons.stop_fill : Icons.stop_circle,
+                  color: isIOS ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
+                  size: 15,
+                ),
+              ),
         onPressed: () async {
           if (controller == null) return;
           controller!.showRecording.toggle();
