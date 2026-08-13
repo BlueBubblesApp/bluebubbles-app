@@ -52,23 +52,47 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
   // Extra vertical offset that differs between the iOS skin and Material/Samsung skins.
   double get _platformVerticalOffset => iOS ? -4.0 : 14.5;
 
-  // Offset for typing indicator when it is visible.
+  // Offset for typing indicator when it is settled visible.
+  //
+  // Resolved from the observable rather than the RenderBox when the indicator is
+  // hidden, because the row does not collapse the instant the flag flips: on
+  // hide, TypingIndicator runs a 280ms ScaleTransition (paint-only, so the row
+  // keeps its full layout height throughout) before removing the bubble from the
+  // tree, and only then does its AnimatedSize collapse the height over 200ms.
+  // Measuring during that ~480ms tail returns the *old* height and would freeze
+  // the target ~55px too high. The flag is already the settled end state, so
+  // trust it and skip the measurement entirely.
   double get _typingIndicatorOffset {
+    if (!controller.showTypingIndicator.value) return 0;
     final measured = (controller.typingInfoKey.currentContext?.findRenderObject() as RenderBox?)?.size.height;
     if (measured != null && measured > 0) {
       return measured;
     }
-    return controller.showTypingIndicator.value ? _typingIndicatorFallbackHeight : 0;
+    return _typingIndicatorFallbackHeight;
   }
 
   // Offset for smart reply row when it is visible.
   double get _smartReplyOffset => controller.showSmartReplyRow.value ? controller.smartReplyRowHeight.value : 0;
 
+  // Snapshot of _liveBottomOffset taken when a send animation starts, and cleared
+  // when the bubble is torn down. Null whenever no send is in flight.
+  //
+  // _textFieldSize already freezes the largest moving part of the offset, but the
+  // typing indicator and the focus-info banner are still measured live and both
+  // animate their height (AnimatedSize). The message list gate keeps *new* events
+  // from starting such a transition mid-flight, but it can't rewind one that was
+  // already running when the user hit send. Freezing the whole sum closes that
+  // window: once the flight begins the target is a constant, so AnimatedPositioned
+  // can never chase it regardless of what moves underneath.
+  double? _frozenBottomOffset;
+
   // Total bottom offset for the AnimatedPositioned — how far above the bottom
   // of the Stack the animation bubble should land at the end of its travel.
+  double get _animationBottomOffset => _frozenBottomOffset ?? _liveBottomOffset;
+
   // Uses the stored resting text field height (_textFieldSize) so the target
   // never changes during the animation, even while the field shrinks.
-  double get _animationBottomOffset =>
+  double get _liveBottomOffset =>
       _textFieldSize +
       focusInfoSize +
       _textFieldVerticalPadding +
@@ -290,6 +314,11 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
               ),
       );
       setState(() {
+        // Freeze the landing target for the whole flight. Computed here rather
+        // than in build() so it reflects the layout at the moment of the send —
+        // notably after updateSmartReplyLayout() above has already zeroed the
+        // smart reply row.
+        _frozenBottomOffset = _liveBottomOffset;
         tween = Tween<double>(
           begin: 0.9,
           end: 0,
@@ -322,6 +351,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
           // the gate — bail before touching state.
           if (!mounted) return;
           setState(() {
+            _frozenBottomOffset = null;
             tween = Tween<double>(begin: 1, end: 0);
             control = Control.stop;
             message = null;

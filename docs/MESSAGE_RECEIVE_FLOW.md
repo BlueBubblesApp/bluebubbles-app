@@ -220,6 +220,8 @@ The send animation flies a bubble from the text field to the bottom of the messa
 
 Also gated: the `typing-indicator` socket event in `action_handler.dart`, since that row sits between the list and the text field and feeds the same offset calculation.
 
+**Frozen target (the other half of the fix).** The gate stops new events from starting a layout transition mid-flight, but it can't rewind one that was already running when the user hit send — `TypingIndicator` takes ~480ms to settle on hide (280ms paint-only `ScaleTransition`, *then* a 200ms `AnimatedSize` height collapse), so an event landing shortly before the send is still moving the row during the flight. `SendAnimation` therefore snapshots the whole offset into `_frozenBottomOffset` when the animation starts and clears it on teardown, so `AnimatedPositioned` animates toward a constant. This generalizes what `_textFieldSize` already did for the composer. Relatedly, `_typingIndicatorOffset` resolves a hidden indicator from `showTypingIndicator` rather than the RenderBox — measuring during the settle tail returns the stale pre-collapse height and would freeze the target ~55px too high.
+
 **Key files:** `lib/services/ui/chat/message_list_gate.dart`, `lib/app/layouts/conversation_view/pages/messages_view.dart`, `lib/app/layouts/conversation_view/widgets/message/send_animation.dart`
 
 ---
