@@ -44,28 +44,52 @@
   <launchable type="desktop-id">app.bluebubbles.BlueBubbles.desktop</launchable>
   <screenshots>
     <screenshot type="default" xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.0%2B90/flatpak/screenshots/Ios%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.1%2B91/flatpak/screenshots/Ios%20Skin.png</image>
       <caption>Chat with friends and family</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.0%2B90/flatpak/screenshots/Dark.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.1%2B91/flatpak/screenshots/Dark.png</image>
       <caption>Dark Mode</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.0%2B90/flatpak/screenshots/Settings.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.1%2B91/flatpak/screenshots/Settings.png</image>
       <caption>Extensive Customization</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.0%2B90/flatpak/screenshots/Material%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.1%2B91/flatpak/screenshots/Material%20Skin.png</image>
       <caption>Material Skin</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.0%2B90/flatpak/screenshots/Samsung%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.1%2B91/flatpak/screenshots/Samsung%20Skin.png</image>
       <caption>Samsung Skin</caption>
     </screenshot>
   </screenshots>
 
   <releases>
+    <release date="2026-08-13" version="2.1.1.0">
+      <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.1%2B91</url>
+      <description>
+        <p>A bug-fix release aimed at issues found during the v2.x rollout, plus a few desktop enhancements.</p>
+        <p>Enhancements</p>
+        <ul>
+          <li>Voice message recording, plus fixes to voice message playback (now working on arm64 too)</li>
+          <li>Settings tiles now highlight the page you are viewing in the two-column layout</li>
+          <li>The splash screen now shows migration progress and only offers to close or report once startup actually stalls</li>
+          <li>Smoother message list animations when sending</li>
+          <li>Backups &amp; restore now fall back to local backups with an offline notice when the server can't be reached</li>
+        </ul>
+        <p>Fixes</p>
+        <ul>
+          <li>Fixes state management issues with the socket connection, which could cause a stale connection status, stacked listeners, and an unnecessary amount of errors</li>
+          <li>Fixes issues with contacts not being detected or matched against handles on some devices</li>
+          <li>Fixes issues receiving notifications on some devices, caused by a faulty contact avatar path</li>
+          <li>Fixes page dimming and navigation issues in the two-column layout</li>
+          <li>Fixes some issues with skin-specific dialogs, including dialog colors on the iOS skin</li>
+          <li>Fixes Theme Studio holding on to stale state between visits</li>
+          <li>Removes the stale connection indicator setting</li>
+        </ul>
+      </description>
+    </release>
     <release date="2026-08-10" version="2.1.0.0">
       <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.0%2B90</url>
       <description>
