@@ -21,6 +21,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
@@ -45,6 +46,21 @@ class ConversationTextField extends CustomStateful<ConversationViewController> {
 
 class ConversationTextFieldState extends CustomState<ConversationTextField, void, ConversationViewController>
     with TickerProviderStateMixin {
+  /// The chat whose composer last auto-opened the keyboard. Tracked statically because
+  /// both the composer's State and its ConversationViewController are recreated while a
+  /// chat stays open (e.g. every time the view insets change when the user dismisses the
+  /// keyboard), so any per-widget or per-controller flag resets and the auto-open re-fires
+  /// — the keyboard "keeps coming back". A static value survives those recreations, so the
+  /// auto-open fires once per *visited* chat and a dismissal sticks. It updates whenever a
+  /// different chat is viewed, so returning to a chat later re-opens as expected.
+  static String? _lastAutoFocusedChatGuid;
+
+  /// Set the first time any composer runs its keyboard retry — a proxy for "how long ago
+  /// this process launched." A shortcut that opens straight into a chat hits this while the
+  /// engine is still restarting its input connection, so those opens get a longer retry
+  /// window (see [_ensureKeyboardShown]).
+  static DateTime? _firstKeyboardAttemptAt;
+
   final recorderController = kIsWeb ? null : RecorderController();
   final localController = ConversationTextFieldLocalController();
   final _emojiScrollController = ScrollController();
@@ -62,6 +78,18 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   final proxyController = TextEditingController();
 
+  // Stable references so these can be removed in dispose(). The focus nodes and text
+  // controllers live on the ConversationViewController, which outlives this widget and
+  // can be reused when the composer is recreated (e.g. the Flutter surface is destroyed
+  // and rebuilt in split-screen). Disposing those nodes here would leave the reused
+  // controller holding a dead FocusNode, so the next composer's initState crashes with
+  // "A FocusNode was used after being disposed." We therefore only add/remove listeners
+  // here and let the controller own their disposal (see ConversationViewController.onClose).
+  void _focusNodeListener() => focusListener(false);
+  void _subjectFocusNodeListener() => focusListener(true);
+  void _textControllerListener() => textListener(false);
+  void _subjectTextControllerListener() => textListener(true);
+
   @override
   void initState() {
     super.initState();
@@ -75,19 +103,21 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     // Save state
     localController.oldTextFieldSelection.value = controller.textController.selection;
 
+    // Let callers that don't rebuild this widget (re-entering an already-open chat,
+    // app resume) drive the keyboard through the same retry-until-visible path.
+    controller.ensureComposerKeyboard = focusComposerAndShowKeyboard;
+
     if (controller.fromChatCreator) {
       controller.focusNode.requestFocus();
     } else if (SettingsSvc.settings.autoOpenKeyboard.value && !controller.fromSearchResult) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.focusNode.requestFocus();
-      });
+      _autoFocusWhenSettled();
     }
 
-    controller.focusNode.addListener(() => focusListener(false));
-    controller.subjectFocusNode.addListener(() => focusListener(true));
+    controller.focusNode.addListener(_focusNodeListener);
+    controller.subjectFocusNode.addListener(_subjectFocusNodeListener);
 
-    controller.textController.addListener(() => textListener(false));
-    controller.subjectTextController.addListener(() => textListener(true));
+    controller.textController.addListener(_textControllerListener);
+    controller.subjectTextController.addListener(_subjectTextControllerListener);
 
     if (kIsDesktop || kIsWeb) {
       proxyController.addListener(() {
@@ -311,18 +341,125 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     }
   }
 
+  /// Focuses the composer and makes sure the keyboard actually appears.
+  ///
+  /// `requestFocus()` alone is enough when the user taps a chat from the list, but not
+  /// when the app is launched straight into a conversation from a launcher shortcut or
+  /// an `imessage://` URI. In that case the node does take focus, yet the platform
+  /// never raises the keyboard: the engine's input connection is still being set up
+  /// (and is restarted during startup), which swallows the show request without
+  /// telling the framework — the same engine behaviour the resume path works around in
+  /// [StartupTasks], see https://github.com/flutter/flutter/issues/52599.
+  ///
+  /// So ask for the keyboard explicitly once the connection has settled.
+  ///
+  /// This runs from initState. Both this widget's State and its controller are recreated
+  /// while a chat stays open (view-inset changes recreate them), so a per-widget or
+  /// per-controller flag can't stop the auto-open from re-firing after the user dismisses
+  /// the keyboard. [_lastAutoFocusedChatGuid] is static, so the automatic open fires once
+  /// per visited chat and a dismissal sticks. Explicit re-focus requests (re-entering from
+  /// a shortcut, app resume) still go through focusComposerAndShowKeyboard directly.
+  void _autoFocusWhenSettled() {
+    // Only the active (foreground) chat's composer may auto-open. A previous chat's view
+    // can stay mounted during navigation, and its composer would otherwise fight the
+    // active one for the keyboard — each recreation re-grabbing focus — so the keyboard
+    // ping-pongs and never stays dismissed.
+    if (ChatsSvc.activeChatGuid.value != chatGuid) return;
+    if (_lastAutoFocusedChatGuid == chatGuid) return; // already auto-opened this chat
+    _lastAutoFocusedChatGuid = chatGuid;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || ChatsSvc.activeChatGuid.value != chatGuid) return;
+      focusComposerAndShowKeyboard();
+    });
+  }
+
+  /// Focuses the message field and drives the keyboard up, retrying until it is
+  /// actually visible. Exposed on the controller for callers that re-enter an
+  /// already-open conversation, where this widget is never rebuilt.
+  void focusComposerAndShowKeyboard() {
+    if (!mounted) return;
+    // This is an explicit request to raise the keyboard for the foreground chat (entry
+    // auto-open, re-open from a shortcut, or resume). Clear any stale overlay/sub-route
+    // flags first: they live on the ConversationViewController, which is reused across
+    // opens, and a value left set by a picker or a details route whose cleanup was skipped
+    // would make _ensureKeyboardShown bail immediately so the keyboard never appears — the
+    // "works a few times then stops" failure. A genuine overlay opened mid-retry still
+    // stops the loop, because it re-sets the flag and the loop re-checks each attempt.
+    controller.showingOverlays = false;
+    controller.showingSubRoute = false;
+    _lastAutoFocusedChatGuid = chatGuid;
+    controller.focusNode.requestFocus();
+    unawaited(_ensureKeyboardShown());
+  }
+
+  /// Nudges the platform for the keyboard a few times to cover cold-start churn, then
+  /// stops.
+  ///
+  /// A single show request is unreliable during startup: the engine tears down and
+  /// re-creates its input connection several times, and a request that lands in one of
+  /// those gaps is dropped without any error. So retry briefly — but only briefly.
+  ///
+  /// The window is short for warm opens and longer for cold (just-launched) opens.
+  ///
+  /// Why short by default: in split-screen / multi-window (common on the Fold) the IME
+  /// doesn't resize this window, so neither `viewInsets.bottom` nor
+  /// `KeyboardVisibilityController` ever report the keyboard as visible — the loop can't
+  /// detect success. Every `TextInput.show` it fires after the user has dismissed the
+  /// keyboard re-raises it, so a long loop there makes Back appear broken (dismiss →
+  /// instantly pops back up). A ~1s window finishes before the user reads and dismisses.
+  ///
+  /// Why longer when cold: a shortcut that launches straight into a chat races the engine's
+  /// input-connection churn, which lasts longer than 1s, so a short window often misses and
+  /// the keyboard never appears. A cold open is fullscreen (it resizes), so the loop DOES
+  /// get a visibility signal and exits the moment the keyboard is up — a longer window there
+  /// doesn't fight a dismissal. The extra time only applies right after launch.
+  Future<void> _ensureKeyboardShown() async {
+    const interval = Duration(milliseconds: 250);
+    _firstKeyboardAttemptAt ??= DateTime.now();
+    final coldStart = DateTime.now().difference(_firstKeyboardAttemptAt!) < const Duration(seconds: 8);
+    final maxAttempts = coldStart ? 20 : 4; // ~5s cold (outlast startup churn), ~1s warm
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      await Future.delayed(interval);
+      if (!mounted) return;
+
+      // Stop if the composer no longer owns focus — the user may have navigated
+      // away, or an overlay/sub-route may have taken over.
+      if (!controller.focusNode.hasFocus) return;
+      if (controller.showingOverlays || controller.showingSubRoute) return;
+
+      // Stop as soon as the keyboard is known to be up. `keyboardOpen` is driven by
+      // KeyboardVisibilityController and is the signal that works when the window does
+      // resize; `viewInsets` is the fallback for contexts that still see the inset.
+      if (controller.keyboardOpen || MediaQuery.of(context).viewInsets.bottom > 0) {
+        Logger.debug('Composer keyboard visible after $attempt attempt(s)', tag: 'ConversationTextField');
+        return; // keyboard is up — done
+      }
+
+      SystemChannels.textInput.invokeMethod('TextInput.show');
+    }
+  }
+
   @override
   void dispose() {
+    // Only clear the hook if it still points at this instance — a replacement
+    // composer may already have registered itself during a rebuild.
+    if (identical(controller.ensureComposerKeyboard, focusComposerAndShowKeyboard)) {
+      controller.ensureComposerKeyboard = null;
+    }
+
     final draftText = controller.textController.text.trim().isNotEmpty ? controller.textController.text : '';
     final draftAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     // Update ChatState synchronously and fire DB save in the background.
     unawaited(ChatsSvc.setChatTextFieldText(chat, draftText));
     unawaited(ChatsSvc.setChatTextFieldAttachments(chat, draftAttachments));
 
-    controller.focusNode.dispose();
-    controller.subjectFocusNode.dispose();
-    controller.textController.dispose();
-    controller.subjectTextController.dispose();
+    // Remove only our listeners — the ConversationViewController owns these nodes and
+    // controllers and disposes them in onClose(). See the field comments above.
+    controller.focusNode.removeListener(_focusNodeListener);
+    controller.subjectFocusNode.removeListener(_subjectFocusNodeListener);
+    controller.textController.removeListener(_textControllerListener);
+    controller.subjectTextController.removeListener(_subjectTextControllerListener);
     recorderController?.dispose();
     _emojiScrollController.dispose();
     controller.showAttachmentPicker.value = false;
