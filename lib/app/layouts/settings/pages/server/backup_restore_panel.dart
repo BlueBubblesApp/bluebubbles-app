@@ -57,7 +57,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
 
   Future<String> defaultName() => BackupRestoreActions.defaultDeviceName();
 
-  Future<BackupDestination?> showMethodDialog() => BackupRestoreDialogs.showBackupDestinationDialog(context);
+  Future<BackupDestination?> showMethodDialog() async => fetching.value == null
+      ? BackupDestination.local
+      : BackupRestoreDialogs.showBackupDestinationDialog(context);
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +81,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         bodySlivers: [
           SliverList(
             delegate: SliverChildListDelegate([
-              if (fetching.value == null || fetching.value == true)
+              if (fetching.value == true)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 100),
@@ -87,20 +89,20 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            fetching.value == null ? "Something went wrong!" : "Getting backups...",
-                            style: context.theme.textTheme.labelLarge,
-                          ),
+                          child: Text("Getting backups...", style: context.theme.textTheme.labelLarge),
                         ),
-                        if (fetching.value == true) buildProgressIndicator(context, size: 15),
+                        buildProgressIndicator(context, size: 15),
                       ],
                     ),
                   ),
-                ),
-              if (fetching.value == false) _buildSectionHeader("Settings Backups"),
-              if (fetching.value == false) _buildBackupSection(BackupKind.settings),
-              if (fetching.value == false) _buildSectionHeader("Theme Backups"),
-              if (fetching.value == false) _buildBackupSection(BackupKind.theme),
+                )
+              else ...[
+                if (fetching.value == null) _buildOfflineBanner(),
+                _buildSectionHeader("Settings Backups"),
+                _buildBackupSection(BackupKind.settings),
+                _buildSectionHeader("Theme Backups"),
+                _buildBackupSection(BackupKind.theme),
+              ],
             ]),
           ),
         ]));
@@ -118,6 +120,29 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       return SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: text);
     }
     return M3ESectionHeader(label: text);
+  }
+
+  Widget _buildOfflineBanner() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            iOS ? CupertinoIcons.exclamationmark_triangle : Icons.warning_amber_outlined,
+            color: context.theme.colorScheme.error,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Couldn't reach the server, so cloud backups aren't available. You can still create and restore local backups.",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBackupSection(BackupKind kind) {
@@ -153,7 +178,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
             ),
             const SizedBox(height: 8),
             Text(
-              isSettings ? "No settings backups yet" : "No theme backups yet",
+              fetching.value == null
+                  ? "Couldn't load server backups"
+                  : (isSettings ? "No settings backups yet" : "No theme backups yet"),
               textAlign: TextAlign.center,
               style: context.theme.textTheme.bodyMedium!
                   .copyWith(color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75)),
@@ -246,8 +273,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
   Widget _buildActionsRow(BackupKind kind) {
     const createLabel = "Create New";
     const restoreLabel = "Restore Local";
-    final onCreate = () => _onCreateNew(kind);
-    final onRestore = () => _onRestoreLocal(kind);
+    Future<void> onCreate() => _onCreateNew(kind);
+    Future<void> onRestore() => _onRestoreLocal(kind);
 
     if (iOS) {
       return Column(children: [
@@ -380,7 +407,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       final desc = descController.text;
       if (name.isEmpty) {
         return showSnackbar("Error", "Provide a name!");
-      } else if (settings.firstWhereOrNull((s) => s["name"] == name) != null) {
+      } else if (destination.isCloud && settings.firstWhereOrNull((s) => s["name"] == name) != null) {
         bool yes = false;
         await BackupRestoreDialogs.showConfirmation(
           context: _context,
@@ -461,7 +488,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           ),
         );
       }
-      refresh();
+      // Only the cloud list is server-backed; a local save has nothing to re-fetch.
+      if (destination.isCloud) refresh();
     }
 
     if (!context.mounted) return;
@@ -706,7 +734,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         ),
       );
     }
-    refresh();
+    if (destination.isCloud) refresh();
   }
 
   Future<void> _restoreThemesFromFile() async {
