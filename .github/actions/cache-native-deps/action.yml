@@ -1,0 +1,33 @@
+name: Cache native build downloads
+description: >
+  Cache the archives plugins fetch during the CMake configure step — mostly github.com release
+  assets pulled with no auth token, which get 429'd when several runs start at once.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: |
+          build/windows/x64/_deps
+          build/windows/x64/packages
+          build/windows/x64/libmpv
+          build/windows/x64/ANGLE
+          build/windows/x64/ANGLE.7z
+          build/windows/x64/mpv-dev-*.7z
+          build/windows/x64/pdfium-src
+          build/windows/x64/pdfium-download
+          build/windows/x64/plugins/ffmpeg_kit_flutter_new_min/ffmpeg-kit
+          build/linux/x64/release/_deps
+          build/linux/x64/release/mimalloc
+          build/linux/x64/release/mimalloc-*.tar.gz
+          build/linux/x64/release/pdfium-src
+          build/linux/x64/release/pdfium-download
+          build/linux/x64/release/plugins/ffmpeg_kit_flutter_new_min/ffmpeg-kit
+          build/linux/arm64/release/_deps
+          build/linux/arm64/release/mimalloc
+          build/linux/arm64/release/mimalloc-*.tar.gz
+          build/linux/arm64/release/pdfium-src
+          build/linux/arm64/release/pdfium-download
+          build/linux/arm64/release/plugins/ffmpeg_kit_flutter_new_min/ffmpeg-kit
+        key: native-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}

@@ -50,8 +50,10 @@ jobs:
         run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env
         shell: bash
 
-      # Inno Setup 6 and Rust (for super_native_extensions) are preinstalled
-      # on the windows-latest runner image.
+      - name: Cache native build downloads
+        uses: ./.github/actions/cache-native-deps
+
+      # Inno Setup 6 is preinstalled on the windows-latest runner image.
       - name: Build app (phase 1)
         run: .\windows\build.ps1 -Phase Build
         shell: pwsh
@@ -291,6 +293,9 @@ jobs:
 
       - name: Write .env
         run: echo "KLIPY_API_KEY=${{ secrets.KLIPY_API_KEY }}" > .env
+
+      - name: Cache native build downloads
+        uses: ./.github/actions/cache-native-deps
 
       - name: Build
         run: bash linux/build.sh
