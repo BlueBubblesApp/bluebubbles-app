@@ -231,7 +231,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   /// given this exact size, and [AttachmentHolder] reserves the same box for the
   /// download/not-loaded placeholders — see [Attachment.displayBox].
   ({double width, double height}) _displaySize(BuildContext context) =>
-      attachment.displayBox(NavigationSvc.width(context) * 0.5);
+      attachment.displayBox(NavigationSvc.width(context) * 0.5, context.height * 0.6);
 
   Widget _buildStandardImage(BuildContext context) {
     // Build the appropriate image widget based on platform and file availability

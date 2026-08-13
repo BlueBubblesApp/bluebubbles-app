@@ -163,7 +163,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     if (isInReply || hideAttachments || widget.transparentBackground) return null;
     if (attachment.mimeStart != "image") return null;
     if (!attachment.hasValidSize) return null;
-    return attachment.displayBox(NavigationSvc.width(context) * 0.5);
+    return attachment.displayBox(NavigationSvc.width(context) * 0.5, context.height * 0.6);
   }
 
   EdgeInsetsGeometry _computePadding(
