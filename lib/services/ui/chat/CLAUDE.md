@@ -5,6 +5,7 @@
 |------|---------|
 | `chats_service.dart` | Global chat list state — the source of truth for all `ChatState` objects |
 | `conversation_view_controller.dart` | Per-chat controller for the active conversation screen |
+| `message_list_gate.dart` | FIFO gate that defers message list mutations while a send animation is in flight |
 
 ---
 
@@ -50,3 +51,21 @@ GetX controller, one instance per open chat. Accessed via `cvc(chat)` helper or 
 **Lifecycle:** Created when a conversation opens, closed when it pops. A conversation can remain "alive" in the background when in tablet mode.
 
 **Rule:** Never hold a direct reference to `ConversationViewController` across navigations — always re-fetch via `cvc(chat)`.
+
+---
+
+## MessageListGate (`message_list_gate.dart`)
+
+One instance per `ConversationViewController`, reached as `controller.messageListGate`.
+
+`SendAnimation` flies a bubble from the text field to the bottom of the message list, aiming at a target computed from the live layout of the rows below the list. Anything that mutates the list or those rows mid-flight moves that target and makes the bubble land wrong. The gate defers that work instead.
+
+**API:** `hold()` closes it, `run(work)` submits, `release()` opens it and replays the queue in order, `dispose()` releases permanently.
+
+**It is not a lock.** No caller ever awaits it and it can never delay a send. While open (the normal case) `run()` executes inline. While held, work queues and replays in submission order as soon as the gate opens. A watchdog force-releases after 2s so a lost `release()` can't strand queued messages.
+
+**Rules:**
+- Anything representing the send itself must bypass the gate — the send takes precedence over everything.
+- Only submit work that is order-independent with respect to bypassing work. Insertions qualify (`_applyNewMessage` re-sorts and recomputes the index); removals do not — see the comment on `MessagesView.handleDeletedMessage`.
+
+Full rationale and the current list of gated/bypassing call sites: **Step 8b** of `docs/MESSAGE_RECEIVE_FLOW.md`.

@@ -407,7 +407,28 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
   }
 
-  void handleNewMessage(Message message) async {
+  /// Entry point registered as [MessagesService.newFunc].
+  ///
+  /// Insertion is routed through [ConversationViewController.messageListGate]
+  /// so that a message arriving while a send animation is in flight waits until
+  /// the animated bubble has landed and been torn down. Inserting mid-flight
+  /// grows the list and can toggle the smart reply / typing indicator rows,
+  /// which moves the target `SendAnimation` is animating toward — the bubble
+  /// then lands short and snaps into place.
+  ///
+  /// Messages this device is currently sending bypass the gate entirely. The
+  /// animation lands *on* the real bubble, so it has to already be in the list
+  /// by the time the flight ends, and a send must never be delayed — including
+  /// a second send fired while the first is still animating.
+  void handleNewMessage(Message message) {
+    if (message.isSending) {
+      _applyNewMessage(message);
+      return;
+    }
+    controller.messageListGate.run(() => _applyNewMessage(message));
+  }
+
+  void _applyNewMessage(Message message) async {
     // Check if widget is still mounted before processing
     if (!mounted) {
       return;
@@ -501,6 +522,19 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
   }
 
+  /// Deliberately NOT routed through [ConversationViewController.messageListGate].
+  ///
+  /// Removal is not order-independent with insertion the way [handleNewMessage]
+  /// is: [MessagesService.retryFailedMessage] calls `removeFunc` immediately
+  /// followed by `newFunc` on the same message, which by then carries a temp
+  /// GUID and so bypasses the gate. Deferring only the removal would invert that
+  /// pair — the re-insert would run first, see the entry already present and
+  /// skip as a duplicate, then the deferred removal would delete it, dropping
+  /// the retried message from the list.
+  ///
+  /// Deletions are also user-initiated rather than something that races a send
+  /// by arriving from the network, so they don't exhibit the timing collision
+  /// the gate exists to solve.
   void handleDeletedMessage(Message message) {
     // Check if widget is still mounted before processing
     if (!mounted) return;
