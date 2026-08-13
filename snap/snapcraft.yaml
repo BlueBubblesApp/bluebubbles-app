@@ -62,15 +62,6 @@ apps:
       GIO_USE_PROXY_RESOLVER: libproxy
 
 parts:
-  desktop-glib-only:
-    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
-    source-subdir: glib-only
-    plugin: make
-    build-packages:
-      - libglib2.0-dev
-    stage-packages:
-      - libglib2.0-bin
-
   alsa-mixin:
     plugin: dump
     source: https://github.com/diddlesnaps/snapcraft-alsa.git
@@ -97,7 +88,6 @@ parts:
 
   bluebubbles:
     after:
-      - desktop-glib-only
       - alsa-mixin
     source:
       - on amd64: https://github.com/BlueBubblesApp/bluebubbles-app/releases/download/v2.1.0%2B90/bluebubbles-linux-x86_64.tar.gz
@@ -110,14 +100,19 @@ parts:
     stage-packages:
       - ffmpeg
       - libayatana-appindicator3-1
-      - libglu1-mesa
       - libmpv2
-      - libnotify4
       - libproxy1v5
-      - net-tools
       - pulseaudio-utils
       - wmctrl
     stage:
+      - -usr/share/doc
+      - -usr/share/man
+      - -usr/share/lintian
+      - -usr/share/bug
+      - -usr/share/icons/Adwaita
+      - -usr/share/icons/Humanity*
+      - -usr/share/icons/ubuntu-mono*
+      - -usr/share/icons/LoginIcons
       - -usr/lib/*/libasound*
       - -usr/lib/*/libmpv.so*
       - -usr/lib/*/libgtk-3*
@@ -185,10 +180,11 @@ parts:
     plugin: nil
     build-snaps:
       - core24
+      - gnome-46-2404
       - gtk-common-themes
     override-prime: |
       set -eux
-      for snap in "core24" "gtk-common-themes"; do
+      for snap in "core24" "gnome-46-2404" "gtk-common-themes"; do
           cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 
