@@ -40,9 +40,36 @@ class StartupTasks {
     await uiReady.future;
   }
 
+  /// Completion of the current determinate step (0..1), or -1 when there isn't
+  /// one — the splash shows its indeterminate spinner instead.
+  static final ValueNotifier<double> progress = ValueNotifier<double>(-1);
+
   static Future<void> setSplashStatus(String value) async {
     status.value = value;
     if (kIsDesktop) await Future.delayed(Duration.zero);
+  }
+
+  /// Drives the splash progress bar. The yield matters as much as the value:
+  /// the platform thread can't deliver either to the native splash while a long
+  /// synchronous step is hogging the isolate, so callers must reach this between
+  /// chunks of work rather than around the whole of it.
+  static Future<void> setSplashProgress(double value) async {
+    progress.value = value;
+    if (kIsDesktop) await Future.delayed(Duration.zero);
+  }
+
+  /// Narrates a startup step to both the log and the desktop splash, which
+  /// shows the last few as a scrolling list.
+  ///
+  /// Reserved for the handful of phases that are slow enough to be worth
+  /// showing and mean something to the user — everything else is a plain
+  /// [Logger.info], since a wall of steps flying by tells them nothing. These
+  /// strings are user-facing, so they describe the step in plain language
+  /// rather than naming the service behind it. Pass [log] when the internals are
+  /// worth having in the log file under a more precise name.
+  static Future<void> _step(String value, {String? log}) async {
+    Logger.info(log ?? value);
+    await setSplashStatus(value);
   }
 
   static Completer<void> _preRegisterInteropServices({
@@ -76,6 +103,9 @@ class StartupTasks {
   }
 
   static Future<void> _initCoreServices({required bool headless}) async {
+    // These run before the logger exists, so they narrate via debugPrint rather
+    // than going through _step. They're fast, so only the last one reaches the
+    // splash.
     debugPrint("Registering FilesystemService...");
     GetIt.I.registerSingletonAsync<FilesystemService>(() async {
       final fsService = FilesystemService();
@@ -95,6 +125,7 @@ class StartupTasks {
     debugPrint("SharedPreferencesService ready");
 
     debugPrint("Registering SettingsService...");
+    await setSplashStatus("Loading settings...");
     GetIt.I.registerSingletonAsync<SettingsService>(() async {
       final settingsService = SettingsService();
       await settingsService.init(headless: headless);
@@ -162,7 +193,6 @@ class StartupTasks {
 
   static Future<void> initStartupServices({bool isBubble = false}) async {
     debugPrint("Initializing startup services...");
-    await setSplashStatus("Loading settings...");
     await _initCoreServices(headless: false);
 
     final startupInteropReady = _preRegisterInteropServices(
@@ -177,13 +207,10 @@ class StartupTasks {
 
     // The next thing we need to do is initialize the database.
     // If the database is not initialized, we cannot do anything.
-    Logger.info("Initializing database...");
-    await setSplashStatus("Opening database...");
+    await _step("Opening database...");
     await Database.init();
     Logger.info("Database initialized");
     startupInteropReady.complete();
-
-    await setSplashStatus("Starting services...");
 
     // Register the global isolate
     Logger.info("Registering isolates...");
@@ -197,7 +224,9 @@ class StartupTasks {
     Logger.info("Loading FCM data...");
     SettingsSvc.loadFcmDataFromDatabase();
 
+    Logger.info("Initializing HttpService...");
     await _initHttpService();
+    Logger.info("Waiting on LifecycleService...");
     await _waitForInterop(lifecycle: true);
 
     Logger.info("Registering IncomingMessageHandler...");
@@ -211,6 +240,7 @@ class StartupTasks {
     // The MethodChannel service needs the database to be initialized to handle events.
     // The Lifecycle service needs the MethodChannel service to be initialized to send events.
 
+    Logger.info("Waiting on MethodChannelService...");
     await _waitForInterop(methodChannel: true);
 
     Logger.info("Registering CloudMessagingService...");
@@ -229,8 +259,7 @@ class StartupTasks {
     GetIt.I.registerSingleton<ThemesService>(ThemesService());
 
     // Parallelize independent services for faster startup
-    Logger.info("Waiting for services to be ready...");
-    await setSplashStatus("Loading contacts...");
+    await _step("Loading themes and contacts...", log: "Waiting for parallel services...");
     await Future.wait([
       ThemeSvc.init(),
       IntentsSvc.init(),
@@ -246,11 +275,11 @@ class StartupTasks {
     GetIt.I.registerSingleton<HandleService>(HandleService());
     HandleSvc.init();
 
-    Logger.info("Registering ChatsService, SocketService, and NotificationsService...");
-    await setSplashStatus("Loading chats...");
+    await _step("Loading chats...");
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
     GetIt.I.registerSingleton<SocketService>(SocketService());
+    Logger.info("Waiting on NotificationsService...");
     await _waitForInterop(notifications: true);
 
     GetIt.I.registerSingleton<EventDispatcher>(EventDispatcher());
@@ -510,8 +539,40 @@ class StartupTasks {
       }
     }
 
+    // Get the connection moving before anything that can block.
+    //
+    // On Android, always restart the socket rather than just reconnecting. Some OEMs
+    // (e.g. Samsung One UI) fire lifecycle events that skip `paused`, so
+    // `disconnect()` is never called and the socket stays `connected` even though its
+    // TCP connection went stale while the app was away. `restartSocket()` rebuilds
+    // from scratch, which is reliable regardless of what lifecycle sequence arrived.
+    //
+    // This used to run *after* detectLocalhost() below, which can take tens of
+    // seconds when the server is unreachable — a serverInfo() call that runs to the
+    // full apiTimeout, then a 255-address subnet scan — leaving the connection
+    // indicator red for that entire window on every resume.
+    final String originBeforeProbe = HttpSvc.origin;
+    if (Platform.isAndroid) {
+      // Also restore the alive marker early: until it is back, LifecycleService.isAlive
+      // reports false for a foreground app, which makes the method-channel handlers
+      // treat incoming pushes as belonging to the headless isolate.
+      if (!(lifecycle?.isBubble ?? false)) {
+        lifecycle?.createFakePort();
+      }
+
+      SocketSvc.restartSocket();
+    }
+
     if (HttpSvc.originOverride == null && SettingsSvc.settings.localhostPort.value != null) {
       await NetworkTasks.detectLocalhost();
+
+      // The probe changes what the socket dials, and setting the override doesn't
+      // cycle the connection on its own. Rebuild only when the resolved origin
+      // actually moved — same rule SocketService applies for URL rediscovery.
+      if (Platform.isAndroid && HttpSvc.origin != originBeforeProbe) {
+        Logger.info("Local address changed to ${HttpSvc.origin} on resume, rebuilding socket");
+        SocketSvc.restartSocket();
+      }
     }
 
     // Flush any contact sync deferred while the app was backgrounded
@@ -533,20 +594,6 @@ class StartupTasks {
           (lifecycle.currentState == AppLifecycleState.resumed && lifecycle.wasBackgrounded)) {
         unawaited(SyncSvc.startIncrementalSync(useGlobalIsolate: true));
       }
-    }
-
-    if (Platform.isAndroid) {
-      if (!(lifecycle?.isBubble ?? false)) {
-        lifecycle?.createFakePort();
-      }
-
-      // On Android, always restart the socket rather than just reconnecting.
-      // Some OEMs (e.g. Samsung One UI) fire lifecycle events that skip `paused`,
-      // meaning `disconnect()` is never called and `state` stays `connected` even
-      // though the underlying TCP connection may be stale after a network change.
-      // `restartSocket()` disposes the old socket and builds a fresh one, which is
-      // reliable regardless of what lifecycle sequence the device sent.
-      SocketSvc.restartSocket();
     }
 
     if (kIsDesktop && lifecycle != null) {

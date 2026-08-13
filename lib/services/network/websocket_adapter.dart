@@ -13,10 +13,19 @@ class WebsocketAdapter implements HttpClientAdapter {
     // Add custom certificate validation for self-signed certs and hostname mismatches
     client.badCertificateCallback = shouldAcceptCertificate;
 
-    return WebSocket.connect(
-      uri,
-      headers: headers?.map((key, value) => MapEntry(key, value.toString())) ?? {},
-      customClient: client,
-    );
+    try {
+      return await WebSocket.connect(
+        uri,
+        headers: headers?.map((key, value) => MapEntry(key, value.toString())) ?? {},
+        customClient: client,
+      );
+    } catch (_) {
+      // The client is only ever handed over to the WebSocket on success. Close it
+      // here or every failed handshake — a DNS miss, a refused connection, a bad
+      // certificate — strands an HttpClient and its connection pool. socket.io
+      // retries on a timer, so an unreachable server leaks one per attempt.
+      client.close(force: true);
+      rethrow;
+    }
   }
 }

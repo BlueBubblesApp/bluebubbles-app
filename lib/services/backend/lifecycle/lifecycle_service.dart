@@ -34,6 +34,22 @@ class LifecycleService with WidgetsBindingObserver {
         IsolateNameServer.lookupPortByName('bg_isolate') != null;
   }
 
+  /// Whether *this* isolate's UI is actually in the foreground right now.
+  ///
+  /// Unlike [isAlive], never consults the process-global `bg_isolate` port marker,
+  /// which goes stale whenever Android backgrounds the app without delivering
+  /// `paused` and leaves [isAlive] reporting true after the user has left.
+  ///
+  /// Use this for decisions that must not be wrong in the "app is still up"
+  /// direction, e.g. dropping a push notification because the UI is expected to
+  /// receive the message over the socket instead.
+  bool get isForeground {
+    if (kIsWeb) return !(window.document.hidden ?? false);
+    if (kIsDesktop) return windowFocused;
+    if (headless) return false;
+    return WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+  }
+
   AppLifecycleState? get currentState => WidgetsBinding.instance.lifecycleState;
 
   List<AppLifecycleState> statesSinceLastResume = [];
@@ -105,7 +121,11 @@ class LifecycleService with WidgetsBindingObserver {
       await Database.waitForInit();
 
       if (GetIt.I.isRegistered<SocketService>()) {
-        GetIt.I<SocketService>().resetScheduledRestartBackoff(cancelPendingTimer: true);
+        // Undo the background disconnect before StartupTasks.onAppResume() tries to
+        // start the socket — startSocket() refuses to run while the connection is
+        // marked as unwanted. Also clears any URL-rediscovery backoff so a returning
+        // user isn't left waiting out a timer that grew while they were away.
+        GetIt.I<SocketService>().resumeConnection();
       }
 
       open();
@@ -212,6 +232,15 @@ class LifecycleService with WidgetsBindingObserver {
     // hidden, the app may still technically be in the foreground, just obscured.
     if (Platform.isAndroid &&
         (triggerState == AppLifecycleState.paused || triggerState == AppLifecycleState.detached)) {
+      // The awaits above can span an entire background → foreground bounce (a slow
+      // or hanging stopAllTyping() request is enough). Tearing the socket and the
+      // isolate down now would kill them out from under a foreground app, so bail
+      // if the user already came back — the resume handler has re-armed everything.
+      if (currentState == AppLifecycleState.resumed) {
+        Logger.info(tag: "LifecycleService", "App resumed during close() — skipping socket and isolate teardown");
+        return;
+      }
+
       if (GetIt.I.isRegistered<SocketService>()) {
         GetIt.I<SocketService>().disconnect();
       }

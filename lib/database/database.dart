@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/database/migrations/chat_latest_message_migration.dart';
@@ -187,6 +188,7 @@ class Database {
     while (currentVersion < Database.version) {
       final int nextVersion = currentVersion + 1;
       Logger.info("Migrating from version $currentVersion to $nextVersion...", tag: "DB-Migration");
+      await StartupTasks.setSplashStatus("Updating database ($nextVersion of ${Database.version})...");
 
       switch (nextVersion) {
         // Version 2 changed handleId to match the server side ROWID, rather than client side ROWID
@@ -251,7 +253,7 @@ class Database {
         // Version 6: Migrate Message.handle from embedded object to ToOne relationship (Phase 2)
         case 6:
           Logger.info("Executing Message-Handle relationship migration (Phase 2)...", tag: "DB-Migration");
-          MessageHandleRelationshipMigration.migrate();
+          await MessageHandleRelationshipMigration.migrate();
           break;
 
         // Version 7: Remove V1 Contact entity (we don't need to do anything.)
@@ -263,7 +265,7 @@ class Database {
         // dbOnlyLatestMessageDate from each chat's most recent message.
         case 8:
           Logger.info("Executing chat latest message backfill...", tag: "DB-Migration");
-          ChatLatestMessageMigration.migrate();
+          await ChatLatestMessageMigration.migrate();
           break;
 
         // Version 9: move legacy Monet overlay users to the new Material You
@@ -279,6 +281,9 @@ class Database {
           await PrefsSvc.admin.remove('monetTheming');
           break;
       }
+
+      // Back to the spinner
+      await StartupTasks.setSplashProgress(-1);
 
       // Update the current version and save it
       currentVersion = nextVersion;

@@ -1,16 +1,17 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 /// Migration for converting Message.handle from embedded object to ToOne&lt;Handle&gt; relationship
 /// This migration populates the handleRelation field for all existing messages
 class MessageHandleRelationshipMigration {
   /// Execute the migration to populate handleRelation for all messages
-  static void migrate() {
+  static Future<void> migrate() async {
     try {
       Logger.info("Starting Message-Handle relationship migration (Phase 2)...", tag: "DB-Migration");
 
-      _migrateMessageHandleRelationships();
+      await _migrateMessageHandleRelationships();
 
       Logger.info("Message-Handle relationship migration (Phase 2) completed successfully", tag: "DB-Migration");
     } catch (e, stack) {
@@ -21,7 +22,7 @@ class MessageHandleRelationshipMigration {
   }
 
   /// Migrate all messages to use ToOne&lt;Handle&gt; relationship instead of embedded Handle object
-  static void _migrateMessageHandleRelationships() {
+  static Future<void> _migrateMessageHandleRelationships() async {
     try {
       Logger.info("Fetching all handles for migration lookup...", tag: "DB-Migration");
 
@@ -93,6 +94,9 @@ class MessageHandleRelationshipMigration {
         }
 
         processed += batch.length;
+
+        // Per batch
+        await StartupTasks.setSplashProgress(processed / totalMessages);
 
         // Log progress every 5000 messages or at the end
         if (processed % 5000 == 0 || processed >= totalMessages) {

@@ -25,6 +25,10 @@ GtkWidget* create_splash_widget();
 // `bluebubbles/splash` method-channel handler in my_application.cc.
 void set_splash_status(const char* status);
 
+// Shows a determinate progress bar at [progress] (0..1), or hides it when
+// negative. Same threading rules as set_splash_status.
+void set_splash_progress(double progress);
+
 // Stops the spinner and destroys the splash widget, removing it from its
 // overlay and revealing the FlView. Safe to call multiple times.
 void close_splash_screen();
