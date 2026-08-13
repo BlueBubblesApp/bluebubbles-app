@@ -160,16 +160,26 @@ std::wstring ExeFileVersion() {
          std::to_wstring(LOWORD(info->dwFileVersionLS));
 }
 
-// True when running from an MSIX package (has package identity).
-bool IsMsix() {
+// Empty when unpackaged.
+std::wstring PackageFullName() {
   UINT32 length = 0;
-  return GetCurrentPackageFullName(&length, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
+  if (GetCurrentPackageFullName(&length, nullptr) == APPMODEL_ERROR_NO_PACKAGE) return L"";
+  std::vector<wchar_t> buffer(length);
+  if (GetCurrentPackageFullName(&length, buffer.data()) != ERROR_SUCCESS) return L"";
+  return std::wstring(buffer.data());
 }
 
 std::wstring BuildVersionLine() {
   std::wstring version = ExeFileVersion();
   if (version.empty()) version = L"?";
-  return L"v" + version + (IsMsix() ? L" (MSIX)" : L"");
+  const std::wstring package = PackageFullName();
+  std::wstring tag;
+  if (!package.empty()) {
+    // Test the store's prefix, not the shared tail: the sideload identity name is a
+    // substring of the store's.
+    tag = package.rfind(L"23344BlueBubbles.BlueBubbles_", 0) == 0 ? L" (MSIX Store)" : L" (MSIX Sideload)";
+  }
+  return L"v" + version + tag;
 }
 
 int S(int logical) { return static_cast<int>(logical * g_scale); }

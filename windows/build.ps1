@@ -133,10 +133,14 @@ if ($Phase -ne 'Build') {
         if ($env:SIGNED_MSIX_PUBLISHER -notmatch '(^|,)\s*CN=') {
             throw "SIGNED_MSIX_PUBLISHER must be an X.500 DN starting with 'CN=' (got: '$env:SIGNED_MSIX_PUBLISHER')."
         }
+        # Must differ from the store package's CLSID (pubspec.yaml) or, with both installed,
+        # one package swallows the other's toast actions. Keep in sync with
+        # _sideloadMsixNotificationGuid in lib/services/backend/notifications/notifications_service.dart.
         $msixArgs = @(
             '--build-windows', 'false',
             '--sign-msix', 'false',
             '--publisher', $env:SIGNED_MSIX_PUBLISHER,
+            '--toast-activator-clsid', '68c6675d-9acf-4098-b539-20b5792427b5',
             '--output-name', 'bluebubbles'
         )
         if ($env:SIGNED_MSIX_IDENTITY) { $msixArgs += @('--identity-name', $env:SIGNED_MSIX_IDENTITY) }

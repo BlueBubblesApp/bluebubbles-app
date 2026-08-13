@@ -54,7 +54,25 @@ bool get isFlatpak => !kIsWeb && Platform.isLinux && Platform.environment.contai
 
 bool get isMsix => !kIsWeb && Platform.isWindows && Platform.resolvedExecutable.contains('WindowsApps');
 
-String get appVersion => "${FilesystemSvc.packageInfo.version}_${Platform.operatingSystem.capitalizeFirst!}${isSnap ? "_Snap" : isFlatpak ? "_Flatpak" : isMsix ? "_Msix" : ""}";
+bool get isStoreMsix => isMsix && Platform.resolvedExecutable.contains(r'\23344BlueBubbles.BlueBubbles_');
+
+bool get isSideloadMsix => isMsix && !isStoreMsix;
+
+String get appVersion {
+  final info = FilesystemSvc.packageInfo;
+  final code = info.buildNumber;
+  final build = Platform.isAndroid ? "+${code.length > 4 ? code.substring(code.length - 4) : code}" : "";
+  final distribution = isSnap
+      ? "_Snap"
+      : isFlatpak
+          ? "_Flatpak"
+          : isStoreMsix
+              ? "_Msix_Store"
+              : isSideloadMsix
+                  ? "_Msix_Sideload"
+                  : "";
+  return "${info.version}${build}_${Platform.operatingSystem.capitalizeFirst!}$distribution";
+}
 
 /// From https://github.com/modulovalue/dart_intersperse/blob/master/lib/src/intersperse.dart
 Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {
