@@ -261,12 +261,16 @@ class Attachment {
   /// at [aspectRatio]'s default — that box *will* change once the real
   /// dimensions land, which is why extraction wants to happen as early as
   /// possible.
-  ({double width, double height}) displayBox(double maxWidth) {
+  ({double width, double height}) displayBox(double maxWidth, [double maxHeight = double.infinity]) {
     final fallbackHeight = maxWidth / aspectRatio;
-    return (
-      width: math.min(displayWidth?.toDouble() ?? maxWidth, maxWidth),
-      height: math.min(displayHeight?.toDouble() ?? fallbackHeight, fallbackHeight),
-    );
+    double width = math.min(displayWidth?.toDouble() ?? maxWidth, maxWidth);
+    double height = math.min(displayHeight?.toDouble() ?? fallbackHeight, fallbackHeight);
+    // Lose width with the height
+    if (height > maxHeight) {
+      width *= maxHeight / height;
+      height = maxHeight;
+    }
+    return (width: width, height: height);
   }
 
   double get aspectRatio => hasValidSize ? (displayWidth! / displayHeight!).abs() : 0.78;
@@ -280,7 +284,7 @@ class Attachment {
   String get path {
     switch (Platform.operatingSystem) {
       case "windows":
-        return "$directory/${"$transferName".replaceAll(RegExp(r'[<>:"/\|?*]'), "_")}";
+        return "$directory/${"$transferName".replaceAll(RegExp(r'[<>:"/|?*]'), "_")}";
       case "linux":
       case "macos":
         return "$directory/${"$transferName".replaceAll(RegExp(r'/'), "_")}";
