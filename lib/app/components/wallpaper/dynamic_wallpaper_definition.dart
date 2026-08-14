@@ -1,5 +1,8 @@
+import 'package:bluebubbles/app/components/wallpaper/aurora_wallpaper.dart';
 import 'package:bluebubbles/app/components/wallpaper/dynamic_wallpaper_config_field.dart';
 import 'package:bluebubbles/app/components/wallpaper/floating_wallpaper.dart';
+import 'package:bluebubbles/app/components/wallpaper/lava_lamp_wallpaper.dart';
+import 'package:bluebubbles/app/components/wallpaper/mesh_gradient_wallpaper.dart';
 import 'package:bluebubbles/app/components/wallpaper/moving_background_wallpaper.dart';
 import 'package:bluebubbles/app/components/wallpaper/particles_wallpaper.dart';
 import 'package:bluebubbles/app/components/wallpaper/wave_wallpaper.dart';
@@ -24,6 +27,14 @@ abstract class DynamicWallpaperDefinition {
     required this.displayName,
     required this.icon,
   });
+
+  /// Whether this wallpaper actually moves. Purely a *presentation* concern —
+  /// the picker groups the gallery by it — and deliberately not part of how a
+  /// wallpaper is stored: a still, generated-and-configured wallpaper uses the
+  /// exact same `ChatWallpaperType.dynamic` + id + config-map plumbing as an
+  /// animated one, and `dynamic` is a persisted enum name that isn't worth a
+  /// migration to rename.
+  bool get isAnimated => true;
 
   /// A sensible starting config, seeded from the chat's active theme (so the
   /// first preview a user sees already matches their bubble color).
@@ -51,9 +62,20 @@ abstract final class DynamicWallpaperRegistry {
     FloatingWallpaperDefinition(),
     MovingBackgroundWallpaperDefinition(),
     ParticlesWallpaperDefinition(),
+    AuroraWallpaperDefinition(),
+    LavaLampWallpaperDefinition(),
+    MeshGradientWallpaperDefinition(),
   ];
 
   static List<DynamicWallpaperDefinition> get all => List.unmodifiable(_definitions);
+
+  /// The gallery renders these as two separate sections — a still wallpaper
+  /// under an "Animated" header would just be misleading.
+  static List<DynamicWallpaperDefinition> get animated =>
+      List.unmodifiable(_definitions.where((d) => d.isAnimated));
+
+  static List<DynamicWallpaperDefinition> get still =>
+      List.unmodifiable(_definitions.where((d) => !d.isAnimated));
 
   static DynamicWallpaperDefinition? byId(String? id) {
     if (id == null) return null;

@@ -161,6 +161,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  aurora_background:
+    dependency: "direct main"
+    description:
+      name: aurora_background
+      sha256: "7618715885e4753cf0fdaf06f5e72ff8be19857f6137ef8a5874efe58d15d0cc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   auto_size_text:
     dependency: "direct main"
     description:
@@ -193,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.13"
+  binarize:
+    dependency: transitive
+    description:
+      name: binarize
+      sha256: "9f0ff4059989f8b9ff09a951e1896998d55cac5fa0d86f701d0165ededf06622"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   bitsdojo_window:
     dependency: "direct main"
     description:
@@ -305,6 +321,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.12.5"
+  cached_value:
+    dependency: transitive
+    description:
+      name: cached_value
+      sha256: "534a6c618e2e891548236c90a3a3ac055dfe4c870efff29719cf28c51ca8b7a5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   characters:
     dependency: transitive
     description:
@@ -1110,6 +1134,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.34"
+  flutter_shaders:
+    dependency: transitive
+    description:
+      name: flutter_shaders
+      sha256: "34794acadd8275d971e02df03afee3dee0f98dbfb8c4837082ad0034f612a3e2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.3"
   flutter_slidable:
     dependency: "direct main"
     description:
@@ -1913,6 +1945,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.1"
+  mesh:
+    dependency: "direct main"
+    description:
+      name: mesh
+      sha256: "513eeca4f4decd6c4c5f829a7fdd68a55abe9b2b379a894dfb17978dee44b8f7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
   meta:
     dependency: "direct overridden"
     description:
@@ -1921,6 +1961,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.2"
+  metaballs:
+    dependency: "direct main"
+    description:
+      name: metaballs
+      sha256: "0a3c11cd8e094c78a5d541c442fe40baf4c01113cd0c3e0e1704d0f9da44b4c8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
   mgrs_dart:
     dependency: transitive
     description:

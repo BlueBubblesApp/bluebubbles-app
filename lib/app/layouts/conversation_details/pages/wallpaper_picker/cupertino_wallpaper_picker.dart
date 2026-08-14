@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/wallpaper_picker_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/widgets/wallpaper_current_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/widgets/wallpaper_gallery_grid.dart';
@@ -50,10 +51,21 @@ class CupertinoWallpaperPicker extends StatelessWidget {
           SettingsHeader(
             iosSubtitle: context.iosSubtitle,
             materialSubtitle: context.materialSubtitle,
-            text: "Dynamic Wallpapers",
+            text: "Animated Wallpapers",
           ),
           WallpaperGalleryGrid(
             chatState: controller.chatState,
+            definitions: DynamicWallpaperRegistry.animated,
+            onSelect: (definition) => controller.openDynamicConfig(context, definition),
+          ),
+          SettingsHeader(
+            iosSubtitle: context.iosSubtitle,
+            materialSubtitle: context.materialSubtitle,
+            text: "Still Wallpapers",
+          ),
+          WallpaperGalleryGrid(
+            chatState: controller.chatState,
+            definitions: DynamicWallpaperRegistry.still,
             onSelect: (definition) => controller.openDynamicConfig(context, definition),
           ),
         ],

@@ -29,6 +29,7 @@ dependencies:
   archive: ^4.0.7
   async_task: ^1.1.1
   audio_waveforms: ^2.0.2
+  aurora_background: ^1.0.2
   auto_size_text: ^3.0.0
   bitsdojo_window: ^0.1.6
   chunked_stream: ^1.4.2
@@ -120,6 +121,8 @@ dependencies:
   media_kit: ^1.2.2 # Primary package.
   media_kit_video: ^2.0.0 # For video rendering.
   media_kit_libs_video: ^1.0.7 # Native video dependencies.
+  mesh: ^0.5.0
+  metaballs: ^1.5.0
   mime_type: ^1.0.1
   mobile_scanner: ^7.2.0 # no desktop support
   msix: ^3.18.0

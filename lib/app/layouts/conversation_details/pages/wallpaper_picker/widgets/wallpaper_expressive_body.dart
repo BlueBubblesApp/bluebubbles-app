@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/m3e/m3e.dart';
+import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/wallpaper_picker_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/widgets/wallpaper_current_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/pages/wallpaper_picker/widgets/wallpaper_gallery_grid.dart';
@@ -32,9 +33,16 @@ class WallpaperExpressiveBody extends StatelessWidget {
             ),
           ],
         ),
-        const M3ESectionHeader(label: "Dynamic wallpapers"),
+        const M3ESectionHeader(label: "Animated wallpapers"),
         WallpaperGalleryGrid(
           chatState: controller.chatState,
+          definitions: DynamicWallpaperRegistry.animated,
+          onSelect: (definition) => controller.openDynamicConfig(context, definition),
+        ),
+        const M3ESectionHeader(label: "Still wallpapers"),
+        WallpaperGalleryGrid(
+          chatState: controller.chatState,
+          definitions: DynamicWallpaperRegistry.still,
           onSelect: (definition) => controller.openDynamicConfig(context, definition),
         ),
       ],

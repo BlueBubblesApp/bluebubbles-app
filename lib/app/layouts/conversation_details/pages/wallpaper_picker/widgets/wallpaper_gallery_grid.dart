@@ -3,19 +3,26 @@ import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Grid of every registered dynamic wallpaper, each tile live-previewing
-/// itself at default settings. New entries in [DynamicWallpaperRegistry]
-/// show up here automatically — nothing here is aware of "wave" or
-/// "floating" specifically.
+/// Grid of dynamic wallpapers, each tile live-previewing itself at default
+/// settings. Defaults to every registered wallpaper, so new entries in
+/// [DynamicWallpaperRegistry] show up automatically — nothing here is aware of
+/// "wave" or "floating" specifically. Pass [definitions] to render one slice
+/// of the registry (the picker splits animated from still).
 class WallpaperGalleryGrid extends StatelessWidget {
   final ChatState? chatState;
   final void Function(DynamicWallpaperDefinition definition) onSelect;
+  final List<DynamicWallpaperDefinition>? definitions;
 
-  const WallpaperGalleryGrid({super.key, required this.chatState, required this.onSelect});
+  const WallpaperGalleryGrid({
+    super.key,
+    required this.chatState,
+    required this.onSelect,
+    this.definitions,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final definitions = DynamicWallpaperRegistry.all;
+    final definitions = this.definitions ?? DynamicWallpaperRegistry.all;
 
     return Obx(() {
       final selectedId = chatState?.wallpaperType.value == ChatWallpaperType.dynamic
