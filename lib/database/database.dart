@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -75,7 +76,8 @@ class Database {
       Logger.info(
           "Database init: SettingsSvc.finishedSetup = $setupFinished, PrefsSvc.finishedSetup = $setupFinished2");
 
-      if (!setupFinished) {
+      // Setup only ever runs on main, so only main may act on an unfinished one.
+      if (!setupFinished && !isIsolate) {
         Logger.warn("Clearing database because setup is not finished...");
 
         Database.attachments.removeAll();

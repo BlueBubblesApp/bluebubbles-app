@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
-import 'package:path_provider_linux/path_provider_linux.dart';
-import 'package:path_provider_windows/path_provider_windows.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/types.dart';
 
@@ -29,15 +28,18 @@ import 'package:shared_preferences_platform_interface/types.dart';
 /// - Writes are serialized across isolates AND processes with an exclusively
 ///   created lock file. (`RandomAccessFile.lock` is not enough: POSIX fcntl
 ///   locks are process-owned and do not exclude isolates within one process.)
-/// - Writes are atomic: temp file + rename, so the store can never be
-///   truncated by a crash mid-write.
+/// - Writes are atomic where the filesystem allows it: temp file + rename, so
+///   the store can never be truncated by a crash mid-write. Where the rename
+///   can't replace the file, it falls back to writing in place and the `.bak`
+///   below covers it.
 /// - Every successful write also refreshes a `.bak` copy (under the same
 ///   lock), and an unparseable file is quarantined and restored from that
 ///   backup — at registration and on mid-session reads — instead of crashing
 ///   the app or losing all settings.
 ///
-/// Storage location and format are identical to the stock implementation, so
-/// existing user data carries over untouched. Custom file names via
+/// Format is identical to the stock implementation, and so is the location
+/// except on MSIX, where [FilesystemService] has already migrated the whole
+/// directory to the real path behind the AppData redirect. Custom file names via
 /// platform-specific [SharedPreferencesOptions] subclasses are not supported;
 /// the app only ever uses the defaults.
 base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform {
@@ -49,7 +51,6 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   static const Duration _staleLockTimeout = Duration(seconds: 10);
   static const Duration _lockRetryDelay = Duration(milliseconds: 5);
 
-  String? _cachedDirectoryPath;
   Future<void> _writeQueue = Future.value();
 
   /// Registers this store as the [SharedPreferencesAsyncPlatform] and
@@ -133,31 +134,21 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   Future<Set<String>> getKeys(GetPreferencesParameters parameters, SharedPreferencesOptions options) async =>
       (await getPreferences(parameters, options)).keys.toSet();
 
-  Future<String> _getDirectoryPath() async {
-    if (_cachedDirectoryPath != null) return _cachedDirectoryPath!;
-    // Instantiated directly (instead of going through path_provider) so this
-    // works in background isolates without plugin registration, exactly like
-    // the stock implementations do.
-    final String? directory = Platform.isWindows
-        ? await PathProviderWindows().getApplicationSupportPath()
-        : await PathProviderLinux().getApplicationSupportPath();
-    if (directory == null) {
-      throw const FileSystemException('Unable to resolve the application support directory for preferences');
-    }
-    return _cachedDirectoryPath = directory;
-  }
-
-  Future<File> _getDataFile() async => File(p.join(await _getDirectoryPath(), _fileName));
+  // Not path_provider's support path directly: on MSIX that one is the AppData
+  // redirect, where a same-folder rename can fail as cross-device. Every
+  // isolate's init registers FilesystemService before this store.
+  Future<File> _getDataFile() async => File(p.join(FilesystemSvc.appDocDir.path, _fileName));
 
   Future<File> _getBackupFile() async => File('${(await _getDataFile()).path}$_backupSuffix');
 
-  /// Returns the parsed contents of [file], `{}` for an existing-but-empty
-  /// file, or null when the file is missing or unparseable.
+  /// Returns the parsed contents of [file], or null when it is missing, empty
+  /// or unparseable. Empty means a reader caught an in-place write mid-truncate,
+  /// never "no preferences set" — that is stored as `{}`.
   Map<String, Object>? _parseFile(File file) {
     try {
       if (!file.existsSync()) return null;
       final String contents = file.readAsStringSync();
-      if (contents.isEmpty) return <String, Object>{};
+      if (contents.isEmpty) return null;
       final Object? decoded = json.decode(contents);
       return decoded is Map ? decoded.cast<String, Object>() : null;
     } on FormatException catch (e) {
@@ -239,20 +230,26 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   Future<void> _atomicWrite(Map<String, Object> prefs) async {
     final File file = await _getDataFile();
     final File tmp = File('${file.path}.tmp');
+    final String contents = json.encode(prefs);
     try {
       final RandomAccessFile raf = tmp.openSync(mode: FileMode.write);
       try {
-        raf.writeStringSync(json.encode(prefs));
+        raf.writeStringSync(contents);
         raf.flushSync();
       } finally {
         raf.closeSync();
       }
-      // Not atomic if it has to fall back to a copy — the `.bak` refreshed
-      // below and the corrupt-file recovery are what cover that.
       await moveFile(tmp, file.path);
     } on FileSystemException catch (e) {
-      _log('Failed to save preferences: $e');
-      return;
+      // Neither rename nor copy can replace a file another handle holds open
+      // (`File.copy` deletes the destination first), but an in-place write can.
+      _log('Atomic preferences write failed, writing in place: $e');
+      try {
+        file.writeAsStringSync(contents, flush: true);
+      } on FileSystemException catch (e) {
+        _log('Failed to save preferences: $e');
+        return;
+      }
     }
     try {
       file.copySync((await _getBackupFile()).path);
