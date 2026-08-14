@@ -28,17 +28,14 @@ Future<void> revealInFileManager(String path) async {
 }
 
 /// Moves [source] onto [targetPath], by rename where the filesystem allows it.
-Future<void> moveFile(File source, String targetPath, {int renameAttempts = 5}) async {
-  for (int attempt = 1; attempt <= renameAttempts; attempt++) {
-    try {
-      await source.rename(targetPath);
-      return;
-    } on PathNotFoundException {
-      rethrow;
-    } on FileSystemException catch (e) {
-      if (isCrossDeviceError(e) || attempt >= renameAttempts) break;
-      await Future.delayed(const Duration(milliseconds: 10));
-    }
+Future<void> moveFile(File source, String targetPath) async {
+  try {
+    await source.rename(targetPath);
+    return;
+  } on PathNotFoundException {
+    rethrow;
+  } on FileSystemException {
+    // Cross-device, or the destination can't be replaced.
   }
   await source.copy(targetPath);
   try {
@@ -47,11 +44,6 @@ Future<void> moveFile(File source, String targetPath, {int renameAttempts = 5}) 
     // Whatever
   }
 }
-
-/// Win32 ERROR_NOT_SAME_DEVICE (17) on Windows, POSIX EXDEV (18) everywhere
-/// else — Dart reports Win32 codes there and errno elsewhere, so the two can't
-/// be checked together: 17 is EEXIST on POSIX.
-bool isCrossDeviceError(FileSystemException e) => e.osError?.errorCode == (Platform.isWindows ? 17 : 18);
 
 /// Desktop "Save As": asks where to put the file, then puts it there. Returns
 /// the path it was saved to, or null if the user cancelled the dialog.
