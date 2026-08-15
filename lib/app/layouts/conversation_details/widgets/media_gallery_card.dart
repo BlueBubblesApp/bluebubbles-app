@@ -78,6 +78,20 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
         getVideoPreview(content as PlatformFile);
       }
     }
+
+    // auto-download images. Videos, audios, and other files stay tap-to-download.
+    if (content is Attachment &&
+        attachment.guid != null &&
+        !attachment.guid!.startsWith("temp") &&
+        attachment.mimeStart == "image") {
+      unawaited(_maybeAutoDownload());
+    }
+  }
+
+  Future<void> _maybeAutoDownload() async {
+    if (!await AttachmentsSvc.canAutoDownload()) return;
+    if (!mounted || content is! Attachment) return;
+    _startDownload();
   }
 
   void onComplete(PlatformFile file) {
@@ -92,6 +106,10 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
   }
 
   void downloadAttachment() {
+    _startDownload();
+  }
+
+  void _startDownload() {
     setState(() {
       content = AttachmentDownloader.startDownload(attachment, onComplete: onComplete);
       if (content is AttachmentDownloadController) {
