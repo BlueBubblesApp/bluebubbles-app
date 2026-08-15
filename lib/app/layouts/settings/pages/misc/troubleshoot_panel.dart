@@ -13,11 +13,11 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,7 +28,7 @@ class TroubleshootPanel extends StatefulWidget {
   State<StatefulWidget> createState() => _TroubleshootPanelState();
 }
 
-class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers {
+class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers, WidgetsBindingObserver {
   final RxnBool resyncingHandles = RxnBool();
   final RxnBool resyncingChats = RxnBool();
   final RxInt logFileCount = 0.obs;
@@ -41,13 +41,28 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
   void initState() {
     super.initState();
     _refreshLogStats();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshBatteryOptimizationStatus();
+  }
 
-    // Check if battery optimizations are disabled
-    if (Platform.isAndroid) {
-      DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((value) {
-        optimizationsDisabled.value = value ?? false;
-      });
-    }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Toggling the exemption happens in the system settings app, so the only signal we
+    // get that it changed is coming back to the foreground.
+    if (state == AppLifecycleState.resumed) _refreshBatteryOptimizationStatus();
+  }
+
+  Future<void> _refreshBatteryOptimizationStatus() async {
+    if (!Platform.isAndroid) return;
+    final isDisabled = await isBatteryOptimizationDisabled();
+    if (!mounted) return;
+    optimizationsDisabled.value = isDisabled;
   }
 
   void _refreshLogStats() {
@@ -255,28 +270,34 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                   SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Optimizations"),
                 if (Platform.isAndroid)
                   SettingsSection(backgroundColor: tileColor, children: [
-                    SettingsTile(
+                    Obx(() => SettingsTile(
                         onTap: () async {
+                          // Android exposes no API to revoke the exemption — the system
+                          // prompt only ever grants it. To turn optimizations back on the
+                          // user has to do it themselves, so send them to app settings and
+                          // pick the status back up on resume.
                           if (optimizationsDisabled.value) {
-                            showSnackbar(
-                                "Already Disabled", "Battery optimizations are already disabled for BlueBubbles");
+                            await openAppSettings();
                             return;
                           }
 
                           final optsDisabled = await disableBatteryOptimizations();
+                          await _refreshBatteryOptimizationStatus();
                           if (!optsDisabled) {
                             showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
                           }
                         },
-                        leading: Obx(() => SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.battery_25,
-                              materialIcon: Icons.battery_5_bar,
-                              containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
-                            )),
-                        title: "Disable Battery Optimizations",
-                        subtitle:
-                            "Allow app to run in the background via the OS. This may not do anything on some devices.",
-                        trailing: Obx(() => !optimizationsDisabled.value
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.battery_25,
+                          materialIcon: Icons.battery_5_bar,
+                          containerColor: optimizationsDisabled.value ? Colors.green : Colors.redAccent,
+                        ),
+                        title: "Battery Optimizations",
+                        isThreeLine: true,
+                        subtitle: optimizationsDisabled.value
+                            ? "Disabled — the OS lets BlueBubbles run in the background. Tap to open system settings if you want to turn optimizations back on."
+                            : "Enabled — the OS may stop BlueBubbles in the background. Tap to allow it to keep running. This may not do anything on some devices.",
+                        trailing: !optimizationsDisabled.value
                             ? const NextButton()
                             : Icon(Icons.check, color: context.theme.colorScheme.outline))),
                   ]),

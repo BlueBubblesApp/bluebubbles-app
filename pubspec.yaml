@@ -51,10 +51,6 @@ dependencies:
   device_info_plus: ^11.3.0
   dice_bear: ^1.0.3
   dio: ^5.9.0
-  disable_battery_optimization: # for jcenter() gradle deprecation
-    git:
-      url: https://github.com/BlueBubblesApp/Disable-Battery-Optimizations.git
-      ref: 996c83bf5f58522ba8da3ce6f44952be7b68171c
   dlibphonenumber: ^1.1.46 # phone number parsing
   dynamic_color: ^1.8.1 # Pinned because of flutter SDK
   easy_debounce: ^2.0.3
