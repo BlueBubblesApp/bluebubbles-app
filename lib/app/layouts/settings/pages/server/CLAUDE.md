@@ -11,7 +11,10 @@ Settings panels for managing the BlueBubbles server connection, authentication, 
 | `backup_restore_actions.dart` | Backup/restore data operations (fetch, delete, device default naming) |
 | `backup_restore_dialogs.dart` | Shared backup/restore dialogs (destination picker) |
 | `backup_restore_types.dart` | Backup enums (`BackupDestination`, `BackupKind`) |
+| `chat_backup_identifier.dart` | Server-agnostic chat identification shared by every chat-scoped backup |
 | `pinned_chats_backup.dart` | Backup/restore of pinned chat order |
+| `custom_groups_backup.dart` | Backup/restore of custom groups and their member chats |
+| `chat_appearance_backup.dart` | Backup/restore of per-chat themes + dynamic wallpapers (and their sub-configs) |
 | `oauth_panel.dart` | OAuth /Google sign-in for cloud relay connection |
 
 ## Subdirectories
@@ -47,3 +50,11 @@ Live stats fetched from the server (account status, active handles, relay info):
 - Keep side-effectful API/file operations in `backup_restore_actions.dart`.
 - Keep destination selection and other shared prompts in `backup_restore_dialogs.dart`.
 - Use `BackupDestination`/`BackupKind` enums rather than implicit bool/string mode flags.
+- Chat-scoped extras ride along inside the settings backup JSON under their own top-level keys
+  (`pinnedChats`, `customGroups`, `chatAppearance`). `Settings.updateFromMap` reads keys it knows
+  by name, so extra keys pass through it untouched.
+- Never key a chat-scoped backup entry off `chat.guid` — guids are server-assigned. Use
+  `ChatBackupIdentifier.export`/`.resolve` so entries match by display name / participant addresses.
+- Anything that only exists as a file in this device's app storage (custom background images,
+  adaptive-background themes derived from them) stays out of backups — they'd need the bytes
+  embedded. Report those as skipped instead of writing an unusable path.

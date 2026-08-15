@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_actions.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_dialogs.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/backup_restore_types.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/server/chat_appearance_backup.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/custom_groups_backup.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/pinned_chats_backup.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -312,6 +313,73 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
   }
 
   // ---------------------------------------------------------------------------------------------
+  // Settings backups — payload build / apply
+  // ---------------------------------------------------------------------------------------------
+
+  /// Builds a settings backup payload: the global settings plus the chat-scoped
+  /// extras (pinned chats, custom groups, per-chat themes/wallpapers). Anything
+  /// that couldn't be represented portably is appended to [skipped] for the
+  /// caller to surface.
+  Future<Map<String, dynamic>> _buildSettingsBackupJson({required List<String> skipped}) async {
+    final Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
+    json["timestamp"] = DateTime.now().millisecondsSinceEpoch;
+    json["pinnedChats"] = PinnedChatsBackup.exportList();
+    json["customGroups"] = await CustomGroupsBackup.exportList();
+    final appearance = ChatAppearanceBackup.export();
+    json["chatAppearance"] = appearance.entries;
+    skipped.addAll(appearance.skipped);
+    return json;
+  }
+
+  Future<void> _showExportSkips(List<String> skipped) async {
+    if (skipped.isEmpty || !context.mounted) return;
+    await BackupRestoreDialogs.showRestoreSummary(
+      context: context,
+      title: "Some Wallpapers Weren't Included",
+      skipped: skipped,
+    );
+  }
+
+  /// Applies the chat-scoped extras carried alongside the global settings in a
+  /// settings backup. Each dialog is awaited so multiple summaries queue up
+  /// rather than stacking on top of each other.
+  Future<void> _restoreChatScopedExtras(Map<String, dynamic> json) async {
+    final pinnedChats = json["pinnedChats"] as List<dynamic>?;
+    if (pinnedChats != null) {
+      final result = await PinnedChatsBackup.restore(pinnedChats);
+      if (result.skipped.isNotEmpty && context.mounted) {
+        await BackupRestoreDialogs.showRestoreSummary(
+          context: context,
+          title: "Some Pinned Chats Couldn't Be Restored",
+          skipped: result.skipped,
+        );
+      }
+    }
+    final customGroups = json["customGroups"] as List<dynamic>?;
+    if (customGroups != null) {
+      final result = await CustomGroupsBackup.restore(customGroups);
+      if (result.skipped.isNotEmpty && context.mounted) {
+        await BackupRestoreDialogs.showRestoreSummary(
+          context: context,
+          title: "Some Custom Group Chats Couldn't Be Restored",
+          skipped: result.skipped,
+        );
+      }
+    }
+    final chatAppearance = json["chatAppearance"] as List<dynamic>?;
+    if (chatAppearance != null) {
+      final result = await ChatAppearanceBackup.restore(chatAppearance);
+      if (result.skipped.isNotEmpty && context.mounted) {
+        await BackupRestoreDialogs.showRestoreSummary(
+          context: context,
+          title: "Some Chat Themes & Wallpapers Couldn't Be Restored",
+          skipped: result.skipped,
+        );
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
   // Settings backups — actions
   // ---------------------------------------------------------------------------------------------
 
@@ -323,11 +391,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         "Are you sure you want to replace this backup with your current Settings?",
       ),
       onYes: () async {
-        Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
+        final exportSkips = <String>[];
+        final json = await _buildSettingsBackupJson(skipped: exportSkips);
         json["description"] = item["description"];
-        json["timestamp"] = DateTime.now().millisecondsSinceEpoch;
-        json["pinnedChats"] = PinnedChatsBackup.exportList();
-        json["customGroups"] = await CustomGroupsBackup.exportList();
         Response response = await HttpSvc.backup.setSettings(item["name"], json);
         if (!context.mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
@@ -337,6 +403,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           showSnackbar("Success", "Settings exported successfully to server");
         }
         refresh();
+        await _showExportSkips(exportSkips);
       },
     );
   }
@@ -365,28 +432,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         try {
           Settings.updateFromMap(item);
           showSnackbar("Success", "Settings restored successfully");
-          final pinnedChats = item["pinnedChats"] as List<dynamic>?;
-          if (pinnedChats != null) {
-            final result = await PinnedChatsBackup.restore(pinnedChats);
-            if (result.skipped.isNotEmpty && context.mounted) {
-              BackupRestoreDialogs.showRestoreSummary(
-                context: context,
-                title: "Some Pinned Chats Couldn't Be Restored",
-                skipped: result.skipped,
-              );
-            }
-          }
-          final customGroups = item["customGroups"] as List<dynamic>?;
-          if (customGroups != null) {
-            final result = await CustomGroupsBackup.restore(customGroups);
-            if (result.skipped.isNotEmpty && context.mounted) {
-              BackupRestoreDialogs.showRestoreSummary(
-                context: context,
-                title: "Some Custom Group Chats Couldn't Be Restored",
-                skipped: result.skipped,
-              );
-            }
-          }
+          await _restoreChatScopedExtras(item);
         } catch (e, s) {
           Logger.error("Failed to restore settings backup!", error: e, trace: s);
           showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
@@ -428,14 +474,11 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       // performing the backup. Using the non-root navigator here would pop
       // the settings page instead, leaving the dialog stuck open.
       Navigator.of(_context, rootNavigator: true).pop();
-      Map<String, dynamic> json = SettingsSvc.settings.toMap(includeAll: false);
+      final exportSkips = <String>[];
+      final json = await _buildSettingsBackupJson(skipped: exportSkips);
       if (desc.isNotEmpty) {
         json["description"] = desc;
       }
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      json["timestamp"] = timestamp;
-      json["pinnedChats"] = PinnedChatsBackup.exportList();
-      json["customGroups"] = await CustomGroupsBackup.exportList();
       if (destination.isCloud) {
         var response = await HttpSvc.backup.setSettings(name, json);
         if (response.statusCode != 200) {
@@ -490,6 +533,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       }
       // Only the cloud list is server-backed; a local save has nothing to re-fetch.
       if (destination.isCloud) refresh();
+      await _showExportSkips(exportSkips);
     }
 
     if (!context.mounted) return;
@@ -588,28 +632,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           Map<String, dynamic> json = jsonDecode(jsonString);
           Settings.updateFromMap(json);
           showSnackbar("Success", "Settings restored successfully");
-          final pinnedChats = json["pinnedChats"] as List<dynamic>?;
-          if (pinnedChats != null) {
-            final result = await PinnedChatsBackup.restore(pinnedChats);
-            if (result.skipped.isNotEmpty && context.mounted) {
-              BackupRestoreDialogs.showRestoreSummary(
-                context: context,
-                title: "Some Pinned Chats Couldn't Be Restored",
-                skipped: result.skipped,
-              );
-            }
-          }
-          final customGroups = json["customGroups"] as List<dynamic>?;
-          if (customGroups != null) {
-            final result = await CustomGroupsBackup.restore(customGroups);
-            if (result.skipped.isNotEmpty && context.mounted) {
-              BackupRestoreDialogs.showRestoreSummary(
-                context: context,
-                title: "Some Custom Group Chats Couldn't Be Restored",
-                skipped: result.skipped,
-              );
-            }
-          }
+          await _restoreChatScopedExtras(json);
         } catch (e, s) {
           Logger.error("Failed to restore settings backup!", error: e, trace: s);
           showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
