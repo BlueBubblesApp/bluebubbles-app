@@ -8,7 +8,6 @@ import 'package:bluebubbles/app/layouts/conversation_details/widgets/media_galle
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_filter_selector.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -87,9 +86,9 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
     return min(kAttachmentPreviewLimit, _filteredMedia.length);
   }
 
-  int get _gridCrossAxisCount {
+  int _gridCrossAxisCountFor(double width) {
     if (widget.crossAxisCount != null) return widget.crossAxisCount!;
-    return expressiveMediaCrossAxisCount(NavigationSvc.width(context));
+    return expressiveMediaCrossAxisCount(width) + (widget.fullPage ? 1 : 0);
   }
 
   void _loadMore() {
@@ -225,16 +224,20 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
           padding: attachmentSectionListPadding(
             top: widget.fullPage ? 10 : 0,
           ),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _gridCrossAxisCount,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, int index) => _buildGridItem(context, index),
-              childCount: _visibleCount,
-            ),
+          sliver: SliverLayoutBuilder(
+            builder: (context, constraints) {
+              return SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _gridCrossAxisCountFor(constraints.crossAxisExtent),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, int index) => _buildGridItem(context, index),
+                  childCount: _visibleCount,
+                ),
+              );
+            },
           ),
         ),
         if (widget.fullPage && _displayCount < _filteredMedia.length)
