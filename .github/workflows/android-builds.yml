@@ -1,16 +1,15 @@
 name: Android Builds
 
-# Builds the two Android release artifacts from one tag:
+# Builds both Android release artifacts from one tag:
 #
-#   * prod      -> universal APK, attached to the GitHub release. Android Auto is
-#                  included here; sideloaders opt into it via unknown sources.
-#   * prodNoAa  -> app bundle for the Play Store. The prodNoAa source set removes the
-#                  com.google.android.gms.car.application meta-data via the manifest
+#   * prod      -> universal APK for the GitHub release. Keeps Android Auto, which
+#                  sideloaders can then turn on themselves.
+#   * prodNoAa  -> app bundle for the Play Store. The prodNoAa source set strips the
+#                  com.google.android.gms.car.application meta-data through the manifest
 #                  merger, so the store build ships without Android Auto.
 #
-# The bundle is uploaded as a workflow artifact only — it is never attached to a
-# release. Play Store submission stays manual (same posture as the store msix in
-# desktop-builds.yml).
+# The bundle is only ever a workflow artifact, never a release asset - Play submission
+# stays manual, same as the store msix in desktop-builds.yml.
 
 on:
   push:
@@ -33,13 +32,17 @@ env:
 
 jobs:
   build:
+    # A v* tag with -desktop in it is a Windows/Linux-only release, so skip Android.
+    # -android tags and plain ones build here. desktop-builds.yml has the mirror of this.
+    # Checking the tag ref and not just the name, otherwise a manual run from a branch
+    # like joel/fix-desktop-notifs would skip too.
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-desktop')) }}
     # Needed by the release attach step on the apk leg.
     permissions:
       contents: write
-    # Gate for the signing key. Holding the keystore secrets in this environment
-    # (rather than as plain repo secrets) means a workflow pushed to some other branch
-    # cannot reach them, and adding a required reviewer under Settings > Environments
-    # forces a human to approve every run that touches the release key.
+    # Keeps the keystore secrets out of reach of workflows on other branches. Add a
+    # required reviewer under Settings > Environments if you want runs that touch the
+    # signing key to need approval.
     environment: android-release
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -50,7 +53,7 @@ jobs:
           - flavor: prod
             target: apk
             ext: apk
-            # Gradle's own outputs/apk/ copy is ignored — flutter mirrors the APK here.
+            # Ignoring gradle's own outputs/apk/ copy; flutter mirrors the APK here.
             outdir: build/app/outputs/flutter-apk
             artifact: bluebubbles-android-apk
             filename: bluebubbles-app-prod-release.apk
@@ -61,9 +64,8 @@ jobs:
             artifact: bluebubbles-android-aab-store
             filename: bluebubbles-app-prodNoAa-release.aab
     steps:
-      # persist-credentials: false — nothing here pushes, and the default leaves the
-      # GITHUB_TOKEN sitting in .git/config where any build step (a gradle plugin, a
-      # pub package's build hook) could read it back out.
+      # Nothing here pushes, and the default leaves the GITHUB_TOKEN in .git/config
+      # where a gradle plugin or pub build hook could read it back out.
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -75,9 +77,8 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      # AGP can auto-download SDK components, but the pinned NDK is a 2GB fetch that
-      # fails deep inside a Gradle task when it goes wrong. Install it up front so a
-      # missing component surfaces as its own step.
+      # AGP will auto-download these, but the NDK is a 2GB fetch and when it goes wrong
+      # it fails somewhere deep in a gradle task. Doing it here keeps the failure obvious.
       - name: Install Android SDK components
         run: |
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -86,17 +87,14 @@ jobs:
             "platforms;android-${ANDROID_COMPILE_SDK}" \
             "ndk;${ANDROID_NDK_VERSION}"
 
-      # No fvm here — the Android build has no reason to switch SDKs mid-job, so this
-      # uses the standard Flutter setup action against the same pinned version.
+      # Skipping fvm here since there's no need to switch SDKs mid-job, but the version
+      # is the same one the desktop builds pin.
       #
-      # Deliberately NOT caching the SDK, pub or gradle in this workflow, and not
-      # setting this action's own `cache` input. This is the job that signs and
-      # publishes a release binary, and a cache entry is mutable state that never
-      # appears in git history — a poisoned blob would silently end up inside a signed
-      # APK with nothing in the commit log to review. Tag builds are rare, so re-
-      # fetching from upstream every time is worth the few minutes. (The action's
-      # `cache` input is also worth avoiding on its own: it delegates to a floating
-      # actions/cache@v3 reference inside the action.)
+      # Nothing is cached in this workflow, including the action's own `cache` input.
+      # This job signs and publishes a release binary, and cache entries are mutable
+      # state that never shows up in git history, so a poisoned one would end up inside
+      # a signed APK with nothing to review. Tag builds are rare enough that refetching
+      # is cheap. (The `cache` input also delegates to a floating actions/cache@v3.)
       - name: Setup Flutter
         uses: subosito/flutter-action@1508160852fb97248640997f7cfb38da241df0ba
         with:
@@ -106,18 +104,16 @@ jobs:
       - name: Pub get
         run: flutter pub get --enforce-lockfile
 
-      # .env is a declared asset in pubspec.yaml — the build fails outright if it is
-      # missing. Passed through env rather than interpolated into the script, so the
-      # value can never be parsed as shell.
+      # pubspec.yaml declares .env as an asset, so the build fails without it. The key
+      # itself is desktop-only - dotenv.load() is behind `if (kIsDesktop)` in main.dart
+      # and the GIF button that reads it is marked unsupported on android - so this only
+      # needs to exist, not have a value.
       - name: Write .env
-        env:
-          KLIPY_API_KEY: ${{ secrets.KLIPY_API_KEY }}
-        run: printf 'KLIPY_API_KEY=%s\n' "$KLIPY_API_KEY" > .env
+        run: 'echo "KLIPY_API_KEY=" > .env'
 
-      # android/app/build.gradle reads android/key.properties and wires the release
-      # signing config into every flavor's release build type, so both artifacts need
-      # it. storeFile is written absolute — Gradle resolves a relative one against
-      # android/app/, not the repo root.
+      # build.gradle reads android/key.properties for the release signing config, which
+      # every shipping flavor uses. storeFile has to be absolute - gradle resolves a
+      # relative path against android/app/, not the repo root.
       - name: Write signing config
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -142,23 +138,29 @@ jobs:
           } > android/key.properties
 
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
-      # flutter build also refreshes android/local.properties with flutter.versionCode
-      # from pubspec.yaml, which build.gradle folds into the final versionCode —
-      # so this must go through the flutter tool, never a bare gradlew invocation.
+      # Has to go through the flutter tool rather than gradlew directly - flutter build
+      # is what refreshes android/local.properties with flutter.versionCode from
+      # pubspec.yaml, and build.gradle folds that into the final versionCode.
       - name: Build ${{ matrix.target }} (${{ matrix.flavor }})
+        # build.gradle falls back to debug signing when key.properties is missing so
+        # contributors and PR checks can build. This one gets published, so turn that
+        # fallback into a hard error.
+        env:
+          BB_REQUIRE_RELEASE_SIGNING: "true"
         run: flutter build ${{ matrix.target }} --release --flavor ${{ matrix.flavor }} --no-pub
 
       # The keystore is only needed by the gradle build above. Drop it before any
       # third-party action runs, so a compromised upload/release action cannot read it
       # off the workspace.
+      # Drop the keystore before any third-party action runs.
       - name: Remove signing material
         if: always()
         run: |
           rm -f android/key.properties "$RUNNER_TEMP/release-keystore.jks"
 
-      # Flutter lower-cases the flavor in APK filenames but not in bundle paths, and that
-      # has shifted between versions — so find the artifact instead of hardcoding a name.
-      # Only one variant is built per job, so exactly one file should match.
+      # Flutter lower-cases the flavor for APK filenames but not for bundle paths, and
+      # that has moved around between versions, so find the file rather than hardcoding
+      # the name. One variant per job means exactly one match.
       - name: Collect artifact
         run: |
           mapfile -t found < <(find "${{ matrix.outdir }}" -type f -name "*.${{ matrix.ext }}")
@@ -186,17 +188,13 @@ jobs:
           name: ${{ matrix.artifact }}
           path: out/${{ matrix.filename }}
 
-      # APK only. The bundle is for the Play Store and stays a workflow artifact.
+      # APK only - the bundle is for Play and stays an artifact. Fires on any tag ref,
+      # which includes picking a tag in the Run workflow dropdown, not just a tag push.
       #
-      # Only fires when github.ref is a tag — note that covers a manual run launched
-      # against a tag from the Run workflow picker, not just a tag push.
-      #
-      # draft: true is load-bearing, for two reasons. Without it the action publishes
-      # the release as soon as this upload finishes, and since the android build beats
-      # the SignPath round trip in desktop-builds.yml that would push the release live
-      # before the Windows installer and msix were attached. It also caps the blast
-      # radius of a mistaken run: the worst case is an extra asset on a draft rather
-      # than a public release nobody meant to cut.
+      # Keep draft: true. Without it the action publishes the release the moment this
+      # upload finishes, and android finishes well before the SignPath round trip in
+      # desktop-builds.yml, so the release would go live with the desktop artifacts
+      # still missing. It also means a mistaken run only adds an asset to a draft.
       - name: Attach APK to release
         if: ${{ matrix.target == 'apk' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228

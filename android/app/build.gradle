@@ -18,6 +18,21 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// Release builds use key.properties when it's present. Local checkouts and PR CI don't
+// have it, and without this they can't do a release build at all: signingConfigs.release
+// gets a null storeFile and gradle fails configuration with "Keystore file not set for
+// signing config release". Those fall back to debug signing, see buildTypes.release.
+def hasReleaseKeystore = keystorePropertiesFile.exists() && keystoreProperties['storeFile']
+
+// Set by the release workflows. A debug-signed build can't update a Play install and
+// shouldn't reach users, so if the artifact is going to be published a missing or
+// malformed key.properties needs to fail rather than quietly downgrade.
+if (System.getenv('BB_REQUIRE_RELEASE_SIGNING') == 'true' && !hasReleaseKeystore) {
+    throw new GradleException(
+        'BB_REQUIRE_RELEASE_SIGNING is set, but android/key.properties is missing or has no ' +
+        'storeFile entry. Refusing to fall back to debug signing for a release build.')
+}
+
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
@@ -70,11 +85,15 @@ android {
     }
 
     signingConfigs {
+        // Left empty when key.properties is absent, so that configuration succeeds and
+        // buildTypes.release below can point the shipping flavors at debug signing.
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            if (hasReleaseKeystore) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
         }
         debug {
 
@@ -131,12 +150,16 @@ android {
 
     buildTypes {
         release {
+            // No keystore means the shipping flavors sign with the debug key, which is
+            // enough to prove the release build compiles. BB_REQUIRE_RELEASE_SIGNING
+            // stops anything publishable from taking this path.
+            def releaseSigning = hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
             productFlavors.joel.signingConfig signingConfigs.debug
             productFlavors.tanay.signingConfig signingConfigs.debug
-            productFlavors.alpha.signingConfig signingConfigs.release
-            productFlavors.beta.signingConfig signingConfigs.release
-            productFlavors.prod.signingConfig signingConfigs.release
-            productFlavors.prodNoAa.signingConfig signingConfigs.release
+            productFlavors.alpha.signingConfig releaseSigning
+            productFlavors.beta.signingConfig releaseSigning
+            productFlavors.prod.signingConfig releaseSigning
+            productFlavors.prodNoAa.signingConfig releaseSigning
             minifyEnabled false
             shrinkResources false
         }

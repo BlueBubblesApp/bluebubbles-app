@@ -1,5 +1,13 @@
 name: Desktop Builds
 
+# A v* tag with -android in it is an Android-only release, so the build jobs below skip
+# it. -desktop tags and plain ones build here. android-builds.yml has the mirror of this.
+# Note that a tag with both words would skip everything, so a release meant for both
+# platforms takes neither suffix.
+#
+# Checking the tag ref and not just the name, otherwise a manual run from a branch with
+# -android in it would skip too.
+
 on:
   push:
     tags:
@@ -27,6 +35,8 @@ env:
 
 jobs:
   windows:
+    # See the note at the top about -android tags.
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-android')) }}
     permissions:
       contents: write
     runs-on: windows-latest
@@ -223,12 +233,14 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: out/installer/bluebubbles_installer.exe
+          draft: true
 
       - name: Attach msix to release
         if: ${{ startsWith(github.ref, 'refs/tags/') && (steps.sign-msix.outcome == 'success' || steps.sign-msix-test.outcome == 'success') }}
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: out/msix/bluebubbles.msix
+          draft: true
 
       # Release metadata, not the tag name, determines whether this is safe to
       # publish unsigned artifacts for. If a release has not been created yet,
@@ -251,8 +263,11 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: windows/bluebubbles_installer.exe
+          draft: true
 
   linux:
+    # See the note at the top about -android tags.
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-android')) }}
     permissions:
       contents: write
     strategy:
@@ -311,6 +326,7 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: bluebubbles-linux-${{ matrix.arch }}.tar.gz
+          draft: true
 
   # Scans the released downloads with VirusTotal and writes the analysis links to the
   # job summary. Prefers the released installer/msix when present; falls back to the

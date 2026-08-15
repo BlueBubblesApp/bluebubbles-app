@@ -1,19 +1,41 @@
 name: PR Check
 
-# Lightweight gate for pull requests: static analysis + an unsigned compile per
-# desktop platform. No signing, no packaging (msix/installer), no release/VirusTotal —
-# those live in desktop-builds.yml and run on tags. This just proves the tree analyzes
-# clean (no new warnings/errors) and still builds.
+# Gate for pull requests: static analysis + an unsigned compile of every platform we
+# ship (Windows, Linux x86_64/aarch64, Android). No signing with the real key, no
+# packaging, no release/VirusTotal - those live in desktop-builds.yml and
+# android-builds.yml and run on tags. Analyze on its own won't catch a broken build,
+# hence the compiles.
+#
+# Merging to master doesn't re-run this. The PR already proved that commit builds.
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  # Warm the SDK, pub and native-download caches in master's scope (see the jobs below).
+
+  # The two push/schedule triggers below only exist to keep master's cache scope warm.
+  # PR runs can read caches from the base branch but only write to their own scope, so
+  # something has to populate master or every new PR starts cold. The native download
+  # cache needs a real compile to fill, which is why the old lightweight warm-cache job
+  # wasn't enough (removed in c90f304).
+  #
+  # Both expensive caches key on hashFiles('pubspec.lock'), so that's the only file whose
+  # changing invalidates them - about 1 commit in 11 here. The rest leave the entries
+  # valid, so there's no point rebuilding for them.
   push:
     branches: [master]
+    paths:
+      - pubspec.lock
+
+  # Cache entries are evicted after 7 days without a read, so a quiet stretch would leave
+  # the next PR cold whatever the lockfile did. Weekly sits right on that boundary, so
+  # some of these will find the entries already gone and rebuild them, which is the
+  # point. Odd minute because the top of the hour is when everyone else's crons fire.
+  schedule:
+    - cron: "37 7 * * 1"
+
   workflow_dispatch:
 
-# Cancel superseded runs when a PR or master is pushed again.
+# Cancel superseded runs when a PR is pushed again.
 concurrency:
   group: pr-check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -25,10 +47,14 @@ env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
   FLUTTER_VERSION: "3.44.6"
   FVM_VERSION: "4.1.2"
+  # Android toolchain, mirroring android-builds.yml and android/app/build.gradle.
+  ANDROID_NDK_VERSION: "28.2.13676358"
+  ANDROID_COMPILE_SDK: "36"
+  JAVA_VERSION: "21"
 
 jobs:
-  # These also run on pushes to master to populate master's cache scope — the only scope PR
-  # runs can read besides their own.
+  # Each PR writes to its own cache scope and reads from master's. First push to a new
+  # PR is cold unless the warm triggers above have seeded master.
   analyze:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -141,3 +167,66 @@ jobs:
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
       - name: Build Linux (unsigned)
         run: fvm flutter build linux --release -v --no-pub
+
+  build-android:
+    # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
+    needs: analyze
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # PR builds run gradle files and plugin hooks from the PR itself, so keep the
+      # token out of .git/config.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$sdkmanager" --licenses > /dev/null
+          "$sdkmanager" --install \
+            "platforms;android-${ANDROID_COMPILE_SDK}" \
+            "ndk;${ANDROID_NDK_VERSION}"
+
+      - name: Setup Flutter
+        uses: ./.github/actions/setup-flutter
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          fvm-version: ${{ env.FVM_VERSION }}
+
+      - name: Write .env
+        run: echo "KLIPY_API_KEY=" > .env
+
+      - name: Cache Gradle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-prod-${{ hashFiles('android/**/*.gradle', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-prod-
+            gradle-${{ runner.os }}-
+
+      # No keystore on purpose. build.gradle signs with the debug key when
+      # key.properties is missing, which is the same path a contributor building locally
+      # hits, so this covers it too. The release workflow sets BB_REQUIRE_RELEASE_SIGNING
+      # to make that fallback fatal there.
+      #
+      # Compile only, the artifact gets thrown away. Release mode so it goes through the
+      # same AOT a tag build would.
+      #
+      # Only the APK here. The Play bundle is a second full AOT compile and the only
+      # thing it covers that this doesn't is the prodNoAa manifest override, so it's
+      # left to android-builds.yml on a release tag.
+      # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
+      - name: Build Android APK (prod)
+        run: fvm flutter build apk --release --flavor prod --no-pub
