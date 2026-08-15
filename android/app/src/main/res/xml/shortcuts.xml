@@ -4,14 +4,61 @@
         <data android:mimeType="*/*" />
         <category android:name="com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET" />
     </share-target>
-    <!-- <capability android:name="actions.intent.CREATE_MESSAGE">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:targetPackage="${applicationId}"
-            android:targetClass="${applicationId}.MainActivity">
-            <parameter android:name="message.recipient.name" android:key="contactName" />
-            <parameter android:name="message.recipient.telephone" android:key="address" />
-            <parameter android:name="message.text" android:key="message" />
+
+    <!--
+      App Actions capabilities. These are what let the user say
+      "Hey Google, send a BlueBubbles message to <name>".
+
+      Fulfillment uses <url-template> (a deep link) rather than an explicit
+      targetPackage/targetClass intent on purpose: intent attributes in this file
+      are parsed as literal strings — they do NOT expand ${applicationId} or
+      @string/ references — so a hardcoded targetPackage would only ever be
+      correct for one product flavor. The bluebubbles:// scheme is registered on
+      MainActivity in AndroidManifest.xml, which every flavor shares.
+
+      Each capability declares two intents. The first requires a recipient and is
+      what a fully-specified query resolves to; the second is the required
+      no-required-parameters fallback, which just opens the app when Assistant
+      could not pin down who the message is for.
+
+      The matching URI is parsed on the Dart side — see
+      lib/services/backend/java_dart_interop/voice_command_service.dart.
+    -->
+    <capability android:name="actions.intent.SEND_MESSAGE">
+        <intent>
+            <url-template android:value="bluebubbles://voice/send-message{?recipient,address,text}" />
+            <parameter
+                android:name="message.recipient.name"
+                android:key="recipient"
+                android:required="true" />
+            <parameter
+                android:name="message.recipient.telephone"
+                android:key="address" />
+            <parameter
+                android:name="message.text"
+                android:key="text" />
         </intent>
-    </capability> -->
+        <intent>
+            <url-template android:value="bluebubbles://voice/send-message" />
+        </intent>
+    </capability>
+
+    <capability android:name="actions.intent.CREATE_MESSAGE">
+        <intent>
+            <url-template android:value="bluebubbles://voice/send-message{?recipient,address,text}" />
+            <parameter
+                android:name="message.recipient.name"
+                android:key="recipient"
+                android:required="true" />
+            <parameter
+                android:name="message.recipient.telephone"
+                android:key="address" />
+            <parameter
+                android:name="message.text"
+                android:key="text" />
+        </intent>
+        <intent>
+            <url-template android:value="bluebubbles://voice/send-message" />
+        </intent>
+    </capability>
 </shortcuts>

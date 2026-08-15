@@ -126,6 +126,12 @@ class Settings {
   final RxnString contactSyncAccountType = RxnString();
   final RxBool scrollToBottomOnSend = true.obs;
   final RxBool sendEventsToTasker = false.obs;
+
+  /// Android only. When true, a "Hey Google, send a BlueBubbles message to ..."
+  /// command that already includes the message body is sent the moment the
+  /// recipient resolves, with no confirmation prompt. Off by default —
+  /// speech-to-text gets things wrong, and an unconfirmed send can't be undone.
+  final RxBool voiceCommandAutoSend = false.obs;
   final RxBool keepAppAlive = false.obs;
   final RxBool unarchiveOnNewMessage = false.obs;
   final RxBool scrollToLastUnread = false.obs;
@@ -402,6 +408,7 @@ class Settings {
       'contactSyncAccountType': contactSyncAccountType.value,
       'scrollToBottomOnSend': scrollToBottomOnSend.value,
       'sendEventsToTasker': sendEventsToTasker.value,
+      'voiceCommandAutoSend': voiceCommandAutoSend.value,
       'keepAppAlive': keepAppAlive.value,
       'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
       'scrollToLastUnread': scrollToLastUnread.value,
@@ -612,6 +619,8 @@ class Settings {
         map['scrollToBottomOnSend'] ?? SettingsSvc.settings.scrollToBottomOnSend.value;
     SettingsSvc.settings.sendEventsToTasker.value =
         map['sendEventsToTasker'] ?? SettingsSvc.settings.sendEventsToTasker.value;
+    SettingsSvc.settings.voiceCommandAutoSend.value =
+        map['voiceCommandAutoSend'] ?? SettingsSvc.settings.voiceCommandAutoSend.value;
     SettingsSvc.settings.keepAppAlive.value = map['keepAppAlive'] ?? SettingsSvc.settings.keepAppAlive.value;
     SettingsSvc.settings.unarchiveOnNewMessage.value =
         map['unarchiveOnNewMessage'] ?? SettingsSvc.settings.unarchiveOnNewMessage.value;
@@ -826,6 +835,7 @@ class Settings {
     s.contactSyncAccountType.value = map['contactSyncAccountType'];
     s.scrollToBottomOnSend.value = map['scrollToBottomOnSend'] ?? true;
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
+    s.voiceCommandAutoSend.value = map['voiceCommandAutoSend'] ?? false;
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;
     s.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
     s.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;

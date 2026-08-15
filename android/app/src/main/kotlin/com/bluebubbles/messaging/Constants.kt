@@ -5,6 +5,13 @@ class Constants {
         const val logTag: String = "BlueBubblesApp"
         const val methodChannel = "com.bluebubbles.messaging"
         const val categoryTextShareTarget = "com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET"
+
+        // App Actions capabilities declared in res/xml/shortcuts.xml. Dynamic shortcuts are
+        // bound to these so Assistant/Gemini can ground a spoken name ("...message to Mom")
+        // against the conversations that actually exist on this device.
+        const val sendMessageCapability = "actions.intent.SEND_MESSAGE"
+        const val createMessageCapability = "actions.intent.CREATE_MESSAGE"
+        const val recipientNameParameter = "message.recipient.name"
         const val googleDuoPackageName = "com.google.android.apps.tachyon"
         const val newMessageNotificationTag = "com.bluebubbles.messaging.NEW_MESSAGE_NOTIFICATION"
         const val newFaceTimeNotificationTag = "com.bluebubbles.messaging.NEW_FACETIME_NOTIFICATION"

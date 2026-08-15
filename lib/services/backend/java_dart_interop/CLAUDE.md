@@ -1,6 +1,6 @@
 # services/backend/java_dart_interop/ — Dart ↔ Android Bridge
 
-Three files that form the Dart side of the Android method channel bridge. The Kotlin side lives in `android/app/src/main/kotlin/com/bluebubbles/messaging/`.
+Four files that form the Dart side of the Android bridge. The Kotlin side lives in `android/app/src/main/kotlin/com/bluebubbles/messaging/`.
 
 For the full Android bridge overview, see `android/CLAUDE.md`.
 
@@ -35,6 +35,27 @@ Listens to `ReceiveIntent.receivedIntentStream` and routes by action:
 - Share intent → pre-fill the chat composer with shared content
 - Notification tap → open the correct conversation
 - Custom deep link → navigate to the specified screen
+
+---
+
+### `voice_command_service.dart` — `VoiceCommandService` / `VoiceCommandSvc`
+
+GetIt singleton. Turns Google Assistant / Gemini "send a message" commands into a real send.
+
+`VoiceCommandRequest.parse(data, extras)` recognises a voice launch — either the
+`bluebubbles://voice/send-message?...` deep link or a capability-bound conversation shortcut —
+and returns null for everything else. `IntentsService` calls it before its own action switch.
+
+`handleRequest` waits for the UI, resolves the spoken recipient against existing chats
+(`rankChats` / `scoreChat`), asks the user to confirm unless `voiceCommandAutoSend` is on, then
+queues through `OutgoingMsgHandler`. **Existing chats only** — an unmatched recipient is an
+error, never a new chat.
+
+Registered in `StartupTasks` *before* `IntentsService`, since `IntentsSvc.init()` replays the
+launch intent and resolves `VoiceCommandSvc` synchronously.
+
+Full walkthrough, including the Android-side declarations and `adb` test commands:
+`docs/VOICE_COMMANDS.md`.
 
 ---
 

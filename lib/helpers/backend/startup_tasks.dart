@@ -254,6 +254,9 @@ class StartupTasks {
     });
 
     Logger.info("Registering IntentsService, SyncService, and ThemesService...");
+    // Must precede IntentsSvc.init() below: that replays the launch intent, which
+    // can itself be a voice command and resolves VoiceCommandSvc synchronously.
+    GetIt.I.registerSingleton<VoiceCommandService>(VoiceCommandService());
     GetIt.I.registerSingleton<IntentsService>(IntentsService());
     GetIt.I.registerSingleton<SyncService>(SyncService());
     GetIt.I.registerSingleton<ThemesService>(ThemesService());

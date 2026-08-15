@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_pro
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/redacted_mode_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/tasker_panel.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/voice_commands_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/chat_list_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_groups_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/desktop/desktop_panel.dart';
@@ -543,6 +544,36 @@ List<Widget> buildSettingItemList({
                 iosIcon: CupertinoIcons.bolt_fill,
                 materialIcon: Icons.electric_bolt_outlined,
                 containerColor: Colors.grey,
+              ),
+            ),
+          ),
+
+        // Voice Commands Tile (Assistant / Gemini App Actions — Android only)
+        if (Platform.isAndroid)
+          SearchableSettingItem(
+            title: "Voice Commands", // Title to search
+            searchTags: [
+              "Hey Google",
+              "Google Assistant",
+              "Gemini",
+              "App Actions",
+              "Send Without Confirming",
+            ],
+            onTap: () async {
+              ns.pushAndRemoveSettingsUntil(context, const VoiceCommandsPanel(), (Route route) => route.isFirst);
+            },
+            child: SettingsTile(
+              backgroundColor: tileColor,
+              title: "Voice Commands",
+              activePage: VoiceCommandsPanel,
+              trailing: const NextButton(),
+              onTap: () async {
+                ns.pushAndRemoveSettingsUntil(context, const VoiceCommandsPanel(), (Route route) => route.isFirst);
+              },
+              leading: const SettingsLeadingIcon(
+                iosIcon: CupertinoIcons.mic,
+                materialIcon: Icons.mic_none_outlined,
+                containerColor: Colors.deepPurple,
               ),
             ),
           ),

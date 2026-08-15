@@ -226,6 +226,18 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="imessage" />
             </intent-filter>
+            <!--
+                Fulfillment target for the App Actions capabilities declared in
+                res/xml/shortcuts.xml ("Hey Google, send a BlueBubbles message to ...").
+                Assistant/Gemini expands the capability's <url-template> into a
+                bluebubbles://voice/... URI and opens it here.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bluebubbles" android:host="voice" />
+            </intent-filter>
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />

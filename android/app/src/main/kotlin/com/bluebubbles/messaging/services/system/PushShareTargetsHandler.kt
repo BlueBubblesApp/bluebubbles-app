@@ -48,11 +48,19 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
         PersistentLog.d(context, Constants.logTag, "Creating and pushing shortcut for $name")
         val shortcut = ShortcutInfoCompat.Builder(context, guid)
             .setShortLabel(name)
+            .setLongLabel(name)
             .setIntent(launcherIntent)
             .setCategories(contactCategories)
             .setLongLived(true)
             .setIsConversation()
             .setPerson(person.build())
+            // Donate this conversation as an entity Assistant/Gemini can match a spoken
+            // recipient against. When a query grounds to one of these, the shortcut's own
+            // intent is launched — which already carries `chatGuid`, so the Dart side gets
+            // an exact chat instead of a name it has to resolve. See
+            // res/xml/shortcuts.xml for the matching capability declarations.
+            .addCapabilityBinding(Constants.sendMessageCapability, Constants.recipientNameParameter, listOf(name))
+            .addCapabilityBinding(Constants.createMessageCapability, Constants.recipientNameParameter, listOf(name))
         if (adaptiveIcon != null) {
             shortcut.setIcon(adaptiveIcon)
         }

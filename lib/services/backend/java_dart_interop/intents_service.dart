@@ -68,6 +68,20 @@ class IntentsService {
     // sheet, misrouting lifecycle teardown to closeBubble() indefinitely.
     LifecycleSvc.isBubble = intent.extra?["bubble"] == true;
 
+    // Voice assistants (Assistant/Gemini) fulfill the App Actions capabilities in
+    // res/xml/shortcuts.xml either through the bluebubbles://voice deep link or
+    // by launching a donated conversation shortcut with the spoken parameters
+    // attached. Both shapes are recognised here — see VoiceCommandRequest.parse
+    // for why a bare chatGuid deliberately isn't one of them.
+    final voiceCommand = VoiceCommandRequest.parse(
+      data: intent.data,
+      extras: intent.extra?.cast<String, dynamic>(),
+    );
+    if (voiceCommand != null) {
+      await VoiceCommandSvc.handleRequest(voiceCommand, isInitialIntent: isInitialIntent);
+      return;
+    }
+
     switch (intent.action) {
       case "android.intent.action.SEND":
       case "android.intent.action.SEND_MULTIPLE":

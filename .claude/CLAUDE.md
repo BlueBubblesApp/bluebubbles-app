@@ -16,6 +16,7 @@ Detailed coding standards live in `.claude/rules/`:
 - `docs/MESSAGE_SEND_FLOW.md` — end-to-end trace: send button → tempGuid → HTTP + socket race → real GUID swap
 - `docs/MODELS.md` — reference for the DB entity / DTO model landscape (`lib/database/`, `lib/models/`)
 - `docs/THEMING_AND_COMPONENTS.md` — reusable `BBScaffold`/`BBAppBar`/`BBChip`/dialog wrappers, skin vs. theme mechanics, color access patterns
+- `docs/VOICE_COMMANDS.md` — Assistant/Gemini App Actions: capability declarations, the two fulfillment paths, chat matching rules
 
 ## Before Making Changes
 - Check for `CLAUDE.md` in the target directory

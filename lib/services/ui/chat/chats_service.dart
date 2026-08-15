@@ -29,6 +29,19 @@ ChatsService get ChatsSvc => GetIt.I<ChatsService>();
 
 class ChatsService {
   static const batchSize = 100;
+
+  /// How many of the most recent chats get donated to Android as dynamic
+  /// shortcuts by [updateShareTargets].
+  ///
+  /// These back two things: the direct-share row in the system share sheet, and
+  /// the recipient inventory that Assistant/Gemini grounds a spoken name against
+  /// for the "send a BlueBubbles message to ..." App Action (each shortcut is
+  /// bound to the capability in `PushShareTargetsHandler`). The share sheet only
+  /// ever surfaces a handful, but voice matching gets materially better with more
+  /// donated names, hence a number well above what the sheet shows. Android caps
+  /// the total per activity (`getMaxShortcutCountPerActivity`, typically 15) and
+  /// drops the lowest-ranked beyond that, so this stays under the usual limit.
+  static const shareTargetCount = 10;
   int currentCount = 0;
   StreamSubscription? countSub;
   bool headless = false;
@@ -836,7 +849,8 @@ class ChatsService {
       StartupTasks.waitForUI().then((_) async {
         // Create a snapshot to avoid concurrent modification during iteration
         final chatList = getSortedChats();
-        final chatSnapshot = chatList.where((e) => !isNullOrEmpty(e.displayName ?? e.chatIdentifier)).take(4).toList();
+        final chatSnapshot =
+            chatList.where((e) => !isNullOrEmpty(e.displayName ?? e.chatIdentifier)).take(shareTargetCount).toList();
         for (Chat c in chatSnapshot) {
           await MethodChannelSvc.actions.pushShareTarget(
             title: c.getTitle(),
