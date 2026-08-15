@@ -96,7 +96,7 @@ jobs:
       # a signed APK with nothing to review. Tag builds are rare enough that refetching
       # is cheap. (The `cache` input also delegates to a floating actions/cache@v3.)
       - name: Setup Flutter
-        uses: subosito/flutter-action@1508160852fb97248640997f7cfb38da241df0ba
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
