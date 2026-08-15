@@ -18,11 +18,15 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    // Capped at AGP 8.x until Flutter 3.47+. AGP 9 forces android.builtInKotlin=true (plugins
+    // like file_picker already skip applying KGP and rely on it), but that makes AGP reject
+    // every plugin still applying kotlin-android — and Flutter 3.44 only detects those, it
+    // has no compatibility shim. See android/CLAUDE.md.
     id "com.android.application" version "8.11.1" apply false
     id "com.android.library" version "8.11.1" apply false
     id "org.jetbrains.kotlin.android" version "2.2.20" apply false
     id "com.google.gms.google-services" version "4.4.1" apply false
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 include ":app"

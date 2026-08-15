@@ -48,6 +48,13 @@ android {
     compileSdk 36
     ndkVersion = "28.2.13676358"
 
+    // Already the default on AGP 8, but AGP 9 flips resValues to false. The product flavors
+    // below declare resValue entries (app_name_en, ic_launcher_background, file_provider),
+    // so stating it explicitly keeps configuration working across that bump.
+    buildFeatures {
+        resValues = true
+    }
+
     lintOptions {
         checkReleaseBuilds false
         disable 'InvalidPackage'
