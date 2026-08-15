@@ -611,15 +611,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  disable_battery_optimization:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "996c83bf5f58522ba8da3ce6f44952be7b68171c"
-      resolved-ref: "996c83bf5f58522ba8da3ce6f44952be7b68171c"
-      url: "https://github.com/BlueBubblesApp/Disable-Battery-Optimizations.git"
-    source: git
-    version: "1.1.1"
   dlibphonenumber:
     dependency: "direct main"
     description:
