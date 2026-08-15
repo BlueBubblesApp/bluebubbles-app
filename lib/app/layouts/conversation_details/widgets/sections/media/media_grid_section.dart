@@ -89,7 +89,8 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   int get _gridCrossAxisCount {
     if (widget.crossAxisCount != null) return widget.crossAxisCount!;
-    return expressiveMediaCrossAxisCount(NavigationSvc.width(context));
+    final width = NavigationSvc.width(context);
+    return expressiveMediaCrossAxisCount(width) + (widget.fullPage ? 1 : 0);
   }
 
   void _loadMore() {

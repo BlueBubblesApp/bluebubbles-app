@@ -24,12 +24,15 @@ EdgeInsets attachmentSectionListPadding({double top = 0, double bottom = 10}) {
   return EdgeInsets.only(left: inset, right: inset, top: top, bottom: bottom);
 }
 
-/// Media grid column count by Material window size class (compact / medium / expanded),
-/// used by the expressive attachment sections instead of `max(2, width ~/ 200)`.
+/// Media grid column count by Material window size class
+/// (compact / medium / expanded / large / extra-large),
+/// used by the details Photos & Videos preview instead of `max(2, width ~/ 200)`.
 int expressiveMediaCrossAxisCount(double width) {
   if (width < 600) return 2;
   if (width < 840) return 3;
-  return 4;
+  if (width < 1200) return 4;
+  if (width < 1600) return 5;
+  return 6;
 }
 
 enum MediaFilter {

@@ -162,7 +162,6 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
             selected: selected,
             isLoading: isLoadingAttachments,
             fullPage: true,
-            crossAxisCount: 3,
             mediaFilter: _filters.mediaFilter,
             senderFilter: _filters.senderFilter,
             sinceDate: _filters.sinceDate,
