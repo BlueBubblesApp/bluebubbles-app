@@ -23,6 +23,7 @@ import io.flutter.embedding.engine.loader.ApplicationInfoLoader
 import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.FlutterCallbackInformation
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -83,104 +84,138 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
     }
 
     override fun startWork(): ListenableFuture<Result> {
-        val method = inputData.getString("method")!!
-        val data = inputData.getString("data")!!
+        return CoroutineScope(Dispatchers.Main).future {
+            val method = inputData.getString("method")
+            if (method == null) {
+                PersistentLog.e(applicationContext, Constants.logTag, "Worker started without a method — dropping")
+                return@future Result.failure()
+            }
+
+            // Payloads too large for WorkManager's 10 KB Data cap are spilled to a file by
+            // DartWorkManager; everything else is inlined under "data".
+            val payloadPath = inputData.getString("dataFile")
+            val data = if (payloadPath != null) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        File(payloadPath).readText(Charsets.UTF_8)
+                    } catch (e: Exception) {
+                        PersistentLog.e(applicationContext, Constants.logTag, "Failed to read spilled payload for method $method", e)
+                        null
+                    }
+                }
+            } else {
+                inputData.getString("data")
+            }
+
+            if (data == null) {
+                PersistentLog.e(applicationContext, Constants.logTag, "Worker for method $method has no payload — dropping")
+                DartWorkManager.deletePayload(applicationContext, payloadPath)
+                return@future Result.failure()
+            }
+
+            val result = runWork(method, data)
+            // A retry re-runs this same worker and re-reads the payload, so the spill file
+            // can only be removed once the work is finished for good.
+            if (result !is Result.Retry) DartWorkManager.deletePayload(applicationContext, payloadPath)
+            return@future result
+        }
+    }
+
+    private suspend fun runWork(method: String, data: String): Result {
         val gson = GsonBuilder()
                 .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
                 .create()
 
-        return CoroutineScope(Dispatchers.Main).future {
-            // Initialize AND select the engine under the same lock so a concurrent
-            // cleanup can't destroy the engine between init and selection.
-            val engineToUse: FlutterEngine? = try {
-                engineReady.withLock {
-                    // MainActivity.getEngine() can be non-null before its Dart isolate has
-                    // registered a method-call handler (the engine object is attached in
-                    // configureFlutterEngine, well before Dart's main() reaches
-                    // MethodChannelService.init()). Invoking into it during that window
-                    // always resolves notImplemented(). Only prefer it once Dart has
-                    // signaled "ready" on it. Otherwise, fall back to (or spin up) the
-                    // dedicated worker engine, which we know is ready before we ever use it.
-                    val mainEngine = MainActivity.getEngine()
-                    val mainEngineDartReady = MainActivity.isDartReady()
-                    val useMainEngine = mainEngine != null && mainEngineDartReady
-                    if (useMainEngine) {
-                        PersistentLog.d(applicationContext, Constants.logTag, "Using MainActivity engine to send to Dart (method=$method)")
+        // Initialize AND select the engine under the same lock so a concurrent
+        // cleanup can't destroy the engine between init and selection.
+        val engineToUse: FlutterEngine? = try {
+            engineReady.withLock {
+                // MainActivity.getEngine() can be non-null before its Dart isolate has
+                // registered a method-call handler (the engine object is attached in
+                // configureFlutterEngine, well before Dart's main() reaches
+                // MethodChannelService.init()). Invoking into it during that window
+                // always resolves notImplemented(). Only prefer it once Dart has
+                // signaled "ready" on it. Otherwise, fall back to (or spin up) the
+                // dedicated worker engine, which we know is ready before we ever use it.
+                val mainEngine = MainActivity.getEngine()
+                val mainEngineDartReady = MainActivity.isDartReady()
+                val useMainEngine = mainEngine != null && mainEngineDartReady
+                if (useMainEngine) {
+                    PersistentLog.d(applicationContext, Constants.logTag, "Using MainActivity engine to send to Dart (method=$method)")
+                } else {
+                    if (mainEngine != null && !mainEngineDartReady) {
+                        PersistentLog.w(applicationContext, Constants.logTag, "MainActivity engine exists but Dart isn't ready yet — using DartWorker engine instead for method $method")
                     } else {
-                        if (mainEngine != null && !mainEngineDartReady) {
-                            PersistentLog.w(applicationContext, Constants.logTag, "MainActivity engine exists but Dart isn't ready yet — using DartWorker engine instead for method $method")
-                        } else {
-                            PersistentLog.d(applicationContext, Constants.logTag, "Using DartWorker engine to send to Dart (method=$method)")
-                        }
-                        if (workerEngine == null) {
-                            PersistentLog.d(applicationContext, Constants.logTag, "Initializing engine for worker with method $method")
-                            initNewEngine()
-                        }
+                        PersistentLog.d(applicationContext, Constants.logTag, "Using DartWorker engine to send to Dart (method=$method)")
                     }
-                    if (useMainEngine) mainEngine else workerEngine
-                }
-            } catch (e: Exception) {
-                PersistentLog.e(applicationContext, Constants.logTag, "Engine init failed for worker with method $method: ${e.message}", e)
-                return@future retryOrFail(method, "engine init failed: ${e.message}")
-            }
-            PersistentLog.d(applicationContext, Constants.logTag, "Sending event, '$method' to Dart")
-
-            try {
-                if (engineToUse == null) {
-                    PersistentLog.d(applicationContext, Constants.logTag, "Engine is null, cannot send method $method to Dart")
-                    return@future retryOrFail(method, "engine was null after init")
-                }
-
-                PersistentLog.d(applicationContext, Constants.logTag, "Invoking method channel...")
-                val callResult = withTimeoutOrNull(120_000L) {
-                    suspendCancellableCoroutine { cont ->
-                        MethodChannel(engineToUse.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
-                            override fun success(result: Any?) {
-                                // A handler that returns false is asking to be retried (see
-                                // MethodChannelService._callHandler). That is still a *successful*
-                                // method-channel call, so it arrives here rather than in error() —
-                                // ignoring the value silently converted every "retry me" into
-                                // "done", permanently dropping the event.
-                                if (result == false) {
-                                    PersistentLog.w(applicationContext, Constants.logTag, "Worker with method $method asked to be retried")
-                                    if (cont.isActive) cont.resume(retryOrFail(method, "Dart requested a retry"))
-                                } else {
-                                    PersistentLog.d(applicationContext, Constants.logTag, "Worker with method $method completed successfully")
-                                    if (cont.isActive) cont.resume(Result.success())
-                                }
-                                closeEngineIfNeeded()
-                            }
-
-                            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                                PersistentLog.e(applicationContext, Constants.logTag, "Worker with method $method failed! ($errorCode: $errorMessage)")
-                                if (cont.isActive) cont.resume(retryOrFail(method, "Dart returned error $errorCode: $errorMessage"))
-                                closeEngineIfNeeded()
-                            }
-
-                            override fun notImplemented() {
-                                // notImplemented also fires when the Dart side hasn't registered its
-                                // method-call handler yet (engine still starting up), so treat it as transient.
-                                PersistentLog.e(applicationContext, Constants.logTag, "Worker with method $method not implemented on Dart side")
-                                if (cont.isActive) cont.resume(retryOrFail(method, "method not implemented on Dart side"))
-                                closeEngineIfNeeded()
-                            }
-                        })
+                    if (workerEngine == null) {
+                        PersistentLog.d(applicationContext, Constants.logTag, "Initializing engine for worker with method $method")
+                        initNewEngine()
                     }
                 }
-
-                if (callResult == null) {
-                    PersistentLog.e(applicationContext, Constants.logTag, "Method $method invocation timed out after 120s")
-                    closeEngineIfNeeded()
-                    return@future retryOrFail(method, "method invocation timed out after 120s")
-                }
-
-                // callResult carries the outcome resumed by the method-channel callback
-                // (success, retry, or failure) — don't collapse it to success.
-                return@future callResult
-            } catch (e: Exception) {
-                PersistentLog.w(applicationContext, Constants.logTag, "Error sending method $method to Dart: ${e.message}", e)
-                return@future retryOrFail(method, "exception sending to Dart: ${e.message}")
+                if (useMainEngine) mainEngine else workerEngine
             }
+        } catch (e: Exception) {
+            PersistentLog.e(applicationContext, Constants.logTag, "Engine init failed for worker with method $method: ${e.message}", e)
+            return retryOrFail(method, "engine init failed: ${e.message}")
+        }
+        PersistentLog.d(applicationContext, Constants.logTag, "Sending event, '$method' to Dart")
+
+        try {
+            if (engineToUse == null) {
+                PersistentLog.d(applicationContext, Constants.logTag, "Engine is null, cannot send method $method to Dart")
+                return retryOrFail(method, "engine was null after init")
+            }
+
+            PersistentLog.d(applicationContext, Constants.logTag, "Invoking method channel...")
+            val callResult = withTimeoutOrNull(120_000L) {
+                suspendCancellableCoroutine { cont ->
+                    MethodChannel(engineToUse.dartExecutor.binaryMessenger, Constants.methodChannel).invokeMethod(method, gson.fromJson(data, TypeToken.getParameterized(HashMap::class.java, String::class.java, Any::class.java).type), object : MethodChannel.Result {
+                        override fun success(result: Any?) {
+                            // A handler that returns false is asking to be retried (see
+                            // MethodChannelService._callHandler). That is still a *successful*
+                            // method-channel call, so it arrives here rather than in error() —
+                            // ignoring the value silently converted every "retry me" into
+                            // "done", permanently dropping the event.
+                            if (result == false) {
+                                PersistentLog.w(applicationContext, Constants.logTag, "Worker with method $method asked to be retried")
+                                if (cont.isActive) cont.resume(retryOrFail(method, "Dart requested a retry"))
+                            } else {
+                                PersistentLog.d(applicationContext, Constants.logTag, "Worker with method $method completed successfully")
+                                if (cont.isActive) cont.resume(Result.success())
+                            }
+                            closeEngineIfNeeded()
+                        }
+
+                        override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                            PersistentLog.e(applicationContext, Constants.logTag, "Worker with method $method failed! ($errorCode: $errorMessage)")
+                            if (cont.isActive) cont.resume(retryOrFail(method, "Dart returned error $errorCode: $errorMessage"))
+                            closeEngineIfNeeded()
+                        }
+
+                        override fun notImplemented() {
+                            // notImplemented also fires when the Dart side hasn't registered its
+                            // method-call handler yet (engine still starting up), so treat it as transient.
+                            PersistentLog.e(applicationContext, Constants.logTag, "Worker with method $method not implemented on Dart side")
+                            if (cont.isActive) cont.resume(retryOrFail(method, "method not implemented on Dart side"))
+                            closeEngineIfNeeded()
+                        }
+                    })
+                }
+            }
+
+            if (callResult == null) {
+                PersistentLog.e(applicationContext, Constants.logTag, "Method $method invocation timed out after 120s")
+                closeEngineIfNeeded()
+                return retryOrFail(method, "method invocation timed out after 120s")
+            }
+
+            // callResult carries the outcome resumed by the method-channel callback
+            // (success, retry, or failure) — don't collapse it to success.
+            return callResult
+        } catch (e: Exception) {
+            PersistentLog.w(applicationContext, Constants.logTag, "Error sending method $method to Dart: ${e.message}", e)
+            return retryOrFail(method, "exception sending to Dart: ${e.message}")
         }
     }
 
