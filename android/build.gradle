@@ -7,9 +7,12 @@ allprojects {
     }
 }
 
-rootProject.buildDir = '../build'
+// Project.buildDir is deprecated and slated for removal in Gradle 10 — it returns a
+// non-lazy File, so plugins that read it before this reassignment land on the wrong path.
+// layout.buildDirectory is the lazy equivalent and resolves to the same directories.
+rootProject.layout.buildDirectory.set(rootProject.layout.projectDirectory.dir("../build"))
 subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.layout.buildDirectory.set(rootProject.layout.buildDirectory.dir(project.name))
 }
 subprojects {
     project.evaluationDependsOn(':app')
@@ -27,6 +30,6 @@ subprojects {
 }
 
 tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }
 
