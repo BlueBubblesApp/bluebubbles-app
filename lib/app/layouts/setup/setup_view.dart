@@ -8,8 +8,8 @@ import 'package:bluebubbles/app/layouts/setup/pages/setup_checks/mac_setup_check
 import 'package:bluebubbles/app/layouts/setup/pages/sync/sync_progress.dart';
 import 'package:bluebubbles/app/layouts/setup/pages/welcome/welcome_page.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -188,8 +188,8 @@ class SetupPages extends StatelessWidget {
         onPageChanged: (page) {
           // skip pages if the things required are already complete
           if (!kIsWeb && !kIsDesktop && page == 2 && controller.currentPage == 2) {
-            DisableBatteryOptimization.isAllBatteryOptimizationDisabled.then((isDisabled) {
-              if (isDisabled ?? false) {
+            isBatteryOptimizationDisabled().then((isDisabled) {
+              if (isDisabled) {
                 controller.pageController.nextPage(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,

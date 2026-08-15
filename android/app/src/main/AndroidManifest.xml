@@ -43,6 +43,15 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" tools:replace="android:maxSdkVersion"/>
 
+    <!--
+         Declared here rather than pulled in by manifest merger. This used to arrive via the
+         disable_battery_optimization plugin's manifest; permission_handler replaced that
+         plugin and ships an empty manifest by design, so the app must declare it itself.
+         Without it, Permission.ignoreBatteryOptimizations silently reports denied and
+         request() never opens the system prompt.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <!-- Features -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />

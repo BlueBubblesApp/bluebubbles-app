@@ -3,7 +3,8 @@ import 'package:bluebubbles/helpers/network/network_helpers.dart';
 import 'package:bluebubbles/helpers/network/network_tasks.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:disable_battery_optimization/disable_battery_optimization.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 Future<bool> saveNewServerUrl(String newServerUrl,
     {bool tryRestartForegroundService = true,
@@ -69,16 +70,25 @@ Future<void> clearServerUrl(
   }
 }
 
+/// Whether the OS is currently exempting us from battery optimization
+///
+/// Backed by `PowerManager.isIgnoringBatteryOptimizations()`. Only Android has the
+/// concept, so everywhere else reports true — callers use this to decide whether to
+/// nag the user, and a check that can never pass would nag forever.
+Future<bool> isBatteryOptimizationDisabled() async {
+  if (!Platform.isAndroid) return true;
+  return await Permission.ignoreBatteryOptimizations.isGranted;
+}
+
 /// Prompts the user to disable battery optimizations for the app
 ///
 /// Returns true if the user has disabled battery optimizations
 Future<bool> disableBatteryOptimizations() async {
-  bool? isDisabled = await DisableBatteryOptimization.isAllBatteryOptimizationDisabled;
+  // If battery optimizations are already disabled, return true
+  if (await isBatteryOptimizationDisabled()) return true;
 
-  // If battery optomizations are already disabled, return true
-  if (isDisabled == true) return true;
-
-  // If optimizations are not disabled, prompt the user to disable them
-  isDisabled = await DisableBatteryOptimization.showDisableBatteryOptimizationSettings();
-  return isDisabled ?? false;
+  // If optimizations are not disabled, prompt the user to disable them. Unlike the
+  // old plugin — which reported success as soon as the settings screen opened — this
+  // resolves once the user returns, so the result reflects what they actually chose.
+  return (await Permission.ignoreBatteryOptimizations.request()).isGranted;
 }
