@@ -40,6 +40,10 @@ pubspeck.lock
 **/android/key.properties
 **/android/.settings
 **/releases
+# Release keystores. These belong in CI secrets, never in the repo.
+*.jks
+*.keystore
+*.p12
 
 #objectbox
 .dart_tool/*

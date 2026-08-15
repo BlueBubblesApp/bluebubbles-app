@@ -1,0 +1,18 @@
+version: 2
+
+# Workflow actions are pinned to full commit SHAs so a compromised upstream cannot
+# repoint a tag underneath us. The tradeoff is that pins go stale silently and never
+# pick up security fixes, so let dependabot raise the bumps as reviewable PRs.
+#
+# Scoped to github-actions only — the pub ecosystem is managed through pubspec.lock.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore"
+    groups:
+      actions:
+        patterns:
+          - "*"
