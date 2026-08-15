@@ -53,8 +53,17 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
+    <!--
+         enableOnBackInvokedCallback is already the default at targetSdk 36, but it is
+         declared explicitly so the predictive-back contract doesn't silently flip if the
+         target level is ever lowered. Everything back-related must go through
+         OnBackPressedDispatcher: onBackPressed() is never called and KEYCODE_BACK is not
+         dispatched. Flutter's embedding and the app's PopScope handlers already use the
+         dispatcher, so no activity may override onBackPressed().
+    -->
     <application
         tools:replace="android:label"
+        android:enableOnBackInvokedCallback="true"
         android:allowBackup="false"
         android:memtagMode="async"
         android:name="${applicationName}"
