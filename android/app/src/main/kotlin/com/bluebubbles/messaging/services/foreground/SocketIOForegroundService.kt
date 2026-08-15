@@ -195,18 +195,48 @@ class SocketIOForegroundService : Service() {
                 updateNotification(RECONNECT_FAILED)
             }
 
+            // This runs on socket.io's own event thread, outside the try/catch wrapping
+            // onCreate — anything that escapes it takes down the whole process rather than
+            // just the connection, so the body is fully guarded.
             mSocket!!.onAnyIncoming { args ->
-                if (args.isNotEmpty()) {
-                    val event = args[0] as String
-                    val message = args[1] as JSONObject
+                try {
+                    // Never cast the args blindly: payload shape varies by event (most send a
+                    // JSONObject, but `incoming-facetime` sends an already-encoded JSON
+                    // string), and some events carry no payload at all.
+                    val event = args.getOrNull(0) as? String
+                    if (event == null) {
+                        PersistentLog.w(applicationContext, Constants.logTag, "Ignoring Socket.io event with a non-string name")
+                        return@onAnyIncoming
+                    }
+
+                    if (eventBlacklist.contains(event)) {
+                        PersistentLog.d(applicationContext, Constants.logTag, "Ignored event of type $event from Socket.io...")
+                        return@onAnyIncoming
+                    }
+
+                    // The Dart handler decodes this into a Map, so only object-shaped JSON is
+                    // usable — forwarding anything else would just burn five headless engine
+                    // boots on retries before being dropped anyway.
+                    val payload = args.getOrNull(1)
+                    val data = when {
+                        payload is JSONObject -> payload.toString()
+                        payload is String && payload.trimStart().startsWith("{") -> payload
+                        else -> null
+                    }
+
+                    if (data == null) {
+                        PersistentLog.w(
+                            applicationContext,
+                            Constants.logTag,
+                            "Ignoring event $event from Socket.io — payload is not a JSON object (${payload?.javaClass?.simpleName ?: "absent"})"
+                        )
+                        return@onAnyIncoming
+                    }
 
                     PersistentLog.d(applicationContext, Constants.logTag, "Received event of type $event from Socket.io...")
-                    if (!eventBlacklist.contains(event)) {
-                        PersistentLog.d(applicationContext, Constants.logTag, "Received event of type $event from Socket.io...")
-                        DartWorkManager.createWorker(applicationContext, "socket-event", hashMapOf("event" to event, "data" to message.toString())) {}
-                    } else {
-                        PersistentLog.d(applicationContext, Constants.logTag, "Ignored event of type $event from Socket.io...")
-                    }
+                    DartWorkManager.createWorker(applicationContext, "socket-event", hashMapOf("event" to event, "data" to data)) {}
+                } catch (e: Exception) {
+                    PersistentLog.e(applicationContext, Constants.logTag, "Failed to handle incoming Socket.io event", e)
                 }
             }
         } catch (e: Exception) {
