@@ -202,6 +202,30 @@ class _FullscreenImageState extends State<FullscreenImage>
     );
   }
 
+  Widget _samsungBottomAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: context.theme.textTheme.labelMedium?.copyWith(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -355,6 +379,44 @@ class _FullscreenImageState extends State<FullscreenImage>
                             ),
                             onPressed: () => refreshAttachment(),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // Bottom actions bar (Samsung style)
+            if (widget.showInteractions && samsung)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: AnimatedOpacity(
+                  opacity: showOverlay ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: SafeArea(
+                    top: false,
+                    child: Container(
+                      height: 72,
+                      color: Colors.black,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _samsungBottomAction(
+                            icon: Icons.file_download_outlined,
+                            label: 'Save',
+                            onPressed: () => AttachmentsSvc.saveToDisk(widget.file),
+                          ),
+                          if (!kIsWeb && !kIsDesktop)
+                            _samsungBottomAction(
+                              icon: Icons.share_outlined,
+                              label: 'Share',
+                              onPressed: () {
+                                if (widget.file.path != null) {
+                                  Share.files([widget.file.path!]);
+                                }
+                              },
+                            ),
                         ],
                       ),
                     ),
