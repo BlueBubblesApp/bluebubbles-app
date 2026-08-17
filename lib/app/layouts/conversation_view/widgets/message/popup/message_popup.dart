@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_action_context.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/reaction_picker_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/widgets/reaction_details.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/widgets/emoji_picker_popup.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
@@ -29,6 +30,7 @@ import 'package:flutter/material.dart' hide BackButton;
 import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
+
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
@@ -146,7 +148,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) =>
-              ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
+              ReactionTypes.checkReactionType(e.associatedMessageType) &&
               (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
@@ -364,9 +366,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                           return Row(
                                             mainAxisSize: MainAxisSize.min,
                                             mainAxisAlignment: MainAxisAlignment.start,
-                                            children: ReactionTypes.toList()
-                                                .slice(narrowScreen && index == 1 ? 3 : 0,
-                                                    narrowScreen && index == 0 ? 3 : null)
+                                            children: [...ReactionTypes.toList(), "+"]
+                                                .slice(narrowScreen && index == 1 ? 4 : 0,
+                                                    narrowScreen && index == 0 ? 4 : null)
                                                 .map((e) {
                                               return Padding(
                                                 padding: iOS
@@ -382,7 +384,17 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                     height: iOS ? 35 : null,
                                                     child: InkWell(
                                                       borderRadius: BorderRadius.circular(20),
-                                                      onTap: () {
+                                                      onTap: () async {
+                                                        if (e == "+") {
+                                                          final String? customEmoji = await EmojiPickerPopup.show(context);
+                                                          if (customEmoji != null && customEmoji.isNotEmpty) {
+                                                            HapticFeedback.lightImpact();
+                                                            widget.sendTapback(selfReaction == customEmoji ? "-$customEmoji" : customEmoji, part.part);
+                                                            popDetails();
+                                                          }
+                                                          return;
+                                                        }
+
                                                         if (currentlySelectedReaction == e) {
                                                           currentlySelectedReaction = null;
                                                         } else {
@@ -396,36 +408,44 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                       child: Padding(
                                                         padding: const EdgeInsets.all(6.5)
                                                             .add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
-                                                        child: iOS
-                                                            ? SvgPicture.asset(
-                                                                'assets/reactions/$e-black.svg',
-                                                                colorFilter: ColorFilter.mode(
-                                                                    e == "love" && currentlySelectedReaction == e
-                                                                        ? Colors.pink
-                                                                        : (currentlySelectedReaction == e
-                                                                            ? context.theme.colorScheme.onPrimary
-                                                                            : context.theme.colorScheme.outline),
-                                                                    BlendMode.srcIn),
+                                                        child: e == "+"
+                                                            ? Center(
+                                                                child: Icon(
+                                                                  iOS ? cupertino.CupertinoIcons.add : Icons.add,
+                                                                  color: context.theme.colorScheme.outline,
+                                                                  size: 20,
+                                                                ),
                                                               )
-                                                            : Center(
-                                                                child: Builder(builder: (context) {
-                                                                  final text = Text(
-                                                                    ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                                    style: const TextStyle(
-                                                                        fontSize: 18, fontFamily: 'Apple Color Emoji'),
-                                                                    textAlign: TextAlign.center,
-                                                                  );
-                                                                  // rotate thumbs down to match iOS
-                                                                  if (e == "dislike") {
-                                                                    return Transform(
-                                                                      transform: Matrix4.identity()..rotateY(pi),
-                                                                      alignment: FractionalOffset.center,
-                                                                      child: text,
-                                                                    );
-                                                                  }
-                                                                  return text;
-                                                                }),
-                                                              ),
+                                                            : (iOS
+                                                                ? SvgPicture.asset(
+                                                                    'assets/reactions/$e-black.svg',
+                                                                    colorFilter: ColorFilter.mode(
+                                                                        e == "love" && currentlySelectedReaction == e
+                                                                            ? Colors.pink
+                                                                            : (currentlySelectedReaction == e
+                                                                                ? context.theme.colorScheme.onPrimary
+                                                                                : context.theme.colorScheme.outline),
+                                                                        BlendMode.srcIn),
+                                                                  )
+                                                                : Center(
+                                                                    child: Builder(builder: (context) {
+                                                                      final text = Text(
+                                                                        ReactionTypes.emojiForReaction(e),
+                                                                        style: const TextStyle(
+                                                                            fontSize: 18, fontFamily: 'Apple Color Emoji'),
+                                                                        textAlign: TextAlign.center,
+                                                                      );
+                                                                      // rotate thumbs down to match iOS
+                                                                      if (e == "dislike") {
+                                                                        return Transform(
+                                                                          transform: Matrix4.identity()..rotateY(pi),
+                                                                          alignment: FractionalOffset.center,
+                                                                          child: text,
+                                                                        );
+                                                                      }
+                                                                      return text;
+                                                                    }),
+                                                                  )),
                                                       ),
                                                     ),
                                                   ),
