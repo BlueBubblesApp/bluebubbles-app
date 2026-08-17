@@ -301,7 +301,11 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
           ),
           itemCount: _attachments.length,
           itemBuilder: (context, index) {
-            return MediaGalleryCard(attachment: _attachments[index], showSenderAvatar: false);
+            return MediaGalleryCard(
+              attachment: _attachments[index],
+              showSenderAvatar: false,
+              galleryAttachments: _attachments,
+            );
           },
         ),
       ),

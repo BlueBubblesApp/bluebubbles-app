@@ -1,3 +1,5 @@
+import 'package:bluebubbles/app/components/bb_chip.dart';
+import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
@@ -28,7 +30,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.initialAttachmentGuid,
       this.replyMessage,
       this.replyPartIndex,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.showJumpToMessage = false});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -42,6 +45,9 @@ class ConversationFullscreenHolder extends StatefulWidget {
   /// When non-null, the fullscreen carousel is limited to these attachments
   /// instead of all images in the chat. Used when opening from a gallery card.
   final List<Attachment>? galleryAttachments;
+
+  /// When true, shows a header chip to jump back to the source message.
+  final bool showJumpToMessage;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -79,6 +85,166 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
+
+  Message? _messageForAttachment(Attachment attachment) {
+    if (attachment.message.hasValue) {
+      return attachment.message.target;
+    }
+    final svc = messageService;
+    if (svc != null && attachment.guid != null) {
+      for (final message in svc.struct.messages) {
+        if (message.dbAttachments.any((a) => a.guid == attachment.guid)) {
+          return message;
+        }
+      }
+    }
+    return null;
+  }
+
+  Message? get _currentMessage => _messageForAttachment(attachments[currentIndex]);
+
+  bool _canJumpFor(Attachment attachment) {
+    if (!widget.showJumpToMessage || kIsWeb || !widget.showInteractions) return false;
+    final message = _messageForAttachment(attachment);
+    if (message?.guid == null) return false;
+    final chatGuid = widget.currentChat?.guid ?? message!.chat.target?.guid;
+    if (chatGuid == null) return false;
+    return maybeFindMessagesSvc(chatGuid) != null;
+  }
+
+  bool get _canJumpToMessage => _canJumpFor(attachments[currentIndex]);
+
+  void _jumpToSourceMessage() {
+    final message = _currentMessage;
+    final guid = message?.guid;
+    final chatGuid = widget.currentChat?.guid ?? message?.chat.target?.guid;
+    if (guid == null || chatGuid == null) return;
+
+    final service = maybeFindMessagesSvc(chatGuid);
+    if (service == null) return;
+
+    // Capture before popping — this widget's context is disposed after the first pop.
+    final navigator = Navigator.of(context);
+    final useTabletNestedNav = Get.keys.containsKey(2) && NavigationSvc.isTabletMode(context);
+
+    // Close fullscreen first.
+    navigator.pop();
+
+    if (useTabletNestedNav) {
+      // Nested right-pane navigator doesn't fire RouteAware, so showingSubRoute stays
+      // false. Pop Details / Attachments via Get.back(id: 2) instead.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _popTabletOverlaysThenJump(guid: guid, service: service);
+      });
+      return;
+    }
+
+    // Phone: pop one route per frame so ConversationView's RouteAware can clear
+    // showingSubRoute before we decide whether another pop is needed.
+    void popUntilConversation() {
+      final ctrl = Get.isRegistered<ConversationViewController>(tag: chatGuid)
+          ? Get.find<ConversationViewController>(tag: chatGuid)
+          : null;
+      if (ctrl?.showingSubRoute == true && navigator.canPop()) {
+        navigator.pop();
+        WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
+        return;
+      }
+      service.jumpToMessage(guid);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
+  }
+
+  /// Tablet right-pane stack is typically: initial → ConversationView → Details → (Attachments?).
+  /// ConversationView and Attachments are both GetPageRoute; Details is a ThemeSwitcher page route.
+  /// Pop overlays only — never the conversation (the GetPageRoute that sits above `initial`).
+  void _popTabletOverlaysThenJump({required String guid, required MessagesService service}) {
+    void step({int popsDone = 0}) {
+      if (popsDone >= 2) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      final nav = Get.global(2).currentState;
+      if (nav == null || !nav.canPop()) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      Route<dynamic>? top;
+      nav.popUntil((route) {
+        top = route;
+        return true; // Inspect only; do not pop.
+      });
+
+      final isDetailsRoute = top is MaterialPageRoute || top is PageRouteBuilder;
+      final isGetPageRoute = top is GetPageRoute;
+
+      // Details (always pop). Attachments is a GetPageRoute still above CV — pop only as
+      // the first overlay. A later GetPageRoute is ConversationView; leave it alone.
+      final shouldPop = isDetailsRoute || (isGetPageRoute && popsDone == 0);
+      if (!shouldPop) {
+        service.jumpToMessage(guid);
+        return;
+      }
+
+      Get.back(id: 2);
+      WidgetsBinding.instance.addPostFrameCallback((_) => step(popsDone: popsDone + 1));
+    }
+
+    step();
+  }
+
+  String get _jumpChipLabel {
+    final message = _currentMessage!;
+    if (message.isFromMe!) return "From You";
+    final handle = message.handleRelation.target;
+    if (handle == null) return "From Unknown";
+    final handleState = HandleSvc.getOrCreateHandleState(handle);
+    return "From ${handleState.displayName.value ?? handle.displayName}";
+  }
+
+  PreferredSizeWidget? _buildJumpToMessageBar(BuildContext context) {
+    if (!_canJumpToMessage) return null;
+
+    return PreferredSize(
+      // Material chip metrics (avatar + bodyMedium line-height) can slightly exceed 36;
+      // keep headroom so we don't trip fractional RenderFlex overflows.
+      preferredSize: const Size.fromHeight(40),
+      child: Align(
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Theme(
+            data: context.theme.copyWith(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            child: BBChip(
+              avatar: CircleAvatar(
+                backgroundColor: context.theme.colorScheme.primaryContainer,
+                radius: 12,
+                child: ContactAvatarWidget(
+                  handle: _currentMessage!.isFromMe! ? null : _currentMessage!.handleRelation.target,
+                  size: 24,
+                  editable: false,
+                  scaleSize: false,
+                  borderThickness: 0,
+                ),
+              ),
+              label: Text(
+                _jumpChipLabel,
+                style: context.theme.textTheme.bodyMedium?.copyWith(height: 1.2),
+                overflow: TextOverflow.ellipsis,
+              ),
+              onPressed: _jumpToSourceMessage,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -153,6 +319,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                       : "${currentIndex + 1} of ${attachments.length}",
                   titleStyle:
                       context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                  bottom: _buildJumpToMessageBar(context),
                   iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                   actions: [
                     if (_canReply)
@@ -233,184 +400,219 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                   _videoSwipeVelocityTracker = null;
                   _videoSwipeDragDx = 0;
                 },
-                child: PageView.builder(
-                physics: physics ??
-                    (attachments.length == 1 ? const NeverScrollableScrollPhysics() : ThemeSwitcher.getScrollPhysics()),
-                reverse: SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
-                itemCount: attachments.length,
-                onPageChanged: (int val) {
-                  widget.videoController?.player.pause();
-                  setState(() {
-                    currentIndex = val;
-                    // Reset a zoom-lock (NeverScrollableScrollPhysics) set by the page we're
-                    // leaving — FullscreenImage's PhotoView reports its own scale state via
-                    // updatePhysics, but `physics` lives on this shared holder, not per-page.
-                    // Without this reset, landing on a video (which never calls updatePhysics)
-                    // after a zoomed image permanently locks the PageView from then on.
-                    physics = null;
-                  });
-                },
-                controller: controller,
-                itemBuilder: (BuildContext context, int index) {
-                  final attachment = attachments[index];
-                  dynamic content = AttachmentsSvc.getContent(attachment,
-                      path: attachment.guid == null ? attachment.transferName : null);
-                  final key = attachment.guid ?? attachment.transferName ?? randomString(8);
-
-                  if (content is PlatformFile) {
-                    if (attachment.mimeStart == "image") {
-                      return FullscreenImage(
-                        key: Key(key),
-                        attachment: attachment,
-                        file: content,
-                        showInteractions: widget.showInteractions,
-                        updatePhysics: (ScrollPhysics p) {
-                          if (physics != p) {
-                            setState(() {
-                              physics = p;
-                            });
-                          }
-                        },
-                        onOverlayToggle: (show) {
-                          if (showAppBar != show) {
-                            setState(() {
-                              showAppBar = show;
-                            });
-                          }
-                        },
-                      );
-                    } else if (attachment.mimeStart == "video") {
-                      return FullscreenVideo(
-                        key: Key(key),
-                        file: content,
-                        attachment: attachment,
-                        showInteractions: widget.showInteractions,
-                        videoController: widget.videoController,
-                        mute: widget.mute,
-                        onOverlayToggle: (show) {
-                          if (showAppBar != show) {
-                            setState(() {
-                              showAppBar = show;
-                            });
-                          }
-                        },
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  } else if (content is Attachment) {
-                    final Attachment _content = content;
-                    return InkWell(
-                      onTap: () {
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      physics: physics ??
+                          (attachments.length == 1
+                              ? const NeverScrollableScrollPhysics()
+                              : ThemeSwitcher.getScrollPhysics()),
+                      reverse: SettingsSvc.settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
+                      itemCount: attachments.length,
+                      onPageChanged: (int val) {
+                        widget.videoController?.player.pause();
                         setState(() {
-                          content = AttachmentDownloader.startDownload(content, onComplete: (file) {
-                            setState(() {
-                              content = file;
-                            });
-                          });
+                          currentIndex = val;
+                          // Reset a zoom-lock (NeverScrollableScrollPhysics) set by the page we're
+                          // leaving — FullscreenImage's PhotoView reports its own scale state via
+                          // updatePhysics, but `physics` lives on this shared holder, not per-page.
+                          // Without this reset, landing on a video (which never calls updatePhysics)
+                          // after a zoomed image permanently locks the PageView from then on.
+                          physics = null;
                         });
                       },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: Center(
-                                child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined,
-                                    size: 30)),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            (_content.mimeType ?? ""),
-                            style: context.theme.textTheme.bodyLarge!
-                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _content.getFriendlySize(),
-                            style: context.theme.textTheme.bodyMedium!
-                                .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                            maxLines: 1,
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (content is AttachmentDownloadController) {
-                    final AttachmentDownloadController _content = content;
-                    return InkWell(
-                      onTap: () {
-                        final AttachmentDownloadController _content = content;
-                        if (_content.state.value != AttachmentDownloadState.error) return;
-                        Get.delete<AttachmentDownloadController>(tag: _content.attachment.guid);
-                        content = AttachmentDownloader.startDownload(_content.attachment, onComplete: (file) {
-                          setState(() {
-                            content = file;
-                          });
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Obx(() {
-                          final isError = _content.state.value == AttachmentDownloadState.error;
-                          final isProcessing = _content.state.value == AttachmentDownloadState.processing;
-                          final isQueued = _content.state.value == AttachmentDownloadState.queued;
+                      controller: controller,
+                      itemBuilder: (BuildContext context, int index) {
+                        final attachment = attachments[index];
+                        dynamic content = AttachmentsSvc.getContent(attachment,
+                            path: attachment.guid == null ? attachment.transferName : null);
+                        final key = attachment.guid ?? attachment.transferName ?? randomString(8);
 
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              SizedBox(
-                                height: 40,
-                                width: 40,
-                                child: Center(
-                                  child: isError
-                                      ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
-                                      : isProcessing
-                                          ? (iOS
-                                              ? const CupertinoActivityIndicator(radius: 14)
-                                              : const CircularProgressIndicator())
-                                          : isQueued
-                                              ? Icon(iOS ? CupertinoIcons.clock : Icons.schedule, size: 30)
-                                              : CircleProgressBar(
-                                                  value: _content.progress.value?.toDouble() ?? 0,
-                                                  backgroundColor: context.theme.colorScheme.outline,
-                                                  foregroundColor: context.theme.colorScheme.onSurfaceVariant,
-                                                ),
+                        if (content is PlatformFile) {
+                          final canJump = _canJumpFor(attachment);
+                          if (attachment.mimeStart == "image") {
+                            return FullscreenImage(
+                              key: Key(key),
+                              attachment: attachment,
+                              file: content,
+                              showInteractions: widget.showInteractions,
+                              updatePhysics: (ScrollPhysics p) {
+                                if (physics != p) {
+                                  setState(() {
+                                    physics = p;
+                                  });
+                                }
+                              },
+                              onOverlayToggle: (show) {
+                                if (showAppBar != show) {
+                                  setState(() {
+                                    showAppBar = show;
+                                  });
+                                }
+                              },
+                              onJumpToMessage: canJump ? _jumpToSourceMessage : null,
+                            );
+                          } else if (attachment.mimeStart == "video") {
+                            return FullscreenVideo(
+                              key: Key(key),
+                              file: content,
+                              attachment: attachment,
+                              showInteractions: widget.showInteractions,
+                              videoController: widget.videoController,
+                              mute: widget.mute,
+                              onOverlayToggle: (show) {
+                                if (showAppBar != show) {
+                                  setState(() {
+                                    showAppBar = show;
+                                  });
+                                }
+                              },
+                              onJumpToMessage: canJump ? _jumpToSourceMessage : null,
+                            );
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        } else if (content is Attachment) {
+                          final Attachment _content = content;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                content = AttachmentDownloader.startDownload(content, onComplete: (file) {
+                                  setState(() {
+                                    content = file;
+                                  });
+                                });
+                              });
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: Center(
+                                      child: Icon(iOS ? CupertinoIcons.cloud_download : Icons.cloud_download_outlined,
+                                          size: 30)),
                                 ),
-                              ),
-                              isError ? const SizedBox(height: 10) : const SizedBox(height: 5),
+                                const SizedBox(height: 5),
+                                Text(
+                                  (_content.mimeType ?? ""),
+                                  style: context.theme.textTheme.bodyLarge!
+                                      .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  _content.getFriendlySize(),
+                                  style: context.theme.textTheme.bodyMedium!
+                                      .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (content is AttachmentDownloadController) {
+                          final AttachmentDownloadController _content = content;
+                          return InkWell(
+                            onTap: () {
+                              final AttachmentDownloadController _content = content;
+                              if (_content.state.value != AttachmentDownloadState.error) return;
+                              Get.delete<AttachmentDownloadController>(tag: _content.attachment.guid);
+                              content = AttachmentDownloader.startDownload(_content.attachment, onComplete: (file) {
+                                setState(() {
+                                  content = file;
+                                });
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Obx(() {
+                                final isError = _content.state.value == AttachmentDownloadState.error;
+                                final isProcessing = _content.state.value == AttachmentDownloadState.processing;
+                                final isQueued = _content.state.value == AttachmentDownloadState.queued;
+
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    SizedBox(
+                                      height: 40,
+                                      width: 40,
+                                      child: Center(
+                                        child: isError
+                                            ? Icon(iOS ? CupertinoIcons.arrow_clockwise : Icons.refresh, size: 30)
+                                            : isProcessing
+                                                ? (iOS
+                                                    ? const CupertinoActivityIndicator(radius: 14)
+                                                    : const CircularProgressIndicator())
+                                                : isQueued
+                                                    ? Icon(iOS ? CupertinoIcons.clock : Icons.schedule, size: 30)
+                                                    : CircleProgressBar(
+                                                        value: _content.progress.value?.toDouble() ?? 0,
+                                                        backgroundColor: context.theme.colorScheme.outline,
+                                                        foregroundColor: context.theme.colorScheme.onSurfaceVariant,
+                                                      ),
+                                      ),
+                                    ),
+                                    isError ? const SizedBox(height: 10) : const SizedBox(height: 5),
+                                    Text(
+                                      isError
+                                          ? "Failed to download!"
+                                          : isProcessing
+                                              ? "Processing"
+                                              : isQueued
+                                                  ? "Queued"
+                                                  : (_content.attachment.mimeType ?? ""),
+                                      style: context.theme.textTheme.bodyLarge!
+                                          .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                  ],
+                                );
+                              }),
+                            ),
+                          );
+                        } else {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                               Text(
-                                isError
-                                    ? "Failed to download!"
-                                    : isProcessing
-                                        ? "Processing"
-                                        : isQueued
-                                            ? "Queued"
-                                            : (_content.attachment.mimeType ?? ""),
-                                style: context.theme.textTheme.bodyLarge!
-                                    .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              )
+                                "Error loading attachment",
+                                style: context.theme.textTheme.bodyLarge,
+                              ),
                             ],
                           );
-                        }),
-                      ),
-                    );
-                  } else {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Error loading attachment",
-                          style: context.theme.textTheme.bodyLarge,
+                        }
+                      },
+                    ),
+                    if (material && _canJumpToMessage)
+                      Positioned(
+                        right: 16,
+                        bottom: 16,
+                        child: IgnorePointer(
+                          ignoring: !showAppBar,
+                          child: AnimatedOpacity(
+                            opacity: showAppBar ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: SafeArea(
+                              top: false,
+                              child: FilledButton(
+                                onPressed: _jumpToSourceMessage,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: context.theme.colorScheme.primary,
+                                  foregroundColor: context.theme.colorScheme.onPrimary,
+                                  shape: const StadiumBorder(),
+                                  minimumSize: const Size(0, 48),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                ),
+                                child: const Text("See in chat"),
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                    );
-                  }
-                },
+                      ),
+                  ],
                 ),
               ),
             ),
