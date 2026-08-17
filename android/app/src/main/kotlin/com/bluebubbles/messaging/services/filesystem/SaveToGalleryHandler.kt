@@ -41,6 +41,9 @@ class SaveToGalleryHandler : MethodCallHandlerImpl() {
         /// How many `name (n)` variants to try before falling back to a timestamped name.
         private const val collisionRetryLimit: Int = 32
 
+        /// Characters that can't appear in a file or directory name on external storage.
+        private val illegalNameChars = Regex("[\\\\/:*?\"<>|\\x00-\\x1f]")
+
         /// Media types common in iMessage attachments that `MimeTypeMap` doesn't know about on
         /// every API level. Without these the file reads as `application/octet-stream` and gets
         /// turned away from the gallery.
@@ -214,10 +217,13 @@ class SaveToGalleryHandler : MethodCallHandlerImpl() {
             MediaType.AUDIO -> Environment.DIRECTORY_MUSIC
         }
 
+        // The relative path is a user setting, and it can arrive from a restored or synced
+        // settings blob without ever passing through the settings dialog's validation. Clean each
+        // segment rather than trusting it. Trimming dots also drops any `.` or `..` traversal.
         val segments = (relativePath ?: "")
             .split('/')
-            .map { it.trim() }
-            .filter { it.isNotEmpty() && it != "." && it != ".." }
+            .map { it.trim().trim('.').replace(illegalNameChars, "_").trim() }
+            .filter { it.isNotEmpty() }
         if (segments.isEmpty()) return "$default/"
 
         val allowed = when (mediaType) {
@@ -261,7 +267,7 @@ class SaveToGalleryHandler : MethodCallHandlerImpl() {
             ?: "attachment"
 
         val cleaned = raw
-            .replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1f]"), "_")
+            .replace(illegalNameChars, "_")
             .trim()
             .trim('.')
             .ifEmpty { "attachment" }

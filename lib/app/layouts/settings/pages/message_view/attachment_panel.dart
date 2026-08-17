@@ -150,8 +150,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                                         Navigator.of(context, rootNavigator: true).pop();
                                         SettingsSvc.settings.autoSavePicsLocation.value = "Pictures";
                                       } else {
-                                        final regex = RegExp(r"^[a-zA-Z0-9-_]+");
-                                        if (!regex.hasMatch(pathController.text) || pathController.text.endsWith("/")) {
+                                        // Validate every segment, not just the start of the string. This
+                                        // ends up in MediaStore's RELATIVE_PATH, and characters it can't
+                                        // turn into a real directory make the insert fail.
+                                        final segment = RegExp(r"^[a-zA-Z0-9-_]+$");
+                                        final segments = pathController.text.split("/");
+                                        if (!segments.every(segment.hasMatch)) {
                                           showSnackbar("Error", "Enter a valid path!");
                                           return;
                                         }
