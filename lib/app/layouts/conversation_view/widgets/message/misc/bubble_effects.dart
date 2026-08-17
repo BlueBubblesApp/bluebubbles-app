@@ -3,9 +3,10 @@ import 'dart:ui';
 
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:collection/collection.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/engine.dart';
@@ -21,6 +22,7 @@ class BubbleEffects extends StatefulWidget {
     required this.globalKey,
     required this.showTail,
     required this.messageState,
+    this.isPreview = false,
   });
 
   final Widget child;
@@ -28,6 +30,14 @@ class BubbleEffects extends StatefulWidget {
   final GlobalKey? globalKey;
   final bool showTail;
   final MessageState messageState;
+
+  /// Whether this bubble is a throwaway preview (the send-effect picker) rather
+  /// than a real message in a conversation.
+  ///
+  /// A preview still animates, but must never call
+  /// [MessageState.markEffectPlayed] — its `Message` is an unsent stand-in, and
+  /// marking it played would persist it to the database.
+  final bool isPreview;
 
   @override
   State<StatefulWidget> createState() => _BubbleEffectsState();
@@ -37,6 +47,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
   late MovieTween tween;
   final rxControl = Rx<Control>(Control.stop);
   late final Worker _effectWorker;
+  Worker? _screenEffectWorker;
 
   /// True while an auto-triggered animation is in-flight. Set to false once
   /// the animation completes and [MessageState.markEffectPlayed] has been
@@ -60,11 +71,11 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
     );
     _fadeAnimation = _fadeController;
 
-    // Auto-play invisible ink on first appearance.
+    // Invisible ink always covers its bubble on first appearance — it is a
+    // resting state rather than a one-shot animation, so it is gated on neither
+    // hasEffectPlayed nor age the way the other effects are.
     final message = widget.messageState.message;
-    final effectStr =
-        effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
-    final effect = stringToMessageEffect[effectStr] ?? MessageEffect.none;
+    final effect = effectOf(message);
     if (effect == MessageEffect.invisibleInk) {
       // Set size first, then flip rxControl so the single Obx rebuild
       // that fires has the correct dimensions and BackdropFilter covers
@@ -74,7 +85,12 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
         _fadeController.value = 1.0;
         rxControl.value = Control.play;
       });
-    } else if (effect.isBubble && !widget.messageState.hasEffectPlayed.value) {
+    } else if (effect.isBubble && !widget.messageState.hasEffectPlayed.value && isEffectRecent(message)) {
+      // Bubble effects animate their own bubble, so every unplayed one plays on
+      // its own as it appears — unlike screen effects, which take over the whole
+      // conversation and so are limited to the newest one by
+      // [MessagesService.playPendingScreenEffect]. Both share the same staleness
+      // cutoff; a stale one is left unflagged, since it only gets older.
       _pendingAutoPlay = true;
       _whenSized((s) {
         _size.value = s;
@@ -88,6 +104,25 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
         _fadeController.value = 1.0;
         rxControl.value = Control.playFromStart;
       }
+    });
+
+    // One bubble per message dispatches the full-screen effect — the popup's
+    // clone shares this MessageState, and both firing would emit the event
+    // twice with two different rects.
+    if (widget.part == 0 && !MessageCloneScope.of(context)) {
+      _screenEffectWorker = ever(widget.messageState.playScreenEffect, (_) => _playScreenEffect());
+    }
+  }
+
+  /// Hands the message's full-screen effect to [ScreenEffectsWidget], along with
+  /// the bubble's on-screen rect — spotlight, love and lasers animate around it.
+  void _playScreenEffect() {
+    if (!mounted) return;
+    final message = widget.messageState.message;
+    if (!effectOf(message).isScreen) return;
+    EventDispatcherSvc.emit('play-effect', {
+      'type': effectNameOf(message),
+      'size': widget.globalKey?.globalPaintBounds(context),
     });
   }
 
@@ -116,6 +151,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
   @override
   void dispose() {
     _effectWorker.dispose();
+    _screenEffectWorker?.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -180,9 +216,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final message = widget.messageState.message;
-    final effectStr =
-        effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
-    final effect = stringToMessageEffect[effectStr] ?? MessageEffect.none;
+    final effect = effectOf(message);
     if (message.expressiveSendStyleId == null) return widget.child;
     if (effect == MessageEffect.invisibleInk) {
       return NotificationListener<SizeChangedLayoutNotification>(
@@ -264,7 +298,7 @@ class _BubbleEffectsState extends State<BubbleEffects> with SingleTickerProvider
               rxControl.value = Control.stop;
               if (_pendingAutoPlay) {
                 _pendingAutoPlay = false;
-                widget.messageState.markEffectPlayed();
+                if (!widget.isPreview) widget.messageState.markEffectPlayed();
               }
             }
           },

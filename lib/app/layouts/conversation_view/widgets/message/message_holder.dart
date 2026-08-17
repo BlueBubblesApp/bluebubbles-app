@@ -634,7 +634,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                         ? EdgeInsets.only(left: 35.0 * avatarScale)
                                         : EdgeInsets.zero,
                                     child:
-                                        MessageProperties(globalKey: keys.length > index ? keys[index] : null, part: e),
+                                        MessageProperties(part: e),
                                   ),
                                 ],
                               ),
