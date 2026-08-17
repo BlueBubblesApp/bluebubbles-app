@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/app/wrappers/trackpad_bug_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -118,10 +119,11 @@ class FindMyMapWidget extends StatelessWidget {
   Widget _buildFriendPopup(BuildContext context, FindMyFriend item) {
     return Obx(() {
       final hideContactInfo = shouldRedactFindMyContactInfo();
-      final handleState = item.handle != null ? HandleSvc.getOrCreateHandleState(item.handle!) : null;
+      final identity = FindMyHandleMatcher.resolveIdentity(item);
+      final handleState = identity.handle != null ? HandleSvc.getOrCreateHandleState(identity.handle!) : null;
       final displayName = hideContactInfo
           ? (handleState?.fakeName ?? 'Contact')
-          : (item.handle?.displayName ?? item.title ?? "Unknown Friend");
+          : identity.displayName(item);
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 5.0),
