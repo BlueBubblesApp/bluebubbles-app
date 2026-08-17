@@ -33,6 +33,9 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   bool fromChatCreator = false;
   bool fromSearchResult = false;
   bool addedRecentPhotoReply = false;
+
+  /// When true, automatic composer focus is rejected until the user taps the field.
+  bool skipComposerFocusOnReturn = false;
   final AutoScrollController scrollController = AutoScrollController();
 
   ConversationViewController(this.chat, {String? tag_}) {
@@ -94,6 +97,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   set replyToMessage(MessageReplyContext? m) {
     _replyToMessage.value = m;
     if (m != null) {
+      releaseComposerFocusSuppression();
       lastFocusedNode.requestFocus();
     }
   }
@@ -185,15 +189,43 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
+        if (skipComposerFocusOnReturn) {
+          _unfocusComposerAfterFrame();
+          return;
+        }
         _subjectWasLastFocused = false;
       }
     });
 
     subjectFocusNode.addListener(() {
       if (subjectFocusNode.hasFocus) {
+        if (skipComposerFocusOnReturn) {
+          _unfocusComposerAfterFrame();
+          return;
+        }
         _subjectWasLastFocused = true;
       }
     });
+  }
+
+  void suppressComposerFocus() {
+    skipComposerFocusOnReturn = true;
+    unfocusComposer();
+  }
+
+  void _unfocusComposerAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (skipComposerFocusOnReturn) unfocusComposer();
+    });
+  }
+
+  void unfocusComposer() {
+    focusNode.unfocus();
+    subjectFocusNode.unfocus();
+  }
+
+  void releaseComposerFocusSuppression() {
+    skipComposerFocusOnReturn = false;
   }
 
   @override

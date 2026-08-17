@@ -123,6 +123,11 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     final service = maybeFindMessagesSvc(chatGuid);
     if (service == null) return;
 
+    final ctrl = Get.isRegistered<ConversationViewController>(tag: chatGuid)
+        ? Get.find<ConversationViewController>(tag: chatGuid)
+        : null;
+    ctrl?.suppressComposerFocus();
+
     // Capture before popping — this widget's context is disposed after the first pop.
     final navigator = Navigator.of(context);
     final useTabletNestedNav = Get.keys.containsKey(2) && NavigationSvc.isTabletMode(context);
@@ -142,9 +147,6 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     // Phone: pop one route per frame so ConversationView's RouteAware can clear
     // showingSubRoute before we decide whether another pop is needed.
     void popUntilConversation() {
-      final ctrl = Get.isRegistered<ConversationViewController>(tag: chatGuid)
-          ? Get.find<ConversationViewController>(tag: chatGuid)
-          : null;
       if (ctrl?.showingSubRoute == true && navigator.canPop()) {
         navigator.pop();
         WidgetsBinding.instance.addPostFrameCallback((_) => popUntilConversation());
