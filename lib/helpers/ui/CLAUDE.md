@@ -8,7 +8,7 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 |------|---------------|
 | `ui_helpers.dart` | General widget utilities; custom back button with gesture support |
 | `theme_helpers.dart` | `HexColor` (hex string → `Color`), `BubbleColors` theme extension, desktop window effects (Mica/acrylic) |
-| `message_widget_helpers.dart` | `buildMessageSpans()` — rich text rendering with emoji scaling, mention detection, and styled spans for message bubbles |
+| `message_widget_helpers.dart` | `buildMessageSpans()` — rich text for message bubbles; `resolveMediaCollectionLayout()` — collage/stack/grid for multi-attachment parts |
 | `attributed_body_helpers.dart` | Extracts audio transcripts from `AttributedBody` rich text; parses `Run` objects by part number |
 | `reaction_helpers.dart` | `ReactionTypes` — string constants for iMessage tapbacks (`love`, `like`, `dislike`, `laugh`, `emphasize`, `question`) and their verb forms |
 | `facetime_helpers.dart` | `showFaceTimeOverlay()` / `hideFaceTimeOverlay()` — incoming FaceTime call UI overlay |
