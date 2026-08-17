@@ -254,40 +254,54 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
   }
 
   Widget _samsungJumpHeader() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onJumpToMessage,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Obx(() {
-                final msg = message;
-                if (msg == null) return const SizedBox.shrink();
-                final name = (msg.isFromMe ?? false)
-                    ? 'You'
-                    : (msg.handleRelation.target != null
-                            ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!).displayName.value
-                            : null) ??
-                        'Unknown';
-                return Text(name, style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white));
-              }),
-              if (message?.dateCreated != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Text(
-                    intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!),
-                    style: context.theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
-                  ),
-                ),
-            ],
+    final nameStyle = context.theme.textTheme.titleLarge!.copyWith(color: Colors.white);
+    final msg = message;
+    Widget name;
+    if (msg == null) {
+      name = const SizedBox.shrink();
+    } else if (msg.isFromMe ?? false) {
+      name = Text('You', style: nameStyle);
+    } else {
+      final handle = msg.handleRelation.target;
+      name = handle == null
+          ? Text('Unknown', style: nameStyle)
+          : Obx(() {
+              final displayName = HandleSvc.getOrCreateHandleState(handle).displayName.value ?? 'Unknown';
+              return Text(displayName, style: nameStyle);
+            });
+    }
+
+    final date = message?.dateCreated;
+    Widget? timestamp;
+    if (date != null) {
+      final label = Text(
+        '${intl.DateFormat.jm().add_MMMd().format(date)} ›',
+        style: context.theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
+      );
+      timestamp = Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onJumpToMessage,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 4, 0),
+            child: label,
           ),
         ),
-      ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        name,
+        if (timestamp != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: timestamp,
+          ),
+      ],
     );
   }
 
@@ -446,29 +460,26 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                                 left: false,
                                 right: false,
                                 bottom: false,
-                                child: SizedBox(
-                                  height: kIsDesktop ? 80 : 50,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 5),
-                                        child: CupertinoButton(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                                          onPressed: () => Navigator.of(context).pop(),
-                                          child: const Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                          ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 5),
+                                      child: CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                                        onPressed: () => Navigator.of(context).pop(),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
                                         ),
                                       ),
-                                      if (_showSamsungJumpHeader)
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 5.0),
-                                          child: _samsungJumpHeader(),
-                                        ),
-                                    ],
-                                  ),
+                                    ),
+                                    if (_showSamsungJumpHeader)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5.0),
+                                        child: _samsungJumpHeader(),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ),

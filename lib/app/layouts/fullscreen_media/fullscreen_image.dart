@@ -158,45 +158,55 @@ class _FullscreenImageState extends State<FullscreenImage>
   }
 
   Widget _senderHeaderColumn({required bool jumpEnabled}) {
-    final column = Column(
+    final nameStyle = context.theme.textTheme.titleLarge!.copyWith(color: Colors.white);
+    final msg = message;
+    Widget name;
+    if (msg == null) {
+      name = const SizedBox.shrink();
+    } else if (msg.isFromMe ?? false) {
+      name = Text('You', style: nameStyle);
+    } else {
+      final handle = msg.handleRelation.target;
+      name = handle == null
+          ? Text('Unknown', style: nameStyle)
+          : Obx(() {
+              final displayName = HandleSvc.getOrCreateHandleState(handle).displayName.value ?? 'Unknown';
+              return Text(displayName, style: nameStyle);
+            });
+    }
+
+    return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Obx(() {
-          final msg = message;
-          if (msg == null) return const SizedBox.shrink();
-          final name = (msg.isFromMe ?? false)
-              ? 'You'
-              : (msg.handleRelation.target != null
-                      ? HandleSvc.getOrCreateHandleState(msg.handleRelation.target!).displayName.value
-                      : null) ??
-                  'Unknown';
-          return Text(name, style: context.theme.textTheme.titleLarge!.copyWith(color: Colors.white));
-        }),
+        name,
         if (message?.dateCreated != null)
           Padding(
             padding: const EdgeInsets.only(top: 2.0),
-            child: Text(
-              samsung
-                  ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
-                  : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!),
-              style: context.theme.textTheme.bodyLarge!
-                  .copyWith(color: samsung ? Colors.grey : Colors.white),
-            ),
+            child: _senderTimestamp(jumpEnabled: jumpEnabled),
           ),
       ],
     );
+  }
 
-    if (!jumpEnabled) return column;
-
+  Widget _senderTimestamp({required bool jumpEnabled}) {
+    final color = samsung ? Colors.grey : Colors.white;
+    final date = samsung
+        ? intl.DateFormat.jm().add_MMMd().format(message!.dateCreated!)
+        : intl.DateFormat('EEE').add_jm().format(message!.dateCreated!);
+    final label = Text(
+      jumpEnabled ? '$date ›' : date,
+      style: context.theme.textTheme.bodyLarge!.copyWith(color: color),
+    );
+    if (!jumpEnabled) return label;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.onJumpToMessage,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: column,
+          padding: const EdgeInsets.fromLTRB(0, 0, 4, 0),
+          child: label,
         ),
       ),
     );
@@ -267,31 +277,29 @@ class _FullscreenImageState extends State<FullscreenImage>
                     left: false,
                     right: false,
                     bottom: false,
-                    child: SizedBox(
-                      height: kIsDesktop ? 80 : 50,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child: CupertinoButton(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Icon(Icons.close, color: Colors.white),
-                                ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 5),
+                              child: CupertinoButton(
+                                padding: const EdgeInsets.symmetric(horizontal: 5),
+                                onPressed: () async {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Icon(Icons.close, color: Colors.white),
                               ),
-                              if (widget.showInteractions)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 5.0),
+                            ),
+                            if (widget.showInteractions)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 5.0),
                                   child: _senderHeaderColumn(
                                     jumpEnabled: samsung && widget.onJumpToMessage != null,
                                   ),
-                                ),
+                              ),
                             ],
                           ),
                           !widget.showInteractions
@@ -323,7 +331,6 @@ class _FullscreenImageState extends State<FullscreenImage>
                                 ),
                         ],
                       ),
-                    ),
                   ),
                 ),
               ),
