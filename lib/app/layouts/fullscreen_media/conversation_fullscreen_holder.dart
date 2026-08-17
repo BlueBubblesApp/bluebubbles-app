@@ -202,7 +202,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     final handle = message.handleRelation.target;
     if (handle == null) return "From Unknown";
     final handleState = HandleSvc.getOrCreateHandleState(handle);
-    return "From ${handleState.displayName.value ?? handle.displayName}";
+    return "From ${handleState.displayName.value ?? "Unknown"}";
   }
 
   PreferredSizeWidget? _buildJumpToMessageBar(BuildContext context) {

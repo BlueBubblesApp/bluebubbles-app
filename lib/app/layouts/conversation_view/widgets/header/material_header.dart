@@ -282,14 +282,24 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
               if (samsung &&
                   (controller.chat.isGroup ||
                       (!controller.chat.getTitle().isPhoneNumber && !controller.chat.getTitle().isEmail)))
-                Text(
-                  controller.chat.isGroup
-                      ? "${controller.chat.handles.length} recipients"
-                      : controller.chat.handles[0].address,
-                  style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                ),
+                controller.chat.isGroup
+                    ? Text(
+                        "${controller.chat.handles.length} recipients",
+                        style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                      )
+                    : Obx(() {
+                        if (chatState.participants.isEmpty) return const SizedBox.shrink();
+                        final address = chatState.participants.first.formattedAddress.value;
+                        if (address == null) return const SizedBox.shrink();
+                        return Text(
+                          address,
+                          style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
+                          maxLines: 1,
+                          overflow: TextOverflow.fade,
+                        );
+                      }),
             ],
           ),
         ),
