@@ -6,6 +6,7 @@ import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.services.filesystem.GetContentUriPathHandler
+import com.bluebubbles.messaging.services.filesystem.SaveToGalleryHandler
 import com.bluebubbles.messaging.services.firebase.FirebaseAuthHandler
 import com.bluebubbles.messaging.services.firebase.FirebaseDeleteTokenHandler
 import com.bluebubbles.messaging.services.firebase.ServerUrlRequestHandler
@@ -125,6 +126,7 @@ class MethodCallHandler {
             StartNotificationListenerHandler.tag -> StartNotificationListenerHandler().handleMethodCall(call, result, context)
             OpenConversationNotificationSettingsHandler.tag -> OpenConversationNotificationSettingsHandler().handleMethodCall(call, result, context)
             GetContentUriPathHandler.tag -> GetContentUriPathHandler().handleMethodCall(call, result, context)
+            SaveToGalleryHandler.tag -> SaveToGalleryHandler().handleMethodCall(call, result, context)
             CreateIncomingMessageNotification.tag -> CreateIncomingMessageNotification().handleMethodCall(call, result, context)
             CreateIncomingFaceTimeNotification.tag -> CreateIncomingFaceTimeNotification().handleMethodCall(call, result, context)
             DeleteNotificationHandler.tag -> DeleteNotificationHandler().handleMethodCall(call, result, context)

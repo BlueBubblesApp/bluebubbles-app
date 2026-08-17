@@ -174,4 +174,31 @@ class MethodChannelActions {
       'mimeType': mimeType,
     });
   }
+
+  /// Saves an image, video, or audio file into the shared media collections so it shows up in
+  /// the system gallery. Pass either [filePath] or [bytes].
+  ///
+  /// [relativePath] is a MediaStore relative path (e.g. `Pictures/BlueBubbles`); the native side
+  /// substitutes a valid top-level directory when the given one isn't allowed for the media type.
+  ///
+  /// Returns the display name the file was saved under, which may differ from [fileName] if it
+  /// had to be sanitized or de-duplicated. Throws a [PlatformException] when the file can't be
+  /// saved — including for documents and other non-media types, which never belong in the
+  /// gallery. Callers are expected to fall back to another location.
+  Future<String> saveToGallery({
+    String? filePath,
+    Uint8List? bytes,
+    required String fileName,
+    required String relativePath,
+    String? mimeType,
+  }) async {
+    final result = await service.invokeMethod('save-to-gallery', {
+      'filePath': filePath,
+      'bytes': bytes,
+      'fileName': fileName,
+      'relativePath': relativePath,
+      'mimeType': mimeType,
+    });
+    return result as String? ?? fileName;
+  }
 }

@@ -147,7 +147,6 @@ dependencies:
   receive_intent: ^0.2.7 # mobile only
   record: ^6.1.1
   reorderables: ^0.6.0
-  saver_gallery: ^4.0.1
   screen_retriever: ^0.2.0
   scroll_to_index: ^3.0.1
   secure_application: ^4.1.0 # no linux support

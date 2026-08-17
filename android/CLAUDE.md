@@ -12,7 +12,7 @@ Source: `app/src/main/kotlin/com/bluebubbles/messaging/`
 | `services/system/` | Calendar, contacts, browser, Chrome OS integrations |
 | `services/network/` | Native HTTP service |
 | `services/backend_ui_interop/` | DartWorkManager / DartWorker for background Dart |
-| `services/filesystem/` | File path resolution |
+| `services/filesystem/` | File path resolution, saving media to the gallery via MediaStore |
 
 ## Dart ↔ Android Bridge
 Flutter side: `lib/services/backend/java_dart_interop/`
