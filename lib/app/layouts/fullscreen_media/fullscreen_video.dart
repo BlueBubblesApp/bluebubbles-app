@@ -421,55 +421,62 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                 // On the iOS skin, closing is handled by whichever holder wraps this
                 // widget (ConversationFullscreenHolder's "Done" app bar, or
                 // SingleAttachmentFullscreenViewer's own), driven by `onOverlayToggle`.
+                // Positioned so this Stack's `alignment: Alignment.center` (needed to
+                // center the video) doesn't pull the bar into the middle of the screen.
                 if (!iOS)
-                  Obx(() {
-                    final visible = showPlayPauseOverlay.value || _hover.value;
-                    return MouseRegion(
-                      onEnter: (event) => _hover.value = true,
-                      onExit: (event) => _hover.value = false,
-                      child: AbsorbPointer(
-                        absorbing: !visible,
-                        child: AnimatedOpacity(
-                          opacity: visible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 125),
-                          child: Container(
-                            height: kIsDesktop ? 80 : 100.0,
-                            width: NavigationSvc.width(context),
-                            color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
-                            child: SafeArea(
-                              left: false,
-                              right: false,
-                              bottom: false,
-                              child: SizedBox(
-                                height: kIsDesktop ? 80 : 50,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 5),
-                                      child: CupertinoButton(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Obx(() {
+                      final visible = showPlayPauseOverlay.value || _hover.value;
+                      return MouseRegion(
+                        onEnter: (event) => _hover.value = true,
+                        onExit: (event) => _hover.value = false,
+                        child: AbsorbPointer(
+                          absorbing: !visible,
+                          child: AnimatedOpacity(
+                            opacity: visible ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 125),
+                            child: Container(
+                              height: kIsDesktop ? 80 : 100.0,
+                              width: NavigationSvc.width(context),
+                              color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
+                              child: SafeArea(
+                                left: false,
+                                right: false,
+                                bottom: false,
+                                child: SizedBox(
+                                  height: kIsDesktop ? 80 : 50,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5),
+                                        child: CupertinoButton(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    if (_showSamsungJumpHeader)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 5.0),
-                                        child: _samsungJumpHeader(),
-                                      ),
-                                  ],
+                                      if (_showSamsungJumpHeader)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 5.0),
+                                          child: _samsungJumpHeader(),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 // Bottom action bar for iOS
                 if (iOS && widget.showInteractions)
                   Positioned(
