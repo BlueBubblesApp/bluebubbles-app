@@ -9,6 +9,7 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 | `ui_helpers.dart` | General widget utilities; custom back button with gesture support |
 | `theme_helpers.dart` | `HexColor` (hex string → `Color`), `BubbleColors` theme extension, desktop window effects (Mica/acrylic) |
 | `message_widget_helpers.dart` | `buildMessageSpans()` — rich text rendering with emoji scaling, mention detection, and styled spans for message bubbles |
+| `message_effect_helpers.dart` | `effectOf()` / `effectNameOf()` — resolve a message's send effect; `newestScreenEffectMessage()` / `pendingScreenEffectMessage()` — pick the one screen effect in a chat that should auto-play |
 | `attributed_body_helpers.dart` | Extracts audio transcripts from `AttributedBody` rich text; parses `Run` objects by part number |
 | `reaction_helpers.dart` | `ReactionTypes` — string constants for iMessage tapbacks (`love`, `like`, `dislike`, `laugh`, `emphasize`, `question`) and their verb forms |
 | `facetime_helpers.dart` | `showFaceTimeOverlay()` / `hideFaceTimeOverlay()` — incoming FaceTime call UI overlay |
@@ -26,6 +27,15 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 **Bubble colors** — `BubbleColors` is a `ThemeExtension`; access via `Theme.of(context).extension<BubbleColors>()`. Don't hardcode bubble colors.
 
 **Hex colors** — `HexColor("#RRGGBB")` or `HexColor("#AARRGGBB")` converts hex strings to Flutter `Color` objects.
+
+**Send effects** — resolve a message's effect with `effectOf(message)` rather than looking its
+`expressiveSendStyleId` up in `effectMap` inline. `MessageEffect.isBubble` / `.isScreen` split the
+two kinds, which auto-play under different rules: every unplayed bubble effect plays (handled by
+`BubbleEffects`), but only the newest unplayed screen effect does. Both are gated on
+`isEffectRecent()` (`effectMaxAge`, 72h) so a stale effect never ambushes the user;
+`pendingScreenEffectMessage()` is the pure selection rule for screen effects, applied by
+`MessagesService.playPendingScreenEffect()`. Invisible ink is exempt from all of it — it's a resting
+state, not a one-shot animation.
 
 **Reaction type constants** — use `ReactionTypes.LOVE`, `ReactionTypes.LIKE`, etc. instead of raw strings. The verb map (`reactionToVerb`) maps type → "loved", "liked", etc. for display.
 

@@ -898,6 +898,14 @@ class Message {
       existing.hasReactions = newMessage.hasReactions;
     }
 
+    // Send effects only ever play once, so the flag is sticky from either side.
+    // Without this, a temp -> real GUID swap (merge is called with the server's
+    // record as `existing`) would clear the flag on a message whose effect just
+    // played, and it would play again the next time the chat was opened.
+    if (newMessage.hasEffectPlayed) {
+      existing.hasEffectPlayed = true;
+    }
+
     // Update chat
     if (!existing.chat.hasValue && newMessage.chat.hasValue) {
       existing.chat.target = newMessage.chat.target;

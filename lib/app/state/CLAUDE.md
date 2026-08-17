@@ -35,6 +35,14 @@ ObjectBox entities are heavy (lazy-loaded relations, DB context required). Re-qu
 ## MessageState Observable Fields
 Key observables: `guid`, `text`, `dateDelivered`, `dateRead`, `dateEdited`, `error`, `hasReactions`, `associatedMessages`, `isSending`, `isSent`, `hasError`, `isReaction`.
 
+Send effects are driven through three of them — `playEffectPart` (bubble animation, per part),
+`playScreenEffect` (full-screen animation), and `hasEffectPlayed` (persisted "already seen" flag,
+shared by both kinds since a message carries exactly one effect). Call `triggerEffect()` to play
+whichever kind the message carries. *When* that happens differs: `BubbleEffects` auto-plays every
+unplayed bubble effect itself, while `MessagesService.playPendingScreenEffect()` limits screen
+effects to the newest unplayed one. Both skip anything older than `effectMaxAge` (72h); invisible
+ink is exempt from all of it, since it renders until swiped rather than playing once.
+
 Also owns `attachmentStates: Map<String, AttachmentState>` keyed by attachment GUID.
 
 ## AttachmentState Observable Fields
