@@ -87,8 +87,10 @@ class FindMyHandleMatcher {
         final hit = index[ContactV2.normalizeEmail(addr)];
         if (hit != null) return hit;
       } else {
-        final hit = index[ContactV2.normalizePhoneNumber(addr)];
-        if (hit != null) return hit;
+        for (final key in getPhoneNumberVariants(addr)) {
+          final hit = index[key];
+          if (hit != null) return hit;
+        }
       }
     }
     return null;
@@ -118,8 +120,9 @@ class FindMyHandleMatcher {
           final email = ContactV2.normalizeEmail(address);
           if (email.isNotEmpty) index[email] = contact;
         } else {
-          final phone = ContactV2.normalizePhoneNumber(address);
-          if (phone.isNotEmpty) index[phone] = contact;
+          for (final key in getPhoneNumberVariants(address)) {
+            if (key.isNotEmpty) index[key] = contact;
+          }
         }
       }
     }
