@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:bluebubbles/database/html/handle.dart';
 import 'package:flutter/material.dart';
 
 /// Web stub for ContactV2 - minimal implementation for web compatibility
@@ -17,6 +18,8 @@ class ContactV2 {
   String nativeContactId;
   String? avatarPath;
   List<String> addresses;
+
+  String get computedDisplayName => displayName;
 
   // Stub properties for web
   Widget? _fakeAvatar;
@@ -45,6 +48,8 @@ class ContactV2 {
   static String normalizeEmail(String email) {
     return email.toLowerCase().trim();
   }
+
+  List<Handle> get handles => const [];
 
   bool hasMatchingAddress(String address) {
     final normalized = address.contains('@') ? normalizeEmail(address) : normalizePhoneNumber(address);
