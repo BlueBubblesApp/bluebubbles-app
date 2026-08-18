@@ -3,6 +3,8 @@
 ## Files
 - `findmy_page.dart` — main screen (map + list tabs)
 - `findmy_controller.dart` — state and logic: location polling, device/friend tracking
+- `findmy_handle_matcher.dart` — friend → handle identity (`FindMyHandleMatcher`)
+- `findmy_participant_prefetch.dart` — session snapshot for the conversation-details Location card
 - `findmy_location_clipper.dart` — custom `CustomClipper` for location shape
 - `findmy_pin_clipper.dart` — custom `CustomClipper` for map pin shape
 

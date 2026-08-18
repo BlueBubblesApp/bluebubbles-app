@@ -7,6 +7,7 @@ Dialogs shown from within the conversation details / info panel.
 | File | Purpose |
 |------|---------|
 | `add_participant.dart` | Dialog for adding a new participant to a group chat |
+| `participants_findmy_sheet/` | Bottom sheet with interactive map for conversation participants |
 | `address_picker.dart` | Picker for choosing which address/handle to use when sending to a contact with multiple numbers |
 | `change_name.dart` | Dialog for renaming a group conversation |
 | `chat_sync_dialog.dart` | Progress dialog shown during a manual chat-level resync |
