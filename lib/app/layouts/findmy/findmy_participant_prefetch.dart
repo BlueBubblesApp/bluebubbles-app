@@ -22,8 +22,12 @@ class FindMyParticipantPrefetch {
   static Future<void>? _inFlight;
   static DateTime? _lastPostAt;
 
-  /// Same capability gate as the Find My nav entry (plus web exclusion).
-  static bool get isSupported => !kIsWeb && SettingsSvc.serverDetails.isMinCatalina;
+  /// Same capability gate as the Find My nav entry (plus web exclusion), and
+  /// off when [Settings.hideFindMyInConversationDetails] is enabled.
+  static bool get isSupported =>
+      !kIsWeb &&
+      SettingsSvc.serverDetails.isMinCatalina &&
+      !SettingsSvc.settings.hideFindMyInConversationDetails.value;
 
   static String controllerTag(String chatGuid) => 'conversation-findmy-location-$chatGuid';
 

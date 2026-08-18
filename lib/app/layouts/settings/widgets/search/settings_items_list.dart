@@ -351,6 +351,7 @@ List<Widget> buildSettingItemList({
             "Sync Group Chat Icons",
             "Store Last Read Message",
             "Hide Names in Reaction Details",
+            "Hide Find My in Conversation Details",
             "Add Send/Receive Sound",
             "Send/Receive Sound Volume",
             "Auto-open Keyboard",
