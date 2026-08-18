@@ -46,7 +46,10 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
   void dispose() {
     if (ChatsSvc.activeChat != null) {
       ChatsSvc.setActiveToAlive();
-      cvc(ChatsSvc.activeChat!.chat).lastFocusedNode.requestFocus();
+      final controller = cvc(ChatsSvc.activeChat!.chat);
+      if (!controller.skipComposerFocusOnReturn) {
+        controller.lastFocusedNode.requestFocus();
+      }
     }
     super.dispose();
   }
