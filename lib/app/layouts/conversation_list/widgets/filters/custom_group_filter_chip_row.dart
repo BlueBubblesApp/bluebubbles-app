@@ -122,13 +122,10 @@ class CustomGroupFilterChipRow extends StatelessWidget {
                         key: const ValueKey('ungrouped-chip'),
                         selected: filters.showUngroupedOnly,
                         unreadCount: ungroupedUnreadCount,
-                        onPressed: () {
-                          final f = ChatsSvc.chatListFilters.value;
-                          ChatsSvc.chatListFilters.value = f.copyWith(
-                            customGroupIds: <int>{},
-                            showUngroupedOnly: !f.showUngroupedOnly,
-                          );
-                        },
+                        // Toggling goes through the service so the filters
+                        // active before the chip was tapped are stashed and
+                        // restored when it's tapped again.
+                        onPressed: ChatsSvc.toggleUngroupedOnly,
                       ),
               ),
             ),
