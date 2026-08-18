@@ -7,6 +7,7 @@ Reusable widgets composing the conversation details / info panel.
 | File | Purpose |
 |------|---------|
 | `chat_info.dart` | **iOS-only.** Top section: avatar, name, participant count, edit name button. Material/Samsung use `../material/material_chat_header.dart` instead — routed from `conversation_details.dart` by skin |
+| `participants_findmy_card/` | Find My map preview for chat participants; opens the map bottom sheet |
 | `chat_options.dart` | **iOS-only.** Action row: mute, pin, archive, block, delete. Material/Samsung use `../material/material_chat_options.dart` instead |
 | `contact_tile.dart` | Single participant row (avatar, name, address, remove button) — shared by both skins |
 | `participants_list.dart` | **iOS-only.** Scrollable list of `ContactTile`s for group chats. Material/Samsung use `../material/material_participants_section.dart` instead |

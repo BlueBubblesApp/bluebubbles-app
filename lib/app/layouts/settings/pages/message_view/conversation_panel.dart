@@ -261,6 +261,20 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                             "Enable this to hide names under participant avatars when you view a message's reactions",
                         backgroundColor: tileColor,
                       )),
+                  if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (!kIsWeb)
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) {
+                            SettingsSvc.settings.hideFindMyInConversationDetails.value = val;
+                            SettingsSvc.settings.saveOneAsync("hideFindMyInConversationDetails");
+                          },
+                          initialVal: SettingsSvc.settings.hideFindMyInConversationDetails.value,
+                          title: "Hide Find My in Conversation Details",
+                          subtitle:
+                              "Hides the participant location map on the conversation details screen",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        )),
                 ],
               ),
               if (!kIsWeb)
