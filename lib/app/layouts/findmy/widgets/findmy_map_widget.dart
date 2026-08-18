@@ -12,31 +12,68 @@ import 'package:url_launcher/url_launcher.dart';
 
 class FindMyMapWidget extends StatelessWidget {
   final FindMyController controller;
+  final bool interactive;
+  final MapController? mapController;
+  final VoidCallback? onMapReady;
+  final double? initialZoom;
 
-  const FindMyMapWidget({super.key, required this.controller});
+  const FindMyMapWidget({
+    super.key,
+    required this.controller,
+    this.interactive = true,
+    this.mapController,
+    this.onMapReady,
+    this.initialZoom,
+  });
+
+  LatLng _initialCenter() {
+    if (controller.location.value != null) {
+      return LatLng(controller.location.value!.latitude, controller.location.value!.longitude);
+    }
+    final participants = controller.participantFriendsWithLocation;
+    if (participants.isNotEmpty) {
+      // Prefer marker points so redacted decoys aren't flashed as real coords.
+      return controller.markerPointForFriend(participants.first);
+    }
+    return const LatLng(0, 0);
+  }
+
+  double _initialZoom() {
+    if (initialZoom != null) return initialZoom!;
+    if (controller.isParticipantMode) return 13;
+    return 5;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return TrackpadBugWrapper(builder: (context, bugDetected) {
+    final activeMapController = mapController ?? controller.mapController;
+    final content = TrackpadBugWrapper(builder: (context, bugDetected) {
       return Obx(() => FlutterMap(
-            mapController: controller.mapController,
+            mapController: activeMapController,
             options: MapOptions(
-              initialZoom: 5.0,
-              minZoom: 1.0,
+              initialZoom: _initialZoom(),
+              // Zoom 1 shows the world in 512px. The compact card is narrower than
+              // that, so longitude-extreme pins need zoom < 1 for CameraFit padding
+              // to take effect. Interactive maps keep 1.0 to avoid a tiny world view.
+              minZoom: controller.isParticipantMode && !interactive ? 0 : 1.0,
               maxZoom: 18.0,
-              initialCenter: controller.location.value == null
-                  ? const LatLng(0, 0)
-                  : LatLng(controller.location.value!.latitude, controller.location.value!.longitude),
-              onTap: (_, _) => controller.popupController.hideAllPopups(),
-              keepAlive: true,
+              initialCenter: _initialCenter(),
+              initialCameraFit: controller.isParticipantMode
+                  ? controller.participantMarkersCameraFit(compact: !interactive)
+                  : null,
+              // Only interactive maps own popups; previews must not subscribe to
+              // the shared PopupController or a sheet tap reparents GlobalKeys.
+              onTap: interactive ? (_, _) => controller.popupController.hideAllPopups() : null,
+              keepAlive: mapController == null,
               interactionOptions: InteractionOptions(
-                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                flags: interactive ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.none,
                 forceOnlySinglePinchGesture: bugDetected,
               ),
               onMapReady: () {
-                if (!controller.completer.isCompleted) {
+                if (mapController == null && !controller.completer.isCompleted) {
                   controller.completer.complete();
                 }
+                onMapReady?.call();
               },
             ),
             children: [
@@ -44,26 +81,33 @@ class FindMyMapWidget extends StatelessWidget {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.bluebubbles.app',
               ),
-              PopupMarkerLayer(
-                options: PopupMarkerLayerOptions(
-                  popupController: controller.popupController,
-                  markers: controller.markers.values.toList(),
-                  popupDisplayOptions: PopupDisplayOptions(
-                    builder: (context, marker) => _buildMarkerPopup(context, marker),
+              if (interactive)
+                PopupMarkerLayer(
+                  options: PopupMarkerLayerOptions(
+                    popupController: controller.popupController,
+                    markers: controller.markers.values.toList(),
+                    popupDisplayOptions: PopupDisplayOptions(
+                      builder: (context, marker) => _buildMarkerPopup(context, marker),
+                    ),
                   ),
+                )
+              else
+                MarkerLayer(markers: controller.markers.values.toList()),
+              if (interactive)
+                RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution(
+                      'OpenStreetMap contributors',
+                      onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
+                    ),
+                  ],
                 ),
-              ),
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
-                  ),
-                ],
-              ),
             ],
           ));
     });
+
+    if (!interactive) return IgnorePointer(child: content);
+    return content;
   }
 
   Widget _buildMarkerPopup(BuildContext context, Marker marker) {
@@ -77,8 +121,10 @@ class FindMyMapWidget extends StatelessWidget {
       if (item == null) return const SizedBox();
       return _buildDevicePopup(context, item);
     } else if (keyStr.startsWith("friend-")) {
-      final stableId = keyStr.substring("friend-".length);
-      final item = controller.friends.firstWhereOrNull((e) => e.stableId == stableId);
+      final markerKey = keyStr.substring("friend-".length);
+      final item = controller.friends.firstWhereOrNull(
+        (e) => controller.friendMarkerKeyFor(e) == markerKey || e.stableId == markerKey,
+      );
       if (item == null) return const SizedBox();
       return _buildFriendPopup(context, item);
     }
