@@ -374,6 +374,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
           child = OtherFile(
             file: file,
             attachment: attachment,
+            showJumpToMessage: widget.showJumpToMessage,
+            galleryAttachments: widget.galleryAttachments,
           );
         }
       } else {
