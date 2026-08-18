@@ -72,6 +72,17 @@ class ChatsService {
   /// sheet — see [saveChatListFiltersAsDefault].
   final Rx<ChatListFilters> chatListFilters = const ChatListFilters().obs;
 
+  /// Filter selection captured the last time the "other chats" (ungrouped) chip
+  /// was activated via [toggleUngroupedOnly], restored when it's toggled back
+  /// off. Session-only — never persisted, and dropped once used.
+  ChatListFilters? _filtersBeforeUngroupedOnly;
+
+  /// The exact filter value [toggleUngroupedOnly] wrote when it activated the
+  /// ungrouped chip. If the current selection no longer matches it, the user
+  /// changed filters some other way in the meantime, so the snapshot above is
+  /// discarded instead of clobbering that newer selection.
+  ChatListFilters? _ungroupedOnlyApplied;
+
   /// Timer for debouncing chatListVersion updates to prevent rapid UI rebuilds
   Timer? _listVersionUpdateTimer;
 
@@ -477,6 +488,41 @@ class ChatsService {
     final pruned = current.customGroupIds.intersection(validIds);
     if (pruned.length != current.customGroupIds.length) {
       chatListFilters.value = current.copyWith(customGroupIds: pruned);
+    }
+    // The stash held for the ungrouped chip isn't in `chatListFilters` yet, so
+    // prune it separately — otherwise toggling the chip back off could restore
+    // a group that has since been deleted.
+    final stash = _filtersBeforeUngroupedOnly;
+    if (stash != null) {
+      final prunedStash = stash.customGroupIds.intersection(validIds);
+      if (prunedStash.length != stash.customGroupIds.length) {
+        _filtersBeforeUngroupedOnly = stash.copyWith(customGroupIds: prunedStash);
+      }
+    }
+  }
+
+  /// Toggles the "other chats" (ungrouped) filter used by the custom group
+  /// chip row.
+  ///
+  /// Turning it on stashes whatever was selected beforehand (typically one or
+  /// more custom groups) and replaces it with the ungrouped-only selection;
+  /// turning it back off restores that stash, so a quick peek at ungrouped
+  /// chats doesn't cost the user their previous filter. The stash is only
+  /// honored if the filters still match what was applied on activation — any
+  /// change made elsewhere (the filter sheet, another chip, "Clear Filters")
+  /// wins, and toggling off then just drops the ungrouped flag.
+  void toggleUngroupedOnly() {
+    final current = chatListFilters.value;
+    if (current.showUngroupedOnly) {
+      final restore = current == _ungroupedOnlyApplied ? _filtersBeforeUngroupedOnly : null;
+      _filtersBeforeUngroupedOnly = null;
+      _ungroupedOnlyApplied = null;
+      chatListFilters.value = restore ?? current.copyWith(showUngroupedOnly: false);
+    } else {
+      _filtersBeforeUngroupedOnly = current;
+      final applied = current.copyWith(customGroupIds: <int>{}, showUngroupedOnly: true);
+      _ungroupedOnlyApplied = applied;
+      chatListFilters.value = applied;
     }
   }
 
