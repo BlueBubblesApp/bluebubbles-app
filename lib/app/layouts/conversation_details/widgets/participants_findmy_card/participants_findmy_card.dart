@@ -71,7 +71,7 @@ class _ParticipantsFindMyMapCardState extends State<ParticipantsFindMyMapCard> {
       _controller.updateParticipantFilter(_currentParticipants);
     } else {
       _controller = Get.put(
-        FindMyController(participantFilter: _currentParticipants),
+        FindMyController(participantFilter: _currentParticipants, showSelf: true),
         tag: tag,
       );
     }

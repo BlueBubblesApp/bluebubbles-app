@@ -71,10 +71,14 @@ class _ParticipantsFindMyMapSheetBodyState extends State<_ParticipantsFindMyMapS
   void initState() {
     super.initState();
     _mapController = MapController();
+    widget.controller.participantSheetMapController = _mapController;
   }
 
   @override
   void dispose() {
+    if (identical(widget.controller.participantSheetMapController, _mapController)) {
+      widget.controller.participantSheetMapController = null;
+    }
     _mapController.dispose();
     super.dispose();
   }

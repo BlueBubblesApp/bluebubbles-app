@@ -21,12 +21,18 @@ import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 
 class FindMyController extends GetxController {
-  FindMyController({this.participantFilter});
+  FindMyController({this.participantFilter, this.showSelf = false});
 
   /// When set, only friends matching these chat participants are shown (conversation details mode).
   List<Handle>? participantFilter;
 
+  /// Conversation-details card/sheet only: also show the user's own GPS marker.
+  /// The main Find My page ignores this and tracks self via [!isParticipantMode].
+  final bool showSelf;
+
   bool get isParticipantMode => participantFilter != null;
+
+  static const String _kCurrentMarkerKey = 'current';
 
   List<FindMyFriend> get participantFriendsWithLocation =>
       friendsWithLocation.where((f) => matchesParticipantFilter(f)).toList();
@@ -131,6 +137,11 @@ class FindMyController extends GetxController {
 
   /// True once the card's [mapController] has attached to a [FlutterMap].
   bool _participantMapReady = false;
+  bool _ownLocationStarted = false;
+  bool _pendingOwnLocationFit = false;
+
+  /// Expanded-sheet map, if open. Fitted alongside the card when own GPS arrives.
+  MapController? participantSheetMapController;
 
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
       FindMyHandleMatcher.friendIdentifiersMatch(a, b);
@@ -160,10 +171,15 @@ class FindMyController extends GetxController {
   void _rebuildParticipantMarkers() {
     if (!isParticipantMode) return;
     final allowedKeys = participantFriendsWithLocation.map(_friendMarkerKey).toSet();
-    markers.removeWhere((key, _) => !allowedKeys.contains(key));
+    markers.removeWhere((key, _) => !_keepParticipantMarker(key, allowedKeys));
     for (final friend in participantFriendsWithLocation) {
       buildFriendMarker(friend);
     }
+  }
+
+  bool _keepParticipantMarker(String key, Set<String> allowedKeys) {
+    if (allowedKeys.contains(key)) return true;
+    return showSelf && key == _kCurrentMarkerKey;
   }
 
   /// Card map finished attaching — later location updates may fit the camera.
@@ -171,6 +187,9 @@ class FindMyController extends GetxController {
   /// group [MapController.move] does not race the first tile request.
   void onParticipantMapReady() {
     _participantMapReady = true;
+    if (!_pendingOwnLocationFit) return;
+    _pendingOwnLocationFit = false;
+    fitMapToParticipantMarkers();
   }
 
   /// Pixel inset when framing 2+ pins on the full-page sheet.
@@ -181,12 +200,13 @@ class FindMyController extends GetxController {
   /// left/right edges; vertical stays smaller so the 2.2 aspect preview still fits.
   static const EdgeInsets _kCardFitPadding = EdgeInsets.symmetric(horizontal: 28, vertical: 16);
 
-  /// Bounds fit for 2+ participant pins. Null for a single pin (use center/zoom 13).
+  /// Bounds fit for 2+ spread-out pins. Null for a single pin or stacked pins
+  /// (use center/zoom 13) — a zero-size CameraFit produces LatLng(NaN,NaN).
   ///
   /// [compact] uses [_kCardFitPadding] for the details-card preview.
   CameraFit? participantMarkersCameraFit({bool compact = false}) {
-    final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
-    if (points.length < 2) return null;
+    final points = _participantCameraPoints(includeSelf: !compact);
+    if (!_canCameraFit(points)) return null;
     return CameraFit.coordinates(
       coordinates: points,
       padding: compact ? _kCardFitPadding : _kSheetFitPadding,
@@ -194,32 +214,85 @@ class FindMyController extends GetxController {
     );
   }
 
-  /// Fits [target], or the card's [mapController] when omitted.
+  List<LatLng> _participantCameraPoints({bool includeSelf = true}) {
+    final points = participantFriendsWithLocation
+        .map(markerPointForFriend)
+        .where(isFiniteLatLng)
+        .toList();
+    if (!includeSelf || !showSelf) return points;
+    final own = markers[_kCurrentMarkerKey]?.point;
+    if (own != null && isFiniteLatLng(own)) points.add(own);
+    return points;
+  }
+
+  /// False when CameraFit.coordinates would divide by zero / emit NaN zoom.
+  static bool _canCameraFit(List<LatLng> points) {
+    if (points.length < 2) return false;
+    var minLat = points.first.latitude;
+    var maxLat = minLat;
+    var minLng = points.first.longitude;
+    var maxLng = minLng;
+    for (final point in points.skip(1)) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+    // ~11m. Stacked/identical pins must not go through CameraFit.
+    const epsilon = 1e-4;
+    return (maxLat - minLat) > epsilon || (maxLng - minLng) > epsilon;
+  }
+
+  /// Fits [target], or the card (and open sheet) when omitted.
   void fitMapToParticipantMarkers({MapController? target}) {
-    if (target == null && isParticipantMode && !_participantMapReady) {
+    if (target != null) {
+      _fitParticipantCamera(target, compact: false);
       return;
     }
+    if (isParticipantMode && !_participantMapReady) return;
 
-    final map = target ?? mapController;
+    _fitParticipantCamera(mapController, compact: true);
+    final sheet = participantSheetMapController;
+    if (sheet != null) _fitParticipantCamera(sheet, compact: false);
+  }
+
+  void _fitParticipantCamera(MapController map, {required bool compact}) {
     if (!_mapHasLayoutSize(map)) return;
 
     // Use markerPointForFriend so redacted mode centers on decoy pins, not real coords.
-    final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
+    final points = _participantCameraPoints(includeSelf: !compact);
     if (points.isEmpty) return;
 
     void apply() {
       if (!_mapHasLayoutSize(map)) return;
-      if (points.length == 1) {
-        map.move(points.first, 13);
-        return;
-      }
-      // This path always frames the details card (the sheet has its own MapController).
-      final fit = participantMarkersCameraFit(compact: true);
-      if (fit != null) map.fitCamera(fit);
+      final size = map.camera.nonRotatedSize;
+      final padding = compact ? _kCardFitPadding : _kSheetFitPadding;
+      final canFit = _canCameraFit(points) &&
+          size.width > padding.horizontal &&
+          size.height > padding.vertical;
+
+      try {
+        if (canFit) {
+          map.fitCamera(CameraFit.coordinates(
+            coordinates: points,
+            padding: padding,
+            maxZoom: 13,
+          ));
+        } else {
+          map.move(points.first, 13);
+        }
+        final center = map.camera.center;
+        if (!isFiniteLatLng(center) || !map.camera.zoom.isFinite) {
+          map.move(points.first, 13);
+        }
+      } catch (_) {}
     }
 
     apply();
-    WidgetsBinding.instance.addPostFrameCallback((_) => apply());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isAlive) return;
+      apply();
+    });
   }
 
   static bool _mapHasLayoutSize(MapController map) {
@@ -266,6 +339,10 @@ class FindMyController extends GetxController {
     }
     for (final device in devices.where((e) => e.location?.latitude != null && e.location?.longitude != null)) {
       buildDeviceMarker(device);
+    }
+    final loc = location.value;
+    if (loc != null && (!isParticipantMode || showSelf)) {
+      buildLocationMarker(loc);
     }
     markers.refresh();
     if (isParticipantMode) fitMapToParticipantMarkers();
@@ -337,32 +414,11 @@ class FindMyController extends GetxController {
   Future<void> getLocations({bool refreshFriends = true, bool refreshDevices = false, bool suppressErrors = false}) async {
     if (!_isAlive) return;
 
-    if (!isParticipantMode && !(Platform.isLinux && !kIsWeb)) {
-      LocationPermission granted = await Geolocator.checkPermission();
-      if (!_isAlive) return;
-      if (granted == LocationPermission.denied) {
-        granted = await Geolocator.requestPermission();
-        if (!_isAlive) return;
-      }
-
-      if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-        Geolocator.getCurrentPosition().then((loc) {
-          if (!_isAlive) return;
-          location.value = loc;
-          buildLocationMarker(location.value!);
-          if (!kIsDesktop) {
-            locationSub = Geolocator.getPositionStream().listen((event) {
-              if (!_isAlive) return;
-              buildLocationMarker(event);
-
-              if (!hasMovedToCurrentLocation.value) {
-                mapController.move(LatLng(event.latitude, event.longitude), 10);
-                hasMovedToCurrentLocation.value = true;
-              }
-            });
-          }
-        });
-      }
+    if (!isParticipantMode) {
+      await _startOwnLocationTracking();
+    } else if (showSelf) {
+      // Don't block friend fetch on the GPS permission prompt.
+      unawaited(_startOwnLocationTracking());
     }
 
     // Fetch friends data
@@ -541,9 +597,67 @@ class FindMyController extends GetxController {
     );
   }
 
+  Future<void> _startOwnLocationTracking() async {
+    if (_ownLocationStarted) return;
+    if (Platform.isLinux && !kIsWeb) return;
+    _ownLocationStarted = true;
+
+    LocationPermission granted = await Geolocator.checkPermission();
+    if (!_isAlive) return;
+    if (granted == LocationPermission.denied) {
+      granted = await Geolocator.requestPermission();
+      if (!_isAlive) return;
+    }
+
+    if (granted != LocationPermission.whileInUse && granted != LocationPermission.always) {
+      return;
+    }
+
+    Geolocator.getCurrentPosition().then((loc) {
+      if (!_isAlive) return;
+      _onOwnLocation(loc, fromStream: false);
+      if (kIsDesktop) return;
+
+      locationSub = Geolocator.getPositionStream().listen((event) {
+        if (!_isAlive) return;
+        _onOwnLocation(event, fromStream: true);
+      });
+    }).catchError((_) {});
+  }
+
+  bool _isUsablePosition(Position pos) {
+    final point = LatLng(pos.latitude, pos.longitude);
+    return isFiniteLatLng(point);
+  }
+
+  void _onOwnLocation(Position pos, {required bool fromStream}) {
+    if (!_isUsablePosition(pos)) return;
+
+    final isFirst = !markers.containsKey(_kCurrentMarkerKey);
+    location.value = pos;
+    buildLocationMarker(pos);
+
+    if (isParticipantMode) {
+      if (!showSelf || !isFirst) return;
+      if (_participantMapReady) {
+        fitMapToParticipantMarkers();
+      } else {
+        _pendingOwnLocationFit = true;
+      }
+      return;
+    }
+
+    if (fromStream && !hasMovedToCurrentLocation.value) {
+      mapController.move(LatLng(pos.latitude, pos.longitude), 10);
+      hasMovedToCurrentLocation.value = true;
+    }
+  }
+
   void buildLocationMarker(Position pos) {
-    markers['current'] = Marker(
-      key: const ValueKey('current'),
+    if (isParticipantMode && !showSelf) return;
+    if (!_isUsablePosition(pos)) return;
+    markers[_kCurrentMarkerKey] = Marker(
+      key: const ValueKey(_kCurrentMarkerKey),
       point: LatLng(pos.latitude, pos.longitude),
       width: 25,
       height: 55,

@@ -27,14 +27,28 @@ class FindMyMapWidget extends StatelessWidget {
     this.initialZoom,
   });
 
+  /// Participant preview hides the self pin; the interactive sheet (and the
+  /// main Find My page) keep it.
+  List<Marker> _visibleMarkers() {
+    final markers = controller.markers.values;
+    if (interactive || !controller.isParticipantMode) return markers.toList();
+    return markers.where((m) {
+      final key = (m.key as ValueKey?)?.value;
+      return key != 'current';
+    }).toList();
+  }
+
   LatLng _initialCenter() {
-    if (controller.location.value != null) {
-      return LatLng(controller.location.value!.latitude, controller.location.value!.longitude);
+    if (controller.isParticipantMode) {
+      final participants = controller.participantFriendsWithLocation;
+      if (participants.isNotEmpty) {
+        // Prefer marker points so redacted decoys aren't flashed as real coords.
+        return controller.markerPointForFriend(participants.first);
+      }
     }
-    final participants = controller.participantFriendsWithLocation;
-    if (participants.isNotEmpty) {
-      // Prefer marker points so redacted decoys aren't flashed as real coords.
-      return controller.markerPointForFriend(participants.first);
+    if (controller.location.value != null) {
+      final point = LatLng(controller.location.value!.latitude, controller.location.value!.longitude);
+      if (isFiniteLatLng(point)) return point;
     }
     return const LatLng(0, 0);
   }
@@ -86,14 +100,14 @@ class FindMyMapWidget extends StatelessWidget {
                 PopupMarkerLayer(
                   options: PopupMarkerLayerOptions(
                     popupController: controller.popupController,
-                    markers: controller.markers.values.toList(),
+                    markers: _visibleMarkers(),
                     popupDisplayOptions: PopupDisplayOptions(
                       builder: (context, marker) => _buildMarkerPopup(context, marker),
                     ),
                   ),
                 )
               else
-                MarkerLayer(markers: controller.markers.values.toList()),
+                MarkerLayer(markers: _visibleMarkers()),
               if (interactive)
                 RichAttributionWidget(
                   attributions: [
@@ -114,7 +128,15 @@ class FindMyMapWidget extends StatelessWidget {
   Widget _buildMarkerPopup(BuildContext context, Marker marker) {
     final ValueKey? key = marker.key as ValueKey?;
     final keyStr = key?.value as String? ?? '';
-    if (keyStr == "current") return const SizedBox();
+    if (keyStr == "current") {
+      if (!controller.isParticipantMode) return const SizedBox();
+      return _popupShell(
+        context,
+        children: [
+          Text("You", style: context.theme.textTheme.labelLarge),
+        ],
+      );
+    }
 
     if (keyStr.startsWith("device-")) {
       final deviceId = keyStr.substring("device-".length);
