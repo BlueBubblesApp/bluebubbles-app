@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
 import 'package:bluebubbles/app/wrappers/trackpad_bug_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -135,28 +136,20 @@ class FindMyMapWidget extends StatelessWidget {
   Widget _buildDevicePopup(BuildContext context, FindMyDevice item) {
     return Obx(() {
       final hideContactInfo = shouldRedactFindMyContactInfo();
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 5.0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+      return _popupShell(
+        context,
+        children: [
+          Text(
+            hideContactInfo ? "Device" : (item.name ?? "Unknown Device"),
+            style: context.theme.textTheme.labelLarge,
           ),
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(hideContactInfo ? "Device" : (item.name ?? "Unknown Device"),
-                  style: context.theme.textTheme.labelLarge),
-              Text(
-                  hideContactInfo
-                      ? "Location"
-                      : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
-                  style: context.theme.textTheme.bodySmall),
-            ],
+          Text(
+            hideContactInfo
+                ? "Location"
+                : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found"),
+            style: context.theme.textTheme.bodySmall,
           ),
-        ),
+        ],
       );
     });
   }
@@ -169,29 +162,39 @@ class FindMyMapWidget extends StatelessWidget {
           ? (handleState?.fakeName ?? 'Contact')
           : (item.handle?.displayName ?? item.title ?? "Unknown Friend");
 
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 5.0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
-          ),
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(displayName, style: context.theme.textTheme.labelLarge),
-              Text(hideContactInfo ? "Location" : (item.longAddress ?? "No location found"),
-                  style: context.theme.textTheme.bodySmall),
-              if (item.lastUpdated != null && item.status != LocationStatus.live)
-                Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
-              if (item.status != null)
-                Text("${item.status!.name.capitalize!} Location", style: context.theme.textTheme.bodySmall),
-            ],
-          ),
-        ),
+      return _popupShell(
+        context,
+        children: [
+          Text(displayName, style: context.theme.textTheme.labelLarge),
+          Text(hideContactInfo ? "Location" : (item.longAddress ?? "No location found"),
+              style: context.theme.textTheme.bodySmall),
+          if (item.lastUpdated != null && item.status != LocationStatus.live)
+            Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),
+          if (item.status != null)
+            Text("${item.status!.name.capitalize!} Location", style: context.theme.textTheme.bodySmall),
+        ],
       );
     });
+  }
+
+  Widget _popupShell(BuildContext context, {required List<Widget> children}) {
+    final isIos = context.iOS;
+    return Padding(
+      padding: EdgeInsets.only(bottom: isIos ? 5.0 : M3ESpacing.xs),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(isIos ? 10 : M3EShapes.md),
+          color: isIos
+              ? context.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8)
+              : context.tileColor.withValues(alpha: 0.9),
+        ),
+        padding: EdgeInsets.all(isIos ? 10 : M3ESpacing.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
+    );
   }
 }
