@@ -129,6 +129,9 @@ class FindMyController extends GetxController {
     _rebuildParticipantMarkers();
   }
 
+  /// True once the card's [mapController] has attached to a [FlutterMap].
+  bool _participantMapReady = false;
+
   static bool _isSameFindMyFriend(FindMyFriend a, FindMyFriend b) =>
       FindMyHandleMatcher.friendIdentifiersMatch(a, b);
 
@@ -160,6 +163,71 @@ class FindMyController extends GetxController {
     markers.removeWhere((key, _) => !allowedKeys.contains(key));
     for (final friend in participantFriendsWithLocation) {
       buildFriendMarker(friend);
+    }
+  }
+
+  /// Card map finished attaching — later location updates may fit the camera.
+  /// First framing uses [FindMyMapWidget] initialCenter / initialCameraFit so a
+  /// group [MapController.move] does not race the first tile request.
+  void onParticipantMapReady() {
+    _participantMapReady = true;
+  }
+
+  /// Pixel inset when framing 2+ pins on the full-page sheet.
+  static const EdgeInsets _kSheetFitPadding = EdgeInsets.all(40);
+
+  /// Extra inset for the compact details card. Horizontal is larger because
+  /// longitude-extreme pins (e.g. Australia, Central America) sit on the clipped
+  /// left/right edges; vertical stays smaller so the 2.2 aspect preview still fits.
+  static const EdgeInsets _kCardFitPadding = EdgeInsets.symmetric(horizontal: 28, vertical: 16);
+
+  /// Bounds fit for 2+ participant pins. Null for a single pin (use center/zoom 13).
+  ///
+  /// [compact] uses [_kCardFitPadding] for the details-card preview.
+  CameraFit? participantMarkersCameraFit({bool compact = false}) {
+    final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
+    if (points.length < 2) return null;
+    return CameraFit.coordinates(
+      coordinates: points,
+      padding: compact ? _kCardFitPadding : _kSheetFitPadding,
+      maxZoom: 13,
+    );
+  }
+
+  /// Fits [target], or the card's [mapController] when omitted.
+  void fitMapToParticipantMarkers({MapController? target}) {
+    if (target == null && isParticipantMode && !_participantMapReady) {
+      return;
+    }
+
+    final map = target ?? mapController;
+    if (!_mapHasLayoutSize(map)) return;
+
+    // Use markerPointForFriend so redacted mode centers on decoy pins, not real coords.
+    final points = participantFriendsWithLocation.map(markerPointForFriend).toList(growable: false);
+    if (points.isEmpty) return;
+
+    void apply() {
+      if (!_mapHasLayoutSize(map)) return;
+      if (points.length == 1) {
+        map.move(points.first, 13);
+        return;
+      }
+      // This path always frames the details card (the sheet has its own MapController).
+      final fit = participantMarkersCameraFit(compact: true);
+      if (fit != null) map.fitCamera(fit);
+    }
+
+    apply();
+    WidgetsBinding.instance.addPostFrameCallback((_) => apply());
+  }
+
+  static bool _mapHasLayoutSize(MapController map) {
+    try {
+      final size = map.camera.nonRotatedSize;
+      return size.width > 0 && size.height > 0;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -200,6 +268,7 @@ class FindMyController extends GetxController {
       buildDeviceMarker(device);
     }
     markers.refresh();
+    if (isParticipantMode) fitMapToParticipantMarkers();
   }
 
   LatLng markerPointForFriend(FindMyFriend friend) => resolveFindMyMarkerPoint(
@@ -252,6 +321,7 @@ class FindMyController extends GetxController {
             friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
 
         buildFriendMarker(friend);
+        if (isParticipantMode) fitMapToParticipantMarkers();
       }
     } catch (e, s) {
       Logger.warn("Failed to fetch FindMy locations", error: e, trace: s, tag: 'FindMyController');
@@ -324,6 +394,7 @@ class FindMyController extends GetxController {
 
         if (isParticipantMode) {
           _rebuildParticipantMarkers();
+          fitMapToParticipantMarkers();
           FindMyParticipantPrefetch.updateSnapshot(friends);
         } else {
           for (final e in friendsWithLocation) {
