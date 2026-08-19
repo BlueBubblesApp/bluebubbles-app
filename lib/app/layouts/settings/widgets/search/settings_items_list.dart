@@ -1,12 +1,14 @@
 import '../../pages/misc/misc_panel.dart';
 import '../../pages/scheduling/message_reminders_panel.dart';
 import '../../pages/scheduling/scheduled_messages_panel.dart';
+import '../tiles/app_updates_tile.dart';
 import '../tiles/connection_server_tile.dart';
 import '../tiles/private_api_tile.dart';
 import '../tiles/redacted_mode_tile.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/version_dialog.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/advanced/app_updates_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/notification_providers_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/private_api_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/advanced/redacted_mode_panel.dart';
@@ -545,6 +547,24 @@ List<Widget> buildSettingItemList({
                 containerColor: Colors.grey,
               ),
             ),
+          ),
+
+        // App Updates Tile (only for Android)
+        if (Platform.isAndroid)
+          SearchableSettingItem(
+            title: "App Updates", // Title to search
+            searchTags: [
+              "Automatic Update Checks",
+              "Check for Updates",
+              "Update Channel",
+              "Update Track",
+              "Beta Updates",
+              "GitHub Release",
+            ],
+            onTap: () async {
+              ns.pushAndRemoveSettingsUntil(context, const AppUpdatesPanel(), (Route route) => route.isFirst);
+            },
+            child: AppUpdatesTile(tileColor: tileColor),
           ),
 
         // Notification Providers Tile

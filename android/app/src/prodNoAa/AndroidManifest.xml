@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.bluebubbles.messaging">
+    <!-- GitHub-sideload auto-update is inert on this flavor (it's gated off whenever the
+         install source is the Play Store), so drop the permission that declares this app
+         as capable of installing packages — avoids the extra Play Console review/declaration
+         that permission otherwise triggers for a build that never uses it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+
     <application>
         <meta-data
             android:name="com.google.android.gms.car.application"

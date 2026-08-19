@@ -253,10 +253,11 @@ class StartupTasks {
       return contactServiceV2;
     });
 
-    Logger.info("Registering IntentsService, SyncService, and ThemesService...");
+    Logger.info("Registering IntentsService, SyncService, ThemesService, and AppUpdateService...");
     GetIt.I.registerSingleton<IntentsService>(IntentsService());
     GetIt.I.registerSingleton<SyncService>(SyncService());
     GetIt.I.registerSingleton<ThemesService>(ThemesService());
+    GetIt.I.registerSingleton<AppUpdateService>(AppUpdateService());
 
     // Parallelize independent services for faster startup
     await _step("Loading themes and contacts...", log: "Waiting for parallel services...");
@@ -462,7 +463,14 @@ class StartupTasks {
       }
 
       try {
-        SettingsSvc.checkClientUpdate();
+        // Android sideload/GitHub installs are handled by AppUpdateService instead —
+        // it supersedes this generic check for Android (channel/interval-aware,
+        // APK-asset-aware, and gated on install source via store_checker).
+        if (Platform.isAndroid) {
+          unawaited(UpdateSvc.checkForUpdate());
+        } else {
+          SettingsSvc.checkClientUpdate();
+        }
       } catch (ex, stack) {
         Logger.warn("Failed to check for client update!", error: ex, trace: stack);
       }
@@ -598,6 +606,12 @@ class StartupTasks {
 
     if (kIsDesktop && lifecycle != null) {
       lifecycle.windowFocused = true;
+    }
+
+    // No-ops internally unless the check interval has elapsed and auto-check
+    // is enabled — safe to call unconditionally on every resume.
+    if (Platform.isAndroid) {
+      unawaited(UpdateSvc.checkForUpdate());
     }
   }
 
