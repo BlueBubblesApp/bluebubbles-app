@@ -130,6 +130,93 @@ enum SwipeDirection {
 
 enum BBTitleBarStyle { native, custom, hidden }
 
+/// Android-only, GitHub-release update channel for [Settings.updateChannel].
+/// Only relevant when the app was not installed from the Play Store.
+///
+/// Each non-stable channel is identified by a tag marker (see
+/// [AppUpdateChannelInfo.tagMarker]) — a release belongs to the first channel
+/// whose marker its tag contains. [stable] is whatever's left over: releases
+/// that don't carry any other channel's marker. Adding a new channel (e.g.
+/// `nightly`) is just a new enum value + marker below; no matching logic
+/// elsewhere needs to change.
+enum AppUpdateChannel {
+  stable,
+  beta,
+}
+
+extension AppUpdateChannelInfo on AppUpdateChannel {
+  /// The tag substring that marks a release as belonging to this channel, or
+  /// `null` for [AppUpdateChannel.stable] — stable has no marker of its own,
+  /// it's just "doesn't match any other channel's marker".
+  String? get tagMarker {
+    switch (this) {
+      case AppUpdateChannel.stable:
+        return null;
+      case AppUpdateChannel.beta:
+        return '-beta';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case AppUpdateChannel.stable:
+        return "Stable";
+      case AppUpdateChannel.beta:
+        return "Beta";
+    }
+  }
+
+  /// Whether [tag] belongs to this channel. For [stable], that means it
+  /// contains none of the other channels' markers.
+  bool matchesTag(String tag) {
+    final lower = tag.toLowerCase();
+    final marker = tagMarker;
+    if (marker != null) return lower.contains(marker);
+    return AppUpdateChannel.values.every((c) => c.tagMarker == null || !lower.contains(c.tagMarker!));
+  }
+}
+
+/// How often the app should automatically check GitHub for a new release.
+enum AppUpdateCheckInterval {
+  every6Hours,
+  every12Hours,
+  daily,
+  every3Days,
+  weekly,
+}
+
+extension AppUpdateCheckIntervalDuration on AppUpdateCheckInterval {
+  Duration get duration {
+    switch (this) {
+      case AppUpdateCheckInterval.every6Hours:
+        return const Duration(hours: 6);
+      case AppUpdateCheckInterval.every12Hours:
+        return const Duration(hours: 12);
+      case AppUpdateCheckInterval.daily:
+        return const Duration(days: 1);
+      case AppUpdateCheckInterval.every3Days:
+        return const Duration(days: 3);
+      case AppUpdateCheckInterval.weekly:
+        return const Duration(days: 7);
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case AppUpdateCheckInterval.every6Hours:
+        return "Every 6 Hours";
+      case AppUpdateCheckInterval.every12Hours:
+        return "Every 12 Hours";
+      case AppUpdateCheckInterval.daily:
+        return "Daily";
+      case AppUpdateCheckInterval.every3Days:
+        return "Every 3 Days";
+      case AppUpdateCheckInterval.weekly:
+        return "Weekly";
+    }
+  }
+}
+
 /// When the app may contact a linked website to build a preview card.
 ///
 /// Fetching a preview for somebody else's link discloses the user's IP address
