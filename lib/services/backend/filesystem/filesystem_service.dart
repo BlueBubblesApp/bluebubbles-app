@@ -23,6 +23,9 @@ import 'package:get_it/get_it.dart';
 FilesystemService get FilesystemSvc => GetIt.I<FilesystemService>();
 
 class FilesystemService {
+  /// The root of Android's shared external storage.
+  static const String androidExternalStoragePath = '/storage/emulated/0/';
+
   /// The default Android downloads directory path.
   static const String androidDownloadsPath = '/storage/emulated/0/Download/';
 
