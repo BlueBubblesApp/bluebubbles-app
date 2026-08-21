@@ -119,9 +119,15 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       } else if (e.type == "add-custom-smartreply") {
         if (!mounted) return;
         if (e.data != null && internalSmartReplies['attach-recent'] == null) {
-          internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
-            controller.pickedAttachments.add(e.data);
-            internalSmartReplies.clear();
+          // Gated: this chip lives in the smart reply row, which sits between
+          // the message list and the text field and feeds SendAnimation's
+          // landing-target calculation. Adding/removing it mid-flight would
+          // move that target the same way the typing indicator does.
+          controller.messageListGate.run(() {
+            internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
+              controller.pickedAttachments.add(e.data);
+              controller.messageListGate.run(() => internalSmartReplies.clear());
+            });
           });
         }
       }
