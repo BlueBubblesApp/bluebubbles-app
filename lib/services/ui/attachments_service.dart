@@ -295,13 +295,17 @@ class AttachmentsService extends GetxService {
           lockParentWindow: true,
         );
       } else {
-        if (file.name.toLowerCase().endsWith(".mov")) {
+        if (isDocument && file.name.toLowerCase().endsWith(".mov")) {
+          // Live Photo companions arrive here as .mov with isDocument: true (see downloadLivePhoto in
+          // media_actions.dart), which skips the SaverGallery branch below. Without this they'd land in
+          // the documents folder, so redirect them to the pictures location instead.
           savePath = join(
             FilesystemService.androidExternalStoragePath,
             SettingsSvc.settings.autoSavePicsLocation.value
           );
         } else {
           if (!isDocument) {
+            // SaverGallery branch
             try {
               if (file.path == null && file.bytes != null) {
                 await SaverGallery.saveImage(
