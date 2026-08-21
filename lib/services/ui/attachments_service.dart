@@ -332,7 +332,11 @@ class AttachmentsService extends GetxService {
 
       if (savePath != null) {
         final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
-        await File(join(savePath, file.name)).writeAsBytes(bytes);
+        final destination = File(join(savePath, file.name));
+        // writeAsBytes won't create missing parents, and a custom save location such as Pictures/BlueBubbles may
+        // not exist yet
+        await destination.parent.create(recursive: true);
+        await destination.writeAsBytes(bytes);
         showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!');
       } else {
         return showSnackbar('Error', 'You didn\'t select a file path!');
