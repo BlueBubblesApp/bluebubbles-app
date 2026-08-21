@@ -296,7 +296,10 @@ class AttachmentsService extends GetxService {
         );
       } else {
         if (file.name.toLowerCase().endsWith(".mov")) {
-          savePath = join(FilesystemService.androidDownloadsPath, SettingsSvc.settings.autoSavePicsLocation.value);
+          savePath = join(
+            FilesystemService.androidExternalStoragePath,
+            SettingsSvc.settings.autoSavePicsLocation.value
+          );
         } else {
           if (!isDocument) {
             try {
