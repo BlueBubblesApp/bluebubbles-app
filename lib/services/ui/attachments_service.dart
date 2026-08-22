@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/database/models.dart';
@@ -541,6 +542,40 @@ class AttachmentsService extends GetxService {
 
   /// Escapes a path for safe interpolation inside a double-quoted ffmpeg command argument.
   String _ffmpegEscapePath(String path) => path.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+
+  /// Transcodes a recorded voice memo to AAC in an m4a container and returns the new file.
+  ///
+  /// Android records voice memos as raw WAV -- it's the only encoder path in `audio_waveforms`
+  /// that finalizes the file synchronously -- so the raw capture is both large and a format
+  /// iMessage doesn't expect. Every other platform already produces m4a, so normalize here
+  /// before the file is attached to a message.
+  ///
+  /// Returns [source] unchanged if the conversion fails; a bigger attachment beats a lost
+  /// recording.
+  Future<File> convertAudioToM4a(File source) async {
+    if (extension(source.path).toLowerCase() == '.m4a') return source;
+
+    final destPath = setExtension(source.path, '.m4a');
+    final command = '-y '
+        '-i "${_ffmpegEscapePath(source.path)}" '
+        '-c:a aac -b:a 64k -ac 1 '
+        '"${_ffmpegEscapePath(destPath)}"';
+    try {
+      final session = await FFmpegKit.execute(command);
+      final returnCode = await session.getReturnCode();
+      final dest = File(destPath);
+      if (ReturnCode.isSuccess(returnCode) && await dest.exists() && await dest.length() > 0) {
+        unawaited(source.delete().catchError((_) => source));
+        return dest;
+      }
+      final logs = await session.getAllLogsAsString();
+      Logger.warn('ffmpeg audio conversion failed for ${source.path} (rc=$returnCode) logs=$logs',
+          tag: 'VoiceMemo');
+    } catch (ex, stacktrace) {
+      Logger.error('ffmpeg audio conversion threw for ${source.path}', error: ex, trace: stacktrace, tag: 'VoiceMemo');
+    }
+    return source;
+  }
 
   /// Thumbnails were historically generated at 128px, which looks blurry now that video previews
   /// render at message-bubble size — treat those disk caches as stale so they get regenerated.

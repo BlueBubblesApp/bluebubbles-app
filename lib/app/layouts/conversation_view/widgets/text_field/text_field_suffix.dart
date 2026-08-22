@@ -62,8 +62,172 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
   bool get isChatCreator => widget.isChatCreator;
   bool get alwaysShowSend => widget.alwaysShowSend;
 
+  /// Absolute path the in-progress recording is being written to.
+  ///
+  /// The recorder is pointed at a path we pick rather than letting it choose its own temp file,
+  /// so the memo can still be recovered when `stop()` fails to hand a path back.
+  String? _recordingPath;
+
+  /// Android captures to WAV instead of going through `audio_waveforms`' AAC encoder.
+  ///
+  /// That encoder drives MediaCodec asynchronously and only completes `stop()` once the codec
+  /// reports end-of-stream, which on most devices it never does: the future never resolves, the
+  /// memo is silently dropped, and the controller stays stuck in its recording state so the next
+  /// tap does nothing at all (#3023). Its WAV encoder finalizes the file inline on the platform
+  /// thread, so `stop()` always returns. The capture is converted to m4a before it's attached.
+  bool get _usesWavCapture => !_isWeb && !_isDesktop && Platform.isAndroid;
+
   void deleteAudioRecording(String path) {
     File(path).delete();
+  }
+
+  /// A stable per-chat destination for the recording, so a leftover file from a discarded memo
+  /// gets overwritten instead of piling up in the temp directory.
+  File _recordingDestination(String ext) {
+    final guid = widget.controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join();
+    final file = File(join(FilesystemSvc.appDocDir.path, "temp", "recorder", "$guid.$ext"));
+    file.createSync(recursive: true);
+    return file;
+  }
+
+  Future<void> _toggleRecording() async {
+    final controller = widget.controller;
+    if (controller == null) return;
+    controller.showRecording.toggle();
+
+    if (controller.showRecording.value) {
+      await _startRecording();
+    } else {
+      await _stopRecording();
+    }
+  }
+
+  Future<void> _startRecording() async {
+    final controller = widget.controller!;
+    try {
+      final destination = _recordingDestination(_usesWavCapture ? "wav" : "m4a");
+      _recordingPath = destination.path;
+
+      if (_isDesktop) {
+        await audioRecorder.start(const RecordConfig(bitRate: 320000), path: destination.path);
+        return;
+      }
+
+      await widget.recorderController!.record(
+        path: destination.path,
+        recorderSettings: RecorderSettings(
+          androidEncoderSettings: AndroidEncoderSettings(
+            androidEncoder: _usesWavCapture ? AndroidEncoder.wav : AndroidEncoder.aacLc,
+          ),
+          // WAV is uncompressed, so capture at a voice-appropriate rate -- converting to AAC
+          // afterwards can't undo an oversized capture.
+          sampleRate: _usesWavCapture ? 22050 : 44100,
+          bitRate: 320000,
+        ),
+      );
+      // If the recorder still isn't in a recording state after the call,
+      // treat it as a failure and reset the UI.
+      if (!widget.recorderController!.isRecording) {
+        controller.showRecording.value = false;
+        showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+      }
+    } catch (e, stack) {
+      controller.showRecording.value = false;
+      showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+      Logger.error("Error starting recording", error: e, trace: stack);
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    String? reportedPath;
+    try {
+      reportedPath = _isDesktop
+          ? await audioRecorder.stop()
+          // A recorder that never completes must not wedge the text field with no way back.
+          : await widget.recorderController!.stop().timeout(const Duration(seconds: 10));
+    } catch (e, stack) {
+      Logger.error("Error stopping recording", error: e, trace: stack);
+    }
+
+    // The recorder only reports its path back on a clean stop, so fall back to the path it was
+    // handed rather than throwing the memo away.
+    final captured = _recordingOnDisk(reportedPath) ?? _recordingOnDisk(_recordingPath);
+    _recordingPath = null;
+    if (captured == null) {
+      showSnackbar("Error", "Failed to save voice memo. Please try again.");
+      return;
+    }
+
+    final recording = _usesWavCapture ? await AttachmentsSvc.convertAudioToM4a(captured) : captured;
+
+    final file = PlatformFile(
+      name: basename(recording.path),
+      path: recording.path,
+      bytes: await recording.readAsBytes(),
+      size: await recording.length(),
+    );
+
+    if (!mounted) return;
+    await _showRecordingPreview(file);
+  }
+
+  /// Resolves [path] to a recording that actually reached disk with audio in it -- a WAV whose
+  /// header was never finalized is 44 bytes of placeholder and nothing else.
+  File? _recordingOnDisk(String? path) {
+    if (path == null) return null;
+    final file = File(path);
+    if (!file.existsSync() || file.lengthSync() <= 44) return null;
+    return file;
+  }
+
+  Future<void> _showRecordingPreview(PlatformFile file) async {
+    await showBBDialog(
+      context: context,
+      barrierDismissible: false,
+      title: "Send it?",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Review your audio snippet before sending it",
+            style: context.theme.textTheme.bodyLarge,
+          ),
+          Container(height: 10.0),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: context.width * 0.6),
+            child: AudioPlayer(
+              key: Key("AudioMessage-${file.path}"),
+              file: file,
+              attachment: null,
+            ),
+          )
+        ],
+      ),
+      actions: <BBDialogAction>[
+        BBDialogAction(
+          text: "Discard",
+          isDestructive: true,
+          onPressed: () {
+            deleteAudioRecording(file.path!);
+            Navigator.of(context, rootNavigator: true).pop();
+          },
+        ),
+        BBDialogAction(
+          text: "Send",
+          isDefault: true,
+          onPressed: () async {
+            await widget.controller!.send(SendData(
+              attachments: [file],
+              text: "",
+              subject: "",
+              isAudioMessage: true,
+            ));
+            deleteAudioRecording(file.path!);
+            Navigator.of(context, rootNavigator: true).pop();
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -122,12 +286,8 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
                 isWeb: _isWeb,
                 isDesktop: _isDesktop,
                 isChatCreator: isChatCreator,
-                alwaysShowSend: alwaysShowSend,
                 showRecording: showRecording,
-                controller: widget.controller,
-                recorderController: widget.recorderController,
-                audioRecorder: audioRecorder,
-                onDeleteRecording: deleteAudioRecording,
+                onPressed: _toggleRecording,
               ),
               secondChild: SendButton(
                 sendMessage: widget.sendMessage,
@@ -170,23 +330,15 @@ class _RecordingButton extends StatelessWidget {
     required this.isWeb,
     required this.isDesktop,
     required this.isChatCreator,
-    required this.alwaysShowSend,
     required this.showRecording,
-    required this.controller,
-    required this.recorderController,
-    required this.audioRecorder,
-    required this.onDeleteRecording,
+    required this.onPressed,
   });
 
   final bool isWeb;
   final bool isDesktop;
   final bool isChatCreator;
-  final bool alwaysShowSend;
   final bool showRecording;
-  final ConversationViewController? controller;
-  final RecorderController? recorderController;
-  final AudioRecorder audioRecorder;
-  final Function(String) onDeleteRecording;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -227,123 +379,7 @@ class _RecordingButton extends StatelessWidget {
                   size: 15,
                 ),
               ),
-        onPressed: () async {
-          if (controller == null) return;
-          controller!.showRecording.toggle();
-
-          if (controller!.showRecording.value) {
-            // Start recording
-            if (isDesktop) {
-              File temp = File(join(
-                FilesystemSvc.appDocDir.path,
-                "temp",
-                "recorder",
-                "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
-              ));
-              temp.createSync(recursive: true);
-              audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
-              return;
-            }
-            try {
-              await recorderController!.record(
-                recorderSettings: const RecorderSettings(
-                  sampleRate: 44100,
-                  bitRate: 320000,
-                ),
-              );
-              // If the recorder still isn't in a recording state after the call,
-              // treat it as a failure and reset the UI.
-              if (!recorderController!.isRecording) {
-                controller!.showRecording.value = false;
-                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
-              }
-            } catch (e, stack) {
-              controller!.showRecording.value = false;
-              showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
-              Logger.error("Error starting recording", error: e, trace: stack);
-            }
-          } else {
-            // Stop recording and show dialog
-            late final String? path;
-            late final PlatformFile file;
-
-            if (isDesktop) {
-              path = await audioRecorder.stop();
-              if (path == null) {
-                showSnackbar("Error", "Failed to save voice memo. Please try again.");
-                return;
-              }
-              final _file = File(path);
-              file = PlatformFile(
-                name: basename(_file.path),
-                path: _file.path,
-                bytes: await _file.readAsBytes(),
-                size: await _file.length(),
-              );
-            } else {
-              path = await recorderController!.stop();
-              if (path == null) {
-                showSnackbar("Error", "Failed to save voice memo. Please try again.");
-                return;
-              }
-              final _file = File(path);
-              file = PlatformFile(
-                name: basename(_file.path),
-                path: _file.path,
-                bytes: await _file.readAsBytes(),
-                size: await _file.length(),
-              );
-            }
-
-            await showBBDialog(
-              context: context,
-              barrierDismissible: false,
-              title: "Send it?",
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Review your audio snippet before sending it",
-                    style: context.theme.textTheme.bodyLarge,
-                  ),
-                  Container(height: 10.0),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: context.width * 0.6),
-                    child: AudioPlayer(
-                      key: Key("AudioMessage-$path"),
-                      file: file,
-                      attachment: null,
-                    ),
-                  )
-                ],
-              ),
-              actions: <BBDialogAction>[
-                BBDialogAction(
-                  text: "Discard",
-                  isDestructive: true,
-                  onPressed: () {
-                    onDeleteRecording(file.path!);
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                ),
-                BBDialogAction(
-                  text: "Send",
-                  isDefault: true,
-                  onPressed: () async {
-                    await controller!.send(SendData(
-                      attachments: [file],
-                      text: "",
-                      subject: "",
-                      isAudioMessage: true,
-                    ));
-                    onDeleteRecording(file.path!);
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                ),
-              ],
-            );
-          }
-        },
+        onPressed: onPressed,
       );
     });
   }

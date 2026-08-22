@@ -68,6 +68,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   late final Future<void> Function({String? effect}) sendMessage;
 
   late final ValueNotifier<bool> isRecordingNotifier;
+  Worker? _recordingWorker;
   EmojiAutocompleteHandler? emojiHandler;
   MentionAutocompleteHandler? mentionHandler;
   KeyboardShortcutHandler? keyboardHandler;
@@ -86,11 +87,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     subjectTextController = widget.subjectTextController;
     sendMessage = widget.sendMessage;
 
-    // add a listener to recorderController to update isRecordingNotifier
-    recorderController?.addListener(() {
-      isRecordingNotifier.value = recorderController?.isRecording ?? false;
-    });
-
+    _bindRecordingState();
     _configureHandlers();
 
     assert(!(subjectTextController == null &&
@@ -102,6 +99,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   @override
   void dispose() {
+    _recordingWorker?.dispose();
     // dispose of the ValueNotifier when the state is disposed
     isRecordingNotifier.dispose();
     super.dispose();
@@ -112,8 +110,20 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
       controller = widget.controller;
+      _bindRecordingState();
       _configureHandlers();
     }
+  }
+
+  /// Drives the recording chrome off our own state rather than the recorder's `isRecording`
+  /// flag -- the recorder can fail to notify (or to ever leave its recording state) on stop,
+  /// which left the field stuck in its blue "recording" treatment with no way back.
+  void _bindRecordingState() {
+    _recordingWorker?.dispose();
+    final showRecording = controller?.showRecording;
+    isRecordingNotifier.value = showRecording?.value ?? false;
+    _recordingWorker =
+        showRecording == null ? null : ever<bool>(showRecording, (value) => isRecordingNotifier.value = value);
   }
 
   void _configureHandlers() {
