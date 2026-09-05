@@ -34,9 +34,13 @@ corner silently reflows layout.
 `m3e_shape_library.dart` is the *abstract shape* library (cookie, clover, burst, gem, …), not the
 corner scale. Geometry comes from the `material_new_shapes` package (a port of
 `androidx.graphics.shapes`), so these are the real M3E spec shapes — don't hand-roll lookalikes.
-- `M3EShapeLibrary.shapeForKey(guid)` — deterministic shape for a stable key, so an entity keeps
-  its shape across reorders and restarts. Draws from `avatarShapes`, the radially-symmetric subset
-  that doesn't crop a centred face.
+- `M3EShapeLibrary.shapeForKey(guid)` — deterministic shape for a stable key (FNV-1a, not
+  `hashCode`), so an entity keeps its shape across reorders, restarts and platforms. Draws from a
+  weighted pool of the radially-symmetric shapes, biased toward large-area, soft-cornered ones —
+  every shape can still come up, common ones just come up more. The weights are derived from two
+  measured properties documented in `_avatarShapeWeights`; if you retune them, measure rather than
+  eyeball (`puffy` looks plumper than it is, `pixelCircle` is larger). Pass `from:` for an
+  unbiased draw over an explicit list.
 - `M3EShapeBorder(shape: id)` — an `OutlinedBorder`, so clip, ink splash and outline all come from
   one object. Pass it to `Material.shape`, `InkWell.customBorder`, `ShapeDecoration.shape`, or
   `ContactAvatarWidget`/`ContactAvatarGroupWidget`'s `shape:` param.

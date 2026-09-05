@@ -54,36 +54,61 @@ enum M3EShapeId {
 /// `Material`, `InkWell`, `ShapeDecoration` or `ClipPath` — clipping, ink
 /// splashes and the optional outline then all read from the same path.
 abstract final class M3EShapeLibrary {
-  /// Shapes that read well as an avatar mask: roughly radially symmetric, so a
-  /// face centred in the source image stays centred and reasonably uncropped.
+  /// Relative likelihood of each avatar shape.
   ///
-  /// The rest of the library stays reachable by id — it's just that a `heart`,
-  /// `arch` or `ghostish` mask puts the visual weight well off centre, `pill` and
-  /// `oval` leave a square avatar box half empty, and the needle-thin points on
-  /// `burst` / `boom` shred a contact photo (their soft variants don't).
-  static const List<M3EShapeId> avatarShapes = [
-    M3EShapeId.circle,
-    M3EShapeId.square,
-    M3EShapeId.slanted,
-    M3EShapeId.triangle,
-    M3EShapeId.diamond,
-    M3EShapeId.pentagon,
-    M3EShapeId.gem,
-    M3EShapeId.sunny,
-    M3EShapeId.verySunny,
-    M3EShapeId.cookie4Sided,
-    M3EShapeId.cookie6Sided,
-    M3EShapeId.cookie7Sided,
-    M3EShapeId.cookie9Sided,
-    M3EShapeId.cookie12Sided,
-    M3EShapeId.clover4Leaf,
-    M3EShapeId.clover8Leaf,
-    M3EShapeId.softBurst,
-    M3EShapeId.softBoom,
-    M3EShapeId.flower,
-    M3EShapeId.puffy,
-    M3EShapeId.puffyDiamond,
-    M3EShapeId.pixelCircle,
+  /// Two measured signals, not taste. **Area** is the fraction of the avatar box
+  /// the normalized shape actually fills (shoelace over a dense sampling of its
+  /// path) — it's what makes a tile read as full-size rather than shrunken next
+  /// to its neighbours. **Round** is the smallest corner-rounding radius in the
+  /// upstream `MaterialShapes` definition — the larger, the softer the outline.
+  ///
+  /// Weight starts from an area bucket (>=0.78 -> 5, >=0.65 -> 4, >=0.58 -> 3,
+  /// else 2) and is then docked for hard corners: -1 for a corner under ~0.17,
+  /// -2 under 0.10, -3 for true right angles. Floor of 1, so nothing is gated
+  /// out — this biases the draw, it doesn't restrict it.
+  ///
+  /// Measuring beats eyeballing here: `puffy` looks plump but fills only 0.586,
+  /// `pixelCircle` fills 0.827 despite its stair-steps, and `softBurst` rounds
+  /// its points harder than `sunny` does in spite of the name.
+  ///
+  /// Restricted to the roughly radially symmetric shapes so a face centred in
+  /// the source image stays centred. The rest of the library is still reachable
+  /// by id — `heart`, `arch` and `ghostish` just put the visual weight well off
+  /// centre, `pill` and `oval` leave a square box half empty, and `burst` /
+  /// `boom` (rounding 0.006, area as low as 0.353) shred a contact photo.
+  static const Map<M3EShapeId, int> _avatarShapeWeights = {
+    //                          weight    area   round
+    M3EShapeId.square: 5, //              0.923  0.189 smoothed
+    M3EShapeId.slanted: 5, //             0.828  0.187 smoothed
+    M3EShapeId.clover4Leaf: 5, //         0.788  0.476
+    M3EShapeId.circle: 5, //              0.785  n/a
+    M3EShapeId.gem: 4, //                 0.729  0.208
+    M3EShapeId.cookie12Sided: 4, //       0.692  0.50
+    M3EShapeId.cookie9Sided: 4, //        0.687  0.50
+    M3EShapeId.clover8Leaf: 4, //         0.684  0.209
+    M3EShapeId.cookie4Sided: 4, //        0.678  0.233
+    M3EShapeId.cookie7Sided: 4, //        0.661  0.50
+    M3EShapeId.cookie6Sided: 4, //        0.659  0.394
+    M3EShapeId.pentagon: 3, //     4 -1   0.665  0.164
+    M3EShapeId.sunny: 3, //        4 -1   0.651  0.085 on wide lobes
+    M3EShapeId.softBoom: 3, //            0.617  0.174
+    M3EShapeId.puffy: 3, //               0.586  0.405
+    M3EShapeId.pixelCircle: 2, //  5 -3   0.827  hard right angles by design
+    M3EShapeId.flower: 2, //       3 -1   0.596  0.095 on the inner notches only
+    M3EShapeId.puffyDiamond: 2, //        0.567  0.146
+    M3EShapeId.softBurst: 1, //    3 -2   0.605  0.053
+    M3EShapeId.verySunny: 1, //    3 -2   0.596  0.085 on narrow lobes
+    M3EShapeId.diamond: 1, //      2 -1   0.517  0.151
+    M3EShapeId.triangle: 1, //     2 -1   0.513  0.20, but acute on a 3-gon
+  };
+
+  /// The distinct shapes [shapeForKey] can hand out, most-favoured first.
+  static List<M3EShapeId> get avatarShapes => _avatarShapeWeights.keys.toList(growable: false);
+
+  // Each shape repeated by its weight, so a single modulo does the biased draw.
+  // Map literals keep insertion order, so this list is stable across runs.
+  static final List<M3EShapeId> _weightedAvatarPool = [
+    for (final entry in _avatarShapeWeights.entries) ...List.filled(entry.value, entry.key),
   ];
 
   /// Picks a stable shape for [key] (a chat GUID, a handle address, …).
@@ -93,7 +118,9 @@ abstract final class M3EShapeLibrary {
   /// restarts. FNV-1a rather than [Object.hashCode] so the mapping can't drift
   /// between platforms or SDK versions.
   static M3EShapeId shapeForKey(String key, {List<M3EShapeId>? from}) {
-    final pool = from ?? avatarShapes;
+    // Defaults to the weighted pool; pass `from` for an unbiased draw over an
+    // explicit list.
+    final pool = from ?? _weightedAvatarPool;
     if (pool.isEmpty) return M3EShapeId.circle;
     return pool[_fnv1a(key) % pool.length];
   }
