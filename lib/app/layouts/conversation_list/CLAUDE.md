@@ -22,6 +22,13 @@
 - `pinned_tile_text_bubble.dart` — text preview bubble in pinned section
 - `list_item.dart` — generic reusable row wrapper
 
+**Pinned** (`widgets/pinned/`)
+- `material_pinned_chats_section.dart` — Material skin's pinned chats: a paged grid of large avatars
+  masked with M3 Expressive shapes, above the list. Behind the `enhancedPinnedTiles` setting and
+  Material-only (Samsung's taller header leaves no room). Its `isEnabled` getter is also what tells
+  `material_conversation_list.dart` to drop pinned chats from the main list — read both from the
+  same place or pins render twice.
+
 **Footer** (`widgets/footer/`)
 - `samsung_footer.dart` — bottom nav bar (Samsung skin only)
 

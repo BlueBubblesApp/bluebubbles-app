@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
@@ -22,11 +23,20 @@ import 'package:get/get.dart';
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   final double avatarSize;
 
+  /// Material 3 Expressive treatment: the avatar is masked with an abstract
+  /// shape from [M3EShapeLibrary] instead of a circle, corners follow the M3E
+  /// shape scale, and pressing the tile springs it inward.
+  ///
+  /// Off by default so the iOS skin — which this layout was built for — is
+  /// untouched.
+  final bool expressive;
+
   PinnedConversationTile({
     super.key,
     required Chat chat,
     required ConversationListController controller,
     required this.avatarSize,
+    this.expressive = false,
   }) : super(
             parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
                 ? Get.find<ConversationTileController>(tag: chat.guid)
@@ -45,6 +55,16 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   ConversationListController get listController => controller.listController;
   Offset? longPressPosition;
   StreamSubscription? _activeSub;
+  bool _pressed = false;
+
+  /// Derived from the chat GUID, so a chat keeps its shape as the pinned list
+  /// reorders and across restarts. Groups rendering the multi-avatar grid fall
+  /// back to a circle inside [ContactAvatarGroupWidget] — a star or clover mask
+  /// would slice the outer avatars in half.
+  late final M3EShapeBorder? _avatarShape =
+      widget.expressive ? M3EShapeBorder(shape: M3EShapeLibrary.shapeForKey(controller.chat.guid)) : null;
+
+  double get _cornerRadius => widget.expressive ? M3EShapes.lg : 8;
 
   @override
   void initState() {
@@ -81,7 +101,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
       margin: const EdgeInsets.only(left: 4, right: 4, top: 1),
       child: Obx(() {
         NavigationSvc.listener.value;
-        return AnimatedContainer(
+        final tile = AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
@@ -91,14 +111,19 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                     ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(
-                controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? 8 : 0),
+                controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? _cornerRadius : 0),
           ),
           child: Material(
             type: MaterialType.transparency,
             child: Listener(
               onPointerDown: (event) => longPressPosition = event.position,
               child: InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(_cornerRadius),
+                onHighlightChanged: widget.expressive
+                    ? (value) {
+                        if (mounted && _pressed != value) setState(() => _pressed = value);
+                      }
+                    : null,
                 onTap: () => controller.onTap(context),
                 onLongPress: kIsDesktop || kIsWeb
                     ? null
@@ -128,6 +153,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                   chat: controller.chat,
                                   size: widget.avatarSize,
                                   editable: false,
+                                  shape: _avatarShape,
                                 ),
                                 MuteIcon(width: widget.avatarSize, parentController: controller),
                                 PinnedIndicators(width: widget.avatarSize, controller: controller),
@@ -172,6 +198,16 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
             ),
           ),
         );
+
+        // M3E presses spring the shape inward rather than only tinting it.
+        return widget.expressive
+            ? AnimatedScale(
+                scale: _pressed ? 0.94 : 1.0,
+                duration: M3EMotion.spatialFast.duration,
+                curve: M3EMotion.spatialFast.curve,
+                child: tile,
+              )
+            : tile;
       }),
     );
   }

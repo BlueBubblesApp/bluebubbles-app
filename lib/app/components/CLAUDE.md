@@ -31,6 +31,16 @@ containment, list tile, tonal button, button group) used by the **Material and S
 several values today — never feed a shape token to an `EdgeInsets` or a `SizedBox`, or retuning a
 corner silently reflows layout.
 
+`m3e_shape_library.dart` is the *abstract shape* library (cookie, clover, burst, gem, …), not the
+corner scale. Geometry comes from the `material_new_shapes` package (a port of
+`androidx.graphics.shapes`), so these are the real M3E spec shapes — don't hand-roll lookalikes.
+- `M3EShapeLibrary.shapeForKey(guid)` — deterministic shape for a stable key, so an entity keeps
+  its shape across reorders and restarts. Draws from `avatarShapes`, the radially-symmetric subset
+  that doesn't crop a centred face.
+- `M3EShapeBorder(shape: id)` — an `OutlinedBorder`, so clip, ink splash and outline all come from
+  one object. Pass it to `Material.shape`, `InkWell.customBorder`, `ShapeDecoration.shape`, or
+  `ContactAvatarWidget`/`ContactAvatarGroupWidget`'s `shape:` param.
+
 `M3ETonalButton` takes a nullable `onPressed`; pass null for a busy/unavailable state rather than
 an empty callback, and it handles the dimming, the inert ink, and the semantics.
 

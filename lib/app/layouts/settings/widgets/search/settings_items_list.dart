@@ -308,6 +308,7 @@ List<Widget> buildSettingItemList({
             "Unarchive Chats On New Message",
             "Hide Dividers",
             "Dense Conversation Tiles",
+            "Enhanced Pinned Chat Tiles",
             "Pin Configuration",
             "Pin Rows",
             "Pins Per Row",

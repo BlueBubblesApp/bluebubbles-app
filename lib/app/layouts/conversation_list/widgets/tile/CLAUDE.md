@@ -43,6 +43,11 @@ All three skins receive the same `ConversationTileController` and read its `Rx*`
 
 Pinned chats are rendered in a horizontal `GridView` at the top of the list. `PinnedConversationTile` uses a column layout (avatar + name stacked vertically) rather than the row layout of standard tiles.
 
+`expressive: true` switches it to the Material 3 Expressive treatment — abstract shape mask on the
+avatar, M3E corner scale, spring-in press — used by `widgets/pinned/material_pinned_chats_section.dart`.
+Default `false` keeps the iOS skin's existing look. Keep this a parameter rather than a second tile
+widget: the overlays (mute, sender, reaction, status, text bubble) are identical either way.
+
 ## Swipe Actions
 
 `ListItem` wraps `ConversationTile` in a `Dismissible` for swipe-to-archive / swipe-to-pin on Material skin. iOS swipe actions are handled by the Cupertino skin tile directly.

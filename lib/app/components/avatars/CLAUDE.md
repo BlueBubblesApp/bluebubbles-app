@@ -14,6 +14,14 @@ Two widgets for rendering contact or group avatars throughout the app.
 - `size` — diameter in logical pixels
 - `borderThickness` — optional white border (use in list tiles)
 - `customColor` — override gradient with `HexColor(handle.color!)`
+- `shape` — optional `OutlinedBorder` replacing the circle (e.g. `M3EShapeBorder`); drives the
+  fill, the clip, the ink splash and the border at once
+
+## Shape Masks
+`ContactAvatarGroupWidget` also takes `shape`, but applies it only to a chat's **custom group photo**
+and to **single-participant** chats. The multi-avatar grid stays circular by design — it is already a
+composition of circles against a circular frame, and masking it with a star or clover slices the
+outer avatars in half.
 
 ## Usage
 ```dart

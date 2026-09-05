@@ -18,6 +18,12 @@ class ChatListPanel extends StatefulWidget {
 }
 
 class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
+  /// The pin row/column settings drive the iOS pinned section and the Material
+  /// skin's expressive one alike, so surface them wherever a pinned grid is
+  /// actually on screen — otherwise Material users get the grid with no way to
+  /// resize it.
+  bool get showPinConfig => iOS || (material && SettingsSvc.settings.enhancedPinnedTiles.value);
+
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -132,13 +138,27 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           isThreeLine: true,
                         )),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsWeb && material)
+                      Obx(() => SettingsSwitch(
+                            onChanged: (bool val) async {
+                              SettingsSvc.settings.enhancedPinnedTiles.value = val;
+                              await SettingsSvc.settings.saveOneAsync('enhancedPinnedTiles');
+                            },
+                            initialVal: SettingsSvc.settings.enhancedPinnedTiles.value,
+                            title: "Enhanced Pinned Chat Tiles",
+                            subtitle:
+                                "Lift pinned chats out of the list into a grid of large avatars, each masked with a Material 3 Expressive shape",
+                            backgroundColor: tileColor,
+                            isThreeLine: true,
+                          )),
+                    if (!kIsWeb && material) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    if (!kIsDesktop && !kIsWeb && showPinConfig)
                       const SettingsTile(
                         title: "Pin Configuration",
                         subtitle: "The row and column count of the pin grid. ",
                         isThreeLine: true,
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb && showPinConfig)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -165,7 +185,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           const SizedBox(width: 20),
                         ],
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb && showPinConfig)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -192,7 +212,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           const SizedBox(width: 20),
                         ],
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb && showPinConfig)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -220,14 +240,14 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                         ],
                       ),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (kIsDesktop && iOS)
+                    if (kIsDesktop && showPinConfig)
                       SettingsTile(
                         title:
                             "Pinned Chat Configuration (${SettingsSvc.settings.pinRowsPortrait.value} row${SettingsSvc.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsSvc.settings.pinColumnsLandscape})",
                         subtitle:
                             "Pinned chats will overflow onto multiple pages if they do not fit in this configuration.",
                       ),
-                    if (kIsDesktop && iOS)
+                    if (kIsDesktop && showPinConfig)
                       Row(
                             children: <Widget>[
                               Flexible(
@@ -399,7 +419,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                               }),
                             ],
                           ),
-                    if (kIsDesktop && iOS) const SizedBox(height: 24),
+                    if (kIsDesktop && showPinConfig) const SizedBox(height: 24),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsWeb)
                       SettingsTile(

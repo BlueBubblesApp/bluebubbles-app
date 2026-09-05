@@ -20,6 +20,7 @@ class ContactAvatarWidget extends StatefulWidget {
       this.contact,
       this.scaleSize = true,
       this.preferHighResAvatar = false,
+      this.shape,
       this.padding = EdgeInsets.zero});
 
   /// Canonical decode size for avatar images. Every avatar usage shares one
@@ -36,6 +37,11 @@ class ContactAvatarWidget extends StatefulWidget {
   final bool editable;
   final bool scaleSize;
   final bool preferHighResAvatar;
+
+  /// Optional non-circular mask, e.g. an [M3EShapeBorder] for the Material
+  /// skin's expressive pinned tiles. Drives the fill, the clip, the ink splash
+  /// and the border together; defaults to a circle when null.
+  final OutlinedBorder? shape;
   final EdgeInsets padding;
 
   @override
@@ -188,11 +194,44 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
           (SettingsSvc.settings.skin.value == Skins.Material && ThemeSvc.isAnyMaterialYouSelected);
       final userAvatarPath = SettingsSvc.settings.userAvatarPath.value;
 
+      final borderColor = iOS || SettingsSvc.settings.skin.value == Skins.Samsung
+          ? tileColor
+          : context.theme.colorScheme.surface;
+      final gradient = LinearGradient(
+        begin: AlignmentDirectional.topStart,
+        end: AlignmentDirectional.bottomEnd,
+        colors: [
+          !colorfulAvatars
+              ? (ThemeSvc.inDarkMode(context) ? HexColor("8A8686") : HexColor("B8B4B4"))
+              : (iOS ? colors[1] : colors[0]),
+          !colorfulAvatars ? (ThemeSvc.inDarkMode(context) ? HexColor("6B6868") : HexColor("928E8E")) : colors[0],
+        ],
+        stops: const [0.3, 0.9],
+      );
+      final border = BorderSide(
+        color: borderColor,
+        width: widget.borderThickness,
+        strokeAlign: BorderSide.strokeAlignOutside,
+      );
+      // A custom shape replaces the circle everywhere it matters at once: the
+      // fill, the clip, the ink splash and the outline all read from it.
+      // A zero thickness still paints a hairline through a ShapeBorder's side,
+      // which would ring every expressive avatar — drop the side entirely there.
+      final OutlinedBorder outline =
+          widget.shape?.copyWith(side: widget.borderThickness <= 0 ? BorderSide.none : border) ?? const CircleBorder();
+      final Decoration decoration = widget.shape == null
+          ? BoxDecoration(
+              gradient: gradient,
+              border: Border.fromBorderSide(border),
+              shape: BoxShape.circle,
+            )
+          : ShapeDecoration(gradient: gradient, shape: outline);
+
       return Material(
         color: Colors.transparent,
-        shape: const CircleBorder(),
+        shape: outline,
         child: InkWell(
-          customBorder: const CircleBorder(),
+          customBorder: outline,
           splashColor: Colors.black,
           onTap: (!widget.editable || (!kIsDesktop && widget.handle == null && contactV2 == null))
               ? null
@@ -219,28 +258,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
             width: size,
             height: size,
             padding: widget.padding,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: AlignmentDirectional.topStart,
-                end: AlignmentDirectional.bottomEnd,
-                colors: [
-                  !colorfulAvatars
-                      ? (ThemeSvc.inDarkMode(context) ? HexColor("8A8686") : HexColor("B8B4B4"))
-                      : (iOS ? colors[1] : colors[0]),
-                  !colorfulAvatars
-                      ? (ThemeSvc.inDarkMode(context) ? HexColor("6B6868") : HexColor("928E8E"))
-                      : colors[0],
-                ],
-                stops: [0.3, 0.9],
-              ),
-              border: Border.all(
-                  color: iOS || SettingsSvc.settings.skin.value == Skins.Samsung
-                      ? tileColor
-                      : context.theme.colorScheme.surface,
-                  width: widget.borderThickness,
-                  strokeAlign: BorderSide.strokeAlignOutside),
-              shape: BoxShape.circle,
-            ),
+            decoration: decoration,
             clipBehavior: Clip.antiAlias,
             alignment: Alignment.center,
             child: () {
@@ -249,11 +267,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
 
               if (!hideContactInfo && widget.handle == null && userAvatarPath != null) {
                 dynamic file = File(userAvatarPath);
-                return CircleAvatar(
+                // The container already clips to the active shape, so fill it
+                // rather than drawing a circle of our own inside it.
+                return SizedBox.expand(
                   key: ValueKey(userAvatarPath),
-                  radius: size / 2,
-                  backgroundImage: Image.file(file).image,
-                  backgroundColor: Colors.transparent,
+                  child: Image.file(file, fit: BoxFit.cover, gaplessPlayback: true),
                 );
               } else if (!hideContactInfo && !genAvatars && contactV2Avatar != null) {
                 final initials = cachedInitials?.substring(0, iOS ? null : 1);

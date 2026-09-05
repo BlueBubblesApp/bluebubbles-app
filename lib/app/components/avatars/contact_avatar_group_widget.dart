@@ -30,6 +30,7 @@ class ContactAvatarGroupWidget extends StatelessWidget {
     this.handles,
     this.size = 40,
     this.editable = true,
+    this.shape,
   });
 
   /// Optional chat for scope-less contexts (search, tiles, scheduling panels).
@@ -42,6 +43,13 @@ class ContactAvatarGroupWidget extends StatelessWidget {
   final List<Handle>? handles;
   final double size;
   final bool editable;
+
+  /// Optional non-circular mask (e.g. an `M3EShapeBorder`). Applied to a chat's
+  /// custom group photo and to single-participant chats. **Deliberately ignored
+  /// for the multi-avatar grid**: that layout is already a composition of
+  /// circles positioned against a circular frame, and clipping it to a star or
+  /// clover lops the outer avatars in half.
+  final OutlinedBorder? shape;
 
   static final _materialGeneration = <int, List<dynamic>>{
     2: [
@@ -103,6 +111,7 @@ class ContactAvatarGroupWidget extends StatelessWidget {
           size: size * SettingsSvc.settings.avatarScale.value,
           editable: false,
           scaleSize: false,
+          shape: shape,
         );
       }
 
@@ -113,6 +122,18 @@ class ContactAvatarGroupWidget extends StatelessWidget {
 
       if (customAvatarPath != null && !hide) {
         dynamic file = File(customAvatarPath);
+        if (shape != null) {
+          return Container(
+            key: ValueKey(customAvatarPath),
+            width: avatarSize,
+            height: avatarSize,
+            clipBehavior: Clip.antiAlias,
+            decoration: ShapeDecoration(
+              shape: shape!,
+              image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
+            ),
+          );
+        }
         return CircleAvatar(
           key: ValueKey(customAvatarPath),
           radius: avatarSize / 2,
@@ -214,12 +235,13 @@ class ContactAvatarGroupWidget extends StatelessWidget {
               )
             : ContactAvatarWidget(
                 handle: participants.first,
-                borderThickness: 0.1,
+                borderThickness: shape != null ? 0 : 0.1,
                 size: avatarSize,
                 preferHighResAvatar: true,
                 fontSize: avatarSize * 0.5,
                 editable: editable,
                 scaleSize: false,
+                shape: shape,
               ),
       );
     });

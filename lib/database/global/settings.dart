@@ -191,6 +191,11 @@ class Settings {
   final RxInt pinRowsLandscape = RxInt(1);
   final RxInt pinColumnsLandscape = RxInt(4);
 
+  /// Material skin only: lift pinned chats out of the conversation list into a
+  /// grid of large avatars masked with M3 Expressive abstract shapes, instead of
+  /// letting them sort to the top of the list as ordinary rows.
+  final RxBool enhancedPinnedTiles = RxBool(false);
+
   final RxInt maxAvatarsInGroupWidget = RxInt(4);
 
   // Desktop settings
@@ -440,6 +445,7 @@ class Settings {
       'pinColumnsPortrait': pinColumnsPortrait.value,
       'pinRowsLandscape': pinRowsLandscape.value,
       'pinColumnsLandscape': pinColumnsLandscape.value,
+      'enhancedPinnedTiles': enhancedPinnedTiles.value,
       'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
       'titleBarStyle': titleBarStyle.value.index,
       'windowEffect': windowEffect.value.name,
@@ -684,6 +690,8 @@ class Settings {
         map['pinRowsLandscape'] ?? SettingsSvc.settings.pinRowsLandscape.value;
     SettingsSvc.settings.pinColumnsLandscape.value =
         map['pinColumnsLandscape'] ?? SettingsSvc.settings.pinColumnsLandscape.value;
+    SettingsSvc.settings.enhancedPinnedTiles.value =
+        map['enhancedPinnedTiles'] ?? SettingsSvc.settings.enhancedPinnedTiles.value;
     SettingsSvc.settings.maxAvatarsInGroupWidget.value =
         map['maxAvatarsInGroupWidget'] ?? SettingsSvc.settings.maxAvatarsInGroupWidget.value;
     SettingsSvc.settings.titleBarStyle.value = map['titleBarStyle'] != null
@@ -873,6 +881,7 @@ class Settings {
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
     s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 4;
+    s.enhancedPinnedTiles.value = map['enhancedPinnedTiles'] ?? false;
     s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     s.titleBarStyle.value = map['titleBarStyle'] != null
         ? BBTitleBarStyle.values[map['titleBarStyle']]

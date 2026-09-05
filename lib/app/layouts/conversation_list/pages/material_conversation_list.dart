@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned/material_pinned_chats_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -88,14 +89,25 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
 
-                final _chats = ChatsSvc.getFilteredChats(
+                // The expressive pinned section owns the pinned chats while it's up,
+                // so they have to come out of the main list or every pin renders twice.
+                final showPinnedSection = MaterialPinnedChatsSection.isEnabled && !showArchived && !showUnknown;
+
+                final _allChats = ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
                   filters: ChatsSvc.chatListFilters.value,
                 );
+                final _chats =
+                    showPinnedSection ? _allChats.where((e) => !(e.isPinned ?? false)).toList() : _allChats;
+                // Everything being pinned is not an empty inbox — the section above is
+                // still showing those chats, so don't offer the "no chats" state under it.
+                final hasPinned = showPinnedSection && _chats.length != _allChats.length;
 
                 final Widget content;
-                if (!loaded || _chats.isEmpty) {
+                if (_chats.isEmpty && hasPinned && loaded) {
+                  content = const SizedBox.shrink();
+                } else if (!loaded || _chats.isEmpty) {
                   content = Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 100),
@@ -155,6 +167,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     if (!showArchived && !showUnknown)
                       const CustomGroupFilterChipRow(
                         padding: EdgeInsets.only(left: 12, right: 12, top: 16, bottom: 4),
+                      ),
+                    if (showPinnedSection)
+                      MaterialPinnedChatsSection(
+                        controller: controller,
+                        showArchived: showArchived,
+                        showUnknown: showUnknown,
                       ),
                     Expanded(child: content),
                   ],
