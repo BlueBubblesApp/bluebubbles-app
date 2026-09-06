@@ -20,56 +20,6 @@ class ContactV2Actions {
   /// Completer to ensure syncContactsToHandles only runs once at a time
   static Completer<_ContactSyncStats>? _syncCompleter;
 
-  /// Generate multiple normalized variants of a phone number to handle country code mismatches
-  ///
-  /// Returns a set of normalized phone numbers including:
-  /// - The original normalized number (digits + plus sign only)
-  /// - Variant without country code (if one exists)
-  /// - Variant with country code removed but assuming it started with +
-  ///
-  /// This handles cases where:
-  /// - Contact has "1234567890" but Handle has "+11234567890"
-  /// - Contact has "+11234567890" but Handle has "1234567890"
-  /// - Works with any country code, not just +1
-  static Set<String> _getPhoneNumberVariants(String phone) {
-    final variants = <String>{};
-    final normalized = ContactV2.normalizePhoneNumber(phone);
-
-    if (normalized.isEmpty) return variants;
-
-    // Always include the base normalized version
-    variants.add(normalized);
-
-    // If it starts with +, add variant without the +
-    if (normalized.startsWith('+')) {
-      variants.add(normalized.substring(1));
-
-      // Also try removing common country codes (1-3 digits after +)
-      // Country codes can be 1-3 digits (e.g., +1, +44, +852, +1246)
-      for (int i = 1; i <= 3 && i < normalized.length; i++) {
-        final withoutCountryCode = normalized.substring(i + 1);
-        if (withoutCountryCode.isNotEmpty) {
-          variants.add(withoutCountryCode);
-        }
-      }
-    } else {
-      // If no +, try adding + and common country code lengths
-      // This handles cases where the stored number doesn't have + but the contact does
-      variants.add('+$normalized');
-
-      // Try removing 1-3 digit prefixes as potential country codes
-      for (int i = 1; i <= 3 && i < normalized.length; i++) {
-        final withoutPrefix = normalized.substring(i);
-        if (withoutPrefix.isNotEmpty) {
-          variants.add(withoutPrefix);
-          variants.add('+$withoutPrefix');
-        }
-      }
-    }
-
-    return variants;
-  }
-
   /// Fetch all contacts from device and match them to existing handles
   /// This is the main operation described in Section II.A of FR-1.md
   ///
@@ -226,13 +176,13 @@ class ContactV2Actions {
             }
           } else {
             // For phones, generate all variants and map them
-            final variants = _getPhoneNumberVariants(handle.address);
+            final variants = getPhoneNumberVariants(handle.address);
             for (final variant in variants) {
               phoneHandleMap.putIfAbsent(variant, () => []).add(handle);
             }
 
             if (handle.formattedAddress != null) {
-              final formattedVariants = _getPhoneNumberVariants(handle.formattedAddress!);
+              final formattedVariants = getPhoneNumberVariants(handle.formattedAddress!);
               for (final variant in formattedVariants) {
                 phoneHandleMap.putIfAbsent(variant, () => []).add(handle);
               }
@@ -408,7 +358,7 @@ class ContactV2Actions {
               }
             } else {
               // For phones, check all variants
-              final variants = _getPhoneNumberVariants(address);
+              final variants = getPhoneNumberVariants(address);
               for (final variant in variants) {
                 final handles = phoneHandleMap[variant];
                 if (handles != null) {
