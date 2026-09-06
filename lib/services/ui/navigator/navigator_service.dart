@@ -46,6 +46,16 @@ class NavigatorService {
       SettingsSvc.settings.tabletMode.value &&
       context.width > 600;
 
+  /// Whether the settings split view's right-hand navigator is live and safe to drive.
+  ///
+  /// `Get.keys.containsKey(3)` alone is not enough: GetX never removes a nested key
+  /// once registered, so it keeps reading true after the settings page is gone. Any
+  /// `id: 3` call made on that stale key throws GetX's "contextless navigation
+  /// without a GetMaterialApp" error from `Get.global()`, which is what the split
+  /// view's own back handling used to do while the page was on its way out.
+  bool hasSettingsNavigator(BuildContext context) =>
+      Get.keys[3]?.currentContext != null && isTabletMode(context);
+
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar
   double width(BuildContext context) {
@@ -88,7 +98,7 @@ class NavigatorService {
 
   /// Push a new route onto the settings navigator
   Future<dynamic> pushSettings(BuildContext context, Widget widget, {Bindings? binding}) async {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
+    if (hasSettingsNavigator(context)) {
       return await Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
       binding?.dependencies();
@@ -128,7 +138,7 @@ class NavigatorService {
   /// Push a new route, popping all previous routes, on the settings navigator
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {Bindings? binding}) {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
+    if (hasSettingsNavigator(context)) {
       activeSettingsPage.value = widget.runtimeType;
       // we only want to offUntil when in landscape, otherwise when the user presses back, the previous page will be the chat list
       Get.offUntil(
@@ -149,16 +159,28 @@ class NavigatorService {
     }
   }
 
+  /// Steps back one level inside the settings split view.
+  ///
+  /// From a settings sub-page this pops the right pane back towards its placeholder;
+  /// from the placeholder itself ("initial") there is nothing left to pop, so the
+  /// whole settings page comes off the outer navigator instead.
+  ///
+  /// No-ops when the right-hand navigator isn't live — see [hasSettingsNavigator].
+  void backSettingsPane(BuildContext context) {
+    if (!hasSettingsNavigator(context)) return;
+    Get.until((route) {
+      if (route.settings.name == "initial") {
+        Get.back();
+      } else {
+        Get.back(id: 3);
+      }
+      return true;
+    }, id: 3);
+  }
+
   void backConversationView(BuildContext context) {
-    if (Get.keys.containsKey(3) && Get.keys[3]?.currentContext != null && isTabletMode(context)) {
-      Get.until((route) {
-        if (route.settings.name == "initial") {
-          Get.back();
-        } else {
-          Get.back(id: 3);
-        }
-        return true;
-      }, id: 3);
+    if (hasSettingsNavigator(context)) {
+      backSettingsPane(context);
     } else if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && isTabletMode(context)) {
       if (Get.currentRoute.isEmpty) {
         Get.back();
@@ -190,7 +212,7 @@ class NavigatorService {
   }
 
   void closeSettings(BuildContext context) {
-    if (Get.keys.containsKey(3) && Get.keys[3]?.currentContext != null && isTabletMode(context)) {
+    if (hasSettingsNavigator(context)) {
       Get.until((route) => route.isFirst, id: 3);
       Get.back(closeOverlays: true);
     } else {
@@ -208,7 +230,7 @@ class NavigatorService {
   }
 
   void backSettings(BuildContext context, {dynamic result, bool closeOverlays = false}) {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
+    if (hasSettingsNavigator(context)) {
       Get.back(result: result, closeOverlays: closeOverlays, id: 3);
     } else {
       Get.back(result: result, closeOverlays: closeOverlays);
