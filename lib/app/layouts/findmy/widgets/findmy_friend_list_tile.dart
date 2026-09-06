@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_raw_data_dialog.dart';
@@ -20,6 +22,34 @@ class FindMyFriendListTile extends StatelessWidget {
     required this.controller,
     this.withLocation = true,
   });
+
+  /// The server payload can carry the friend's contact photo as base64 (`avatar`).
+  /// Prefer it over the local contact cache, which may not have a photo for this
+  /// handle at all. Redacted mode hides real photos, same as names and addresses.
+  Widget _buildLeadingAvatar(bool hideContactInfo) {
+    final avatar = item.avatar;
+    if (!hideContactInfo && avatar != null && avatar.isNotEmpty) {
+      try {
+        final size = 40 * SettingsSvc.settings.avatarScale.value;
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(avatar),
+            width: size,
+            height: size,
+            cacheWidth: ContactAvatarWidget.avatarDecodeSize,
+            cacheHeight: ContactAvatarWidget.avatarDecodeSize,
+            filterQuality: FilterQuality.low,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stackTrace) => ContactAvatarWidget(handle: item.handle),
+          ),
+        );
+      } catch (_) {
+        // Invalid base64: fall through to the contact avatar
+      }
+    }
+    return ContactAvatarWidget(handle: item.handle);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +74,7 @@ class FindMyFriendListTile extends StatelessWidget {
 
       return ListTile(
         mouseCursor: MouseCursor.defer,
-        leading: ContactAvatarWidget(handle: item.handle),
+        leading: _buildLeadingAvatar(hideContactInfo),
         title: Text(displayName),
         subtitle: Text(displayLocation),
         trailing: withLocation && hasLocation
