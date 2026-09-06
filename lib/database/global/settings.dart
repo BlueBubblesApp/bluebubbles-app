@@ -155,6 +155,12 @@ class Settings {
   final RxBool generateFakeAvatars = false.obs;
   final RxBool hideMessageContent = false.obs;
 
+  // App Update Settings (Android-only, GitHub-sideload installs only)
+  final RxBool autoUpdateCheckEnabled = true.obs;
+  final Rx<AppUpdateChannel> updateChannel = AppUpdateChannel.stable.obs;
+  final Rx<AppUpdateCheckInterval> updateCheckInterval = AppUpdateCheckInterval.daily.obs;
+  final RxInt lastUpdateCheckMillis = 0.obs;
+
   // Unified Push Settings
   final RxBool enableUnifiedPush = false.obs;
   final RxString endpointUnifiedPush = RxString("");
@@ -424,6 +430,10 @@ class Settings {
       'hideContactInfo': hideContactInfo.value,
       'generateFakeAvatars': generateFakeAvatars.value,
       'generateFakeMessageContent': hideMessageContent.value,
+      'autoUpdateCheckEnabled': autoUpdateCheckEnabled.value,
+      'updateChannel': updateChannel.value.index,
+      'updateCheckInterval': updateCheckInterval.value.index,
+      'lastUpdateCheckMillis': lastUpdateCheckMillis.value,
       'enableQuickTapback': enableQuickTapback.value,
       'quickTapbackType': quickTapbackType.value,
       'notificationReactionAction': notificationReactionAction.value,
@@ -646,6 +656,16 @@ class Settings {
         map['generateFakeAvatars'] ?? SettingsSvc.settings.generateFakeAvatars.value;
     SettingsSvc.settings.hideMessageContent.value =
         map['generateFakeMessageContent'] ?? SettingsSvc.settings.hideMessageContent.value;
+    SettingsSvc.settings.autoUpdateCheckEnabled.value =
+        map['autoUpdateCheckEnabled'] ?? SettingsSvc.settings.autoUpdateCheckEnabled.value;
+    SettingsSvc.settings.updateChannel.value = map['updateChannel'] != null
+        ? AppUpdateChannel.values[map['updateChannel']]
+        : SettingsSvc.settings.updateChannel.value;
+    SettingsSvc.settings.updateCheckInterval.value = map['updateCheckInterval'] != null
+        ? AppUpdateCheckInterval.values[map['updateCheckInterval']]
+        : SettingsSvc.settings.updateCheckInterval.value;
+    SettingsSvc.settings.lastUpdateCheckMillis.value =
+        map['lastUpdateCheckMillis'] ?? SettingsSvc.settings.lastUpdateCheckMillis.value;
     SettingsSvc.settings.enableUnifiedPush.value =
         map['enableUnifiedPush'] ?? SettingsSvc.settings.enableUnifiedPush.value;
     SettingsSvc.settings.endpointUnifiedPush.value =
@@ -847,6 +867,13 @@ class Settings {
     s.hideContactInfo.value = map['hideContactInfo'] ?? true;
     s.generateFakeAvatars.value = map['generateFakeAvatars'] ?? false;
     s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    s.autoUpdateCheckEnabled.value = map['autoUpdateCheckEnabled'] ?? true;
+    s.updateChannel.value =
+        map['updateChannel'] != null ? AppUpdateChannel.values[map['updateChannel']] : AppUpdateChannel.stable;
+    s.updateCheckInterval.value = map['updateCheckInterval'] != null
+        ? AppUpdateCheckInterval.values[map['updateCheckInterval']]
+        : AppUpdateCheckInterval.daily;
+    s.lastUpdateCheckMillis.value = map['lastUpdateCheckMillis'] ?? 0;
     s.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     s.enableFcm.value = map['enableFcm'] ?? true;

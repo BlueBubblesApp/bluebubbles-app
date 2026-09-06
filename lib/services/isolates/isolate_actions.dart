@@ -30,8 +30,8 @@ class IsolateActons {
       TestActions.executeTestThrowError(data as String);
     },
 
-    // App — no-arg, wrap to accept and ignore the data param
-    IsolateRequestType.checkForUpdate: (_) => AppActions.checkForUpdate(),
+    // App
+    IsolateRequestType.checkForUpdate: (data) => AppActions.checkForUpdate(data as Map<String, dynamic>? ?? {}),
 
     // Server — no-arg, wrap to accept and ignore the data param
     IsolateRequestType.checkForServerUpdate: (_) => ServerActions.checkForServerUpdate(),

@@ -7,13 +7,13 @@ import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/services/backend/interfaces/app_interface.dart';
 import 'package:bluebubbles/services/backend/interfaces/server_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:github/github.dart' hide Source;
 import 'package:local_auth/local_auth.dart';
@@ -429,7 +429,29 @@ class SettingsService {
     );
   }
 
-  Future<Map<String, dynamic>> getAppUpdateDict() async {
+  /// Fetches the latest matching GitHub release for the app.
+  ///
+  /// With [channel] left `null`, this is the legacy/generic check (desktop):
+  /// picks the newest non-draft, non-prerelease release, exactly as before
+  /// this method learned about channels at all.
+  ///
+  /// With [channel] set, this is the Android GitHub-sideload auto-update
+  /// flow: matches by the channel's tag marker (see [AppUpdateChannelInfo])
+  /// and only considers releases that carry a `.apk` asset, since that's
+  /// what gets installed.
+  ///
+  /// Both are thin wrappers over the shared fetch/parse helpers below — this
+  /// just picks which one owns the request.
+  Future<Map<String, dynamic>> getAppUpdateDict({AppUpdateChannel? channel}) async {
+    return channel != null ? await _getChannelUpdateDict(channel) : await _getLegacyUpdateDict();
+  }
+
+  /// Newest non-draft, non-prerelease release — no channel awareness, no
+  /// APK requirement. Availability requires being sideloaded specifically
+  /// (stricter than [_getChannelUpdateDict]'s "just not the Play Store"),
+  /// then narrows further per-platform: build-code comparison on Android,
+  /// semver comparison everywhere else.
+  Future<Map<String, dynamic>> _getLegacyUpdateDict() async {
     bool available = true;
     if (!kIsDesktop && (kIsWeb || (await StoreChecker.getSource) != Source.IS_INSTALLED_FROM_LOCAL_SOURCE)) {
       available = false;
@@ -438,71 +460,169 @@ class SettingsService {
       available = false;
     }
 
-    final github = GitHub();
-    final stream = github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app'));
-    final release = await stream.firstWhere(
+    final releases = await _fetchAppReleases();
+    final release = releases.firstWhereOrNull(
         (element) => !(element.isDraft ?? false) && !(element.isPrerelease ?? false) && element.tagName != null);
-    final version = release.tagName!.split("+").first.replaceAll("v", "");
-    final code = release.tagName!.split("+").last.split('-').first;
-    final isDesktopRelease = release.tagName!.split('+').last.contains('desktop');
+    if (release?.tagName == null) {
+      return _unavailableUpdateDict(release: release, channel: null);
+    }
 
+    final parsed = _parseReleaseTag(release!.tagName!);
     String buildNumber = "";
     if (Platform.isAndroid) {
       buildNumber =
           FilesystemSvc.packageInfo.buildNumber.lastChars(min(4, FilesystemSvc.packageInfo.buildNumber.length));
-      if (int.parse(code) <= int.parse(buildNumber) ||
-          PrefsSvc.server.getClientUpdateCheckCode() == code ||
-          (Platform.isAndroid && isDesktopRelease)) {
+      if (!_isNewerBuild(parsed, buildNumber)) {
         available = false;
       }
     } else {
-      final latestRelease = Version(
-        int.parse(version.split(".")[0]),
-        int.parse(version.split(".")[1]),
-        int.parse(version.split(".")[2]),
-      );
-      final current = Version(
-        int.parse(FilesystemSvc.packageInfo.version.split(".")[0]),
-        int.parse(FilesystemSvc.packageInfo.version.split(".")[1]),
-        int.parse(FilesystemSvc.packageInfo.version.split(".")[2]),
-      );
-      if (current.compareTo(latestRelease) < 0) {
+      final latest = _parseSemver(parsed.version);
+      final current = _parseSemver(FilesystemSvc.packageInfo.version);
+      if (current.compareTo(latest) < 0) {
         available = true;
       }
     }
 
-    return {
-      'available': available,
-      'latestRelease': release,
-      'isDesktopRelease': isDesktopRelease,
-      'parsedVersion': {
-        'version': version,
-        'code': code,
-        'build': buildNumber,
-      }
-    };
-  }
-
-  Future<AppUpdateInfo> checkForUpdate() async {
-    final updateDict = await getAppUpdateDict();
-    return AppUpdateInfo(
-      available: updateDict['available'] as bool,
-      latestRelease: updateDict['latestRelease'] as Release,
-      isDesktopRelease: updateDict['isDesktopRelease'] as bool,
-      version: (updateDict['parsedVersion'] as Map<String, String>)['version']!,
-      code: (updateDict['parsedVersion'] as Map<String, String>)['code']!,
-      buildNumber: (updateDict['parsedVersion'] as Map<String, String>)['build']!,
+    return _updateDict(
+      available: available,
+      release: release,
+      parsed: parsed,
+      buildNumber: buildNumber,
+      channel: null,
     );
   }
 
-  Future<void> checkClientUpdate() async {
-    late AppUpdateInfo updateInfo;
-    if (Platform.isAndroid) {
-      updateInfo = await AppInterface.checkForUpdate();
-    } else {
-      updateInfo = await checkForUpdate();
+  /// Matches a release on [channel]'s track that carries a `.apk` asset.
+  /// Availability requires not being installed from the Play Store (any
+  /// other source is eligible), then a genuinely newer build code.
+  Future<Map<String, dynamic>> _getChannelUpdateDict(AppUpdateChannel channel) async {
+    final available = Platform.isAndroid && (await StoreChecker.getSource) != Source.IS_INSTALLED_FROM_PLAY_STORE;
+
+    final releases = await _fetchAppReleases();
+    ReleaseAsset? apkAsset;
+    final release = releases.firstWhereOrNull((element) {
+      if (element.isDraft ?? false) return false;
+      if (element.tagName == null) return false;
+      if (!channel.matchesTag(element.tagName!)) return false;
+      apkAsset = element.assets?.firstWhereOrNull((a) => (a.name ?? '').toLowerCase().endsWith('.apk'));
+      return apkAsset != null;
+    });
+    if (release?.tagName == null) {
+      return _unavailableUpdateDict(release: release, channel: channel);
     }
-    if (!updateInfo.available) return;
+
+    final parsed = _parseReleaseTag(release!.tagName!);
+    final buildNumber =
+        FilesystemSvc.packageInfo.buildNumber.lastChars(min(4, FilesystemSvc.packageInfo.buildNumber.length));
+
+    return _updateDict(
+      available: available && _isNewerBuild(parsed, buildNumber),
+      release: release,
+      parsed: parsed,
+      buildNumber: buildNumber,
+      channel: channel,
+      apkAsset: apkAsset,
+    );
+  }
+
+  /// Fetches every release for the BlueBubbles app repo (newest first, per
+  /// the GitHub API's default ordering) — the one network round-trip shared
+  /// by both [_getLegacyUpdateDict] and [_getChannelUpdateDict].
+  Future<List<Release>> _fetchAppReleases() async {
+    final github = GitHub();
+    try {
+      return await github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app')).toList();
+    } finally {
+      github.dispose();
+    }
+  }
+
+  /// Splits a tag like `v1.2.3+400-desktop` into its numeric version, build
+  /// code, and whether it's a desktop-flavored release.
+  ({String version, String code, bool isDesktopRelease}) _parseReleaseTag(String tagName) {
+    return (
+      version: tagName.split("+").first.replaceAll("v", ""),
+      code: tagName.split("+").last.split('-').first,
+      isDesktopRelease: tagName.split('+').last.contains('desktop'),
+    );
+  }
+
+  /// Whether [parsed]'s build code represents a real update over the running
+  /// app: strictly newer, not already dismissed via [PrefsSvc], and not a
+  /// desktop-flavored release (which would never apply on Android).
+  bool _isNewerBuild(({String version, String code, bool isDesktopRelease}) parsed, String currentBuildNumber) {
+    return int.parse(parsed.code) > int.parse(currentBuildNumber) &&
+        PrefsSvc.server.getClientUpdateCheckCode() != parsed.code &&
+        !parsed.isDesktopRelease;
+  }
+
+  Version _parseSemver(String version) {
+    final parts = version.split(".");
+    return Version(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+  }
+
+  Map<String, dynamic> _unavailableUpdateDict({required Release? release, required AppUpdateChannel? channel}) {
+    return {
+      'available': false,
+      'latestRelease': release,
+      'isDesktopRelease': false,
+      'channel': channel?.index,
+      'parsedVersion': {'version': '', 'code': '', 'build': ''},
+      'apkDownloadUrl': null,
+      'apkAssetName': null,
+      'apkSizeBytes': null,
+    };
+  }
+
+  Map<String, dynamic> _updateDict({
+    required bool available,
+    required Release release,
+    required ({String version, String code, bool isDesktopRelease}) parsed,
+    required String buildNumber,
+    required AppUpdateChannel? channel,
+    ReleaseAsset? apkAsset,
+  }) {
+    return {
+      'available': available,
+      'latestRelease': release,
+      'isDesktopRelease': parsed.isDesktopRelease,
+      'channel': channel?.index,
+      'parsedVersion': {
+        'version': parsed.version,
+        'code': parsed.code,
+        'build': buildNumber,
+      },
+      'apkDownloadUrl': apkAsset?.browserDownloadUrl,
+      'apkAssetName': apkAsset?.name,
+      'apkSizeBytes': apkAsset?.size,
+    };
+  }
+
+  Future<AppUpdateInfo> checkForUpdate({AppUpdateChannel? channel}) async {
+    final updateDict = await getAppUpdateDict(channel: channel);
+    final channelIndex = updateDict['channel'] as int?;
+    return AppUpdateInfo(
+      available: updateDict['available'] as bool,
+      latestRelease: updateDict['latestRelease'] as Release?,
+      isDesktopRelease: updateDict['isDesktopRelease'] as bool,
+      channel: channelIndex != null ? AppUpdateChannel.values[channelIndex] : null,
+      version: (updateDict['parsedVersion'] as Map<String, String>)['version']!,
+      code: (updateDict['parsedVersion'] as Map<String, String>)['code']!,
+      buildNumber: (updateDict['parsedVersion'] as Map<String, String>)['build']!,
+      apkDownloadUrl: updateDict['apkDownloadUrl'] as String?,
+      apkAssetName: updateDict['apkAssetName'] as String?,
+      apkSizeBytes: updateDict['apkSizeBytes'] as int?,
+    );
+  }
+
+  /// Generic/legacy update check — desktop only. Android uses
+  /// `AppUpdateService` instead (see startup_tasks.dart), which calls through
+  /// the same `AppInterface.checkForUpdate` / [getAppUpdateDict] but with an
+  /// [AppUpdateChannel] so it gets track-matched, APK-asset-backed releases.
+  Future<void> checkClientUpdate() async {
+    final updateInfo = await checkForUpdate();
+    if (!updateInfo.available || updateInfo.latestRelease == null) return;
+    final latestRelease = updateInfo.latestRelease!;
 
     showBBDialog(
       context: Get.context!,
@@ -515,16 +635,18 @@ class SettingsService {
           const Text("Updates available:"),
           const SizedBox(height: 15.0),
           Text(
-            "Version: ${updateInfo.version}\nRelease Date: ${buildDate(updateInfo.latestRelease.createdAt)}\nRelease Name: ${updateInfo.latestRelease.name}",
+            "Version: ${updateInfo.version}\n"
+            "Release Date: ${buildDate(latestRelease.createdAt)}\n"
+            "Release Name: ${latestRelease.name}",
           ),
         ],
       ),
       actions: [
-        if (updateInfo.latestRelease.htmlUrl != null)
+        if (latestRelease.htmlUrl != null)
           BBDialogAction(
             text: "Download",
             onPressed: () async {
-              await launchUrl(Uri.parse(updateInfo.latestRelease.htmlUrl!), mode: LaunchMode.externalApplication);
+              await launchUrl(Uri.parse(latestRelease.htmlUrl!), mode: LaunchMode.externalApplication);
             },
           ),
         BBDialogAction(
