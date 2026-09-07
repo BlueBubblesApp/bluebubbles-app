@@ -28,11 +28,12 @@ class FindMyFriendListTile extends StatelessWidget {
       final lastUpdatedSuffix = item.lastUpdated == null || item.status == LocationStatus.live
           ? ""
           : "\nLast updated ${buildDate(item.lastUpdated)}";
+      final address = controller.addressForFriend(item, preferLong: !withLocation);
       final displayLocation = hideContactInfo
           ? (withLocation ? "Location$lastUpdatedSuffix" : "Location")
           : withLocation
-              ? ("${item.shortAddress ?? "No location found"}$lastUpdatedSuffix")
-              : (item.longAddress ?? "No location found");
+              ? ("${address ?? "No location found"}$lastUpdatedSuffix")
+              : (address ?? "No location found");
 
       final handleState = item.handle != null ? HandleSvc.getOrCreateHandleState(item.handle!) : null;
       final displayName = hideContactInfo

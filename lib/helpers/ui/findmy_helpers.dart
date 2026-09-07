@@ -1,4 +1,5 @@
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Preset decoy centers spread across continents for redacted mode
@@ -40,4 +41,18 @@ LatLng resolveFindMyMarkerPoint({
 }) {
   if (shouldRedactFindMyContactInfo()) return redactedFindMyPoint(stableKey);
   return LatLng(latitude, longitude);
+}
+
+/// Single-line address from a reverse-geocoded [Placemark], in the spirit of the
+/// addresses the legacy Find My payloads carried ("Street, City, ST").
+String formatPlacemarkAddress(Placemark p) {
+  String clean(String? s) => (s ?? "").trim();
+  final street = [clean(p.subThoroughfare), clean(p.thoroughfare)].where((e) => e.isNotEmpty).join(" ");
+  final city = clean(p.locality).isNotEmpty ? clean(p.locality) : clean(p.subLocality);
+  final region = clean(p.administrativeArea);
+  final cityState = [city, region].where((e) => e.isNotEmpty).join(", ");
+  if (street.isNotEmpty && cityState.isNotEmpty) return "$street, $cityState";
+  if (street.isNotEmpty) return street;
+  if (cityState.isNotEmpty) return cityState;
+  return [clean(p.name), clean(p.country)].where((e) => e.isNotEmpty).join(", ");
 }
