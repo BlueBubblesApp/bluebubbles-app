@@ -87,6 +87,7 @@ dependencies:
   flutter_svg: ^2.2.0
   flutter_timezone: ^5.0.2
   fluttertoast: ^8.2.14
+  geocoding: ^5.0.0
   geolocator: ^14.0.2
   gesture_x_detector: # support touchscreens properly
     git:
