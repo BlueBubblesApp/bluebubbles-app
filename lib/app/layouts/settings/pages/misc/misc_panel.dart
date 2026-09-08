@@ -322,6 +322,24 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                             containerColor: Colors.indigo),
                       )),
                   const SettingsDivider(),
+                  if (kIsDesktop && Platform.isWindows)
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.copyOtpToClipboard.value = val;
+                            await SettingsSvc.settings.saveOneAsync('copyOtpToClipboard');
+                          },
+                          initialVal: SettingsSvc.settings.copyOtpToClipboard.value,
+                          title: "Copy 2FA Codes to Clipboard",
+                          subtitle:
+                              "Automatically copy verification codes from incoming messages so you can paste them",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                          leading: const SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.doc_on_clipboard,
+                              materialIcon: Icons.content_paste_outlined,
+                              containerColor: Colors.teal),
+                        )),
+                  if (kIsDesktop && Platform.isWindows) const SettingsDivider(),
                   if (kIsDesktop || kIsWeb)
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
