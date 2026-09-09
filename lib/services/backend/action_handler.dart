@@ -150,7 +150,10 @@ class ActionHandler extends GetxService {
       case "chat-read-status-changed":
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
         if (chat != null && (data["read"] == true || data["read"] == false)) {
-          chat.toggleHasUnreadAsync(!data["read"]!, privateMark: false);
+          // Route through ChatsService so the ChatState the conversation list
+          // renders from is updated too. Writing only to the DB row leaves the
+          // unread dot stale until the state is rebuilt (open chat / restart).
+          await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
         }
         return;
       case "typing-indicator":
