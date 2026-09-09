@@ -405,6 +405,19 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                               ],
                             );
 
+                          toolbar.buttonItems?.addAllIf(
+                            !(toolbar.buttonItems?.any((item) => item.label == 'Paste') ?? false),
+                            [
+                              ContextMenuButtonItem(
+                                onPressed: () {
+                                  clipboardHandler?.handlePasteEvent();
+                                  editableTextState.hideToolbar();
+                                },
+                                label: 'Paste',
+                              ),
+                            ],
+                          );
+
                           // Use outerTheme (captured from the real build context) because the
                           // contextMenuBuilder's own `context` parameter shadows the build context
                           // and may not have the dark theme applied (it's a detached overlay context).
