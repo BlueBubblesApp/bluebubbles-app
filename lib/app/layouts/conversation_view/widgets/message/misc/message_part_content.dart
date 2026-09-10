@@ -82,6 +82,7 @@ class MessagePartContent extends StatelessWidget {
               return MessageImageGallery(
                 attachments: messagePart.attachments,
                 partIndex: messagePart.part,
+                attachmentPartIndices: messagePart.attachmentPartIndices,
                 isInReply: false,
                 fanDirection: message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right,
                 currentIndexNotifier: galleryCurrentIndexNotifier,
