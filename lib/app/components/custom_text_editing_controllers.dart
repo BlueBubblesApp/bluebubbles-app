@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "package:bluebubbles/helpers/helpers.dart";
+import "package:bluebubbles/helpers/ui/grapheme_caret.dart";
 import "package:bluebubbles/database/models.dart";
 import "package:bluebubbles/services/services.dart";
 import 'package:bluebubbles/utils/emoji.dart';
@@ -92,6 +93,9 @@ class SpellCheckTextEditingController extends TextEditingController {
         _mistakeTooltip?.remove();
         _mistakeTooltip = null;
       }
+      // Never leave the caret inside a UTF-16 surrogate pair (app-side fix for
+      // flutter/flutter#188713) — a following edit would split the emoji into "??".
+      newValue = snapSelectionOffSurrogatePairs(newValue);
       super.value = newValue;
       return;
     }
@@ -138,6 +142,9 @@ class SpellCheckTextEditingController extends TextEditingController {
       }
     }
 
+    // Never leave the caret inside a UTF-16 surrogate pair (app-side fix for
+    // flutter/flutter#188713) — a following edit would split the emoji into "??".
+    newValue = snapSelectionOffSurrogatePairs(newValue);
     super.value = newValue;
   }
 
