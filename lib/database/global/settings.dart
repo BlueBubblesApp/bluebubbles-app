@@ -132,6 +132,7 @@ class Settings {
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
   final RxBool hideNamesForReactions = false.obs;
+  final RxBool hideFindMyInConversationDetails = false.obs;
   final RxBool replaceEmoticonsWithEmoji = false.obs;
 
   // final RxString emojiFontFamily;
@@ -451,6 +452,7 @@ class Settings {
       'useDesktopAccent': useDesktopAccent.value,
       'logLevel': logLevel.value.index,
       'hideNamesForReactions': hideNamesForReactions.value,
+      'hideFindMyInConversationDetails': hideFindMyInConversationDetails.value,
       'replaceEmoticonsWithEmoji': replaceEmoticonsWithEmoji.value,
       'lastReviewRequestTimestamp': lastReviewRequestTimestamp.value,
       'serverPrivateAPI': serverPrivateAPI.value,
@@ -731,6 +733,8 @@ class Settings {
         map['logLevel'] != null ? Level.values[map['logLevel']] : SettingsSvc.settings.logLevel.value;
     SettingsSvc.settings.hideNamesForReactions.value =
         map['hideNamesForReactions'] ?? SettingsSvc.settings.hideNamesForReactions.value;
+    SettingsSvc.settings.hideFindMyInConversationDetails.value =
+        map['hideFindMyInConversationDetails'] ?? SettingsSvc.settings.hideFindMyInConversationDetails.value;
     SettingsSvc.settings.replaceEmoticonsWithEmoji.value =
         map['replaceEmoticonsWithEmoji'] ?? SettingsSvc.settings.replaceEmoticonsWithEmoji.value;
     SettingsSvc.settings.lastReviewRequestTimestamp.value =
@@ -899,6 +903,7 @@ class Settings {
     s.firstFcmRegisterDate.value = map['firstFcmRegisterDate'] ?? 0;
     s.logLevel.value = map['logLevel'] != null ? Level.values[map['logLevel']] : Level.info;
     s.hideNamesForReactions.value = map['hideNamesForReactions'] ?? false;
+    s.hideFindMyInConversationDetails.value = map['hideFindMyInConversationDetails'] ?? false;
     s.replaceEmoticonsWithEmoji.value = map['replaceEmoticonsWithEmoji'] ?? false;
     s.lastReviewRequestTimestamp.value = map['lastReviewRequestTimestamp'] ?? 0;
     return s;

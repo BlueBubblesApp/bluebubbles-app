@@ -12,6 +12,7 @@ Displayed as a right-side panel on tablet or pushed screen on mobile.
 - `timeframe_picker.dart` — date range selector (for media/docs filtering)
 - `add_participant.dart` — add a member to a group chat
 - `chat_sync_dialog.dart` — progress dialog for re-syncing chat history
+- `participants_findmy_sheet/` — interactive Find My map bottom sheet for chat participants
 
 ## Material 3 Expressive (`material/`)
 The Material/Samsung-only expressive tree — `conversation_details.dart` routes to these instead
@@ -30,6 +31,7 @@ of the iOS widgets below based on `SettingsSvc.settings.skin.value`. See
 - `chat_options.dart` — action buttons (mute, archive, FaceTime, custom avatar, etc.)
 - `participants_list.dart` — group member list
 - `contact_tile.dart` — individual participant row (tappable → contact details)
+- `participants_findmy_card/` — Find My map preview for participants sharing location
 
 **Shared Media**
 - `attachment_section_header.dart` — section label + "Show more" action

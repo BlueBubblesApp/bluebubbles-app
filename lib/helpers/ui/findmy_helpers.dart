@@ -32,6 +32,13 @@ LatLng redactedFindMyPoint(String key) {
   return LatLng(center.lat + latJitter, center.lng + lngJitter);
 }
 
+/// True when [point] can be projected by flutter_map (finite, in-range).
+bool isFiniteLatLng(LatLng point) =>
+    point.latitude.isFinite &&
+    point.longitude.isFinite &&
+    point.latitude.abs() <= 90 &&
+    point.longitude.abs() <= 180;
+
 /// Returns [redactedFindMyPoint] when contact info is hidden, otherwise the real coordinates.
 LatLng resolveFindMyMarkerPoint({
   required String stableKey,
