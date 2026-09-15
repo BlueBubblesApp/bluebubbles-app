@@ -53,7 +53,7 @@ class SettingsItemsActions {
     final contacts = <Map<String, dynamic>>[];
     final allContacts = await ContactsSvcV2.getAllContacts();
     for (final contact in allContacts) {
-      contacts.add(contact.toMap());
+      contacts.add(contact.toServerMap());
     }
 
     HttpSvc.contact.create(
