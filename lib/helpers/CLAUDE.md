@@ -6,6 +6,7 @@ Import via barrel: `package:bluebubbles/helpers/helpers.dart` (re-exports most f
 - `ui_helpers.dart` — general UI utilities (back button, safe area, etc.)
 - `theme_helpers.dart` — `ThemeHelpers` mixin; mixed into `CustomState`; provides `iOS`, `material`, `samsung` skin booleans
 - `message_widget_helpers.dart` — message-specific UI utilities
+- `message_effect_helpers.dart` — send effect resolution + which effect in a chat should auto-play
 - `reaction_helpers.dart` — tapback emoji display helpers
 - `dialog_helpers.dart` — shared dialog builders
 - `findmy_helpers.dart` — Find My UI helpers

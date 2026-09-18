@@ -14,7 +14,21 @@ The animation classes and renderers live in `lib/app/animations/` → `CLAUDE.md
 Effect name ↔ Apple code mapping: `lib/helpers/types/constants.dart` (`effectMap`).
 
 ## Trigger
-Effect playback is triggered from `MessagesView` when an incoming or outgoing message has a non-null `expressiveSendStyleId`.
+`ScreenEffectsWidget` plays whatever arrives on the `play-effect` event (`{'type': <effect name>,
+'size': <bubble Rect>}`). The only emitter is `BubbleEffects` (part 0 of a message), which owns the
+bubble's `GlobalKey` and therefore its rect.
+
+Two things reach it:
+- **Auto-play** — `MessagesService.playPendingScreenEffect()` bumps `MessageState.playScreenEffect`
+  for the newest unplayed screen-effect message when a chat is opened, when a message arrives, or on
+  app resume. Only the newest one, since these cover the whole conversation, and only within
+  `effectMaxAge` (72h) of arrival. (Bubble effects share that age cutoff but not the newest-only
+  rule: every unplayed one plays, handled by `BubbleEffects` itself.)
+- **Manual replay** — tapping "sent with \<effect\>" in `MessageProperties`, which calls
+  `MessageState.triggerEffect()`.
+
+`echo` never reaches this widget (`MessageEffect.isScreen` excludes it): there is no renderer for it,
+and a selection this widget can't clear would block every effect after it.
 
 ## Related
 - Animation renderers: `lib/app/animations/CLAUDE.md`

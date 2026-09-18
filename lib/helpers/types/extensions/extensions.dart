@@ -105,6 +105,14 @@ extension EffectHelper on MessageEffect {
       this == MessageEffect.loud ||
       this == MessageEffect.gentle ||
       this == MessageEffect.invisibleInk;
+
+  /// Effects that animate over the whole conversation rather than the bubble.
+  ///
+  /// [MessageEffect.echo] is deliberately excluded even though it is one of
+  /// Apple's screen effects: it has no renderer here, and handing it to
+  /// `ScreenEffectsWidget` would leave that widget holding a selection it never
+  /// clears — blocking every effect that comes after it.
+  bool get isScreen => this != MessageEffect.none && this != MessageEffect.echo && !isBubble;
 }
 
 /// Used when playing iMessage effects

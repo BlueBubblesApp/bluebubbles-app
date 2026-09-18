@@ -3,7 +3,6 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -29,9 +28,7 @@ class _TextBubbleState extends State<TextBubble> with ThemeHelpers {
 
   MessagePart get part => widget.message;
   Message get message => controller.message;
-  String get effectStr =>
-      effectMap.entries.firstWhereOrNull((e) => e.value == message.expressiveSendStyleId)?.key ?? "unknown";
-  MessageEffect get effect => stringToMessageEffect[effectStr] ?? MessageEffect.none;
+  MessageEffect get effect => effectOf(message);
 
   late MovieTween tween;
   final rxAnim = Rx<Control>(Control.stop);

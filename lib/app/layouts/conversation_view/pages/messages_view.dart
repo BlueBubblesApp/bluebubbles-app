@@ -62,6 +62,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
   Timer? _setStateDebouncer;
   StreamSubscription? _eventSubscription;
 
+  // Fires when the app resumes onto this (already open) chat, so a screen effect
+  // that arrived while it was backgrounded gets its chance to play.
+  Worker? _aliveWorker;
+
   // Managers for different responsibilities
   late final SmartRepliesManager smartRepliesManager;
   late final DropZoneManager dropZoneManager;
@@ -96,6 +100,18 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       // Trigger a rebuild to display the messages.
       setState(() {});
     });
+
+    // Messages that arrive while the app is backgrounded are added to the list
+    // with their screen effect left unplayed (MessagesService refuses to play
+    // into a chat that isn't active). Re-evaluate once the chat is live again.
+    // Bubble effects need no equivalent — they animate on their bubble's first
+    // laid-out frame, which is already deferred until the view is visible.
+    final chatState = ChatsSvc.getChatState(chat.guid);
+    if (chatState != null) {
+      _aliveWorker = ever(chatState.isAlive, (bool alive) {
+        if (alive && mounted && isMessagesServiceInitialized) messageService.playPendingScreenEffect();
+      });
+    }
 
     _eventSubscription = EventDispatcherSvc.stream.listen((e) async {
       if (!mounted) return;
@@ -187,6 +203,12 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
         // Notify SendAnimation that handlers + list key are fully ready so that
         // any pending send fires after the rebuilt SliverAnimatedList is mounted.
         controller.markMessagesViewReady();
+
+        // Play the screen effect on the newest message of the initial page, if
+        // it was sent with one and hasn't been played yet. Only the initial page
+        // is evaluated — paging further back never brings in a newer message, so
+        // scrolling through history can't set this off.
+        messageService.playPendingScreenEffect();
       }
 
       // If this is a search result, load surrounding context and scroll/highlight it
@@ -240,6 +262,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     // Controllers are now disposed by MessagesService.onClose()
     _setStateDebouncer?.cancel();
     _eventSubscription?.cancel();
+    _aliveWorker?.dispose();
     _listVersion.dispose();
     super.dispose();
   }
@@ -476,6 +499,11 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     Future.delayed(duration, () {
       animationOrchestrator.clearAnimating(message, mounted: mounted);
     });
+
+    // Play this message's screen effect if it has one — waiting out the
+    // insertion animation so the bubble is settled before it fires. Its bubble
+    // effect, if any, plays itself once BubbleEffects builds below.
+    messageService.playPendingScreenEffect(delay: duration + const Duration(milliseconds: 100));
 
     if (insertIndex == 0 && smartRepliesEnabled) {
       smartRepliesManager.addMessageToContext(message);

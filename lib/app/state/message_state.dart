@@ -4,6 +4,8 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
+import 'package:bluebubbles/helpers/ui/message_effect_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -79,9 +81,20 @@ class MessageState extends StatefulController {
   /// the animation has been kicked off so it can be retriggered later.
   final RxnInt playEffectPart = RxnInt(null);
 
-  /// Whether the bubble effect for this message has already been auto-played
-  /// once. Prevents the animation from firing again on subsequent renders.
-  /// Manual replay via the replay button always works regardless of this flag.
+  /// Bumped to play this message's full-screen effect (balloons, confetti,
+  /// spotlight, ...).  Deliberately carries no part index: the animation covers
+  /// the whole conversation, and the only per-part input it needs is the
+  /// bubble's on-screen rect.  [BubbleEffects] for part 0 owns that rect (via
+  /// its GlobalKey) and is what turns this into a `play-effect` event.
+  final RxInt playScreenEffect = 0.obs;
+
+  /// Whether this message's send effect has already been played once — the flag
+  /// that stops effects replaying every time the chat is opened.  Persisted, and
+  /// shared by both kinds of effect, which is unambiguous because a message
+  /// carries exactly one: for a bubble effect it is set once that message's own
+  /// animation has run, for a screen effect only on the *newest* such message in
+  /// the chat (see [pendingScreenEffectMessage]).  Manual replay from the message
+  /// properties row always works regardless of this flag.
   final RxBool hasEffectPlayed;
 
   /// Increment to trigger a re-download of all attachments in this message.
@@ -227,10 +240,25 @@ class MessageState extends StatefulController {
     playEffectPart.value = part;
   }
 
-  /// Marks this message's bubble effect as having been played once.
+  /// Plays whatever send effect this message carries, routing to the bubble
+  /// animation or the full-screen animation as appropriate.  Does nothing for a
+  /// message without an effect, or with one this client cannot render (echo).
+  ///
+  /// [part] targets a specific part's bubble — pass it when replaying from a
+  /// tapped part.  It defaults to the last part, which is where the effect label
+  /// sits for the common attachment-then-text message.  Screen effects ignore it.
+  void triggerEffect({int? part}) {
+    final effect = effectOf(message);
+    if (effect.isScreen) {
+      playScreenEffect.value++;
+    } else if (effect.isBubble) {
+      triggerBubbleEffect(part ?? parts.lastOrNull?.part ?? 0);
+    }
+  }
+
+  /// Marks this message's send effect as having been played once.
   /// Persists the flag to the database so it survives app restarts.
-  /// Only called after an auto-triggered animation completes — manual
-  /// replays do not call this.
+  /// Only called for auto-played effects — manual replays do not call this.
   void markEffectPlayed() {
     if (hasEffectPlayed.value) return;
     hasEffectPlayed.value = true;

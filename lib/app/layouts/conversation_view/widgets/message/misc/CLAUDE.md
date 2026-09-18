@@ -45,4 +45,25 @@ Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `Mess
 
 ## Bubble Effects
 
-`BubbleEffects` plays a one-shot animation overlay on top of the bubble. Triggered when `message.expressiveSendStyleId` is set (e.g., `com.apple.MobileSMS.expressivesend.balloons`). Uses `AnimationController` tied to `initState` — effect plays once and disappears.
+`BubbleEffects` wraps every bubble and owns **both** kinds of send effect for that message:
+
+- **Bubble effects** (slam, loud, gentle) — a one-shot animation on the bubble itself. **This widget
+  owns their auto-play**: an unplayed one that passes `isEffectRecent()` animates on its bubble's
+  first laid-out frame and flags itself via `markEffectPlayed()` when it completes. *Every* unplayed
+  recent one plays, because each is confined to its own bubble. A stale one is skipped and left
+  unflagged — it only gets older, so it keeps failing the check on its own. Replays arrive via
+  `MessageState.playEffectPart` matching this widget's part index.
+- **Screen effects** (balloons, confetti, spotlight, ...) — this widget only *dispatches* them. The
+  part-0 widget listens to `MessageState.playScreenEffect` and emits `play-effect` with the bubble's
+  on-screen rect for `ScreenEffectsWidget` to render. It skips registering inside a
+  `MessageCloneScope` so the popup's clone doesn't fire the effect a second time. *When* one plays is
+  decided by `MessagesService.playPendingScreenEffect()` — they cover the whole conversation, so only
+  the newest unplayed one in a chat ever fires.
+- **Invisible ink** is neither: it's a resting state, so it covers the bubble on first appearance
+  regardless of `hasEffectPlayed` *or* age, and clears when swiped (recorded via `datePlayed`).
+
+`isPreview: true` (send-effect picker only) keeps a throwaway preview bubble animating without
+persisting its stand-in `Message` as played.
+
+Use `effectOf(message)` / `effectNameOf(message)` from `helpers/ui/message_effect_helpers.dart` to
+resolve a message's effect — don't re-derive it from `effectMap` inline.

@@ -15,11 +15,9 @@ class MessageProperties extends StatefulWidget {
   const MessageProperties({
     super.key,
     required this.part,
-    this.globalKey,
   });
 
   final MessagePart part;
-  final GlobalKey? globalKey;
 
   @override
   State<StatefulWidget> createState() => _MessagePropertiesState();
@@ -43,26 +41,17 @@ class _MessagePropertiesState extends State<MessageProperties> with ThemeHelpers
     final properties = <TextSpan>[];
     final replyList = service.struct.threads(message.guid!, widget.part.part, returnOriginator: false);
     if (message.expressiveSendStyleId != null) {
-      final effect =
-          effectMap.entries.firstWhereOrNull((element) => element.value == message.expressiveSendStyleId)?.key ??
-              "unknown";
+      final effectName = effectNameOf(message) ?? "unknown";
       properties.add(TextSpan(
-          text: "↺ sent with $effect",
+          text: "↺ sent with $effectName",
           recognizer: TapGestureRecognizer()
             ..onTap = () {
-              if (stringToMessageEffect[effect] == MessageEffect.echo) {
+              if (effectOf(message) == MessageEffect.echo) {
                 showSnackbar("Notice", "Echo animation is not supported at this time.");
                 return;
               }
               HapticFeedback.mediumImpact();
-              if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
-                MessageStateScope.of(context).triggerBubbleEffect(widget.part.part);
-              } else if (widget.globalKey != null) {
-                EventDispatcherSvc.emit('play-effect', {
-                  'type': effect,
-                  'size': widget.globalKey!.globalPaintBounds(context),
-                });
-              }
+              MessageStateScope.of(context).triggerEffect(part: widget.part.part);
             }));
     }
     if (replyList.isNotEmpty) {

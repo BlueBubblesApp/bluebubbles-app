@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/ui/message_effect_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
@@ -105,6 +106,63 @@ class MessagesService extends GetxController {
 
   Message? get mostRecentReceived =>
       (struct.messages.where((e) => !e.isFromMe!).toList()..sort(Message.sort)).firstOrNull;
+
+  // ========== Screen Effect Auto-Play ==========
+
+  /// The [MessageState] whose screen effect is waiting out [_effectTimer].
+  MessageState? _scheduledEffectState;
+  Timer? _effectTimer;
+
+  /// Plays the screen effect (balloons, confetti, spotlight, ...) of the newest
+  /// message in this chat carrying one, unless it has already been played.
+  ///
+  /// Only screen effects are centralized here, because they animate over the
+  /// whole conversation and only one can meaningfully play at a time. Bubble
+  /// effects are per-bubble, so `BubbleEffects` plays each unplayed one itself as
+  /// its message appears — no coordination needed.
+  ///
+  /// Called whenever the loaded messages might have gained a screen effect the
+  /// user hasn't seen: when a chat is first opened, when a message arrives in the
+  /// open chat, and when the app resumes onto a chat that was already open. Which
+  /// of those it is doesn't change the decision — only the newest screen-effect
+  /// message is ever a candidate, it has to have arrived within
+  /// [effectMaxAge], and it has to be unplayed. So paging back through
+  /// history can't resurrect an old one, re-opening a chat whose newest one
+  /// already played stays quiet, and a chat left unopened for days doesn't
+  /// ambush the user on the way back in. See [pendingScreenEffectMessage].
+  ///
+  /// [delay] gives the bubble time to be laid out first: spotlight, love and
+  /// lasers animate around its on-screen rect, and a bubble that is still sliding
+  /// into the list would give them the wrong one.
+  void playPendingScreenEffect({Duration delay = const Duration(seconds: 1)}) {
+    if (!_init) return;
+
+    final message = pendingScreenEffectMessage(struct.messages);
+    if (message?.guid == null) return;
+
+    final state = messageStates[message!.guid!];
+    if (state == null || state.hasEffectPlayed.value) return;
+    // Already queued from an earlier call — don't restart its delay.
+    if (identical(state, _scheduledEffectState)) return;
+    // Backgrounded, or the user is looking at another chat. Leave it unplayed so
+    // it fires when they come back.
+    if (!ChatsSvc.isChatActive(chat.guid)) return;
+
+    _scheduledEffectState = state;
+    _effectTimer?.cancel();
+    _effectTimer = Timer(delay, () {
+      _scheduledEffectState = null;
+      if (state.hasEffectPlayed.value) return;
+      // The chat may have been closed or backgrounded during the delay.
+      if (!ChatsSvc.isChatActive(chat.guid)) return;
+      Logger.debug("Auto-playing ${effectNameOf(state.message)} screen effect for message ${state.guid.value}",
+          tag: "MessageEffects");
+      state.triggerEffect();
+      state.markEffectPlayed();
+    });
+  }
+
+  // ========== End Screen Effect Auto-Play ==========
 
   // ========== MessageState Management ==========
 
@@ -715,6 +773,8 @@ class MessagesService extends GetxController {
 
   @override
   void onClose() {
+    _effectTimer?.cancel();
+    _scheduledEffectState = null;
     if (_init) {
       _webMessageSub?.cancel();
       _redactedModeListener?.cancel();
@@ -736,6 +796,8 @@ class MessagesService extends GetxController {
       Get.delete<MessagesService>(tag: tag, force: true);
     }
 
+    _effectTimer?.cancel();
+    _scheduledEffectState = null;
     struct.flush();
     messagesLoaded = false;
     messageUpdateTrigger.clear();

@@ -385,6 +385,9 @@ void sendEffectAction(
                                             messageState: previewState,
                                             globalKey: key,
                                             part: 0,
+                                            // Unsent stand-in message — animate
+                                            // it, but never persist it as played.
+                                            isPreview: true,
                                               showTail: true,
                                               child: ClipPath(
                                                 clipper: TailClipper(
