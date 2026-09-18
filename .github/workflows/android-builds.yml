@@ -22,8 +22,8 @@ permissions:
 
 env:
   # Matches the pin in windows/build.ps1, linux/build.sh and the other workflows.
-  FLUTTER_VERSION: "3.44.6"
-  FVM_VERSION: "4.1.2"
+  FLUTTER_VERSION: "3.47.4"
+  FVM_VERSION: "4.3.1"
   # Pinned by android/app/build.gradle; the runner image does not always carry it.
   ANDROID_NDK_VERSION: "28.2.13676358"
   # android/app/build.gradle compileSdk.
