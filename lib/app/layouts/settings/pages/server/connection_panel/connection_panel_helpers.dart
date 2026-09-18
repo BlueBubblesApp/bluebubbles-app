@@ -517,9 +517,17 @@ mixin ConnectionPanelHelpersMixin {
               subtitle: "Forcefully fetch latest URL from Firebase",
               backgroundColor: tileColor,
               onTap: () async {
+                // read before fetching — fetchNewUrl saves the new URL over this value.
+                final String? oldUrl = sanitizeServerAddress(address: SettingsSvc.settings.serverAddress.value);
                 await fdb.fetchFirebaseConfig();
                 String? newUrl = await fdb.fetchNewUrl(restartSocket: false);
-                showSnackbar("Notice", "Fetched URL: $newUrl");
+                if (newUrl == null) {
+                  showSnackbar("Error", "Failed to fetch URL");
+                } else if (newUrl == oldUrl) {
+                  showSnackbar("Notice", "URL is already up to date");
+                } else {
+                  showSnackbar("Notice", "New URL found: $newUrl");
+                }
                 SocketSvc.restartSocket();
               },
             ),
