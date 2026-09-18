@@ -102,15 +102,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
   List<RxDouble> replyOffsets = [];
   List<GlobalKey> keys = [];
   final RxBool tapped = false.obs;
-  final Map<int, ValueNotifier<int>> _galleryIndices = {};
-
-  @override
-  void dispose() {
-    for (final notifier in _galleryIndices.values) {
-      notifier.dispose();
-    }
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -144,8 +135,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     widget.cvController.lastFocusedNode.requestFocus();
   }
 
-  List<MessagePart> _collapseImageGalleryParts(List<MessagePart> parts) {
-    if (!iOS) return parts;
+  List<MessagePart> _collapseMediaCollectionParts(List<MessagePart> parts) {
     final collapsed = <MessagePart>[];
     int i = 0;
     while (i < parts.length) {
@@ -158,24 +148,21 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
 
       final groupedAttachments = <Attachment>[...current.attachments];
       final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
-      int lastPart = current.part;
       int j = i + 1;
       while (j < parts.length) {
         final next = parts[j];
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
-        lastPart = next.part;
         j++;
       }
 
       if (groupedAttachments.length > 1) {
         collapsed.add(MessagePart(
           attachments: groupedAttachments,
-          // Use the last grouped raw part index (not the first) so downstream
-          // "is this the last part of the message" checks (e.g. avatar, tail)
-          // still resolve correctly against controller.parts.length.
-          part: lastPart,
+          // First raw id is the bubble's part id; attachmentPartIndices holds the
+          // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
+          part: current.part,
           shouldRedact: current.shouldRedact,
           mentions: const [],
           edits: const [],
@@ -199,8 +186,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     final alwaysShowAvatars = SettingsSvc.settings.alwaysShowAvatars.value;
     final avatarScale = SettingsSvc.settings.avatarScale.value;
 
-    Iterable<Message> reactionsForPart(int part, List<Message> reactions) {
-      return reactions.where((s) => (s.associatedMessagePart ?? 0) == part);
+    // Bubble-level reactions for [part], including any original ids in a collapsed collection span.
+    Iterable<Message> reactionsForPart(MessagePart part, List<Message> reactions) {
+      return reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0));
     }
 
     /// Layout tree
@@ -230,11 +218,23 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
         // ignore: unused_local_variable
         final _rxGuard = (controller.isSending.value, controller.hasError.value, controller.parts.length);
 
-        // Read controller.parts reactively so Obx rebuilds when parts change
-        final rawMessageParts = widget.isReplyThread && widget.replyPart != null
-            ? [controller.parts[widget.replyPart!]]
+        // Read controller.parts reactively so Obx rebuilds when parts change.
+        // replyPart is a message-part id, not a list index. A miss must not fall
+        // through to the full parts list — that would show the whole message.
+        final targetingPart = widget.isReplyThread && widget.replyPart != null;
+        final matchedPart = targetingPart ? controller.partById(widget.replyPart!) : null;
+        final rawMessageParts = targetingPart
+            ? [
+                if (matchedPart != null)
+                  matchedPart
+                else
+                  MessagePart(
+                    part: widget.replyPart!,
+                    text: "This message is no longer available",
+                  ),
+              ]
             : controller.parts.toList();
-        final messageParts = _collapseImageGalleryParts(rawMessageParts);
+        final messageParts = _collapseMediaCollectionParts(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
         // always safe to access, even when parts are added after initState.
@@ -268,7 +268,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                       children: [
                         // message column
                         ...messageParts.mapIndexed((index, e) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              padding: e.isMediaCollection
+                                  ? const EdgeInsets.only(top: 2.0, bottom: 4.0)
+                                  : const EdgeInsets.symmetric(vertical: 2.0),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -336,7 +338,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                             )
                                           : MessageSender(olderMessage: olderMessage),
                                     ),
-                                  // add a box to account for height of reactions
+                                  // add a box to account for height of reactions.
+                                  // iOS stacks reserve space between the "X Items" label and cards
+                                  // instead; skip the bubble-level spacer so it doesn't sit above the label.
                                   iOS &&
                                           !widget.isReplyThread &&
                                           message.threadOriginatorGuid != null &&
@@ -349,25 +353,36 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                               color: context.theme.colorScheme.surfaceContainerHighest,
                                               isFromMe: message.isFromMe!,
                                             ),
-                                            child: ReactionSpacing(
+                                            child: e.isMediaCollection
+                                                ? SizedBox(height: message.isFromMe! ? 8 : 0)
+                                                : ReactionSpacing(
+                                                    messageParts: messageParts,
+                                                    part: e,
+                                                    reactionsForPart: reactionsForPart,
+                                                    minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
+                                                  ),
+                                          ),
+                                        )
+                                      : iOS && e.isMediaCollection
+                                          ? SizedBox(
+                                              height: iOS &&
+                                                      !widget.isReplyThread &&
+                                                      message.threadOriginatorGuid != null &&
+                                                      message.isFromMe!
+                                                  ? 8
+                                                  : 0,
+                                            )
+                                          : ReactionSpacing(
                                               messageParts: messageParts,
                                               part: e,
                                               reactionsForPart: reactionsForPart,
-                                              minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
+                                              minHeightWhenNoReactions: iOS &&
+                                                      !widget.isReplyThread &&
+                                                      message.threadOriginatorGuid != null &&
+                                                      message.isFromMe!
+                                                  ? 8
+                                                  : 0,
                                             ),
-                                          ),
-                                        )
-                                      : ReactionSpacing(
-                                          messageParts: messageParts,
-                                          part: e,
-                                          reactionsForPart: reactionsForPart,
-                                          minHeightWhenNoReactions: iOS &&
-                                                  !widget.isReplyThread &&
-                                                  message.threadOriginatorGuid != null &&
-                                                  message.isFromMe!
-                                              ? 8
-                                              : 0,
-                                        ),
                                   if (!iOS &&
                                       index == 0 &&
                                       !widget.isReplyThread &&
@@ -389,7 +404,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                     children: [
                                       // avatar, if needed
                                       if (message.showTail(newerMessage) &&
-                                          e.part == controller.parts.length - 1 &&
+                                          controller.isTrailingMessagePart(e) &&
                                           (showAvatar || SettingsSvc.settings.alwaysShowAvatars.value) &&
                                           !message.isFromMe! &&
                                           !message.isGroupEvent)
@@ -405,8 +420,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                       Padding(
                                         padding:
                                             (showAvatar || alwaysShowAvatars) && !(message.isGroupEvent || e.isUnsent)
-                                                ? EdgeInsets.only(
-                                                    left: 35.0 * avatarScale + (e.isMediaGallery ? 12.0 : 0.0))
+                                                ? EdgeInsets.only(left: 35.0 * avatarScale)
                                                 : EdgeInsets.zero,
                                         child: DecoratedBox(
                                           decoration: iOS &&
@@ -415,7 +429,13 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                           message.threadOriginatorGuid != null &&
                                                           olderMessage != null) ||
                                                       (index == messageParts.length - 1 &&
-                                                          service.struct.threads(message.guid!, index).isNotEmpty &&
+                                                          service.struct
+                                                              .threadsForParts(
+                                                                message.guid!,
+                                                                e.attachmentPartIndices ?? [e.part],
+                                                                returnOriginator: false,
+                                                              )
+                                                              .isNotEmpty &&
                                                           newerMessage != null))
                                               ? ReplyLineDecoration(
                                                   isFromMe: message.isFromMe!,
@@ -458,26 +478,29 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                         if ((message.hasApplePayloadData ||
                                                                 message.isLegacyUrlPreview ||
                                                                 message.isInteractive ||
-                                                                (e.part == 0 &&
+                                                                (controller.isLeadingMessagePart(e) &&
                                                                     isNullOrEmpty(e.text) &&
                                                                     e.attachments.isNotEmpty)) &&
                                                             !isNullOrEmpty(message.subject))
                                                           Padding(
-                                                            padding: const EdgeInsets.only(bottom: 2.0),
+                                                            padding: const EdgeInsets.only(bottom: 6.0),
                                                             child: ClipPath(
                                                               clipper: TailClipper(
                                                                 isFromMe: isFromMe,
                                                                 showTail: false,
                                                                 connectLower: iOS
                                                                     ? false
-                                                                    : (e.part != 0 &&
-                                                                            e.part != controller.parts.length - 1) ||
-                                                                        (e.part == 0 && controller.parts.length > 1),
-                                                                connectUpper: iOS ? false : e.part != 0,
+                                                                    : (!controller.isLeadingMessagePart(e) &&
+                                                                            !controller.isTrailingMessagePart(e)) ||
+                                                                        (controller.isLeadingMessagePart(e) &&
+                                                                            controller.parts.length > 1),
+                                                                connectUpper:
+                                                                    iOS ? false : !controller.isLeadingMessagePart(e),
                                                               ),
                                                               child: TextBubble(
+                                                                subjectOnly: true,
                                                                 message: MessagePart(
-                                                                  subject: e.subject,
+                                                                  subject: message.subject,
                                                                   part: e.part,
                                                                 ),
                                                               ),
@@ -500,10 +523,10 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                               children: [
                                                                 // actual message content
                                                                 BubbleEffects(
-                                                                  part: index,
+                                                                  part: e.part,
                                                                   globalKey: keys.length > index ? keys[index] : null,
                                                                   showTail: message.showTail(newerMessage) &&
-                                                                      e.part == controller.parts.length - 1,
+                                                                      controller.isTrailingMessagePart(e),
                                                                   messageState: controller,
                                                                   child: MessagePopupHolder(
                                                                     key: keys.length > index ? keys[index] : null,
@@ -511,30 +534,25 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     cvController: widget.cvController,
                                                                     part: e,
                                                                     isEditing: isEditing(e.part),
-                                                                    galleryCurrentIndex: e.isMediaGallery
-                                                                        ? _galleryIndices.putIfAbsent(
-                                                                            e.part, () => ValueNotifier(0))
-                                                                        : null,
+                                                                    enableGestures: !e.isMediaCollection,
                                                                     child: SwipeToReplyWrapper(
                                                                       enabled: canSwipeToReply &&
                                                                           !isEditing(e.part) &&
-                                                                          !(iOS && e.isMediaGallery),
-                                                                      partIndex: index,
+                                                                          !e.isMediaCollection,
+                                                                      partIndex: e.part,
                                                                       replyOffset: replyOffsets[index],
                                                                       cvController: widget.cvController,
                                                                       child: Builder(
                                                                         builder: (_) {
-                                                                          final isGallery = iOS && e.isMediaGallery;
+                                                                          final isCollection = e.isMediaCollection;
                                                                           final inner = Stack(
                                                                             alignment: Alignment.centerRight,
                                                                             children: [
                                                                               MessagePartContent(
                                                                                 messagePart: e,
-                                                                                galleryCurrentIndexNotifier: e
-                                                                                        .isMediaGallery
-                                                                                    ? _galleryIndices.putIfAbsent(
-                                                                                        e.part, () => ValueNotifier(0))
-                                                                                    : null,
+                                                                                cvController: widget.cvController,
+                                                                                isEditing: isEditing(e.part),
+                                                                                canSwipeToReply: canSwipeToReply,
                                                                               ),
                                                                               if (message.isFromMe!)
                                                                                 Obx(() {
@@ -562,22 +580,25 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                                 }),
                                                                             ],
                                                                           );
-                                                                          if (isGallery) return inner;
+                                                                          if (isCollection) return inner;
                                                                           return ClipPath(
                                                                             clipper: TailClipper(
                                                                               isFromMe: message.isFromMe!,
                                                                               showTail: !e.isPkPass &&
                                                                                   message.showTail(newerMessage) &&
-                                                                                  e.part == controller.parts.length - 1,
+                                                                                  controller.isTrailingMessagePart(e),
                                                                               connectLower: iOS
                                                                                   ? false
-                                                                                  : (e.part != 0 &&
-                                                                                          e.part !=
-                                                                                              controller.parts.length -
-                                                                                                  1) ||
-                                                                                      (e.part == 0 &&
+                                                                                  : (!controller.isLeadingMessagePart(
+                                                                                          e) &&
+                                                                                      !controller.isTrailingMessagePart(
+                                                                                          e)) ||
+                                                                                      (controller.isLeadingMessagePart(
+                                                                                              e) &&
                                                                                           controller.parts.length > 1),
-                                                                              connectUpper: iOS ? false : e.part != 0,
+                                                                              connectUpper: iOS
+                                                                                  ? false
+                                                                                  : !controller.isLeadingMessagePart(e),
                                                                             ),
                                                                             child: inner,
                                                                           );
@@ -588,10 +609,10 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 ),
                                                                 // Reactions are in the inner Stack so they are always
                                                                 // positioned relative to the bubble, not the sticker.
-                                                                // Gallery parts show a reaction per attachment instead
-                                                                // (inside MessageImageGallery), since a tapback can be
-                                                                // associated with just one image/video in the gallery.
-                                                                if (!(iOS && e.isMediaGallery))
+                                                                // Collection parts show a reaction per attachment instead
+                                                                // (inside CollectionAttachmentCard), since a tapback can be
+                                                                // associated with just one image/video in the collection.
+                                                                if (!e.isMediaCollection)
                                                                   MessageReactions(
                                                                     messageParts: messageParts,
                                                                     part: e,

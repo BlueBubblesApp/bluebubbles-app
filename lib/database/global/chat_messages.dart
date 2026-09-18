@@ -21,6 +21,23 @@ class ChatMessages {
           .toList() ??
       [];
 
+  /// Returns replies whose [Message.normalizedThreadPart] matches any value in
+  /// [originatorParts], plus the originator when [returnOriginator] is true.
+  List<Message> threadsForParts(
+    String originatorGuid,
+    Iterable<int> originatorParts, {
+    bool returnOriginator = true,
+  }) {
+    final partIds = originatorParts.toSet();
+    return _threads[originatorGuid]
+            ?.values
+            .where((e) =>
+                (partIds.contains(e.normalizedThreadPart) && e.guid != originatorGuid) ||
+                (returnOriginator ? e.guid == originatorGuid : false))
+            .toList() ??
+        [];
+  }
+
   void addMessages(List<Message> __messages) {
     for (Message m in __messages) {
       if (m.associatedMessageGuid != null) {
