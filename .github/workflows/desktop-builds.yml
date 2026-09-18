@@ -27,8 +27,8 @@ permissions:
   contents: read
 
 env:
-  FLUTTER_VERSION: "3.44.6"
-  FVM_VERSION: "4.1.2"
+  FLUTTER_VERSION: "3.47.4"
+  FVM_VERSION: "4.3.1"
   # Which SignPath policy/cert to use. Tags always sign for release; a manual run
   # can opt in when a release build needs re-signing outside a tag push.
   RELEASE_SIGNING: ${{ startsWith(github.ref, 'refs/tags/') || inputs.release_signing }}
