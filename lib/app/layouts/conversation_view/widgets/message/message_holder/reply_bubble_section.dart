@@ -70,9 +70,10 @@ class ReplyBubbleSection extends StatelessWidget {
       // Android/Material style - separate decorative box
       final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
       return Padding(
-        padding: showAvatar || alwaysShowAvatars
-            ? const EdgeInsets.only(left: 45.0, right: 10)
-            : const EdgeInsets.symmetric(horizontal: 10),
+        padding: (showAvatar || alwaysShowAvatars
+                ? const EdgeInsets.only(left: 45.0, right: 10)
+                : const EdgeInsets.symmetric(horizontal: 10))
+            .add(const EdgeInsets.only(bottom: 6)),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(25),
           child: DecoratedBox(
