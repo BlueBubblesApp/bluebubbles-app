@@ -434,6 +434,17 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       return;
     }
 
+    // service.init() registers this callback before the initial loadChunk above
+    // has awaited, so a message arriving in that window (e.g. from incremental
+    // sync) lands here while the mixin's service reference is still null.
+    // MessagesService._handleNewMessage has already added the message to struct
+    // and created its MessageState, so the initializeMessagesService pass that
+    // follows the load picks it up — there is no built list to insert into yet.
+    if (!isMessagesServiceInitialized) {
+      Logger.debug("handleNewMessage: View not initialized yet, deferring ${message.guid} to initial load");
+      return;
+    }
+
     Logger.debug("handleNewMessage: Received new message ${message.guid}, current count: ${_messages.length}");
 
     // Check if message already exists to prevent duplicates
