@@ -8,9 +8,9 @@ class AttributedBody {
   final List<Run> runs;
 
   factory AttributedBody.fromMap(Map<String, dynamic> json) => AttributedBody(
-        string: json["string"],
+        string: json["string"] ?? "",
         runs:
-            json["runs"] == null ? [] : List<Run>.from(json["runs"].map((x) => Run.fromMap(x!.cast<String, Object>()))),
+            json["runs"] == null ? [] : List<Run>.from(json["runs"].map((x) => Run.fromMap(x!.cast<String, dynamic>()))),
       );
 
   Map<String, dynamic> toMap() => {
@@ -33,7 +33,7 @@ class Run {
 
   factory Run.fromMap(Map<String, dynamic> json) => Run(
         range: json["range"] == null ? [] : List<int>.from(json["range"].map((x) => x)),
-        attributes: json["attributes"] == null ? null : Attributes.fromMap(json["attributes"]!.cast<String, Object>()),
+        attributes: json["attributes"] == null ? null : Attributes.fromMap(json["attributes"]!.cast<String, dynamic>()),
       );
 
   Map<String, dynamic> toMap() => {

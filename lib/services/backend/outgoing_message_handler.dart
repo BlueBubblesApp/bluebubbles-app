@@ -899,7 +899,7 @@ class OutgoingMessageHandler {
         final newMessage = Message.fromMap(data['data']);
         final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
             .whereType<Map>()
-            .map((e) => Attachment.fromMap(e.cast<String, Object>()))
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
             .toList();
         // Swap attachment GUIDs first, then swap the message GUID.
         for (final a in responseAttachments) {

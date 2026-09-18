@@ -100,7 +100,7 @@ class MethodChannelService implements MethodChannelServiceDelegate {
 
   Future<bool> _callHandler(MethodCall call) async {
     final Map<String, dynamic>? arguments =
-        call.arguments is String ? jsonDecode(call.arguments) : call.arguments?.cast<String, Object>();
+        call.arguments is String ? jsonDecode(call.arguments) : call.arguments?.cast<String, dynamic>();
 
     // ONLY RETURN Future.value or Future.error
     // Future.value(false) will have the engine retry the call
