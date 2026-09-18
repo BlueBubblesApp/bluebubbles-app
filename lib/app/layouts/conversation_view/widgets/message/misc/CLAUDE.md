@@ -24,10 +24,13 @@ if (message.hasApplePayloadData || message.isInteractive)
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
 else if (messagePart.attachments.isNotEmpty)
-  → AttachmentHolder           // image, video, audio, sticker, file
+  → CollectionGroup*           // isMediaCollection → collage/stack/grid via resolveMediaCollectionLayout
+  → AttachmentHolder           // otherwise: image, video, audio, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
+
+Media collections: `../attachment/collections/CLAUDE.md`.
 
 Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`.
 
