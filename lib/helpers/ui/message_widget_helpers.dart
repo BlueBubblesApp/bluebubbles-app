@@ -269,3 +269,12 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
 
   return textSpans;
 }
+
+/// Resolves the media-collection layout for [attachmentCount].
+MediaCollectionLayout resolveMediaCollectionLayout(int attachmentCount) {
+  final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
+  if (attachmentCount <= 3) {
+    return iOS ? MediaCollectionLayout.collage : MediaCollectionLayout.grid;
+  }
+  return iOS ? MediaCollectionLayout.stack : MediaCollectionLayout.grid;
+}

@@ -1,10 +1,6 @@
-import 'dart:math';
-
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -23,7 +19,7 @@ class MessagePopupHolder extends StatefulWidget {
     required this.controller,
     required this.cvController,
     required this.isEditing,
-    this.galleryCurrentIndex,
+    this.enableGestures = true,
   });
 
   final Widget child;
@@ -32,9 +28,9 @@ class MessagePopupHolder extends StatefulWidget {
   final ConversationViewController cvController;
   final bool isEditing;
 
-  /// For gallery parts: tracks which attachment is currently at the front.
-  /// When set, [openPopup] scopes the popup to just the selected attachment.
-  final ValueNotifier<int>? galleryCurrentIndex;
+  /// When false, skips the [GestureDetector] and passes [child] through unchanged.
+  /// Used when deferring gestures to a descendant (e.g. collection cards).
+  final bool enableGestures;
 
   @override
   State<StatefulWidget> createState() => _MessagePopupHolderState();
@@ -63,51 +59,6 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     final minBigSur = serverDetails.isMinBigSur;
     if (!iOS) {
       widget.cvController.selected.add(message);
-    }
-
-    // For gallery parts, scope the popup to the currently visible attachment.
-    final galleryIdx = widget.galleryCurrentIndex?.value;
-    final effectivePart = (galleryIdx != null && widget.part.attachments.isNotEmpty)
-        ? MessagePart(
-            part: widget.part.partIndexForAttachment(galleryIdx),
-            attachments: [widget.part.attachments[galleryIdx]],
-            shouldRedact: widget.part.shouldRedact,
-            mentions: const [],
-            edits: const [],
-            isUnsent: widget.part.isUnsent,
-          )
-        : widget.part;
-    final effectiveChild = (galleryIdx != null && widget.part.attachments.isNotEmpty)
-        ? MessageStateScope(
-            messageState: widget.controller,
-            child: AttachmentHolder(
-              message: effectivePart,
-              transparentBackground: true,
-              showCardShadow: true,
-              galleryAttachments: widget.part.attachments,
-            ),
-          )
-        : widget.child;
-
-    // For gallery selections, recompute the size to match the actual rendered
-    // height of the selected attachment (ImageViewer self-sizes to
-    // dh * min(1, halfWidth / dw)). The full gallery size.height is the
-    // tallest card in the fan, which may be much taller than the selected
-    // image — causing the reaction picker to float too high.
-    Size effectiveSize = size;
-    if (galleryIdx != null && widget.part.attachments.isNotEmpty) {
-      final selectedAttachment = widget.part.attachments[galleryIdx];
-      final halfWidth = NavigationSvc.width(context) * 0.5;
-      double attachmentHeight;
-      if (selectedAttachment.hasValidSize) {
-        final dw = selectedAttachment.displayWidth!.toDouble();
-        final dh = selectedAttachment.displayHeight!.toDouble();
-        attachmentHeight = dh * min(1.0, halfWidth / dw);
-      } else {
-        // No dimension metadata — use the default aspect ratio (0.78 portrait)
-        attachmentHeight = halfWidth / 0.78;
-      }
-      effectiveSize = Size(size.width, attachmentHeight);
     }
 
     if (kIsDesktop || kIsWeb) {
@@ -142,15 +93,15 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                 child: PopupScope(
                   child: MessagePopup(
                     childPosition: childPos!,
-                    size: effectiveSize,
-                    part: effectivePart,
+                    size: size,
+                    part: widget.part,
                     controller: widget.controller,
                     cvController: widget.cvController,
                     serverDetails: MessagePopupServerDetails(
                         minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: version > 100),
                     sendTapback: sendTapback,
                     widthContext: () => mounted ? context : null,
-                    child: effectiveChild,
+                    child: widget.child,
                   ),
                 ),
               ),
@@ -206,18 +157,10 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     );
   }
 
-  /// The part index to use for quick-tapbacks (double-tap / long-press shortcuts).
-  /// For gallery parts, returns the part index of the currently visible attachment.
-  int get _effectivePartIndex {
-    final galleryIdx = widget.galleryCurrentIndex?.value;
-    if (galleryIdx != null && widget.part.attachments.isNotEmpty) {
-      return widget.part.partIndexForAttachment(galleryIdx);
-    }
-    return widget.part.part;
-  }
-
   @override
   Widget build(BuildContext context) {
+    if (!widget.enableGestures) return widget.child;
+
     return Obx(() {
       final isTempMessage = widget.controller.isSending.value;
       return GestureDetector(
@@ -227,7 +170,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
             : SettingsSvc.settings.doubleTapForDetails.value || isTempMessage
                 ? () => openPopup()
                 : SettingsSvc.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
-                    ? () => sendTapback(null, _effectivePartIndex)
+                    ? () => sendTapback(null, widget.part.part)
                     : null,
         onLongPress: widget.isEditing
             ? null
@@ -235,7 +178,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                     SettingsSvc.settings.enableQuickTapback.value &&
                     widget.cvController.chat.isIMessage &&
                     !isTempMessage
-                ? () => sendTapback(null, _effectivePartIndex)
+                ? () => sendTapback(null, widget.part.part)
                 : () => openPopup(),
         onSecondaryTapUp: widget.isEditing
             ? null
@@ -264,7 +207,7 @@ class PopupScope extends InheritedWidget {
 
   static PopupScope of(BuildContext context) {
     final PopupScope? result = maybeOf(context);
-    assert(result != null, 'No ReplyScope found in context');
+    assert(result != null, 'No PopupScope found in context');
     return result!;
   }
 

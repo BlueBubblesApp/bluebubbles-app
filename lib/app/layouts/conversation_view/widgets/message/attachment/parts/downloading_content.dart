@@ -16,14 +16,14 @@ class DownloadingContent extends StatelessWidget {
     required this.showTail,
     required this.isFromMe,
     required this.hasReservedSize,
-    this.isInGallery = false,
+    this.isInCollection = false,
     this.compact = false,
   });
 
   final AttachmentDownloadController downloadController;
   final bool isInReply;
   final bool isiOS;
-  final bool isInGallery;
+  final bool isInCollection;
 
   /// Whether [AttachmentHolder] is reserving a server-provided width/height
   /// for this attachment versus falling back to this widget's own default
@@ -143,8 +143,8 @@ class DownloadingContent extends StatelessWidget {
       // against (or cropped by) the clipped edge. A few extra pt beyond that
       // 10pt gives the tag some visual breathing room from the curved corner
       // instead of sitting exactly on the clip boundary.
-      final basePadding = isInGallery ? 10.0 : (hasReservedSize ? 8.0 : 0);
-      final topPadding = hasReservedSize ? 14.0 : isInGallery ? 10.0 : 4.0;
+      final basePadding = isInCollection ? 10.0 : (hasReservedSize ? 8.0 : 0);
+      final topPadding = hasReservedSize ? 14.0 : isInCollection ? 10.0 : 4.0;
       final tailInset = showTail ? (hasReservedSize ? 14.0 : 0.0) : 0.0;
 
       return Stack(
