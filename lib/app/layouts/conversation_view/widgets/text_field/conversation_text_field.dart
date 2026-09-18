@@ -459,7 +459,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Padding(
+    return Listener(
+      onPointerDown: (_) => controller.releaseComposerFocusSuppression(),
+      child: Obx(() => Padding(
           padding: EdgeInsets.only(
             bottom: showAttachmentPicker ? 0 : 10.0,
             top: 10.0,
@@ -539,6 +541,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
               ),
             ],
           ),
-        ));
+        )),
+    );
   }
 }

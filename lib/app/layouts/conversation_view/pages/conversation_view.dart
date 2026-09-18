@@ -58,6 +58,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
       controller.focusNode.unfocus();
       controller.subjectFocusNode.unfocus();
     } else if (SettingsSvc.settings.swipeToOpenKeyboard.value && details.delta.dy < 0 && !controller.keyboardOpen) {
+      controller.releaseComposerFocusSuppression();
       controller.focusNode.requestFocus();
     }
   }

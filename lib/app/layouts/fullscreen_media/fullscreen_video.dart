@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart' as media_kit_video_controls;
 import 'package:universal_html/html.dart' as html;
 
@@ -26,6 +27,7 @@ class FullscreenVideo extends StatefulWidget {
     this.videoController,
     this.mute,
     this.onOverlayToggle,
+    this.onJumpToMessage,
   });
 
   final PlatformFile file;
@@ -35,6 +37,7 @@ class FullscreenVideo extends StatefulWidget {
   final VideoController? videoController;
   final RxBool? mute;
   final Function(bool)? onOverlayToggle;
+  final VoidCallback? onJumpToMessage;
 
   @override
   State<StatefulWidget> createState() => _FullscreenVideoState();
@@ -51,6 +54,11 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
   final RxBool muted = SettingsSvc.settings.startVideosMutedFullscreen.value.obs;
   final RxBool showPlayPauseOverlay = true.obs;
   final RxDouble aspectRatio = 1.0.obs;
+
+  Attachment get attachment => widget.attachment;
+  Message? get message => attachment.message.target;
+
+  bool get _showSamsungJumpHeader => samsung && widget.onJumpToMessage != null;
 
   @override
   void initState() {
@@ -245,6 +253,58 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
     });
   }
 
+  Widget _samsungJumpHeader() {
+    final nameStyle = context.theme.textTheme.titleLarge!.copyWith(color: Colors.white);
+    final msg = message;
+    Widget name;
+    if (msg == null) {
+      name = const SizedBox.shrink();
+    } else if (msg.isFromMe ?? false) {
+      name = Text('You', style: nameStyle);
+    } else {
+      final handle = msg.handleRelation.target;
+      name = handle == null
+          ? Text('Unknown', style: nameStyle)
+          : Obx(() {
+              final displayName = HandleSvc.getOrCreateHandleState(handle).displayName.value ?? 'Unknown';
+              return Text(displayName, style: nameStyle);
+            });
+    }
+
+    final date = message?.dateCreated;
+    Widget? timestamp;
+    if (date != null) {
+      final label = Text(
+        '${intl.DateFormat.jm().add_MMMd().format(date)} ›',
+        style: context.theme.textTheme.bodyLarge!.copyWith(color: Colors.grey),
+      );
+      timestamp = Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onJumpToMessage,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 4, 0),
+            child: label,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        name,
+        if (timestamp != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: timestamp,
+          ),
+      ],
+    );
+  }
+
   @override
   bool get wantKeepAlive => true;
 
@@ -375,27 +435,31 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                 // On the iOS skin, closing is handled by whichever holder wraps this
                 // widget (ConversationFullscreenHolder's "Done" app bar, or
                 // SingleAttachmentFullscreenViewer's own), driven by `onOverlayToggle`.
+                // Positioned so this Stack's `alignment: Alignment.center` (needed to
+                // center the video) doesn't pull the bar into the middle of the screen.
                 if (!iOS)
-                  Obx(() {
-                    final visible = showPlayPauseOverlay.value || _hover.value;
-                    return MouseRegion(
-                      onEnter: (event) => _hover.value = true,
-                      onExit: (event) => _hover.value = false,
-                      child: AbsorbPointer(
-                        absorbing: !visible,
-                        child: AnimatedOpacity(
-                          opacity: visible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 125),
-                          child: Container(
-                            height: kIsDesktop ? 80 : 100.0,
-                            width: NavigationSvc.width(context),
-                            color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
-                            child: SafeArea(
-                              left: false,
-                              right: false,
-                              bottom: false,
-                              child: SizedBox(
-                                height: kIsDesktop ? 80 : 50,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Obx(() {
+                      final visible = showPlayPauseOverlay.value || _hover.value;
+                      return MouseRegion(
+                        onEnter: (event) => _hover.value = true,
+                        onExit: (event) => _hover.value = false,
+                        child: AbsorbPointer(
+                          absorbing: !visible,
+                          child: AnimatedOpacity(
+                            opacity: visible ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 125),
+                            child: Container(
+                              height: kIsDesktop ? 80 : 100.0,
+                              width: NavigationSvc.width(context),
+                              color: context.theme.colorScheme.shadow.withValues(alpha: samsung ? 1 : 0.65),
+                              child: SafeArea(
+                                left: false,
+                                right: false,
+                                bottom: false,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
@@ -410,15 +474,20 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
                                         ),
                                       ),
                                     ),
+                                    if (_showSamsungJumpHeader)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5.0),
+                                        child: _samsungJumpHeader(),
+                                      ),
                                   ],
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 // Bottom action bar for iOS
                 if (iOS && widget.showInteractions)
                   Positioned(
