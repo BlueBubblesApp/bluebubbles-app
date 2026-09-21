@@ -6,7 +6,7 @@ Pure helpers for network operations. No UI dependencies.
 
 | File | What's inside |
 |------|---------------|
-| `network_helpers.dart` | `sanitizeServerAddress(url)` — validates and normalizes server URLs (detects ngrok/Cloudflare tunnels, ensures correct scheme); `getOrCreateUniqueId()` — persistent install ID; `getDeviceName()` — device name for server registration |
+| `network_helpers.dart` | `sanitizeServerAddress(url)` — normalizes server URLs (detects ngrok/Cloudflare tunnels, ensures correct scheme); `isValidServerAddress(url)` — accepts LAN hostnames, localhost, IPs, and long TLDs that GetX `isURL` rejects; `getOrCreateUniqueId()` — persistent install ID; `getDeviceName()` — device name for server registration |
 | `network_error_handler.dart` | `handleSendError(error, message)` — classifies `DioException`/HTTP errors into timeout vs. connection failure, updates `message.guid` with error prefix for UI display |
 | `metadata_helper.dart` | `MetadataHelper` — public entry point for URL preview metadata. Thin facade over `metadata/` |
 | `metadata/` | The URL preview metadata pipeline → `metadata/CLAUDE.md` |
