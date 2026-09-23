@@ -243,7 +243,7 @@ class _RecordingButton extends StatelessWidget {
                 ));
                 temp.createSync(recursive: true);
                 // Windows Media Foundation AAC encoder strictly supports up to 192 kbps (192000 bps).
-                // Requesting 320 kbps causes MF_E_INVALIDMEDIATYPE (0xC00D36B4).
+                // Requesting an unsupported bitrate causes MF_E_INVALIDMEDIATYPE (0xC00D36B4).
                 await audioRecorder.start(const RecordConfig(bitRate: 192000), path: temp.path);
               } catch (e, stack) {
                 controller!.showRecording.value = false;
