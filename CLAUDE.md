@@ -1,7 +1,7 @@
 # BlueBubbles App
-iMessage client for Android and Desktop (macOS, Windows, Linux). Flutter/Dart.
+iMessage client for Android and Desktop (Windows, Linux). Flutter/Dart.
 Web support exists in the codebase but is **deprecated** — do not design for it.
-iOS exists but is secondary; the server component runs on macOS only.
+iOS and macOS clients are not supported and never will be — do not design for them. (The server component runs on macOS only.)
 
 ## Code → `lib/CLAUDE.md`
 ## Android native → `android/CLAUDE.md`
