@@ -76,16 +76,6 @@ Future<void> openInImageViewer(MessagePopupActionContext ctx) async {
 }
 
 void copyAttachment(MessagePopupActionContext ctx) {
-  if (ctx.part.attachments.length == 1) {
-    Pasteboard.writeFiles([ctx.part.attachments.first.path]).then((_) {
-      ctx.popDetails();
-    }).catchError((e) {
-      Logger.error("Failed to copy files!", error: e);
-      ctx.showSnack("Copy Error", "Failed to copy image!");
-    });
-    return;
-  }
-
   Pasteboard.writeFiles(ctx.part.attachments.map((element) => element.path).toList()).then((_) {
     ctx.popDetails();
   }).catchError((e) {
