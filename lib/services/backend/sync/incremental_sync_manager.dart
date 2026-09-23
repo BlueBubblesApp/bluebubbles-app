@@ -364,7 +364,7 @@ class IncrementalSyncManager extends SyncManager {
     syncedChats.addAll(chatCache);
 
     // For each chat, bulk sync the messages
-    final pageMessageIds = <int>[];
+    final pageMessageIdsByChat = <String, List<int>>{};
     final pageLatestMessageIdPerChat = <String, int>{};
 
     for (var item in messagesToSync.entries) {
@@ -387,9 +387,10 @@ class IncrementalSyncManager extends SyncManager {
         latestMessageIdPerChat[item.key] = latest.id!;
       }
 
-      // Collect per-page data for the progressive UI update event.
-      for (final m in syncResult.messages) {
-        if (m.id != null) pageMessageIds.add(m.id!);
+      // Grouped by chat so the main thread can skip hydrating messages for closed chats.
+      final ids = syncResult.messages.where((m) => m.id != null).map((m) => m.id!).toList();
+      if (ids.isNotEmpty) {
+        pageMessageIdsByChat[item.key] = ids;
       }
       if (latest != null) {
         pageLatestMessageIdPerChat[item.key] = latest.id!;
@@ -398,9 +399,9 @@ class IncrementalSyncManager extends SyncManager {
 
     // Emit a per-page event so the main thread can update the UI incrementally
     // without waiting for all pages to finish.
-    if (isIsolate && pageMessageIds.isNotEmpty) {
+    if (isIsolate && pageMessageIdsByChat.isNotEmpty) {
       IsolateEventEmitter.emit(IsolateEvent.incrementalSyncPageComplete, {
-        'messageIds': pageMessageIds,
+        'messageIdsByChat': pageMessageIdsByChat,
         'latestMessageIdPerChat': pageLatestMessageIdPerChat,
       });
     }
