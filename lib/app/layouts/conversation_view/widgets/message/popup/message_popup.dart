@@ -115,7 +115,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       message.isLegacyUrlPreview || message.payloadData?.type == PayloadType.url || message.isPhotoSlideshow;
 
   bool get canOpenInImageViewer =>
-      kIsDesktop && !kIsWeb && part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
+      part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
 
   late bool isEmbeddedMedia = (message.balloonBundleId == "com.apple.Handwriting.HandwritingProvider" ||
           message.balloonBundleId == "com.apple.DigitalTouchBalloonProvider") &&
@@ -533,12 +533,12 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_media_actions.openInImageViewer(_buildActionContext(DetailsMenuAction.OpenInImageViewer)),
           action: DetailsMenuAction.OpenInImageViewer,
         ),
-      if ((part.text?.hasUrl ?? false) && !kIsWeb && !kIsDesktop && !LifecycleSvc.isBubble)
+      if ((part.text?.hasUrl ?? false) && !LifecycleSvc.isBubble)
         DetailsMenuActionWidget(
           onTap: () => popup_text_actions.openLink(_buildActionContext(DetailsMenuAction.OpenInBrowser)),
           action: DetailsMenuAction.OpenInBrowser,
         ),
-      if (showDownload && kIsWeb && part.attachments.firstOrNull?.webUrl != null)
+      if (showDownload && part.attachments.firstOrNull?.webUrl != null)
         DetailsMenuActionWidget(
           onTap: () => popup_media_actions.openAttachmentWeb(_buildActionContext(DetailsMenuAction.OpenInNewTab)),
           action: DetailsMenuAction.OpenInNewTab,
@@ -548,7 +548,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_text_actions.copyText(_buildActionContext(DetailsMenuAction.CopyText)),
           action: DetailsMenuAction.CopyText,
         ),
-      if (showDownload && kIsDesktop)
+      if (showDownload)
         DetailsMenuActionWidget(
           onTap: () => popup_media_actions.copyAttachment(_buildActionContext(DetailsMenuAction.CopyAttachment)),
           action: DetailsMenuAction.CopyAttachment,
@@ -584,8 +584,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_navigation_actions.showThread(_buildActionContext(DetailsMenuAction.ViewThread)),
           action: DetailsMenuAction.ViewThread,
         ),
-      if ((part.attachments.isNotEmpty && !kIsWeb && !(kIsDesktop && Platform.isLinux)) ||
-          (!kIsWeb && !(kIsDesktop && Platform.isLinux) && !isNullOrEmpty(part.text)))
+      if (part.attachments.isNotEmpty || !isNullOrEmpty(part.text))
         DetailsMenuActionWidget(
           onTap: () => popup_media_actions.sharePart(_buildActionContext(DetailsMenuAction.Share)),
           action: DetailsMenuAction.Share,
@@ -595,14 +594,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_media_actions.redownload(_buildActionContext(DetailsMenuAction.ReDownloadFromServer)),
           action: DetailsMenuAction.ReDownloadFromServer,
         ),
-      if (!kIsWeb && !kIsDesktop)
-        DetailsMenuActionWidget(
-          onTap: () => popup_message_actions.remindLater(_buildActionContext(DetailsMenuAction.RemindLater)),
-          action: DetailsMenuAction.RemindLater,
-        ),
-      if (!kIsWeb &&
-          !kIsDesktop &&
-          !message.isFromMe! &&
+      DetailsMenuActionWidget(
+        onTap: () => popup_message_actions.remindLater(_buildActionContext(DetailsMenuAction.RemindLater)),
+        action: DetailsMenuAction.RemindLater,
+      ),
+      if (!message.isFromMe! &&
           message.handleRelation.target != null &&
           message.handleRelation.target!.contactsV2.isEmpty)
         DetailsMenuActionWidget(
@@ -645,7 +641,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_navigation_actions.newConvo(_buildActionContext(DetailsMenuAction.StartConversation)),
           action: DetailsMenuAction.StartConversation,
         ),
-      if (!isNullOrEmptyString(part.fullText) && (kIsDesktop || kIsWeb))
+      if (!isNullOrEmptyString(part.fullText))
         DetailsMenuActionWidget(
           onTap: () => popup_text_actions.copySelection(_buildActionContext(DetailsMenuAction.CopySelection)),
           action: DetailsMenuAction.CopySelection,
@@ -672,7 +668,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           onTap: () => popup_media_actions.refreshPreview(_buildActionContext(DetailsMenuAction.RefreshPreview)),
           action: DetailsMenuAction.RefreshPreview,
         ),
-    ].sorted((a, b) => SettingsSvc.settings.detailsMenuActions
+    ].where((a) => a.action.isPlatformSupported).sorted((a, b) => SettingsSvc.settings.detailsMenuActions
         .indexOf(a.action)
         .compareTo(SettingsSvc.settings.detailsMenuActions.indexOf(b.action)));
   }

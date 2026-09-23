@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_windows/src/details/notification_to_xml.dart';
+import 'package:timezone/timezone.dart';
 import 'package:universal_io/io.dart';
 
 class _Callbacks {
@@ -150,11 +151,12 @@ class DesktopNotifications {
 
   /// Startup sweep: cancels leftovers from a previous run — their callbacks died
   /// with the process. Keeps toasts shown by this session (live callbacks) and
-  /// toasts in the id range of any group in [keepGroups] (chats still unread).
-  static Future<void> cancelStale({List<String> keepGroups = const []}) async {
+  /// toasts in the id range of any group in [keepGroups] (chats still unread), and ids [keep] accepts.
+  static Future<void> cancelStale({List<String> keepGroups = const [], bool Function(int id)? keep}) async {
     final List<int> bases = keepGroups.map(groupBase).toList();
     for (final int id in await activeIds()) {
       if (_callbacks.containsKey(id)) continue;
+      if (keep?.call(id) ?? false) continue;
       if (bases.any((base) => id >= base && id < base + groupRange)) continue;
       await cancel(id);
     }
@@ -362,6 +364,61 @@ class DesktopNotifications {
     );
   }
 
+  /// Reminder toast, scheduled with the OS so it fires even when the app is closed. Windows
+  /// only: the Linux plugin can't schedule. Uses the reminder scenario (stays on screen until
+  /// dismissed), which Windows only honors when the toast has a button, hence Open + Dismiss.
+  static Future<bool> scheduleReminder({
+    required int id,
+    required String title,
+    required String body,
+    required TZDateTime scheduledDate,
+    String? avatarPath,
+    DesktopMessageData? messageData,
+  }) async {
+    final FlutterLocalNotificationsWindows? windowsPlugin = _plugin
+        ?.resolvePlatformSpecificImplementation<FlutterLocalNotificationsWindows>();
+    if (windowsPlugin == null) {
+      Logger.warn('Reminders are only supported on Windows', tag: 'DesktopNotifications');
+      return false;
+    }
+    final String payload = messageData?.payload ?? '';
+    final Uri? avatarUri = _windowsFileUri(avatarPath);
+    try {
+      await windowsPlugin.zonedScheduleRawXml(
+        id: id,
+        scheduledDate: scheduledDate,
+        xml: _windowsXml(
+          title: title,
+          body: body,
+          payload: payload,
+          details: WindowsNotificationDetails(
+            scenario: WindowsNotificationScenario.reminder,
+            images: [
+              if (avatarUri != null)
+                WindowsImage(
+                  avatarUri,
+                  altText: 'avatar',
+                  placement: WindowsImagePlacement.appLogoOverride,
+                  crop: WindowsImageCrop.circle,
+                ),
+            ],
+            actions: [WindowsAction(content: 'Open', arguments: payload)],
+            audio: WindowsNotificationAudio.preset(sound: WindowsNotificationSound.reminder),
+          ),
+          // System dismiss has no public API — splice it in. Empty content = localized "Dismiss".
+          editXml: (xml) => xml.replaceFirst(
+            '</actions>',
+            '<action activationType="system" arguments="dismiss" content=""/></actions>',
+          ),
+        ),
+      );
+      return true;
+    } catch (e, s) {
+      Logger.error('Failed to schedule reminder', error: e, trace: s, tag: 'DesktopNotifications');
+      return false;
+    }
+  }
+
   /// Incoming-call toast: stays on screen ringing until acted on, large circular caller
   /// photo, and green Answer / red Decline buttons (Windows). Buttons only appear when
   /// [onAnswer]/[onDecline] are provided.
@@ -461,18 +518,13 @@ class DesktopNotifications {
       final FlutterLocalNotificationsWindows? windowsPlugin = plugin
           .resolvePlatformSpecificImplementation<FlutterLocalNotificationsWindows>();
       if (windowsPlugin != null) {
-        // Windows toasts always go through raw XML: the plugin pretty-prints its XML, which
-        // collapses newlines in the body to spaces (package:xml normalizeText), so newlines
-        // hide behind a sentinel and come back as &#10; after generation — and the per-type
-        // editXml splices have no public API equivalent.
-        String xml = notificationToXml(
+        final String xml = _windowsXml(
           title: title,
-          body: body.replaceAll('\n', _newlineSentinel),
+          body: body,
           payload: notificationPayload,
-          notificationDetails: windows(id),
+          details: windows(id),
+          editXml: editXml,
         );
-        if (editXml != null) xml = editXml(xml);
-        xml = xml.replaceAll(_newlineSentinel, '&#10;');
         Logger.debug(xml);
         await windowsPlugin.showRawXml(id: id, xml: xml, suppressPopup: suppressPopup);
       } else {
@@ -490,6 +542,27 @@ class DesktopNotifications {
       return null;
     }
     return id;
+  }
+
+  /// Windows toasts always go through raw XML: the plugin pretty-prints its XML, which
+  /// collapses newlines in the body to spaces (package:xml normalizeText), so newlines
+  /// hide behind a sentinel and come back as &#10; after generation — and the per-type
+  /// editXml splices have no public API equivalent.
+  static String _windowsXml({
+    required String title,
+    required String body,
+    required String payload,
+    required WindowsNotificationDetails details,
+    String Function(String xml)? editXml,
+  }) {
+    String xml = notificationToXml(
+      title: title,
+      body: body.replaceAll('\n', _newlineSentinel),
+      payload: payload,
+      notificationDetails: details,
+    );
+    if (editXml != null) xml = editXml(xml);
+    return xml.replaceAll(_newlineSentinel, '&#10;');
   }
 
   // Private-use character: valid in XML, untouched by the pretty-printer's whitespace

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:bluebubbles/models/models.dart' show LocationAttachmentData;
 import 'package:universal_io/io.dart';
@@ -14,11 +15,16 @@ import 'package:universal_io/io.dart';
 class Share {
   /// Share a file with other apps.
   static void files(List<String> filepaths, {String? mimeType}) async {
-    if (kIsDesktop) {
-      showSnackbar("Unsupported", "Can't share files on desktop yet!");
+    if (kIsDesktop && Platform.isLinux) {
+      showSnackbar("Unsupported", "Can't share files on Linux yet!");
     } else {
-      await SharePlus.instance
-          .share(ShareParams(files: filepaths.map((String path) => XFile(path, mimeType: mimeType)).toList()));
+      // Windows' StorageFile rejects '/' separators and its share sheet requires a title, else the package is empty.
+      await SharePlus.instance.share(ShareParams(
+        files: filepaths
+            .map((String path) => XFile(Platform.isWindows ? p.normalize(path) : path, mimeType: mimeType))
+            .toList(),
+        title: Platform.isWindows ? filepaths.map(p.basename).join(", ") : null,
+      ));
     }
   }
 
