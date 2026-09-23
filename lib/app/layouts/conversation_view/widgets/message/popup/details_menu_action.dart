@@ -59,7 +59,7 @@ const Map<DetailsMenuAction, PlatformSupport> _actionPlatformSupport = {
   DetailsMenuAction.SaveLivePhoto: PlatformSupport(true, true, true, true),
   DetailsMenuAction.OpenDirectMessage: PlatformSupport(true, true, true, true),
   DetailsMenuAction.ViewThread: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Share: PlatformSupport(true, false, false, false),
+  DetailsMenuAction.Share: PlatformSupport(true, true, false, false),
   DetailsMenuAction.ReDownloadFromServer: PlatformSupport(true, true, true, true),
   DetailsMenuAction.RemindLater: PlatformSupport(true, false, false, false),
   DetailsMenuAction.CreateContact: PlatformSupport(true, false, false, false),
@@ -134,29 +134,18 @@ const Map<DetailsMenuAction, String> _actionToText = {
   DetailsMenuAction.RefreshPreview: "Refresh Preview",
 };
 
-class _DetailsMenuActionUtils {
-  static final List<DetailsMenuAction> _androidActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.android).toList();
-
-  static final List<DetailsMenuAction> _windowsActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.windows).toList();
-
-  static final List<DetailsMenuAction> _linuxActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.linux).toList();
-
-  static final List<DetailsMenuAction> _webActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.web).toList();
+extension DetailsMenuActionSupport on DetailsMenuAction {
+  bool get isPlatformSupported {
+    final support = _actionPlatformSupport[this]!;
+    if (kIsWeb) return support.web;
+    if (Platform.isAndroid) return support.android;
+    if (Platform.isWindows) return support.windows;
+    return support.linux;
+  }
 }
 
 extension DetailsMenuActionExtension on List<DetailsMenuAction> {
-  List<DetailsMenuAction> get platformSupportedActions => (kIsWeb
-          ? where((action) => _DetailsMenuActionUtils._webActions.contains(action))
-          : Platform.isAndroid
-              ? where((action) => _DetailsMenuActionUtils._androidActions.contains(action))
-              : Platform.isWindows
-                  ? where((action) => _DetailsMenuActionUtils._windowsActions.contains(action))
-                  : where((action) => _DetailsMenuActionUtils._linuxActions.contains(action)))
-      .toList();
+  List<DetailsMenuAction> get platformSupportedActions => where((action) => action.isPlatformSupported).toList();
 }
 
 class CustomDetailsMenuActionWidget extends StatelessWidget {
