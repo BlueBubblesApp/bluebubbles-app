@@ -20,7 +20,9 @@ class Share {
     } else {
       // Windows' StorageFile rejects '/' separators and its share sheet requires a title, else the package is empty.
       await SharePlus.instance.share(ShareParams(
-        files: filepaths.map((String path) => XFile(p.normalize(path), mimeType: mimeType)).toList(),
+        files: filepaths
+            .map((String path) => XFile(Platform.isWindows ? p.normalize(path) : path, mimeType: mimeType))
+            .toList(),
         title: Platform.isWindows ? filepaths.map(p.basename).join(", ") : null,
       ));
     }

@@ -36,7 +36,10 @@ Future<void> remindLater(MessagePopupActionContext ctx) async {
       ctx.showSnack("Error", "Select a date in the future");
       return;
     }
-    await NotificationsSvc.createReminder(ctx.chat, ctx.message, finalDate);
+    if (!await NotificationsSvc.createReminder(ctx.chat, ctx.message, finalDate)) {
+      ctx.showSnack("Error", "Failed to schedule reminder");
+      return;
+    }
     ctx.popDetails();
     ctx.showSnack("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
   }

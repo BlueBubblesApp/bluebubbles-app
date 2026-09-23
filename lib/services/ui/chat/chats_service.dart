@@ -378,7 +378,10 @@ class ChatsService {
 
     if (kIsDesktop) {
       unawaited(
-        DesktopNotifications.cancelStale(keepGroups: chatStates.values.where((s) => s.hasUnreadMessage.value).map((s) => s.chat.guid).toList())
+        DesktopNotifications.cancelStale(
+          keepGroups: chatStates.values.where((s) => s.hasUnreadMessage.value).map((s) => s.chat.guid).toList(),
+          keep: NotificationsService.isReminderId,
+        )
       );
     }
 

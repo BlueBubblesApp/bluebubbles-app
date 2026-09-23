@@ -26,7 +26,7 @@ enum DetailsMenuAction {
   ViewThread(PlatformSupport.all, CupertinoIcons.bubble_left_bubble_right, Icons.forum, "View Thread"),
   Share(PlatformSupport.android | PlatformSupport.windows, CupertinoIcons.share, Icons.share, "Share"),
   ReDownloadFromServer(PlatformSupport.all, CupertinoIcons.refresh, Icons.refresh, "Re-download From Server"),
-  RemindLater(PlatformSupport.android, CupertinoIcons.alarm, Icons.alarm, "Remind Later"),
+  RemindLater(PlatformSupport.android | PlatformSupport.windows, CupertinoIcons.alarm, Icons.alarm, "Remind Later"),
   CreateContact(
     PlatformSupport.android,
     CupertinoIcons.person_crop_circle_badge_plus,

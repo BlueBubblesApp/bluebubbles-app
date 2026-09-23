@@ -152,13 +152,45 @@ class NotificationsService {
     countSub?.cancel();
   }
 
-  Future<void> createReminder(Chat? chat, Message? message, DateTime time,
+  static const int _reminderIdBase = 50000;
+  static const int _reminderIdRange = 9998;
+
+  /// Reminders are payload-backed and usually fire after the run that scheduled them has
+  /// exited, so desktop's stale-toast sweep keeps them.
+  static bool isReminderId(int id) => id >= _reminderIdBase && id < _reminderIdBase + _reminderIdRange;
+
+  /// Returns false when the reminder couldn't be scheduled.
+  Future<bool> createReminder(Chat? chat, Message? message, DateTime time,
       {String? chatTitle, String? messageText}) async {
+    final int id = Random().nextInt(_reminderIdRange) + _reminderIdBase;
+    final String title = chatTitle ?? 'Reminder: ${chat!.getTitle()}';
+    final String body = messageText ?? (hideContent ? "iMessage" : message!.getNotificationText());
+    final TZDateTime scheduledDate = TZDateTime.from(time, local);
+    if (kIsDesktop) {
+      return DesktopNotifications.scheduleReminder(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        // Reminders fire later, often after a restart; one overwritten file per chat.
+        avatarPath: chat == null
+            ? null
+            : (await _chatAvatarPath(
+                chat,
+                persistPath: join(
+                  FilesystemSvc.appDocDir.path,
+                  'reminder_avatars',
+                  '${DesktopNotifications.groupBase(chat.guid)}.png',
+                ),
+              )).$1,
+        messageData: chat == null ? null : DesktopMessageData(chatGuid: chat.guid, messageGuid: message?.guid),
+      );
+    }
     await flnp.zonedSchedule(
-      id: Random().nextInt(9998) + 50000,
-      title: chatTitle ?? 'Reminder: ${chat!.getTitle()}',
-      body: messageText ?? (hideContent ? "iMessage" : message!.getNotificationText()),
-      scheduledDate: TZDateTime.from(time, local),
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduledDate,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           REMINDER_CHANNEL,
@@ -172,6 +204,7 @@ class NotificationsService {
       payload: "${time.millisecondsSinceEpoch}",
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
+    return true;
   }
 
   Future<void> createNotification(Chat chat, Message message) async {
@@ -503,8 +536,9 @@ class NotificationsService {
 
   /// Avatar file for [chat] and whether it's a temp file the caller should delete.
   /// Single-participant chats reuse the ContactV2 avatar file directly; group chats
-  /// and custom avatars get a generated composite written to a temp file.
-  Future<(String, bool)> _chatAvatarPath(Chat chat) async {
+  /// and custom avatars get a generated composite written to a temp file, or to
+  /// [persistPath] when the file must outlive this run (appTemp is wiped on startup).
+  Future<(String, bool)> _chatAvatarPath(Chat chat, {String? persistPath}) async {
     if (chat.handles.length == 1 && chat.customAvatarPath == null) {
       final contactV2 = chat.handles.first.contactsV2.firstOrNull;
       // A reserved character in the file name means a row written before avatar
@@ -518,11 +552,11 @@ class NotificationsService {
       }
     }
     final Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
-    final String path = join(FilesystemSvc.appTempPath, "${randomString(8)}.png");
+    final String path = persistPath ?? join(FilesystemSvc.appTempPath, "${randomString(8)}.png");
     final File avatarFile = File(path);
     await avatarFile.create(recursive: true);
     await avatarFile.writeAsBytes(avatar);
-    return (path, true);
+    return (path, persistPath == null);
   }
 
   int _estimateLines(String text) {
