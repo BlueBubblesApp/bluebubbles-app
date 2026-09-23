@@ -234,14 +234,22 @@ class _RecordingButton extends StatelessWidget {
           if (controller!.showRecording.value) {
             // Start recording
             if (isDesktop) {
-              File temp = File(join(
-                FilesystemSvc.appDocDir.path,
-                "temp",
-                "recorder",
-                "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
-              ));
-              temp.createSync(recursive: true);
-              audioRecorder.start(const RecordConfig(bitRate: 320000), path: temp.path);
+              try {
+                File temp = File(join(
+                  FilesystemSvc.appDocDir.path,
+                  "temp",
+                  "recorder",
+                  "${controller!.chat.guid.characters.where((c) => c.isAlphabetOnly || c.isNumericOnly).join()}.m4a",
+                ));
+                temp.createSync(recursive: true);
+                // Windows Media Foundation AAC encoder strictly supports up to 192 kbps (192000 bps).
+                // Requesting an unsupported bitrate causes MF_E_INVALIDMEDIATYPE (0xC00D36B4).
+                await audioRecorder.start(const RecordConfig(bitRate: 192000), path: temp.path);
+              } catch (e, stack) {
+                controller!.showRecording.value = false;
+                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+                Logger.error("Error starting desktop recording", error: e, trace: stack);
+              }
               return;
             }
             try {
