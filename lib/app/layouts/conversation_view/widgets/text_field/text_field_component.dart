@@ -405,6 +405,26 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                               ],
                             );
 
+                          // The stock paste item only exists when the clipboard has text, and only pastes text.
+                          // Replace it (or add one) with our handler, which handles media and falls back to text.
+                          if (kIsDesktop) {
+                            final pasteItem = ContextMenuButtonItem(
+                              type: ContextMenuButtonType.paste,
+                              onPressed: () {
+                                clipboardHandler?.handlePasteEvent();
+                                editableTextState.hideToolbar();
+                              },
+                            );
+                            final items = toolbar.buttonItems!;
+                            final pasteIndex =
+                                items.indexWhere((item) => item.type == ContextMenuButtonType.paste);
+                            if (pasteIndex == -1) {
+                              items.add(pasteItem);
+                            } else {
+                              items[pasteIndex] = pasteItem;
+                            }
+                          }
+
                           // Use outerTheme (captured from the real build context) because the
                           // contextMenuBuilder's own `context` parameter shadows the build context
                           // and may not have the dark theme applied (it's a detached overlay context).
