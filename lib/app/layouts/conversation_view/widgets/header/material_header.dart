@@ -61,32 +61,15 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
-                onTap: controller.chat.isGroup
-                    ? () {
-                        Navigator.of(context).push(
-                          ThemeSwitcher.buildPageRoute(
-                            builder: (context) => ConversationDetails(
-                              chat: controller.chat,
-                            ),
-                          ),
-                        );
-                      }
-                    : () async {
-                        final handle = controller.chat.handles.first;
-                        final contact = handle.contactsV2.firstOrNull;
-                        if (contact == null || !contact.isNative) {
-                          await MethodChannelSvc.actions.openContactForm(
-                            address: handle.address,
-                            isEmail: handle.address.isEmail,
-                          );
-                        } else {
-                          try {
-                            await MethodChannelSvc.actions.viewContactForm(nativeContactId: contact.nativeContactId);
-                          } catch (_) {
-                            showSnackbar("Error", "Failed to find contact on device!");
-                          }
-                        }
-                      },
+                onTap: () {
+                  Navigator.of(context).push(
+                    ThemeSwitcher.buildPageRoute(
+                      builder: (context) => ConversationDetails(
+                        chat: controller.chat,
+                      ),
+                    ),
+                  );
+                },
                 child: Padding(
                   padding: const EdgeInsets.all(5.0),
                   child: _ChatIconAndTitle(parentController: controller),
