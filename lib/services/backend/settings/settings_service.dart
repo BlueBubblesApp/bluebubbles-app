@@ -21,6 +21,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:store_checker/store_checker.dart';
 import 'package:bluebubbles/models/models.dart' show ServerDetails, AppUpdateInfo, ServerUpdateInfo;
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:dio/dio.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
@@ -466,7 +467,9 @@ class SettingsService {
         int.parse(FilesystemSvc.packageInfo.version.split(".")[1]),
         int.parse(FilesystemSvc.packageInfo.version.split(".")[2]),
       );
-      if (current.compareTo(latestRelease) < 0) {
+      if (current.compareTo(latestRelease) < 0 &&
+          PrefsSvc.server.getClientUpdateCheckCode() != code &&
+          await _isReleaseInStore(latestRelease)) {
         available = true;
       }
     }
@@ -481,6 +484,35 @@ class SettingsService {
         'build': buildNumber,
       }
     };
+  }
+
+  /// Store listings lag behind GitHub releases, so only report an update once the install's store has it.
+  Future<bool> _isReleaseInStore(Version release) async {
+    if (!isStoreMsix && !isSnap && !isFlatpak) return true;
+    try {
+      final dio = Dio();
+      String? storeVersion;
+      if (isStoreMsix) {
+        final res = await dio.get(
+            "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds=9P3XF8KJ0LSM&market=US&languages=en-US");
+        final skus = res.data['Products'][0]['DisplaySkuAvailabilities'] as List;
+        final name = skus.first['Sku']['Properties']['Packages'][0]['PackageFullName'] as String;
+        storeVersion = name.split('_')[1];
+      } else if (isSnap) {
+        final res = await dio.get("https://api.snapcraft.io/v2/snaps/info/bluebubbles?fields=version",
+            options: Options(headers: {'Snap-Device-Series': '16'}));
+        storeVersion = (res.data['channel-map'] as List)
+            .firstWhere((e) => e['channel']['name'] == 'stable')['version'] as String;
+      } else {
+        final res = await dio.get("https://flathub.org/api/v2/appstream/app.bluebubbles.BlueBubbles");
+        storeVersion = res.data['releases'][0]['version'] as String;
+      }
+      final parts = storeVersion.split('.').map(int.parse).toList();
+      return Version(parts[0], parts[1], parts[2]) >= release;
+    } catch (e, s) {
+      Logger.warn("Failed to check store version", error: e, trace: s);
+      return false;
+    }
   }
 
   Future<AppUpdateInfo> checkForUpdate() async {
@@ -524,7 +556,14 @@ class SettingsService {
           BBDialogAction(
             text: "Download",
             onPressed: () async {
-              await launchUrl(Uri.parse(updateInfo.latestRelease.htmlUrl!), mode: LaunchMode.externalApplication);
+              final url = isStoreMsix
+                  ? "ms-windows-store://pdp/?productid=9P3XF8KJ0LSM"
+                  : isSnap
+                      ? "https://snapcraft.io/bluebubbles"
+                      : isFlatpak
+                          ? "https://flathub.org/apps/app.bluebubbles.BlueBubbles"
+                          : updateInfo.latestRelease.htmlUrl!;
+              await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
             },
           ),
         BBDialogAction(
