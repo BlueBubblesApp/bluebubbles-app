@@ -534,40 +534,26 @@ IconData getAttachmentIcon(String mimeType) {
   return isiOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
 }
 
-/// Controls a snackbar's icon, colors and how long it stays up on desktop, and how it's shown on mobile.
+/// Controls a snackbar's icon, colors and how long it stays up, and whether mobile shows a toast instead.
 enum SnackbarType { success, error }
 
-/// Root [ScaffoldMessenger] that mobile success snackbars are shown through.
-final snackbarMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
-/// On mobile, errors are toasts and successes are Material snackbars (never toasts); the title is dropped. Mobile
-/// successes are skipped inside a chat, where they'd cover the messages.
+/// Errors on mobile are native toasts; everything else is this snackbar on every platform.
 void showSnackbar(String title, String message,
     {SnackbarType type = SnackbarType.success,
     int durationMs = 1500,
     String? actionLabel,
     VoidCallback? onAction}) {
   final isError = type == SnackbarType.error;
-  if (!kIsDesktop) {
-    if (isError) {
-      unawaited(showToast(message, isError: true));
-    } else if (ChatsSvc.activeChat == null) {
-      snackbarMessengerKey.currentState
-        ?..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          // A snackbar with an action otherwise stays up until dismissed.
-          persist: false,
-          action: actionLabel == null ? null : SnackBarAction(label: actionLabel, onPressed: onAction ?? () {}),
-        ));
-    }
+  if (!kIsDesktop && isError) {
+    unawaited(showToast(message, isError: true));
     return;
   }
-  // Desktop: top-right corner under the title bar, so it covers neither the text field nor the window buttons.
-  // Matches TitleBarWrapper's rule for when the custom title bar is drawn.
+  // Top of the screen (top-right when there's room), so it never covers the text field; on desktop it also sits
+  // under the title bar to keep the window buttons clear. GetX adds the status bar inset on mobile itself.
+  // The title bar check matches TitleBarWrapper's rule for when the custom title bar is drawn.
   const width = 360.0;
-  final hasCustomTitleBar = !Platform.isLinux || SettingsSvc.settings.titleBarStyle.value == BBTitleBarStyle.custom;
+  final hasCustomTitleBar =
+      kIsDesktop && (!Platform.isLinux || SettingsSvc.settings.titleBarStyle.value == BBTitleBarStyle.custom);
   final theme = Get.theme;
   final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
   // Errors use the error container. The theme has no success role, so success builds one the way M3 builds

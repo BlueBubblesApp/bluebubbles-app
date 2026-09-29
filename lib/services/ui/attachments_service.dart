@@ -310,7 +310,9 @@ class AttachmentsService extends GetxService {
                   skipIfExists: false,
                 );
               }
-              return showSnackbar('Success', 'Saved attachment to gallery!', type: SnackbarType.success);
+              // Auto-download saves every incoming attachment, so only confirm saves the user asked for.
+              if (!isAutoDownload) showSnackbar('Success', 'Saved attachment to gallery!', type: SnackbarType.success);
+              return;
             } catch (_) {}
           }
           savePath = SettingsSvc.settings.autoSaveDocsLocation.value;
@@ -320,8 +322,10 @@ class AttachmentsService extends GetxService {
       if (savePath != null) {
         final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
         await File(join(savePath, file.name)).writeAsBytes(bytes);
-        showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!',
-            type: SnackbarType.success);
+        if (!isAutoDownload) {
+          showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!',
+              type: SnackbarType.success);
+        }
       }
     }
   }
