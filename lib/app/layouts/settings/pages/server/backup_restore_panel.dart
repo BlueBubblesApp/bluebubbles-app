@@ -475,17 +475,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           "Success",
           "Settings exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
           durationMs: kIsDesktop ? 4000 : 2000,
-          button: TextButton(
-            style: TextButton.styleFrom(backgroundColor: Get.theme.colorScheme.secondary),
-            onPressed: () {
-              if (kIsDesktop) {
-                revealInFileManager(filePath);
-              }
-              Share.files([filePath]);
-            },
-            child: Text(kIsDesktop ? "OPEN FOLDER" : "SHARE",
-                style: TextStyle(color: context.theme.colorScheme.onSecondary)),
-          ),
+          actionLabel: kIsDesktop ? "OPEN FOLDER" : "SHARE",
+          onAction: () => kIsDesktop ? revealInFileManager(filePath) : Share.files([filePath]),
         );
       }
       // Only the cloud list is server-backed; a local save has nothing to re-fetch.
@@ -720,18 +711,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         "Success",
         "Theming exported successfully to ${kIsDesktop ? filePath : "downloads folder"}",
         durationMs: kIsDesktop ? 4000 : 2000,
-        button: TextButton(
-          style: TextButton.styleFrom(backgroundColor: Get.theme.colorScheme.secondary),
-          onPressed: () {
-            if (kIsDesktop) {
-              revealInFileManager(filePath);
-              return;
-            }
-            Share.files([filePath]);
-          },
-          child: Text(kIsDesktop ? "OPEN FOLDER" : "SHARE",
-              style: TextStyle(color: context.theme.colorScheme.onSecondary)),
-        ),
+        actionLabel: kIsDesktop ? "OPEN FOLDER" : "SHARE",
+        onAction: () => kIsDesktop ? revealInFileManager(filePath) : Share.files([filePath]),
       );
     }
     if (destination.isCloud) refresh();

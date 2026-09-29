@@ -277,13 +277,8 @@ class AttachmentsService extends GetxService {
         'Success',
         'Saved attachment to $savePath!',
         durationMs: 3000,
-        button: TextButton(
-          style: TextButton.styleFrom(backgroundColor: Get.theme.colorScheme.surfaceVariant),
-          onPressed: () {
-            launchUrl(Uri.file(savePath));
-          },
-          child: Text("OPEN FILE", style: TextStyle(color: Get.theme.colorScheme.onSurfaceVariant)),
-        ),
+        actionLabel: "OPEN FILE",
+        onAction: () => launchUrl(Uri.file(savePath)),
       );
     } else {
       String? savePath;

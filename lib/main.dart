@@ -344,6 +344,7 @@ class Main extends StatelessWidget {
           ),
         ),
         navigatorKey: NavigationSvc.key,
+        scaffoldMessengerKey: snackbarMessengerKey,
         navigatorObservers: [routeObserver],
         scrollBehavior: const MaterialScrollBehavior().copyWith(
           // Specifically for GNU/Linux & Android-x86 family, where touch isn't interpreted as a drag device by Flutter apparently.
