@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
+import 'package:bluebubbles/app/components/copy_address_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -184,7 +185,16 @@ class ContactTile extends StatelessWidget {
             handle: handle,
             borderThickness: 0.1,
           ),
-          trailing: _buildTrailing(context, contact: contact, isEmail: isEmail),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CopyAddressButton(address: handle.address),
+              ),
+              _buildTrailing(context, contact: contact, isEmail: isEmail),
+            ],
+          ),
         ),
       );
 

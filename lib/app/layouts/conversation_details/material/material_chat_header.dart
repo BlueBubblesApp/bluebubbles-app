@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/copy_address_button.dart';
 import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/components/m3e/m3e.dart';
@@ -147,16 +148,27 @@ class ExpressiveChatHeader extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Obx(() {
-          final address = chatState.participants.first.formattedAddress.value;
+          final participant = chatState.participants.first;
+          final address = participant.formattedAddress.value;
           if (address == null) return const SizedBox.shrink();
-          return Text(
-            address,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: context.theme.textTheme.bodyMedium!.copyWith(
-              color: context.theme.colorScheme.onSurfaceVariant,
-            ),
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  address,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: context.theme.textTheme.bodyMedium!.copyWith(
+                    color: context.theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Copies the raw handle, not the formatted display string.
+              CopyAddressButton(address: participant.handle.address),
+            ],
           );
         }),
       );
