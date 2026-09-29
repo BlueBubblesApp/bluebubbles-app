@@ -249,7 +249,7 @@ class AttachmentsService extends GetxService {
         ..click();
     } else if (kIsDesktop) {
       if (file.path == null && file.bytes == null) {
-        return showSnackbar('Error', 'That attachment has no data to save!');
+        return showSnackbar('Error', 'That attachment has no data to save!', type: SnackbarType.error);
       }
 
       final String? picked;
@@ -263,12 +263,10 @@ class AttachmentsService extends GetxService {
         );
       } catch (ex, stack) {
         Logger.error('Failed to save attachment!', error: ex, trace: stack);
-        return showSnackbar('Error', 'Failed to save attachment!');
+        return showSnackbar('Error', 'Failed to save attachment!', type: SnackbarType.error);
       }
 
-      if (picked == null) {
-        return showSnackbar('Error', 'You didn\'t select a file path!');
-      }
+      if (picked == null) return;
       // Non-nullable copy: the null check above doesn't promote inside the
       // snackbar's callback.
       final String savePath = picked;
@@ -279,6 +277,7 @@ class AttachmentsService extends GetxService {
         durationMs: 3000,
         actionLabel: "OPEN FILE",
         onAction: () => launchUrl(Uri.file(savePath)),
+        type: SnackbarType.success,
       );
     } else {
       String? savePath;
@@ -311,7 +310,7 @@ class AttachmentsService extends GetxService {
                   skipIfExists: false,
                 );
               }
-              return showSnackbar('Success', 'Saved attachment to gallery!');
+              return showSnackbar('Success', 'Saved attachment to gallery!', type: SnackbarType.success);
             } catch (_) {}
           }
           savePath = SettingsSvc.settings.autoSaveDocsLocation.value;
@@ -321,9 +320,8 @@ class AttachmentsService extends GetxService {
       if (savePath != null) {
         final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
         await File(join(savePath, file.name)).writeAsBytes(bytes);
-        showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!');
-      } else {
-        return showSnackbar('Error', 'You didn\'t select a file path!');
+        showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!',
+            type: SnackbarType.success);
       }
     }
   }

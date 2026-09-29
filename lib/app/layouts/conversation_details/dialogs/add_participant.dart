@@ -107,7 +107,7 @@ void showAddParticipant(BuildContext context, Chat chat) {
               onPressed: () async {
                 if (participantController.text.isEmpty ||
                     (!participantController.text.isEmail && !participantController.text.isPhoneNumber)) {
-                  showSnackbar("Error", "Enter a valid address!");
+                  showSnackbar("Error", "Enter a valid address!", type: SnackbarType.error);
                   return;
                 }
                 showDialog(
@@ -144,10 +144,9 @@ void showAddParticipant(BuildContext context, Chat chat) {
                   }
                   Navigator.of(context, rootNavigator: true).pop();
                   Navigator.of(context, rootNavigator: true).pop();
-                  showSnackbar("Notice", "Added ${participantController.text} successfully!");
                 } else {
                   Navigator.of(context, rootNavigator: true).pop();
-                  showSnackbar("Error", "Failed to add ${participantController.text}!");
+                  showSnackbar("Error", "Failed to add ${participantController.text}!", type: SnackbarType.error);
                 }
               },
             ),

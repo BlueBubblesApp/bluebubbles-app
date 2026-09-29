@@ -72,7 +72,7 @@ class ConversationListController extends StatefulController {
     if (!camera) {
       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
       if (!granted) {
-        showSnackbar("Error", "Camera was denied");
+        showSnackbar("Error", "Camera was denied", type: SnackbarType.error);
         return;
       }
     }

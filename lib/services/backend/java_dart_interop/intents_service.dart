@@ -167,7 +167,7 @@ class IntentsService {
       Navigator.of(Get.context!, rootNavigator: true).pop();
     }
     if (link == null) {
-      return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!");
+      return showSnackbar("Failed to answer FaceTime", "Unable to generate FaceTime link!", type: SnackbarType.error);
     }
 
     if (!kIsWeb) {

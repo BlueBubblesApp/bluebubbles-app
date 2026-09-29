@@ -29,7 +29,7 @@ void showBookmarksThread(ConversationViewController cvController, BuildContext c
       .build()
       .find();
   if (_messages.isEmpty) {
-    return showSnackbar("Error", "There are no bookmarked messages in this chat!");
+    return showSnackbar("Error", "There are no bookmarked messages in this chat!", type: SnackbarType.error);
   }
   for (Message m in _messages) {
     m.realAttachments;

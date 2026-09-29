@@ -94,7 +94,6 @@ class _FullscreenImageState extends State<FullscreenImage>
   }
 
   void refreshAttachment() {
-    showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
     setState(() {
       bytes = null;
       compatiblePath = null;

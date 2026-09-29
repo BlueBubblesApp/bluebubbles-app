@@ -212,7 +212,7 @@ class ChatCreatorController extends StatefulController {
   Future<void> addSelected(SelectedContact contact) async {
     // Guard: server doesn't support group chats
     if (selectedContacts.length > 1 && !canCreateGroupChats) {
-      showSnackbar('Not Supported', 'Your server does not support creating group chats');
+      showSnackbar('Not Supported', 'Your server does not support creating group chats', type: SnackbarType.error);
       return;
     }
 
@@ -500,7 +500,7 @@ class ChatCreatorController extends StatefulController {
       // ----------------------------------------------------------------
       final messageText = textController.text.trim();
       if (messageText.isEmpty) {
-        showSnackbar('Error', 'A message is required to start a new conversation');
+        showSnackbar('Error', 'A message is required to start a new conversation', type: SnackbarType.error);
         return;
       }
 

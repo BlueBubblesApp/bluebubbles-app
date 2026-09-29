@@ -332,9 +332,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         if (!context.mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
         if (response.statusCode != 200) {
-          showSnackbar("Error", "Somthing went wrong");
+          showSnackbar("Error", "Something went wrong", type: SnackbarType.error);
         } else {
-          showSnackbar("Success", "Settings exported successfully to server");
+          showSnackbar("Success", "Settings exported successfully to server", type: SnackbarType.success);
         }
         refresh();
       },
@@ -364,7 +364,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         Navigator.of(context, rootNavigator: true).pop();
         try {
           Settings.updateFromMap(item);
-          showSnackbar("Success", "Settings restored successfully");
+          showSnackbar("Success", "Settings restored successfully", type: SnackbarType.success);
           final pinnedChats = item["pinnedChats"] as List<dynamic>?;
           if (pinnedChats != null) {
             final result = await PinnedChatsBackup.restore(pinnedChats);
@@ -389,7 +389,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           }
         } catch (e, s) {
           Logger.error("Failed to restore settings backup!", error: e, trace: s);
-          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
+          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}", type: SnackbarType.error);
         }
       },
     );
@@ -406,7 +406,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       String name = nameController.text;
       final desc = descController.text;
       if (name.isEmpty) {
-        return showSnackbar("Error", "Provide a name!");
+        return showSnackbar("Error", "Provide a name!", type: SnackbarType.error);
       } else if (destination.isCloud && settings.firstWhereOrNull((s) => s["name"] == name) != null) {
         bool yes = false;
         await BackupRestoreDialogs.showConfirmation(
@@ -439,9 +439,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       if (destination.isCloud) {
         var response = await HttpSvc.backup.setSettings(name, json);
         if (response.statusCode != 200) {
-          showSnackbar("Error", "Somthing went wrong");
+          showSnackbar("Error", "Something went wrong", type: SnackbarType.error);
         } else {
-          showSnackbar("Success", "Settings exported successfully to server");
+          showSnackbar("Success", "Settings exported successfully to server", type: SnackbarType.success);
         }
       } else {
         if (kIsWeb) {
@@ -462,9 +462,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
             bytes: utf8.encode(jsonString),
             allowedExtensions: ["json"],
           );
-          if (_filePath == null) {
-            return showSnackbar('Failed', 'You didn\'t select a file path!');
-          }
+          if (_filePath == null) return;
           filePath = _filePath;
         } else {
           File file = File(filePath);
@@ -477,6 +475,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           durationMs: kIsDesktop ? 4000 : 2000,
           actionLabel: kIsDesktop ? "OPEN FOLDER" : "SHARE",
           onAction: () => kIsDesktop ? revealInFileManager(filePath) : Share.files([filePath]),
+          type: SnackbarType.success,
         );
       }
       // Only the cloud list is server-backed; a local save has nothing to re-fetch.
@@ -578,7 +577,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
           Map<String, dynamic> json = jsonDecode(jsonString);
           Settings.updateFromMap(json);
-          showSnackbar("Success", "Settings restored successfully");
+          showSnackbar("Success", "Settings restored successfully", type: SnackbarType.success);
           final pinnedChats = json["pinnedChats"] as List<dynamic>?;
           if (pinnedChats != null) {
             final result = await PinnedChatsBackup.restore(pinnedChats);
@@ -603,7 +602,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           }
         } catch (e, s) {
           Logger.error("Failed to restore settings backup!", error: e, trace: s);
-          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}");
+          showSnackbar("Error", "Failed to restore settings backup! Error: ${e.toString()}", type: SnackbarType.error);
         }
       },
     );
@@ -627,7 +626,8 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
 
   void _confirmRestoreThemeBackup(Map<String, dynamic> item) {
     if (!item.containsKey('data')) {
-      showSnackbar("Error", "This theme was created on the old theming engine and cannot be restored");
+      showSnackbar("Error", "This theme was created on the old theming engine and cannot be restored",
+          type: SnackbarType.error);
       return;
     }
     BackupRestoreDialogs.showConfirmation(
@@ -642,10 +642,10 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           ThemeStruct object = ThemeStruct.fromMap(item);
           object.id = null;
           object.save();
-          showSnackbar("Success", "Theme restored successfully");
+          showSnackbar("Success", "Theme restored successfully", type: SnackbarType.success);
         } catch (e, s) {
           Logger.error("Failed to restore theme backup!", error: e, trace: s);
-          showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
+          showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}", type: SnackbarType.error);
         }
       },
     );
@@ -656,7 +656,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
     if (destination == null || !context.mounted) return;
     List<ThemeStruct> allThemes = ThemeStruct.getThemes().where((element) => !element.isPreset).toList();
     if (allThemes.isEmpty) {
-      return showSnackbar("Notice", "No custom themes found!");
+      return showSnackbar("Notice", "No custom themes found!", type: SnackbarType.error);
     }
     if (destination.isCloud) {
       bool errored = false;
@@ -667,9 +667,9 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         }
       }
       if (errored) {
-        showSnackbar("Error", "Somthing went wrong");
+        showSnackbar("Error", "Something went wrong", type: SnackbarType.error);
       } else {
-        showSnackbar("Success", "Themes exported successfully to server");
+        showSnackbar("Success", "Themes exported successfully to server", type: SnackbarType.success);
       }
     } else {
       final List<Map<String, dynamic>> themeData = [];
@@ -698,9 +698,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
           bytes: utf8.encode(jsonStr),
           allowedExtensions: ["json"],
         );
-        if (_filePath == null) {
-          return showSnackbar('Failed', 'You didn\'t select a file path!');
-        }
+        if (_filePath == null) return;
         filePath = _filePath;
       } else {
         File file = File(filePath);
@@ -713,6 +711,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         durationMs: kIsDesktop ? 4000 : 2000,
         actionLabel: kIsDesktop ? "OPEN FOLDER" : "SHARE",
         onAction: () => kIsDesktop ? revealInFileManager(filePath) : Share.files([filePath]),
+        type: SnackbarType.success,
       );
     }
     if (destination.isCloud) refresh();
@@ -739,10 +738,10 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
             object.id = null;
             object.save();
           }
-          showSnackbar("Success", "Theming restored successfully");
+          showSnackbar("Success", "Theming restored successfully", type: SnackbarType.success);
         } catch (e, s) {
           Logger.error("Failed to restore theme backup!", error: e, trace: s);
-          showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}");
+          showSnackbar("Error", "Failed to restore theme backup! Error: ${e.toString()}", type: SnackbarType.error);
         }
       },
     );

@@ -206,7 +206,7 @@ class InfoButton extends StatelessWidget {
               try {
                 await MethodChannelSvc.actions.viewContactForm(nativeContactId: contact.nativeContactId);
               } catch (_) {
-                showSnackbar("Error", "Failed to find contact on device!");
+                showSnackbar("Error", "Failed to find contact on device!", type: SnackbarType.error);
               }
             }
           },

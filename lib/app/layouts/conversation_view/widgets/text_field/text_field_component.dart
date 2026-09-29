@@ -505,7 +505,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                   if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
                   for (fp.PlatformFile e in res.files) {
                     if (e.size / 1024000 > 1000) {
-                      showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                      showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
+                          type: SnackbarType.error);
                       continue;
                     }
                     controller!.pickedAttachments.add(PlatformFile(

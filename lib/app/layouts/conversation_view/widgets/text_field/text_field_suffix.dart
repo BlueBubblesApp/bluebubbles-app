@@ -255,11 +255,13 @@ class _RecordingButton extends StatelessWidget {
               // treat it as a failure and reset the UI.
               if (!recorderController!.isRecording) {
                 controller!.showRecording.value = false;
-                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.",
+                    type: SnackbarType.error);
               }
             } catch (e, stack) {
               controller!.showRecording.value = false;
-              showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+              showSnackbar("Error", "Failed to start recording. Please check microphone permissions.",
+                  type: SnackbarType.error);
               Logger.error("Error starting recording", error: e, trace: stack);
             }
           } else {
@@ -270,7 +272,7 @@ class _RecordingButton extends StatelessWidget {
             if (isDesktop) {
               path = await audioRecorder.stop();
               if (path == null) {
-                showSnackbar("Error", "Failed to save voice memo. Please try again.");
+                showSnackbar("Error", "Failed to save voice memo. Please try again.", type: SnackbarType.error);
                 return;
               }
               final _file = File(path);
@@ -283,7 +285,7 @@ class _RecordingButton extends StatelessWidget {
             } else {
               path = await recorderController!.stop();
               if (path == null) {
-                showSnackbar("Error", "Failed to save voice memo. Please try again.");
+                showSnackbar("Error", "Failed to save voice memo. Please try again.", type: SnackbarType.error);
                 return;
               }
               final _file = File(path);

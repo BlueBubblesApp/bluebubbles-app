@@ -312,7 +312,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
       await scrollController.scrollToIndex(index, preferPosition: AutoScrollPosition.middle);
       scrollController.highlight(index, highlightDuration: const Duration(milliseconds: 2000));
     } else {
-      showSnackbar("Error", "Failed to find message!");
+      showSnackbar("Error", "Failed to find message!", type: SnackbarType.error);
     }
   }
 

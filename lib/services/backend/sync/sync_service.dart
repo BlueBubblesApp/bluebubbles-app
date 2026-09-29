@@ -188,7 +188,7 @@ class SyncService {
     }
 
     if (errors > 0) {
-      await showToast('Incremental sync completed with $errors errors', isError: true);
+      await showToast("Sync failed. Check your connection.", isError: true);
     } else if (SettingsSvc.settings.showIncrementalSync.value) {
       await showToast('Incremental sync complete');
     }

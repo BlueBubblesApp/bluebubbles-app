@@ -339,9 +339,11 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final text = controller.textController.text;
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
-      if (date.isBefore(DateTime.now())) return showSnackbar("Error", "Pick a date in the future!");
+      if (date.isBefore(DateTime.now())) {
+        return showSnackbar("Error", "Pick a date in the future!", type: SnackbarType.error);
+      }
       if (text.contains(MentionTextEditingController.escapingChar)) {
-        return showSnackbar("Error", "Mentions are not allowed in scheduled messages!");
+        return showSnackbar("Error", "Mentions are not allowed in scheduled messages!", type: SnackbarType.error);
       }
       showDialog(
         context: context,
@@ -371,16 +373,18 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       } else {
         Logger.error("Scheduled message error: ${response.statusCode}");
         Logger.error(response.data);
-        showSnackbar("Error", "Something went wrong!");
+        showSnackbar("Error", "Something went wrong!", type: SnackbarType.error);
       }
     } else {
       if (text.isEmpty &&
           controller.subjectTextController.text.isEmpty &&
           !SettingsSvc.settings.privateAPIAttachmentSend.value) {
         if (controller.replyToMessage != null) {
-          return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!");
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send replies with media!",
+              type: SnackbarType.error);
         } else if (effect != null) {
-          return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!");
+          return showSnackbar("Error", "Turn on Private API Attachment Send to send effects with media!",
+              type: SnackbarType.error);
         }
       }
       if (effect == null && SettingsSvc.settings.enablePrivateAPI.value) {
@@ -428,14 +432,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   Future<void> openFullCamera({String type = 'camera'}) async {
     bool granted = (await Permission.camera.request()).isGranted;
     if (!granted) {
-      showSnackbar("Error", "Camera access was denied!");
+      showSnackbar("Error", "Camera access was denied!", type: SnackbarType.error);
       return;
     }
 
     if (type == 'video') {
       final micGranted = (await Permission.microphone.request()).isGranted;
       if (!micGranted) {
-        showSnackbar("Error", "Microphone access was denied!");
+        showSnackbar("Error", "Microphone access was denied!", type: SnackbarType.error);
         return;
       }
     }

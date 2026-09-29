@@ -204,7 +204,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
                       await MethodChannelSvc.actions.viewContactForm(nativeContactId: contactV2!.nativeContactId);
                     } catch (e, s) {
                       Logger.error("Failed to find contact on device", error: e, trace: s);
-                      showSnackbar("Error", "Failed to find contact on device!");
+                      showSnackbar("Error", "Failed to find contact on device!", type: SnackbarType.error);
                     }
                   } else if (widget.handle != null) {
                     await MethodChannelSvc.actions.openContactForm(
