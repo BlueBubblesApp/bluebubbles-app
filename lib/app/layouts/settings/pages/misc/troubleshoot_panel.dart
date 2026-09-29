@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -105,42 +107,38 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       SettingsTile(
                         onTap: () async {
                           final RxList<String> log = <String>[].obs;
-                          showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                    backgroundColor: context.theme.colorScheme.surface,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                    titlePadding: const EdgeInsets.only(top: 15),
-                                    title: Text("Fetching contacts...", style: context.theme.textTheme.titleLarge),
-                                    content: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: SizedBox(
-                                        width: NavigationSvc.width(context) * 4 / 5,
-                                        height: context.height * 1 / 3,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(25),
-                                            color: context.theme.colorScheme.surface,
-                                          ),
-                                          padding: const EdgeInsets.all(10),
-                                          child: Obx(() => ListView.builder(
-                                                physics: const AlwaysScrollableScrollPhysics(
-                                                    parent: BouncingScrollPhysics()),
-                                                itemBuilder: (context, index) {
-                                                  return Text(
-                                                    log[index],
-                                                    style: TextStyle(
-                                                      color: context.theme.colorScheme.onSurface,
-                                                      fontSize: 10,
-                                                    ),
-                                                  );
-                                                },
-                                                itemCount: log.length,
-                                              )),
+                          showBBDialog(
+                            context: context,
+                            title: "Fetching contacts...",
+                            content: Container(
+                              width: min(NavigationSvc.width(context) * 0.8, 560),
+                              height: context.height / 3,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: context.theme.colorScheme.surface,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Obx(() => ListView.builder(
+                                    itemCount: log.length,
+                                    itemBuilder: (context, index) => Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      child: Text(
+                                        log[index],
+                                        style: context.theme.textTheme.bodySmall!.copyWith(
+                                          color: context.theme.colorScheme.onSurface,
+                                          fontFamily: "monospace",
                                         ),
                                       ),
                                     ),
-                                  ));
+                                  )),
+                            ),
+                            actions: [
+                              BBDialogAction(
+                                text: "Close",
+                                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                              ),
+                            ],
+                          );
                           await ContactsSvcV2.fetchNetworkContacts(logger: (newLog) {
                             log.add(newLog);
                           });
