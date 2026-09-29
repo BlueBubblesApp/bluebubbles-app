@@ -551,7 +551,6 @@ class StartupTasks {
     // seconds when the server is unreachable — a serverInfo() call that runs to the
     // full apiTimeout, then a 255-address subnet scan — leaving the connection
     // indicator red for that entire window on every resume.
-    final String originBeforeProbe = HttpSvc.origin;
     if (Platform.isAndroid) {
       // Also restore the alive marker early: until it is back, LifecycleService.isAlive
       // reports false for a foreground app, which makes the method-channel handlers
@@ -561,18 +560,12 @@ class StartupTasks {
       }
 
       SocketSvc.restartSocket();
+    } else if (kIsDesktop) {
+      SocketSvc.checkConnection();
     }
 
     if (HttpSvc.originOverride == null && SettingsSvc.settings.localhostPort.value != null) {
       await NetworkTasks.detectLocalhost();
-
-      // The probe changes what the socket dials, and setting the override doesn't
-      // cycle the connection on its own. Rebuild only when the resolved origin
-      // actually moved — same rule SocketService applies for URL rediscovery.
-      if (Platform.isAndroid && HttpSvc.origin != originBeforeProbe) {
-        Logger.info("Local address changed to ${HttpSvc.origin} on resume, rebuilding socket");
-        SocketSvc.restartSocket();
-      }
     }
 
     // Flush any contact sync deferred while the app was backgrounded

@@ -11,7 +11,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 import 'websocket_adapter.dart';
 import 'package:get_it/get_it.dart';
@@ -77,6 +76,12 @@ class SocketService {
   /// rediscovery is the only recovery from [_socketGaveUp].
   static const Duration _urlDiscoveryTimeout = Duration(seconds: 60);
 
+  /// The server's engine.io heartbeat takes up to three minutes to notice a dead connection
+  /// and can't change until the server rewrite, so the client runs its own.
+  static const Duration _heartbeatInterval = Duration(seconds: 10);
+  static const Duration _heartbeatTimeout = Duration(seconds: 5);
+  static const int _heartbeatMissLimit = 2;
+
   /// Collapse window for repeated identical error logs.
   static const Duration _errorLogThrottle = Duration(minutes: 1);
 
@@ -103,6 +108,9 @@ class SocketService {
   final Rx<SocketState> state = SocketState.connecting.obs;
   RxString lastError = "".obs;
   Socket? socket;
+
+  /// The origin [socket] was built against; a Manager can't change it afterwards.
+  String? _dialedOrigin;
 
   /// Unsubscribe callbacks for every listener registered in [startSocket].
   ///
@@ -146,15 +154,18 @@ class SocketService {
   ///
   /// Deliberately not a single "last signature" pair: socket.io emits more than
   /// one error per failed attempt, and when the payloads differ (a `SocketException`
-  /// from the engine, the bare String `'timeout'` from `Manager.open`, the
-  /// synthetic message from the Windows connectivity probe) a single-slot throttle
-  /// alternates and suppresses nothing at all.
+  /// from the engine, the bare String `'timeout'` from `Manager.open`) a single-slot
+  /// throttle alternates and suppresses nothing at all.
   final Map<String, _ErrorLogState> _errorLog = {};
 
-  InternetConnection? internetConnection;
-  StreamSubscription<InternetStatus>? internetConnectionListener;
   StreamSubscription? _connectivitySubscription;
+  bool _networkAvailable = true;
   Timer? _connectivityReconnectTimer;
+
+  Timer? _heartbeatTimer;
+  Timer? _heartbeatTimeoutTimer;
+  int _heartbeatMisses = 0;
+  bool _heartbeatUrgent = false;
 
   String get serverAddress => HttpSvc.origin;
   String get password => SettingsSvc.settings.guidAuthKey.value;
@@ -162,27 +173,45 @@ class SocketService {
   void init() {
     Logger.debug("Initializing socket service...");
     startSocket();
-    // startSocket() arms this too, but it bails out before that when no server is
-    // configured yet — and we still want to react to connectivity changes then.
-    _startConnectivitySubscription();
+    unawaited(Connectivity().checkConnectivity().then(_onConnectivityChanged));
     Logger.debug("Initialized socket service");
   }
 
   void _startConnectivitySubscription() {
-    if (kIsDesktop && Platform.isWindows) return;
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
-      if (!event.contains(ConnectivityResult.wifi) &&
-          !event.contains(ConnectivityResult.ethernet) &&
-          HttpSvc.originOverride != null) {
-        Logger.info("Detected switch off wifi, removing localhost address...");
-        NetworkTasks.setOriginOverride(null);
-      }
+    if (_connectivitySubscription != null) return;
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+  }
 
-      if (event.any((result) => result != ConnectivityResult.none)) {
-        _scheduleConnectivityReconnect();
-      }
-    });
+  void _onConnectivityChanged(List<ConnectivityResult> event) {
+    if (!connectionDesired) return;
+
+    if (!event.contains(ConnectivityResult.wifi) &&
+        !event.contains(ConnectivityResult.ethernet) &&
+        HttpSvc.originOverride != null) {
+      Logger.info("Detected switch off wifi, removing localhost address...");
+      NetworkTasks.setOriginOverride(null);
+      followOrigin();
+    }
+
+    if (event.every((result) => result == ConnectivityResult.none)) {
+      if (!_networkAvailable) return;
+      _networkAvailable = false;
+      Logger.info(tag: _tag, "Network lost — closing socket until it's back");
+      closeSocket();
+      _reportOffline();
+    } else if (!_networkAvailable) {
+      _networkAvailable = true;
+      Logger.info(tag: _tag, "Network is back — connecting");
+      startSocket();
+    } else {
+      checkConnection();
+      _scheduleConnectivityReconnect();
+    }
+  }
+
+  void _reportOffline() {
+    lastError.value = "No network connection";
+    state.value = SocketState.error;
   }
 
   /// Cuts short socket.io's backoff wait when the network comes back.
@@ -191,10 +220,6 @@ class SocketService {
   /// with the backoff ceiling at [_reconnectDelayMax] the next scheduled attempt
   /// can be a minute out. `Socket.connect()` can't shorten that — it no-ops while
   /// `Manager.reconnecting` is set — so the connection has to be rebuilt.
-  ///
-  /// Windows is excluded along with the rest of this subscription; there the
-  /// `InternetConnection` probe in [startSocket] is the better signal, since it
-  /// checks the server itself rather than the interface.
   void _scheduleConnectivityReconnect() {
     if (!_shouldReconnectOnNetworkChange) return;
     _connectivityReconnectTimer?.cancel();
@@ -226,11 +251,18 @@ class SocketService {
       return;
     }
 
+    _startConnectivitySubscription();
+
     if (socket != null) {
       Logger.debug("Socket already exists, disposing previous instance before starting a new connection");
       _clearEventHandlers();
       socket?.dispose();
       socket = null;
+    }
+
+    if (!_networkAvailable) {
+      _reportOffline();
+      return;
     }
 
     // Validate server address before attempting to connect
@@ -247,6 +279,7 @@ class SocketService {
     }
 
     Logger.info("Starting socket connection to $serverAddress");
+    _dialedOrigin = serverAddress;
 
     OptionBuilder options = OptionBuilder()
         .setQuery({"guid": password})
@@ -324,50 +357,11 @@ class SocketService {
       s.on("new-findmy-location", (data) => EventDispatcherSvc.emit('new-findmy-location', data)),
     ]);
 
-    // Re-arm connectivity monitoring — closeSocket()/disconnect() tear it down, and
-    // without this it would stay dead for the rest of the process after the first
-    // restart, silently stranding the localhost origin override on a cellular switch.
-    _startConnectivitySubscription();
-
     // Report the attempt before making it. closeSocket() leaves the state at
     // `disconnected`, so without this a deliberate rebuild reads as "offline"
     // rather than "connecting" for the whole handshake.
     handleStatusUpdate(SocketState.connecting, null);
     s.connect();
-
-    if (kIsDesktop && Platform.isWindows) {
-      // closeSocket() cancels this, but startSocket() can also be reached with a
-      // live listener still attached — don't stack a second one on the old
-      // InternetConnection instance.
-      internetConnectionListener?.cancel();
-      internetConnectionListener = null;
-
-      internetConnection = InternetConnection.createInstance(
-        customCheckOptions: [
-          InternetCheckOption(
-            uri: Uri.parse(serverAddress),
-            timeout: const Duration(seconds: 3),
-            responseStatusFn: (_) => true,
-          ),
-        ],
-        useDefaultOptions: false,
-        triggerStream: Connectivity().onConnectivityChanged,
-      );
-
-      internetConnectionListener = internetConnection!.onStatusChange.listen((InternetStatus status) {
-        Logger.info("Internet status changed: $status");
-        if (status == InternetStatus.disconnected) {
-          // Pass a description rather than null — the error path falls back to
-          // "Unknown error" for a null payload, which tells nobody anything.
-          handleStatusUpdate(SocketState.error, "No internet connection");
-        } else if (state.value == SocketState.error) {
-          // Skip the wait for socket.io's next scheduled attempt now that we know
-          // the network is back.
-          Logger.info("Internet reconnected, restarting socket...");
-          restartSocket();
-        }
-      });
-    }
   }
 
   /// Removes every listener registered by [startSocket], including the ones that
@@ -391,6 +385,7 @@ class SocketService {
     // from, since every restart path now refuses to run.
     _connectivityReconnectTimer?.cancel();
     _connectivityReconnectTimer = null;
+    _stopHeartbeat();
     socket?.disconnect();
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
@@ -407,6 +402,9 @@ class SocketService {
   void resumeConnection() {
     _setConnectionDesired(true);
     _cancelUrlDiscovery();
+    // No connectivity events arrive while backgrounded.
+    _networkAvailable = true;
+    unawaited(Connectivity().checkConnectivity().then(_onConnectivityChanged));
   }
 
   /// Tears the connection down completely, including its Manager.
@@ -422,10 +420,7 @@ class SocketService {
     // validation, contradicting this method's entire contract.
     _connectivityReconnectTimer?.cancel();
     _connectivityReconnectTimer = null;
-    internetConnectionListener?.cancel();
-    internetConnectionListener = null;
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = null;
+    _stopHeartbeat();
     _clearEventHandlers();
     socket?.dispose();
     // Drop the reference too: the FCM handler reads `socket?.connected` to decide
@@ -445,6 +440,13 @@ class SocketService {
   void restartSocket() {
     closeSocket();
     startSocket();
+  }
+
+  /// Rebuilds onto [serverAddress] if it no longer matches what the socket dials.
+  void followOrigin() {
+    if (!connectionDesired || socket == null || _dialedOrigin == serverAddress) return;
+    Logger.info(tag: _tag, "Server origin moved from $_dialedOrigin to $serverAddress — rebuilding socket");
+    restartSocket();
   }
 
   void forgetConnection() {
@@ -532,7 +534,6 @@ class SocketService {
     bool rebuild = false;
     _urlDiscoveryInProgress = true;
     try {
-      final String previousOrigin = serverAddress;
       Logger.info(tag: _tag, "Connection still failing — checking whether the server URL changed");
 
       // fetchNewUrl() persists whatever it finds via saveNewServerUrl(force: true).
@@ -546,10 +547,8 @@ class SocketService {
         return;
       }
 
-      // Compare the resolved origin rather than the returned string — that is what
-      // the socket actually dials.
-      if (serverAddress != previousOrigin) {
-        Logger.info(tag: _tag, "Server URL changed from $previousOrigin to $serverAddress — rebuilding socket");
+      if (serverAddress != _dialedOrigin) {
+        Logger.info(tag: _tag, "Server URL changed from $_dialedOrigin to $serverAddress — rebuilding socket");
         rebuild = true;
       } else if (_socketGaveUp) {
         // Same address, but socket.io has stopped retrying it — a rebuild is the
@@ -565,11 +564,6 @@ class SocketService {
         // leaving us pinned to a dead local address.
         Logger.info(tag: _tag, "Server URL unchanged — re-probing the local address override");
         await NetworkTasks.detectLocalhost().timeout(_urlDiscoveryTimeout);
-        if (!connectionDesired) return;
-        if (serverAddress != previousOrigin) {
-          Logger.info(tag: _tag, "Local address changed from $previousOrigin to $serverAddress — rebuilding socket");
-          rebuild = true;
-        }
       } else {
         Logger.debug(tag: _tag, "Server URL unchanged — leaving socket.io to keep retrying");
       }
@@ -588,6 +582,60 @@ class SocketService {
     if (state.value != SocketState.connected && _urlDiscoveryTimer == null) {
       _scheduleUrlDiscovery();
     }
+  }
+
+  // ── Heartbeat ──────────────────────────────────────────────────────────────
+
+  void _startHeartbeat() {
+    _stopHeartbeat();
+    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) => _sendHeartbeat());
+  }
+
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+    _heartbeatTimeoutTimer?.cancel();
+    _heartbeatTimeoutTimer = null;
+    _heartbeatMisses = 0;
+    _heartbeatUrgent = false;
+  }
+
+  /// Checks a "connected" socket now and rebuilds it on the first miss.
+  void checkConnection() {
+    if (socket == null || state.value != SocketState.connected) return;
+    _heartbeatTimeoutTimer?.cancel();
+    _heartbeatTimeoutTimer = null;
+    _sendHeartbeat(urgent: true);
+  }
+
+  /// Rebuilds rather than calling `connect()`: socket.io still believes the dead
+  /// connection is up.
+  void _sendHeartbeat({bool urgent = false}) {
+    final Socket? s = socket;
+    if (s == null || state.value != SocketState.connected || _heartbeatTimeoutTimer != null) return;
+
+    _heartbeatUrgent = urgent;
+    _heartbeatTimeoutTimer = Timer(_heartbeatTimeout, () {
+      _heartbeatTimeoutTimer = null;
+      _heartbeatMisses++;
+      if (!_heartbeatUrgent && _heartbeatMisses < _heartbeatMissLimit) return;
+      Logger.warn(
+          tag: _tag,
+          _heartbeatUrgent
+              ? "Server didn't answer a connection check — rebuilding socket"
+              : "Server missed $_heartbeatMisses heartbeats in a row — rebuilding socket");
+      restartSocket();
+    });
+
+    // Read-only; get-server-config would delete the server's live password. The payload must be
+    // non-null or the server's `(_, cb)` handler never acks.
+    s.emitWithAck("get-fcm-client", {}, ack: (_) {
+      if (!identical(s, socket) || _heartbeatTimeoutTimer == null) return;
+      _heartbeatTimeoutTimer!.cancel();
+      _heartbeatTimeoutTimer = null;
+      _heartbeatMisses = 0;
+      _heartbeatUrgent = false;
+    });
   }
 
   // ── Messaging ──────────────────────────────────────────────────────────────
@@ -626,6 +674,7 @@ class SocketService {
           _resetErrorLog();
           NetworkTasks.onConnect();
           Logger.info("Socket connected successfully to $serverAddress");
+          _startHeartbeat();
         }
       case SocketState.reconnecting:
         if (stateChanged) {
