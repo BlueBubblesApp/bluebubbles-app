@@ -83,11 +83,11 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       });
     }
 
-    controller.focusNode.addListener(() => focusListener(false));
-    controller.subjectFocusNode.addListener(() => focusListener(true));
+    controller.focusNode.addListener(_onFocusChange);
+    controller.subjectFocusNode.addListener(_onSubjectFocusChange);
 
-    controller.textController.addListener(() => textListener(false));
-    controller.subjectTextController.addListener(() => textListener(true));
+    controller.textController.addListener(_onTextChange);
+    controller.subjectTextController.addListener(_onSubjectTextChange);
 
     if (kIsDesktop || kIsWeb) {
       proxyController.addListener(() {
@@ -150,6 +150,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       }
     }
   }
+
+  // Named methods rather than inline closures so dispose() can remove them: tear-offs of the same method on the
+  // same object compare ==, which is how removeListener matches. The focus nodes and text controllers belong to
+  // the ConversationViewController, which can outlive this widget and hand them to the next one.
+  void _onFocusChange() => focusListener(false);
+  void _onSubjectFocusChange() => focusListener(true);
+  void _onTextChange() => textListener(false);
+  void _onSubjectTextChange() => textListener(true);
 
   void focusListener(bool subject) async {
     final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
@@ -319,10 +327,11 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     unawaited(ChatsSvc.setChatTextFieldText(chat, draftText));
     unawaited(ChatsSvc.setChatTextFieldAttachments(chat, draftAttachments));
 
-    controller.focusNode.dispose();
-    controller.subjectFocusNode.dispose();
-    controller.textController.dispose();
-    controller.subjectTextController.dispose();
+    controller.focusNode.removeListener(_onFocusChange);
+    controller.subjectFocusNode.removeListener(_onSubjectFocusChange);
+    controller.textController.removeListener(_onTextChange);
+    controller.subjectTextController.removeListener(_onSubjectTextChange);
+    proxyController.dispose();
     recorderController?.dispose();
     _emojiScrollController.dispose();
     controller.showAttachmentPicker.value = false;
