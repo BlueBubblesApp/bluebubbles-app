@@ -574,6 +574,7 @@ mixin ConnectionPanelHelpersMixin {
                       await SettingsSvc.settings.saveOneAsync('useLocalhost');
                       if (SettingsSvc.settings.localhostPort.value == null) {
                         NetworkTasks.setOriginOverride(null);
+                        SocketSvc.followOrigin();
                       } else {
                         NetworkTasks.detectLocalhost(createSnackbar: true);
                       }

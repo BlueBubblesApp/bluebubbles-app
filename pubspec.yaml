@@ -105,7 +105,6 @@ dependencies:
   image_picker: ^1.2.0
   image_size_getter: ^2.4.1
   in_app_review: ^2.0.11
-  internet_connection_checker_plus: ^3.0.0
   klipy_flutter: ^0.0.3
   languagetool_textfield: ^0.1.1
   launch_at_startup: ^0.5.1
