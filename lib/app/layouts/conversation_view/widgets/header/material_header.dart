@@ -61,7 +61,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
               padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
-                onTap: controller.chat.isGroup
+                onTap: controller.chat.isGroup || kIsDesktop
                     ? () {
                         Navigator.of(context).push(
                           ThemeSwitcher.buildPageRoute(
