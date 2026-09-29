@@ -9,6 +9,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -107,6 +108,10 @@ class SocketService {
   /// that could drift out of sync with those direct writes.
   final Rx<SocketState> state = SocketState.connecting.obs;
   RxString lastError = "".obs;
+
+  /// Whether the server rejected the current password.
+  final RxBool authFailed = false.obs;
+  String? _rejectedPassword;
   Socket? socket;
 
   /// The origin [socket] was built against; a Manager can't change it afterwards.
@@ -278,6 +283,7 @@ class SocketService {
       return;
     }
 
+    if (password != _rejectedPassword) authFailed.value = false;
     Logger.info("Starting socket connection to $serverAddress");
     _dialedOrigin = serverAddress;
 
@@ -584,6 +590,28 @@ class SocketService {
     }
   }
 
+  /// The server rejects a bad password by kicking the socket without a reason; HTTP gives a 401.
+  Future<void> _checkAuth() async {
+    final String attempted = password;
+    try {
+      await HttpSvc.server.ping();
+    } on DioException catch (e) {
+      if (e.response?.statusCode != 401 || attempted != password) return;
+      _rejectedPassword = attempted;
+      authFailed.value = true;
+      handleStatusUpdate(SocketState.error, "Incorrect password");
+    } catch (_) {}
+  }
+
+  /// The password can also be fixed server-side, so a flagged failure is re-checked on connect.
+  Future<void> _clearAuthFailureIfAccepted() async {
+    try {
+      await HttpSvc.server.ping();
+      authFailed.value = false;
+      _rejectedPassword = null;
+    } catch (_) {}
+  }
+
   // ── Heartbeat ──────────────────────────────────────────────────────────────
 
   void _startHeartbeat() {
@@ -675,6 +703,7 @@ class SocketService {
           NetworkTasks.onConnect();
           Logger.info("Socket connected successfully to $serverAddress");
           _startHeartbeat();
+          if (authFailed.value) unawaited(_clearAuthFailureIfAccepted());
         }
       case SocketState.reconnecting:
         if (stateChanged) {
@@ -686,6 +715,8 @@ class SocketService {
           Logger.info("Disconnected from socket at $serverAddress");
           state.value = SocketState.disconnected;
         }
+
+        if (data == 'io server disconnect') unawaited(_checkAuth());
 
         // Concern 1 (socket.io retries) does not cover a disconnect it initiated
         // itself — see [_socketGaveUp]. Hand those to the rediscovery timer, which
