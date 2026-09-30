@@ -560,7 +560,7 @@ class StartupTasks {
       }
 
       SocketSvc.restartSocket();
-    } else if (kIsDesktop) {
+    } else if (kIsDesktop && GetIt.I.isRegistered<SocketService>()) {
       SocketSvc.checkConnection();
     }
 
