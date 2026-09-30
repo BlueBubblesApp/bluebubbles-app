@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:github/github.dart' hide Source;
+import 'package:in_app_update/in_app_update.dart' as play;
 import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:store_checker/store_checker.dart';
@@ -515,6 +516,32 @@ class SettingsService {
     }
   }
 
+  /// Play installs can't use GitHub releases, so let Play download the update in the background instead.
+  Future<void> _checkPlayUpdate() async {
+    try {
+      final info = await play.InAppUpdate.checkForUpdate();
+      final code = info.availableVersionCode?.toString();
+      if (info.updateAvailability != play.UpdateAvailability.updateAvailable ||
+          !info.flexibleUpdateAllowed ||
+          code == null ||
+          PrefsSvc.server.getClientUpdateCheckCode() == code) {
+        return;
+      }
+      // Only prompt once per version, same as the GitHub dialog's OK button.
+      await PrefsSvc.server.setClientUpdateCheckCode(code);
+      if (await play.InAppUpdate.startFlexibleUpdate() != play.AppUpdateResult.success) return;
+      showSnackbar(
+        "Update Downloaded",
+        "Restart BlueBubbles to finish updating",
+        durationMs: 10000,
+        actionLabel: "Restart",
+        onAction: () => play.InAppUpdate.completeFlexibleUpdate(),
+      );
+    } catch (e, s) {
+      Logger.warn("Failed to check Play Store for updates", error: e, trace: s);
+    }
+  }
+
   Future<AppUpdateInfo> checkForUpdate() async {
     final updateDict = await getAppUpdateDict();
     return AppUpdateInfo(
@@ -528,6 +555,9 @@ class SettingsService {
   }
 
   Future<void> checkClientUpdate() async {
+    if (Platform.isAndroid && await StoreChecker.getSource == Source.IS_INSTALLED_FROM_PLAY_STORE) {
+      return _checkPlayUpdate();
+    }
     late AppUpdateInfo updateInfo;
     if (Platform.isAndroid) {
       updateInfo = await AppInterface.checkForUpdate();
