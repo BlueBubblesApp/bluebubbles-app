@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/cache_tuning_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/handle_audit_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/soft_deleted_chats_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
@@ -457,6 +458,21 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     title: "Audit Handles",
                     subtitle: "Scans local handles for a missing originalROWID (the server-side ID used to link "
                         "messages to their sender) and lets you try to repair the affected ones.",
+                    trailing: const NextButton(),
+                  ),
+                ]),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Memory"),
+                SettingsSection(backgroundColor: tileColor, children: [
+                  SettingsTile(
+                    onTap: () => NavigationSvc.pushSettings(context, const CacheTuningPanel()),
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.memories,
+                      materialIcon: Icons.memory,
+                      containerColor: Colors.teal,
+                    ),
+                    title: "Cache Tuning",
+                    subtitle: "Choose how much the app releases when it goes to the background, purge caches by hand, "
+                        "and watch what each purge frees.",
                     trailing: const NextButton(),
                   ),
                 ]),

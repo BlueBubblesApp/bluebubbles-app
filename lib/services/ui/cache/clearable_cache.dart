@@ -171,6 +171,18 @@ class CachePurgeReport {
   }
 }
 
+/// Parses a stored level name. `off`, empty and unknown values map to null,
+/// which the service treats as "do not purge automatically".
+CachePurgeLevel? cachePurgeLevelFromName(String? name) {
+  for (final level in CachePurgeLevel.values) {
+    if (level.name == name) return level;
+  }
+  return null;
+}
+
+/// Inverse of [cachePurgeLevelFromName]; null becomes `off`.
+String cachePurgeLevelName(CachePurgeLevel? level) => level?.name ?? 'off';
+
 /// Human-readable byte count for logs.
 String formatCacheBytes(int bytes) {
   if (bytes < 1024) return '$bytes B';

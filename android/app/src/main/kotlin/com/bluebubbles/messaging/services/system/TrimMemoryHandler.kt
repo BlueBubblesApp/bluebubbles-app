@@ -1,12 +1,12 @@
 package com.bluebubbles.messaging.services.system
 
 import android.content.Context
-import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.MemoryStats
 import com.bluebubbles.messaging.utils.PersistentLog
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -37,13 +37,14 @@ class TrimMemoryHandler : MethodCallHandlerImpl() {
                 return
             }
 
-            val before = sample()
+            val before = MemoryStats.describe()
             engine.dartExecutor.notifyLowMemoryWarning()
             engine.systemChannel.sendMemoryPressureWarning()
             PersistentLog.d(context, Constants.logTag, "$tag: engine purge requested, before: $before")
 
             Handler(Looper.getMainLooper()).postDelayed({
-                PersistentLog.d(context, Constants.logTag, "$tag: after settle: ${sample()} (before: $before)")
+                val after = MemoryStats.describe()
+                PersistentLog.d(context, Constants.logTag, "$tag: after settle: $after (before: $before)")
             }, SETTLE_DELAY_MS)
 
             result.success(true)
@@ -52,17 +53,4 @@ class TrimMemoryHandler : MethodCallHandlerImpl() {
             result.error("TRIM_MEMORY_ERROR", e.message, e)
         }
     }
-
-    /// Debug.getMemoryInfo reads the calling process directly and is not subject to the
-    /// five-minute rate limit ActivityManager.getProcessMemoryInfo has had since Android 10.
-    private fun sample(): String {
-        val info = Debug.MemoryInfo()
-        Debug.getMemoryInfo(info)
-        val graphics = info.getMemoryStat("summary.graphics")?.toLongOrNull() ?: -1L
-        val java = info.getMemoryStat("summary.java-heap")?.toLongOrNull() ?: -1L
-        val native = info.getMemoryStat("summary.native-heap")?.toLongOrNull() ?: -1L
-        return "pss=${mb(info.totalPss.toLong())} graphics=${mb(graphics)} java=${mb(java)} native=${mb(native)}"
-    }
-
-    private fun mb(kb: Long): String = if (kb < 0) "?" else String.format("%.1fMB", kb / 1024.0)
 }

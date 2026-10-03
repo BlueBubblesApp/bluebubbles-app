@@ -217,9 +217,11 @@ while backgrounded is rebuildable: Flutter's decoded-image cache, inline video d
 with per-level purge policies:
 
 - `LifecycleService.close()` calls `CacheSvc.onAppBackgrounded()` on mobile when the app is paused or detached
-  (`moderate` level by default: everything except inline video players).
-- `LifecycleService.didHaveMemoryPressure()` calls `CacheSvc.onMemoryPressure()` (`aggressive` by default), unless
+  (`light` level by default: images trimmed to 25%, engine caches purged).
+- `LifecycleService.didHaveMemoryPressure()` calls `CacheSvc.onMemoryPressure()` (`moderate` by default), unless
   the signal is the echo of an engine purge the service requested itself.
+- Both levels and a per-cache opt-out are persisted settings, editable from Developer Tools → Cache Tuning, so the
+  right amount of purging is found on real devices rather than guessed.
 - Anything can call `CacheSvc.clear(id)`, `trim(id, bytes)`, `clearMany(ids)` or `purge(level)` on demand.
 
 The `engine` cache crosses to Kotlin (`trim-memory` → `TrimMemoryHandler.kt`), which does what

@@ -26,6 +26,7 @@ import com.bluebubbles.messaging.services.system.OpenExistingContactRequestHandl
 import com.bluebubbles.messaging.services.system.PushShareTargetsHandler
 import com.bluebubbles.messaging.services.system.SaveFileToDownloadsHandler
 import com.bluebubbles.messaging.services.system.StartGoogleDuoRequestHandler
+import com.bluebubbles.messaging.services.system.MemoryStatsHandler
 import com.bluebubbles.messaging.services.system.TrimMemoryHandler
 import com.bluebubbles.messaging.services.foreground.StartForegroundServiceHandler
 import com.bluebubbles.messaging.services.foreground.StopForegroundServiceHandler
@@ -132,6 +133,7 @@ class MethodCallHandler {
             StartForegroundServiceHandler.tag -> StartForegroundServiceHandler().handleMethodCall(call, result, context)
             StopForegroundServiceHandler.tag -> StopForegroundServiceHandler().handleMethodCall(call, result, context)
             TrimMemoryHandler.tag -> TrimMemoryHandler().handleMethodCall(call, result, context)
+            MemoryStatsHandler.tag -> MemoryStatsHandler().handleMethodCall(call, result, context)
             else -> {
                 val error = "Could not find method call handler for ${call.method}!"
                 PersistentLog.d(context, Constants.logTag, error)

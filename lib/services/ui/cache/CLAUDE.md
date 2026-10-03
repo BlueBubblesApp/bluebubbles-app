@@ -20,12 +20,25 @@ largest cached process first, and most of what this app holds while backgrounded
 | `engine` | GPU textures, Skia/Impeller resource cache, VM heap pages — via the `trim-memory` method channel (Android only) | no |
 
 ## Levels (default policies)
-- `light` — trim `images` to 25% of current, purge `engine`, leave the rest
-- `moderate` — clear everything except `videoPlayers` (the only cache with a visible rebuild cost). **Default on background.**
-- `aggressive` — clear everything. **Default on memory pressure.**
+- `off` (null) — nothing runs automatically
+- `light` — trim `images` to 25% of current, purge `engine`, leave the rest. **Default on background.**
+- `moderate` — clear everything except `videoPlayers` (the only cache with a visible rebuild cost). **Default on memory pressure.**
+- `aggressive` — clear everything.
 
-Caches a policy does not name get `defaultActions[level]`, so a newly registered cache is covered immediately.
-Tune via `CacheSvc.policies[level][id]`, `CacheSvc.backgroundLevel`, `CacheSvc.memoryPressureLevel`.
+Defaults start at the minor end on purpose: raise them only as device testing shows what each step buys and what
+it costs on resume. Caches a policy does not name get `defaultActions[level]`, so a newly registered cache is
+covered immediately.
+
+## Settings (persisted, `lib/database/global/settings.dart`)
+| Key | Values | Default |
+|-----|--------|---------|
+| `cachePurgeBackgroundLevel` | `off` / `light` / `moderate` / `aggressive` | `light` |
+| `cachePurgeMemoryPressureLevel` | same | `moderate` |
+| `cachePurgeExcludedCaches` | comma-separated cache ids skipped by automatic purges | empty |
+
+`CacheSvc.loadFromSettings()` (extension in `app_caches.dart`) applies them at startup and after every change.
+The Developer Tools → Cache Tuning page (`settings/pages/misc/cache_tuning_panel.dart`) edits them, runs any level
+or single cache by hand, and shows live process memory (`memory-stats` channel) next to the last purge report.
 
 ## Granular use
 ```dart

@@ -16,6 +16,35 @@ import 'package:get_it/get_it.dart';
 /// to their thumbnail instead of driving a disposed controller.
 const String kVideoPlayersEvictedEvent = 'video-players-evicted';
 
+/// Keys in `Settings` that drive the automatic purges. The developer tools
+/// page writes them; [CacheServiceSettings.loadFromSettings] reads them.
+const String kCachePurgeBackgroundLevelKey = 'cachePurgeBackgroundLevel';
+const String kCachePurgeMemoryPressureLevelKey = 'cachePurgeMemoryPressureLevel';
+const String kCachePurgeExcludedCachesKey = 'cachePurgeExcludedCaches';
+
+extension CacheServiceSettings on CacheService {
+  /// Applies the persisted purge levels and exclusions. Called once at startup
+  /// and again whenever the developer tools page changes one of them.
+  void loadFromSettings() {
+    if (!GetIt.I.isRegistered<SettingsService>()) return;
+    final settings = SettingsSvc.settings;
+    backgroundLevel = cachePurgeLevelFromName(settings.cachePurgeBackgroundLevel.value);
+    memoryPressureLevel = cachePurgeLevelFromName(settings.cachePurgeMemoryPressureLevel.value);
+    excludedIds
+      ..clear()
+      ..addAll(parseExcludedCacheIds(settings.cachePurgeExcludedCaches.value));
+    Logger.debug(
+      'Loaded purge settings: background=${cachePurgeLevelName(backgroundLevel)}, '
+      'memoryPressure=${cachePurgeLevelName(memoryPressureLevel)}, excluded=${excludedIds.join(',')}',
+      tag: 'CacheService',
+    );
+  }
+}
+
+/// The exclusion setting is a comma-separated list of cache ids.
+Set<String> parseExcludedCacheIds(String raw) =>
+    raw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+
 /// The caches the main app registers at startup, in the order they are purged.
 ///
 /// Order matters a little: Dart-side caches go first so their memory is

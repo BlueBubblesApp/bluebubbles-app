@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/services/ui/cache/clearable_cache.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 
 // ignore: non_constant_identifier_names
@@ -41,11 +42,22 @@ class CacheService {
 
   final Map<String, ClearableCache> _caches = {};
 
-  /// Level applied by [onAppBackgrounded].
-  CachePurgeLevel backgroundLevel = CachePurgeLevel.moderate;
+  /// Level applied by [onAppBackgrounded]; null disables the automatic purge.
+  ///
+  /// Deliberately starts at the minor end. The plan is to raise it only as
+  /// device testing shows what each step actually buys and costs on resume.
+  CachePurgeLevel? backgroundLevel = CachePurgeLevel.light;
 
-  /// Level applied by [onMemoryPressure].
-  CachePurgeLevel memoryPressureLevel = CachePurgeLevel.aggressive;
+  /// Level applied by [onMemoryPressure]; null disables it.
+  CachePurgeLevel? memoryPressureLevel = CachePurgeLevel.moderate;
+
+  /// Caches that automatic (policy-driven) purges leave alone. Explicit calls
+  /// such as [clear] still work on them. Mutated from settings, see
+  /// `CacheServiceSettings.loadFromSettings`.
+  final Set<String> excludedIds = {};
+
+  /// The most recent purge, for the developer tools page.
+  final Rxn<CachePurgeReport> lastReport = Rxn<CachePurgeReport>();
 
   /// Action for any cache a policy does not name, per level.
   final Map<CachePurgeLevel, CachePurgeAction> defaultActions = {
@@ -146,28 +158,44 @@ class CacheService {
     final actions = <String, CachePurgeAction>{};
     for (final cache in _caches.values) {
       if (!includeDisk && cache.kind == CacheKind.disk) continue;
+      if (excludedIds.contains(cache.id)) {
+        actions[cache.id] = CachePurgeAction.skip;
+        continue;
+      }
       actions[cache.id] = overrides?[cache.id] ?? policy[cache.id] ?? fallback;
     }
     return _run(reason, level, actions);
   }
 
   /// Called by the lifecycle service when the app is backgrounded on mobile.
-  Future<CachePurgeReport> onAppBackgrounded() {
-    return purge(backgroundLevel, reason: 'app backgrounded');
+  /// Returns null when [backgroundLevel] is off.
+  Future<CachePurgeReport?> onAppBackgrounded() async {
+    final level = backgroundLevel;
+    if (level == null) {
+      Logger.debug('Background purge is off; holding caches', tag: _tag);
+      return null;
+    }
+    return purge(level, reason: 'app backgrounded');
   }
 
   /// Called by the lifecycle service on `didHaveMemoryPressure`.
   ///
-  /// Returns null when the signal is the echo of an engine purge this service
-  /// requested itself (see [markEnginePurgeRequested]), which Flutter reports
-  /// back through the same channel as a genuine OS warning.
+  /// Returns null when [memoryPressureLevel] is off, or when the signal is the
+  /// echo of an engine purge this service requested itself (see
+  /// [markEnginePurgeRequested]), which Flutter reports back through the same
+  /// channel as a genuine OS warning.
   Future<CachePurgeReport?> onMemoryPressure() async {
     if (_expectingEnginePressure) {
       _clearEnginePressureFlag();
       Logger.debug('Memory pressure callback matches our own engine purge; not purging again', tag: _tag);
       return null;
     }
-    return purge(memoryPressureLevel, reason: 'memory pressure');
+    final level = memoryPressureLevel;
+    if (level == null) {
+      Logger.debug('Memory pressure purge is off; holding caches', tag: _tag);
+      return null;
+    }
+    return purge(level, reason: 'memory pressure');
   }
 
   /// Caches that purge the engine itself call this right before doing so.
@@ -222,6 +250,7 @@ class CacheService {
 
     stopwatch.stop();
     final report = CachePurgeReport(reason: reason, level: level, entries: entries, elapsed: stopwatch.elapsed);
+    lastReport.value = report;
     if (report.hadErrors) {
       Logger.warn(report.summarize(), tag: _tag);
     } else {
