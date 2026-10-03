@@ -57,9 +57,10 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
 
   Future<String> defaultName() => BackupRestoreActions.defaultDeviceName();
 
-  Future<BackupDestination?> showMethodDialog() async => fetching.value == null
-      ? BackupDestination.local
-      : BackupRestoreDialogs.showBackupDestinationDialog(context);
+  // Cloud is only offered once the server has actually answered; while loading or offline, save locally.
+  Future<BackupDestination?> showMethodDialog() async => fetching.value == false
+      ? BackupRestoreDialogs.showBackupDestinationDialog(context)
+      : BackupDestination.local;
 
   @override
   Widget build(BuildContext context) {
@@ -81,28 +82,11 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         bodySlivers: [
           SliverList(
             delegate: SliverChildListDelegate([
-              if (fetching.value == true)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 100),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text("Getting backups...", style: context.theme.textTheme.labelLarge),
-                        ),
-                        buildProgressIndicator(context, size: 15),
-                      ],
-                    ),
-                  ),
-                )
-              else ...[
-                if (fetching.value == null) _buildOfflineBanner(),
-                _buildSectionHeader("Settings Backups"),
-                _buildBackupSection(BackupKind.settings),
-                _buildSectionHeader("Theme Backups"),
-                _buildBackupSection(BackupKind.theme),
-              ],
+              if (fetching.value == null) _buildOfflineBanner(),
+              _buildSectionHeader("Settings Backups"),
+              _buildBackupSection(BackupKind.settings),
+              _buildSectionHeader("Theme Backups"),
+              _buildBackupSection(BackupKind.theme),
             ]),
           ),
         ]));
@@ -150,7 +134,14 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
     return SettingsSection(
       backgroundColor: tileColor,
       children: [
-        if (items.isEmpty) _buildEmptyState(kind),
+        // Local create/restore stays usable while the cloud list loads; only the list waits on the server.
+        if (items.isEmpty && fetching.value == true)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: buildProgressIndicator(context, size: 15)),
+          )
+        else if (items.isEmpty)
+          _buildEmptyState(kind),
         for (int i = 0; i < items.length; i++) ...[
           if (i > 0) const SettingsDivider(),
           _buildBackupTile(kind, items[i]),
