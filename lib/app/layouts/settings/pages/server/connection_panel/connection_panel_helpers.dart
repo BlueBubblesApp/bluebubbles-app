@@ -168,6 +168,7 @@ mixin ConnectionPanelHelpersMixin {
         if (checked == true) return 'Connected';
         return 'Connecting';
       case 'socket':
+        if (SocketSvc.authFailed.value) return 'Incorrect password';
         return SocketSvc.state.value.name.capitalizeFirst ?? SocketSvc.state.value.name;
       case 'privateApi':
         final enabled = controller.serverDetails.value.privateApiEnabled;
@@ -574,6 +575,7 @@ mixin ConnectionPanelHelpersMixin {
                       await SettingsSvc.settings.saveOneAsync('useLocalhost');
                       if (SettingsSvc.settings.localhostPort.value == null) {
                         NetworkTasks.setOriginOverride(null);
+                        SocketSvc.followOrigin();
                       } else {
                         NetworkTasks.detectLocalhost(createSnackbar: true);
                       }
