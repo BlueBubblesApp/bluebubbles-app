@@ -24,6 +24,18 @@ String? sanitizeServerAddress({String? address}) {
   return uri.toString();
 }
 
+bool isValidServerAddress(String address) {
+  final sanitized = sanitizeServerAddress(address: address);
+  if (sanitized == null) return false;
+
+  final uri = Uri.tryParse(sanitized);
+  if (uri == null) return false;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return false;
+  if (uri.host.isEmpty) return false;
+
+  return true;
+}
+
 Future<int> getOrCreateUniqueId() async {
   int uniqueId = SettingsSvc.settings.firstFcmRegisterDate.value;
   if (uniqueId == 0) {
