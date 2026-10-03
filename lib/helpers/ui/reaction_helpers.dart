@@ -58,6 +58,29 @@ class ReactionTypes {
     "❗": EMPHASIZE,
     "❓": QUESTION,
   };
+
+  static bool checkReactionType(String? type) {
+    if (type == null) return false;
+    String clean = type.replaceAll("-", "");
+    if (toList().contains(clean)) return true;
+    return RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])').hasMatch(clean);
+  }
+
+  static String emojiForReaction(String? type) {
+    if (type == null) return "X";
+    String clean = type.replaceAll("-", "");
+    if (reactionToEmoji.containsKey(clean)) return reactionToEmoji[clean]!;
+    if (checkReactionType(clean)) return clean;
+    return "X";
+  }
+
+  static String verbForReaction(String? type) {
+    if (type == null) return "reacted to";
+    if (reactionToVerb.containsKey(type)) return reactionToVerb[type]!;
+    bool isRemoval = type.startsWith("-");
+    String emoji = type.replaceAll("-", "");
+    return isRemoval ? "removed $emoji from" : "reacted with $emoji to";
+  }
 }
 
 List<Message> getUniqueReactionMessages(List<Message> messages) {

@@ -181,7 +181,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
               child: Center(
                 child: Builder(builder: (context) {
                   final text = Text(
-                    ReactionTypes.reactionToEmoji[reactionType] ?? "X",
+                    ReactionTypes.emojiForReaction(reactionType),
                     style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
                     textAlign: TextAlign.center,
                   );
@@ -238,16 +238,24 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                           child: Padding(
                         padding:
                             const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0)),
-                        child: SvgPicture.asset(
-                          'assets/reactions/$reactionType-black.svg',
-                          colorFilter: ColorFilter.mode(
-                              reactionType == "love"
-                                  ? Colors.pink
-                                  : (reactionIsFromMe
-                                      ? context.theme.colorScheme.onPrimary
-                                      : context.theme.colorScheme.onSurfaceVariant),
-                              BlendMode.srcIn),
-                        ),
+                        child: ReactionTypes.toList().contains(reactionType.replaceAll("-", ""))
+                            ? SvgPicture.asset(
+                                'assets/reactions/$reactionType-black.svg',
+                                colorFilter: ColorFilter.mode(
+                                    reactionType == "love"
+                                        ? Colors.pink
+                                        : (reactionIsFromMe
+                                            ? context.theme.colorScheme.onPrimary
+                                            : context.theme.colorScheme.onSurfaceVariant),
+                                    BlendMode.srcIn),
+                              )
+                            : Center(
+                                child: Text(
+                                  ReactionTypes.emojiForReaction(reactionType),
+                                  style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                       )),
                     ));
               })),
@@ -341,7 +349,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
         child: Center(
           child: Builder(builder: (ctx) {
             final text = Text(
-              ReactionTypes.reactionToEmoji[rType] ?? "X",
+              ReactionTypes.emojiForReaction(rType),
               style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
               textAlign: TextAlign.center,
             );
