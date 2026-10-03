@@ -4,6 +4,11 @@
 - `contact_avatar_widget.dart` — single contact avatar (initials, photo, gradient color, typing indicator)
 - `contact_avatar_group_widget.dart` — stacked multi-contact avatar for group chats
 
+Every avatar file decodes at `ContactAvatarWidget.avatarDecodeSize` (256 px), group photos included — never draw one
+with a bare `FileImage`, and keep the conversation list warm-up's `ResizeImage` params identical or its precache is
+never hit. Chat backgrounds go through `wallpaper/static_wallpaper_image.dart` for the same reason: decoded at window
+size, one provider shape for draw, precache and eviction.
+
 Always use these for any handle/contact avatar — don't build custom avatar UIs from scratch.
 Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `HexColor(handle!.color!)`.
 

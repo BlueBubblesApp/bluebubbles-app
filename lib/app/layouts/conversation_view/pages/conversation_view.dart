@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/messages_view_components.dart';
@@ -11,7 +12,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/screen
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/window_effect.dart';
@@ -50,6 +51,10 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   late final Widget _bodyContent;
   late final PreferredSizeWidget _appBar;
 
+  /// The background this view warmed into the image cache, kept so dispose can
+  /// evict exactly that entry.
+  ImageProvider? _backgroundProvider;
+
   Chat get chat => widget.chat;
 
   void _onPanUpdate(DragUpdateDetails details) {
@@ -84,7 +89,12 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     final bgPath = ChatsSvc.getChatState(chat.guid)?.customBackgroundPath.value;
     if (bgPath != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) precacheImage(FileImage(File(bgPath)), context);
+        if (!mounted) return;
+        // Same resize parameters as GradientBackgroundWrapper, or this warms a
+        // cache entry the wrapper never reads and the file decodes twice.
+        final provider = chatBackgroundImageProvider(bgPath, context);
+        _backgroundProvider = provider;
+        precacheImage(provider, context);
       });
     }
   }
@@ -207,6 +217,11 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void dispose() {
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
+    // Drop the decoded background with the view. At 10 MB or more per chat it
+    // would otherwise sit in the image cache until size pressure evicted it.
+    final background = _backgroundProvider;
+    _backgroundProvider = null;
+    if (background != null) unawaited(background.evict());
     super.dispose();
   }
 
