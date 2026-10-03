@@ -248,10 +248,6 @@
             <meta-data android:name="WindowManagerPreference:SuppressWindowControlNavigationButton" android:value="true" />
 
             <meta-data
-                android:name="io.flutter.embedding.android.EnableImpeller"
-                android:value="false" />
-
-            <meta-data
                 android:name="io.flutter.embedding.android.DisableMergedPlatformUIThread"
                 android:value="false" />
         </activity>
