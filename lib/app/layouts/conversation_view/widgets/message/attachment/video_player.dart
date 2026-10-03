@@ -235,6 +235,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   final RxBool muted = SettingsSvc.settings.startVideosMuted.value.obs;
   final RxDouble aspectRatio = 1.0.obs;
   final RxBool firstFrameReady = false.obs;
+  StreamSubscription? _evictionSubscription;
   // Path to the generated thumbnail file on disk -- deliberately never held as decoded bytes in
   // memory; always rendered via Image.file.
   String? thumbnailPath;
@@ -246,6 +247,14 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
 
     // Seed layout from the DB dimensions so the box doesn't resize once the video decodes
     aspectRatio.value = attachment.aspectRatio;
+
+    // The cache service may dispose our controller out from under us while the app is
+    // backgrounded; drop back to the thumbnail rather than drive a dead player.
+    _evictionSubscription = EventDispatcherSvc.stream.listen((event) {
+      if (event.type != kVideoPlayersEvictedEvent) return;
+      if (cvController != null && event.data != cvController!.chat.guid) return;
+      _onControllerEvicted();
+    });
 
     // Check for cached controller first
     VideoController? cachedController = cvController?.videoPlayers[attachment.guid];
@@ -276,6 +285,26 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
         _seedAspectRatioFromThumbnail();
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _evictionSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Our cached controller was disposed by the cache service. Forget it and return to
+  /// the lazy thumbnail state; the next tap builds a fresh player from disk. Desktop has
+  /// no thumbnail path, so it rebuilds eagerly, as it does on first mount.
+  void _onControllerEvicted() {
+    if (videoController == null) return;
+    videoController = null;
+    hasListener = false;
+    firstFrameReady.value = false;
+    showPlayPauseOverlay.value = true;
+    if (!mounted) return;
+    setState(() {});
+    if (kIsDesktop || kIsWeb) initializeController();
   }
 
   Future<void> _playInline() async {

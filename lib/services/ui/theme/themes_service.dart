@@ -593,6 +593,12 @@ class ThemesService {
     _adaptiveThemeCache.remove(path);
   }
 
+  static int get adaptiveThemeCacheSize => _adaptiveThemeCache.length;
+
+  /// Drops every generated set. Used by the cache service; a set is regenerated
+  /// from its image the next time it is needed.
+  static void clearAllAdaptiveThemeCaches() => _adaptiveThemeCache.clear();
+
   /// Generates all 9 Material You variant [ThemeData] pairs (light + dark) by
   /// extracting the dominant seed color from the image at [imagePath] and
   /// feeding it through [CorePalette.of] + [materialYouTheme].

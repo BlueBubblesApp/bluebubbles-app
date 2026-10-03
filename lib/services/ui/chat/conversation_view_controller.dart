@@ -225,6 +225,21 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     controller.player.dispose();
   }
 
+  /// Disposes every cached inline video player and returns how many were released.
+  ///
+  /// Called by the cache service when the app is backgrounded or memory is low. A
+  /// `VideoPlayer` widget still holding one of these listens for the
+  /// `video-players-evicted` event and falls back to its thumbnail.
+  int disposeVideoPlayers() {
+    final released = videoPlayers.length;
+    for (final controller in videoPlayers.values) {
+      controller.player.pause();
+      controller.player.dispose();
+    }
+    videoPlayers.clear();
+    return released;
+  }
+
   Future<void> scrollToBottom() async {
     if (scrollController.positions.isNotEmpty && scrollController.positions.first.extentBefore > 0) {
       await scrollController.animateTo(

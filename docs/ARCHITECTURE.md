@@ -206,3 +206,22 @@ If adding a new service, place it at the correct position in `startup_tasks.dart
 ## Event Bus
 
 `lib/services/backend_ui_interop/event_dispatcher.dart` is a broadcast `StreamController<Tuple2<String, dynamic>>`. Backend services emit named events; UI widgets subscribe in `initState()` and cancel in `dispose()`. This decouples the backend from the UI without needing shared observable state for one-off cross-cutting events (e.g., "chat-updated"). Use sparingly, only when absolutely necessary.
+
+---
+
+## Memory & Cache Purging
+
+Android's low memory killer evicts cached (backgrounded) processes largest-first, and most of what this app holds
+while backgrounded is rebuildable: Flutter's decoded-image cache, inline video decoders, GPU textures. The
+`CacheService` (`lib/services/ui/cache/`, shorthand `CacheSvc`) is a registry of `ClearableCache` implementations
+with per-level purge policies:
+
+- `LifecycleService.close()` calls `CacheSvc.onAppBackgrounded()` on mobile when the app is paused or detached
+  (`moderate` level by default: everything except inline video players).
+- `LifecycleService.didHaveMemoryPressure()` calls `CacheSvc.onMemoryPressure()` (`aggressive` by default), unless
+  the signal is the echo of an engine purge the service requested itself.
+- Anything can call `CacheSvc.clear(id)`, `trim(id, bytes)`, `clearMany(ids)` or `purge(level)` on demand.
+
+The `engine` cache crosses to Kotlin (`trim-memory` → `TrimMemoryHandler.kt`), which does what
+`FlutterActivityAndFragmentDelegate` does on an OS trim callback and logs process PSS before/after to `native.log`.
+See `lib/services/ui/cache/CLAUDE.md` for the cache list, levels, and how to add one.
