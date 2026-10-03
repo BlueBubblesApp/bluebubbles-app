@@ -16,7 +16,7 @@ class Share {
   /// Share a file with other apps.
   static void files(List<String> filepaths, {String? mimeType}) async {
     if (kIsDesktop && Platform.isLinux) {
-      showSnackbar("Unsupported", "Can't share files on Linux yet!");
+      showSnackbar("Unsupported", "Can't share files on Linux yet!", type: SnackbarType.error);
     } else {
       // Windows' StorageFile rejects '/' separators and its share sheet requires a title, else the package is empty.
       await SharePlus.instance.share(ShareParams(

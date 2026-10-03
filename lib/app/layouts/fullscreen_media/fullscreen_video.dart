@@ -226,7 +226,6 @@ class _FullscreenVideoState extends State<FullscreenVideo> with AutomaticKeepAli
   }
 
   void refreshAttachment() {
-    showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
     AttachmentsSvc.redownloadAttachment(widget.attachment, onComplete: (file) async {
       if (hasDisposed) return;
       hasListener = false;

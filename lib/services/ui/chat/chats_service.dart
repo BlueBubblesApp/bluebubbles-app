@@ -832,7 +832,7 @@ class ChatsService {
       await ChatInterface.markAllChatsRead(chatIds: chatIds, shouldMarkOnServer: shouldMark);
     } catch (e, stack) {
       Logger.error("Error marking all chats as read", error: e, trace: stack, tag: "ChatsService");
-      showToast("Failed to mark all chats as read!");
+      showToast("Failed to mark all chats as read!", isError: true);
     }
   }
 

@@ -98,7 +98,7 @@ class NotificationSettingsDialog extends StatelessWidget {
                                       .copyWith(color: context.theme.colorScheme.primary)),
                               onPressed: () {
                                 if (existing.isEmpty) {
-                                  showSnackbar("Error", "Please select at least one person!");
+                                  showSnackbar("Error", "Please select at least one person!", type: SnackbarType.error);
                                   return;
                                 }
                                 ChatsSvc.setChatMuted(chat, false);

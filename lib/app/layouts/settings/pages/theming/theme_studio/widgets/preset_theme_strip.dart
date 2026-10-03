@@ -873,9 +873,9 @@ class _ImportDialogState extends State<_ImportDialog> {
     if (!mounted) return;
     Navigator.of(context).pop();
     if (theme != null) {
-      showSnackbar("Imported", "Theme \"${theme.name}\" imported successfully");
+      showSnackbar("Imported", "Theme \"${theme.name}\" imported successfully", type: SnackbarType.success);
     } else {
-      showSnackbar("Error", "Could not parse theme — make sure it's a valid exported JSON");
+      showSnackbar("Error", "Could not parse theme — make sure it's a valid exported JSON", type: SnackbarType.error);
     }
   }
 

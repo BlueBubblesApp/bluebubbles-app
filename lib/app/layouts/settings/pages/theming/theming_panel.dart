@@ -396,7 +396,8 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                     Logger.error("Failed to start notification listener for music theme",
                                         error: e, trace: s);
                                     showSnackbar("Error",
-                                        "Something went wrong, please ensure you granted the permission correctly!");
+                                        "Something went wrong, please ensure you granted the permission correctly!",
+                                        type: SnackbarType.error);
                                   }
                                 } else {
                                   var allThemes = ThemeStruct.getThemes();
@@ -542,11 +543,12 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                 );
                                 await fontLoader.load();
                                 FilesystemSvc.fontExistsOnDisk.value = true;
-                                return showSnackbar("Notice", "Font loaded");
+                                return;
                               } catch (e, s) {
                                 Logger.error("Failed to load font file", error: e, trace: s);
                                 return showSnackbar("Error",
-                                    "Failed to load font file. Please make sure it is a valid ttf and under 50mb.");
+                                    "Failed to load font file. Please make sure it is a valid ttf and under 50mb.",
+                                    type: SnackbarType.error);
                               }
                             }
 

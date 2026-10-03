@@ -126,7 +126,8 @@ class _BatteryOptimizationCheckState extends State<BatteryOptimizationCheck> wit
                       final optimizationsDisabled = await disableBatteryOptimizations();
                       await _refreshStatus();
                       if (!optimizationsDisabled) {
-                        showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
+                        showSnackbar("Error", "Battery optimizations were not disabled. Please try again.",
+                            type: SnackbarType.error);
                       }
                     },
                     child: Shimmer.fromColors(

@@ -75,7 +75,7 @@ class SettingsItemsActions {
       }
 
       closeDialog();
-      showSnackbar("Error", "Failed to export contacts to server");
+      showSnackbar("Error", "Failed to export contacts to server", type: SnackbarType.error);
       return Response(requestOptions: RequestOptions(path: ''));
     });
   }

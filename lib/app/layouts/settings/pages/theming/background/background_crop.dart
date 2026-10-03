@@ -107,7 +107,7 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
           });
         }
       case CropFailure(:final cause, :final stackTrace):
-        showSnackbar("Error", "Failed to crop image");
+        showSnackbar("Error", "Failed to crop image", type: SnackbarType.error);
         Logger.error(cause);
         Logger.error(stackTrace);
     }
@@ -145,7 +145,6 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     Navigator.of(context).pop(file.path);
-    showSnackbar("Notice", "Custom background saved successfully");
   }
 
   @override

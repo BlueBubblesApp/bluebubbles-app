@@ -199,11 +199,11 @@ class ThemeManagementSection extends StatelessWidget {
   Future<void> _doRename(BuildContext dialogCtx, BuildContext pageCtx, String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      showSnackbar("Error", "Name cannot be empty");
+      showSnackbar("Error", "Name cannot be empty", type: SnackbarType.error);
       return;
     }
     if (ThemeStruct.findOne(trimmed) != null) {
-      showSnackbar("Error", "A theme named \"$trimmed\" already exists");
+      showSnackbar("Error", "A theme named \"$trimmed\" already exists", type: SnackbarType.error);
       return;
     }
     Navigator.of(dialogCtx, rootNavigator: true).pop();
@@ -229,7 +229,7 @@ class ThemeManagementSection extends StatelessWidget {
         await file.writeAsString(json);
         await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
       } catch (e) {
-        showSnackbar("Error", "Could not export theme: $e");
+        showSnackbar("Error", "Could not export theme: $e", type: SnackbarType.error);
       }
     }
   }
@@ -337,7 +337,7 @@ class _ExportDialog extends StatelessWidget {
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: json));
             if (context.mounted) {
-              showToast("Theme JSON copied to clipboard");
+              showCopiedToast("Theme JSON copied to clipboard");
               Navigator.of(context).pop();
             }
           },

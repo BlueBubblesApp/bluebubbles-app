@@ -53,7 +53,7 @@ Future<void> openFullCamera(
 }) async {
   bool granted = (await Permission.camera.request()).isGranted;
   if (!granted) {
-    showSnackbar("Error", "Camera access was denied!");
+    showSnackbar("Error", "Camera access was denied!", type: SnackbarType.error);
     return;
   }
 
@@ -61,7 +61,7 @@ Future<void> openFullCamera(
   if (type == 'video') {
     final micGranted = (await Permission.microphone.request()).isGranted;
     if (!micGranted) {
-      showSnackbar("Error", "Microphone access was denied!");
+      showSnackbar("Error", "Microphone access was denied!", type: SnackbarType.error);
       return;
     }
   }

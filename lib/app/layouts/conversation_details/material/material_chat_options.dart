@@ -567,7 +567,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         if (response.statusCode == 200) {
           showSnackbar("Notice", "Left chat successfully!");
         } else {
-          showSnackbar("Error", "Failed to leave chat!");
+          showSnackbar("Error", "Failed to leave chat!", type: SnackbarType.error);
         }
       },
     );
@@ -585,7 +585,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true)).reversed.where((e) => e.dateCreated!.isAfter(date));
     if (messages.isEmpty) {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      showSnackbar("Error", "No messages found!");
+      showSnackbar("Error", "No messages found!", type: SnackbarType.error);
       return;
     }
 
@@ -606,7 +606,7 @@ class ExpressiveChatOptions extends StatelessWidget {
       await file.create(recursive: true);
       await file.writeAsString(lines.join('\n'));
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      showSnackbar("Success", "Saved transcript to the downloads folder");
+      showSnackbar("Success", "Saved transcript to the downloads folder", type: SnackbarType.success);
       return;
     }
 
@@ -677,6 +677,6 @@ class ExpressiveChatOptions extends StatelessWidget {
     await file.create(recursive: true);
     await file.writeAsBytes(await doc.save());
     if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-    showSnackbar("Success", "Saved transcript to the downloads folder");
+    showSnackbar("Success", "Saved transcript to the downloads folder", type: SnackbarType.success);
   }
 }

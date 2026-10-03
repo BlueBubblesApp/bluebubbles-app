@@ -14,7 +14,7 @@ void launchIntent(bool video, String address) async {
       try {
         await MethodChannelSvc.actions.googleDuo(number: address);
       } catch (_) {
-        showSnackbar("Error", "Something went wrong, Google Duo may not be installed!");
+        showSnackbar("Error", "Something went wrong, Google Duo may not be installed!", type: SnackbarType.error);
       }
     } else {
       launchUrl(Uri(scheme: "tel", path: address));

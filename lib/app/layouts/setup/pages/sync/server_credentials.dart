@@ -565,11 +565,12 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
     if (!status.isPermanentlyDenied && !status.isGranted) {
       final result = await Permission.camera.request();
       if (!result.isGranted) {
-        showSnackbar("Error", "Camera permission required for QR scanning!");
+        showSnackbar("Error", "Camera permission required for QR scanning!", type: SnackbarType.error);
         return;
       }
     } else if (status.isPermanentlyDenied) {
-      showSnackbar("Error", "Camera permission permanently denied, please modify permissions from Android settings.");
+      showSnackbar("Error", "Camera permission permanently denied, please modify permissions from Android settings.",
+          type: SnackbarType.error);
       return;
     }
 
