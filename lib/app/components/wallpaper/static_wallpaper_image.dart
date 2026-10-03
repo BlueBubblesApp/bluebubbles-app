@@ -11,9 +11,9 @@ import 'package:universal_io/io.dart';
 /// its longer axis; the other axis follows the image's own aspect ratio and ends
 /// up at least window-sized for any photo-shaped image.
 ///
-/// Every consumer (the wrapper, the precache on conversation open, the eviction
-/// on close) must build the provider through here. The image cache keys on the
-/// exact resize parameters, and a mismatch means a second full decode.
+/// Every consumer (the wrapper and the precache on conversation open) must build
+/// the provider through here. The image cache keys on the exact resize
+/// parameters, and a mismatch means a second full decode.
 ImageProvider chatBackgroundImageProvider(String path, BuildContext context) {
   return chatBackgroundImageProviderForWindow(
     path,
