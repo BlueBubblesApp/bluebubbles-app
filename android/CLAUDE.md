@@ -22,28 +22,33 @@ Flutter side: `lib/services/backend/java_dart_interop/`
 
 ## Build Config
 - Compile/Target SDK: 36 | Min SDK: 26 | NDK: 28.2 | Java/Kotlin compat: version 21
-- Gradle 9.5.0 | AGP 8.11.1 | KGP 2.2.20 | Gradle with Kotlin plugin
+- Gradle 9.8.0 | AGP 9.4.1 | KGP 2.4.20 | Gradle with Kotlin plugin
 
 Targeting API 36 means Android 16 behavior changes apply: edge-to-edge is mandatory
 (no opt-out), predictive back is on by default, and on `sw600dp`+ screens the system
 ignores orientation/resizability restrictions — including
 `SystemChrome.setPreferredOrientations` from Dart.
 
-### Version ceilings — don't bump these blindly
+### AGP 9 and Kotlin — don't flip `builtInKotlin` blindly
 
-**Gradle is capped at 9.5.x.** Gradle 9.6.0 removed the internal API
-`org.gradle.api.problems.internal.InternalProblems`, which AGP 8.x depends on. On Gradle
-9.6+ the build fails at `apply plugin: 'com.android.application'`. Raising Gradle past 9.5
-requires AGP 9 first.
+The build runs on AGP 9 with `android.builtInKotlin=false` and `android.newDsl=false` in
+`gradle.properties`. Both opt-outs stop working in AGP 10.
 
-**AGP is capped at 8.x until Flutter 3.47+.** AGP 9 has no workable configuration here:
-- `android.builtInKotlin=false` — AGP-9-aware plugins break. `file_picker` (and others)
-  deliberately skip applying KGP on AGP 9 and expect built-in Kotlin to compile their
-  `.kt` sources; with it off, nothing does, and `FilePickerPlugin` fails to resolve.
-- `android.builtInKotlin=true` — every plugin still applying `kotlin-android` breaks, since
-  AGP 9 rejects that plugin. Flutter 3.44's Gradle plugin only *detects* those
-  (`FlutterPluginUtils.detectApplyingKotlinGradlePlugin`) and tells you to report them
-  upstream; the compatibility shim that actually allows KGP under AGP 9 lands in 3.47.
-
-`android.newDsl=false` and `android.builtInKotlin=false` in `gradle.properties` are the
-AGP 9 opt-outs, staged ahead of that move. Both stop working in AGP 10.
+- **Why `builtInKotlin=false`:** with it on, AGP 9 rejects every module that applies
+  `kotlin-android`. That covers the app itself and ~30 plugins, which Flutter lists on each
+  build ("Your app uses the following plugins that apply Kotlin Gradle Plugin"). Turn it on
+  only when that list is empty, then remove `kotlin-android` from `app/build.gradle` and
+  the KGP entry from `settings.gradle`.
+- **Plugins that skip KGP on AGP 9:** Flutter (3.47+) applies `kotlin-android` to any plugin
+  that doesn't, so it has to stay declared in `settings.gradle`. Flutter detects that by
+  text-matching each plugin's build file, so a plugin that applies KGP only behind an `if`
+  slips through. `file_picker` 11.x does this; the root `build.gradle` applies KGP to it
+  directly and sets its Kotlin `jvmTarget`. Without that, the app fails with
+  `FilePickerPlugin` "cannot find symbol".
+- **Kotlin language floor:** KGP 2.4 rejects `languageVersion` below 2.0, so the root
+  `build.gradle` forces 2.0 on all modules (some plugins pin 1.7/1.8).
+- **Native libs:** AGP 9 rejects `android:extractNativeLibs` in the manifest; compressed
+  native libs are set with `packaging.jniLibs.useLegacyPackaging` instead.
+- **Gradle vs AGP:** AGP 8.x can't run on Gradle 9.6+ (Gradle removed
+  `org.gradle.api.problems.internal.InternalProblems`), so never downgrade AGP without
+  also dropping Gradle to 9.5.

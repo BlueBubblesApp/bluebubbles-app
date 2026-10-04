@@ -86,6 +86,12 @@ android {
     // Fix for META-INF/versions/9/OSGI-INF/MANIFEST.MF duplicate file error
     // This is a known issue with the latest version of OkHttp.
     packaging {
+        // Store native libs compressed and extract them at install, which keeps the APK
+        // smaller. This used to be android:extractNativeLibs="true" in the manifest, which
+        // AGP 9 rejects in favor of this setting.
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF']
         }
