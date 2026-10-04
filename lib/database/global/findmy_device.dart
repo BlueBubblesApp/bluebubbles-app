@@ -48,6 +48,8 @@ class FindMyDevice {
     required this.crowdSourcedLocation,
     required this.role,
     required this.lostModeMetadata,
+    required this.groupIdentifier,
+    required this.groupName,
   });
 
   final String? deviceModel;
@@ -98,6 +100,18 @@ class FindMyDevice {
   final dynamic crowdSourcedLocation;
   final Map<String, dynamic>? role;
   final Map<String, dynamic>? lostModeMetadata;
+  final String? groupIdentifier;
+  final String? groupName;
+
+  /// Apple reports some accessories as a component of a parent accessory: an
+  /// AirPods Max earpiece arrives as its own entry named "single" with
+  /// [groupName] set to the headphones it belongs to. Find My displays the
+  /// group, so prefer [groupName] and keep [name] only as a fallback.
+  String? get displayName => (groupName?.isNotEmpty ?? false) ? groupName : name;
+
+  /// True when this entry is a component of another accessory rather than a
+  /// standalone item the user owns.
+  bool get isGroupedComponent => (groupIdentifier?.isNotEmpty ?? false) && (groupName?.isNotEmpty ?? false);
 
   factory FindMyDevice.fromJson(Map<String, dynamic> json) => FindMyDevice(
         deviceModel: json["deviceModel"],
@@ -150,6 +164,8 @@ class FindMyDevice {
         crowdSourcedLocation: json["crowdSourcedLocation"],
         role: json["role"],
         lostModeMetadata: json["lostModeMetadata"],
+        groupIdentifier: json["groupIdentifier"],
+        groupName: json["groupName"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -199,6 +215,8 @@ class FindMyDevice {
         "maxMsgChar": maxMsgChar,
         "deviceClass": deviceClass,
         "crowdSourcedLocation": crowdSourcedLocation,
+        "groupIdentifier": groupIdentifier,
+        "groupName": groupName,
       };
 }
 

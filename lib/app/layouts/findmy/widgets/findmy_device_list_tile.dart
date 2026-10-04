@@ -24,7 +24,7 @@ class FindMyDeviceListTile extends StatelessWidget {
       final hideContactInfo = shouldRedactFindMyContactInfo();
 
       final displayName =
-          hideContactInfo ? (isItem ? "Item" : "Device") : (item.name ?? (isItem ? "Unknown Item" : "Unknown Device"));
+          hideContactInfo ? (isItem ? "Item" : "Device") : (item.displayName ?? (isItem ? "Unknown Item" : "Unknown Device"));
 
       final displayLocation = hideContactInfo
           ? "Location"

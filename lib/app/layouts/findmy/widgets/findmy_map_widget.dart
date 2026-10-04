@@ -101,7 +101,7 @@ class FindMyMapWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(hideContactInfo ? "Device" : (item.name ?? "Unknown Device"),
+              Text(hideContactInfo ? "Device" : (item.displayName ?? "Unknown Device"),
                   style: context.theme.textTheme.labelLarge),
               Text(
                   hideContactInfo

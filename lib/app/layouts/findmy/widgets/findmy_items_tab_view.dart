@@ -15,10 +15,19 @@ class FindMyItemsTabView extends StatelessWidget {
     return Obx(() {
       final allItems = controller.devices.where((item) => item.isConsideredAccessory).toList();
 
+      // Apple reports some accessories as a component of a parent accessory: an
+      // AirPods Max earpiece arrives as its own entry named "single" carrying
+      // the headphones' groupName. Find My shows one row per accessory, so drop
+      // components whose parent is already listed.
+      final parentNames =
+          allItems.where((item) => !item.isGroupedComponent).map((item) => item.name).whereType<String>().toSet();
+      final items =
+          allItems.where((item) => !(item.isGroupedComponent && parentNames.contains(item.groupName))).toList();
+
       final itemsWithLocation =
-          allItems.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null).toList();
+          items.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) != null).toList();
       final itemsWithoutLocation =
-          allItems.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
+          items.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
 
       return SliverList(
         delegate: SliverChildListDelegate([
