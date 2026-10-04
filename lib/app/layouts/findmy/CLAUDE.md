@@ -3,6 +3,7 @@
 ## Files
 - `findmy_page.dart` — main screen (map + list tabs)
 - `findmy_controller.dart` — state and logic: location polling, device/friend tracking
+- `findmy_friend_sort.dart` — coordinate validation and deterministic nearest-first friend ordering
 - `findmy_location_clipper.dart` — custom `CustomClipper` for location shape
 - `findmy_pin_clipper.dart` — custom `CustomClipper` for map pin shape
 

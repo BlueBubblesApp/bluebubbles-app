@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_friend_sort.dart';
 import 'package:bluebubbles/app/wrappers/trackpad_bug_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -18,15 +19,37 @@ class FindMyMapWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TrackpadBugWrapper(builder: (context, bugDetected) {
-      return Obx(() => FlutterMap(
+      return Obx(() {
+        final currentLocation = controller.location.value;
+        final currentCenter = isUsableFindMyCoordinate(currentLocation?.latitude, currentLocation?.longitude)
+            ? LatLng(currentLocation!.latitude, currentLocation.longitude)
+            : null;
+        LatLng? markerCenter;
+        for (final marker in controller.markers.values) {
+          if (isUsableFindMyCoordinate(marker.point.latitude, marker.point.longitude)) {
+            markerCenter = marker.point;
+            break;
+          }
+        }
+        // Wait for GPS before falling back to a marker, so the map doesn't open elsewhere and then jump.
+        final initialCenter = currentCenter ?? (controller.resolvingCurrentLocation.value ? null : markerCenter);
+
+        if (initialCenter == null) {
+          final isLoading = controller.resolvingCurrentLocation.value ||
+              controller.fetching.value == true ||
+              controller.fetching2.value == true;
+          return Center(
+            child: isLoading ? const CircularProgressIndicator() : const Text("Location unavailable"),
+          );
+        }
+
+        return FlutterMap(
             mapController: controller.mapController,
             options: MapOptions(
-              initialZoom: 5.0,
+              initialZoom: currentCenter != null ? 10.0 : 5.0,
               minZoom: 1.0,
               maxZoom: 18.0,
-              initialCenter: controller.location.value == null
-                  ? const LatLng(0, 0)
-                  : LatLng(controller.location.value!.latitude, controller.location.value!.longitude),
+              initialCenter: initialCenter,
               onTap: (_, _) => controller.popupController.hideAllPopups(),
               keepAlive: true,
               interactionOptions: InteractionOptions(
@@ -62,7 +85,8 @@ class FindMyMapWidget extends StatelessWidget {
                 ],
               ),
             ],
-          ));
+          );
+      });
     });
   }
 

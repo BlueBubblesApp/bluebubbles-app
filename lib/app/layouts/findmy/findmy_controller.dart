@@ -49,6 +49,7 @@ class FindMyController extends GetxController {
   final RxBool refreshing2 = false.obs;
   final RxBool canRefresh = false.obs;
   final RxBool hasMovedToCurrentLocation = false.obs;
+  final RxBool resolvingCurrentLocation = true.obs;
 
   StreamSubscription? locationSub;
   Timer? _refreshTimer;
@@ -94,7 +95,8 @@ class FindMyController extends GetxController {
     for (final friend in friendsWithLocation) {
       buildFriendMarker(friend);
     }
-    for (final device in devices.where((e) => e.location?.latitude != null && e.location?.longitude != null)) {
+    for (final device in devices.where((e) =>
+        isUsableFindMyCoordinate(e.location?.latitude, e.location?.longitude))) {
       buildDeviceMarker(device);
     }
     markers.refresh();
@@ -164,26 +166,35 @@ class FindMyController extends GetxController {
       }
 
       if (granted == LocationPermission.whileInUse || granted == LocationPermission.always) {
-        Geolocator.getCurrentPosition().then((loc) {
+        Geolocator.getCurrentPosition(locationSettings: const LocationSettings(timeLimit: Duration(seconds: 10)))
+            .then((loc) {
           if (!_isAlive) return;
           location.value = loc;
           _updateFriendLists();
           buildLocationMarker(location.value!);
           if (!kIsDesktop && locationSub == null) {
-            locationSub = Geolocator.getPositionStream().listen((event) {
+            locationSub = Geolocator.getPositionStream().listen((event) async {
               if (!_isAlive) return;
               location.value = event;
               _updateFriendLists();
               buildLocationMarker(event);
 
               if (!hasMovedToCurrentLocation.value) {
+                if (!completer.isCompleted) await completer.future;
+                if (!_isAlive) return;
                 mapController.move(LatLng(event.latitude, event.longitude), 10);
                 hasMovedToCurrentLocation.value = true;
               }
             });
           }
-        });
+        }).catchError((e) {
+          Logger.warn("Failed to get current location", error: e, tag: 'FindMyController');
+        }).whenComplete(() => resolvingCurrentLocation.value = false);
+      } else {
+        resolvingCurrentLocation.value = false;
       }
+    } else {
+      resolvingCurrentLocation.value = false;
     }
 
     // Fetch friends data
@@ -252,7 +263,8 @@ class FindMyController extends GetxController {
           }
         }
 
-        for (FindMyDevice e in devices.where((e) => e.location?.latitude != null && e.location?.longitude != null)) {
+        for (FindMyDevice e in devices.where((e) =>
+            isUsableFindMyCoordinate(e.location?.latitude, e.location?.longitude))) {
           buildDeviceMarker(e);
         }
         fetching.value = false;
@@ -415,6 +427,7 @@ class FindMyController extends GetxController {
     _hideContactInfoListener?.cancel();
     _findMyLocationListener?.cancel();
     locationSub?.cancel();
+    if (!completer.isCompleted) completer.complete();
     mapController.dispose();
     popupController.dispose();
     tabController?.dispose();

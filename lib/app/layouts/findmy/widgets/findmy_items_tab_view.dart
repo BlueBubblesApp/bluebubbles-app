@@ -29,6 +29,15 @@ class FindMyItemsTabView extends StatelessWidget {
       final itemsWithoutLocation =
           items.where((item) => (item.address?.label ?? item.address?.mapItemFullAddress) == null).toList();
 
+      final iosSubtitle = context.theme.textTheme.labelLarge!.copyWith(
+        color: context.theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        fontWeight: FontWeight.w300,
+      );
+      final materialSubtitle = context.theme.textTheme.labelLarge!.copyWith(
+        color: context.theme.colorScheme.primary,
+        fontWeight: FontWeight.bold,
+      );
+
       return SliverList(
         delegate: SliverChildListDelegate([
           if (controller.fetching.value == null ||
@@ -36,17 +45,7 @@ class FindMyItemsTabView extends StatelessWidget {
               (controller.fetching.value == false && allItems.isEmpty))
             _buildEmptyState(context),
           if (itemsWithLocation.isNotEmpty)
-            SettingsHeader(
-              iosSubtitle: context.theme.textTheme.labelLarge!.copyWith(
-                color: context.theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w300,
-              ),
-              materialSubtitle: context.theme.textTheme.labelLarge!.copyWith(
-                color: context.theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-              text: "Items",
-            ),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Items"),
           if (itemsWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: context.tileColor,
@@ -68,22 +67,24 @@ class FindMyItemsTabView extends StatelessWidget {
               ],
             ),
           if (itemsWithoutLocation.isNotEmpty)
+            SettingsHeader(
+                iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Items without locations"),
+          if (itemsWithoutLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: context.tileColor,
               children: [
                 Material(
                   color: Colors.transparent,
-                  child: ExpansionTile(
-                    shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
-                    title: const Text("Items without locations"),
-                    initiallyExpanded: true,
-                    children: itemsWithoutLocation
-                        .map((item) => FindMyDeviceListTile(
-                              item: item,
-                              controller: controller,
-                              isItem: true,
-                            ))
-                        .toList(),
+                  child: ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemBuilder: (context, i) => FindMyDeviceListTile(
+                      item: itemsWithoutLocation[i],
+                      controller: controller,
+                      isItem: true,
+                    ),
+                    itemCount: itemsWithoutLocation.length,
                   ),
                 ),
               ],

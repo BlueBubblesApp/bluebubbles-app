@@ -1,9 +1,7 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:geolocator/geolocator.dart';
 
-bool hasUsableFindMyLocation(FindMyFriend friend) {
-  final latitude = friend.latitude;
-  final longitude = friend.longitude;
+bool isUsableFindMyCoordinate(double? latitude, double? longitude) {
   return latitude != null &&
       longitude != null &&
       latitude.isFinite &&
@@ -11,6 +9,10 @@ bool hasUsableFindMyLocation(FindMyFriend friend) {
       latitude.abs() <= 90 &&
       longitude.abs() <= 180 &&
       (latitude != 0 || longitude != 0);
+}
+
+bool hasUsableFindMyLocation(FindMyFriend friend) {
+  return isUsableFindMyCoordinate(friend.latitude, friend.longitude);
 }
 
 /// Returns friends nearest to [originLatitude], [originLongitude] first.
