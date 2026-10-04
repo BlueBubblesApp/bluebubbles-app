@@ -254,6 +254,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
         backgroundColor: context.material ? context.tileColor : context.headerColor,
         safeAreaLeft: false,
         safeAreaRight: false,
+        extendBodyBehindBottomPill: false,
         body: Stack(
           children: [
             SlidingUpPanel(
