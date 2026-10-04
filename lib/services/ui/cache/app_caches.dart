@@ -114,7 +114,7 @@ class VideoPlayerCache extends ClearableCache {
   String get description => 'Inline video players in open conversations';
 
   @override
-  int? get entryCount => _controllers().fold(0, (sum, c) => sum + c.videoPlayers.length);
+  int? get entryCount => _controllers().fold<int>(0, (sum, c) => sum + c.videoPlayers.length);
 
   @override
   Future<void> clear() async {

@@ -139,7 +139,8 @@ class CachePurgeEntry {
     if (entriesBefore != null || entriesAfter != null) {
       parts.add('${entriesBefore ?? 0} -> ${entriesAfter ?? 0} entries');
     }
-    return '$id: ${action.describe()}${parts.isEmpty ? '' : ' (${parts.join(', ')})'}';
+    final detail = parts.isEmpty ? '' : ' (${parts.join(', ')})';
+    return '$id: ${action.describe()}$detail';
   }
 }
 
@@ -164,10 +165,12 @@ class CachePurgeReport {
 
   String summarize() {
     final touched = entries.where((e) => !e.skipped).length;
-    final head = 'purge ($reason${level == null ? '' : ', ${level!.name}}): '
-        '$touched cache(s) touched, ${formatCacheBytes(bytesFreed)} measurable freed in ${elapsed.inMilliseconds}ms';
+    final levelLabel = level == null ? '' : ', ${level!.name}';
+    final head = 'purge ($reason$levelLabel): $touched cache(s) touched, '
+        '${formatCacheBytes(bytesFreed)} measurable freed in ${elapsed.inMilliseconds}ms';
     if (entries.isEmpty) return head;
-    return '$head\n  ${entries.map((e) => e.describe()).join('\n  ')}';
+    final lines = entries.map((e) => e.describe()).join('\n  ');
+    return '$head\n  $lines';
   }
 }
 
