@@ -54,7 +54,7 @@ class _ProfilePanelState extends State<ProfilePanel> with WidgetsBindingObserver
     final nameController = TextEditingController(text: SettingsSvc.settings.userName.value);
     done() async {
       if (nameController.text.isEmpty) {
-        showSnackbar("Error", "Enter a name!");
+        showSnackbar("Error", "Enter a name!", type: SnackbarType.error);
         return;
       }
       Navigator.of(context, rootNavigator: true).pop();

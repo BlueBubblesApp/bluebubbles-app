@@ -141,14 +141,16 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
             )));
       }
 
-      /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
-      if (!kIsWeb && !kIsDesktop) {
-        /* ----- TIME ZONE INITIALIZATION ----- */
+      /* ----- TIME ZONE INITIALIZATION ----- */
+      if (!kIsWeb) {
         tz.initializeTimeZones();
         try {
           tz.setLocalLocation(tz.getLocation((await FlutterTimezone.getLocalTimezone()).identifier));
         } catch (_) {}
+      }
 
+      /* ----- ANDROID SPECIFIC INITIALIZATION ----- */
+      if (!kIsWeb && !kIsDesktop) {
         /* ----- MLKIT INITIALIZATION ----- */
         // Defer MLKit model check - not critical for startup
         Future.microtask(() async {

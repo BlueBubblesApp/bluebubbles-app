@@ -98,7 +98,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
       }
     } catch (e, s) {
       Logger.error("Failed to load attachments", error: e, trace: s);
-      showSnackbar("Error", "Failed to load attachments: $e");
+      showSnackbar("Error", "Failed to load attachments: $e", type: SnackbarType.error);
     } finally {
       if (mounted) {
         setState(() {
@@ -111,14 +111,14 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   Future<void> openFullCamera({String type = 'camera'}) async {
     bool granted = (await Permission.camera.request()).isGranted;
     if (!granted) {
-      showSnackbar("Error", "Camera access was denied!");
+      showSnackbar("Error", "Camera access was denied!", type: SnackbarType.error);
       return;
     }
 
     if (type == 'video') {
       final micGranted = (await Permission.microphone.request()).isGranted;
       if (!micGranted) {
-        showSnackbar("Error", "Microphone access was denied!");
+        showSnackbar("Error", "Microphone access was denied!", type: SnackbarType.error);
         return;
       }
     }
@@ -263,7 +263,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     for (final file in files) {
       final size = await file.length();
       if (size / 1024000 > 1000) {
-        showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+        showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.", type: SnackbarType.error);
         continue;
       }
       controller.pickedAttachments.add(PlatformFile(
@@ -284,7 +284,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
 
     for (pf.PlatformFile file in res.files) {
       if (file.size / 1024000 > 1000) {
-        showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+        showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.", type: SnackbarType.error);
         continue;
       }
       controller.pickedAttachments.add(PlatformFile(
@@ -302,9 +302,9 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
 
   Future<void> _handleSchedule(BuildContext context) async {
     if (controller.pickedAttachments.isNotEmpty) {
-      return showSnackbar("Error", "Remove all attachments before scheduling!");
+      return showSnackbar("Error", "Remove all attachments before scheduling!", type: SnackbarType.error);
     } else if (controller.replyToMessage != null || controller.subjectTextController.text.isNotEmpty) {
-      return showSnackbar("Error", "Private API features are not supported when scheduling!");
+      return showSnackbar("Error", "Private API features are not supported when scheduling!", type: SnackbarType.error);
     }
 
     final date = await showTimeframePicker("Pick date and time", context, presetsAhead: true);
@@ -529,7 +529,8 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
               if (file == null) return;
 
               if ((await file.length()) / 1024000 > 1000) {
-                showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.");
+                showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
+                    type: SnackbarType.error);
                 return;
               }
 

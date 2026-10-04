@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
+import 'package:bluebubbles/app/components/copy_address_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -14,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pull_down_button/pull_down_button.dart';
-import 'package:universal_io/io.dart';
 
 class ContactTile extends StatelessWidget {
   final Handle handle;
@@ -66,7 +66,6 @@ class ContactTile extends StatelessWidget {
         }
       }
       Logger.info("Removed participant ${handle.address}");
-      showSnackbar("Notice", "Removed participant from chat!");
     }).catchError((err, stack) {
       Logger.error("Failed to remove participant ${handle.address}", error: err, trace: stack);
       late final String error;
@@ -75,7 +74,7 @@ class ContactTile extends StatelessWidget {
       } else {
         error = err.toString();
       }
-      showSnackbar("Error", "Failed to remove participant: $error");
+      showSnackbar("Error", "Failed to remove participant: $error", type: SnackbarType.error);
     });
   }
 
@@ -91,9 +90,7 @@ class ContactTile extends StatelessWidget {
         mouseCursor: MouseCursor.defer,
         onLongPress: () {
           Clipboard.setData(ClipboardData(text: handle.address));
-          if (!Platform.isAndroid || (FilesystemSvc.androidInfo?.version.sdkInt ?? 0) < 33) {
-            showToast("Address copied to clipboard");
-          }
+          showCopiedToast("Address copied to clipboard");
         },
         onTap: kIsDesktop
             ? null
@@ -108,7 +105,7 @@ class ContactTile extends StatelessWidget {
                   try {
                     await MethodChannelSvc.actions.viewContactForm(nativeContactId: contactV2.nativeContactId);
                   } catch (_) {
-                    showSnackbar("Error", "Failed to find contact on device!");
+                    showSnackbar("Error", "Failed to find contact on device!", type: SnackbarType.error);
                   }
                 }
               },
@@ -148,7 +145,7 @@ class ContactTile extends StatelessWidget {
                       onTap: () {
                         Navigator.of(ctx).pop();
                         Clipboard.setData(ClipboardData(text: handle.address));
-                        showToast("Address copied to clipboard");
+                        showCopiedToast("Address copied to clipboard");
                       },
                     ),
                     if (canBeRemoved)
@@ -188,7 +185,16 @@ class ContactTile extends StatelessWidget {
             handle: handle,
             borderThickness: 0.1,
           ),
-          trailing: _buildTrailing(context, contact: contact, isEmail: isEmail),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CopyAddressButton(address: handle.address),
+              ),
+              _buildTrailing(context, contact: contact, isEmail: isEmail),
+            ],
+          ),
         ),
       );
 

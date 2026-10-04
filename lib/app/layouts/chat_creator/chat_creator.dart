@@ -583,7 +583,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                                 // Throw an error if it wasn't saved correctly.
                                 final saved = await ChatsSvc.fetchChat(newChat.guid);
                                 if (saved == null) {
-                                  return showSnackbar("Error", "Failed to save chat!");
+                                  return showSnackbar("Error", "Failed to save chat!", type: SnackbarType.error);
                                 }
 
                                 // Update the chat in the chat list.

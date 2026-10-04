@@ -99,7 +99,7 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
           if (mounted) {
             setState(() {});
           }
-          showSnackbar("Error", "Failed to download attachment!");
+          showSnackbar("Error", "Failed to download attachment!", type: SnackbarType.error);
         });
       }
     });

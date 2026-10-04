@@ -565,11 +565,12 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
     if (!status.isPermanentlyDenied && !status.isGranted) {
       final result = await Permission.camera.request();
       if (!result.isGranted) {
-        showSnackbar("Error", "Camera permission required for QR scanning!");
+        showSnackbar("Error", "Camera permission required for QR scanning!", type: SnackbarType.error);
         return;
       }
     } else if (status.isPermanentlyDenied) {
-      showSnackbar("Error", "Camera permission permanently denied, please modify permissions from Android settings.");
+      showSnackbar("Error", "Camera permission permanently denied, please modify permissions from Android settings.",
+          type: SnackbarType.error);
       return;
     }
 
@@ -620,27 +621,7 @@ class _ServerCredentialsState extends State<ServerCredentials> with ThemeHelpers
       controller.updateConnectError("HTTP URLs are not supported on Web! You must use an HTTPS URL.");
       return;
     }
-    // Check if the URL is valid
-    bool isValid = url.isURL;
-    if (url.contains(":") && !isValid) {
-      // port applied to URL
-      if (":".allMatches(url).length == 2) {
-        final newUrl = url.split(":")[1].split("/").last;
-        isValid = "https://${(newUrl.split(".")..removeLast()).join(".")}.com".isURL || newUrl.isIPv6 || newUrl.isIPv4;
-      } else {
-        final newUrl = url.split(":").first;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
-      }
-    }
-    // the getx regex only allows extensions up to 6 characters in length
-    // this is a workaround for that
-    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
-      final newUrl = (url.split(".")..removeLast()).join(".");
-      isValid = ("$newUrl.com").isURL;
-    }
-
-    // If the URL is invalid, or the password is invalid, show an error
-    if (!isValid || password.isEmpty) {
+    if (!isValidServerAddress(url) || password.isEmpty) {
       controller.updateConnectError("Please enter a valid URL and password!");
       return;
     }

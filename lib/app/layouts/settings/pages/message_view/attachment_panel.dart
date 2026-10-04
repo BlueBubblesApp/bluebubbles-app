@@ -152,7 +152,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                                       } else {
                                         final regex = RegExp(r"^[a-zA-Z0-9-_]+");
                                         if (!regex.hasMatch(pathController.text) || pathController.text.endsWith("/")) {
-                                          showSnackbar("Error", "Enter a valid path!");
+                                          showSnackbar("Error", "Enter a valid path!", type: SnackbarType.error);
                                           return;
                                         }
                                         Navigator.of(context, rootNavigator: true).pop();

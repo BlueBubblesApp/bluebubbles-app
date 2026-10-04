@@ -36,7 +36,7 @@ Future<void> downloadAttachment(MessagePopupActionContext ctx) async {
     }
   } catch (ex, trace) {
     Logger.error("Error downloading attachment: ${ex.toString()}", error: ex, trace: trace);
-    ctx.showSnack("Save Error", ex.toString());
+    ctx.showSnack("Save Error", "Failed to save: $ex", type: SnackbarType.error);
   }
 }
 
@@ -49,7 +49,7 @@ Future<void> openInImageViewer(MessagePopupActionContext ctx) async {
   try {
     final content = AttachmentsSvc.getContent(ctx.part.attachments.first);
     if (content is! PlatformFile || isNullOrEmptyString(content.path)) {
-      ctx.showSnack("Open Error", "Failed to find image file path!");
+      ctx.showSnack("Open Error", "Failed to find image file path!", type: SnackbarType.error);
       return;
     }
 
@@ -60,7 +60,7 @@ Future<void> openInImageViewer(MessagePopupActionContext ctx) async {
     }
 
     if (response.type == ResultType.noAppToOpen) {
-      ctx.showSnack("Open Error", "No app found to open this image!");
+      ctx.showSnack("Open Error", "No app found to open this image!", type: SnackbarType.error);
       return;
     }
 
@@ -68,29 +68,21 @@ Future<void> openInImageViewer(MessagePopupActionContext ctx) async {
       "Failed to open image in viewer (${response.type}): ${response.message}",
       tag: "MessagePopup",
     );
-    ctx.showSnack("Open Error", response.message);
+    ctx.showSnack("Open Error", "Failed to open image: ${response.message}", type: SnackbarType.error);
   } catch (ex, trace) {
     Logger.error("Failed to open image in viewer!", error: ex, trace: trace);
-    ctx.showSnack("Open Error", "Failed to open image!");
+    ctx.showSnack("Open Error", "Failed to open image!", type: SnackbarType.error);
   }
 }
 
 void copyAttachment(MessagePopupActionContext ctx) {
-  if (ctx.part.attachments.length == 1) {
-    Pasteboard.writeFiles([ctx.part.attachments.first.path]).then((_) {
-      ctx.popDetails();
-    }).catchError((e) {
-      Logger.error("Failed to copy files!", error: e);
-      ctx.showSnack("Copy Error", "Failed to copy image!");
-    });
-    return;
-  }
-
   Pasteboard.writeFiles(ctx.part.attachments.map((element) => element.path).toList()).then((_) {
     ctx.popDetails();
+    showCopiedToast(
+        ctx.part.attachments.length > 1 ? "Attachments copied to clipboard" : "Attachment copied to clipboard");
   }).catchError((e) {
     Logger.error("Failed to copy attachment(s)!", error: e);
-    ctx.showSnack("Copy Error", "Failed to copy attachment(s)!");
+    ctx.showSnack("Copy Error", "Failed to copy attachment(s)!", type: SnackbarType.error);
   });
 }
 
@@ -176,7 +168,7 @@ Future<void> downloadOriginalAttachments(MessagePopupActionContext ctx) async {
     downloadingAttachments.value = false;
   } catch (ex, trace) {
     Logger.error("Failed to download original attachment!", error: ex, trace: trace);
-    ctx.showSnack("Download Error", ex.toString());
+    ctx.showSnack("Download Error", "Failed to download: $ex", type: SnackbarType.error);
   }
 }
 
@@ -247,7 +239,7 @@ Future<void> downloadLivePhoto(MessagePopupActionContext ctx) async {
     downloadingAttachments.value = false;
   } catch (ex, trace) {
     Logger.error("Failed to download live photo!", error: ex, trace: trace);
-    ctx.showSnack("Download Error", ex.toString());
+    ctx.showSnack("Download Error", "Failed to download: $ex", type: SnackbarType.error);
   }
 }
 
@@ -290,9 +282,9 @@ void refreshPreview(MessagePopupActionContext ctx) {
 }
 
 void sharePart(MessagePopupActionContext ctx) {
-  if (ctx.part.attachments.isNotEmpty && !ctx.message.isLegacyUrlPreview && !kIsWeb && !kIsDesktop) {
+  if (ctx.part.attachments.isNotEmpty && !ctx.message.isLegacyUrlPreview) {
     Share.files(ctx.part.attachments.map((a) => a.path).nonNulls.toList());
-  } else if (ctx.part.text!.isNotEmpty) {
+  } else if (!isNullOrEmpty(ctx.part.text)) {
     Share.text(ctx.part.text!);
   }
   ctx.popDetails();

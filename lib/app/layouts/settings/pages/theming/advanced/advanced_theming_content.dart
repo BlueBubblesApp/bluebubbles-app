@@ -179,7 +179,8 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> with Th
                     } catch (e, s) {
                       Logger.error("Failed to start notification listener for music theme", error: e, trace: s);
                       showSnackbar(
-                          "Error", "Something went wrong, please ensure you granted the permission correctly!");
+                          "Error", "Something went wrong, please ensure you granted the permission correctly!",
+                          type: SnackbarType.error);
                       return;
                     }
                   } else {

@@ -21,5 +21,10 @@ Flutter side: `lib/services/backend/java_dart_interop/`
 - `background_isolate.dart` — background Dart execution
 
 ## Build Config
-- Target SDK: 35 | NDK: 27.0 | Java/Kotlin compat: version 21
+- Compile/Target SDK: 36 | Min SDK: 26 | NDK: 28.2 | Java/Kotlin compat: version 21
 - Gradle with Kotlin plugin
+
+Targeting API 36 means Android 16 behavior changes apply: edge-to-edge is mandatory
+(no opt-out), predictive back is on by default, and on `sw600dp`+ screens the system
+ignores orientation/resizability restrictions — including
+`SystemChrome.setPreferredOrientations` from Dart.

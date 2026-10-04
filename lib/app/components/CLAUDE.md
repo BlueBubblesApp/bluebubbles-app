@@ -23,6 +23,7 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 - `bb_switch.dart` — `BBSwitch`, skin-aware toggle (`CupertinoSwitch` on iOS skin, Material `Switch` otherwise). Used internally by `SettingsSwitch`; prefer it over raw `Switch`/`CupertinoSwitch` for any new toggle.
 - `bb_slider.dart` — `BBSlider`, skin-aware slider (`CupertinoSlider` on iOS skin, Material 3 Expressive-styled `Slider` via `m3e/m3e_slider.dart` on Material/Samsung). Supports `divisions` (steps). Used internally by `SettingsSlider`; prefer it over raw `Slider`/`CupertinoSlider` for any new slider/number-picker.
 - `circle_progress_bar.dart` — circular progress indicator
+- `copy_address_button.dart` — `CopyAddressButton`, skin-aware copy icon for a handle address (check mark + "Copied" feedback). Used on participant tiles and the 1:1 details header
 - `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`
 

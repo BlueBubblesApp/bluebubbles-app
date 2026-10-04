@@ -188,7 +188,7 @@ class FindMyController extends GetxController {
         ? await HttpSvc.icloud.refreshFriends().catchError((_) async {
             if (!_isAlive) return Response(requestOptions: RequestOptions(path: ''));
             refreshing2.value = false;
-            showSnackbar("Error", "Something went wrong refreshing FindMy Friends data!");
+            showSnackbar("Error", "Something went wrong refreshing FindMy Friends data!", type: SnackbarType.error);
             return Response(requestOptions: RequestOptions(path: ''));
           })
         : await HttpSvc.icloud.getFriends().catchError((_) async {
@@ -229,7 +229,7 @@ class FindMyController extends GetxController {
         ? await HttpSvc.icloud.refreshDevices().catchError((_) async {
             if (!_isAlive) return Response(requestOptions: RequestOptions(path: ''));
             refreshing.value = false;
-            showSnackbar("Error", "Something went wrong refreshing FindMy Devices data!");
+            showSnackbar("Error", "Something went wrong refreshing FindMy Devices data!", type: SnackbarType.error);
             return Response(requestOptions: RequestOptions(path: ''));
           })
         : await HttpSvc.icloud.getDevices().catchError((_) async {

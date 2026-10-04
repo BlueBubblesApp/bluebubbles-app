@@ -275,10 +275,12 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                         onTap: () async {
                           try {
                             await FirebaseSvc.registerDevice();
-                            showSnackbar("Device Registered", "Successfully re-registered device with server!");
+                            showSnackbar("Device Registered", "Successfully re-registered device with server!",
+                                type: SnackbarType.success);
                           } catch (e, s) {
                             Logger.error("Failed to re-register device with server", error: e, trace: s);
-                            showSnackbar("Error", "Failed to re-register device with server! Error: ${e.toString()}");
+                            showSnackbar("Error", "Failed to re-register device with server! Error: ${e.toString()}",
+                                type: SnackbarType.error);
                           }
                         },
                       ),

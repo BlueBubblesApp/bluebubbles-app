@@ -26,7 +26,7 @@ class PresetThemeActions {
   static void showThemeNameError(String name) {
     final err = validateThemeName(name);
     if (err != null) {
-      showSnackbar("Error", err);
+      showSnackbar("Error", err, type: SnackbarType.error);
     }
   }
 }

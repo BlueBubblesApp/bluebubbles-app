@@ -127,22 +127,24 @@ class OtherFile extends StatelessWidget {
             final res =
                 await OpenFilex.open(join(FilesystemSvc.attachmentsPath, attachment.guid!, basename(file.path!)));
             if (res.type == ResultType.noAppToOpen) {
-              showSnackbar('Error', "No handler for this file type! Using share menu instead.");
+              showSnackbar('Error', "No handler for this file type! Using share menu instead.",
+                  type: SnackbarType.error);
               await Future.delayed(const Duration(seconds: 1));
               Share.files([file.path!]);
             } else if (res.type == ResultType.error) {
-              showSnackbar('Error', res.message);
+              showSnackbar('Error', "Failed to open file: ${res.message}", type: SnackbarType.error);
             } else if (res.type == ResultType.fileNotFound) {
-              showSnackbar('Not Found', "File not found at path: ${file.path}");
+              showSnackbar('Not Found', "File not found at path: ${file.path}", type: SnackbarType.error);
             } else if (res.type == ResultType.permissionDenied) {
               showSnackbar(
-                  'Permission Denied', "BlueBubbles does not have access to this file! Using share menu instead.");
+                  'Permission Denied', "BlueBubbles does not have access to this file! Using share menu instead.",
+                  type: SnackbarType.error);
               await Future.delayed(const Duration(seconds: 1));
               Share.files([file.path!]);
             }
           } catch (ex) {
             Logger.error("Error opening file: ${file.path}", error: ex);
-            showSnackbar('Error', "No handler for this file type!");
+            showSnackbar('Error', "No handler for this file type!", type: SnackbarType.error);
           }
         }
       },
