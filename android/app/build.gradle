@@ -88,7 +88,8 @@ android {
     packaging {
         // Store native libs compressed and extract them at install, which keeps the APK
         // smaller. This used to be android:extractNativeLibs="true" in the manifest, which
-        // AGP 9 rejects in favor of this setting.
+        // AGP 9 rejects in favor of this setting. prodNoAa overrides it, see
+        // androidComponents below.
         jniLibs {
             useLegacyPackaging = true
         }
@@ -182,6 +183,23 @@ android {
             java {
                 srcDirs 'src/main/java', 'src/main/java/workers'
             }
+        }
+    }
+}
+
+// Native lib packaging is chosen per distribution channel:
+// - Sideloaded APKs (prod on GitHub releases, alpha/beta/dev) keep libs compressed. The
+//   APK file is what users download, and uncompressed libs nearly double its size.
+// - prodNoAa is the Play Store bundle. Play compresses downloads in transit, so storing
+//   libs uncompressed costs nothing there. Devices then load them straight from the APK,
+//   which skips extraction at install and the extra on-device copy of every lib.
+// The same variant produces both APKs and bundles, so this is keyed on flavor, not on
+// the output type.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        if (variant.flavorName == 'prodNoAa') {
+            variant.packaging.jniLibs.useLegacyPackaging.set(false)
+            variant.packaging.jniLibs.useLegacyPackagingFromBundle.set(false)
         }
     }
 }

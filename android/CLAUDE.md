@@ -47,8 +47,11 @@ The build runs on AGP 9 with `android.builtInKotlin=false` and `android.newDsl=f
   `FilePickerPlugin` "cannot find symbol".
 - **Kotlin language floor:** KGP 2.4 rejects `languageVersion` below 2.0, so the root
   `build.gradle` forces 2.0 on all modules (some plugins pin 1.7/1.8).
-- **Native libs:** AGP 9 rejects `android:extractNativeLibs` in the manifest; compressed
-  native libs are set with `packaging.jniLibs.useLegacyPackaging` instead.
+- **Native libs:** AGP 9 rejects `android:extractNativeLibs` in the manifest, so packaging is
+  set in `app/build.gradle`, per flavor. Sideloaded APKs (`prod` on GitHub releases, alpha,
+  beta) keep libs compressed so the download stays small. The Play bundle (`prodNoAa`)
+  stores them uncompressed: Play compresses in transit anyway, and devices skip extraction.
+  This is keyed on flavor because one variant produces both APKs and bundles.
 - **Gradle vs AGP:** AGP 8.x can't run on Gradle 9.6+ (Gradle removed
   `org.gradle.api.problems.internal.InternalProblems`), so never downgrade AGP without
   also dropping Gradle to 9.5.
