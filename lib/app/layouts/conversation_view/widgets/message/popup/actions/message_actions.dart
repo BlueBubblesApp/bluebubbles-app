@@ -19,7 +19,8 @@ Future<void> remindLater(MessagePopupActionContext ctx) async {
     if (denied && !permanentlyDenied) {
       await Permission.scheduleExactAlarm.request();
     } else if (permanentlyDenied) {
-      ctx.showSnack("Error", "You must enable the manage alarm permission to use this feature");
+      ctx.showSnack("Error", "You must enable the manage alarm permission to use this feature",
+          type: SnackbarType.error);
       return;
     }
   }
@@ -33,10 +34,13 @@ Future<void> remindLater(MessagePopupActionContext ctx) async {
   );
   if (finalDate != null) {
     if (!finalDate.isAfter(DateTime.now().toLocal())) {
-      ctx.showSnack("Error", "Select a date in the future");
+      ctx.showSnack("Error", "Select a date in the future", type: SnackbarType.error);
       return;
     }
-    await NotificationsSvc.createReminder(ctx.chat, ctx.message, finalDate);
+    if (!await NotificationsSvc.createReminder(ctx.chat, ctx.message, finalDate)) {
+      ctx.showSnack("Error", "Failed to schedule reminder", type: SnackbarType.error);
+      return;
+    }
     ctx.popDetails();
     ctx.showSnack("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
   }

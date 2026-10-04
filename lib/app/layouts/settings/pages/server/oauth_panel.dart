@@ -39,27 +39,8 @@ class _OauthPanelState extends State<OauthPanel> with ThemeHelpers {
       error.value = "HTTP URLs are not supported on Web! You must use an HTTPS URL.";
       return;
     }
-    // Check if the URL is valid
-    bool isValid = url.isURL;
-    if (url.contains(":") && !isValid) {
-      if (":".allMatches(url).length == 2) {
-        final newUrl = url.split(":")[1].split("/").last;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
-      } else {
-        final newUrl = url.split(":").first;
-        isValid = newUrl.isIPv6 || newUrl.isIPv4;
-      }
-    }
-    // the getx regex only allows extensions up to 6 characters in length
-    // this is a workaround for that
-    if (!isValid && url.split(".").last.isAlphabetOnly && url.split(".").last.length > 6) {
-      final newUrl = url.split(".").sublist(0, url.split(".").length - 1).join(".");
-      isValid = ("$newUrl.com").isURL;
-    }
-
-    // If the URL is invalid, show an error
     String? addr = sanitizeServerAddress(address: url);
-    if (!isValid || addr == null) {
+    if (!isValidServerAddress(url) || addr == null) {
       error.value = "Server address is invalid!";
       return;
     }

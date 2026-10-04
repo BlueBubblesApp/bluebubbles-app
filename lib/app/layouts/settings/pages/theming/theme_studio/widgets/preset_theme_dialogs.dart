@@ -195,7 +195,7 @@ class PresetThemeDialogs {
   void _doClone(BuildContext context, ThemeStruct source, String name) {
     final err = PresetThemeActions.validateThemeName(name);
     if (err != null) {
-      showSnackbar("Error", err);
+      showSnackbar("Error", err, type: SnackbarType.error);
       return;
     }
     Navigator.of(context, rootNavigator: true).pop();
@@ -205,13 +205,13 @@ class PresetThemeDialogs {
   Future<void> _doRename(BuildContext context, BuildContext pageCtx, String newName) async {
     Navigator.of(context, rootNavigator: true).pop();
     final ok = await controller.renameTheme(pageCtx, newName.trim());
-    if (!ok) showSnackbar("Error", "Could not rename — name is empty or already taken");
+    if (!ok) showSnackbar("Error", "Could not rename — name is empty or already taken", type: SnackbarType.error);
   }
 
   void _doCreate(BuildContext context, BuildContext pageCtx, String name) {
     final err = PresetThemeActions.validateThemeName(name);
     if (err != null) {
-      showSnackbar("Error", err);
+      showSnackbar("Error", err, type: SnackbarType.error);
       return;
     }
     Navigator.of(context, rootNavigator: true).pop();

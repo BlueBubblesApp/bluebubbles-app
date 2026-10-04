@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -32,6 +33,7 @@ class FailedToScanDialog extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop();
             Clipboard.setData(ClipboardData(text: error.toString()));
+            showCopiedToast("Error copied to clipboard");
           },
         ),
         TextButton(

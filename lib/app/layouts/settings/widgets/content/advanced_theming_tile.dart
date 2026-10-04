@@ -60,9 +60,9 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                       }
                     } else {
                       if (ThemeSvc.isAnyMaterialYouSelected) {
-                        showSnackbar('Notice', "Turn off Material You to start customizing!");
+                        showSnackbar('Notice', "Turn off Material You to start customizing!", type: SnackbarType.error);
                       } else {
-                        showSnackbar('Notice', "Create a new theme to start customizing!");
+                        showSnackbar('Notice', "Create a new theme to start customizing!", type: SnackbarType.error);
                       }
                     }
                   },
@@ -84,9 +84,9 @@ class _AdvancedThemingTileState extends State<AdvancedThemingTile> {
                             }
                           } else {
                             if (ThemeSvc.isAnyMaterialYouSelected) {
-                              showSnackbar('Notice', "Turn off Material You to start customizing!");
+                              showSnackbar('Notice', "Turn off Material You to start customizing!", type: SnackbarType.error);
                             } else {
-                              showSnackbar('Notice', "Create a new theme to start customizing!");
+                              showSnackbar('Notice', "Create a new theme to start customizing!", type: SnackbarType.error);
                             }
                           }
                         }

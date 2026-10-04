@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
@@ -105,42 +107,38 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       SettingsTile(
                         onTap: () async {
                           final RxList<String> log = <String>[].obs;
-                          showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                    backgroundColor: context.theme.colorScheme.surface,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                                    titlePadding: const EdgeInsets.only(top: 15),
-                                    title: Text("Fetching contacts...", style: context.theme.textTheme.titleLarge),
-                                    content: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: SizedBox(
-                                        width: NavigationSvc.width(context) * 4 / 5,
-                                        height: context.height * 1 / 3,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(25),
-                                            color: context.theme.colorScheme.surface,
-                                          ),
-                                          padding: const EdgeInsets.all(10),
-                                          child: Obx(() => ListView.builder(
-                                                physics: const AlwaysScrollableScrollPhysics(
-                                                    parent: BouncingScrollPhysics()),
-                                                itemBuilder: (context, index) {
-                                                  return Text(
-                                                    log[index],
-                                                    style: TextStyle(
-                                                      color: context.theme.colorScheme.onSurface,
-                                                      fontSize: 10,
-                                                    ),
-                                                  );
-                                                },
-                                                itemCount: log.length,
-                                              )),
+                          showBBDialog(
+                            context: context,
+                            title: "Fetching contacts...",
+                            content: Container(
+                              width: min(NavigationSvc.width(context) * 0.8, 560),
+                              height: context.height / 3,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: context.theme.colorScheme.surface,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Obx(() => ListView.builder(
+                                    itemCount: log.length,
+                                    itemBuilder: (context, index) => Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      child: Text(
+                                        log[index],
+                                        style: context.theme.textTheme.bodySmall!.copyWith(
+                                          color: context.theme.colorScheme.onSurface,
+                                          fontFamily: "monospace",
                                         ),
                                       ),
                                     ),
-                                  ));
+                                  )),
+                            ),
+                            actions: [
+                              BBDialogAction(
+                                text: "Close",
+                                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                              ),
+                            ],
+                          );
                           await ContactsSvcV2.fetchNetworkContacts(logger: (newLog) {
                             log.add(newLog);
                           });
@@ -190,7 +188,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                           onTap: () async {
                             _refreshLogStats();
                             if (logFileCount.value == 0) {
-                              showSnackbar("No Logs", "There are no logs to download!");
+                              showSnackbar("No Logs", "There are no logs to download!", type: SnackbarType.error);
                               return;
                             }
 
@@ -198,7 +196,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             isExportingLogs = true;
 
                             try {
-                              showSnackbar("Please Wait", "Compressing ${logFileCount.value} log file(s)...");
                               String filePath = await Logger.compressLogs();
                               final String fileName = File(filePath).uri.pathSegments.last;
 
@@ -207,7 +204,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                                   File(filePath),
                                   mimeType: 'application/zip',
                                 );
-                                showSnackbar("Logs Saved", "Saved $fileName to your Downloads folder.");
+                                showSnackbar("Logs Saved", "Saved $fileName to your Downloads folder.",
+                                    type: SnackbarType.success);
                                 if (kIsDesktop) await launchUrl(Uri.file(savedPath));
                               } catch (_) {
                                 // saveToDownloads failed on Android — fall back to share sheet.
@@ -215,7 +213,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                               }
                             } catch (ex, stacktrace) {
                               Logger.error("Failed to export logs!", error: ex, trace: stacktrace);
-                              showSnackbar("Failed to export logs!", "Error: ${ex.toString()}");
+                              showSnackbar("Failed to export logs!", "Failed to export logs: ${ex.toString()}",
+                                  type: SnackbarType.error);
                             } finally {
                               isExportingLogs = false;
                               _refreshLogStats();
@@ -250,7 +249,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       subtitle: "Deletes all stored log files.",
                       onTap: () async {
                         Logger.clearLogs();
-                        showSnackbar("Logs Cleared", "All logs have been deleted.");
+                        showSnackbar("Logs Cleared", "All logs have been deleted.", type: SnackbarType.success);
                         _refreshLogStats();
                       }),
                   if (kIsDesktop) const SettingsDivider(),
@@ -284,7 +283,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                           final optsDisabled = await disableBatteryOptimizations();
                           await _refreshBatteryOptimizationStatus();
                           if (!optsDisabled) {
-                            showSnackbar("Error", "Battery optimizations were not disabled. Please try again.");
+                            showSnackbar("Error", "Battery optimizations were not disabled. Please try again.",
+                                type: SnackbarType.error);
                           }
                         },
                         leading: SettingsLeadingIcon(
@@ -347,10 +347,12 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                                 showSnackbar(
                                   "Chat Deleted",
                                   "Successfully deleted chat and all associated data.",
+                                  type: SnackbarType.success,
                                 );
                               } catch (ex, stacktrace) {
                                 Logger.error("Failed to delete chat!", error: ex, trace: stacktrace);
-                                showSnackbar("Failed to Delete Chat", "Error: ${ex.toString()}");
+                                showSnackbar("Failed to Delete Chat", "Failed to delete chat: ${ex.toString()}",
+                                    type: SnackbarType.error);
                               }
                             },
                           ),
@@ -397,10 +399,13 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                           showSnackbar(
                             "Messaging Data Deleted",
                             "Successfully deleted all messages, chats, attachments, participants, and contacts.",
+                            type: SnackbarType.success,
                           );
                         } catch (ex, stacktrace) {
                           Logger.error("Failed to delete all messaging data!", error: ex, trace: stacktrace);
-                          showSnackbar("Failed to Delete Messaging Data", "Error: ${ex.toString()}");
+                          showSnackbar(
+                              "Failed to Delete Messaging Data", "Failed to delete messaging data: ${ex.toString()}",
+                              type: SnackbarType.error);
                           return;
                         }
 

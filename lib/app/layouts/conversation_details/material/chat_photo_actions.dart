@@ -83,19 +83,18 @@ Future<void> updatePhoto(BuildContext context, Chat chat) async {
     if (response.statusCode == 200) {
       await ChatsSvc.setChatCustomAvatarPath(chat, result);
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      showSnackbar("Notice", "Updated group photo successfully!");
     } else {
       try {
         await File(result).delete();
       } catch (_) {}
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      showSnackbar("Error", "Failed to update group photo!");
+      showSnackbar("Error", "Failed to update group photo!", type: SnackbarType.error);
     }
   } else if (usePrivateApi) {
     try {
       await File(result).delete();
     } catch (_) {}
-    showSnackbar("Error", "Failed to update group photo!");
+    showSnackbar("Error", "Failed to update group photo!", type: SnackbarType.error);
   }
 }
 
@@ -114,9 +113,8 @@ Future<void> deletePhoto(BuildContext context, Chat chat) async {
     final response = await HttpSvc.chat.removeIcon(chat.guid);
     if (response.statusCode == 200) {
       await ChatsSvc.setChatCustomAvatarPath(chat, null);
-      showSnackbar("Notice", "Deleted group photo successfully!");
     } else {
-      showSnackbar("Error", "Failed to delete group photo!");
+      showSnackbar("Error", "Failed to delete group photo!", type: SnackbarType.error);
     }
     return;
   }

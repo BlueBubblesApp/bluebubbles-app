@@ -378,7 +378,10 @@ class ChatsService {
 
     if (kIsDesktop) {
       unawaited(
-        DesktopNotifications.cancelStale(keepGroups: chatStates.values.where((s) => s.hasUnreadMessage.value).map((s) => s.chat.guid).toList())
+        DesktopNotifications.cancelStale(
+          keepGroups: chatStates.values.where((s) => s.hasUnreadMessage.value).map((s) => s.chat.guid).toList(),
+          keep: NotificationsService.isReminderId,
+        )
       );
     }
 
@@ -829,7 +832,7 @@ class ChatsService {
       await ChatInterface.markAllChatsRead(chatIds: chatIds, shouldMarkOnServer: shouldMark);
     } catch (e, stack) {
       Logger.error("Error marking all chats as read", error: e, trace: stack, tag: "ChatsService");
-      showToast("Failed to mark all chats as read!");
+      showToast("Failed to mark all chats as read!", isError: true);
     }
   }
 
@@ -1585,7 +1588,10 @@ class ChatsService {
   /// older delta message as a chat's latest, which would rewind its sort order.
   /// The 2s tolerance allows a temp->real GUID swap. [allowOlder] opts out for the
   /// post-deletion recompute, which must fall back to an older surviving message.
-  void updateChatLatestMessage(String chatGuid, Message message, {bool allowOlder = false}) {
+  /// [repositionImmediate] controls the chat list rebuild only — the ChatState update is always
+  /// synchronous. Pass false when updating many chats in a row so the rebuilds coalesce.
+  void updateChatLatestMessage(String chatGuid, Message message,
+      {bool allowOlder = false, bool repositionImmediate = true}) {
     final state = getChatState(chatGuid);
     if (state == null) return;
 
@@ -1611,7 +1617,7 @@ class ChatsService {
     state.updateSubtitleInternal(
         message.getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent));
     state.chat.setLatestMessage(message);
-    _repositionChat(state.chat, immediate: true);
+    _repositionChat(state.chat, immediate: repositionImmediate);
   }
 
   /// Set chat text field text

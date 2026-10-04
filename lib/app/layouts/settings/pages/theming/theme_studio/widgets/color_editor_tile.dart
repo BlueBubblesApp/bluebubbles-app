@@ -63,7 +63,7 @@ class ColorEditorTile extends StatelessWidget {
                 GestureDetector(
                   onLongPress: () async {
                     await Clipboard.setData(ClipboardData(text: _hexOf(mainColor)));
-                    showToast("Copied ${_hexOf(mainColor)}");
+                    showCopiedToast("Copied ${_hexOf(mainColor)}");
                   },
                   child: Text(
                     _hexOf(mainColor) + (onColor != null ? '  ·  ${_hexOf(onColor!)}' : ''),

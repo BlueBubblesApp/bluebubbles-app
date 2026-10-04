@@ -51,7 +51,7 @@ class _MessagePropertiesState extends State<MessageProperties> with ThemeHelpers
           recognizer: TapGestureRecognizer()
             ..onTap = () {
               if (stringToMessageEffect[effect] == MessageEffect.echo) {
-                showSnackbar("Notice", "Echo animation is not supported at this time.");
+                showSnackbar("Notice", "Echo animation is not supported at this time.", type: SnackbarType.error);
                 return;
               }
               HapticFeedback.mediumImpact();
