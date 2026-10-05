@@ -76,6 +76,15 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   }
 
   @override
+  void dispose() {
+    // Nothing is selected once the page is gone. The pane observer only fires when
+    // the right pane pops back to its placeholder, which doesn't happen when the
+    // whole settings page is closed with a sub-page still open.
+    NavigationSvc.activeSettingsPage.value = null;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!showAltLayout && NavigationSvc.activeSettingsPage.value != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => NavigationSvc.activeSettingsPage.value = null);
@@ -235,15 +244,16 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                     NavigationSvc.maxWidthSettings = constraints.maxWidth;
                     return PopScope(
                       canPop: false,
-                      onPopInvokedWithResult: <T>(bool _, T? _) async {
-                        Get.until((route) {
-                          if (route.settings.name == "initial") {
-                            Get.back();
-                          } else {
-                            Get.back(id: 3);
-                          }
-                          return true;
-                        }, id: 3);
+                      // `canPop: false` only intercepts back gestures and system back —
+                      // an imperative Navigator.pop() (the list pane's back button, or
+                      // anything closing settings outright) still pops this route and
+                      // then reports it here with didPop == true. Stepping the settings
+                      // navigator again at that point pops a second, unrelated route and
+                      // reaches for a nested navigator that is already on its way out,
+                      // which threw GetX's "contextless navigation" error.
+                      onPopInvokedWithResult: <T>(bool didPop, T? _) {
+                        if (didPop) return;
+                        NavigationSvc.backSettingsPane(context);
                       },
                       child: Navigator(
                         key: Get.nestedKey(3),

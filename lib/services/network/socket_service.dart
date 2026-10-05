@@ -168,9 +168,26 @@ class SocketService {
     Logger.debug("Initialized socket service");
   }
 
+  /// Attaches the process-lifetime listener on [Connectivity.onConnectivityChanged].
+  ///
+  /// Idempotent on purpose, and deliberately never torn down. `connectivity_plus`
+  /// backs that stream with a broadcast controller whose `onListen`/`onCancel`
+  /// start and stop a platform watcher, so re-subscribing churns that watcher —
+  /// and the Linux implementation cannot survive the churn: its `onListen` nulls
+  /// out its NetworkManager client from `onCancel` while still suspended on
+  /// `client.connect()`, then dereferences it with `!` on resume. That throws
+  /// "Null check operator used on a null value" from inside the plugin's own
+  /// unawaited future, where no `onError` of ours can catch it — it only ever
+  /// surfaces as an unhandled zone exception.
+  ///
+  /// Every caller here used to cancel and re-listen (init() right after
+  /// startSocket(), and startSocket() right after closeSocket()), which hit that
+  /// race on every launch and every socket restart. There is nothing to re-arm:
+  /// the callback below is stateless with respect to the socket, and already
+  /// no-ops while a reconnect is unwanted via [_shouldReconnectOnNetworkChange].
   void _startConnectivitySubscription() {
     if (kIsDesktop && Platform.isWindows) return;
-    _connectivitySubscription?.cancel();
+    if (_connectivitySubscription != null) return;
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((event) {
       if (!event.contains(ConnectivityResult.wifi) &&
           !event.contains(ConnectivityResult.ethernet) &&
@@ -324,9 +341,9 @@ class SocketService {
       s.on("new-findmy-location", (data) => EventDispatcherSvc.emit('new-findmy-location', data)),
     ]);
 
-    // Re-arm connectivity monitoring — closeSocket()/disconnect() tear it down, and
-    // without this it would stay dead for the rest of the process after the first
-    // restart, silently stranding the localhost origin override on a cellular switch.
+    // Arm connectivity monitoring. init() covers the case where this method bails
+    // out above on an unconfigured server, so by the time a server exists the
+    // listener is usually already attached — the call is idempotent and cheap.
     _startConnectivitySubscription();
 
     // Report the attempt before making it. closeSocket() leaves the state at
@@ -392,8 +409,9 @@ class SocketService {
     _connectivityReconnectTimer?.cancel();
     _connectivityReconnectTimer = null;
     socket?.disconnect();
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = null;
+    // The connectivity listener stays attached — see [_startConnectivitySubscription].
+    // It cannot resurrect the socket on its own: _shouldReconnectOnNetworkChange
+    // reads connectionDesired, which was just cleared above.
     state.value = SocketState.disconnected;
   }
 
@@ -424,8 +442,7 @@ class SocketService {
     _connectivityReconnectTimer = null;
     internetConnectionListener?.cancel();
     internetConnectionListener = null;
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = null;
+    // The connectivity listener stays attached — see [_startConnectivitySubscription].
     _clearEventHandlers();
     socket?.dispose();
     // Drop the reference too: the FCM handler reads `socket?.connected` to decide
