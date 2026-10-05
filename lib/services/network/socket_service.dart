@@ -79,7 +79,7 @@ class SocketService {
 
   /// The server's engine.io heartbeat takes up to three minutes to notice a dead connection
   /// and can't change until the server rewrite, so the client runs its own.
-  static const Duration _heartbeatInterval = Duration(seconds: 10);
+  static const Duration _heartbeatInterval = Duration(seconds: 30);
   static const Duration _heartbeatTimeout = Duration(seconds: 5);
   static const int _heartbeatMissLimit = 2;
 
@@ -170,7 +170,6 @@ class SocketService {
   Timer? _heartbeatTimer;
   Timer? _heartbeatTimeoutTimer;
   int _heartbeatMisses = 0;
-  bool _heartbeatUrgent = false;
 
   String get serverAddress => HttpSvc.origin;
   String get password => SettingsSvc.settings.guidAuthKey.value;
@@ -178,17 +177,36 @@ class SocketService {
   void init() {
     Logger.debug("Initializing socket service...");
     startSocket();
-    unawaited(Connectivity().checkConnectivity().then(_onConnectivityChanged));
+    _checkConnectivity();
     Logger.debug("Initialized socket service");
   }
 
   void _startConnectivitySubscription() {
     if (_connectivitySubscription != null) return;
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen(_onConnectivityChanged, onError: _logConnectivityError);
   }
+
+  void _checkConnectivity() {
+    unawaited(Connectivity().checkConnectivity().then(_onConnectivityChanged, onError: _logConnectivityError));
+  }
+
+  // Throws on Linux without NetworkManager (or a Flatpak without DBus access to it).
+  void _logConnectivityError(Object e) => Logger.warn(tag: _tag, "Connectivity check failed", error: e);
 
   void _onConnectivityChanged(List<ConnectivityResult> event) {
     if (!connectionDesired) return;
+
+    if (event.every((result) => result == ConnectivityResult.none)) {
+      // Windows reports `none` whenever NCSI finds no internet, even with the server reachable on the LAN,
+      // so desktop leaves it to socket.io's retries.
+      if (kIsDesktop || !_networkAvailable) return;
+      _networkAvailable = false;
+      Logger.info(tag: _tag, "Network lost — closing socket until it's back");
+      closeSocket();
+      _reportOffline();
+      return;
+    }
 
     if (!event.contains(ConnectivityResult.wifi) &&
         !event.contains(ConnectivityResult.ethernet) &&
@@ -198,18 +216,11 @@ class SocketService {
       followOrigin();
     }
 
-    if (event.every((result) => result == ConnectivityResult.none)) {
-      if (!_networkAvailable) return;
-      _networkAvailable = false;
-      Logger.info(tag: _tag, "Network lost — closing socket until it's back");
-      closeSocket();
-      _reportOffline();
-    } else if (!_networkAvailable) {
+    if (!_networkAvailable) {
       _networkAvailable = true;
       Logger.info(tag: _tag, "Network is back — connecting");
       startSocket();
     } else {
-      checkConnection();
       _scheduleConnectivityReconnect();
     }
   }
@@ -225,11 +236,13 @@ class SocketService {
   /// with the backoff ceiling at [_reconnectDelayMax] the next scheduled attempt
   /// can be a minute out. `Socket.connect()` can't shorten that — it no-ops while
   /// `Manager.reconnecting` is set — so the connection has to be rebuilt.
+  /// A socket that still reads as connected gets a liveness check instead.
   void _scheduleConnectivityReconnect() {
-    if (!_shouldReconnectOnNetworkChange) return;
+    if (!connectionDesired) return;
     _connectivityReconnectTimer?.cancel();
     _connectivityReconnectTimer = Timer(_connectivityReconnectDebounce, () {
       _connectivityReconnectTimer = null;
+      checkConnection();
       if (!_shouldReconnectOnNetworkChange) return;
       Logger.info(tag: _tag, "Network changed while disconnected — rebuilding socket");
       restartSocket();
@@ -410,7 +423,7 @@ class SocketService {
     _cancelUrlDiscovery();
     // No connectivity events arrive while backgrounded.
     _networkAvailable = true;
-    unawaited(Connectivity().checkConnectivity().then(_onConnectivityChanged));
+    _checkConnectivity();
   }
 
   /// Tears the connection down completely, including its Manager.
@@ -609,6 +622,7 @@ class SocketService {
       await HttpSvc.server.ping();
       authFailed.value = false;
       _rejectedPassword = null;
+      NetworkTasks.onConnect();
     } catch (_) {}
   }
 
@@ -625,44 +639,34 @@ class SocketService {
     _heartbeatTimeoutTimer?.cancel();
     _heartbeatTimeoutTimer = null;
     _heartbeatMisses = 0;
-    _heartbeatUrgent = false;
   }
 
-  /// Checks a "connected" socket now and rebuilds it on the first miss.
-  void checkConnection() {
-    if (socket == null || state.value != SocketState.connected) return;
-    _heartbeatTimeoutTimer?.cancel();
-    _heartbeatTimeoutTimer = null;
-    _sendHeartbeat(urgent: true);
-  }
+  /// Checks a "connected" socket now instead of waiting for the next heartbeat.
+  void checkConnection() => _sendHeartbeat();
 
   /// Rebuilds rather than calling `connect()`: socket.io still believes the dead
   /// connection is up.
-  void _sendHeartbeat({bool urgent = false}) {
+  void _sendHeartbeat() {
     final Socket? s = socket;
     if (s == null || state.value != SocketState.connected || _heartbeatTimeoutTimer != null) return;
 
-    _heartbeatUrgent = urgent;
     _heartbeatTimeoutTimer = Timer(_heartbeatTimeout, () {
       _heartbeatTimeoutTimer = null;
-      _heartbeatMisses++;
-      if (!_heartbeatUrgent && _heartbeatMisses < _heartbeatMissLimit) return;
-      Logger.warn(
-          tag: _tag,
-          _heartbeatUrgent
-              ? "Server didn't answer a connection check — rebuilding socket"
-              : "Server missed $_heartbeatMisses heartbeats in a row — rebuilding socket");
+      // socket.io may already be reconnecting on its own.
+      if (state.value != SocketState.connected) return;
+      // One late ack on a slow link isn't enough to throw away a working socket; retry straight away.
+      if (++_heartbeatMisses < _heartbeatMissLimit) return _sendHeartbeat();
+      Logger.warn(tag: _tag, "Server missed $_heartbeatMisses heartbeats in a row — rebuilding socket");
       restartSocket();
     });
 
     // Read-only; get-server-config would delete the server's live password. The payload must be
     // non-null or the server's `(_, cb)` handler never acks.
-    s.emitWithAck("get-fcm-client", {}, ack: (_) {
+    s.emitWithAck("get-fcm-client", {}, ack: ([_, _]) {
       if (!identical(s, socket) || _heartbeatTimeoutTimer == null) return;
       _heartbeatTimeoutTimer!.cancel();
       _heartbeatTimeoutTimer = null;
       _heartbeatMisses = 0;
-      _heartbeatUrgent = false;
     });
   }
 
@@ -700,7 +704,8 @@ class SocketService {
           state.value = SocketState.connected;
           _cancelUrlDiscovery();
           _resetErrorLog();
-          NetworkTasks.onConnect();
+          // A rejected password still connects briefly, and the sync would just 401.
+          if (!authFailed.value) NetworkTasks.onConnect();
           Logger.info("Socket connected successfully to $serverAddress");
           _startHeartbeat();
           if (authFailed.value) unawaited(_clearAuthFailureIfAccepted());

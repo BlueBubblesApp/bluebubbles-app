@@ -27,10 +27,11 @@ class _ConnectingDialogState extends State<ConnectingDialog> {
       if (!mounted) return;
       if (event == SocketState.connected) {
         // A wrong password connects briefly before the server drops it; SocketService reports the 401.
+        // Any other ping failure is ignored since the socket itself is up.
         HttpSvc.server.ping().then((_) {
           if (mounted) widget.onConnect(true);
         }, onError: (e) {
-          if (mounted && !(e is DioException && e.response?.statusCode == 401)) widget.onConnect(false);
+          if (mounted && !(e is DioException && e.response?.statusCode == 401)) widget.onConnect(true);
         });
       } else if (event == SocketState.error) {
         widget.onConnect(false);
