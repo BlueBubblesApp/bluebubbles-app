@@ -6,6 +6,7 @@ class SharedPreferencesDatabaseActions {
   static const String _themesVersionKey = 'themesVersion';
   static const String _useCustomPathKey = 'use-custom-path';
   static const String _customPathKey = 'custom-path';
+  static const String _chatStateBaselineKey = 'chat-state-replication-baseline-v2';
 
   final SharedPreferencesService service;
 
@@ -24,6 +25,10 @@ class SharedPreferencesDatabaseActions {
   bool shouldUseCustomPath() => service.i.getBool(_useCustomPathKey) == true;
 
   String? getCustomPath() => service.i.getString(_customPathKey);
+
+  String? getChatStateBaseline() => service.i.getString(_chatStateBaselineKey);
+
+  Future<void> setChatStateBaseline(String value) => service.i.setString(_chatStateBaselineKey, value);
 
   Future<void> clearCustomPathConfig() async {
     await service.i.remove(_useCustomPathKey);

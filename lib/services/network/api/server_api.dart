@@ -47,6 +47,23 @@ class ServerApi {
     });
   }
 
+  /// Get the server's complete chat list with each chat's current read state.
+  ///
+  /// Used to reconcile after being offline. The live `chat-read-status-changed`
+  /// event only reaches a connected client, and no event exists at all for a
+  /// chat deleted on the Apple side, so without this the device keeps stale
+  /// unread dots and threads Apple no longer has.
+  Future<Response> chatStateSnapshot({CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.apiRoot}/server/chat-state/snapshot",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Get server metadata like server version, macOS version, current URL, etc
   Future<Response> info({CancelToken? cancelToken}) async {
     final now = DateTime.now();

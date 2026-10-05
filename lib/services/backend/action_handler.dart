@@ -156,6 +156,26 @@ class ActionHandler extends GetxService {
           await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
         }
         return;
+      case "chat-deleted":
+        final chatGuid = data["chatGuid"] ?? data["guid"];
+        if (chatGuid is! String || chatGuid.isEmpty) {
+          Logger.warn("Ignoring chat-deleted event without a valid chat GUID", tag: "ActionHandler");
+          return;
+        }
+
+        final deletedChat = Chat.findOne(guid: chatGuid);
+        if (deletedChat == null) {
+          Logger.warn("Ignoring chat-deleted event for unknown chat $chatGuid", tag: "ActionHandler");
+          return;
+        }
+        if (deletedChat.dateDeleted != null) {
+          Logger.info("Ignoring duplicate chat-deleted event for $chatGuid", tag: "ActionHandler");
+          return;
+        }
+
+        await ChatsSvc.softDeleteChat(deletedChat);
+        Logger.info("Applied server chat deletion for $chatGuid", tag: "ActionHandler");
+        return;
       case "typing-indicator":
         final chat = ChatsSvc.findChatByGuid(data["guid"]);
         if (chat != null) {

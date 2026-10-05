@@ -1331,6 +1331,26 @@ class ChatsService {
     state?.updateHasUnreadInternal(value);
   }
 
+  /// Apply unread state received from the server without echoing it back to Apple.
+  ///
+  /// This deliberately bypasses [_toggleChatHasUnread], whose active-chat logic
+  /// forces `privateMark` back to true. Reconciliation must remain local-only
+  /// even when the conversation is open.
+  Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null && state.hasUnreadMessage.value == value) return;
+
+    final chatToUpdate = state?.chat ?? chat;
+    await chatToUpdate.toggleHasUnreadAsync(
+      value,
+      force: true,
+      clearLocalNotifications: !value,
+      privateMark: false,
+    );
+    updateChat(chatToUpdate);
+    state?.updateHasUnreadInternal(value);
+  }
+
   /// Set chat muted status
   Future<void> setChatMuted(Chat chat, bool isMuted) async {
     final state = getChatState(chat.guid);
@@ -1357,6 +1377,19 @@ class ChatsService {
 
     // Update state if available
     state?.updateArchivedInternal(value);
+  }
+
+  /// Apply archive state received from the server without changing the local pin.
+  Future<void> setChatArchivedFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null && state.isArchived.value == value) return;
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.isArchived = value;
+    await chatToUpdate.saveAsync(updateIsArchived: true);
+    updateChat(chatToUpdate);
+    state?.updateArchivedInternal(value);
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat auto send read receipts

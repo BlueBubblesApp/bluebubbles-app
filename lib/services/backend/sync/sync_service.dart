@@ -177,6 +177,11 @@ class SyncService {
       syncIsolate.removeEventListener(IsolateEvent.incrementalSyncPageComplete, onPageComplete);
     }
 
+    // Deliberately not counted toward `errors`: this corrects drift rather than
+    // syncing data, and an older server without the endpoint must not make the
+    // user think their sync failed.
+    await performChatStateReconcile();
+
     final contactSyncResult = await performContactSyncToHandles();
     if (!contactSyncResult) {
       errors += 1;
@@ -194,6 +199,35 @@ class SyncService {
     }
 
     isIncrementalSyncing.value = false;
+  }
+
+  /// Reconciles local chat state against the server's authoritative snapshot.
+  ///
+  /// Incremental sync pages forward through new and updated messages, so it can
+  /// only ever learn about things that still exist. Two kinds of change are
+  /// invisible to it: a read that happened while this device was offline (the
+  /// live event was never received) and a chat deleted on the Apple side (no
+  /// event is emitted for it at all). Both leave the device permanently out of
+  /// step, so reconcile once per sync rather than relying on events alone.
+  ///
+  /// Failures here are logged but not surfaced as sync errors: this is a
+  /// correction pass, and a server too old to serve the endpoint is a normal
+  /// condition rather than a fault.
+  Future<bool> performChatStateReconcile() async {
+    try {
+      final response = await HttpSvc.server.chatStateSnapshot();
+      final payload = response.data?['data'];
+      if (payload is! Map) {
+        Logger.warn('Chat state snapshot response had no data payload', tag: 'Chat State Reconcile');
+        return false;
+      }
+
+      await ChatStateReconciler.apply(Map<String, dynamic>.from(payload));
+      return true;
+    } catch (ex, stack) {
+      Logger.error('Chat state reconcile failed!', error: ex, trace: stack, tag: 'Chat State Reconcile');
+      return false;
+    }
   }
 
   Future<bool> performContactSyncToHandles() async {
