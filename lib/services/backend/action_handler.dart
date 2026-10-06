@@ -153,7 +153,7 @@ class ActionHandler extends GetxService {
           // Route through ChatsService so the ChatState the conversation list
           // renders from is updated too. Writing only to the DB row leaves the
           // unread dot stale until the state is rebuilt (open chat / restart).
-          await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
+          await ChatsSvc.setChatHasUnreadFromServer(chat, !data["read"]!);
         }
         return;
       case "chat-deleted":
@@ -170,6 +170,12 @@ class ActionHandler extends GetxService {
         }
         if (deletedChat.dateDeleted != null) {
           Logger.info("Ignoring duplicate chat-deleted event for $chatGuid", tag: "ActionHandler");
+          return;
+        }
+
+        if (ChatsSvc.hasLocalWorkForChat(chatGuid)) {
+          await ChatStateReconciler.deferDeletion(chatGuid);
+          Logger.warn("Deferring server chat deletion because $chatGuid has local work", tag: "ActionHandler");
           return;
         }
 

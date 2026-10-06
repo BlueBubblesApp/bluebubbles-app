@@ -18,14 +18,12 @@ class ChatSnapshotEntry {
   const ChatSnapshotEntry({
     required this.guid,
     required this.read,
-    required this.isArchived,
     required this.messageCount,
     required this.readPointer,
   });
 
   final String guid;
   final bool read;
-  final bool isArchived;
   final int messageCount;
   final String readPointer;
 
@@ -33,17 +31,15 @@ class ChatSnapshotEntry {
     if (raw is! Map) return null;
     final guid = raw['guid'];
     final read = raw['read'];
-    final isArchived = raw['isArchived'];
     final messageCount = raw['messageCount'];
     final readPointer = raw['readPointer'];
     if (guid is! String || guid.isEmpty) return null;
-    if (read is! bool || isArchived is! bool) return null;
+    if (read is! bool) return null;
     if (messageCount is! int || messageCount < 0) return null;
     if (readPointer is! String || !_decimalPointer.hasMatch(readPointer)) return null;
     return ChatSnapshotEntry(
       guid: guid,
       read: read,
-      isArchived: isArchived,
       messageCount: messageCount,
       readPointer: readPointer,
     );
@@ -51,7 +47,6 @@ class ChatSnapshotEntry {
 
   bool hasSameState(ChatSnapshotEntry other) =>
       read == other.read &&
-      isArchived == other.isArchived &&
       messageCount == other.messageCount &&
       readPointer == other.readPointer;
 }
@@ -59,7 +54,6 @@ class ChatSnapshotEntry {
 class ChatSnapshotOutcome {
   const ChatSnapshotOutcome({
     this.readUpdated = 0,
-    this.archivedUpdated = 0,
     this.deleted = 0,
     this.skipped = false,
     this.seeded = false,
@@ -67,7 +61,6 @@ class ChatSnapshotOutcome {
   });
 
   final int readUpdated;
-  final int archivedUpdated;
   final int deleted;
   final bool skipped;
   final bool seeded;
@@ -195,6 +188,65 @@ class ChatStateReconciler {
     }));
   }
 
+  static Map<String, Set<String>> _readDeferredDeletionsByServer() {
+    final raw = PrefsSvc.database.getDeferredChatDeletions();
+    if (raw == null) return {};
+
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) throw const FormatException('malformed deferred deletion map');
+
+    final result = <String, Set<String>>{};
+    for (final item in decoded.entries) {
+      final serverAddress = item.key;
+      final rawGuids = item.value;
+      if (serverAddress is! String || serverAddress.isEmpty || rawGuids is! List) {
+        throw const FormatException('malformed deferred deletion server');
+      }
+      if (rawGuids.any((guid) => guid is! String || guid.isEmpty)) {
+        throw const FormatException('malformed deferred deletion GUID');
+      }
+      result[serverAddress] = rawGuids.cast<String>().toSet();
+    }
+    return result;
+  }
+
+  static Set<String> _readDeferredDeletionGuids(String serverAddress) =>
+      _readDeferredDeletionsByServer()[serverAddress] ?? <String>{};
+
+  static Future<void> _saveDeferredDeletionGuids(String serverAddress, Set<String> guids) async {
+    final byServer = _readDeferredDeletionsByServer();
+    if (guids.isEmpty) {
+      byServer.remove(serverAddress);
+    } else {
+      byServer[serverAddress] = {...guids};
+    }
+
+    final sortedServers = byServer.keys.toList()..sort();
+    final encoded = <String, dynamic>{};
+    for (final server in sortedServers) {
+      encoded[server] = byServer[server]!.toList()..sort();
+    }
+    await PrefsSvc.database.setDeferredChatDeletions(jsonEncode(encoded));
+  }
+
+  /// Persists a live deletion that cannot yet be applied because local work
+  /// would be lost. The next complete snapshot confirms Apple still considers
+  /// the chat deleted before retrying it.
+  static Future<void> deferDeletion(String guid) {
+    final completer = Completer<void>();
+    _applyTail = _applyTail.then((_) async {
+      try {
+        final serverAddress = SettingsSvc.settings.serverAddress.value;
+        final guids = _readDeferredDeletionGuids(serverAddress)..add(guid);
+        await _saveDeferredDeletionGuids(serverAddress, guids);
+        completer.complete();
+      } catch (error, trace) {
+        completer.completeError(error, trace);
+      }
+    });
+    return completer.future;
+  }
+
   static bool? _readTransition(_ReadState previous, ChatSnapshotEntry next) {
     final pointerChange = _compareDecimalStrings(next.readPointer, previous.readPointer);
 
@@ -258,6 +310,11 @@ class ChatStateReconciler {
 
     final baseline = _readBaseline();
     final serverAddress = SettingsSvc.settings.serverAddress.value;
+    final queuedDeletionGuids = _readDeferredDeletionGuids(serverAddress);
+    final confirmedQueuedDeletionGuids = queuedDeletionGuids.where((guid) {
+      final entry = entries[guid];
+      return entry == null || entry.messageCount == 0;
+    }).toSet();
     final baselineMatchesServer = baseline.initialized && baseline.serverAddress == serverAddress;
     if (baselineMatchesServer && generatedAt <= baseline.lastGeneratedAt) {
       Logger.warn('Chat snapshot was older than the applied baseline; refusing to reconcile');
@@ -271,24 +328,26 @@ class ChatStateReconciler {
     );
 
     var readUpdated = 0;
-    var archivedUpdated = 0;
     var deleted = 0;
+    final remainingDeferredDeletionGuids = <String>{};
+    final deletionCandidates = {...transition.deletedGuids, ...confirmedQueuedDeletionGuids};
 
     for (final chat in localChats) {
       if (chat.dateDeleted != null || !_isServerBacked(chat)) continue;
       final entry = entries[chat.guid];
 
-      if (transition.deletedGuids.contains(chat.guid)) {
+      if (deletionCandidates.contains(chat.guid)) {
+        if (ChatsSvc.hasLocalWorkForChat(chat.guid)) {
+          remainingDeferredDeletionGuids.add(chat.guid);
+          Logger.warn('Deferring server chat deletion because ${chat.guid} has local work',
+              tag: 'ChatStateReconciler');
+          continue;
+        }
         await ChatsSvc.softDeleteChat(chat);
         deleted++;
         continue;
       }
       if (entry == null) continue;
-
-      if (chat.isArchived != entry.isArchived) {
-        await ChatsSvc.setChatArchivedFromServer(chat, entry.isArchived);
-        archivedUpdated++;
-      }
 
       final previousReadState = baselineMatchesServer && baseline.schemaVersion == 3
           ? baseline.readStates[chat.guid]
@@ -303,18 +362,18 @@ class ChatStateReconciler {
     // Commit only after every local effect succeeded. A partial failure retries
     // from the previous known-good state.
     await _saveBaseline(
-      transition.nextNonEmptyGuids,
+      {...transition.nextNonEmptyGuids, ...remainingDeferredDeletionGuids},
       entries,
       serverAddress: serverAddress,
       lastGeneratedAt: generatedAt,
     );
+    await _saveDeferredDeletionGuids(serverAddress, remainingDeferredDeletionGuids);
 
-    Logger.info('Reconciled chat state: $readUpdated read updates, $archivedUpdated archive updates, '
-        '$deleted forward deletions against ${entries.length} server chats');
+    Logger.info('Reconciled chat state: $readUpdated read updates, $deleted forward deletions '
+        'against ${entries.length} server chats');
 
     return ChatSnapshotOutcome(
       readUpdated: readUpdated,
-      archivedUpdated: archivedUpdated,
       deleted: deleted,
       seeded: !baselineMatchesServer || baseline.schemaVersion != 3,
     );

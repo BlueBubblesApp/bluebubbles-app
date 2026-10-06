@@ -1150,6 +1150,24 @@ class ChatsService {
     await init(force: true);
   }
 
+  /// Whether a server-originated deletion would discard local composition work.
+  bool hasLocalWorkForChat(String chatGuid) {
+    final hasPendingSend = GetIt.I.isRegistered<OutgoingMessageHandler>() &&
+        OutgoingMsgHandler.hasOutgoingWorkForChat(chatGuid);
+    final active = activeChat;
+    if (active?.chat.guid != chatGuid) return hasPendingSend;
+
+    final controller = active?.controller;
+    final hasDraft = controller != null &&
+        (controller.textController.text.isNotEmpty ||
+            controller.subjectTextController.text.isNotEmpty ||
+            controller.pickedAttachments.isNotEmpty ||
+            controller.showRecording.value ||
+            controller.scheduledDate.value != null ||
+            controller.replyToMessage != null);
+    return hasPendingSend || hasDraft;
+  }
+
   /// Soft delete a chat with full UI cleanup and service state management
   Future<void> softDeleteChat(Chat chat) async {
     if (kIsWeb) return;

@@ -175,6 +175,27 @@ class OutgoingMessageHandler {
   /// there is actually something pending for a given chat.
   final pendingChatGuids = <String>{}.obs;
 
+  /// Preparation happens before an item enters [pendingChatGuids]. Keep a
+  /// reference count so concurrent sends for the same chat cannot clear the
+  /// deletion guard while another preparation is still awaiting persistence.
+  final Map<String, int> _preparingChatCounts = {};
+
+  bool hasOutgoingWorkForChat(String chatGuid) =>
+      (_preparingChatCounts[chatGuid] ?? 0) > 0 || pendingChatGuids.contains(chatGuid);
+
+  void _beginPreparing(String chatGuid) {
+    _preparingChatCounts[chatGuid] = (_preparingChatCounts[chatGuid] ?? 0) + 1;
+  }
+
+  void _finishPreparing(String chatGuid) {
+    final remaining = (_preparingChatCounts[chatGuid] ?? 1) - 1;
+    if (remaining <= 0) {
+      _preparingChatCounts.remove(chatGuid);
+    } else {
+      _preparingChatCounts[chatGuid] = remaining;
+    }
+  }
+
   /// Enqueues [item] for sending.  Preparation (DB write / file copy) is
   /// performed synchronously before the item enters the queue, so the
   /// outgoing bubble appears in the UI immediately.  The actual HTTP call
@@ -190,26 +211,35 @@ class OutgoingMessageHandler {
     // centralized rather than left to convention).
     _ensureTempGuid(item);
 
-    // Prep the item (writes temp messages / copies attachment files to disk),
-    // retrying a transient failure and surfacing a terminal one as a failed
-    // message so it is never silently dropped. See [_prepItemWithRetry].
-    final prep = await _prepItemWithRetry(item);
-    if (!prep.ok) return;
-    final returned = prep.result;
+    final chatGuid = item.chat.guid;
+    _beginPreparing(chatGuid);
+    try {
+      // Prep the item (writes temp messages / copies attachment files to disk),
+      // retrying a transient failure and surfacing a terminal one as a failed
+      // message so it is never silently dropped. See [_prepItemWithRetry].
+      final prep = await _prepItemWithRetry(item);
+      if (!prep.ok) return;
+      final returned = prep.result;
 
-    if (returned is List<Message>) {
-      // _persistOutgoingMessages already saved each message to the DB; create a queue
-      // entry for each one with the message that was actually saved.
-      for (final m in returned) {
-        _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
+      if (returned is List<Message>) {
+        // _persistOutgoingMessages already saved each message to the DB; create a queue
+        // entry for each one with the message that was actually saved.
+        if (returned.isEmpty) return;
+        for (final m in returned) {
+          _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
+        }
+      } else {
+        // Attachment: prepAttachment already saved it; keep the original item.
+        _queue.add(_OutgoingEntry(item));
       }
-    } else {
-      // Attachment: prepAttachment already saved it; keep the original item.
-      _queue.add(_OutgoingEntry(item));
-    }
 
-    pendingChatGuids.add(item.chat.guid);
-    unawaited(_processNext());
+      // Establish the queue/dispatch guard before releasing the preparation
+      // reference in finally, so there is no deletion window between phases.
+      pendingChatGuids.add(chatGuid);
+      unawaited(_processNext());
+    } finally {
+      _finishPreparing(chatGuid);
+    }
   }
 
   /// Ensures [item.message] has a stable temp GUID before prep/retry begins.
