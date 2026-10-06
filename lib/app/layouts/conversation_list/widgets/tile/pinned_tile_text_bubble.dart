@@ -160,7 +160,6 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
           : AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
       final previewAttachment = AttachmentPreview.firstPreviewableAttachment(attachments);
       final showPreview = previewAttachment != null &&
-          !SettingsSvc.settings.highPerfMode.value &&
           AttachmentPreview.canShow(previewAttachment, generateVideoThumbnail: true);
       // Prefer a real "1 Photo" label over the stale "Attachment" fallback when
       // we had to re-query attachments that the cached latest message missed.

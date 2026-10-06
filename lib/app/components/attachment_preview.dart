@@ -95,7 +95,7 @@ class AttachmentPreview extends StatefulWidget {
     required bool generateVideoThumbnail,
   }) {
     if (kIsWeb) return false;
-    if (_hidePreview(generateVideoThumbnail: generateVideoThumbnail)) return false;
+    if (_hidePreview()) return false;
     final mimeStart = attachment.mimeStart;
     if (mimeStart != 'image' && mimeStart != 'video') return false;
     if (!AttachmentsSvc.hasLocalFile(attachment)) return false;
@@ -107,15 +107,12 @@ class AttachmentPreview extends StatefulWidget {
     return true;
   }
 
-  static bool _hidePreview({required bool generateVideoThumbnail}) {
+  static bool _hidePreview() {
     // Read each Rx unconditionally so Obx subscriptions don't depend on short-circuiting.
     final redacted = SettingsSvc.settings.redactedMode.value;
     final hideAttachments = SettingsSvc.settings.hideAttachments.value;
     final highPerf = SettingsSvc.settings.highPerfMode.value;
-    // High Performance Mode skips decoding on the conversation list (pin grid),
-    // where [generateVideoThumbnail] is false. In-conversation surfaces may still
-    // generate a video thumb.
-    return (redacted && hideAttachments) || (!generateVideoThumbnail && highPerf);
+    return (redacted && hideAttachments) || highPerf;
   }
 
   @override
@@ -188,7 +185,7 @@ class _AttachmentPreviewState extends State<AttachmentPreview> with ThemeHelpers
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (AttachmentPreview._hidePreview(generateVideoThumbnail: widget.generateVideoThumbnail)) {
+      if (AttachmentPreview._hidePreview()) {
         return const SizedBox.shrink();
       }
       final path = _imagePath;
