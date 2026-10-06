@@ -1154,18 +1154,21 @@ class ChatsService {
   bool hasLocalWorkForChat(String chatGuid) {
     final hasPendingSend = GetIt.I.isRegistered<OutgoingMessageHandler>() &&
         OutgoingMsgHandler.hasOutgoingWorkForChat(chatGuid);
+    final state = getChatState(chatGuid);
+    final hasPersistedDraft =
+        (state?.textFieldText.value?.isNotEmpty ?? false) || (state?.textFieldAttachments.isNotEmpty ?? false);
     final active = activeChat;
-    if (active?.chat.guid != chatGuid) return hasPendingSend;
+    if (active?.chat.guid != chatGuid) return hasPendingSend || hasPersistedDraft;
 
     final controller = active?.controller;
-    final hasDraft = controller != null &&
+    final hasActiveDraft = controller != null &&
         (controller.textController.text.isNotEmpty ||
             controller.subjectTextController.text.isNotEmpty ||
             controller.pickedAttachments.isNotEmpty ||
             controller.showRecording.value ||
             controller.scheduledDate.value != null ||
             controller.replyToMessage != null);
-    return hasPendingSend || hasDraft;
+    return hasPendingSend || hasPersistedDraft || hasActiveDraft;
   }
 
   /// Soft delete a chat with full UI cleanup and service state management

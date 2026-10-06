@@ -24,7 +24,7 @@ and applies it once per incremental sync. It is intentionally **not** counted
 toward the sync error total — it corrects drift, and an older server without the
 endpoint is a normal condition.
 
-Snapshot v2 is strict and forward-only. `ChatStateReconciler.apply()` rejects an
+Snapshot v3 is strict and forward-only. `ChatStateReconciler.apply()` rejects an
 unsupported schema, malformed row, conflicting duplicate, incomplete response,
 or out-of-order response. Complete empty snapshots remain valid: the first seeds
 a durable set of non-empty chats without deleting; later populated-to-empty or
