@@ -9,9 +9,20 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 
 final RegExp _decimalPointer = RegExp(r'^(0|[1-9][0-9]*)$');
 
-int _compareDecimalStrings(String a, String b) {
-  if (a.length != b.length) return a.length < b.length ? -1 : 1;
-  return a.compareTo(b);
+/// Returns the unread state a trusted snapshot should apply locally.
+///
+/// The first snapshot only seeds a forward-sync baseline. Once that baseline
+/// contains the chat, each newer complete snapshot is Apple-authoritative and
+/// repairs local drift even when the persisted baseline itself did not change.
+bool? desiredUnreadFromSnapshot({
+  required bool hasTrustedBaseline,
+  required bool baselineHasChat,
+  required bool serverRead,
+  required bool localUnread,
+}) {
+  if (!hasTrustedBaseline || !baselineHasChat) return null;
+  final desiredUnread = !serverRead;
+  return desiredUnread == localUnread ? null : desiredUnread;
 }
 
 class ChatSnapshotEntry {
@@ -37,18 +48,11 @@ class ChatSnapshotEntry {
     if (read is! bool) return null;
     if (messageCount is! int || messageCount < 0) return null;
     if (readPointer is! String || !_decimalPointer.hasMatch(readPointer)) return null;
-    return ChatSnapshotEntry(
-      guid: guid,
-      read: read,
-      messageCount: messageCount,
-      readPointer: readPointer,
-    );
+    return ChatSnapshotEntry(guid: guid, read: read, messageCount: messageCount, readPointer: readPointer);
   }
 
   bool hasSameState(ChatSnapshotEntry other) =>
-      read == other.read &&
-      messageCount == other.messageCount &&
-      readPointer == other.readPointer;
+      read == other.read && messageCount == other.messageCount && readPointer == other.readPointer;
 }
 
 class ChatSnapshotOutcome {
@@ -105,13 +109,13 @@ class ChatStateReconciler {
   static bool _isServerBacked(Chat chat) => chat.guid.isNotEmpty && !chat.guid.startsWith('temp-');
 
   static _Baseline _emptyBaseline() => const _Baseline(
-        initialized: false,
-        schemaVersion: 0,
-        nonEmptyGuids: {},
-        readStates: {},
-        serverAddress: null,
-        lastGeneratedAt: -1,
-      );
+    initialized: false,
+    schemaVersion: 0,
+    nonEmptyGuids: {},
+    readStates: {},
+    serverAddress: null,
+    lastGeneratedAt: -1,
+  );
 
   static _Baseline _readBaseline() {
     final raw = PrefsSvc.database.getChatStateBaseline();
@@ -179,13 +183,15 @@ class ChatStateReconciler {
       final entry = entries[guid]!;
       chatStates[guid] = {'readPointer': entry.readPointer, 'read': entry.read};
     }
-    await PrefsSvc.database.setChatStateBaseline(jsonEncode({
-      'schemaVersion': 3,
-      'serverAddress': serverAddress,
-      'lastGeneratedAt': lastGeneratedAt,
-      'nonEmptyGuids': sortedGuids,
-      'chatStates': chatStates,
-    }));
+    await PrefsSvc.database.setChatStateBaseline(
+      jsonEncode({
+        'schemaVersion': 3,
+        'serverAddress': serverAddress,
+        'lastGeneratedAt': lastGeneratedAt,
+        'nonEmptyGuids': sortedGuids,
+        'chatStates': chatStates,
+      }),
+    );
   }
 
   static Map<String, Set<String>> _readDeferredDeletionsByServer() {
@@ -245,15 +251,6 @@ class ChatStateReconciler {
       }
     });
     return completer.future;
-  }
-
-  static bool? _readTransition(_ReadState previous, ChatSnapshotEntry next) {
-    final pointerChange = _compareDecimalStrings(next.readPointer, previous.readPointer);
-
-    // Unread evidence wins over a simultaneous read signal.
-    if (pointerChange < 0 || (previous.read && !next.read)) return false;
-    if ((pointerChange > 0 && next.read) || (!previous.read && next.read)) return true;
-    return null;
   }
 
   static Future<ChatSnapshotOutcome> apply(Map<String, dynamic> payload) {
@@ -339,8 +336,7 @@ class ChatStateReconciler {
       if (deletionCandidates.contains(chat.guid)) {
         if (ChatsSvc.hasLocalWorkForChat(chat.guid)) {
           remainingDeferredDeletionGuids.add(chat.guid);
-          Logger.warn('Deferring server chat deletion because ${chat.guid} has local work',
-              tag: 'ChatStateReconciler');
+          Logger.warn('Deferring server chat deletion because ${chat.guid} has local work', tag: 'ChatStateReconciler');
           continue;
         }
         await ChatsSvc.softDeleteChat(chat);
@@ -352,9 +348,14 @@ class ChatStateReconciler {
       final previousReadState = baselineMatchesServer && baseline.schemaVersion == 3
           ? baseline.readStates[chat.guid]
           : null;
-      final read = previousReadState == null ? null : _readTransition(previousReadState, entry);
-      if (read != null && chat.hasUnreadMessage != !read) {
-        await ChatsSvc.setChatHasUnreadFromServer(chat, !read);
+      final desiredUnread = desiredUnreadFromSnapshot(
+        hasTrustedBaseline: baselineMatchesServer && baseline.schemaVersion == 3,
+        baselineHasChat: previousReadState != null,
+        serverRead: entry.read,
+        localUnread: chat.hasUnreadMessage ?? false,
+      );
+      if (desiredUnread != null) {
+        await ChatsSvc.setChatHasUnreadFromServer(chat, desiredUnread);
         readUpdated++;
       }
     }
@@ -369,8 +370,10 @@ class ChatStateReconciler {
     );
     await _saveDeferredDeletionGuids(serverAddress, remainingDeferredDeletionGuids);
 
-    Logger.info('Reconciled chat state: $readUpdated read updates, $deleted forward deletions '
-        'against ${entries.length} server chats');
+    Logger.info(
+      'Reconciled chat state: $readUpdated read updates, $deleted forward deletions '
+      'against ${entries.length} server chats',
+    );
 
     return ChatSnapshotOutcome(
       readUpdated: readUpdated,
