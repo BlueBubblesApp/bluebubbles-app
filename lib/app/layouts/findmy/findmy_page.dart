@@ -74,6 +74,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                   child: Stack(
                     children: [
                       FindMyMapWidget(controller: controller),
+                      if (!controller.canRefresh.value) _buildUpdatingIndicator(context),
                       if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: true),
                       if (kIsDesktop) _buildDesktopTitleBar(context),
                     ],
@@ -327,6 +328,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                   child: buildBackButton(context, padding: const EdgeInsets.only(right: 2)),
                 ),
               ),
+            if (!controller.canRefresh.value) _buildUpdatingIndicator(context),
             if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: false),
             if (kIsDesktop) _buildDesktopTitleBar(context),
           ],
@@ -389,6 +391,32 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
             controller.panelController.close();
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildUpdatingIndicator(BuildContext context) {
+    return Positioned(
+      top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
+      right: 20,
+      child: Semantics(
+        liveRegion: true,
+        label: "Updating locations",
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildProgressIndicator(context, size: 18),
+              const SizedBox(width: 8),
+              Text("Updating locations…", style: context.theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
       ),
     );
   }

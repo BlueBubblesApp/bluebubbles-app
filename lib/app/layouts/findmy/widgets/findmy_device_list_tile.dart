@@ -1,4 +1,5 @@
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_friend_sort.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_raw_data_dialog.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -30,8 +31,12 @@ class FindMyDeviceListTile extends StatelessWidget {
           ? "Location"
           : (item.address?.label ?? item.address?.mapItemFullAddress ?? "No location found");
 
-      final hasLocation = item.location?.latitude != null && item.location?.longitude != null;
-      final markerPoint = hasLocation ? controller.markerPointForDevice(item) : null;
+      final hasUsableCoordinates =
+          isUsableFindMyCoordinate(item.location?.latitude, item.location?.longitude);
+      final fullAddress = item.address?.mapItemFullAddress?.trim();
+      final hasFullAddress = fullAddress?.isNotEmpty ?? false;
+      final markerPoint = hasUsableCoordinates ? controller.markerPointForDevice(item) : null;
+      final canOpenMaps = markerPoint != null || hasFullAddress;
 
       return ListTile(
         mouseCursor: MouseCursor.defer,
@@ -47,7 +52,7 @@ class FindMyDeviceListTile extends StatelessWidget {
                 controller.mapController.move(markerPoint, 10);
               }
             : null,
-        trailing: markerPoint != null
+        trailing: canOpenMaps
             ? ButtonTheme(
                 minWidth: 1,
                 child: TextButton(
@@ -56,7 +61,11 @@ class FindMyDeviceListTile extends StatelessWidget {
                     backgroundColor: context.theme.colorScheme.primaryContainer,
                   ),
                   onPressed: () async {
-                    await MapsLauncher.launchCoordinates(markerPoint.latitude, markerPoint.longitude);
+                    if (markerPoint != null) {
+                      await MapsLauncher.launchCoordinates(markerPoint.latitude, markerPoint.longitude);
+                    } else {
+                      await MapsLauncher.launchQuery(fullAddress!);
+                    }
                   },
                   child: const Icon(Icons.directions, size: 20),
                 ),
