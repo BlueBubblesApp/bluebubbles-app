@@ -38,6 +38,7 @@ class MethodChannelHandlers {
       MethodChannelInboundMethods.replyChat: _handleReplyChat,
       MethodChannelInboundMethods.markChatRead: _handleMarkChatRead,
       MethodChannelInboundMethods.chatReadStatusChanged: _handleChatReadStatusChanged,
+      MethodChannelInboundMethods.chatDeleted: _handleChatDeleted,
       MethodChannelInboundMethods.mediaColors: _handleMediaColors,
       MethodChannelInboundMethods.incomingFacetime: _handleIncomingFacetime,
       MethodChannelInboundMethods.ftCallStatusChanged: _handleFtCallStatusChanged,
@@ -352,6 +353,25 @@ class MethodChannelHandlers {
       return await _retry();
     } catch (e, s) {
       return Future.error(e, s);
+    }
+  }
+
+  Future<bool> _handleChatDeleted(MethodCall _, Map<String, dynamic>? arguments) async {
+    if (arguments == null) return _retry();
+    await Database.waitForInit();
+    Logger.info('Received chat deletion from push notification');
+
+    try {
+      final payload = ServerPayload.fromJson(arguments);
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatDeleted,
+        payload.data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
+    } catch (e, s) {
+      Error.throwWithStackTrace(e, s);
     }
   }
 
