@@ -333,26 +333,31 @@ class MethodChannelHandlers {
   }
 
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
-    if (!service.headless && LifecycleSvc.isAlive) return _ok();
+    if (!service.headless &&
+        LifecycleSvc.isAlive &&
+        (SocketSvc.socket?.connected ?? false)) {
+      return _ok();
+    }
+    if (arguments == null) return _retry();
     await Database.waitForInit();
     Logger.info('Received chat status change from FCM');
 
     try {
-      final Map<String, dynamic>? data = arguments;
-      if (!isNullOrEmpty(data)) {
-        final payload = ServerPayload.fromJson(data!);
-        final Chat? chat = Chat.findOne(guid: payload.data['chatGuid']);
-        if (chat == null || (payload.data['read'] != true && payload.data['read'] != false)) {
-          return await _retry();
-        }
-
-        chat.toggleHasUnreadAsync(!payload.data['read']!, privateMark: false);
-        return await _ok();
+      final payload = ServerPayload.fromJson(arguments);
+      final data = payload.data;
+      if (data['chatGuid'] is! String || (data['read'] != true && data['read'] != false)) {
+        return await _retry();
       }
 
-      return await _retry();
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatReadStatusChanged,
+        data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
     } catch (e, s) {
-      return Future.error(e, s);
+      Error.throwWithStackTrace(e, s);
     }
   }
 
