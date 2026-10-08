@@ -9,6 +9,7 @@ import 'package:bluebubbles/services/backend/settings/actions/shared_preferences
 import 'package:bluebubbles/services/backend/settings/desktop_shared_preferences_store.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_database_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_desktop_actions.dart';
+import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_findmy_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_firebase_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_messaging_actions.dart';
 import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_network_actions.dart';
@@ -26,6 +27,7 @@ class SharedPreferencesService {
   late final SharedPreferencesAdminActions admin;
   late final SharedPreferencesDatabaseActions database;
   late final SharedPreferencesDesktopActions desktop;
+  late final SharedPreferencesFindMyActions findMy;
   late final SharedPreferencesFirebaseActions firebase;
   late final SharedPreferencesThemeActions theme;
   late final SharedPreferencesMessagingActions messaging;
@@ -84,6 +86,7 @@ class SharedPreferencesService {
     admin = SharedPreferencesAdminActions(this);
     database = SharedPreferencesDatabaseActions(this);
     desktop = SharedPreferencesDesktopActions(this);
+    findMy = SharedPreferencesFindMyActions(this);
     firebase = SharedPreferencesFirebaseActions(this);
     theme = SharedPreferencesThemeActions(this);
     messaging = SharedPreferencesMessagingActions(this);

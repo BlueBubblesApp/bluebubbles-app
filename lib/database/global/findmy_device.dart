@@ -33,6 +33,9 @@ class FindMyDevice {
     required this.isMac,
     required this.rawDeviceModel,
     required this.baUuid,
+    required this.productIdentifier,
+    required this.serialNumber,
+    required this.isAppleAudioAccessory,
     required this.trackingInfo,
     required this.features,
     required this.deviceDiscoveryId,
@@ -64,8 +67,8 @@ class FindMyDevice {
   final double? batteryLevel;
   final dynamic locationEnabled;
   final bool isConsideredAccessory;
-  final Address? address;
-  final Location? location;
+  Address? address;
+  Location? location;
   final String? modelDisplayName;
   final dynamic deviceColor;
   final dynamic activationLocked;
@@ -85,6 +88,9 @@ class FindMyDevice {
   final dynamic isMac;
   final String? rawDeviceModel;
   final String? baUuid;
+  final String? productIdentifier;
+  final String? serialNumber;
+  final bool isAppleAudioAccessory;
   final dynamic trackingInfo;
   final Map<String, bool?>? features;
   final String? deviceDiscoveryId;
@@ -103,11 +109,30 @@ class FindMyDevice {
   final String? groupIdentifier;
   final String? groupName;
 
+  /// Set when [location] is the last known location from the local cache
+  /// because Apple currently reports none.
+  DateTime? lastKnownLocationAt;
+
   /// Apple reports some accessories as a component of a parent accessory: an
   /// AirPods Max earpiece arrives as its own entry named "single" with
   /// [groupName] set to the headphones it belongs to. Find My displays the
   /// group, so prefer [groupName] and keep [name] only as a fallback.
-  String? get displayName => (groupName?.isNotEmpty ?? false) ? groupName : name;
+  String? get displayName {
+    if (groupName?.isNotEmpty ?? false) return groupName;
+    if (isAppleAudioAccessory && deviceModel == 'hawkeye') {
+      switch (name?.toLowerCase()) {
+        case 'left':
+          return 'Left earbud';
+        case 'right':
+          return 'Right earbud';
+        case 'case':
+          return 'AirPods case';
+        case 'single':
+          return 'AirPods component';
+      }
+    }
+    return name;
+  }
 
   /// True when this entry is a component of another accessory rather than a
   /// standalone item the user owns.
@@ -127,7 +152,7 @@ class FindMyDevice {
         locationEnabled: json["locationEnabled"],
         isConsideredAccessory: json["isConsideredAccessory"] ?? false,
         address: json["address"] == null ? null : Address.fromJson(json["address"]),
-        location: json["location"] == null ? null : Location.fromJson(json["location"]),
+        location: _newestLocation(json["location"], json["crowdSourcedLocation"]),
         modelDisplayName: json["modelDisplayName"],
         deviceColor: json["deviceColor"],
         activationLocked: json["activationLocked"],
@@ -149,6 +174,9 @@ class FindMyDevice {
         isMac: json["isMac"],
         rawDeviceModel: json["rawDeviceModel"],
         baUuid: json["baUUID"],
+        productIdentifier: json["productIdentifier"],
+        serialNumber: json["serialNumber"],
+        isAppleAudioAccessory: json["isAppleAudioAccessory"] ?? false,
         trackingInfo: json["trackingInfo"],
         features: json["features"]?.cast<String, bool?>(),
         deviceDiscoveryId: json["deviceDiscoveryId"],
@@ -202,6 +230,9 @@ class FindMyDevice {
         "isMac": isMac,
         "rawDeviceModel": rawDeviceModel,
         "baUUID": baUuid,
+        "productIdentifier": productIdentifier,
+        "serialNumber": serialNumber,
+        "isAppleAudioAccessory": isAppleAudioAccessory,
         "trackingInfo": trackingInfo,
         "features": features,
         "deviceDiscoveryId": deviceDiscoveryId,
@@ -285,6 +316,27 @@ class Address {
         "locality": locality,
         "country": country,
       };
+}
+
+/// Apple sometimes leaves [location] empty and reports the device's only fix
+/// as a crowd-sourced location (e.g. a Wi-Fi iPad found through nearby Apple
+/// devices). Find My shows whichever fix is newest, so prefer that one.
+Location? _newestLocation(dynamic primary, dynamic crowdSourced) {
+  Location? usable(dynamic json) {
+    if (json is! Map<String, dynamic>) return null;
+    final location = Location.fromJson(json);
+    final latitude = location.latitude;
+    final longitude = location.longitude;
+    if (latitude == null || longitude == null || !latitude.isFinite || !longitude.isFinite) return null;
+    if (latitude.abs() > 90 || longitude.abs() > 180 || (latitude == 0 && longitude == 0)) return null;
+    return location;
+  }
+
+  final main = usable(primary);
+  final crowd = usable(crowdSourced);
+  if (crowd == null) return main ?? (primary is Map<String, dynamic> ? Location.fromJson(primary) : null);
+  if (main == null) return crowd;
+  return (crowd.timeStamp ?? 0) > (main.timeStamp ?? 0) ? crowd : main;
 }
 
 class Location {

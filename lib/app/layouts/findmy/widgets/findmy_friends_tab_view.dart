@@ -52,7 +52,10 @@ class FindMyFriendsTabView extends StatelessWidget {
             ),
           if (controller.friendsWithoutLocation.isNotEmpty)
             SettingsHeader(
-                iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Friends without locations"),
+              iosSubtitle: iosSubtitle,
+              materialSubtitle: materialSubtitle,
+              text: "Friends without locations",
+            ),
           if (controller.friendsWithoutLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: context.tileColor,
@@ -90,8 +93,8 @@ class FindMyFriendsTabView extends StatelessWidget {
                 controller.fetching2.value == null
                     ? "Something went wrong!"
                     : controller.fetching2.value == false
-                        ? "You have no friends."
-                        : "Getting FindMy data...",
+                    ? "You have no friends."
+                    : "Getting FindMy data...",
                 style: context.theme.textTheme.labelLarge,
               ),
             ),
