@@ -95,6 +95,9 @@ class Win32Window {
   // This is mandatory if you want to catch further links in same app.
   bool SendAppLinkToInstance(const std::wstring& title);
 
+  // Whether |hwnd|'s thread answers messages within a short timeout (i.e. it isn't hung or crashing).
+  static bool IsWindowResponsive(HWND hwnd);
+
   bool quit_on_close_ = false;
 
   // window handle for top level window.
