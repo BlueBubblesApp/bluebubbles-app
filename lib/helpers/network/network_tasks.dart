@@ -6,6 +6,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:network_tools/network_tools.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/network_tools.dart';
@@ -47,8 +48,11 @@ class NetworkTasks {
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) {
     // Deduplicate: if already running, all callers share the same future.
-    _detectLocalhostFuture ??=
-        _detectLocalhostImpl(createSnackbar: createSnackbar).whenComplete(() => _detectLocalhostFuture = null);
+    _detectLocalhostFuture ??= _detectLocalhostImpl(createSnackbar: createSnackbar).whenComplete(() {
+      _detectLocalhostFuture = null;
+      // Not in setOriginOverride(): the probe clears the override midway.
+      if (GetIt.I.isRegistered<SocketService>()) SocketSvc.followOrigin();
+    });
     return _detectLocalhostFuture!;
   }
 

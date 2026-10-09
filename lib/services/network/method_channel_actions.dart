@@ -64,6 +64,20 @@ class MethodChannelActions {
     await service.invokeMethod('stop-foreground-service');
   }
 
+  /// Asks the engine to drop its GPU, Skia/Impeller and VM caches, as it would on
+  /// a system low-memory signal. Android only; a no-op elsewhere.
+  Future<void> trimMemory() async {
+    await service.invokeMethod('trim-memory');
+  }
+
+  /// Current process memory in KB, keyed `pss`, `graphics`, `javaHeap`, `nativeHeap`,
+  /// `code`, `privateOther`. Android only; null elsewhere or on failure.
+  Future<Map<String, int>?> memoryStats() async {
+    final raw = await service.invokeMethod('memory-stats');
+    if (raw is! Map) return null;
+    return raw.map((key, value) => MapEntry(key.toString(), value is num ? value.toInt() : 0));
+  }
+
   Future<void> deleteNotification({required int notificationId, String? tag}) async {
     await service.invokeMethod('delete-notification', {
       'notification_id': notificationId,

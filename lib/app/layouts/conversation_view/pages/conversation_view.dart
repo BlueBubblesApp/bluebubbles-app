@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/messages_view_components.dart';
@@ -11,7 +12,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/effects/screen
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/window_effect.dart';
@@ -84,7 +84,13 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     final bgPath = ChatsSvc.getChatState(chat.guid)?.customBackgroundPath.value;
     if (bgPath != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) precacheImage(FileImage(File(bgPath)), context);
+        if (!mounted) return;
+        // Same resize parameters as GradientBackgroundWrapper, or this warms a
+        // cache entry the wrapper never reads and the file decodes twice. The
+        // entry is deliberately left in the cache on close so reopening the chat
+        // paints the background on its first frame; the LRU cap and the
+        // on-background purge decide when it goes.
+        precacheImage(chatBackgroundImageProvider(bgPath, context), context);
       });
     }
   }

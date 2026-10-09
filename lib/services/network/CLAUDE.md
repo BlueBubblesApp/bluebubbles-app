@@ -59,8 +59,20 @@ socket_io_client connection to the BlueBubbles server. Don't create additional
   `_socketGaveUp`, so a wedged `_urlDiscoveryInProgress` disables it for the process.
 - Connectivity changes (`Connectivity()` stream) drop a stale localhost origin
   override **and** rebuild (debounced) when the network returns — socket.io's backoff
-  can be a minute out and `Socket.connect()` can't shorten it. On Windows an
-  `InternetConnection` probe against the server drives this instead.
+  can be a minute out and `Socket.connect()` can't shorten it. Subscribed once, not per
+  rebuild. On Android, with no network at all the socket is closed and reports "No network
+  connection"; `startSocket()` refuses to run until a network event arrives. Desktop ignores
+  `none`: Windows reports it whenever NCSI finds no internet, even with the server on the LAN.
+- The server's engine.io heartbeat takes up to ~3 min to notice a dead connection
+  (pingInterval 60s + pingTimeout 120s) and can't change until the server rewrite, so
+  the client runs its own over the socket: `get-fcm-client` with an ack, every 30s,
+  5s to answer, a miss retries immediately, rebuild after 2 misses. `checkConnection()`
+  sends one now — called on desktop resume and (debounced) on connectivity changes.
+  There's no separate HTTP internet probe; it flagged working sockets on slow replies.
+  Never use `get-server-config`: the server deletes the password from its live config.
+- The socket follows the origin it dials (`_dialedOrigin`): anything that changes the
+  LAN override calls `followOrigin()` once the value settles (`detectLocalhost()` does
+  this itself), which rebuilds only if the origin actually moved.
 - A stale LAN override is re-probed by `_runUrlDiscovery()` via
   `NetworkTasks.detectLocalhost()`, not cleared by `saveNewServerUrl()`.
 - Error logs are throttled per signature (`_errorLog`); a single-slot throttle would

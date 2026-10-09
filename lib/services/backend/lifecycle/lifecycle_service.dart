@@ -140,6 +140,16 @@ class LifecycleService with WidgetsBindingObserver {
     unawaited(handleForegroundService(state));
   }
 
+  /// Flutter forwards the OS low-memory signal here (on Android, every trim at
+  /// TRIM_MEMORY_RUNNING_LOW or worse, which includes going to the background).
+  /// Flutter has already emptied its image cache by this point; this releases
+  /// everything else we can.
+  @override
+  void didHaveMemoryPressure() {
+    if (headless || !GetIt.I.isRegistered<CacheService>()) return;
+    unawaited(CacheSvc.onMemoryPressure());
+  }
+
   Future<void> handleForegroundService(AppLifecycleState state) async {
     // If an isolate is invoking this, we don't want to start/stop the foreground service.
     // It should already be running. We don't need to stop it because the socket service
@@ -224,6 +234,18 @@ class LifecycleService with WidgetsBindingObserver {
         await TypingIndicatorSvc.stopAllTyping();
       } catch (e, stack) {
         Logger.warn("Failed to stop typing indicators during close", error: e, trace: stack, tag: "LifecycleService");
+      }
+    }
+
+    // Release rebuildable memory while cached. The low memory killer evicts the
+    // largest cached process first, and decoded images, inline video players and
+    // GPU textures are the bulk of what this app holds in the background. Mobile
+    // only: a hidden desktop window is never cached and killed.
+    if (!kIsDesktop && !kIsWeb && backgrounded && GetIt.I.isRegistered<CacheService>()) {
+      if (currentState == AppLifecycleState.resumed) {
+        Logger.info(tag: "LifecycleService", "App resumed during close() — skipping cache purge");
+      } else {
+        unawaited(CacheSvc.onAppBackgrounded());
       }
     }
 

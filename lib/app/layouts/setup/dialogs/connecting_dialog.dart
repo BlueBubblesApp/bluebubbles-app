@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +26,13 @@ class _ConnectingDialogState extends State<ConnectingDialog> {
     _socketStateWorker = ever(SocketSvc.state, (event) {
       if (!mounted) return;
       if (event == SocketState.connected) {
-        widget.onConnect(true);
+        // A wrong password connects briefly before the server drops it; SocketService reports the 401.
+        // Any other ping failure is ignored since the socket itself is up.
+        HttpSvc.server.ping().then((_) {
+          if (mounted) widget.onConnect(true);
+        }, onError: (e) {
+          if (mounted && !(e is DioException && e.response?.statusCode == 401)) widget.onConnect(true);
+        });
       } else if (event == SocketState.error) {
         widget.onConnect(false);
       }

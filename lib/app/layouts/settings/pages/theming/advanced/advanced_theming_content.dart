@@ -34,6 +34,9 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> with Th
   final Rxn<ThemeData> oldData = Rxn<ThemeData>();
   final _controller = ScrollController();
 
+  // Music Theme is driven by Android's media notification listener, which desktop doesn't have.
+  static bool _selectable(ThemeStruct t) => !kIsDesktop || !t.name.startsWith("Music Theme");
+
   @override
   void initState() {
     super.initState();
@@ -87,9 +90,11 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> with Th
                 clampWidth: false,
                 options: allThemes.where((a) => !a.name.contains("🌙") && !a.name.contains("☀")).toList()
                   ..add(ThemeStruct(name: "Divider1"))
-                  ..addAll(allThemes.where((a) => widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀")))
+                  ..addAll(allThemes.where((a) => widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))
+                      .where(_selectable))
                   ..add(ThemeStruct(name: "Divider2"))
-                  ..addAll(allThemes.where((a) => !widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))),
+                  ..addAll(allThemes.where((a) => !widget.isDarkMode ? a.name.contains("🌙") : a.name.contains("☀"))
+                      .where(_selectable)),
                 textProcessing: (struct) => struct.name.toUpperCase(),
                 secondaryColor: headerColor,
                 useCupertino: false,

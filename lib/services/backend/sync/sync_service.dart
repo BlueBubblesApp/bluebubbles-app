@@ -70,6 +70,7 @@ class SyncService {
     _lastIncrementalSyncTimestamp = now;
     isIncrementalSyncing.value = true;
     int errors = 0;
+    bool chatSyncFailed = false;
 
     // Per-page tracking: record message IDs and chat subtitle message IDs that were
     // already applied by per-page events so the final return can skip redundant work.
@@ -173,8 +174,18 @@ class SyncService {
     } catch (e, stack) {
       Logger.error('Incremental chat sync failed!', error: e, trace: stack, tag: 'Incremental Chat Sync');
       errors += 1;
+      chatSyncFailed = true;
     } finally {
       syncIsolate.removeEventListener(IsolateEvent.incrementalSyncPageComplete, onPageComplete);
+    }
+
+    // A failed chat sync must not consume the cooldown window. Otherwise a sync that
+    // fails on launch (e.g. no network yet) blocks the retry triggered by the socket
+    // reconnect or app resume that follows, and new messages wait out the cooldown.
+    // Only the chat sync resets it: contact sync failures are usually persistent
+    // (permissions, unsupported server) and shouldn't defeat the throttle.
+    if (chatSyncFailed) {
+      _lastIncrementalSyncTimestamp = null;
     }
 
     // Deliberately not counted toward `errors`: this corrects drift rather than

@@ -112,11 +112,18 @@ class ContactAvatarGroupWidget extends StatelessWidget {
       final skin = SettingsSvc.settings.skin.value;
 
       if (customAvatarPath != null && !hide) {
-        dynamic file = File(customAvatarPath);
+        // Group photos arrive from the server at their original size, often 1000 px
+        // or more, and are drawn at tens of pixels. Decode at the shared avatar size
+        // so each costs a few hundred KB instead of several MB. Must match the
+        // ResizeImage the conversation list warm-up precaches with.
         return CircleAvatar(
           key: ValueKey(customAvatarPath),
           radius: avatarSize / 2,
-          backgroundImage: FileImage(file),
+          backgroundImage: ResizeImage(
+            FileImage(File(customAvatarPath)),
+            width: ContactAvatarWidget.avatarDecodeSize,
+            height: ContactAvatarWidget.avatarDecodeSize,
+          ),
           backgroundColor: Colors.transparent,
         );
       }
