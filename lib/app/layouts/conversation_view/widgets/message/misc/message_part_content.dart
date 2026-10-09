@@ -1,7 +1,6 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/message_image_gallery.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/interactive_holder.dart';
-import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -25,7 +24,6 @@ class MessagePartContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message = MessageStateScope.messageOf(context);
-    final chat = ChatStateScope.chatOf(context);
     // Interactive messages (URL previews, GamePigeon, etc.)
     if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
       // These checks are message-level, not part-level, but Apple's attributedBody
@@ -58,9 +56,13 @@ class MessagePartContent extends StatelessWidget {
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
       if (iOS && messagePart.isMediaGallery) {
         final state = MessageStateScope.of(context);
+        // Same 10px author-side inset single attachments get from TailClipper.
+        final isFromMe = message.isFromMe == true;
         return Padding(
-            padding:
-                EdgeInsets.only(left: !chat.isGroup && SettingsSvc.settings.alwaysShowAvatars.value == false ? 20 : 10),
+            padding: EdgeInsets.only(
+              left: isFromMe ? 0 : 10,
+              right: isFromMe ? 10 : 0,
+            ),
             child: Obx(() {
               // Each attachment in the gallery may originally have been its own
               // message part (see MessageHolder._collapseImageGalleryParts), so a
@@ -82,8 +84,9 @@ class MessagePartContent extends StatelessWidget {
               return MessageImageGallery(
                 attachments: messagePart.attachments,
                 partIndex: messagePart.part,
+                attachmentPartIndices: messagePart.attachmentPartIndices,
                 isInReply: false,
-                fanDirection: message.isFromMe == true ? GalleryFanDirection.left : GalleryFanDirection.right,
+                fanDirection: isFromMe ? GalleryFanDirection.left : GalleryFanDirection.right,
                 currentIndexNotifier: galleryCurrentIndexNotifier,
                 reactionsByAttachmentKey: reactionsByAttachmentKey,
               );

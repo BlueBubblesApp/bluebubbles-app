@@ -26,12 +26,17 @@ class AttachmentHolder extends StatefulWidget {
     required this.message,
     this.transparentBackground = false,
     this.showCardShadow = false,
+    this.fill = false,
     this.galleryAttachments,
   });
 
   final MessagePart message;
   final bool transparentBackground;
   final bool showCardShadow;
+
+  /// Cover-fill a parent-fixed frame (gallery fan cards). Paint only — chrome stays on
+  /// [transparentBackground] / [showCardShadow].
+  final bool fill;
   final List<Attachment>? galleryAttachments;
 
   @override
@@ -178,6 +183,11 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       right: message.isFromMe! ? 10 : 0,
     );
 
+    // Fan cards are sized by MessageImageGallery; padding is on the gallery wrapper.
+    if (widget.transparentBackground) {
+      return EdgeInsets.zero;
+    }
+
     // Treat an error preview the same as a resolved file — no extra padding.
     final hasError = state.hasError.value || message.error > 0;
     final effectiveFile =
@@ -193,12 +203,6 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       return const EdgeInsets.symmetric(vertical: 5, horizontal: 10).add(sideInsets);
     }
     if (state.isSending.value && message.isFromMe!) {
-      return EdgeInsets.zero;
-    }
-    // Gallery cards (transparentBackground=true) constrain their height via an
-    // outer SizedBox. DownloadingContent / NotLoadedContent handle their own
-    // internal padding, so adding extra padding here causes overflow.
-    if (widget.transparentBackground) {
       return EdgeInsets.zero;
     }
     return const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(sideInsets);
@@ -272,6 +276,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           cvController: controller.cvController,
           isInReply: isInReply,
           forceAllCornersRounded: widget.transparentBackground,
+          fill: widget.fill,
           galleryAttachments: widget.galleryAttachments,
         );
       }
@@ -288,6 +293,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         cvController: controller.cvController,
         isInReply: isInReply,
         forceAllCornersRounded: widget.transparentBackground,
+        fill: widget.fill,
         galleryAttachments: widget.galleryAttachments,
       );
     }
@@ -338,7 +344,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     final bool isInReply = ReplyScope.maybeOf(context) != null;
     final bool isPass = attachment.isPkPass;
     final bool showTail =
-        !isInReply && !isPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1;
+        !isInReply && !isPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part);
 
     // Resolve state once for the scope.  The AttachmentState object is updated
     // in-place by the service layer; no re-lookup is needed on reactive changes.
@@ -375,6 +381,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         // to fill the SizedBox dimensions set by MessageImageGallery and have their
         // background clipped to rounded corners.
         final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
+        // Explicit fill (gallery fan) also expands into the parent-fixed frame.
+        final expandIntoParent = widget.fill || shouldExpandAndClipForGallery;
         // Only meaningful before the file resolves; once it has, the image
         // itself defines the box.
         final reservedBox = hasPreview ? null : _reservedImageBox(context, isInReply, hideAttachments);
@@ -405,18 +413,44 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                     // natural size — smaller than the gallery SizedBox. SizedBox.expand()
                     // snaps back to the max loosened constraints (= cardWidth x cardHeight)
                     // and forces tight dimensions all the way down to the content widget.
-                    child: shouldExpandAndClipForGallery
+                    child: expandIntoParent
                         ? SizedBox.expand(
-                            child: SendingOpacityWrapper(
-                              child: _buildContent(
-                                state: state,
-                                hideAttachments: hideAttachments,
-                                showTail: showTail,
-                                isInReply: isInReply,
-                                isiOS: isiOS,
-                                reservedBox: reservedBox,
-                              ),
-                            ),
+                            // Fill preview skips the outer non-preview clip wrap — keep
+                            // showCardShadow here so loaded gallery cards still cast a shadow.
+                            child: (widget.showCardShadow && !shouldExpandAndClipForGallery)
+                                ? DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: SendingOpacityWrapper(
+                                      child: _buildContent(
+                                        state: state,
+                                        hideAttachments: hideAttachments,
+                                        showTail: showTail,
+                                        isInReply: isInReply,
+                                        isiOS: isiOS,
+                                        reservedBox: reservedBox,
+                                      ),
+                                    ),
+                                  )
+                                : SendingOpacityWrapper(
+                                    child: _buildContent(
+                                      state: state,
+                                      hideAttachments: hideAttachments,
+                                      showTail: showTail,
+                                      isInReply: isInReply,
+                                      isiOS: isiOS,
+                                      reservedBox: reservedBox,
+                                    ),
+                                  ),
                           )
                         : Center(
                             heightFactor: 1,
