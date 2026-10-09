@@ -212,6 +212,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.dispose();
     }
     scrollController.dispose();
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
     super.onClose();
   }
 
