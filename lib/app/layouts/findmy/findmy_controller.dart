@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:latlong2/latlong.dart';
@@ -69,6 +70,15 @@ class FindMyController extends GetxController {
   bool _cameraMovedByUser = false;
   late final FindMyLocationCache _locationCache = FindMyLocationCache.load();
   Worker? _tabWorker;
+
+  /// Reverse-geocoded addresses for friends whose server payload carries none
+  /// (the macOS 14.4+ decryption path can't persist address strings). Keyed by
+  /// the friend's stable id; populated asynchronously by [resolveFriendAddress].
+  final RxMap<String, String> friendAddresses = <String, String>{}.obs;
+
+  /// ~100m location cells already attempted this controller lifetime, so the 30s
+  /// poll doesn't re-hit the platform geocoder for the same spot.
+  final Set<String> _geocodeAttempts = {};
 
   StreamSubscription? locationSub;
   Timer? _refreshTimer;
@@ -138,6 +148,45 @@ class FindMyController extends GetxController {
     latitude: friend.latitude!,
     longitude: friend.longitude!,
   );
+
+  String _addressKeyForFriend(FindMyFriend friend) =>
+      friend.stableId ?? friend.title ?? '${friend.latitude},${friend.longitude}';
+
+  /// The friend's display address: the payload's own address when present, otherwise
+  /// a reverse-geocoded one once [resolveFriendAddress] has populated it.
+  String? addressForFriend(FindMyFriend friend, {bool preferLong = false}) {
+    final own = preferLong
+        ? friend.longAddress ?? friend.shortAddress
+        : friend.shortAddress ?? friend.longAddress;
+    return own ?? friendAddresses[_addressKeyForFriend(friend)];
+  }
+
+  /// Reverse-geocodes a friend's coordinates when the server sent no address.
+  /// Best-effort: unsupported platforms and geocoder failures leave the map empty.
+  Future<void> resolveFriendAddress(FindMyFriend friend) async {
+    if (friend.shortAddress != null || friend.longAddress != null) return;
+    if (shouldRedactFindMyContactInfo()) return;
+    final lat = friend.latitude;
+    final lng = friend.longitude;
+    if (lat == null || lng == null || (lat == 0 && lng == 0)) return;
+    // The geocoding plugin implements Android/iOS/macOS only.
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) return;
+
+    final key = _addressKeyForFriend(friend);
+    if (friendAddresses.containsKey(key)) return;
+    if (!_geocodeAttempts.add('${lat.toStringAsFixed(3)},${lng.toStringAsFixed(3)}')) return;
+
+    try {
+      final geocoding = Geocoding();
+      if (!await geocoding.isPresent()) return;
+      final placemarks = await geocoding.placemarkFromCoordinates(lat, lng);
+      if (!_isAlive || placemarks.isEmpty) return;
+      final address = formatPlacemarkAddress(placemarks.first);
+      if (address.isNotEmpty) friendAddresses[key] = address;
+    } catch (e, s) {
+      Logger.warn("Failed to reverse-geocode Find My friend location", error: e, trace: s, tag: 'FindMyController');
+    }
+  }
 
   LatLng markerPointForDevice(FindMyDevice device) => resolveFindMyMarkerPoint(
     stableKey: markerIdentityForDevice(device),
@@ -354,6 +403,7 @@ class FindMyController extends GetxController {
         _updateFriendLists();
 
         buildFriendMarker(friend);
+        unawaited(resolveFriendAddress(friend));
       }
     } catch (e, s) {
       Logger.warn("Failed to fetch FindMy locations", error: e, trace: s, tag: 'FindMyController');
@@ -439,6 +489,7 @@ class FindMyController extends GetxController {
         _clearFriendMarkers();
         for (FindMyFriend e in friends.where(hasUsableFindMyLocation)) {
           buildFriendMarker(e);
+          unawaited(resolveFriendAddress(e));
         }
         fitCameraToTab();
         fetching2.value = false;

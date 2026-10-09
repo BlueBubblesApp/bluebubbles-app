@@ -6,7 +6,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
-import 'package:universal_io/io.dart';
 
 class GradientBackground extends CustomStateful<ConversationViewController> {
   final Widget child;
@@ -83,7 +82,8 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
               return Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: FileImage(File(bgPath)),
+                    // Decoded at window size, not file size: see static_wallpaper_image.dart.
+                    image: chatBackgroundImageProvider(bgPath, context),
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.high,
                     onError: (_, _) {},

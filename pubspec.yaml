@@ -12,7 +12,7 @@ description: Send iMessages on Android using BlueBubbles!
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 
-version: 2.1.1+91
+version: 2.1.2+92
 publish_to: none
 
 environment:
@@ -87,6 +87,7 @@ dependencies:
   flutter_svg: ^2.2.0
   flutter_timezone: ^5.0.2
   fluttertoast: ^8.2.14
+  geocoding: ^5.0.0
   geolocator: ^14.0.2
   gesture_x_detector: # support touchscreens properly
     git:
@@ -105,7 +106,7 @@ dependencies:
   image_picker: ^1.2.0
   image_size_getter: ^2.4.1
   in_app_review: ^2.0.11
-  internet_connection_checker_plus: ^3.0.0
+  in_app_update: ^5.0.0
   klipy_flutter: ^0.0.3
   languagetool_textfield: ^0.1.1
   launch_at_startup: ^0.5.1
@@ -344,7 +345,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles
   identity_name: 23344BlueBubbles.BlueBubbles
-  msix_version: 2.1.1.0
+  msix_version: 2.1.2.0
   publisher: CN=BEC9154D-191E-4375-BF30-698BD4C141C4
   vs_generated_images_folder_path: windows/icons
   logo_path: assets/icon/icon.ico

@@ -122,22 +122,23 @@ class _NotificationProvidersState extends State<NotificationProvidersPanel> with
                             materialIcon: Icons.bolt,
                             containerColor: Colors.blueAccent),
                       )),
-                const SettingsDivider(),
-                SettingsTile(
-                    title: "Unified Push",
-                    subtitle: "Receive notifications using a custom distributor",
-                    onTap: () async {
-                      NavigationSvc.pushSettings(
-                        context,
-                        UnifiedPushPanel(),
-                      );
-                    },
-                    leading: const SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.bell_circle,
-                      materialIcon: Icons.circle_notifications_outlined,
-                      containerColor: Colors.purpleAccent,
-                    ),
-                    trailing: const NextButton()),
+                if (Platform.isAndroid) const SettingsDivider(),
+                if (Platform.isAndroid)
+                  SettingsTile(
+                      title: "Unified Push",
+                      subtitle: "Receive notifications using a custom distributor",
+                      onTap: () async {
+                        NavigationSvc.pushSettings(
+                          context,
+                          UnifiedPushPanel(),
+                        );
+                      },
+                      leading: const SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.bell_circle,
+                        materialIcon: Icons.circle_notifications_outlined,
+                        containerColor: Colors.purpleAccent,
+                      ),
+                      trailing: const NextButton()),
               ],
             ),
           ])),

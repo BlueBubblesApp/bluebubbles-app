@@ -275,7 +275,7 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - arch: aarch64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
@@ -333,7 +333,7 @@ jobs:
   # unsigned installer otherwise. The store msix is not scanned — Microsoft vets it.
   virustotal:
     needs: [windows, linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       VT_API_KEY: ${{ secrets.VT_API_KEY }}
