@@ -338,7 +338,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     final bool isInReply = ReplyScope.maybeOf(context) != null;
     final bool isPass = attachment.isPkPass;
     final bool showTail =
-        !isInReply && !isPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1;
+        !isInReply && !isPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part);
 
     // Resolve state once for the scope.  The AttachmentState object is updated
     // in-place by the service layer; no re-lookup is needed on reactive changes.
