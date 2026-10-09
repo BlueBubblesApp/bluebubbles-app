@@ -79,6 +79,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   bool _labelHovered = false;
   final Map<String, Size> _imageSizes = {};
   int? _activeDragPointer;
+  Offset? _dragStart;
   VelocityTracker? _velocityTracker;
   ConversationViewController? _cvController;
   late final MessageState _ms;
@@ -439,6 +440,8 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       onPointerDown: (event) {
         if (_attachments.length <= 1) return;
         _activeDragPointer = event.pointer;
+        // Touch has to commit to a horizontal swipe first, otherwise scrolling the chat over the stack drags it.
+        _dragStart = event.kind == PointerDeviceKind.touch ? event.position : null;
         _velocityTracker = VelocityTracker.withKind(event.kind);
         _velocityTracker!.addPosition(event.timeStamp, event.position);
         // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
@@ -449,6 +452,17 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       onPointerMove: (event) {
         if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
         _velocityTracker?.addPosition(event.timeStamp, event.position);
+        if (_dragStart != null) {
+          final moved = event.position - _dragStart!;
+          if (moved.distance < kTouchSlop) return;
+          _dragStart = null;
+          if (moved.dy.abs() > moved.dx.abs()) {
+            _activeDragPointer = null;
+            _velocityTracker = null;
+            _cvController?.isGalleryDragging = false;
+            return;
+          }
+        }
         if (!widget.infiniteScroll) {
           final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
           final atStart = _currentIndex == 0;
