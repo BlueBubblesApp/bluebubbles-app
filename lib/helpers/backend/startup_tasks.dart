@@ -258,6 +258,13 @@ class StartupTasks {
     GetIt.I.registerSingleton<SyncService>(SyncService());
     GetIt.I.registerSingleton<ThemesService>(ThemesService());
 
+    Logger.info("Registering CacheService...");
+    GetIt.I.registerSingleton<CacheService>(
+      CacheService()
+        ..registerAll(defaultAppCaches())
+        ..loadFromSettings(),
+    );
+
     // Parallelize independent services for faster startup
     await _step("Loading themes and contacts...", log: "Waiting for parallel services...");
     await Future.wait([
