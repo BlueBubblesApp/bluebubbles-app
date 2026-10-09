@@ -68,19 +68,19 @@ class IncrementalSyncManager extends SyncManager {
     "handle",
     "attributedBody",
     "messageSummaryInfo",
-    "payloadData"
+    "payloadData",
   ];
 
-  IncrementalSyncManager(
-      {this.startRowId,
-      this.endRowId,
-      this.startTimestamp,
-      this.endTimestamp,
-      this.batchSize = 1000,
-      this.saveMarker = false,
-      this.onComplete,
-      bool saveLogs = false})
-      : super("Incremental", saveLogs: saveLogs) {
+  IncrementalSyncManager({
+    this.startRowId,
+    this.endRowId,
+    this.startTimestamp,
+    this.endTimestamp,
+    this.batchSize = 1000,
+    this.saveMarker = false,
+    this.onComplete,
+    bool saveLogs = false,
+  }) : super("Incremental", saveLogs: saveLogs) {
     if (startRowId == null && startTimestamp == null) {
       throw Exception("Must provide either a startRowId or startTimestamp");
     }
@@ -97,7 +97,8 @@ class IncrementalSyncManager extends SyncManager {
     syncStartedAt = DateTime.now().millisecondsSinceEpoch;
     super.start();
     addToOutput(
-        "Starting incremental sync (startTimestamp: $startTimestamp; endTimestamp: $endTimestamp; startRowId: $startRowId; endRowId: $endRowId)");
+      "Starting incremental sync (startTimestamp: $startTimestamp; endTimestamp: $endTimestamp; startRowId: $startRowId; endRowId: $endRowId)",
+    );
 
     // General flow of the sync:
     // 0: Hit API endpoint to check for updated messages
@@ -128,7 +129,7 @@ class IncrementalSyncManager extends SyncManager {
 
       await complete();
     } catch (ex) {
-      completeWithError(ex.toString());
+      completeWithError(maskUrlPassword(ex.toString()));
     }
 
     return completer!.future;
@@ -224,17 +225,19 @@ class IncrementalSyncManager extends SyncManager {
       // Fetch the pages differently depending on the parameters.
       if (useRowId) {
         messagesResponse = await HttpSvc.message.query(
-            where: buildRowIdWhereArgs(startRowId!, endRowId),
-            offset: i * batchSize,
-            limit: batchSize,
-            withQuery: defaultWithQuery);
+          where: buildRowIdWhereArgs(startRowId!, endRowId),
+          offset: i * batchSize,
+          limit: batchSize,
+          withQuery: defaultWithQuery,
+        );
       } else {
         messagesResponse = await HttpSvc.message.query(
-            after: startTimestamp,
-            before: endTimestamp,
-            offset: i * batchSize,
-            limit: batchSize,
-            withQuery: defaultWithQuery);
+          after: startTimestamp,
+          before: endTimestamp,
+          offset: i * batchSize,
+          limit: batchSize,
+          withQuery: defaultWithQuery,
+        );
       }
 
       int messageCount = messagesResponse.data['data'].length;
@@ -371,10 +374,7 @@ class IncrementalSyncManager extends SyncManager {
       Chat? theChat = chatCache[item.key];
       if (theChat == null || item.value.isEmpty) continue;
 
-      final syncResult = await SyncInterface.bulkSyncData(
-        chatData: theChat.toMap(),
-        messagesData: item.value,
-      );
+      final syncResult = await SyncInterface.bulkSyncData(chatData: theChat.toMap(), messagesData: item.value);
       messagesSynced += syncResult.messages.length;
       setProgress(messagesSynced, total);
 
@@ -411,14 +411,14 @@ class IncrementalSyncManager extends SyncManager {
     List<Map<String, dynamic>> whereArgs = [
       {
         'statement': 'message.ROWID > :startRowId',
-        'args': {'startRowId': startRowId}
-      }
+        'args': {'startRowId': startRowId},
+      },
     ];
 
     if (endRowId != null && endRowId > startRowId) {
       whereArgs.add({
         'statement': 'message.ROWID <= :endRowId',
-        'args': {'endRowId': endRowId}
+        'args': {'endRowId': endRowId},
       });
     }
 

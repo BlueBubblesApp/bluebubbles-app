@@ -10,6 +10,7 @@ Pure helpers for network operations. No UI dependencies.
 | `network_error_handler.dart` | `handleSendError(error, message)` — classifies `DioException`/HTTP errors into timeout vs. connection failure, updates `message.guid` with error prefix for UI display |
 | `metadata_helper.dart` | `MetadataHelper` — public entry point for URL preview metadata. Thin facade over `metadata/` |
 | `metadata/` | The URL preview metadata pipeline → `metadata/CLAUDE.md` |
+| `url_utils.dart` | `maskUrlPassword(input)` — pure, dependency-free helper that replaces `guid=` and `password=` query-parameter values with `***` in any string (standalone URL or error message embedding one) |
 | `network_tasks.dart` | `onConnect()` — called when network becomes available; triggers localhost detection, incremental sync, and socket reconnection |
 
 ## Key Usage Notes

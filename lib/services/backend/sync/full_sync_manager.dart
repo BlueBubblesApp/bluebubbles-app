@@ -1,6 +1,6 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/models/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -27,15 +27,15 @@ class FullSyncManager extends SyncManager {
   int? syncTimeFilter;
   String? origin;
 
-  FullSyncManager(
-      {int? endTimestamp,
-      this.messageCount = 25,
-      this.skipEmptyChats = true,
-      bool saveLogs = false,
-      this.syncGroupChatIcons = false,
-      this.syncTimeFilter,
-      String? origin})
-      : super("Full", saveLogs: saveLogs);
+  FullSyncManager({
+    int? endTimestamp,
+    this.messageCount = 25,
+    this.skipEmptyChats = true,
+    bool saveLogs = false,
+    this.syncGroupChatIcons = false,
+    this.syncTimeFilter,
+    String? origin,
+  }) : super("Full", saveLogs: saveLogs);
 
   @override
   Future<void> start() async {
@@ -149,7 +149,10 @@ class FullSyncManager extends SyncManager {
               if (status.value == SyncStatus.STOPPING) break;
             }
           } catch (ex, stack) {
-            addToOutput('Failed to sync chat messages! Error: ${ex.toString()}', level: LogLevel.ERROR);
+            addToOutput(
+              'Failed to sync chat messages! Error: ${maskUrlPassword(ex.toString())}',
+              level: LogLevel.ERROR,
+            );
             Logger.debug("StackTrace: $stack", tag: tag);
             Logger.debug('Error: ${ex.toString()}', tag: tag);
           }
@@ -175,9 +178,9 @@ class FullSyncManager extends SyncManager {
         }
       }
     } catch (e, s) {
-      addToOutput('Failed to sync chats! Error: ${e.toString()}', level: LogLevel.ERROR);
+      addToOutput('Failed to sync chats! Error: ${maskUrlPassword(e.toString())}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
-      completeWithError(e.toString());
+      completeWithError(maskUrlPassword(e.toString()));
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
         await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
@@ -203,15 +206,17 @@ class FullSyncManager extends SyncManager {
       // Fetch the chats and throw an error if we don't get back a good response.
       // Throwing an error should cancel the sync
       Response chatPage = await HttpSvc.chat.query(
-          offset: i * countPerBatch,
-          limit: countPerBatch,
-          sort: kIsWeb ? "lastmessage" : null,
-          withQuery: ["lastMessage"]);
+        offset: i * countPerBatch,
+        limit: countPerBatch,
+        sort: kIsWeb ? "lastmessage" : null,
+        withQuery: ["lastMessage"],
+      );
 
       dynamic data = chatPage.data;
       if (chatPage.statusCode != 200) {
         throw ChatRequestException(
-            '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}');
+          '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}',
+        );
       }
 
       // Convert the returned chat dictionaries to a list of Chat Objects
@@ -255,16 +260,19 @@ class FullSyncManager extends SyncManager {
     for (int i = 0; i < batches; i++) {
       // Fetch the messages and throw an error if we don't get back a good response.
       // Throwing an error should _not_ cancel the sync
-      Response messagePage = await HttpSvc.chat.getMessages(chatGuid,
-          after: 0,
-          before: endTimestamp,
-          offset: i * countPerBatch,
-          limit: countPerBatch,
-          withQuery: "attachments,handle,message.attributedBody,message.messageSummaryInfo,message.payloadData");
+      Response messagePage = await HttpSvc.chat.getMessages(
+        chatGuid,
+        after: 0,
+        before: endTimestamp,
+        offset: i * countPerBatch,
+        limit: countPerBatch,
+        withQuery: "attachments,handle,message.attributedBody,message.messageSummaryInfo,message.payloadData",
+      );
       dynamic data = messagePage.data;
       if (messagePage.statusCode != 200) {
         throw MessageRequestException(
-            '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}');
+          '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}',
+        );
       }
 
       // Convert the returned chat dictionaries to a list of Chat Objects

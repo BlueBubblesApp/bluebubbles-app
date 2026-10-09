@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/network/url_utils.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -93,8 +94,8 @@ class HttpService implements BaseApi {
       final statusCode = e is Response
           ? e.statusCode
           : e is DioException
-              ? e.response?.statusCode
-              : null;
+          ? e.response?.statusCode
+          : null;
       if (statusCode == 502 && apiRoot.contains("trycloudflare")) {
         try {
           return await func();
@@ -129,12 +130,14 @@ class HttpService implements BaseApi {
   }
 
   Future<void> init() async {
-    dio = Dio(BaseOptions(
-      connectTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-      receiveTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-      sendTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
-      headers: headers,
-    ));
+    dio = Dio(
+      BaseOptions(
+        connectTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+        receiveTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+        sendTimeout: Duration(milliseconds: SettingsSvc.settings.apiTimeout.value),
+        headers: headers,
+      ),
+    );
     // Use IOHttpClientAdapter with certificate validation so that:
     // 1. Self-signed server certs are accepted via shouldAcceptCertificate.
     // 2. Device-level user-installed certificates (Android) are trusted by
@@ -180,7 +183,10 @@ class HttpService implements BaseApi {
       final response = await dio.get(
         url,
         options: Options(
-            responseType: ResponseType.bytes, receiveTimeout: dio.options.receiveTimeout! * 12, headers: headers),
+          responseType: ResponseType.bytes,
+          receiveTimeout: dio.options.receiveTimeout! * 12,
+          headers: headers,
+        ),
         cancelToken: cancelToken,
         onReceiveProgress: progress,
       );
@@ -191,21 +197,23 @@ class HttpService implements BaseApi {
   Future<void> downloadAppleEmojiFont() async {
     if (downloadingFont.value) return;
 
-    final response = await downloadFromUrl(
-        "https://github.com/BlueBubblesApp/bluebubbles-fonts/releases/latest/download/AppleColorEmoji.ttf",
-        progress: (current, total) {
-      if (current <= total) {
-        downloadingFont.value = true;
-        fontDownloadProgress.value = current / total;
-        fontDownloadTotalSize.value = total;
-      }
-    }).catchError((error) {
-      downloadingFont.value = false;
-      fontDownloadProgress.value = null;
-      fontDownloadTotalSize.value = null;
+    final response =
+        await downloadFromUrl(
+          "https://github.com/BlueBubblesApp/bluebubbles-fonts/releases/latest/download/AppleColorEmoji.ttf",
+          progress: (current, total) {
+            if (current <= total) {
+              downloadingFont.value = true;
+              fontDownloadProgress.value = current / total;
+              fontDownloadTotalSize.value = total;
+            }
+          },
+        ).catchError((error) {
+          downloadingFont.value = false;
+          fontDownloadProgress.value = null;
+          fontDownloadTotalSize.value = null;
 
-      return Response(requestOptions: RequestOptions(path: ''));
-    });
+          return Response(requestOptions: RequestOptions(path: ''));
+        });
 
     if (response.statusCode == 200) {
       try {
@@ -216,14 +224,12 @@ class HttpService implements BaseApi {
         FilesystemSvc.fontExistsOnDisk.value = true;
         final fontLoader = FontLoader("Apple Color Emoji");
         final cachedFontBytes = ByteData.view(data.buffer);
-        fontLoader.addFont(
-          Future<ByteData>.value(cachedFontBytes),
-        );
+        fontLoader.addFont(Future<ByteData>.value(cachedFontBytes));
         await fontLoader.load();
         showSnackbar("Notice", "Font loaded");
       } catch (e, stack) {
         Logger.error("Failed to load font!", error: e, trace: stack);
-        showSnackbar("Error", "Failed to load font! Error: ${e.toString()}", type: SnackbarType.error);
+        showSnackbar("Error", "Failed to load font! Error: ${maskUrlPassword(e.toString())}", type: SnackbarType.error);
       }
     }
 
@@ -415,24 +421,36 @@ class ApiInterceptor extends Interceptor {
     if (err.response != null && err.response!.data is Map) return handler.resolve(err.response!);
     if (err.response != null) {
       final body = err.response!.data.toString();
-      return handler.resolve(Response(data: {
-        'status': err.response!.statusCode,
-        'error': {
-          'type': 'Error',
-          'error': body,
-          'message': body.isEmpty ? 'Server returned ${err.response!.statusCode}' : body,
-        }
-      }, requestOptions: err.requestOptions, statusCode: err.response!.statusCode));
+      return handler.resolve(
+        Response(
+          data: {
+            'status': err.response!.statusCode,
+            'error': {
+              'type': 'Error',
+              'error': body,
+              'message': body.isEmpty ? 'Server returned ${err.response!.statusCode}' : body,
+            },
+          },
+          requestOptions: err.requestOptions,
+          statusCode: err.response!.statusCode,
+        ),
+      );
     }
     if (err.type.name.contains("Timeout")) {
-      return handler.resolve(Response(data: {
-        'status': 500,
-        'error': {
-          'type': 'timeout',
-          'error': 'Failed to receive response from server.',
-          'message': 'Failed to receive response from server.',
-        }
-      }, requestOptions: err.requestOptions, statusCode: 500));
+      return handler.resolve(
+        Response(
+          data: {
+            'status': 500,
+            'error': {
+              'type': 'timeout',
+              'error': 'Failed to receive response from server.',
+              'message': 'Failed to receive response from server.',
+            },
+          },
+          requestOptions: err.requestOptions,
+          statusCode: 500,
+        ),
+      );
     }
     return super.onError(err, handler);
   }
