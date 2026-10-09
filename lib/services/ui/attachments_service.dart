@@ -330,9 +330,15 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  Future<bool> canAutoDownload() async {
-    final canSave = (await Permission.storage.request()).isGranted;
-    if (!canSave) return false;
+  /// Whether auto-download is allowed by settings (and optional storage permission).
+  ///
+  /// [requestStoragePermission] is for in-conversation downloads. The pin-grid
+  /// preview path passes false so a list tile never pops a permission dialog.
+  Future<bool> canAutoDownload({bool requestStoragePermission = true}) async {
+    if (requestStoragePermission) {
+      final canSave = (await Permission.storage.request()).isGranted;
+      if (!canSave) return false;
+    }
     if (!SettingsSvc.settings.autoDownload.value) {
       return false;
     } else {
