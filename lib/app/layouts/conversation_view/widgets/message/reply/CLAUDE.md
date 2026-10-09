@@ -12,9 +12,9 @@ Displays reply threading: the quoted preview above a message and the thread conn
 
 ## How `ReplyBubble` Works
 
-- Reads `controller.messageState?.text` reactively so the quoted text updates if the original was edited.
+- Resolves the quoted part via `MessageState.partById` (message-part id, not list index).
 - Shows: sender name, content snippet (text or attachment icon), and a mini attachment thumbnail if applicable.
-- Tap → scrolls the conversation list to the original message (via `cvController.scrollToMessage(replyTo)`).
+- Tap → opens the reply thread for the resolved part (`showReplyThread`).
 
 ## Thread Lines (iOS)
 
