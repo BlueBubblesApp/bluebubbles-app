@@ -168,11 +168,6 @@ class SettingsService {
         'macOSMinorVersion': minorVersion ?? 0,
         'serverVersion': serverVersion ?? "0.0.0",
         'serverVersionCode': versionCode,
-        'recommendPrivateApi': settings.finishedSetup.value &&
-            settings.reachedConversationList.value &&
-            !settings.enablePrivateAPI.value &&
-            settings.serverPrivateAPI.value == true &&
-            !PrefsSvc.server.hasSeenPrivateApiEnableTip(),
       };
     }
 
@@ -181,13 +176,12 @@ class SettingsService {
       'macOSMinorVersion': 0,
       'serverVersion': "0.0.0",
       'serverVersionCode': 0,
-      'recommendPrivateApi': false,
     };
   }
 
   /// Fetches server details via HTTP (main isolate), updates [serverDetails],
   /// and persists values to [PrefsSvc]. Also handles [iCloudAccount] and
-  /// [serverPrivateAPI] side effects and shows the PAPI popup when applicable.
+  /// [serverPrivateAPI] side effects.
   /// Used during the first-time setup flow.
   Future<ServerDetails> fetchServerDetails() async {
     final detailsDict = await getServerDetailsDict();
@@ -198,12 +192,22 @@ class SettingsService {
       serverVersionCode: detailsDict['serverVersionCode'] as int,
     );
     _serverDetails.value = details;
-
-    if (detailsDict['recommendPrivateApi'] as bool) {
-      await _showPapiPopup();
-    }
-
     return details;
+  }
+
+  /// Offers to turn on Private API features, once, when the server has them set up but the client doesn't.
+  ///
+  /// Called from the conversation list rather than during setup, because the popup needs a finished setup
+  /// and a conversation list to navigate back from.
+  Future<void> showPrivateApiTipIfNeeded() async {
+    if (!settings.finishedSetup.value ||
+        settings.enablePrivateAPI.value ||
+        settings.serverPrivateAPI.value != true ||
+        PrefsSvc.server.hasSeenPrivateApiEnableTip() ||
+        _showingPapiPopup) {
+      return;
+    }
+    await _showPapiPopup();
   }
 
   /// Refreshes [serverDetails] in the background via [ServerInterface]
