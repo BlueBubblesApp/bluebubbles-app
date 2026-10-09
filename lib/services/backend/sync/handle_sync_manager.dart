@@ -1,7 +1,7 @@
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/database/database.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -145,9 +145,9 @@ class HandleSyncManager extends SyncManager {
         }
       }
     } catch (e, s) {
-      addToOutput('Failed to sync handles! Error: ${maskUrlPassword(e.toString())}', level: LogLevel.ERROR);
+      addToOutput('Failed to sync handles! Error: ${e.toString()}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
-      completeWithError(maskUrlPassword(e.toString()));
+      completeWithError(e.toString());
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
         await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
@@ -240,8 +240,7 @@ class HandleSyncManager extends SyncManager {
       dynamic data = handlePage.data;
       if (handlePage.statusCode != 200) {
         throw HandleRequestException(
-          '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}',
-        );
+            '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}');
       }
 
       // Convert the returned handle dictionaries to a list of Handle Objects

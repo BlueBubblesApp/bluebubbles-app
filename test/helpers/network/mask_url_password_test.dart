@@ -87,22 +87,4 @@ void main() {
       expect(maskUrlPassword(url), 'https://server.example.com/api/v1/ping?guid=***#anchor');
     });
   });
-
-  group('maskUrlPassword revert check', () {
-    // Demonstrate that an identity function (helper returning input unchanged)
-    // fails the masking assertions, while maskUrlPassword passes them.
-    String identityFn(String input) => input;
-
-    test('identity function does NOT mask the guid (revert check)', () {
-      const url = 'https://server.example.com/api/v1/ping?guid=secretpassword123';
-      // With the identity function the value is still present — this should FAIL
-      // if we expect masking.  We verify the identity does NOT produce masked output.
-      expect(identityFn(url), isNot('https://server.example.com/api/v1/ping?guid=***'));
-    });
-
-    test('maskUrlPassword DOES mask the guid (passes the revert check)', () {
-      const url = 'https://server.example.com/api/v1/ping?guid=secretpassword123';
-      expect(maskUrlPassword(url), 'https://server.example.com/api/v1/ping?guid=***');
-    });
-  });
 }

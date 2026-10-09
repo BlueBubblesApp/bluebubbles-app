@@ -11,7 +11,7 @@ class FailedToScanDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String error = exception.toString();
+    String error = maskUrlPassword(exception.toString());
     if (error.contains("ROWID")) {
       error = "iMessage is not configured on the macOS server, please sign in with an Apple ID and try again.";
     }

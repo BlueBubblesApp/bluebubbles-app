@@ -1,6 +1,6 @@
 import 'package:async_task/async_task_extension.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -102,9 +102,9 @@ class ChatSyncManager extends SyncManager {
         }
       }
     } catch (e, s) {
-      addToOutput('Failed to sync chats! Error: ${maskUrlPassword(e.toString())}', level: LogLevel.ERROR);
+      addToOutput('Failed to sync chats! Error: ${e.toString()}', level: LogLevel.ERROR);
       addToOutput(s.toString(), level: LogLevel.ERROR);
-      completeWithError(maskUrlPassword(e.toString()));
+      completeWithError(e.toString());
       if (kIsDesktop && Platform.isWindows) {
         await WindowsTaskbar.setProgressMode(TaskbarProgressMode.error);
         await WindowsTaskbar.setFlashTaskbarAppIcon(mode: TaskbarFlashMode.timernofg);
@@ -139,16 +139,13 @@ class ChatSyncManager extends SyncManager {
     for (int i = 0; i < batches; i++) {
       // Fetch the handles and throw an error if we don't get back a good response.
       // Throwing an error should cancel the sync
-      Response chatPage = await HttpSvc.chat.query(
-        offset: i * countPerBatch,
-        limit: countPerBatch,
-        withQuery: ["participants"],
-      );
+      Response chatPage = await HttpSvc.chat.query(offset: i * countPerBatch, limit: countPerBatch, withQuery: [
+        "participants",
+      ]);
       dynamic data = chatPage.data;
       if (chatPage.statusCode != 200) {
         throw ChatRequestException(
-          '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}',
-        );
+            '${data["error"]?["type"] ?? "API_ERROR"}: data["message"] ?? data["error"]["message"]}');
       }
 
       // Convert the returned handle dictionaries to a list of Handle Objects
