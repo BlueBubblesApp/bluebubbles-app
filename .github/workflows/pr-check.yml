@@ -56,7 +56,7 @@ jobs:
   # Each PR writes to its own cache scope and reads from master's. First push to a new
   # PR is cold unless the warm triggers above have seeded master.
   analyze:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -129,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, ubuntu-24.04-arm]
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -172,7 +172,7 @@ jobs:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       # PR builds run gradle files and plugin hooks from the PR itself, so keep the
