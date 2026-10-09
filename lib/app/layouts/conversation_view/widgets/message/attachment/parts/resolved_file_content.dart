@@ -27,6 +27,7 @@ class ResolvedFileContent extends StatelessWidget {
     required this.cvController,
     this.isInReply = false,
     this.forceAllCornersRounded = false,
+    this.fill = false,
     this.galleryAttachments,
   });
 
@@ -37,6 +38,9 @@ class ResolvedFileContent extends StatelessWidget {
   final ConversationViewController? cvController;
   final bool isInReply;
   final bool forceAllCornersRounded;
+
+  /// Cover-fill a parent-fixed frame (gallery cards).
+  final bool fill;
   final List<Attachment>? galleryAttachments;
 
   @override
@@ -82,21 +86,40 @@ class ResolvedFileContent extends StatelessWidget {
             ctrl.subjectFocusNode.unfocus();
             openContainer();
           },
-          child: Container(
-            color: Colors.transparent,
-            child: ImageViewer(
-              file: file,
-              attachment: attachment,
-              isFromMe: message.isFromMe!,
-              isInReply: isInReply,
-              controller: cvController,
-            ),
-          ),
+          child: fill
+              ? SizedBox.expand(
+                  child: ImageViewer(
+                    file: file,
+                    attachment: attachment,
+                    isFromMe: message.isFromMe!,
+                    isInReply: isInReply,
+                    controller: cvController,
+                    fill: true,
+                  ),
+                )
+              : Container(
+                  color: Colors.transparent,
+                  child: ImageViewer(
+                    file: file,
+                    attachment: attachment,
+                    isFromMe: message.isFromMe!,
+                    isInReply: isInReply,
+                    controller: cvController,
+                  ),
+                ),
         ),
       );
     }
 
     if (attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value) {
+      final video = VideoPlayer(
+        attachment: attachment,
+        file: file,
+        controller: cvController,
+        isFromMe: message.isFromMe!,
+        galleryAttachments: galleryAttachments,
+        fill: fill,
+      );
       return ClipRRect(
         borderRadius: isiOS
             ? BorderRadius.only(
@@ -110,13 +133,7 @@ class ResolvedFileContent extends StatelessWidget {
                     : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
               )
             : const BorderRadius.all(Radius.circular(5.0)),
-        child: VideoPlayer(
-          attachment: attachment,
-          file: file,
-          controller: cvController,
-          isFromMe: message.isFromMe!,
-          galleryAttachments: galleryAttachments,
-        ),
+        child: fill ? SizedBox.expand(child: video) : video,
       );
     }
 
