@@ -30,9 +30,11 @@ Both dispatch on the attachment's mime type and render `FullscreenImage` or `Ful
 - `showInteractions` gates which action buttons are relevant (download/reply/share/etc.), not whether the overlay can be shown/hidden
 - Video player is disposed when the route is popped
 - Shares/saves to gallery are triggered from within the action bar
+- With `collectionController`, grid button → `openGallery`; overview→FS omits controller (no nesting)
 
 ## Related
 - Attachment models: `lib/database/io/attachment.dart`
 - Attachment download state: `lib/services/ui/attachments_service.dart`
 - Thumbnails in the chat: `lib/app/layouts/conversation_view/widgets/message/attachment/`
+- Collection overview: `lib/app/layouts/conversation_view/widgets/message/attachment/collections/`
 - Composer preview: `lib/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart`

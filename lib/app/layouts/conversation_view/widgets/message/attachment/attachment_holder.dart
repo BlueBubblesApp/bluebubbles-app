@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/sending_opacity_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/upload_progress_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/not_loaded_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/downloading_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/resolved_file_content.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/attachment_state_scope.dart';
@@ -24,15 +26,21 @@ class AttachmentHolder extends StatefulWidget {
   const AttachmentHolder({
     super.key,
     required this.message,
-    this.transparentBackground = false,
-    this.showCardShadow = false,
+    this.fill = false,
     this.galleryAttachments,
+    this.collectionController,
   });
 
   final MessagePart message;
-  final bool transparentBackground;
-  final bool showCardShadow;
+
+  /// Cover-expand into a parent-fixed frame and suppress standalone bubble chrome
+  /// (padding, selection tint, holder shadow/radius). Parents own clip/shadow.
+  /// Disabled automatically inside [PopupScope].
+  final bool fill;
   final List<Attachment>? galleryAttachments;
+
+  /// When set, fullscreen viewers show a collection-grid button (omit when opened from the collections gallery).
+  final CollectionMediaController? collectionController;
 
   @override
   State<StatefulWidget> createState() => _AttachmentHolderState();
@@ -160,7 +168,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   ///   itself from [Attachment.displayBox], so reserving that box would just
   ///   move the jump rather than remove it.
   ({double width, double height})? _reservedImageBox(BuildContext context, bool isInReply, bool hideAttachments) {
-    if (isInReply || hideAttachments || widget.transparentBackground) return null;
+    if (isInReply || hideAttachments || widget.fill) return null;
     if (attachment.mimeStart != "image") return null;
     if (!attachment.hasValidSize) return null;
     return attachment.displayBox(NavigationSvc.width(context) * 0.5, context.height * 0.6);
@@ -178,6 +186,12 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       right: message.isFromMe! ? 10 : 0,
     );
 
+    // Collection fill cards are sized by the parent; padding is on the collection wrapper.
+    // Use [widget.fill] (not the popup-adjusted layout fill) so popup cards stay zero-padded.
+    if (widget.fill) {
+      return EdgeInsets.zero;
+    }
+
     // Treat an error preview the same as a resolved file — no extra padding.
     final hasError = state.hasError.value || message.error > 0;
     final effectiveFile =
@@ -193,12 +207,6 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       return const EdgeInsets.symmetric(vertical: 5, horizontal: 10).add(sideInsets);
     }
     if (state.isSending.value && message.isFromMe!) {
-      return EdgeInsets.zero;
-    }
-    // Gallery cards (transparentBackground=true) constrain their height via an
-    // outer SizedBox. DownloadingContent / NotLoadedContent handle their own
-    // internal padding, so adding extra padding here causes overflow.
-    if (widget.transparentBackground) {
       return EdgeInsets.zero;
     }
     return const EdgeInsets.symmetric(vertical: 10, horizontal: 15).add(sideInsets);
@@ -249,6 +257,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     required bool isInReply,
     required bool isiOS,
     required ({double width, double height})? reservedBox,
+    required bool fill,
+    required bool forceAllCornersRounded,
   }) {
     // Redacted mode always shows placeholder regardless of download status.
     if (hideAttachments) {
@@ -271,8 +281,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isiOS: isiOS,
           cvController: controller.cvController,
           isInReply: isInReply,
-          forceAllCornersRounded: widget.transparentBackground,
+          forceAllCornersRounded: forceAllCornersRounded,
+          fill: fill,
           galleryAttachments: widget.galleryAttachments,
+          collectionController: widget.collectionController,
         );
       }
     }
@@ -287,8 +299,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         isiOS: isiOS,
         cvController: controller.cvController,
         isInReply: isInReply,
-        forceAllCornersRounded: widget.transparentBackground,
+        forceAllCornersRounded: forceAllCornersRounded,
+        fill: fill,
         galleryAttachments: widget.galleryAttachments,
+        collectionController: widget.collectionController,
       );
     }
 
@@ -310,7 +324,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           downloadController: download,
           isInReply: isInReply,
           isiOS: isiOS,
-          isInGallery: widget.transparentBackground,
+          isInCollection: widget.fill,
           compact: compact,
           showTail: showTail,
           isFromMe: message.isFromMe!,
@@ -338,7 +352,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
     final bool isInReply = ReplyScope.maybeOf(context) != null;
     final bool isPass = attachment.isPkPass;
     final bool showTail =
-        !isInReply && !isPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1;
+        !isInReply && !isPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part);
 
     // Resolve state once for the scope.  The AttachmentState object is updated
     // in-place by the service layer; no re-lookup is needed on reactive changes.
@@ -370,11 +384,18 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         final hasError = state.hasError.value || message.error > 0;
         final hasPreview = state.resolvedFile.value != null ||
             (hasError && message.isFromMe == true && state.uploadPreviewFile.value != null);
-        final transparentCard = hasPreview && (widget.transparentBackground || isPass || attachment.mimeStart == "image");
-        // Gallery cards in non-preview states (downloading, not-loaded, etc.) need
-        // to fill the SizedBox dimensions set by MessageImageGallery and have their
-        // background clipped to rounded corners.
-        final shouldExpandAndClipForGallery = widget.transparentBackground && !hasPreview;
+        // Message popup has no tight parent frame — skip cover-fill expand.
+        final inPopup = PopupScope.maybeOf(context) != null;
+        final fill = widget.fill && !inPopup;
+        // Parent ClipRRect owns collection corners; popup has no bubble tail so round all.
+        final forceAllCornersRounded = inPopup;
+        // Fill cards (and images / pkpasses) use transparent ink so media shows through.
+        // Popup videos also need transparency — otherwise the square Ink peeks past ClipRRect.
+        final transparentCard = hasPreview &&
+            (widget.fill ||
+                isPass ||
+                attachment.mimeStart == "image" ||
+                (inPopup && attachment.mimeStart == "video"));
         // Only meaningful before the file resolves; once it has, the image
         // itself defines the box.
         final reservedBox = hasPreview ? null : _reservedImageBox(context, isInReply, hideAttachments);
@@ -402,10 +423,10 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                   child: AnimatedSize(
                     duration: const Duration(milliseconds: 150),
                     // AnimatedSize loosens constraints, so content would render at its
-                    // natural size — smaller than the gallery SizedBox. SizedBox.expand()
-                    // snaps back to the max loosened constraints (= cardWidth x cardHeight)
-                    // and forces tight dimensions all the way down to the content widget.
-                    child: shouldExpandAndClipForGallery
+                    // natural size — smaller than the parent frame. SizedBox.expand()
+                    // snaps back to the max loosened constraints and forces tight
+                    // dimensions all the way down to the content widget.
+                    child: fill
                         ? SizedBox.expand(
                             child: SendingOpacityWrapper(
                               child: _buildContent(
@@ -415,6 +436,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                                 isInReply: isInReply,
                                 isiOS: isiOS,
                                 reservedBox: reservedBox,
+                                fill: fill,
+                                forceAllCornersRounded: forceAllCornersRounded,
                               ),
                             ),
                           )
@@ -423,28 +446,16 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
                             widthFactor: 1,
                             // SendingOpacityWrapper has its own Obx so isSending
                             // changes only rebuild the opacity layer, not this tree.
-                            child: DecoratedBox(
-                              decoration: widget.showCardShadow
-                                  ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
-                                          blurRadius: 3,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    )
-                                  : const BoxDecoration(),
-                              child: SendingOpacityWrapper(
-                                child: _buildContent(
-                                  state: state,
-                                  hideAttachments: hideAttachments,
-                                  showTail: showTail,
-                                  isInReply: isInReply,
-                                  isiOS: isiOS,
-                                  reservedBox: reservedBox,
-                                ),
+                            child: SendingOpacityWrapper(
+                              child: _buildContent(
+                                state: state,
+                                hideAttachments: hideAttachments,
+                                showTail: showTail,
+                                isInReply: isInReply,
+                                isiOS: isiOS,
+                                reservedBox: reservedBox,
+                                fill: fill,
+                                forceAllCornersRounded: forceAllCornersRounded,
                               ),
                             ),
                           ),
@@ -454,35 +465,11 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
-        // Gallery non-preview: wrap with shadow + rounded clip at the card boundary.
-        // This clips the surfaceContainerHighest Ink background to rounded corners and
-        // places the shadow around the full card rather than the smaller content widget.
-        if (shouldExpandAndClipForGallery) {
-          content = DecoratedBox(
-            decoration: widget.showCardShadow
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  )
-                : const BoxDecoration(),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: content,
-            ),
-          );
-        }
-        // ColorFiltered is only for standalone (non-gallery) selection tinting.
-        // In gallery mode (transparentBackground = true), the ColorFilter creates a
-        // saveLayer bounded by the messages view repaint boundary. The dstOver blend
-        // then fills every transparent pixel in that large layer with tertiaryContainer,
-        // turning the entire messages view pink/purple while an attachment downloads.
-        if (!transparentCard && !widget.transparentBackground) {
+        // ColorFiltered is only for standalone selection tinting.
+        // In fill mode the ColorFilter creates a saveLayer bounded by the messages
+        // view repaint boundary; dstOver then fills every transparent pixel in that
+        // large layer with tertiaryContainer (pink/purple flash while downloading).
+        if (!transparentCard && !widget.fill) {
           content = ColorFiltered(
             colorFilter: ColorFilter.mode(
               context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),

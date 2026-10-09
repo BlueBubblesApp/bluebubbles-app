@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_corner_badge.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
@@ -52,6 +53,10 @@ class VideoPlayer extends StatefulWidget {
   final Attachment attachment;
   final bool isFromMe;
   final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
+
+  /// Cover-expand into a parent-fixed frame (gallery cards).
+  final bool fill;
 
   const VideoPlayer(
       {super.key,
@@ -59,7 +64,9 @@ class VideoPlayer extends StatefulWidget {
       required this.attachment,
       required this.controller,
       required this.isFromMe,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.collectionController,
+      this.fill = false});
 
   final ConversationViewController? controller;
 
@@ -239,6 +246,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   // memory; always rendered via Image.file.
   String? thumbnailPath;
   bool thumbnailFailed = false;
+
+  /// Expand into a parent-fixed gallery frame, or size to aspect ratio for bubble videos.
+  Widget _sizeMedia(Widget child) {
+    if (widget.fill) return SizedBox.expand(child: child);
+    return Obx(() => _boundedAspectRatio(
+          ratio: aspectRatio.value,
+          child: child,
+        ));
+  }
 
   @override
   void initState() {
@@ -448,6 +464,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                           videoController: videoController,
                           mute: muted,
                           galleryAttachments: widget.galleryAttachments,
+                          collectionController: widget.collectionController,
                         ),
                       ),
                     );
@@ -466,6 +483,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         mute: muted,
                         videoController: videoController,
                         galleryAttachments: widget.galleryAttachments,
+                        collectionController: widget.collectionController,
                       ),
                     ),
                   );
@@ -478,35 +496,42 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
-              Obx(() => _boundedAspectRatio(
-                    ratio: aspectRatio.value,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Video(
-                          controller: videoController!,
-                          controls: null,
-                          fit: BoxFit.cover,
-                        ),
-                        // Keep the thumbnail painted over the black surface until the first frame decodes
-                        if (!kIsDesktop && !kIsWeb && thumbnailPath != null)
-                          Obx(() => IgnorePointer(
-                                child: AnimatedOpacity(
-                                  opacity: firstFrameReady.value ? 0 : 1,
-                                  duration: const Duration(milliseconds: 150),
-                                  child: _buildThumbnailImage(context, fit: BoxFit.cover),
-                                ),
-                              )),
-                      ],
+              _sizeMedia(
+                Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Video(
+                      controller: videoController!,
+                      controls: null,
+                      fit: BoxFit.cover,
                     ),
-                  )),
+                    // Keep the thumbnail painted over the black surface until the first frame decodes
+                    if (!kIsDesktop && !kIsWeb && thumbnailPath != null)
+                      Obx(() => IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: firstFrameReady.value ? 0 : 1,
+                              duration: const Duration(milliseconds: 150),
+                              child: _buildThumbnailImage(context, fit: BoxFit.cover),
+                            ),
+                          )),
+                  ],
+                ),
+              ),
               PlayPauseButton(showPlayPauseOverlay: showPlayPauseOverlay, controller: videoController),
               MuteButton(
                   showPlayPauseOverlay: showPlayPauseOverlay,
                   muted: muted,
                   controller: videoController,
                   isFromMe: widget.isFromMe),
-              if (kIsDesktop) FullscreenButton(attachment: attachment, isFromMe: widget.isFromMe, muted: muted),
+              if (kIsDesktop)
+                FullscreenButton(
+                  attachment: attachment,
+                  isFromMe: widget.isFromMe,
+                  muted: muted,
+                  videoController: videoController,
+                  galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
+                ),
               if (!kIsDesktop && !kIsWeb && thumbnailFailed)
                 Obx(() => firstFrameReady.value
                     ? const SizedBox.shrink()
@@ -532,6 +557,7 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   mute: muted,
                   videoController: videoController,
                   galleryAttachments: widget.galleryAttachments,
+                  collectionController: widget.collectionController,
                 ),
               ),
             );
@@ -539,16 +565,15 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           // All mobile states (placeholder → thumbnail → playing) share the same
           // Obx(AspectRatio(aspectRatio.value)) geometry so state changes never resize the box
           child: thumbnailPath == null && !thumbnailFailed && !kIsDesktop && !kIsWeb
-              ? Obx(() => _boundedAspectRatio(
-                    ratio: aspectRatio.value,
-                    child: Center(
-                      child: PlayPauseButton(
-                        showPlayPauseOverlay: showPlayPauseOverlay,
-                        controller: videoController,
-                        customOnTap: _playInline,
-                      ),
+              ? _sizeMedia(
+                  Center(
+                    child: PlayPauseButton(
+                      showPlayPauseOverlay: showPlayPauseOverlay,
+                      controller: videoController,
+                      customOnTap: _playInline,
                     ),
-                  ))
+                  ),
+                )
               : thumbnailPath == null && !thumbnailFailed
                   ? Padding(
                       padding: const EdgeInsets.all(15.0),
@@ -588,39 +613,38 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         ],
                       ),
                     )
-                  : Obx(() => _boundedAspectRatio(
-                        ratio: aspectRatio.value,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Positioned.fill(
-                              child: _buildThumbnailImage(
-                                context,
-                                fit: BoxFit.cover,
-                                filterQuality: FilterQuality.medium,
-                                frameBuilder: (context, child, frame, wasSyncLoaded) => wasSyncLoaded
-                                    ? child
-                                    : AnimatedOpacity(
-                                        opacity: frame == null ? 0 : 1,
-                                        duration: const Duration(milliseconds: 150),
-                                        child: child,
-                                      ),
-                              ),
+                  : _sizeMedia(
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: _buildThumbnailImage(
+                              context,
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.medium,
+                              frameBuilder: (context, child, frame, wasSyncLoaded) => wasSyncLoaded
+                                  ? child
+                                  : AnimatedOpacity(
+                                      opacity: frame == null ? 0 : 1,
+                                      duration: const Duration(milliseconds: 150),
+                                      child: child,
+                                    ),
                             ),
-                            if (thumbnailFailed) MediaCornerBadge(label: "Preview Unavailable", alignLeft: isFromMe),
-                            PlayPauseButton(
+                          ),
+                          if (thumbnailFailed) MediaCornerBadge(label: "Preview Unavailable", alignLeft: isFromMe),
+                          PlayPauseButton(
+                            showPlayPauseOverlay: showPlayPauseOverlay,
+                            controller: videoController,
+                            customOnTap: _playInline,
+                          ),
+                          MuteButton(
                               showPlayPauseOverlay: showPlayPauseOverlay,
+                              muted: muted,
                               controller: videoController,
-                              customOnTap: _playInline,
-                            ),
-                            MuteButton(
-                                showPlayPauseOverlay: showPlayPauseOverlay,
-                                muted: muted,
-                                controller: videoController,
-                                isFromMe: isFromMe),
-                          ],
-                        ),
-                      ))),
+                              isFromMe: isFromMe),
+                        ],
+                      ),
+                    )),
     );
   }
 
@@ -629,13 +653,22 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
 }
 
 class FullscreenButton extends StatelessWidget {
-  const FullscreenButton(
-      {super.key, required this.attachment, required this.isFromMe, this.videoController, this.muted});
+  const FullscreenButton({
+    super.key,
+    required this.attachment,
+    required this.isFromMe,
+    this.videoController,
+    this.muted,
+    this.galleryAttachments,
+    this.collectionController,
+  });
 
   final Attachment attachment;
   final bool isFromMe;
   final VideoController? videoController;
   final RxBool? muted;
+  final List<Attachment>? galleryAttachments;
+  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
@@ -653,11 +686,14 @@ class FullscreenButton extends StatelessWidget {
               await Navigator.of(Get.context!).push(
                 ThemeSwitcher.buildPageRoute(
                   builder: (context) => ConversationFullscreenHolder(
-                      currentChat: currentChat,
-                      attachment: attachment,
-                      showInteractions: true,
-                      videoController: videoController,
-                      mute: muted),
+                    currentChat: currentChat,
+                    attachment: attachment,
+                    showInteractions: true,
+                    videoController: videoController,
+                    mute: muted,
+                    galleryAttachments: galleryAttachments,
+                    collectionController: collectionController,
+                  ),
                 ),
               );
             },
