@@ -91,10 +91,10 @@ class MethodChannelHandlers {
           (SocketSvc.socket?.connected ?? false) &&
           SettingsSvc.settings.endpointUnifiedPush.value == '') {
         Logger.debug('App is in the foreground with a connected socket, ignoring new message...');
-        return _ok();
+        return await _ok();
       } else if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
         Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
-        return _ok();
+        return await _ok();
       }
 
       final Map<String, dynamic>? data = arguments;
@@ -149,7 +149,7 @@ class MethodChannelHandlers {
             payload.data['chats'] = [existingMsg.chat.target!.toMap()];
           } else {
             Logger.warn('No chat data found, and unable to find chat from message guid: ${payload.data['guid']}');
-            return _retry();
+            return await _retry();
           }
         }
 
@@ -230,7 +230,7 @@ class MethodChannelHandlers {
 
     try {
       await GetIt.I.isReady<NotificationsService>();
-      if (arguments == null) return _ok();
+      if (arguments == null) return await _ok();
       final payload = ServerPayload.fromJson(arguments);
       final Chat? chat = Chat.findOne(guid: payload.data['payload']['chatGuid']);
       if (chat != null) {
@@ -321,7 +321,7 @@ class MethodChannelHandlers {
         if (chat != null) {
           await chat.toggleHasUnreadAsync(false, clearLocalNotifications: false);
           ChatsSvc.getChatState(chat.guid)?.updateHasUnreadInternal(false);
-          return _ok();
+          return await _ok();
         }
       }
     } catch (e, s) {
@@ -342,14 +342,14 @@ class MethodChannelHandlers {
         final payload = ServerPayload.fromJson(data!);
         final Chat? chat = Chat.findOne(guid: payload.data['chatGuid']);
         if (chat == null || (payload.data['read'] != true && payload.data['read'] != false)) {
-          return _retry();
+          return await _retry();
         }
 
         chat.toggleHasUnreadAsync(!payload.data['read']!, privateMark: false);
-        return _ok();
+        return await _ok();
       }
 
-      return _retry();
+      return await _retry();
     } catch (e, s) {
       return Future.error(e, s);
     }

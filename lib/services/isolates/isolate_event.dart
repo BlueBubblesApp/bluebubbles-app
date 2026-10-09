@@ -34,7 +34,7 @@ enum IsolateEvent {
 
   /// Emitted after each page of messages is persisted during incremental sync.
   /// Payload: `Map<String, dynamic>` with keys:
-  ///   `messageIds`             — `List<int>` of all DB IDs saved in this page
+  ///   `messageIdsByChat`       — `Map<String, List<int>>` chatGuid → DB IDs saved in this page
   ///   `latestMessageIdPerChat` — `Map<String, int>` chatGuid → latest message DB ID in this page
   incrementalSyncPageComplete,
 

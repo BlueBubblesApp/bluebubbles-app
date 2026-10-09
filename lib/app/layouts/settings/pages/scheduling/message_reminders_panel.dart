@@ -100,7 +100,7 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
                                 useTodayYesterday: true);
                             if (finalDate != null) {
                               if (!finalDate.isAfter(DateTime.now().toLocal())) {
-                                showSnackbar("Error", "Select a date in the future");
+                                showSnackbar("Error", "Select a date in the future", type: SnackbarType.error);
                                 return;
                               }
                               deleteMessage(item);

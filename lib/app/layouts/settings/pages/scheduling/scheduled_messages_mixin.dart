@@ -47,7 +47,7 @@ mixin ScheduledMessagesMixin<T extends StatefulWidget> on State<T> {
       scheduled.remove(item);
     } else {
       Logger.error(response.data);
-      showSnackbar("Error", "Something went wrong!");
+      showSnackbar("Error", "Something went wrong!", type: SnackbarType.error);
     }
   }
 

@@ -47,7 +47,8 @@ class _SoftDeletedChatsPanelState extends State<SoftDeletedChatsPanel> with Them
     await ChatsSvc.unDeleteChat(chat);
     await ChatsSvc.addChat(chat);
     setState(() => _deletedChats.removeWhere((c) => c.guid == chat.guid));
-    showSnackbar("Chat Restored", "${chat.getTitle()} has been restored to your chat list.");
+    showSnackbar("Chat Restored", "${chat.getTitle()} has been restored to your chat list.",
+        type: SnackbarType.success);
   }
 
   @override

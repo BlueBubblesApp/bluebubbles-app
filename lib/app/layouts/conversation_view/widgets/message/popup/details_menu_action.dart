@@ -7,156 +7,76 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// When adding a new [DetailsMenuAction], make sure to add corresponding entries to
-/// the [_actionPlatformSupport], [_actionToIcon], and [_actionToText] Maps
 enum DetailsMenuAction {
-  Reply,
-  Save,
-  OpenInImageViewer,
-  OpenInBrowser,
-  OpenInNewTab,
-  CopyText,
-  CopyAttachment,
-  SaveOriginal,
-  SaveLivePhoto,
-  OpenDirectMessage,
-  ViewThread,
-  Share,
-  ReDownloadFromServer,
-  RemindLater,
-  CreateContact,
-  UndoSend,
-  Edit,
-  Forward,
-  StartConversation,
-  CopySelection,
-  Delete,
-  Bookmark,
-  SelectMultiple,
-  MessageInfo,
-  CancelSend,
-  RefreshPreview,
+  Reply(PlatformSupport.all, CupertinoIcons.reply, Icons.reply, "Reply"),
+  Save(PlatformSupport.all, CupertinoIcons.cloud_download, Icons.file_download, "Save"),
+  OpenInImageViewer(PlatformSupport.desktop, CupertinoIcons.photo, Icons.image_outlined, "Open In Image Viewer"),
+  OpenInBrowser(PlatformSupport.android, CupertinoIcons.macwindow, Icons.open_in_browser, "Open In Browser"),
+  OpenInNewTab(PlatformSupport.web, CupertinoIcons.macwindow, Icons.open_in_browser, "Open In New Tab"),
+  CopyText(PlatformSupport.all, CupertinoIcons.doc_on_clipboard, Icons.content_copy, "Copy"),
+  CopyAttachment(PlatformSupport.desktop, CupertinoIcons.doc_on_clipboard, Icons.content_copy, "Copy Attachment"),
+  SaveOriginal(PlatformSupport.all, CupertinoIcons.cloud_download, Icons.file_download, "Save Original"),
+  SaveLivePhoto(PlatformSupport.all, CupertinoIcons.photo, Icons.motion_photos_on_outlined, "Save Live Photo"),
+  OpenDirectMessage(
+    PlatformSupport.all,
+    CupertinoIcons.arrow_up_right_square,
+    Icons.open_in_new,
+    "Open Direct Message",
+  ),
+  ViewThread(PlatformSupport.all, CupertinoIcons.bubble_left_bubble_right, Icons.forum, "View Thread"),
+  Share(PlatformSupport.android | PlatformSupport.windows, CupertinoIcons.share, Icons.share, "Share"),
+  ReDownloadFromServer(PlatformSupport.all, CupertinoIcons.refresh, Icons.refresh, "Re-download From Server"),
+  RemindLater(PlatformSupport.android | PlatformSupport.windows, CupertinoIcons.alarm, Icons.alarm, "Remind Later"),
+  CreateContact(
+    PlatformSupport.android,
+    CupertinoIcons.person_crop_circle_badge_plus,
+    Icons.contact_page_outlined,
+    "Create Contact",
+  ),
+  UndoSend(PlatformSupport.all, CupertinoIcons.arrow_uturn_left, Icons.undo, "Undo Send"),
+  Edit(PlatformSupport.all, CupertinoIcons.pencil, Icons.edit_outlined, "Edit"),
+  Forward(PlatformSupport.all, CupertinoIcons.arrow_right, Icons.forward, "Forward"),
+  StartConversation(PlatformSupport.all, CupertinoIcons.chat_bubble, Icons.message, "Start Conversation"),
+  CopySelection(PlatformSupport.all, CupertinoIcons.text_cursor, Icons.content_copy, "Copy Selection"),
+  Delete(PlatformSupport.all, CupertinoIcons.trash, Icons.delete_outlined, "Delete"),
+  Bookmark(PlatformSupport.all, CupertinoIcons.bookmark, Icons.bookmark_outlined, "Add/Remove Bookmark"),
+  SelectMultiple(PlatformSupport.all, CupertinoIcons.checkmark_square, Icons.check_box_outlined, "Select Multiple"),
+  MessageInfo(PlatformSupport.all, CupertinoIcons.info, Icons.info, "Message Info"),
+  CancelSend(PlatformSupport.all, CupertinoIcons.xmark_circle, Icons.cancel_outlined, "Cancel Send"),
+  RefreshPreview(PlatformSupport.all, CupertinoIcons.arrow_clockwise, Icons.refresh, "Refresh Preview");
+
+  const DetailsMenuAction(this.platformSupport, this.iosIcon, this.nonIosIcon, this.text);
+
+  /// [PlatformSupport] flags.
+  final int platformSupport;
+  final IconData iosIcon;
+  final IconData nonIosIcon;
+  final String text;
+
+  bool get isPlatformSupported {
+    final current = kIsWeb
+        ? PlatformSupport.web
+        : Platform.isAndroid
+        ? PlatformSupport.android
+        : Platform.isWindows
+        ? PlatformSupport.windows
+        : PlatformSupport.linux;
+    return platformSupport & current != 0;
+  }
 }
 
-class PlatformSupport {
-  final bool android;
-  final bool windows;
-  final bool linux;
-  final bool web;
-
-  const PlatformSupport(this.android, this.windows, this.linux, this.web);
-}
-
-const Map<DetailsMenuAction, PlatformSupport> _actionPlatformSupport = {
-  DetailsMenuAction.Reply: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Save: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.OpenInImageViewer: PlatformSupport(false, true, true, false),
-  DetailsMenuAction.OpenInBrowser: PlatformSupport(true, false, false, false),
-  DetailsMenuAction.OpenInNewTab: PlatformSupport(false, false, false, true),
-  DetailsMenuAction.CopyText: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.CopyAttachment: PlatformSupport(false, true, true, false),
-  DetailsMenuAction.SaveOriginal: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.SaveLivePhoto: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.OpenDirectMessage: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.ViewThread: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Share: PlatformSupport(true, false, false, false),
-  DetailsMenuAction.ReDownloadFromServer: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.RemindLater: PlatformSupport(true, false, false, false),
-  DetailsMenuAction.CreateContact: PlatformSupport(true, false, false, false),
-  DetailsMenuAction.UndoSend: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Edit: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Forward: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.StartConversation: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.CopySelection: PlatformSupport(false, true, true, true),
-  DetailsMenuAction.Delete: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.Bookmark: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.SelectMultiple: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.MessageInfo: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.CancelSend: PlatformSupport(true, true, true, true),
-  DetailsMenuAction.RefreshPreview: PlatformSupport(true, true, true, true),
-};
-
-const Map<DetailsMenuAction, (IconData, IconData)> _actionToIcon = {
-  DetailsMenuAction.Reply: (CupertinoIcons.reply, Icons.reply),
-  DetailsMenuAction.Save: (CupertinoIcons.cloud_download, Icons.file_download),
-  DetailsMenuAction.OpenInImageViewer: (CupertinoIcons.photo, Icons.image_outlined),
-  DetailsMenuAction.OpenInBrowser: (CupertinoIcons.macwindow, Icons.open_in_browser),
-  DetailsMenuAction.OpenInNewTab: (CupertinoIcons.macwindow, Icons.open_in_browser),
-  DetailsMenuAction.CopyText: (CupertinoIcons.doc_on_clipboard, Icons.content_copy),
-  DetailsMenuAction.CopyAttachment: (CupertinoIcons.doc_on_clipboard, Icons.content_copy),
-  DetailsMenuAction.SaveOriginal: (CupertinoIcons.cloud_download, Icons.file_download),
-  DetailsMenuAction.SaveLivePhoto: (CupertinoIcons.photo, Icons.motion_photos_on_outlined),
-  DetailsMenuAction.OpenDirectMessage: (CupertinoIcons.arrow_up_right_square, Icons.open_in_new),
-  DetailsMenuAction.ViewThread: (CupertinoIcons.bubble_left_bubble_right, Icons.forum),
-  DetailsMenuAction.Share: (CupertinoIcons.share, Icons.share),
-  DetailsMenuAction.ReDownloadFromServer: (CupertinoIcons.refresh, Icons.refresh),
-  DetailsMenuAction.RemindLater: (CupertinoIcons.alarm, Icons.alarm),
-  DetailsMenuAction.CreateContact: (CupertinoIcons.person_crop_circle_badge_plus, Icons.contact_page_outlined),
-  DetailsMenuAction.UndoSend: (CupertinoIcons.arrow_uturn_left, Icons.undo),
-  DetailsMenuAction.Edit: (CupertinoIcons.pencil, Icons.edit_outlined),
-  DetailsMenuAction.Forward: (CupertinoIcons.arrow_right, Icons.forward),
-  DetailsMenuAction.StartConversation: (CupertinoIcons.chat_bubble, Icons.message),
-  DetailsMenuAction.CopySelection: (CupertinoIcons.text_cursor, Icons.content_copy),
-  DetailsMenuAction.Delete: (CupertinoIcons.trash, Icons.delete_outlined),
-  DetailsMenuAction.Bookmark: (CupertinoIcons.bookmark, Icons.bookmark_outlined),
-  DetailsMenuAction.SelectMultiple: (CupertinoIcons.checkmark_square, Icons.check_box_outlined),
-  DetailsMenuAction.MessageInfo: (CupertinoIcons.info, Icons.info),
-  DetailsMenuAction.CancelSend: (CupertinoIcons.xmark_circle, Icons.cancel_outlined),
-  DetailsMenuAction.RefreshPreview: (CupertinoIcons.arrow_clockwise, Icons.refresh),
-};
-
-const Map<DetailsMenuAction, String> _actionToText = {
-  DetailsMenuAction.Reply: "Reply",
-  DetailsMenuAction.Save: "Save",
-  DetailsMenuAction.OpenInImageViewer: "Open In Image Viewer",
-  DetailsMenuAction.OpenInBrowser: "Open In Browser",
-  DetailsMenuAction.OpenInNewTab: "Open In New Tab",
-  DetailsMenuAction.CopyText: "Copy",
-  DetailsMenuAction.CopyAttachment: "Copy Attachment",
-  DetailsMenuAction.SaveOriginal: "Save Original",
-  DetailsMenuAction.SaveLivePhoto: "Save Live Photo",
-  DetailsMenuAction.OpenDirectMessage: "Open Direct Message",
-  DetailsMenuAction.ViewThread: "View Thread",
-  DetailsMenuAction.Share: "Share",
-  DetailsMenuAction.ReDownloadFromServer: "Re-download From Server",
-  DetailsMenuAction.RemindLater: "Remind Later",
-  DetailsMenuAction.CreateContact: "Create Contact",
-  DetailsMenuAction.UndoSend: "Undo Send",
-  DetailsMenuAction.Edit: "Edit",
-  DetailsMenuAction.Forward: "Forward",
-  DetailsMenuAction.StartConversation: "Start Conversation",
-  DetailsMenuAction.CopySelection: "Copy Selection",
-  DetailsMenuAction.Delete: "Delete",
-  DetailsMenuAction.Bookmark: "Add/Remove Bookmark",
-  DetailsMenuAction.SelectMultiple: "Select Multiple",
-  DetailsMenuAction.MessageInfo: "Message Info",
-  DetailsMenuAction.CancelSend: "Cancel Send",
-  DetailsMenuAction.RefreshPreview: "Refresh Preview",
-};
-
-class _DetailsMenuActionUtils {
-  static final List<DetailsMenuAction> _androidActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.android).toList();
-
-  static final List<DetailsMenuAction> _windowsActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.windows).toList();
-
-  static final List<DetailsMenuAction> _linuxActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.linux).toList();
-
-  static final List<DetailsMenuAction> _webActions =
-      DetailsMenuAction.values.where((action) => _actionPlatformSupport[action]!.web).toList();
+/// Bit flags for [DetailsMenuAction.platformSupport]; combine with `|`.
+abstract final class PlatformSupport {
+  static const android = 1 << 0;
+  static const windows = 1 << 1;
+  static const linux = 1 << 2;
+  static const web = 1 << 3;
+  static const desktop = windows | linux;
+  static const all = android | desktop | web;
 }
 
 extension DetailsMenuActionExtension on List<DetailsMenuAction> {
-  List<DetailsMenuAction> get platformSupportedActions => (kIsWeb
-          ? where((action) => _DetailsMenuActionUtils._webActions.contains(action))
-          : Platform.isAndroid
-              ? where((action) => _DetailsMenuActionUtils._androidActions.contains(action))
-              : Platform.isWindows
-                  ? where((action) => _DetailsMenuActionUtils._windowsActions.contains(action))
-                  : where((action) => _DetailsMenuActionUtils._linuxActions.contains(action)))
-      .toList();
+  List<DetailsMenuAction> get platformSupportedActions => where((action) => action.isPlatformSupported).toList();
 }
 
 class CustomDetailsMenuActionWidget extends StatelessWidget {
@@ -186,14 +106,8 @@ class CustomDetailsMenuActionWidget extends StatelessWidget {
         child: ListTile(
           mouseCursor: MouseCursor.defer,
           dense: !kIsDesktop && !kIsWeb,
-          title: Text(
-            title,
-            style: context.theme.textTheme.bodyLarge!.copyWith(color: color),
-          ),
-          trailing: Icon(
-            SettingsSvc.settings.skin.value == Skins.iOS ? iosIcon : nonIosIcon,
-            color: color,
-          ),
+          title: Text(title, style: context.theme.textTheme.bodyLarge!.copyWith(color: color)),
+          trailing: Icon(SettingsSvc.settings.skin.value == Skins.iOS ? iosIcon : nonIosIcon, color: color),
         ),
       ),
     );
@@ -205,15 +119,11 @@ class DetailsMenuActionWidget extends CustomDetailsMenuActionWidget {
   final String? customTitle;
   final bool? shouldDisableBtn;
 
-  DetailsMenuActionWidget({
-    super.key,
-    super.onTap,
-    this.customTitle,
-    required this.action,
-    this.shouldDisableBtn,
-  }) : super(
-            title: customTitle ?? _actionToText[action]!,
-            iosIcon: _actionToIcon[action]!.$1,
-            nonIosIcon: _actionToIcon[action]!.$2,
-            shouldDisable: shouldDisableBtn);
+  DetailsMenuActionWidget({super.key, super.onTap, this.customTitle, required this.action, this.shouldDisableBtn})
+    : super(
+        title: customTitle ?? action.text,
+        iosIcon: action.iosIcon,
+        nonIosIcon: action.nonIosIcon,
+        shouldDisable: shouldDisableBtn,
+      );
 }

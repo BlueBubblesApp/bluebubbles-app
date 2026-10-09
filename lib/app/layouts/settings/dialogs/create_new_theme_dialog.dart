@@ -28,7 +28,7 @@ class CreateNewThemeDialog extends StatelessWidget {
               Text("OK", style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
           onPressed: () {
             if (ThemeStruct.findOne(controller.text) != null || controller.text.isEmpty) {
-              showSnackbar("Error", "Please use a unique name for your new theme");
+              showSnackbar("Error", "Please use a unique name for your new theme", type: SnackbarType.error);
             } else {
               Navigator.of(kIsDesktop ? context : _context).pop();
               ThemeData finalData = currentTheme.data;

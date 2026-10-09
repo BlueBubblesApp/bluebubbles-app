@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/details_menu_action.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:bluebubbles/services/ui/message/messages_service.dart';
 import 'package:flutter/widgets.dart';
@@ -29,7 +30,7 @@ class MessagePopupActionContext {
   final MessagePopupServerDetails serverDetails;
   final DetailsMenuAction action;
   final void Function({bool returnVal}) popDetails;
-  final void Function(String title, String body) showSnack;
+  final void Function(String title, String body, {SnackbarType type}) showSnack;
   final Chat? dmChat;
   final bool isEmbeddedMedia;
 

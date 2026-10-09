@@ -166,6 +166,7 @@ class _HandleAuditPanelState extends State<HandleAuditPanel> with ThemeHelpers {
     showSnackbar(
       "Remediation Complete",
       "Repaired $repaired of ${_results.length} handle(s). Relinked $totalRelinked orphaned message(s).",
+      type: SnackbarType.success,
     );
   }
 
@@ -198,10 +199,11 @@ class _HandleAuditPanelState extends State<HandleAuditPanel> with ThemeHelpers {
         _results.remove(result);
         if (_totalHandles > 0) _totalHandles -= 1;
       });
-      showSnackbar("Handle Deleted", "Removed \"${result.displayLabel}\" from this device.");
+      showSnackbar("Handle Deleted", "Removed \"${result.displayLabel}\" from this device.",
+          type: SnackbarType.success);
     } catch (e, s) {
       Logger.error("Failed to delete handle ${result.address}", error: e, trace: s);
-      showSnackbar("Error", "Failed to delete handle: ${e.toString()}");
+      showSnackbar("Error", "Failed to delete handle: ${e.toString()}", type: SnackbarType.error);
     }
   }
 

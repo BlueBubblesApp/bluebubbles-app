@@ -56,7 +56,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
                     nativeContactId: handle.contactsV2.first.nativeContactId,
                   );
                 } catch (_) {
-                  showSnackbar("Error", "Failed to find contact on device!");
+                  showSnackbar("Error", "Failed to find contact on device!", type: SnackbarType.error);
                 }
               } else if (handle != null) {
                 await MethodChannelSvc.actions.openContactForm(
@@ -196,7 +196,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                       nativeContactId: handle.contactsV2.first.nativeContactId,
                     );
                   } catch (_) {
-                    showSnackbar("Error", "Failed to find contact on device!");
+                    showSnackbar("Error", "Failed to find contact on device!", type: SnackbarType.error);
                   }
                 } else if (handle != null) {
                   await MethodChannelSvc.actions.openContactForm(
@@ -235,6 +235,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
                   final TrackingCarrier c = data!.first;
                   final String number = data.last;
                   Clipboard.setData(ClipboardData(text: number));
+                  showCopiedToast("Tracking number copied to clipboard");
                   await launchUrl(Uri.parse("https://www.google.com/search?q=${c.name} $number"),
                       mode: LaunchMode.externalApplication);
                 } else if (type == "flight") {

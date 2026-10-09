@@ -542,7 +542,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             )).reversed.where((e) => e.dateCreated!.isAfter(date));
             if (messages.isEmpty) {
               Navigator.of(context, rootNavigator: true).pop();
-              showSnackbar("Error", "No messages found!");
+              showSnackbar("Error", "No messages found!", type: SnackbarType.error);
               return;
             }
             final List<String> lines = [];
@@ -563,7 +563,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             await file.create(recursive: true);
             await file.writeAsString(lines.join('\n'));
             Navigator.of(context, rootNavigator: true).pop();
-            showSnackbar("Success", "Saved transcript to the downloads folder");
+            showSnackbar("Success", "Saved transcript to the downloads folder", type: SnackbarType.success);
           },
           onLongPress: () async {
             final date = await showTimeframePicker("Select Timeframe", context, additionalTimeframes: {"6 Hours": 6});
@@ -588,7 +588,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             )).reversed.where((e) => e.dateCreated!.isAfter(date));
             if (messages.isEmpty) {
               Navigator.of(context, rootNavigator: true).pop();
-              showSnackbar("Error", "No messages found!");
+              showSnackbar("Error", "No messages found!", type: SnackbarType.error);
               return;
             }
             final doc = pw.Document();
@@ -683,7 +683,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             await file.create(recursive: true);
             await file.writeAsBytes(await doc.save());
             Navigator.of(context, rootNavigator: true).pop();
-            showSnackbar("Success", "Saved transcript to the downloads folder");
+            showSnackbar("Success", "Saved transcript to the downloads folder", type: SnackbarType.success);
           },
         ),
       ),
@@ -783,7 +783,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         if (response.statusCode == 200) {
           showSnackbar("Notice", "Left chat successfully!");
         } else {
-          showSnackbar("Error", "Failed to leave chat!");
+          showSnackbar("Error", "Failed to leave chat!", type: SnackbarType.error);
         }
       },
     );

@@ -117,10 +117,10 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
 
               // If the selected date is not in the future, show an error
               if (!presetsAhead && now.isBefore(finalDate!)) {
-                showSnackbar("Invalid Date Selection", "Please select a date in the future");
+                showSnackbar("Invalid Date Selection", "Please select a date in the future", type: SnackbarType.error);
                 finalDate = null;
               } else if (presetsAhead && now.isAfter(finalDate!)) {
-                showSnackbar("Invalid Date Selection", "Please select a date in the past");
+                showSnackbar("Invalid Date Selection", "Please select a date in the past", type: SnackbarType.error);
                 finalDate = null;
               }
 

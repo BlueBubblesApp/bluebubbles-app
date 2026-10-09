@@ -1,12 +1,10 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 class OldThemesDialog extends StatelessWidget {
   const OldThemesDialog(this.oldThemes, this.clearOld, {super.key});
@@ -88,10 +86,7 @@ class OldThemesDialog extends StatelessWidget {
                                             ),
                                             onTap: () {
                                               Clipboard.setData(ClipboardData(text: hex));
-                                              if (!Platform.isAndroid ||
-                                                  (FilesystemSvc.androidInfo?.version.sdkInt ?? 0) < 33) {
-                                                showToast("Hex code copied to clipboard");
-                                              }
+                                              showCopiedToast("Hex code copied to clipboard");
                                             });
                                       },
                                     ),

@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,7 @@ import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image/image.dart' as img;
+import 'package:material_color_utilities/material_color_utilities.dart' as mcu;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -531,43 +534,92 @@ IconData getAttachmentIcon(String mimeType) {
   return isiOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
 }
 
+/// Controls a snackbar's icon, colors and how long it stays up, and whether mobile shows a toast instead.
+enum SnackbarType { success, error }
+
+/// Errors on mobile are native toasts; everything else is this snackbar on every platform.
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetSnackBar)? onTap, TextButton? button}) {
+    {SnackbarType type = SnackbarType.success,
+    int durationMs = 1500,
+    String? actionLabel,
+    VoidCallback? onAction}) {
+  final isError = type == SnackbarType.error;
+  if (!kIsDesktop && isError) {
+    unawaited(showToast(message, isError: true));
+    return;
+  }
+  // Top of the screen (top-right when there's room), so it never covers the text field; on desktop it also sits
+  // under the title bar to keep the window buttons clear. GetX adds the status bar inset on mobile itself.
+  // The title bar check matches TitleBarWrapper's rule for when the custom title bar is drawn.
+  const width = 360.0;
+  final hasCustomTitleBar =
+      kIsDesktop && (!Platform.isLinux || SettingsSvc.settings.titleBarStyle.value == BBTitleBarStyle.custom);
+  final theme = Get.theme;
+  final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
+  // Errors use the error container. The theme has no success role, so success builds one the way M3 builds
+  // errorContainer: a tonal palette from green (nudged toward the theme's primary), tones 90/10 light, 30/90 dark.
+  final dark = theme.brightness == Brightness.dark;
+  final greenHue = mcu.Hct.fromInt(Colors.green.harmonizeWith(theme.colorScheme.primary).toARGB32()).hue;
+  final green = mcu.TonalPalette.of(greenHue, 48);
+  final (background, foreground) = switch (type) {
+    SnackbarType.error => (theme.colorScheme.errorContainer, theme.colorScheme.onErrorContainer),
+    SnackbarType.success => (Color(green.get(dark ? 30 : 90)), Color(green.get(dark ? 90 : 10))),
+  };
+  final icon = switch (type) {
+    SnackbarType.error => iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+    SnackbarType.success => iOS ? CupertinoIcons.checkmark_circle : Icons.check_circle_outline,
+  };
   Get.snackbar(
     title,
     message,
-    snackPosition: SnackPosition.BOTTOM,
-    colorText: Get.theme.colorScheme.onInverseSurface,
-    backgroundColor: Get.theme.colorScheme.inverseSurface,
-    margin: const EdgeInsets.only(bottom: 10),
-    maxWidth: Get.width - 20,
+    titleText: Text(title, style: theme.textTheme.titleSmall!.copyWith(color: foreground)),
+    messageText: Text(message, style: theme.textTheme.bodyMedium!.copyWith(color: foreground)),
+    icon: Icon(icon, color: foreground),
+    shouldIconPulse: false,
+    snackPosition: SnackPosition.TOP,
+    borderRadius: 12,
+    backgroundColor: background,
+    barBlur: 0,
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    margin: EdgeInsets.only(
+      top: (hasCustomTitleBar ? appWindow.titleBarHeight : 0) + 10,
+      right: 10,
+      left: max(10, Get.width - width - 10),
+    ),
+    maxWidth: width,
     isDismissible: false,
-    duration: Duration(milliseconds: durationMs),
-    animationDuration: Duration(milliseconds: animationMs),
-    mainButton: button,
-    onTap: onTap ??
-        (GetSnackBar bar) {
-          if (Get.isSnackbarOpen) Get.back();
-        },
+    // Errors usually need reading, so they stay up longer.
+    duration: Duration(milliseconds: isError ? max(durationMs, 4000) : durationMs),
+    animationDuration: const Duration(milliseconds: 250),
+    mainButton: actionLabel == null
+        ? null
+        : TextButton(onPressed: onAction, child: Text(actionLabel, style: TextStyle(color: foreground))),
+    onTap: (GetSnackBar bar) {
+      if (Get.isSnackbarOpen) Get.back();
+    },
   );
 }
 
+/// Only errors become native toasts on mobile; anything else is routed through [showSnackbar].
 Future<void> showToast(String message, {bool isError = false}) async {
   if (message.trim().isEmpty) return;
-  if (kIsDesktop) {
-    showSnackbar(isError ? "Error" : "Notice", message);
+  if (kIsDesktop || !isError) {
+    showSnackbar(isError ? "Error" : "Notice", message, type: isError ? SnackbarType.error : SnackbarType.success);
     return;
   }
   try {
-    await Fluttertoast.showToast(
-      msg: message,
-      toastLength: isError ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-    );
+    await Fluttertoast.showToast(msg: message, toastLength: Toast.LENGTH_LONG, gravity: ToastGravity.BOTTOM);
   } catch (e, s) {
     Logger.warn("Failed to show toast: $e");
     Logger.debug(s.toString());
   }
+}
+
+/// Confirms any copy the app does on the user's behalf (keyboard Ctrl+C/X never comes through here).
+/// Android 13+ always shows its own confirmation, so only Android 12 and older get a snackbar.
+void showCopiedToast(String message) {
+  if (Platform.isAndroid && (FilesystemSvc.androidInfo?.version.sdkInt ?? 0) >= 33) return;
+  showSnackbar("Copied", message);
 }
 
 Widget getSocketStateIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {

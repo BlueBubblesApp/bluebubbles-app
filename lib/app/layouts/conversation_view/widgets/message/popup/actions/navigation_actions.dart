@@ -35,7 +35,7 @@ void showThread(MessagePopupActionContext ctx) {
   ctx.popDetails();
   if (ctx.message.threadOriginatorGuid != null) {
     final mwc = ctx.service.getMessageStateIfExists(ctx.message.threadOriginatorGuid!);
-    if (mwc == null) return ctx.showSnack("Error", "Failed to find thread!");
+    if (mwc == null) return ctx.showSnack("Error", "Failed to find thread!", type: SnackbarType.error);
     showReplyThread(
         ctx.context, mwc.message, mwc.parts[ctx.message.normalizedThreadPart], ctx.service, ctx.cvController);
   } else {

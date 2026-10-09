@@ -7,7 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 /// Optimized reactive tile for Connection & Server settings
 /// Only rebuilds when socket.state changes
@@ -54,9 +53,7 @@ class ConnectionServerTile extends StatelessWidget {
         },
         onLongPress: () {
           Clipboard.setData(ClipboardData(text: HttpSvc.origin));
-          if (!Platform.isAndroid || (FilesystemSvc.androidInfo?.version.sdkInt ?? 0) < 33) {
-            showToast("Server address copied to clipboard");
-          }
+          showCopiedToast("Server address copied to clipboard");
         },
         leading: SettingsLeadingIcon(
           iosIcon: CupertinoIcons.antenna_radiowaves_left_right,

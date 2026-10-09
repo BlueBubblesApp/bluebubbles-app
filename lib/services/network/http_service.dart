@@ -223,7 +223,7 @@ class HttpService implements BaseApi {
         showSnackbar("Notice", "Font loaded");
       } catch (e, stack) {
         Logger.error("Failed to load font!", error: e, trace: stack);
-        showSnackbar("Error", "Failed to load font! Error: ${e.toString()}");
+        showSnackbar("Error", "Failed to load font! Error: ${e.toString()}", type: SnackbarType.error);
       }
     }
 

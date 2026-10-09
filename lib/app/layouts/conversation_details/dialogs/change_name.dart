@@ -51,10 +51,9 @@ void showChangeName(Chat chat, String method, BuildContext context) {
               Navigator.of(context, rootNavigator: true).pop();
               Navigator.of(context, rootNavigator: true).pop();
               unawaited(ChatsSvc.setChatDisplayName(chat, controller.text));
-              showSnackbar("Notice", "Updated name successfully!");
             } else {
               Navigator.of(context, rootNavigator: true).pop();
-              showSnackbar("Error", "Failed to update name!");
+              showSnackbar("Error", "Failed to update name!", type: SnackbarType.error);
             }
           } else {
             Navigator.of(context, rootNavigator: true).pop();
