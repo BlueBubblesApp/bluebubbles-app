@@ -25,6 +25,10 @@ class MediaGridSection extends StatefulWidget {
   final MediaSenderFilter senderFilter;
   final DateTime? sinceDate;
   final ValueChanged<MediaFilter>? onMediaFilterChanged;
+  final bool showSenderAvatar;
+
+  /// Optional per-cell overlay (e.g. collection tapbacks); clips thumbnail only so overlays can overflow.
+  final Widget Function(BuildContext context, int index, Attachment attachment)? cellOverlayBuilder;
 
   const MediaGridSection({
     super.key,
@@ -38,6 +42,8 @@ class MediaGridSection extends StatefulWidget {
     this.senderFilter = const MediaSenderFilter.any(),
     this.sinceDate,
     this.onMediaFilterChanged,
+    this.showSenderAvatar = true,
+    this.cellOverlayBuilder,
   });
 
   @override
@@ -100,6 +106,19 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   Widget _buildGridItem(BuildContext context, int index) {
     final attachment = _filteredMedia[index];
+    final hasOverlay = widget.cellOverlayBuilder != null;
+    const tileRadius = BorderRadius.all(Radius.circular(20));
+
+    Widget thumbnail = MediaGalleryCard(
+      attachment: attachment,
+      showSenderAvatar: widget.showSenderAvatar,
+      chat: widget.chat,
+      galleryAttachments: _filteredMedia,
+    );
+    if (hasOverlay) {
+      thumbnail = ClipRRect(borderRadius: tileRadius, child: thumbnail);
+    }
+
     return Obx(() {
       final isSelected = widget.selected.contains(attachment.guid);
       const motion = M3EMotion.spatialFast;
@@ -107,10 +126,12 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
         duration: motion.duration,
         curve: motion.curve,
         margin: EdgeInsets.all(isSelected ? 10 : 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(isSelected ? M3EShapes.md : 20),
-        ),
-        clipBehavior: Clip.antiAlias,
+        decoration: hasOverlay
+            ? null
+            : BoxDecoration(
+                borderRadius: BorderRadius.circular(isSelected ? M3EShapes.md : 20),
+              ),
+        clipBehavior: hasOverlay ? Clip.none : Clip.antiAlias,
         child: GestureDetector(
           onTap: widget.selected.isNotEmpty
               ? () {
@@ -132,10 +153,9 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
             absorbing: widget.selected.isNotEmpty,
             child: Stack(
               alignment: Alignment.center,
+              clipBehavior: hasOverlay ? Clip.none : Clip.hardEdge,
               children: [
-                MediaGalleryCard(
-                  attachment: attachment,
-                ),
+                thumbnail,
                 if (isSelected)
                   Container(
                     decoration: BoxDecoration(
@@ -151,6 +171,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
                       ),
                     ),
                   ),
+                if (hasOverlay) widget.cellOverlayBuilder!(context, index, attachment),
               ],
             ),
           ),
