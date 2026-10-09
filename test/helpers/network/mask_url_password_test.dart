@@ -86,5 +86,62 @@ void main() {
       const url = 'https://server.example.com/api/v1/ping?guid=secret#anchor';
       expect(maskUrlPassword(url), 'https://server.example.com/api/v1/ping?guid=***#anchor');
     });
+
+    // Terminator tests — narrowed value pattern stops at closing delimiter chars
+    test('stops before trailing comma (e.g. JSON or log context)', () {
+      const input = 'error at ?guid=secret,next';
+      expect(maskUrlPassword(input), 'error at ?guid=***,next');
+    });
+
+    test('stops before closing parenthesis', () {
+      const input = 'see url(?guid=secret)';
+      expect(maskUrlPassword(input), 'see url(?guid=***)');
+    });
+
+    test('stops before closing double-quote', () {
+      const input = '"url": "https://server.example.com/api?guid=secret"';
+      expect(maskUrlPassword(input), '"url": "https://server.example.com/api?guid=***"');
+    });
+
+    test('stops before closing single-quote', () {
+      const input = "url='https://server.example.com/api?guid=secret'";
+      expect(maskUrlPassword(input), "url='https://server.example.com/api?guid=***'");
+    });
+
+    test('stops before closing bracket', () {
+      const input = '[https://server.example.com/api?guid=secret]';
+      expect(maskUrlPassword(input), '[https://server.example.com/api?guid=***]');
+    });
+
+    test('stops before closing brace', () {
+      const input = '{url: https://server.example.com/api?guid=secret}';
+      expect(maskUrlPassword(input), '{url: https://server.example.com/api?guid=***}');
+    });
+
+    // getErrorText path — covers Message.errorMessage strings saved before masking was added
+    // and new entries masked at display time via ErrorHelper.getErrorText -> maskUrlPassword.
+    test('masks HttpException URI in a stored errorMessage (getErrorText path)', () {
+      const stored =
+          'HttpException: Connection closed before full header was received, '
+          'uri = http://127.0.0.1:18081/api/v1/message/text?guid=SECRETPW';
+      const expected =
+          'HttpException: Connection closed before full header was received, '
+          'uri = http://127.0.0.1:18081/api/v1/message/text?guid=***';
+      expect(maskUrlPassword(stored), expected);
+    });
+
+    // handleSendError path — the DioException default branch stores error.message or
+    // error.error.toString(), both of which may embed an HttpException with the request URI.
+    test('masks URI embedded via DioException error string (handleSendError path)', () {
+      const dioMsg =
+          'DioException [connection error]: The connection errored: '
+          'HttpException: Connection closed before full header was received, '
+          'uri = http://127.0.0.1:18081/api/v1/message/text?guid=SECRETPW';
+      const expected =
+          'DioException [connection error]: The connection errored: '
+          'HttpException: Connection closed before full header was received, '
+          'uri = http://127.0.0.1:18081/api/v1/message/text?guid=***';
+      expect(maskUrlPassword(dioMsg), expected);
+    });
   });
 }

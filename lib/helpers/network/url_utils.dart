@@ -8,7 +8,7 @@ String maskUrlPassword(String input) {
   if (input.isEmpty) return input;
   try {
     return input.replaceAllMapped(
-      RegExp(r'([?&])(guid|password)=([^&\s#]*)', caseSensitive: false),
+      RegExp(r'''([?&])(guid|password)=([^&\s#'",)}\]]*)''', caseSensitive: false),
       (m) => '${m[1]}${m[2]}=***',
     );
   } catch (_) {
