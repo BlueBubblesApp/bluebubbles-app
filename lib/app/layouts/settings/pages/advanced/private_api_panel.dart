@@ -283,6 +283,25 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   )),
                             ),
                           ),
+                          if (kIsDesktop) ...[
+                            const SettingsDivider(),
+                            SettingsSwitch(
+                              title: "Show Tapbacks on Hover",
+                              initialVal: SettingsSvc.settings.desktopHoverReactions.value,
+                              onChanged: (bool val) async {
+                                SettingsSvc.settings.desktopHoverReactions.value = val;
+                                await SettingsSvc.settings.saveOneAsync('desktopHoverReactions');
+                              },
+                              subtitle: "Show a tapback bar beside a message when hovering over it with the mouse",
+                              backgroundColor: tileColor,
+                              isThreeLine: true,
+                              leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.hand_thumbsup,
+                                materialIcon: Icons.add_reaction_outlined,
+                                containerColor: Colors.blue,
+                              ),
+                            ),
+                          ],
                           AnimatedSizeAndFade.showHide(
                             show: SettingsSvc.serverDetails.isMinVentura &&
                                 SettingsSvc.serverDetails.supportsEditAndUnsend,

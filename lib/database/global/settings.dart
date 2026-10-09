@@ -177,6 +177,7 @@ class Settings {
   // Quick tapback settings
   final RxBool enableQuickTapback = false.obs;
   final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
+  final RxBool desktopHoverReactions = true.obs;
 
   // Notification reaction settings
   final RxBool notificationReactionAction = true.obs;
@@ -435,6 +436,7 @@ class Settings {
       'generateFakeAvatars': generateFakeAvatars.value,
       'generateFakeMessageContent': hideMessageContent.value,
       'enableQuickTapback': enableQuickTapback.value,
+      'desktopHoverReactions': desktopHoverReactions.value,
       'quickTapbackType': quickTapbackType.value,
       'notificationReactionAction': notificationReactionAction.value,
       'notificationReactionActionType': notificationReactionActionType.value,
@@ -672,6 +674,8 @@ class Settings {
     SettingsSvc.settings.enableFcm.value = map['enableFcm'] ?? SettingsSvc.settings.enableFcm.value;
     SettingsSvc.settings.enableQuickTapback.value =
         map['enableQuickTapback'] ?? SettingsSvc.settings.enableQuickTapback.value;
+    SettingsSvc.settings.desktopHoverReactions.value =
+        map['desktopHoverReactions'] ?? SettingsSvc.settings.desktopHoverReactions.value;
     SettingsSvc.settings.quickTapbackType.value =
         map['quickTapbackType'] ?? SettingsSvc.settings.quickTapbackType.value;
     SettingsSvc.settings.notificationReactionAction.value =
@@ -873,6 +877,7 @@ class Settings {
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     s.enableFcm.value = map['enableFcm'] ?? true;
     s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
+    s.desktopHoverReactions.value = map['desktopHoverReactions'] ?? true;
     s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
     s.notificationReactionAction.value = map['notificationReactionAction'] ?? true;
     s.notificationReactionActionType.value = map['notificationReactionActionType'] ?? ReactionTypes.LIKE;
