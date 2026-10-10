@@ -19,6 +19,16 @@ namespace {
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 
+/// How long a second launch waits for an existing instance that is hung, crashing, or shutting down before
+/// starting on its own.
+constexpr ULONGLONG kExistingInstanceTimeoutMs = 15000;
+/// Interval at which a second launch re-checks an existing instance that isn't usable yet.
+constexpr DWORD kExistingInstancePollMs = 250;
+/// How long to wait for an existing instance to answer a ping before treating it as not responding.
+constexpr UINT kResponsiveTimeoutMs = 2000;
+/// Delay before confirming the existing instance is still alive after handing off to it.
+constexpr DWORD kHandOffCheckDelayMs = 1000;
+
 /// Registry key for app theme preference.
 ///
 /// A value of 0 indicates apps should use dark mode. A non-zero or missing
@@ -294,44 +304,67 @@ void Win32Window::UpdateTheme(HWND const window) {
 }
 
 bool Win32Window::SendAppLinkToInstance(const std::wstring& title) {
-  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, title.c_str());
+  // An existing instance can be hung, crashing, or still shutting down (e.g. while Windows Error Reporting
+  // collects a crash), in which case handing off to it would make this launch silently do nothing. Only hand
+  // off to an instance that is responding; otherwise wait for it to go away, and start anyway after a timeout.
+  const ULONGLONG deadline = GetTickCount64() + kExistingInstanceTimeoutMs;
+  bool sentLink = false;
 
-  if (!hMutex) {
-    // Mutex doesn't exist. This is
-    // the first instance so create
-    // the mutex.
-    hMutex = CreateMutex(0, 0, title.c_str());
-  } else {
-    // The mutex exists so this is the
-    // the second instance so return.
-
-    // Find the window of First Instance
-    HWND hwnd = FindWindow(kWindowClassName, title.c_str());
-
-    // Dispatch new link to current window
-    SendAppLink(hwnd);
-
-    // (Optional) Restore our window to front in same state
-    WINDOWPLACEMENT place = { sizeof(WINDOWPLACEMENT) };
-    GetWindowPlacement(hwnd, &place);
-
-    switch(place.showCmd) {
-      case SW_SHOWMAXIMIZED:
-        ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-        break;
-      case SW_SHOWMINIMIZED:
-        ShowWindow(hwnd, SW_RESTORE);
-        break;
-      default:
-        ShowWindow(hwnd, SW_NORMAL);
-        break;
+  while (true) {
+    // SYNCHRONIZE rather than MUTEX_ALL_ACCESS, so a normal launch can still see an instance running elevated
+    HANDLE hMutex = OpenMutex(SYNCHRONIZE, FALSE, title.c_str());
+    if (!hMutex) {
+      // Mutex doesn't exist, so this is the first instance. The handle is intentionally never closed.
+      CreateMutex(nullptr, FALSE, title.c_str());
+      return false;
     }
 
-    SetWindowPos(0, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
-    SetForegroundWindow(hwnd);
+    HWND hwnd = FindWindow(kWindowClassName, title.c_str());
+    if (hwnd && IsWindowResponsive(hwnd)) {
+      if (!sentLink) {
+        // Dispatch new link to current window
+        SendAppLink(hwnd);
+        sentLink = true;
+      }
 
-    return true;
+      // Restore the existing window to front in same state
+      WINDOWPLACEMENT place = {sizeof(WINDOWPLACEMENT)};
+      GetWindowPlacement(hwnd, &place);
+      switch (place.showCmd) {
+        case SW_SHOWMAXIMIZED:
+          ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+          break;
+        case SW_SHOWMINIMIZED:
+          ShowWindow(hwnd, SW_RESTORE);
+          break;
+        default:
+          ShowWindow(hwnd, SW_NORMAL);
+          break;
+      }
+      SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+      SetForegroundWindow(hwnd);
+
+      // Make sure the existing instance survived the hand-off before giving up on starting
+      Sleep(kHandOffCheckDelayMs);
+      if (IsWindow(hwnd) && IsWindowResponsive(hwnd)) {
+        CloseHandle(hMutex);
+        return true;
+      }
+    }
+
+    if (GetTickCount64() >= deadline) {
+      // The existing instance never became usable. Start anyway rather than leaving the user with nothing;
+      // keep the mutex handle open so later launches hand off to this instance.
+      return false;
+    }
+
+    // Release our handle so the mutex disappears once the existing instance exits
+    CloseHandle(hMutex);
+    Sleep(kExistingInstancePollMs);
   }
+}
 
-  return false;
+bool Win32Window::IsWindowResponsive(HWND hwnd) {
+  DWORD_PTR result;
+  return SendMessageTimeout(hwnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, kResponsiveTimeoutMs, &result) != 0;
 }

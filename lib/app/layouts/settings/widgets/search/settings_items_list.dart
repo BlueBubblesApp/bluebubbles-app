@@ -496,6 +496,7 @@ List<Widget> buildSettingItemList({
             "Manual Mark Read / Send Read Receipts",
             "Double Tap/Click",
             "Quick Tapback",
+            "Show Tapbacks on Hover",
             "Up Arrow for Quick Edit",
             "Send Subject Lines",
             "Private API Send",

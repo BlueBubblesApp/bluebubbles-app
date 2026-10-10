@@ -52,6 +52,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
       if (widget.enablePrivateAPIonInit && SettingsSvc.settings.serverPrivateAPI.value == true) {
         SettingsSvc.settings.enablePrivateAPI.value = true;
         SettingsSvc.settings.privateAPISend.value = true;
+        await SettingsSvc.settings.saveManyAsync(['enablePrivateAPI', 'privateAPISend']);
         HttpSvc.server.info().then((response) {
           final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
           Version version = Version.parse(serverVersionStr);
@@ -283,6 +284,25 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                   )),
                             ),
                           ),
+                          if (kIsDesktop) ...[
+                            const SettingsDivider(),
+                            SettingsSwitch(
+                              title: "Show Tapbacks on Hover",
+                              initialVal: SettingsSvc.settings.desktopHoverReactions.value,
+                              onChanged: (bool val) async {
+                                SettingsSvc.settings.desktopHoverReactions.value = val;
+                                await SettingsSvc.settings.saveOneAsync('desktopHoverReactions');
+                              },
+                              subtitle: "Show a tapback bar beside a message when hovering over it with the mouse",
+                              backgroundColor: tileColor,
+                              isThreeLine: true,
+                              leading: const SettingsLeadingIcon(
+                                iosIcon: CupertinoIcons.hand_thumbsup,
+                                materialIcon: Icons.add_reaction_outlined,
+                                containerColor: Colors.blue,
+                              ),
+                            ),
+                          ],
                           AnimatedSizeAndFade.showHide(
                             show: SettingsSvc.serverDetails.isMinVentura &&
                                 SettingsSvc.serverDetails.supportsEditAndUnsend,
