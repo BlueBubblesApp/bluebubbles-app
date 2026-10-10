@@ -2,6 +2,17 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:dio/dio.dart';
 
+/// The HTTP status code behind a failed API call, or null when the failure never reached the server.
+///
+/// `ApiInterceptor` resolves every HTTP error carrying a response into a [Response], and
+/// `returnSuccessOrError` then rejects with that [Response] rather than a [DioException], so
+/// callers that only catch [DioException] never see a 4xx/5xx. Use this instead.
+int? httpStatusCodeOf(Object? error) {
+  if (error is Response) return error.statusCode;
+  if (error is DioException) return error.response?.statusCode;
+  return null;
+}
+
 /// Classifies a send failure, sets [Message.error] and [Message.errorMessage],
 /// and returns the updated message.
 ///

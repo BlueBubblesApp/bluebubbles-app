@@ -247,7 +247,8 @@ class _RecordingButton extends StatelessWidget {
                 await audioRecorder.start(const RecordConfig(bitRate: 192000), path: temp.path);
               } catch (e, stack) {
                 controller!.showRecording.value = false;
-                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.");
+                showSnackbar("Error", "Failed to start recording. Please check microphone permissions.",
+                    type: SnackbarType.error);
                 Logger.error("Error starting desktop recording", error: e, trace: stack);
               }
               return;

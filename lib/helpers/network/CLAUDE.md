@@ -8,7 +8,7 @@ Pure helpers for network operations. No UI dependencies.
 |------|---------------|
 | `network_helpers.dart` | `sanitizeServerAddress(url)` — normalizes server URLs (detects ngrok/Cloudflare tunnels, ensures correct scheme); `isValidServerAddress(url)` — accepts LAN hostnames, localhost, IPs, and long TLDs that GetX `isURL` rejects; `getOrCreateUniqueId()` — persistent install ID; `getDeviceName()` — device name for server registration |
 | `url_utils.dart` | `maskUrlPassword(input)` — masks `guid=` and `password=` query-parameter values anywhere they appear in a string (e.g. error messages embedding a request URI); replaces each value with `***` |
-| `network_error_handler.dart` | `handleSendError(error, message)` — classifies `DioException`/HTTP errors into timeout vs. connection failure, updates `message.guid` with error prefix for UI display |
+| `network_error_handler.dart` | `handleSendError(error, message)` — classifies `DioException`/HTTP errors into timeout vs. connection failure, updates `message.guid` with error prefix for UI display; `httpStatusCodeOf(error)` — status code from a failed API call (handles both the `Response` that `ApiInterceptor` rejects with and a raw `DioException`) |
 | `metadata_helper.dart` | `MetadataHelper` — public entry point for URL preview metadata. Thin facade over `metadata/` |
 | `metadata/` | The URL preview metadata pipeline → `metadata/CLAUDE.md` |
 | `network_tasks.dart` | `onConnect()` — called when network becomes available; triggers localhost detection, incremental sync, and socket reconnection |
@@ -16,6 +16,8 @@ Pure helpers for network operations. No UI dependencies.
 ## Key Usage Notes
 
 **Server URL normalization** — always pass user-entered server addresses through `sanitizeServerAddress()` before storing or connecting. It handles missing schemes, trailing slashes, and known tunnel providers.
+
+**Checking an HTTP status on a failed call** — `HttpSvc` calls reject with a dio `Response` (not a `DioException`) when the server answered with an error status, because `ApiInterceptor` resolves those into responses. `on DioException catch` therefore never sees a 401/404/500. Use `httpStatusCodeOf(e)` in a plain `catch (e)`.
 
 **Send error classification** — in error handlers for outgoing messages, use `handleSendError()` rather than inspecting `DioException` directly. It returns an updated `Message` with the correct error code set and the GUID prefixed with `"error-"` so the UI shows the failure state.
 

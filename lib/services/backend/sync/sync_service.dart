@@ -69,7 +69,6 @@ class SyncService {
 
     _lastIncrementalSyncTimestamp = now;
     isIncrementalSyncing.value = true;
-    int errors = 0;
     bool chatSyncFailed = false;
 
     // Per-page tracking: record message IDs and chat subtitle message IDs that were
@@ -173,7 +172,6 @@ class SyncService {
           tag: 'Incremental Chat Sync');
     } catch (e, stack) {
       Logger.error('Incremental chat sync failed!', error: e, trace: stack, tag: 'Incremental Chat Sync');
-      errors += 1;
       chatSyncFailed = true;
     } finally {
       syncIsolate.removeEventListener(IsolateEvent.incrementalSyncPageComplete, onPageComplete);
@@ -189,17 +187,17 @@ class SyncService {
     }
 
     final contactSyncResult = await performContactSyncToHandles();
-    if (!contactSyncResult) {
-      errors += 1;
-    }
-
     final contactUploadResult = await performContactSyncToServer();
-    if (!contactUploadResult) {
-      errors += 1;
-    }
 
-    if (errors > 0) {
+    // The chat sync is the one that matters, so its failure is reported alone and wins over the rest.
+    // Contact failures get their own wording: a missing contacts permission returns early without
+    // throwing, so a refresh failure is a genuine local error, not something a reconnect fixes.
+    if (chatSyncFailed) {
       await showToast("Sync failed. Check your connection.", isError: true);
+    } else if (!contactSyncResult) {
+      await showToast("Messages synced, but refreshing contacts failed. Check the logs for details.", isError: true);
+    } else if (!contactUploadResult) {
+      await showToast("Messages synced, but uploading contacts to the server failed.", isError: true);
     } else if (SettingsSvc.settings.showIncrementalSync.value) {
       await showToast('Incremental sync complete');
     }
