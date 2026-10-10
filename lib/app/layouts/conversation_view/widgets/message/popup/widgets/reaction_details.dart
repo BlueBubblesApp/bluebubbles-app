@@ -91,11 +91,11 @@ class ReactionDetails extends StatelessWidget {
                           ],
                         ),
                         child: Padding(
-                          padding: SettingsSvc.settings.skin.value == Skins.iOS
+                          padding: SettingsSvc.settings.skin.value == Skins.iOS && ReactionTypes.toList().contains(message.associatedMessageType?.replaceAll("-", ""))
                               ? const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0)
                                   .add(EdgeInsets.only(right: message.associatedMessageType == "emphasize" ? 1 : 0))
                               : EdgeInsets.zero,
-                          child: SettingsSvc.settings.skin.value == Skins.iOS
+                          child: SettingsSvc.settings.skin.value == Skins.iOS && ReactionTypes.toList().contains(message.associatedMessageType?.replaceAll("-", ""))
                               ? SvgPicture.asset(
                                   'assets/reactions/${message.associatedMessageType}-black.svg',
                                   colorFilter: ColorFilter.mode(
@@ -110,7 +110,7 @@ class ReactionDetails extends StatelessWidget {
                               : Center(
                                   child: Builder(builder: (context) {
                                     final text = Text(
-                                      ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
+                                      ReactionTypes.emojiForReaction(message.associatedMessageType),
                                       style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                       textAlign: TextAlign.center,
                                     );
