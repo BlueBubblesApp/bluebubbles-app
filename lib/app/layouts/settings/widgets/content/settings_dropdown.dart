@@ -47,12 +47,17 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
   /// their current look until migrated.
   final bool useModernMenu;
 
-  String _labelFor(T value) => capitalize ? textProcessing!(value).capitalize! : textProcessing!(value);
+  /// Display label for [value]. Falls back to `toString()` when no [textProcessing] is given, so a
+  /// plain-string option list renders rather than throwing a null check during build.
+  String _labelFor(T value) {
+    final String raw = textProcessing?.call(value) ?? value.toString();
+    return capitalize ? raw.capitalize! : raw;
+  }
 
   @override
   Widget build(BuildContext context) {
     if (SettingsSvc.settings.skin.value == Skins.iOS && useCupertino) {
-      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
+      final texts = options.map((e) => Text(_labelFor(e),
           style: context.theme.textTheme.bodyLarge!
               .copyWith(color: e == initial ? context.theme.colorScheme.onPrimary : null)));
       final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
@@ -154,7 +159,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                                   value: e,
                                   child: materialCustomWidgets?.call(e) ??
                                       Text(
-                                        capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
+                                        _labelFor(e),
                                         style: context.theme.textTheme.bodyLarge,
                                       ),
                                 );
