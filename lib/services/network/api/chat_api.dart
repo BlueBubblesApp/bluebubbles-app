@@ -262,6 +262,11 @@ class ChatApi {
       final response = await _svc.dio.post(
         "${_svc.apiRoot}/chat/$guid/delete/recoverable",
         queryParameters: _svc.buildQueryParams(),
+        // The helper gives up after 30s with its own "check Recently Deleted"
+        // error; wait past that so the user sees it instead of a bare timeout.
+        options: Options(
+          receiveTimeout: _svc.dio.options.receiveTimeout! * 2,
+        ),
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
