@@ -102,6 +102,13 @@ class ListItem extends StatelessWidget {
         background: (kIsDesktop || kIsWeb) ? null : Obx(() => slideBackground(chat, false)),
         secondaryBackground: (kIsDesktop || kIsWeb) ? null : Obx(() => slideBackground(chat, true)),
         key: UniqueKey(),
+        confirmDismiss: (direction) async {
+          final action = direction == DismissDirection.endToStart ? leftAction : rightAction;
+          if (action == MaterialSwipeAction.delete) {
+            return ChatsSvc.recoverablyDeleteChat(chat);
+          }
+          return true;
+        },
         onDismissed: (direction) {
           MaterialSwipeAction action;
           if (direction == DismissDirection.endToStart) {
@@ -121,8 +128,8 @@ class ListItem extends StatelessWidget {
               chat.toggleMuteAsync(chat.muteType != "mute");
             }
           } else if (action == MaterialSwipeAction.delete) {
-            ChatsSvc.removeChat(chat);
-            ChatsSvc.softDeleteChat(chat);
+            // Deletion completed in confirmDismiss so a failed server request
+            // cancels the dismiss and leaves the local tile untouched.
           } else if (action == MaterialSwipeAction.mark_read) {
             final chatState = ChatsSvc.getChatState(chat.guid);
             if (chatState != null) {

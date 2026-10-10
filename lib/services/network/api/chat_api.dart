@@ -252,7 +252,23 @@ class ChatApi {
     });
   }
 
-  /// Delete a chat by [guid]
+  /// Move a chat to Recently Deleted on the Apple devices connected to the server.
+  ///
+  /// This intentionally uses the dedicated recoverable endpoint. The existing
+  /// DELETE /chat/:guid endpoint permanently deletes a chat and must not be used
+  /// for user-initiated whole-chat deletion.
+  Future<Response> recoverableDelete(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.apiRoot}/chat/$guid/delete/recoverable",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
+  /// Permanently delete a chat by [guid]
   Future<Response> delete(String guid, {CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {
       final response = await _svc.dio.delete(

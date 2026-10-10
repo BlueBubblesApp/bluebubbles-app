@@ -1076,7 +1076,42 @@ class ChatsService {
     return Database.chats.count();
   }
 
-  /// Delete a chat with full UI cleanup and service state management.
+  /// Requests a recoverable Apple-side deletion, then soft-deletes locally.
+  ///
+  /// The local mutation is deliberately sequenced after the dedicated server
+  /// endpoint succeeds. Any server failure leaves the chat and its transcript
+  /// untouched on this device.
+  Future<bool> recoverablyDeleteChat(Chat chat) async {
+    if (kIsWeb) return false;
+
+    try {
+      await HttpSvc.chat.recoverableDelete(chat.guid);
+
+      // A chat-deleted socket event may win the race with the HTTP response.
+      // Only apply the local mutation if the chat is still present. Check both
+      // collections because a deep-linked active chat may not be in the list.
+      if (_sortedChats.any((item) => item.guid == chat.guid) || chatStates.containsKey(chat.guid)) {
+        await softDeleteChatLocalOnly(chat);
+      }
+      return true;
+    } catch (error, trace) {
+      Logger.error(
+        'Failed to recoverably delete chat',
+        error: error,
+        trace: trace,
+        tag: 'ChatsService',
+      );
+      showSnackbar(
+        'Conversation not deleted',
+        'The deletion could not be completed. The conversation is still on this device.',
+        type: SnackbarType.error,
+        durationMs: 4000,
+      );
+      return false;
+    }
+  }
+
+  /// Permanently delete a chat from the local ObjectBox database.
   /// Set [deleteHandles] to true to also remove the chat's participant handles.
   Future<void> deleteChat(Chat chat, {bool deleteHandles = false}) async {
     if (kIsWeb) return;
@@ -1171,8 +1206,12 @@ class ChatsService {
     return hasPendingSend || hasPersistedDraft || hasActiveDraft;
   }
 
-  /// Soft delete a chat with full UI cleanup and service state management
-  Future<void> softDeleteChat(Chat chat) async {
+  /// Soft-delete a chat on this device only, with full UI cleanup.
+  ///
+  /// User-initiated deletion must call [recoverablyDeleteChat] instead so the
+  /// server succeeds before any local state is changed. This local-only method
+  /// remains available for applying deletion state received from the server.
+  Future<void> softDeleteChatLocalOnly(Chat chat) async {
     if (kIsWeb) return;
 
     // Handle active chat cleanup

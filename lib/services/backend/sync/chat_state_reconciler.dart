@@ -339,7 +339,7 @@ class ChatStateReconciler {
           Logger.warn('Deferring server chat deletion because ${chat.guid} has local work', tag: 'ChatStateReconciler');
           continue;
         }
-        await ChatsSvc.softDeleteChat(chat);
+        await ChatsSvc.softDeleteChatLocalOnly(chat);
         deleted++;
         continue;
       }
