@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/network/url_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/services/backend/filesystem/filesystem_service.dart';
@@ -82,7 +83,7 @@ abstract class SyncManager {
   }
 
   void addToOutput(String log, {LogLevel level = LogLevel.INFO}) {
-    output.add(SyncLogEntry(level, log));
+    output.add(SyncLogEntry(level, maskUrlPassword(log)));
 
     if (level == LogLevel.ERROR) {
       Logger.error(log, tag: "SyncManager");
