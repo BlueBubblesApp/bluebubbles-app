@@ -103,11 +103,11 @@ class MethodChannelHandlers {
         await IncomingMsgHandler.handle(IncomingPayload(
           type: MessageEventType.newMessage,
           source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, Object>()),
+          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
           message: Message.fromMap(payload.data),
           attachments: ((payload.data['attachments'] as List?) ?? const [])
               .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, Object>()))
+              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
               .toList(),
           tempGuid: payload.data['tempGuid'],
         ));
@@ -156,11 +156,11 @@ class MethodChannelHandlers {
         await IncomingMsgHandler.handle(IncomingPayload(
           type: MessageEventType.updatedMessage,
           source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, Object>()),
+          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
           message: Message.fromMap(payload.data),
           attachments: ((payload.data['attachments'] as List?) ?? const [])
               .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, Object>()))
+              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
               .toList(),
           tempGuid: payload.data['tempGuid'],
         ));
@@ -186,7 +186,7 @@ class MethodChannelHandlers {
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
         await MessageHandlerSvc.handleNewOrUpdatedChat(
-            Chat.fromMap(payload.data['chats'].first.cast<String, Object>()));
+            Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()));
       }
     } catch (e, s) {
       return Future.error(e, s);
