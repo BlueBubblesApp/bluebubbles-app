@@ -202,9 +202,9 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             await SettingsSvc.settings.saveManyAsync(toSave);
                                           },
                                           initialVal: SettingsSvc.settings.privateMarkChatAsRead.value,
-                                          title: "Automatic Mark Read / Send Read Receipts",
+                                          title: "Automatic Mark Read",
                                           subtitle:
-                                              "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
+                                              "Marks chats read in the iMessage app on your server",
                                           backgroundColor: tileColor,
                                           isThreeLine: true,
                                           leading: const SettingsLeadingIcon(
@@ -212,6 +212,32 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                             materialIcon: Icons.playlist_add_check,
                                             containerColor: Colors.blueAccent,
                                           )),
+                                      AnimatedSizeAndFade.showHide(
+                                        show: SettingsSvc.settings.privateMarkChatAsRead.value,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const SettingsDivider(),
+                                            SettingsSwitch(
+                                              onChanged: (bool val) async {
+                                                SettingsSvc.settings.privateSendReadReceipts.value = val;
+                                                await SettingsSvc.settings.saveOneAsync('privateSendReadReceipts');
+                                              },
+                                              initialVal: SettingsSvc.settings.privateSendReadReceipts.value,
+                                              title: "Send Read Receipts",
+                                              subtitle:
+                                                  "Also sends read receipts to other iMessage users when a chat is marked read",
+                                              backgroundColor: tileColor,
+                                              isThreeLine: true,
+                                              leading: const SettingsLeadingIcon(
+                                                iosIcon: CupertinoIcons.checkmark_rectangle,
+                                                materialIcon: Icons.check_box_outlined,
+                                                containerColor: Colors.indigo,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
                                   )
                                 : const SizedBox.shrink(),

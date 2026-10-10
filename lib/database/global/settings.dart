@@ -151,6 +151,7 @@ class Settings {
   final RxBool enablePrivateAPI = false.obs;
   final RxBool privateSendTypingIndicators = false.obs;
   final RxBool privateMarkChatAsRead = false.obs;
+  final RxBool privateSendReadReceipts = false.obs;
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
   final RxBool privateAPISend = false.obs;
@@ -425,6 +426,7 @@ class Settings {
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
+      'privateSendReadReceipts': privateSendReadReceipts.value,
       'privateManualMarkAsRead': privateManualMarkAsRead.value,
       'privateSubjectLine': privateSubjectLine.value,
       'editLastSentMessageOnUpArrow': editLastSentMessageOnUpArrow.value,
@@ -650,6 +652,8 @@ class Settings {
         map['privateSendTypingIndicators'] ?? SettingsSvc.settings.privateSendTypingIndicators.value;
     SettingsSvc.settings.privateMarkChatAsRead.value =
         map['privateMarkChatAsRead'] ?? SettingsSvc.settings.privateMarkChatAsRead.value;
+    SettingsSvc.settings.privateSendReadReceipts.value =
+        map['privateSendReadReceipts'] ?? SettingsSvc.settings.privateSendReadReceipts.value;
     SettingsSvc.settings.privateManualMarkAsRead.value =
         map['privateManualMarkAsRead'] ?? SettingsSvc.settings.privateManualMarkAsRead.value;
     SettingsSvc.settings.privateSubjectLine.value =
@@ -860,6 +864,7 @@ class Settings {
     s.cachePurgeExcludedCaches.value = map['cachePurgeExcludedCaches'] ?? "";
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
+    s.privateSendReadReceipts.value = map['privateSendReadReceipts'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
     s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     s.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
