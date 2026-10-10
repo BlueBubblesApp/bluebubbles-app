@@ -14,6 +14,19 @@ import 'package:get_it/get_it.dart';
 
 import 'method_channel_constants.dart';
 
+/// Whether the FCM copy of a chat read-state event is guaranteed to be a
+/// duplicate of the socket copy.
+///
+/// Android can leave both the background-isolate marker and socket connected
+/// flag stale after the activity backgrounds. Only the actual UI lifecycle is
+/// strong enough evidence that the foreground socket will deliver the event.
+bool shouldDropChatReadPush({
+  required bool headless,
+  required bool isForeground,
+  required bool socketConnected,
+}) =>
+    !headless && isForeground && socketConnected;
+
 abstract class MethodChannelServiceDelegate {
   bool get headless;
   bool get shouldIgnoreMessage;
@@ -38,6 +51,7 @@ class MethodChannelHandlers {
       MethodChannelInboundMethods.replyChat: _handleReplyChat,
       MethodChannelInboundMethods.markChatRead: _handleMarkChatRead,
       MethodChannelInboundMethods.chatReadStatusChanged: _handleChatReadStatusChanged,
+      MethodChannelInboundMethods.chatDeleted: _handleChatDeleted,
       MethodChannelInboundMethods.mediaColors: _handleMediaColors,
       MethodChannelInboundMethods.incomingFacetime: _handleIncomingFacetime,
       MethodChannelInboundMethods.ftCallStatusChanged: _handleFtCallStatusChanged,
@@ -332,26 +346,52 @@ class MethodChannelHandlers {
   }
 
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
-    if (!service.headless && LifecycleSvc.isAlive) return _ok();
+    if (shouldDropChatReadPush(
+      headless: service.headless,
+      isForeground: LifecycleSvc.isForeground,
+      socketConnected: SocketSvc.socket?.connected ?? false,
+    )) {
+      return _ok();
+    }
+    if (arguments == null) return _retry();
     await Database.waitForInit();
     Logger.info('Received chat status change from FCM');
 
     try {
-      final Map<String, dynamic>? data = arguments;
-      if (!isNullOrEmpty(data)) {
-        final payload = ServerPayload.fromJson(data!);
-        final Chat? chat = Chat.findOne(guid: payload.data['chatGuid']);
-        if (chat == null || (payload.data['read'] != true && payload.data['read'] != false)) {
-          return await _retry();
-        }
-
-        chat.toggleHasUnreadAsync(!payload.data['read']!, privateMark: false);
-        return await _ok();
+      final payload = ServerPayload.fromJson(arguments);
+      final data = payload.data;
+      if (data['chatGuid'] is! String || (data['read'] != true && data['read'] != false)) {
+        return await _retry();
       }
 
-      return await _retry();
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatReadStatusChanged,
+        data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
     } catch (e, s) {
-      return Future.error(e, s);
+      Error.throwWithStackTrace(e, s);
+    }
+  }
+
+  Future<bool> _handleChatDeleted(MethodCall _, Map<String, dynamic>? arguments) async {
+    if (arguments == null) return _retry();
+    await Database.waitForInit();
+    Logger.info('Received chat deletion from push notification');
+
+    try {
+      final payload = ServerPayload.fromJson(arguments);
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatDeleted,
+        payload.data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
+    } catch (e, s) {
+      Error.throwWithStackTrace(e, s);
     }
   }
 

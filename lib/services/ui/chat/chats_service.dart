@@ -45,6 +45,10 @@ class ChatsService {
   /// The map itself doesn't need to be Rx because the underlying ChatState fields are
   final Map<String, ChatState> chatStates = {};
 
+  /// Guids with a recoverable delete in flight. Tiles dim and ignore taps while
+  /// their guid is here, and a repeat request for the same chat is dropped.
+  final RxSet<String> pendingDeletes = <String>{}.obs;
+
   ChatState? _activeChat;
   ChatState? get activeChat => _activeChat;
   set activeChat(ChatState? value) {
@@ -1076,7 +1080,45 @@ class ChatsService {
     return Database.chats.count();
   }
 
-  /// Delete a chat with full UI cleanup and service state management.
+  /// Requests a recoverable Apple-side deletion, then soft-deletes locally.
+  ///
+  /// The local mutation is deliberately sequenced after the dedicated server
+  /// endpoint succeeds. Any server failure leaves the chat and its transcript
+  /// untouched on this device.
+  Future<bool> recoverablyDeleteChat(Chat chat) async {
+    if (kIsWeb) return false;
+    if (!pendingDeletes.add(chat.guid)) return false;
+
+    try {
+      await HttpSvc.chat.recoverableDelete(chat.guid);
+
+      // A chat-deleted socket event may win the race with the HTTP response.
+      // Only apply the local mutation if the chat is still present. Check both
+      // collections because a deep-linked active chat may not be in the list.
+      if (_sortedChats.any((item) => item.guid == chat.guid) || chatStates.containsKey(chat.guid)) {
+        await softDeleteChatLocalOnly(chat);
+      }
+      return true;
+    } catch (error, trace) {
+      Logger.error(
+        'Failed to recoverably delete chat',
+        error: error,
+        trace: trace,
+        tag: 'ChatsService',
+      );
+      showSnackbar(
+        'Conversation not deleted',
+        'The deletion could not be completed. The conversation is still on this device.',
+        type: SnackbarType.error,
+        durationMs: 4000,
+      );
+      return false;
+    } finally {
+      pendingDeletes.remove(chat.guid);
+    }
+  }
+
+  /// Permanently delete a chat from the local ObjectBox database.
   /// Set [deleteHandles] to true to also remove the chat's participant handles.
   Future<void> deleteChat(Chat chat, {bool deleteHandles = false}) async {
     if (kIsWeb) return;
@@ -1150,8 +1192,33 @@ class ChatsService {
     await init(force: true);
   }
 
-  /// Soft delete a chat with full UI cleanup and service state management
-  Future<void> softDeleteChat(Chat chat) async {
+  /// Whether a server-originated deletion would discard local composition work.
+  bool hasLocalWorkForChat(String chatGuid) {
+    final hasPendingSend = GetIt.I.isRegistered<OutgoingMessageHandler>() &&
+        OutgoingMsgHandler.hasOutgoingWorkForChat(chatGuid);
+    final state = getChatState(chatGuid);
+    final hasPersistedDraft =
+        (state?.textFieldText.value?.isNotEmpty ?? false) || (state?.textFieldAttachments.isNotEmpty ?? false);
+    final active = activeChat;
+    if (active?.chat.guid != chatGuid) return hasPendingSend || hasPersistedDraft;
+
+    final controller = active?.controller;
+    final hasActiveDraft = controller != null &&
+        (controller.textController.text.isNotEmpty ||
+            controller.subjectTextController.text.isNotEmpty ||
+            controller.pickedAttachments.isNotEmpty ||
+            controller.showRecording.value ||
+            controller.scheduledDate.value != null ||
+            controller.replyToMessage != null);
+    return hasPendingSend || hasPersistedDraft || hasActiveDraft;
+  }
+
+  /// Soft-delete a chat on this device only, with full UI cleanup.
+  ///
+  /// User-initiated deletion must call [recoverablyDeleteChat] instead so the
+  /// server succeeds before any local state is changed. This local-only method
+  /// remains available for applying deletion state received from the server.
+  Future<void> softDeleteChatLocalOnly(Chat chat) async {
     if (kIsWeb) return;
 
     // Handle active chat cleanup
@@ -1331,6 +1398,26 @@ class ChatsService {
     state?.updateHasUnreadInternal(value);
   }
 
+  /// Apply unread state received from the server without echoing it back to Apple.
+  ///
+  /// This deliberately bypasses [_toggleChatHasUnread], whose active-chat logic
+  /// forces `privateMark` back to true. Reconciliation must remain local-only
+  /// even when the conversation is open.
+  Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null && state.hasUnreadMessage.value == value) return;
+
+    final chatToUpdate = state?.chat ?? chat;
+    await chatToUpdate.toggleHasUnreadAsync(
+      value,
+      force: true,
+      clearLocalNotifications: !value,
+      privateMark: false,
+    );
+    updateChat(chatToUpdate);
+    state?.updateHasUnreadInternal(value);
+  }
+
   /// Set chat muted status
   Future<void> setChatMuted(Chat chat, bool isMuted) async {
     final state = getChatState(chat.guid);
@@ -1357,6 +1444,19 @@ class ChatsService {
 
     // Update state if available
     state?.updateArchivedInternal(value);
+  }
+
+  /// Apply archive state received from the server without changing the local pin.
+  Future<void> setChatArchivedFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null && state.isArchived.value == value) return;
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.isArchived = value;
+    await chatToUpdate.saveAsync(updateIsArchived: true);
+    updateChat(chatToUpdate);
+    state?.updateArchivedInternal(value);
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat auto send read receipts

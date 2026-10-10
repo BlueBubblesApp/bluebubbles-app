@@ -399,7 +399,7 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
               barrierDismissible: false,
               context: context,
               title: "Are you sure?",
-              body: "This chat will be deleted from this device only",
+              body: "This conversation will be moved to Recently Deleted on your Apple devices and removed from this device.",
               actions: [
                 BBDialogAction(
                   text: "No",
@@ -409,9 +409,9 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
                   text: "Yes",
                   isDefault: true,
                   onPressed: () {
-                    ChatsSvc.removeChat(widget.chat);
-                    ChatsSvc.softDeleteChat(widget.chat);
+                    // Close right away; the tile shows progress until the server confirms.
                     Navigator.of(context, rootNavigator: true).pop();
+                    ChatsSvc.recoverablyDeleteChat(widget.chat);
                   },
                 ),
               ],
