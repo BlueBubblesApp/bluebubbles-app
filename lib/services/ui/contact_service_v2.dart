@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -298,6 +299,7 @@ class ContactServiceV2 {
   /// Notify the UI that certain handles have been updated.
   /// Pushes fresh DB data into the HandleState registry so reactive Obx() widgets rebuild.
   void notifyHandlesUpdated(List<int> handleIds) {
+    FindMyHandleMatcher.clearContactIndex();
     if (handleIds.isEmpty) return;
 
     // Push refreshed Handle data into the HandleState registry
