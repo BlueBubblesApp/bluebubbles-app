@@ -45,6 +45,10 @@ class ChatsService {
   /// The map itself doesn't need to be Rx because the underlying ChatState fields are
   final Map<String, ChatState> chatStates = {};
 
+  /// Guids with a recoverable delete in flight. Tiles dim and ignore taps while
+  /// their guid is here, and a repeat request for the same chat is dropped.
+  final RxSet<String> pendingDeletes = <String>{}.obs;
+
   ChatState? _activeChat;
   ChatState? get activeChat => _activeChat;
   set activeChat(ChatState? value) {
@@ -1083,6 +1087,7 @@ class ChatsService {
   /// untouched on this device.
   Future<bool> recoverablyDeleteChat(Chat chat) async {
     if (kIsWeb) return false;
+    if (!pendingDeletes.add(chat.guid)) return false;
 
     try {
       await HttpSvc.chat.recoverableDelete(chat.guid);
@@ -1108,6 +1113,8 @@ class ChatsService {
         durationMs: 4000,
       );
       return false;
+    } finally {
+      pendingDeletes.remove(chat.guid);
     }
   }
 

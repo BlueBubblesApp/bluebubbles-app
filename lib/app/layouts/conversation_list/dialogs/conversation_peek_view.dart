@@ -408,9 +408,10 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
                 BBDialogAction(
                   text: "Yes",
                   isDefault: true,
-                  onPressed: () async {
-                    await ChatsSvc.recoverablyDeleteChat(widget.chat);
-                    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+                  onPressed: () {
+                    // Close right away; the tile shows progress until the server confirms.
+                    Navigator.of(context, rootNavigator: true).pop();
+                    ChatsSvc.recoverablyDeleteChat(widget.chat);
                   },
                 ),
               ],
