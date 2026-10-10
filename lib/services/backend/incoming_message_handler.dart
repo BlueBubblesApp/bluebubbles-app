@@ -11,6 +11,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
 
@@ -363,6 +364,11 @@ class IncomingMessageHandler {
     //    Here, dedup already short-circuited at step 1, so we just gate on isFromMe:
     //    outgoing echoes never need a receive sound; real incoming messages do.
     if (!(saved.isFromMe ?? false)) await _playReceiveSound();
+
+    // 7b. Copy a detected one-time passcode to the clipboard (Windows only).
+    //     Fire-and-forget -- clipboard work must never delay notification
+    //     dispatch in step 9.
+    _tryCopyOtpToClipboard(saved);
 
     // 8. Drive UI reactivity, if not in a background isolate.
     if (!isIsolate) {
@@ -872,6 +878,41 @@ class IncomingMessageHandler {
   /// Plays the configured receive sound, mirroring the original ActionHandler behaviour:
   /// * Android: only while the app process is alive, so headless wake-ups do not play audio.
   /// * Desktop: may play regardless of window focus.
+  /// Copies a one-time passcode out of [saved] and onto the clipboard.
+  ///
+  /// Windows-only and opt-in.  Windows has no background isolate -- every
+  /// incoming message arrives over the in-process WebSocket -- so this always
+  /// runs on the main isolate where [Clipboard] is available.
+  ///
+  /// Never throws: a clipboard failure must not break message delivery.
+  void _tryCopyOtpToClipboard(Message saved) {
+    try {
+      if (!kIsDesktop || !Platform.isWindows) return;
+      if (!SettingsSvc.settings.copyOtpToClipboard.value) return;
+      // Only genuinely incoming messages -- never our own echoed sends.
+      if (saved.isFromMe ?? false) return;
+      // Reactions carry the parent message's text, which would re-copy a code
+      // the user already got when the original arrived.
+      if (saved.associatedMessageGuid != null) return;
+
+      final code = extractOtpCode(saved.fullText);
+      if (code == null) return;
+
+      Logger.info('Copying detected one-time passcode to clipboard', tag: _tag);
+      unawaited(
+        Clipboard.setData(ClipboardData(text: code)).then((_) {
+          // Tell the user why their clipboard changed -- replacing it silently
+          // is hostile.
+          showSnackbar('Copied', 'Copied code $code to clipboard');
+        }).catchError((Object e, StackTrace st) {
+          Logger.error('Failed to copy passcode to clipboard', error: e, trace: st, tag: _tag);
+        }),
+      );
+    } catch (e, st) {
+      Logger.error('Failed to extract one-time passcode', error: e, trace: st, tag: _tag);
+    }
+  }
+
   Future<void> _playReceiveSound() async {
     if (SettingsSvc.settings.receiveSoundPath.value == null) return;
     if (SettingsSvc.settings.soundVolume.value == 0) return;

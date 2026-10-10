@@ -138,6 +138,11 @@ class Settings {
   final RxBool sendEventsToTasker = false.obs;
   final RxBool keepAppAlive = false.obs;
   final RxBool unarchiveOnNewMessage = false.obs;
+
+  /// Windows only. Copies a detected one-time passcode from an incoming
+  /// message straight to the clipboard. Off by default because it silently
+  /// replaces whatever the user already had copied.
+  final RxBool copyOtpToClipboard = false.obs;
   final RxBool scrollToLastUnread = false.obs;
   final RxString userName = "You".obs;
   final RxnString userAvatarPath = RxnString();
@@ -414,6 +419,7 @@ class Settings {
       'sendEventsToTasker': sendEventsToTasker.value,
       'keepAppAlive': keepAppAlive.value,
       'unarchiveOnNewMessage': unarchiveOnNewMessage.value,
+      'copyOtpToClipboard': copyOtpToClipboard.value,
       'scrollToLastUnread': scrollToLastUnread.value,
       'userName': userName.value,
       'privateAPISend': privateAPISend.value,
@@ -628,6 +634,8 @@ class Settings {
     SettingsSvc.settings.keepAppAlive.value = map['keepAppAlive'] ?? SettingsSvc.settings.keepAppAlive.value;
     SettingsSvc.settings.unarchiveOnNewMessage.value =
         map['unarchiveOnNewMessage'] ?? SettingsSvc.settings.unarchiveOnNewMessage.value;
+    SettingsSvc.settings.copyOtpToClipboard.value =
+        map['copyOtpToClipboard'] ?? SettingsSvc.settings.copyOtpToClipboard.value;
     SettingsSvc.settings.scrollToLastUnread.value =
         map['scrollToLastUnread'] ?? SettingsSvc.settings.scrollToLastUnread.value;
     SettingsSvc.settings.userName.value = map['userName'] ?? SettingsSvc.settings.userName.value;
@@ -847,6 +855,7 @@ class Settings {
     s.sendEventsToTasker.value = map['sendEventsToTasker'] ?? false;
     s.keepAppAlive.value = map['keepAppAlive'] ?? false;
     s.unarchiveOnNewMessage.value = map['unarchiveOnNewMessage'] ?? false;
+    s.copyOtpToClipboard.value = map['copyOtpToClipboard'] ?? false;
     s.scrollToLastUnread.value = map['scrollToLastUnread'] ?? false;
     s.userName.value = map['userName'] ?? "You";
     s.userAvatarPath.value = map['userAvatarPath'];
