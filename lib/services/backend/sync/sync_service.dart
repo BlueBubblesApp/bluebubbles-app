@@ -64,6 +64,10 @@ class SyncService {
         '(cooldown: ${_incrementalSyncCooldown.inSeconds}s)',
         tag: 'Incremental Chat Sync',
       );
+      // The cooldown protects the expensive message/contact sync, not the
+      // authoritative read/deletion correction. A read-state event can be lost
+      // while Android is backgrounded, and resume must still repair that drift.
+      await performChatStateReconcile();
       return;
     }
 

@@ -14,6 +14,19 @@ import 'package:get_it/get_it.dart';
 
 import 'method_channel_constants.dart';
 
+/// Whether the FCM copy of a chat read-state event is guaranteed to be a
+/// duplicate of the socket copy.
+///
+/// Android can leave both the background-isolate marker and socket connected
+/// flag stale after the activity backgrounds. Only the actual UI lifecycle is
+/// strong enough evidence that the foreground socket will deliver the event.
+bool shouldDropChatReadPush({
+  required bool headless,
+  required bool isForeground,
+  required bool socketConnected,
+}) =>
+    !headless && isForeground && socketConnected;
+
 abstract class MethodChannelServiceDelegate {
   bool get headless;
   bool get shouldIgnoreMessage;
@@ -333,9 +346,11 @@ class MethodChannelHandlers {
   }
 
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
-    if (!service.headless &&
-        LifecycleSvc.isAlive &&
-        (SocketSvc.socket?.connected ?? false)) {
+    if (shouldDropChatReadPush(
+      headless: service.headless,
+      isForeground: LifecycleSvc.isForeground,
+      socketConnected: SocketSvc.socket?.connected ?? false,
+    )) {
       return _ok();
     }
     if (arguments == null) return _retry();
