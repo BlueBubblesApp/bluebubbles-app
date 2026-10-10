@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/backend/actions/image_actions.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/database/migrations/chat_latest_message_migration.dart';
 import 'package:bluebubbles/database/migrations/message_handle_relationship_migration.dart';
@@ -16,7 +18,7 @@ import 'package:io/io.dart';
 import 'package:path/path.dart';
 
 class Database {
-  static int version = 9;
+  static int version = 10;
 
   /// Bump this whenever preset theme definitions change (colors, font sizes,
   /// etc.) to force existing installs to re-seed preset themes on next launch.
@@ -281,6 +283,23 @@ class Database {
             );
           }
           await PrefsSvc.admin.remove('monetTheming');
+          break;
+
+        // Version 10: favicons cached before convertIcoToPng passed `singleFrame: true` are APNGs that cycle
+        // through every .ico resolution, and the cache is never re-fetched, so flatten them in place.
+        case 10:
+          final query = Database.messages.query(Message_.dbMetadata.contains('previewIconMd5')).build();
+          final hashes = query
+              .property(Message_.dbMetadata)
+              .find()
+              .map((json) => (jsonDecode(json) as Map<String, dynamic>)['previewIconMd5'])
+              .whereType<String>()
+              .toSet();
+          query.close();
+          for (final hash in hashes) {
+            final path = FilesystemSvc.urlPreviewImagePath(hash);
+            if (File(path).existsSync()) ImageActions.flattenAnimatedPng(path);
+          }
           break;
       }
 
