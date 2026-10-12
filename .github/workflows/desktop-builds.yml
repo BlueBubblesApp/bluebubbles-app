@@ -1,12 +1,13 @@
 name: Desktop Builds
 
-# A v* tag with -android in it is an Android-only release, so the build jobs below skip
-# it. -desktop tags and plain ones build here. android-builds.yml has the mirror of this.
+# A v* tag with android in it (-android, +android.N) is an Android-only release, so the
+# build jobs below skip it. desktop tags and plain ones build here. android-builds.yml
+# has the mirror of this.
 # Note that a tag with both words would skip everything, so a release meant for both
 # platforms takes neither suffix.
 #
 # Checking the tag ref and not just the name, otherwise a manual run from a branch with
-# -android in it would skip too.
+# android in it would skip too.
 
 on:
   push:
@@ -35,8 +36,8 @@ env:
 
 jobs:
   windows:
-    # See the note at the top about -android tags.
-    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-android')) }}
+    # See the note at the top about android tags.
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
     permissions:
       contents: write
     runs-on: windows-latest
@@ -266,8 +267,8 @@ jobs:
           draft: true
 
   linux:
-    # See the note at the top about -android tags.
-    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-android')) }}
+    # See the note at the top about android tags.
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
     permissions:
       contents: write
     strategy:
