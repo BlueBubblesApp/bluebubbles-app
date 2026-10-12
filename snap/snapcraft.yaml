@@ -102,7 +102,6 @@ parts:
       - libmpv2
       - libproxy1v5
       - pulseaudio-utils
-      - wmctrl
     stage:
       - -usr/bin/ffplay
       - -usr/bin/ffprobe
