@@ -375,7 +375,11 @@ class GlobalIsolate {
           if (!requestInfo.completer.isCompleted) {
             requestInfo.completer.completeError('Request timeout after ${customTimeout ?? taskTimeout}');
           }
-          _maybeStopAfterDrain();
+          if (_shutdownPending) {
+            _maybeStopAfterDrain();
+          } else {
+            _scheduleIdleShutdown();
+          }
         }
       });
     }
@@ -521,22 +525,19 @@ class GlobalIsolate {
     if (idleTimeout == null) return;
 
     _idleTimer?.cancel();
-    _idleTimer = Timer(idleTimeout!, () async {
-      if (!_isRunning) return;
 
-      // Never stop while work is in flight. Re-schedule from "now" and check again.
-      if (_pendingRequests.isNotEmpty) {
-        _scheduleIdleShutdown();
-        return;
-      }
+    // Never stop while work is in flight; the response and timeout paths re-arm this once the last request
+    // settles. Re-arming from the timer itself would spin a zero-delay timer for the whole request when
+    // idleTimeout is zero, flooding the platform thread with tasks and starving Windows input (#3321).
+    if (_pendingRequests.isNotEmpty) return;
+
+    _idleTimer = Timer(idleTimeout!, () async {
+      if (!_isRunning || _pendingRequests.isNotEmpty) return;
 
       // Nor while services are still initialising — the isolate looks idle here but
       // has plugin calls in flight, and killing it aborts the process.
       await _awaitInit();
-      if (!_isRunning || _pendingRequests.isNotEmpty) {
-        _scheduleIdleShutdown();
-        return;
-      }
+      if (!_isRunning || _pendingRequests.isNotEmpty) return;
 
       Logger.info('$isolateDebugName has been idle for ${idleTimeout!.inSeconds}s. Shutting down...');
       stop();
