@@ -2,12 +2,12 @@ package com.bluebubbles.messaging.services.system
 
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.MainActivity
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
+import com.bluebubbles.messaging.utils.ContactNotificationHelper
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
 import io.flutter.plugin.common.MethodCall
@@ -32,6 +32,16 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
     }
 
     fun pushShareTarget(context: Context, name: String, guid: String, icon: ByteArray?) {
+        pushShareTarget(context, name, guid, icon, ContactNotificationHelper.ContactInfo(lookupUri = null, isFavorite = false))
+    }
+
+    internal fun pushShareTarget(
+        context: Context,
+        name: String,
+        guid: String,
+        icon: ByteArray?,
+        contactInfo: ContactNotificationHelper.ContactInfo,
+    ) {
         val adaptiveIcon = if ((icon?.size ?: 0) == 0) null else Utils.getAdaptiveIconFromByteArray(icon!!)
 
         PersistentLog.d(context, Constants.logTag, "Creating intent for shortcut with name $name")
@@ -40,10 +50,7 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
             .putExtra("chatGuid", guid)
             .putExtra("bubble", false)
             .setAction(Intent.ACTION_DEFAULT)
-        val person = Person.Builder().setName(name)
-        if (adaptiveIcon != null) {
-            person.setIcon(adaptiveIcon)
-        }
+        val person = ContactNotificationHelper.buildPerson(name, adaptiveIcon, contactInfo)
 
         PersistentLog.d(context, Constants.logTag, "Creating and pushing shortcut for $name")
         val shortcut = ShortcutInfoCompat.Builder(context, guid)
@@ -52,7 +59,7 @@ class PushShareTargetsHandler: MethodCallHandlerImpl() {
             .setCategories(contactCategories)
             .setLongLived(true)
             .setIsConversation()
-            .setPerson(person.build())
+            .setPerson(person)
         if (adaptiveIcon != null) {
             shortcut.setIcon(adaptiveIcon)
         }
