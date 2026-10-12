@@ -497,7 +497,9 @@ void close_splash_screen() {
     g_stall_poll_id = 0;
   }
   if (g_area != nullptr) {
-    gtk_widget_destroy(g_area);
+    // Deferred: closeSplash can be dispatched while FlView's draw blocks for a
+    // frame inside the overlay's draw, and destroying now frees a child mid-draw.
+    g_idle_add_once([](gpointer area) { gtk_widget_destroy(GTK_WIDGET(area)); }, g_area);
     g_area = nullptr;
   }
   if (g_icon != nullptr) {
