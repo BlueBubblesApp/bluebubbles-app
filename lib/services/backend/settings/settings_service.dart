@@ -255,6 +255,9 @@ class SettingsService {
                     const Text("Private API features give you the ability to:"),
                     const Text(" - Send & Receive typing indicators"),
                     const Text(" - Send tapbacks, effects, and mentions"),
+                    if (kIsDesktop)
+                      const Text(
+                          " - React from the bar that appears when hovering over a message (Settings → Conversations → Hover Actions)"),
                     const Text(" - Send messages with subject lines"),
                     if (_serverDetails.value.isMinBigSur) const Text(" - Send replies"),
                     if (_serverDetails.value.isMinVentura) const Text(" - Edit & Unsend messages"),

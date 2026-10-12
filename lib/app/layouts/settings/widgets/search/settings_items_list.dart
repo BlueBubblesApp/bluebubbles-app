@@ -347,6 +347,7 @@ List<Widget> buildSettingItemList({
             "Show Avatars in DM Chats",
             "Smart Suggestions",
             "Show Replies To Previous Message",
+            "Hover Actions",
             "Message Options Order",
             "Sync Group Chat Icons",
             "Store Last Read Message",

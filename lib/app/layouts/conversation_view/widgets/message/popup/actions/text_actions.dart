@@ -17,9 +17,14 @@ void copyText(MessagePopupActionContext ctx) {
 }
 
 void copySelection(MessagePopupActionContext ctx) {
+  showCopySelectionDialog(ctx.context, ctx.part.fullText);
+}
+
+/// Shows [text] in a dialog where any part of it can be selected and copied.
+void showCopySelectionDialog(BuildContext context, String text) {
   showBBDialog(
-    context: ctx.context,
+    context: context,
     title: "Copy Selection",
-    content: SelectableText(ctx.part.fullText, style: Theme.of(ctx.context).extension<BubbleText>()!.bubbleText),
+    content: SelectableText(text, style: Theme.of(context).extension<BubbleText>()!.bubbleText),
   );
 }
