@@ -1,7 +1,18 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/actions/message_actions.dart'
+    as popup_message_actions;
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/actions/navigation_actions.dart'
+    as popup_navigation_actions;
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/actions/text_actions.dart'
+    as popup_text_actions;
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/details_menu_action.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_action_context.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/widgets/hover_reaction_bar.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
@@ -43,9 +54,187 @@ class MessagePopupHolder extends StatefulWidget {
 class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpers {
   final GlobalKey globalKey = GlobalKey();
 
+  // Desktop hover tapback bar
+  final LayerLink _hoverBarLink = LayerLink();
+  final OverlayPortalController _hoverBarController = OverlayPortalController();
+  Timer? _hoverBarHideTimer;
+  bool _hoverBarBeside = true;
+  double _hoverBarGap = 6;
+
   Message get message => widget.controller.message;
 
+  @override
+  void dispose() {
+    _hoverBarHideTimer?.cancel();
+    super.dispose();
+  }
+
+  bool get _canShowHoverBar =>
+      kIsDesktop && !widget.isEditing && !MessageCloneScope.of(context) && (_canReact || _hoverActions.isNotEmpty);
+
+  bool get _isSent => !widget.controller.isSending.value && !widget.controller.hasError.value;
+
+  /// Same conditions as the popup's reaction row.
+  bool get _canReact =>
+      SettingsSvc.settings.enablePrivateAPI.value &&
+      SettingsSvc.serverDetails.isMinSierra &&
+      widget.cvController.chat.isIMessage &&
+      _isSent;
+
+  /// The picked quick actions that apply to this message part, each running the details menu's handler.
+  List<(DetailsMenuAction, VoidCallback)> get _hoverActions => [
+        for (final action in SettingsSvc.settings.hoverMenuActions)
+          if (_hoverActionHandler(action) case final handler?)
+            (action, () {
+              _hideHoverBar();
+              handler(_hoverActionContext(action));
+            }),
+      ];
+
+  void Function(MessagePopupActionContext)? _hoverActionHandler(DetailsMenuAction action) {
+    final text = widget.part.text?.isNotEmpty ?? false;
+    final papi = SettingsSvc.settings.enablePrivateAPI.value && widget.cvController.chat.isIMessage && _isSent;
+    return switch (action) {
+      DetailsMenuAction.Reply when papi && SettingsSvc.serverDetails.isMinBigSur => popup_navigation_actions.reply,
+      DetailsMenuAction.CopyText || DetailsMenuAction.CopySelection when text =>
+        action == DetailsMenuAction.CopyText ? popup_text_actions.copyText : popup_text_actions.copySelection,
+      DetailsMenuAction.Forward when !message.isInteractive => popup_navigation_actions.forward,
+      DetailsMenuAction.Edit
+          when text &&
+              message.isFromMe! &&
+              _isSent &&
+              SettingsSvc.serverDetails.supportsEditAndUnsend &&
+              (message.dateCreated?.toUtc().isWithin(DateTime.now().toUtc(), minutes: 15) ?? false) =>
+        popup_message_actions.edit,
+      DetailsMenuAction.RemindLater => popup_message_actions.remindLater,
+      DetailsMenuAction.Bookmark => popup_message_actions.toggleBookmark,
+      _ => null,
+    };
+  }
+
+  /// There's no popup to close from the hover bar, so popDetails does nothing.
+  MessagePopupActionContext _hoverActionContext(DetailsMenuAction action) => MessagePopupActionContext(
+        context: context,
+        widthContext: context,
+        cvController: widget.cvController,
+        messageState: widget.controller,
+        message: message,
+        part: widget.part,
+        chat: widget.cvController.chat,
+        service: MessagesSvc(widget.cvController.chat.guid),
+        serverDetails: MessagePopupServerDetails(
+          minSierra: SettingsSvc.serverDetails.isMinSierra,
+          minBigSur: SettingsSvc.serverDetails.isMinBigSur,
+          supportsOriginalDownload: SettingsSvc.serverDetails.serverVersionCode > 100,
+        ),
+        action: action,
+        popDetails: ({bool returnVal = true}) {},
+        showSnack: showSnackbar,
+        dmChat: null,
+        isEmbeddedMedia: false,
+      );
+
+  /// The user's current (non-removed) tapback on the hovered part, if any.
+  String? get _selfReaction {
+    final part = _effectivePartIndex;
+    final reactions = getUniqueReactionMessages(widget.controller.associatedMessages
+        .where((e) =>
+            ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
+            (e.associatedMessagePart ?? 0) == part)
+        .toList());
+    final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
+    return (self?.contains("-") ?? true) ? null : self;
+  }
+
+  void _onHoverEnter() {
+    _hoverBarHideTimer?.cancel();
+    if (_hoverBarController.isShowing) return;
+    if (widget.cvController.showingOverlays || widget.cvController.inSelectMode.value) return;
+
+    final box = globalKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    final bubble = box.localToGlobal(Offset.zero) & box.size;
+    // Bounds of the message list, so the bar never spills over the chat list or off the window
+    final listBox = Scrollable.maybeOf(context)?.context.findRenderObject() as RenderBox?;
+    final list = listBox != null && listBox.hasSize
+        ? listBox.localToGlobal(Offset.zero) & listBox.size
+        : Offset.zero & MediaQuery.sizeOf(context);
+
+    // Leave room for the existing tapback badges, which overhang the outer top corner of the bubble
+    final hasReactions = widget.controller.associatedMessages.any((e) =>
+        ReactionTypes.toList().contains(e.associatedMessageType) &&
+        (e.associatedMessagePart ?? 0) == _effectivePartIndex);
+    _hoverBarGap = hasReactions ? 26 : 6;
+    final room = message.isFromMe! ? bubble.left - list.left : list.right - bubble.right;
+    final barWidth = HoverReactionBar.widthFor(tapbacks: _canReact, actions: _hoverActions.length);
+    _hoverBarBeside = room >= barWidth + _hoverBarGap + 4;
+    _hoverBarController.show();
+  }
+
+  void _onHoverExit() {
+    _hoverBarHideTimer?.cancel();
+    // Grace period so the pointer can travel from the bubble to the bar
+    _hoverBarHideTimer = Timer(const Duration(milliseconds: 250), _hideHoverBar);
+  }
+
+  void _hideHoverBar() {
+    _hoverBarHideTimer?.cancel();
+    if (mounted && _hoverBarController.isShowing) _hoverBarController.hide();
+  }
+
+  Widget _buildHoverBar(BuildContext context) {
+    final isFromMe = message.isFromMe!;
+    final Alignment targetAnchor;
+    final Alignment followerAnchor;
+    final Offset offset;
+    if (_hoverBarBeside) {
+      // Bottom-aligned beside the bubble, on the side facing the middle of the chat
+      targetAnchor = isFromMe ? Alignment.bottomLeft : Alignment.bottomRight;
+      followerAnchor = isFromMe ? Alignment.bottomRight : Alignment.bottomLeft;
+      offset = Offset(isFromMe ? -_hoverBarGap : _hoverBarGap, 0);
+    } else {
+      // Not enough room beside a wide bubble: sit just above it, away from the tapback badges
+      targetAnchor = isFromMe ? Alignment.topRight : Alignment.topLeft;
+      followerAnchor = isFromMe ? Alignment.bottomRight : Alignment.bottomLeft;
+      offset = const Offset(0, 2);
+    }
+    return CompositedTransformFollower(
+      link: _hoverBarLink,
+      showWhenUnlinked: false,
+      targetAnchor: targetAnchor,
+      followerAnchor: followerAnchor,
+      offset: offset,
+      child: Align(
+        alignment: followerAnchor,
+        child: MouseRegion(
+          onEnter: (_) => _hoverBarHideTimer?.cancel(),
+          onExit: (_) => _onHoverExit(),
+          child: Obx(() {
+            // Reads the observable tapback list, so the user's current one stays highlighted
+            final canReact = _canReact;
+            final selfReaction = canReact ? _selfReaction : null;
+            return HoverReactionBar(
+              onReact: !canReact
+                  ? null
+                  : (reaction) {
+                      _hideHoverBar();
+                      sendTapback(selfReaction == reaction ? "-$reaction" : reaction, _effectivePartIndex);
+                    },
+              selfReaction: selfReaction,
+              actions: _hoverActions,
+              onMore: () {
+                _hideHoverBar();
+                openPopup();
+              },
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
   void openPopup() async {
+    _hideHoverBar();
     HapticFeedback.lightImpact();
     final size = globalKey.currentContext?.size;
     Offset? childPos = (globalKey.currentContext?.findRenderObject() as RenderBox?)?.localToGlobal(Offset.zero);
@@ -220,7 +409,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
   Widget build(BuildContext context) {
     return Obx(() {
       final isTempMessage = widget.controller.isSending.value;
-      return GestureDetector(
+      final detector = GestureDetector(
         key: globalKey,
         onDoubleTap: widget.isEditing
             ? null
@@ -247,6 +436,24 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                 openPopup();
               },
         child: widget.child,
+      );
+      if (!kIsDesktop) return detector;
+
+      final canShowHoverBar = _canShowHoverBar;
+      if (!canShowHoverBar && _hoverBarController.isShowing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _hideHoverBar());
+      }
+      return CompositedTransformTarget(
+        link: _hoverBarLink,
+        child: OverlayPortal(
+          controller: _hoverBarController,
+          overlayChildBuilder: _buildHoverBar,
+          child: MouseRegion(
+            onEnter: canShowHoverBar ? (_) => _onHoverEnter() : null,
+            onExit: (_) => _onHoverExit(),
+            child: detector,
+          ),
+        ),
       );
     });
   }
