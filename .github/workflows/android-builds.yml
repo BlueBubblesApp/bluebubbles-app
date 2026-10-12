@@ -33,11 +33,12 @@ env:
 
 jobs:
   build:
-    # A v* tag with -desktop in it is a Windows/Linux-only release, so skip Android.
-    # -android tags and plain ones build here. desktop-builds.yml has the mirror of this.
+    # A v* tag with desktop in it (-desktop, +desktop.N) is a Windows/Linux-only release,
+    # so skip Android.
+    # android tags and plain ones build here. desktop-builds.yml has the mirror of this.
     # Checking the tag ref and not just the name, otherwise a manual run from a branch
     # like joel/fix-desktop-notifs would skip too.
-    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-desktop')) }}
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'desktop')) }}
     # Needed by the release attach step on the apk leg.
     permissions:
       contents: write
