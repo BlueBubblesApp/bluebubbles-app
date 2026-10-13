@@ -411,10 +411,11 @@ jobs:
 
       - name: Point manifest at local sources
         run: |
-          dnf install -y python3-pyyaml
+          # The image is a Freedesktop SDK with no package manager; ruamel.yaml ships for flatpak-builder-lint.
           python3 - <<'EOF'
-          import yaml
-          m = yaml.safe_load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
+          from ruamel.yaml import YAML
+          yaml = YAML()
+          m = yaml.load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
           m['modules'] = ['flathub/' + x if isinstance(x, str) else x for x in m['modules']]
           bb = next(x for x in m['modules'] if isinstance(x, dict) and x['name'] == 'bluebubbles')
           bb['sources'] = [
@@ -423,7 +424,7 @@ jobs:
               {'type': 'file', 'path': 'flatpak/icon/128x128.png'},
               {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.desktop'},
           ]
-          yaml.safe_dump(m, open('app.bluebubbles.BlueBubbles.yml', 'w'), sort_keys=False)
+          yaml.dump(m, open('app.bluebubbles.BlueBubbles.yml', 'w'))
           EOF
 
       - name: Build flatpak
