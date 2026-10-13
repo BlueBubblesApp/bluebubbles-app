@@ -68,8 +68,6 @@ void main(List<String> args) {
       '#define MyAppVersion "$version"');
   substitute('pubspec.yaml', line('  msix_version: '), '  msix_version: $version');
   substitute('snap/snapcraft.yaml', line('version: '), 'version: $version');
-  // Both arch download URLs point at the release tag, which keys off pubspec's `version:`.
-  substitute('snap/snapcraft.yaml', RegExp(r'/releases/download/v[^/]*/'), '/releases/download/v${releaseTag()}/');
   substitute('linux/build.sh', RegExp(r"""jq '\.version = "[^"]*"'"""), """jq '.version = "$version"'""");
   // Screenshots are served from the tag, so they keep matching the release they're shown for.
   substitute(flatpakMetainfo, RegExp(r'/refs/tags/v[^/]*/'), '/refs/tags/v${releaseTag()}/');
