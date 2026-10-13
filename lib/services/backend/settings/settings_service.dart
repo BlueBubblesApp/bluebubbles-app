@@ -446,8 +446,12 @@ class SettingsService {
 
     final github = GitHub();
     final stream = github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app'));
-    final release = await stream.firstWhere(
-        (element) => !(element.isDraft ?? false) && !(element.isPrerelease ?? false) && element.tagName != null);
+    // Desktop-only tags (v2.1.3+desktop.93) have no Android build number, so Android skips past them.
+    final release = await stream.firstWhere((element) =>
+        !(element.isDraft ?? false) &&
+        !(element.isPrerelease ?? false) &&
+        element.tagName != null &&
+        !(Platform.isAndroid && element.tagName!.split('+').last.contains('desktop')));
     final version = release.tagName!.split("+").first.replaceAll("v", "");
     final code = release.tagName!.split("+").last.split('-').first;
     final isDesktopRelease = release.tagName!.split('+').last.contains('desktop');
@@ -456,9 +460,7 @@ class SettingsService {
     if (Platform.isAndroid) {
       buildNumber =
           FilesystemSvc.packageInfo.buildNumber.lastChars(min(4, FilesystemSvc.packageInfo.buildNumber.length));
-      if (int.parse(code) <= int.parse(buildNumber) ||
-          PrefsSvc.server.getClientUpdateCheckCode() == code ||
-          (Platform.isAndroid && isDesktopRelease)) {
+      if (int.parse(code) <= int.parse(buildNumber) || PrefsSvc.server.getClientUpdateCheckCode() == code) {
         available = false;
       }
     } else {
