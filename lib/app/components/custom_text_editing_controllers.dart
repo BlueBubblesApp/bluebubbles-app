@@ -9,6 +9,7 @@ import "package:bluebubbles/utils/emoticons.dart";
 import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter/scheduler.dart";
 import "package:flutter/services.dart";
 import "package:bluebubbles/utils/logger/logger.dart";
 import "package:get/get.dart";
@@ -718,11 +719,33 @@ class _TypingLagProbe {
   static int? _minOffsetUs;
   static int _lastLogMs = -1000;
   static int _suppressed = 0;
+  // (end time ms, build ms, raster ms) of recent frames. Text arriving late while Dart is idle points at the platform
+  // thread, which on Linux also presents every frame, so a steady stream of slow frames would explain it.
+  static final Queue<(int, int, int)> _frames = Queue();
 
   static void install() {
     if (_installed || !kIsDesktop) return;
     _installed = true;
     HardwareKeyboard.instance.addHandler(_onKey);
+    SchedulerBinding.instance.addTimingsCallback(_onTimings);
+  }
+
+  static void _onTimings(List<FrameTiming> timings) {
+    final nowMs = _clock.elapsedMilliseconds;
+    for (final t in timings) {
+      _frames.add((nowMs, t.buildDuration.inMilliseconds, t.rasterDuration.inMilliseconds));
+    }
+    while (_frames.isNotEmpty && nowMs - _frames.first.$1 > 2000) {
+      _frames.removeFirst();
+    }
+  }
+
+  static String _frameStats() {
+    final nowMs = _clock.elapsedMilliseconds;
+    final recent = _frames.where((f) => nowMs - f.$1 <= 2000);
+    if (recent.isEmpty) return 'no frames in last 2s';
+    return '${recent.length} frames in last 2s, worst build ${recent.map((f) => f.$2).max}ms, '
+        'worst raster ${recent.map((f) => f.$3).max}ms';
   }
 
   static bool _onKey(KeyEvent event) {
@@ -771,6 +794,6 @@ class _TypingLagProbe {
     final extra = _suppressed > 0 ? ' [+$_suppressed suppressed]' : '';
     _suppressed = 0;
     _lastLogMs = nowMs;
-    Logger.warn('$message$extra', tag: 'TypingLag');
+    Logger.warn('$message$extra; ${_frameStats()}', tag: 'TypingLag');
   }
 }
