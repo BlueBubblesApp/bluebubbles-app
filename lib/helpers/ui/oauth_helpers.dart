@@ -301,7 +301,7 @@ Future<void> requestPassword(
     BuildContext context, String serverUrl, Future<void> Function(String url, String password) connect) async {
   final TextEditingController passController = TextEditingController();
   final RxBool enabled = false.obs;
-  await showDialog(
+  final submitted = await showDialog<bool>(
     barrierDismissible: false,
     context: context,
     builder: (_) {
@@ -331,7 +331,7 @@ Future<void> requestPassword(
                     if (passController.text.isEmpty) {
                       return;
                     }
-                    Navigator.of(context, rootNavigator: true).pop();
+                    Navigator.of(context, rootNavigator: true).pop(true);
                   },
                 ),
               ),
@@ -355,7 +355,7 @@ Future<void> requestPassword(
               if (passController.text.isEmpty) {
                 return;
               }
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context, rootNavigator: true).pop(true);
             },
           ),
           title: Text("Enter Server Password", style: context.theme.textTheme.titleLarge),
@@ -365,5 +365,7 @@ Future<void> requestPassword(
     },
   );
 
+  // Cancel closes the dialog without a result; don't try to connect with an empty password
+  if (submitted != true) return;
   await connect(serverUrl, passController.text);
 }
