@@ -277,16 +277,21 @@ class DesktopWindowListener extends WindowListener {
     LifecycleSvc.close();
   }
 
+  // A drag fires these dozens of times a second; only the final geometry needs saving.
   @override
-  void onWindowResized() async {
-    Size size = await windowManager.getSize();
-    await PrefsSvc.desktop.setWindowDimensions(width: size.width, height: size.height);
+  void onWindowResized() {
+    EasyDebounce.debounce('save-window-size', const Duration(milliseconds: 500), () async {
+      Size size = await windowManager.getSize();
+      await PrefsSvc.desktop.setWindowDimensions(width: size.width, height: size.height);
+    });
   }
 
   @override
-  void onWindowMoved() async {
-    Offset offset = await windowManager.getPosition();
-    await PrefsSvc.desktop.setWindowOffsets(x: offset.dx, y: offset.dy);
+  void onWindowMoved() {
+    EasyDebounce.debounce('save-window-position', const Duration(milliseconds: 500), () async {
+      Offset offset = await windowManager.getPosition();
+      await PrefsSvc.desktop.setWindowOffsets(x: offset.dx, y: offset.dy);
+    });
   }
 
   @override
