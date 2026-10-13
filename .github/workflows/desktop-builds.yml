@@ -413,13 +413,18 @@ jobs:
         run: |
           # The image is a Freedesktop SDK with no package manager; ruamel.yaml ships for flatpak-builder-lint.
           python3 - <<'EOF'
+          import hashlib
           from ruamel.yaml import YAML
           yaml = YAML()
+          tarball = 'bluebubbles-linux-${{ matrix.arch }}.tar.gz'
+          # flatpak-builder keys a local archive's cache on the manifest fields, not the file, so without
+          # sha256 every run reuses the first cached build of the app.
+          sha256 = hashlib.sha256(open(tarball, 'rb').read()).hexdigest()
           m = yaml.load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
           m['modules'] = ['flathub/' + x if isinstance(x, str) else x for x in m['modules']]
           bb = next(x for x in m['modules'] if isinstance(x, dict) and x['name'] == 'bluebubbles')
           bb['sources'] = [
-              {'type': 'archive', 'path': 'bluebubbles-linux-${{ matrix.arch }}.tar.gz', 'dest': 'bluebubbles'},
+              {'type': 'archive', 'path': tarball, 'sha256': sha256, 'dest': 'bluebubbles'},
               {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.metainfo.xml'},
               {'type': 'file', 'path': 'flatpak/icon/128x128.png'},
               {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.desktop'},
