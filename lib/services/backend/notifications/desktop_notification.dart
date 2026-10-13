@@ -290,7 +290,6 @@ class DesktopNotifications {
   /// buttons, SMS sound, optional attribution line, replaceable in place.
   static Future<int?> showMessage({
     String? group,
-    int? replaceId,
     bool suppressPopup = false,
     String? avatarPath,
     required String title,
@@ -308,7 +307,6 @@ class DesktopNotifications {
     final Uri? avatarUri = _windowsFileUri(avatarPath);
     return _post(
       group: group,
-      replaceId: replaceId,
       suppressPopup: suppressPopup,
       title: title,
       body: body,
@@ -491,7 +489,6 @@ class DesktopNotifications {
 
   static Future<int?> _post({
     String? group,
-    int? replaceId,
     bool suppressPopup = false,
     required String title,
     required String body,
@@ -506,9 +503,7 @@ class DesktopNotifications {
       Logger.warn('Notification shown before plugin registration', tag: 'DesktopNotifications');
       return null;
     }
-    // New toasts get a fresh id. [replaceId] reuses one instead: Windows swaps the
-    // toast in place, keeping a single Action Center entry.
-    final int id = replaceId ?? (group == null ? _nextId++ : _nextGroupId(group));
+    final int id = group == null ? _nextId++ : _nextGroupId(group);
     if (callbacks != null) _callbacks[id] = callbacks;
     final String notificationPayload = payload ?? '$_prefix:$id';
 
