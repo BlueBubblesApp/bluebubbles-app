@@ -756,8 +756,7 @@ class Settings {
         map['lastReviewRequestTimestamp'] ?? SettingsSvc.settings.lastReviewRequestTimestamp.value;
 
     if (!isIsolate) {
-      SettingsSvc.settings.save();
-      unawaited(PrefsInterface.syncAllSettings());
+      unawaited(SettingsSvc.settings.saveAsync());
       EventDispatcherSvc.emit("theme-update", null);
     }
   }
