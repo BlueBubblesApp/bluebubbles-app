@@ -1,3 +1,4 @@
+import "dart:collection";
 import "dart:math";
 
 import "package:bluebubbles/helpers/helpers.dart";
@@ -8,6 +9,8 @@ import "package:bluebubbles/utils/emoticons.dart";
 import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+import "package:bluebubbles/utils/logger/logger.dart";
 import "package:get/get.dart";
 import "package:languagetool_textfield/src/core/enums/mistake_type.dart";
 import 'package:languagetool_textfield/languagetool_textfield.dart';
@@ -50,8 +53,11 @@ class SpellCheckTextEditingController extends TextEditingController {
     _languageCheckService = DebounceLangToolService(
         LangToolService(LanguageToolClient(language: SettingsSvc.settings.spellcheckLanguage.value)),
         const Duration(milliseconds: 1000));
+    _TypingLagProbe.install();
     _processMistakes(text);
   }
+
+  int _spellcheckInFlight = 0;
 
   /// focusNode
   /// Required for spellcheck replacement to work
@@ -134,6 +140,8 @@ class SpellCheckTextEditingController extends TextEditingController {
     if (kIsDesktop || kIsWeb) {
       // Only process text change if text actually changed
       if (newValue.text != text) {
+        _TypingLagProbe.onTextChanged(newValue.text.length - text.length,
+            textLength: newValue.text.length, spellcheckInFlight: _spellcheckInFlight, mistakes: _mistakes.length);
         _handleTextChange(newValue.text);
       }
     }
@@ -205,9 +213,10 @@ class SpellCheckTextEditingController extends TextEditingController {
     final filteredMistakes = _filterMistakesOnChanged(newText);
     _mistakes = filteredMistakes.toList();
 
-    final mistakesWrapper = await _latestResponseService.processLatestOperation(
-      () => _languageCheckService.findMistakes(newText),
-    );
+    _spellcheckInFlight++;
+    final mistakesWrapper = await _latestResponseService
+        .processLatestOperation(() => _languageCheckService.findMistakes(newText))
+        .whenComplete(() => _spellcheckInFlight--);
     if (mistakesWrapper == null || !mistakesWrapper.hasResult) return;
 
     final mistakes = mistakesWrapper.result();
@@ -695,5 +704,73 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         );
       }).toList(),
     );
+  }
+}
+
+/// Desktop diagnostic for intermittent typing lag: warns when a typed key reaches the framework late, or when its
+/// character lands in a composer late. Key timestamps come from the embedder, so delivery lag is measured against the
+/// smallest platform-to-framework offset seen.
+class _TypingLagProbe {
+  static const int _thresholdMs = 150;
+  static bool _installed = false;
+  static final Stopwatch _clock = Stopwatch()..start();
+  static final Queue<int> _pendingKeys = Queue();
+  static int? _minOffsetUs;
+  static int _lastLogMs = -1000;
+  static int _suppressed = 0;
+
+  static void install() {
+    if (_installed || !kIsDesktop) return;
+    _installed = true;
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  static bool _onKey(KeyEvent event) {
+    if (event is KeyUpEvent || (event.character?.isEmpty ?? true)) return false;
+    final now = _clock.elapsedMicroseconds;
+    // Keys typed into other fields never land here; don't let them read as lag forever.
+    while (_pendingKeys.isNotEmpty && now - _pendingKeys.first > 10000000) {
+      _pendingKeys.removeFirst();
+    }
+    _pendingKeys.add(now);
+
+    if (event.timeStamp != Duration.zero) {
+      final offset = now - event.timeStamp.inMicroseconds;
+      if (_minOffsetUs == null || offset < _minOffsetUs!) _minOffsetUs = offset;
+      final lateMs = (offset - _minOffsetUs!) ~/ 1000;
+      if (lateMs >= _thresholdMs && lateMs < 60000) {
+        _log('Key reached framework ${lateMs}ms after the platform saw it (${_pendingKeys.length} keys pending)');
+      }
+    }
+    return false;
+  }
+
+  static void onTextChanged(int addedChars,
+      {required int textLength, required int spellcheckInFlight, required int mistakes}) {
+    if (addedChars <= 0) {
+      _pendingKeys.clear();
+      return;
+    }
+    if (_pendingKeys.isEmpty) return;
+    final waitMs = (_clock.elapsedMicroseconds - _pendingKeys.first) ~/ 1000;
+    for (var i = 0; i < addedChars && _pendingKeys.isNotEmpty; i++) {
+      _pendingKeys.removeFirst();
+    }
+    if (waitMs >= _thresholdMs) {
+      _log('Typed text landed ${waitMs}ms after its key (+$addedChars chars, ${_pendingKeys.length} keys still '
+          'pending, length $textLength, spellcheck in flight $spellcheckInFlight, mistakes $mistakes)');
+    }
+  }
+
+  static void _log(String message) {
+    final nowMs = _clock.elapsedMilliseconds;
+    if (nowMs - _lastLogMs < 1000) {
+      _suppressed++;
+      return;
+    }
+    final extra = _suppressed > 0 ? ' [+$_suppressed suppressed]' : '';
+    _suppressed = 0;
+    _lastLogMs = nowMs;
+    Logger.warn('$message$extra', tag: 'TypingLag');
   }
 }
