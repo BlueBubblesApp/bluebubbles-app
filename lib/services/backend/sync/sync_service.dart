@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/ui/async_task.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
+import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -118,7 +119,9 @@ class SyncService {
       }
     }
 
-    final syncIsolate = GetIt.I<IncrementalSyncIsolate>();
+    // Events arrive on the instance that runs the sync, so listen there.
+    final GlobalIsolate syncIsolate =
+        useGlobalIsolate ? GetIt.I<GlobalIsolate>() : GetIt.I<IncrementalSyncIsolate>();
     syncIsolate.addEventListener(IsolateEvent.incrementalSyncPageComplete, onPageComplete);
 
     try {
