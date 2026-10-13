@@ -6,6 +6,7 @@
 #include <flutter/method_channel.h>
 
 #include <memory>
+#include <string>
 
 #include "win32_window.h"
 
@@ -15,6 +16,9 @@ class FlutterWindow : public Win32Window {
   // Creates a new FlutterWindow hosting a Flutter view running |project|.
   explicit FlutterWindow(const flutter::DartProject& project);
   virtual ~FlutterWindow();
+
+  // Sends a line to the Dart logger (tag NativeInput). Must be called on the platform thread.
+  void ReportDiagnostic(const std::string& message);
 
  protected:
   // Win32Window:
@@ -32,6 +36,9 @@ class FlutterWindow : public Win32Window {
 
   // Channel used to dismiss the native splash screen.
   std::unique_ptr<flutter::MethodChannel<>> splash_channel_;
+
+  // Channel used to forward native diagnostics to the Dart logger.
+  std::unique_ptr<flutter::MethodChannel<>> diagnostics_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

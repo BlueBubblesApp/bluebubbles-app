@@ -62,6 +62,10 @@ bool FlutterWindow::OnCreate() {
         }
       });
 
+  diagnostics_channel_ = std::make_unique<flutter::MethodChannel<>>(
+      flutter_controller_->engine()->messenger(), "bluebubbles/diagnostics",
+      &flutter::StandardMethodCodec::GetInstance());
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -74,7 +78,14 @@ bool FlutterWindow::OnCreate() {
   return true;
 }
 
+void FlutterWindow::ReportDiagnostic(const std::string& message) {
+  if (diagnostics_channel_) {
+    diagnostics_channel_->InvokeMethod("log", std::make_unique<flutter::EncodableValue>(message));
+  }
+}
+
 void FlutterWindow::OnDestroy() {
+  diagnostics_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

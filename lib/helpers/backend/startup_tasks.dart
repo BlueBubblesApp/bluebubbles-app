@@ -130,6 +130,13 @@ class StartupTasks {
     });
     await GetIt.I.isReady<BaseLogger>();
     Logger.info("BaseLogger ready - switching to Logger for remaining logs");
+
+    // Typing-lag diagnostics from the Windows runner's message loop (windows/runner/main.cpp).
+    if (!kIsWeb && Platform.isWindows && !isIsolate) {
+      const MethodChannel('bluebubbles/diagnostics').setMethodCallHandler((call) async {
+        if (call.method == 'log') Logger.warn(call.arguments as String, tag: 'NativeInput');
+      });
+    }
   }
 
   static Future<void> _initContactHandleChats({required bool headless}) async {
