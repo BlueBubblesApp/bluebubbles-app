@@ -538,7 +538,7 @@ packages:
     source: hosted
     version: "3.1.7"
   dbus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: dbus
       sha256: d0c98dcd4f5169878b6cf8f6e0a52403a9dff371a3e2f019697accbf6f44a270
