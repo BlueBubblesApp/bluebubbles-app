@@ -728,6 +728,27 @@ class _TypingLagProbe {
     _installed = true;
     HardwareKeyboard.instance.addHandler(_onKey);
     SchedulerBinding.instance.addTimingsCallback(_onTimings);
+    FocusManager.instance.addListener(_onFocusChanged);
+  }
+
+  static FocusNode? _lastPrimary;
+
+  // Keys go nowhere when primary focus is off the composer (e.g. fell back to a scope, or the field's node detached
+  // from the tree), which the probe would otherwise misread as late text.
+  static void _onFocusChanged() {
+    final primary = FocusManager.instance.primaryFocus;
+    if (identical(primary, _lastPrimary)) return;
+    _lastPrimary = primary;
+    Logger.debug('Primary focus now ${_describeFocus(primary)}', tag: 'TypingLag');
+  }
+
+  static String _describeFocus(FocusNode? node) {
+    if (node == null) return 'none';
+    final kind = node is FocusScopeNode ? 'scope' : 'node';
+    final context = node.context;
+    final widget = context == null ? 'unmounted' : context.widget.runtimeType.toString();
+    final attached = node.parent == null && node != FocusManager.instance.rootScope ? ', detached' : '';
+    return '$kind ${node.debugLabel ?? ''} #${identityHashCode(node)} ($widget$attached)';
   }
 
   static void _onTimings(List<FrameTiming> timings) {
@@ -794,6 +815,7 @@ class _TypingLagProbe {
     final extra = _suppressed > 0 ? ' [+$_suppressed suppressed]' : '';
     _suppressed = 0;
     _lastLogMs = nowMs;
-    Logger.warn('$message$extra; ${_frameStats()}', tag: 'TypingLag');
+    Logger.warn('$message$extra; ${_frameStats()}; primary focus ${_describeFocus(FocusManager.instance.primaryFocus)}',
+        tag: 'TypingLag');
   }
 }

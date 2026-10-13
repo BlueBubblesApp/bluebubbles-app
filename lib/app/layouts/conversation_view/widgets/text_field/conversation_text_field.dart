@@ -84,7 +84,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     }
 
     // Pairs with the dispose log: two live composers for one chat would point at a stale text input connection.
-    Logger.debug('Composer attached for $chatGuid (controller #${identityHashCode(controller.textController)})',
+    Logger.debug(
+        'Composer attached for $chatGuid (controller #${identityHashCode(controller.textController)}, '
+        'node #${identityHashCode(controller.focusNode)})',
         tag: 'TypingLag');
     controller.focusNode.addListener(_onFocusChange);
     controller.subjectFocusNode.addListener(_onSubjectFocusChange);
@@ -166,7 +168,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
     Logger.debug(
         'Composer ${subject ? 'subject' : 'text'} focus ${_focusNode.hasFocus ? 'gained' : 'lost'} '
-        '(primary: ${_focusNode.hasPrimaryFocus}, controller #${identityHashCode(controller.textController)})',
+        '(primary: ${_focusNode.hasPrimaryFocus}, controller #${identityHashCode(controller.textController)}, '
+        'node #${identityHashCode(_focusNode)}${_focusNode.parent == null ? ', detached' : ''})',
         tag: 'TypingLag');
     // OPTIMIZATION: Only update if state actually needs to change
     if (_focusNode.hasFocus && controller.showAttachmentPicker.value) {

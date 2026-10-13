@@ -211,11 +211,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
-    scrollController.dispose();
-    focusNode.dispose();
-    subjectFocusNode.dispose();
-    textController.dispose();
-    subjectTextController.dispose();
+    // Chat switches close this before the old route unmounts, and disposing a FocusNode that a mounted field still
+    // holds corrupts the focus tree, leaving the next composer unable to take input. Wait for the unmount.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      scrollController.dispose();
+      focusNode.dispose();
+      subjectFocusNode.dispose();
+      textController.dispose();
+      subjectTextController.dispose();
+    });
     super.onClose();
   }
 
