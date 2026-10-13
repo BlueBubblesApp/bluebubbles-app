@@ -117,9 +117,9 @@ class OtherFile extends StatelessWidget {
         } else if (kIsDesktop) {
           File _file = File(
               join(FilesystemSvc.sysTempPath, "BlueBubbles", "attachments", attachment.guid, basename(file.path!)));
-          if (!_file.existsSync()) {
-            _file.createSync(recursive: true);
-            File(file.path!).copySync(_file.path);
+          if (!await _file.exists()) {
+            await _file.create(recursive: true);
+            await File(file.path!).copy(_file.path);
           }
           launchUrl(Uri.file(_file.path));
         } else {

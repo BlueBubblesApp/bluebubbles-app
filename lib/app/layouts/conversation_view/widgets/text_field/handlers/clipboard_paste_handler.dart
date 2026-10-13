@@ -51,8 +51,8 @@ class ClipboardPasteHandler {
           controller.pickedAttachments.add(PlatformFile(
             name: name,
             path: path,
-            bytes: file.readAsBytesSync(),
-            size: file.lengthSync(),
+            bytes: await file.readAsBytes(),
+            size: await file.length(),
           ));
         }
         return true;
