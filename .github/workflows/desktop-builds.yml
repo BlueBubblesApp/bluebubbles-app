@@ -23,6 +23,10 @@ on:
         description: "Sign with the release cert instead of the test cert (implies sign). Artifacts are still not attached to any release."
         type: boolean
         default: false
+      publish_snap:
+        description: "Publish the snap to the edge channel (tags always do)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -328,6 +332,48 @@ jobs:
         with:
           files: bluebubbles-linux-${{ matrix.arch }}.tar.gz
           draft: true
+
+  # Builds the snap from the tarball the linux job just made (snapcraft.yaml sources it from the
+  # repo root) and, on tags or with publish_snap, pushes it to the edge channel. Promote to stable from the store.
+  snap:
+    needs: linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bluebubbles-linux-${{ matrix.arch }}
+
+      - name: Build snap
+        id: build
+        uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-snap-${{ matrix.arch }}
+          path: ${{ steps.build.outputs.snap }}
+
+      - name: Publish to edge
+        if: (startsWith(github.ref, 'refs/tags/') || inputs.publish_snap) && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        uses: snapcore/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          release: edge
 
   # Scans the released downloads with VirusTotal and writes the analysis links to the
   # job summary. Prefers the released installer/msix when present; falls back to the
