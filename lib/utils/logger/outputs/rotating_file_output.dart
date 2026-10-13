@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui' show IsolateNameServer;
 
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
@@ -8,8 +11,10 @@ import 'package:path/path.dart';
 /// exceeds [maxFileSizeKB].
 ///
 /// Every isolate that logs — main, GlobalIsolate, IncrementalSyncIsolate, the
-/// Android DartWorker — builds its own instance against the same file, so this
-/// has to tolerate concurrent writers in one process:
+/// Android DartWorker — builds its own instance against the same file. On desktop
+/// they all forward to one `LogWriter` isolate so the UI isolate does no file I/O;
+/// direct writes remain for Android and for the moments before the writer is up,
+/// so this still has to tolerate concurrent writers in one process:
 ///
 ///  * An event is written with a single [RandomAccessFile.writeFromSync]; writing
 ///    line by line let another isolate's line land inside a multi-line event
@@ -47,11 +52,75 @@ class RotatingFileOutput extends LogOutput {
     required this.fileNameFormatter,
   });
 
+  static const String _writerPortName = 'bb_log_writer';
+
+  SendPort? _writer;
+
   int get _maxBytes => maxFileSizeKB * 1024;
 
   @override
   Future<void> init() async {
+    // Write directly until the writer is up; the logger doesn't await init().
     _openFile();
+    if (!Platform.isWindows && !Platform.isLinux) return;
+    final writer = await _ensureWriter();
+    if (writer == null) return;
+    _writer = writer;
+    try {
+      _raf?.closeSync();
+    } catch (_) {}
+    _raf = null;
+  }
+
+  Future<SendPort?> _ensureWriter() async {
+    final existing = IsolateNameServer.lookupPortByName(_writerPortName);
+    if (existing != null) return existing;
+    final ready = ReceivePort();
+    try {
+      await Isolate.spawn(
+        _writerMain,
+        (ready.sendPort, dirPath, latestFileName, maxFileSizeKB, maxRotatedFilesCount, fileNameFormatter),
+        debugName: 'LogWriter',
+      );
+      await ready.first.timeout(const Duration(seconds: 5));
+    } catch (_) {
+    } finally {
+      ready.close();
+    }
+    return IsolateNameServer.lookupPortByName(_writerPortName);
+  }
+
+  /// The single file writer for every isolate on desktop. Not used on Android: a writer
+  /// spawned by the UI engine dies with it while the DartWorker keeps logging.
+  static void _writerMain((SendPort, String, String, int, int, String Function(DateTime)) args) {
+    final (ready, dirPath, latestFileName, maxFileSizeKB, maxRotatedFilesCount, fileNameFormatter) = args;
+    final port = ReceivePort();
+    // Lost a spawn race with another isolate; that writer serves everyone.
+    if (!IsolateNameServer.registerPortWithName(port.sendPort, _writerPortName)) {
+      port.close();
+      ready.send(null);
+      return;
+    }
+    final out = RotatingFileOutput(
+      dirPath: dirPath,
+      latestFileName: latestFileName,
+      maxFileSizeKB: maxFileSizeKB,
+      maxRotatedFilesCount: maxRotatedFilesCount,
+      fileNameFormatter: fileNameFormatter,
+    ).._openFile();
+    // Everything that arrives before the next event-loop turn goes out in one write.
+    final pending = StringBuffer();
+    port.listen((message) {
+      if (pending.isEmpty) {
+        Timer.run(() {
+          final chunk = pending.toString();
+          pending.clear();
+          out._write(chunk);
+        });
+      }
+      pending.write(message as String);
+    });
+    ready.send(null);
   }
 
   void _openFile() {
@@ -68,12 +137,23 @@ class RotatingFileOutput extends LogOutput {
 
   @override
   void output(OutputEvent event) {
+    if (event.lines.isEmpty) return;
+    // One write per event — never one per line. See the class doc.
+    final text = '${event.lines.join('\n')}\n';
+    final writer = _writer;
+    if (writer != null) {
+      writer.send(text);
+    } else {
+      _write(text);
+    }
+  }
+
+  void _write(String text) {
     final raf = _raf;
-    if (raf == null || event.lines.isEmpty) return;
+    if (raf == null) return;
     try {
-      // One write per event — never one per line. See the class doc.
       raf.setPositionSync(raf.lengthSync());
-      raf.writeFromSync(encoding.encode('${event.lines.join('\n')}\n'));
+      raf.writeFromSync(encoding.encode(text));
       if (raf.lengthSync() >= _maxBytes) _rotate(raf);
     } catch (_) {}
   }
