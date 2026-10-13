@@ -83,6 +83,9 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       });
     }
 
+    // Pairs with the dispose log: two live composers for one chat would point at a stale text input connection.
+    Logger.debug('Composer attached for $chatGuid (controller #${identityHashCode(controller.textController)})',
+        tag: 'TypingLag');
     controller.focusNode.addListener(_onFocusChange);
     controller.subjectFocusNode.addListener(_onSubjectFocusChange);
 
@@ -161,6 +164,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   void focusListener(bool subject) async {
     final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
+    Logger.debug(
+        'Composer ${subject ? 'subject' : 'text'} focus ${_focusNode.hasFocus ? 'gained' : 'lost'} '
+        '(primary: ${_focusNode.hasPrimaryFocus}, controller #${identityHashCode(controller.textController)})',
+        tag: 'TypingLag');
     // OPTIMIZATION: Only update if state actually needs to change
     if (_focusNode.hasFocus && controller.showAttachmentPicker.value) {
       controller.showAttachmentPicker.value = false;
@@ -321,6 +328,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
+    Logger.debug('Composer disposed for $chatGuid (controller #${identityHashCode(controller.textController)})',
+        tag: 'TypingLag');
     final draftText = controller.textController.text.trim().isNotEmpty ? controller.textController.text : '';
     final draftAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     // Update ChatState synchronously and fire DB save in the background.
