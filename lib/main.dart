@@ -577,7 +577,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
           }
 
           unawaited(updateBadge(ChatsSvc.unreadCount.value));
-          ChatsSvc.unreadCount.listen(updateBadge);
+          // Each update is a shell COM call on the platform thread; syncs and mark-all-read change the count in bursts.
+          debounce<int>(ChatsSvc.unreadCount, updateBadge, time: const Duration(milliseconds: 250));
 
           /* ----- WINDOW EFFECT INITIALIZATION ----- */
           EventDispatcherSvc.stream.listen((event) async {
