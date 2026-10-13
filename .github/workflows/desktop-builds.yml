@@ -376,6 +376,66 @@ jobs:
           snap: ${{ steps.build.outputs.snap }}
           release: ${{ !startsWith(github.ref, 'refs/tags/') && 'edge' || contains(github.ref_name, '-b.') && 'beta,edge' || 'stable,beta,edge' }}
 
+  # Test-only .flatpak bundle: the live Flathub manifest with the bluebubbles sources swapped for
+  # this run's tarball and this checkout's flatpak/ files. Flathub itself still builds releases.
+  flatpak:
+    needs: linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Checkout Flathub manifest
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: flathub/app.bluebubbles.BlueBubbles
+          path: flathub
+          submodules: true
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bluebubbles-linux-${{ matrix.arch }}
+
+      - name: Point manifest at local sources
+        run: |
+          dnf install -y python3-pyyaml
+          python3 - <<'EOF'
+          import yaml
+          m = yaml.safe_load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
+          m['modules'] = ['flathub/' + x if isinstance(x, str) else x for x in m['modules']]
+          bb = next(x for x in m['modules'] if isinstance(x, dict) and x['name'] == 'bluebubbles')
+          bb['sources'] = [
+              {'type': 'archive', 'path': 'bluebubbles-linux-${{ matrix.arch }}.tar.gz', 'dest': 'bluebubbles'},
+              {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.metainfo.xml'},
+              {'type': 'file', 'path': 'flatpak/icon/128x128.png'},
+              {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.desktop'},
+          ]
+          yaml.safe_dump(m, open('app.bluebubbles.BlueBubbles.yml', 'w'), sort_keys=False)
+          EOF
+
+      - name: Build flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3
+        with:
+          manifest-path: app.bluebubbles.BlueBubbles.yml
+          bundle: bluebubbles-${{ matrix.arch }}.flatpak
+          artifact-name: bluebubbles-flatpak-${{ matrix.arch }}
+          arch: ${{ matrix.arch }}
+          # Passed to build-bundle as --runtime-repo so installing the bundle pulls the GNOME runtime.
+          repository-url: https://dl.flathub.org/repo/flathub.flatpakrepo
+
   # Scans the released downloads with VirusTotal and writes the analysis links to the
   # job summary. Prefers the released installer/msix when present; falls back to the
   # unsigned installer otherwise. The store msix is not scanned — Microsoft vets it.
