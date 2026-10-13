@@ -59,6 +59,15 @@ class TextFieldComponent extends StatefulWidget {
 }
 
 class TextFieldComponentState extends State<TextFieldComponent> {
+  /// Bumped to recreate the message field; see [reattachMessageField].
+  int _messageFieldGeneration = 0;
+
+  /// Recreates the message field so its [FocusNode] is attached to the focus tree again, after it was left on screen
+  /// but detached from the tree (focus requests on a detached node are deferred until it's reattached).
+  void reattachMessageField() {
+    if (mounted) setState(() => _messageFieldGeneration++);
+  }
+
   late ConversationViewController? controller;
   late final FocusNode? focusNode;
   late final RecorderController? recorderController;
@@ -272,6 +281,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                       final chatTitle =
                           chat == null ? null : (ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle());
                       return TextField(
+                        key: ValueKey(_messageFieldGeneration),
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller?.focusNode ?? focusNode,
                         autocorrect: true,

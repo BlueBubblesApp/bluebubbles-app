@@ -89,6 +89,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     controller.textController.addListener(_onTextChange);
     controller.subjectTextController.addListener(_onSubjectTextChange);
 
+    if (kIsDesktop) FocusManager.instance.addListener(_keepMessageFieldFocused);
+
     if (kIsDesktop || kIsWeb) {
       proxyController.addListener(() {
         if (proxyController.text.isEmpty) return;
@@ -158,6 +160,39 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
   void _onSubjectFocusChange() => focusListener(true);
   void _onTextChange() => textListener(false);
   void _onSubjectTextChange() => textListener(true);
+
+  /// Scopes around the message field while it was last focused; see [_keepMessageFieldFocused].
+  Set<FocusScopeNode> _scopesAroundField = {};
+
+  /// Desktop: keep keyboard focus in the message field.
+  ///
+  /// After switching chats or windows, focus can fall back to the route's scope without the field being notified, and
+  /// after a chat switch the field's node can even be left detached from the focus tree while still on screen. Either
+  /// way the field keeps showing a cursor but can't take input until the chat is reopened (#2656). The FocusManager
+  /// still reports the change, so when focus lands on one of the field's own scopes (not another field, a popup or
+  /// dialog, or the root scope while the window is inactive), put it back.
+  void _keepMessageFieldFocused() {
+    final primary = FocusManager.instance.primaryFocus;
+    final node = controller.lastFocusedNode;
+    if (node.hasFocus) {
+      // Remembered while healthy, so focus falling back to these scopes is recognized even once the node is detached
+      _scopesAroundField = node.ancestors.whereType<FocusScopeNode>().toSet();
+      return;
+    }
+    if (primary is! FocusScopeNode || primary == FocusManager.instance.rootScope) return;
+    if (node.context == null || !_scopesAroundField.contains(primary)) return;
+    if (controller.showingOverlays || controller.showingSubRoute || controller.editing.isNotEmpty) return;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || node.hasFocus || FocusManager.instance.primaryFocus != primary) return;
+      node.requestFocus();
+      // Detached from the focus tree: the request above is deferred until the node is reattached, so recreate the field
+      if (node.parent == null) {
+        (controller.textFieldKey.currentState as TextFieldComponentState?)?.reattachMessageField();
+      }
+    });
+  }
 
   void focusListener(bool subject) async {
     final _focusNode = subject ? controller.subjectFocusNode : controller.focusNode;
@@ -321,6 +356,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   @override
   void dispose() {
+    if (kIsDesktop) FocusManager.instance.removeListener(_keepMessageFieldFocused);
     final draftText = controller.textController.text.trim().isNotEmpty ? controller.textController.text : '';
     final draftAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     // Update ChatState synchronously and fire DB save in the background.
