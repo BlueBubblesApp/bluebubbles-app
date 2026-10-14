@@ -159,8 +159,9 @@ jobs:
         run: |
           rm -f android/key.properties "$RUNNER_TEMP/release-keystore.jks"
 
+      # Tag-scoped caches are only readable by that same tag, so saving one would just evict master's.
       - name: Save Gradle cache
-        if: steps.cache-gradle.outputs.cache-hit != 'true'
+        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
