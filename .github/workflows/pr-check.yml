@@ -45,6 +45,8 @@ concurrency:
 
 permissions:
   contents: read
+  # Deleting superseded caches after a master save. Fork PRs still get a read-only token.
+  actions: write
 
 env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
@@ -245,3 +247,15 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ steps.cache-gradle.outputs.cache-primary-key }}
+
+      # At ~4 GB, a superseded entry left for eviction pushes the repo well past the 10 GB limit.
+      - name: Delete older Gradle caches
+        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: gradle-${{ runner.os }}-
+          KEEP: ${{ steps.cache-gradle.outputs.cache-primary-key }}
+        run: |
+          gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+            --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"

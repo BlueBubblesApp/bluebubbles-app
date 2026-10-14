@@ -55,6 +55,20 @@ runs:
         path: ~/fvm
         key: ${{ steps.cache-fvm.outputs.cache-primary-key }}
 
+    # A superseded entry would otherwise sit there until eviction, and one full set of master's caches is
+    # already close to the 10 GB limit. Needs `actions: write`; a failed cleanup never fails the build.
+    - name: Delete older Flutter SDK caches
+      if: github.ref == 'refs/heads/master' && steps.cache-fvm.outputs.cache-hit != 'true'
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PREFIX: fvm-${{ runner.os }}-${{ runner.arch }}-
+        KEEP: ${{ steps.cache-fvm.outputs.cache-primary-key }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+          --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+      shell: bash
+
     - name: Pub get
       run: dart pub global run fvm:main flutter pub get --enforce-lockfile
       shell: bash
@@ -65,3 +79,15 @@ runs:
       with:
         path: ~/.pub-cache
         key: ${{ steps.cache-pub.outputs.cache-primary-key }}
+
+    - name: Delete older pub caches
+      if: github.ref == 'refs/heads/master' && steps.cache-pub.outputs.cache-hit != 'true'
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PREFIX: pub-${{ runner.os }}-${{ runner.arch }}-
+        KEEP: ${{ steps.cache-pub.outputs.cache-primary-key }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+          --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+      shell: bash
