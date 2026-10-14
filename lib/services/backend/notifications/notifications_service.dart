@@ -539,15 +539,15 @@ class NotificationsService {
   /// [persistPath] when the file must outlive this run (appTemp is wiped on startup).
   Future<(String, bool)> _chatAvatarPath(Chat chat, {String? persistPath}) async {
     if (chat.handles.length == 1 && chat.customAvatarPath == null) {
-      final contactV2 = chat.handles.first.contactsV2.firstOrNull;
+      final avatarPath = chat.handles.first.contactsV2.map((c) => c.avatarPath).nonNulls.firstOrNull;
       // A reserved character in the file name means a row written before avatar
       // names were sanitized (macOS contact IDs end in `:ABPerson`). Windows can
       // neither build a file URI for it nor read it back reliably, so regenerate
       // a composite instead of handing the toast a path it will choke on.
-      if (contactV2?.avatarPath != null &&
-          !hasReservedFileNameChars(basename(contactV2!.avatarPath!)) &&
-          await File(contactV2.avatarPath!).exists()) {
-        return (contactV2.avatarPath!, false);
+      if (avatarPath != null &&
+          !hasReservedFileNameChars(basename(avatarPath)) &&
+          await File(avatarPath).exists()) {
+        return (avatarPath, false);
       }
     }
     final Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
