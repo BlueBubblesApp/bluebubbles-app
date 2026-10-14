@@ -567,7 +567,7 @@ packages:
     description:
       path: "."
       ref: "webkit2gtk-4.1"
-      resolved-ref: "4e1a29541a7356e23c53eb079cd3643899fc6fd4"
+      resolved-ref: "683143ea6ab4ef3a2a1572fcd23be3aa8d74979d"
       url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
     source: git
     version: "0.0.16"
@@ -727,8 +727,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: bef0c248842d156153d041c810a53641fdb553c4
-      resolved-ref: bef0c248842d156153d041c810a53641fdb553c4
+      ref: "1131693155c2dd2dbc76fda2e1bd5618c7872e2c"
+      resolved-ref: "1131693155c2dd2dbc76fda2e1bd5618c7872e2c"
       url: "https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git"
     source: git
     version: "3.6.2"
