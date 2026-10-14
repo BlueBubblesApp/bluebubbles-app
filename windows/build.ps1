@@ -100,15 +100,16 @@ if ($Phase -ne 'Package') {
 
     Invoke-Checked $flutterCmd pub get --enforce-lockfile
 
-    # Runs `flutter build windows` and packages the MS Store MSIX
-    # (windows\bluebubbles-store.msix). Microsoft signs this one, so pass --store
-    # explicitly (store mode is no longer set in pubspec.yaml). Built from the
-    # unsigned Release output — Microsoft re-signs the package at ingestion.
-    # --windows-build-args=--no-pub: the inner `flutter build windows` reuses the
-    # lockfile-enforced resolution above instead of re-running pub get unenforced.
+    # Built here rather than by msix:create, which buffers the build's output and only prints it on failure.
+    # --no-pub reuses the lockfile-enforced resolution above instead of re-running pub get unenforced.
     # --split-debug-info pulls the Dart AOT debug symbols out of the binary (they trip
     # AV malware heuristics otherwise) into build\windows\symbols, which CI uploads.
-    Invoke-Checked $dartCmd run msix:create --store '--windows-build-args=--no-pub --split-debug-info=build/windows/symbols' --output-name bluebubbles-store
+    Invoke-Checked $flutterCmd build windows -v --no-pub --split-debug-info=build/windows/symbols
+
+    # Packages the MS Store MSIX (windows\bluebubbles-store.msix). Microsoft signs this one, so pass --store
+    # explicitly (store mode is no longer set in pubspec.yaml). Built from the unsigned Release output —
+    # Microsoft re-signs the package at ingestion.
+    Invoke-Checked $dartCmd run msix:create --store --build-windows false --output-name bluebubbles-store
 
     Get-FileHash 'windows\bluebubbles-store.msix' -Algorithm SHA256 | Format-List Path, Hash
 }
