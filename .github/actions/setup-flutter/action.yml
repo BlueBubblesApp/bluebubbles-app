@@ -35,6 +35,8 @@ runs:
       with:
         path: ~/.pub-cache
         key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+        # A PR that changes the lockfile can't save its own entry, so start from master's and fetch only the difference.
+        restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
 
     # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
     # from Git Bash on the Windows runner, and this form works on all three platforms.
