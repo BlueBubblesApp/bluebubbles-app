@@ -209,7 +209,7 @@ dependency_overrides:
   flutter_local_notifications_windows: # no identity + crashing fixes + suppressPopup
     git:
       url: https://github.com/jjoelj/flutter_local_notifications.git
-      ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
+      ref: ce056e4cec320c76441937de2605a2c28a88db5f
       path: flutter_local_notifications_windows
   flutter_map: # https://github.com/fleaflet/flutter_map/issues/2152
     git:
