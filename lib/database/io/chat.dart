@@ -152,13 +152,13 @@ class Chat {
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
-    final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']!.cast<String, Object>()) : null;
+    final message = json['lastMessage'] != null ? Message.fromMap(json['lastMessage']!.cast<String, dynamic>()) : null;
     return Chat(
       id: json["ROWID"] ?? json["id"],
       guid: json["guid"],
       chatIdentifier: json["chatIdentifier"],
       participants:
-          (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e!.cast<String, Object>())).toList(),
+          (json['participants'] as List? ?? []).map((e) => Handle.fromMap(e!.cast<String, dynamic>())).toList(),
       isArchived: json['isArchived'] ?? false,
       muteType: json["muteType"],
       muteArgs: json["muteArgs"],
