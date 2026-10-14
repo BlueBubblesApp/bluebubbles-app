@@ -38,6 +38,7 @@ dependencies:
   crop_your_image: ^2.0.0
   csslib: ^1.0.2
   cupertino_icons: ^1.0.8
+  dbus: ^0.7.12
   defer_pointer: ^0.0.2
   desktop_drop:
     git:
