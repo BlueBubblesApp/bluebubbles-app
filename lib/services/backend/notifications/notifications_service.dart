@@ -626,7 +626,7 @@ class NotificationsService {
     }
 
     await _openChat(chat);
-    await showAndFocusWindow();
+    if (interaction.focusWindow) await showAndFocusWindow();
   }
 
   Future<void> _deleteTempFile(String path) async {
