@@ -44,8 +44,10 @@ runs:
 
     # No explicit status check, so the saves inherit the implicit success() — they never
     # persist a half-populated directory left behind by a step that failed.
+    # Master only: a PR's or tag's entry is readable by that ref alone, and at ~0.8 GB each
+    # they push master's shared entries out of the 10 GB repo limit.
     - name: Save Flutter SDK (fvm)
-      if: steps.cache-fvm.outputs.cache-hit != 'true'
+      if: github.ref == 'refs/heads/master' && steps.cache-fvm.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ~/fvm
@@ -56,7 +58,7 @@ runs:
       shell: bash
 
     - name: Save pub packages
-      if: steps.cache-pub.outputs.cache-hit != 'true'
+      if: github.ref == 'refs/heads/master' && steps.cache-pub.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ~/.pub-cache
