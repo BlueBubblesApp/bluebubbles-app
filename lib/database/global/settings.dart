@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/details_menu_action.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/hover_action.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -237,6 +238,9 @@ class Settings {
   // Text field buttons — enabled buttons, in display order. Absent = hidden.
   final RxList<TextFieldButton> textFieldButtons = RxList.from(TextFieldButton.values);
 
+  // Desktop hover bar actions — enabled actions, in display order. Absent = hidden; empty = no hover bar.
+  final RxList<HoverAction> hoverActions = RxList.from(defaultHoverActions);
+
   // Message options order
   final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
 
@@ -398,6 +402,7 @@ class Settings {
       'actionList': List<String>.from(actionList),
       'detailsMenuActions': detailsMenuActions.map((action) => action.name).toList(),
       'textFieldButtons': textFieldButtons.map((button) => button.name).toList(),
+      'hoverActions': hoverActions.map((action) => action.name).toList(),
       'askWhereToSave': askWhereToSave.value,
       'statusIndicatorsOnChats': statusIndicatorsOnChats.value,
       'apiTimeout': apiTimeout.value,
@@ -722,6 +727,9 @@ class Settings {
       SettingsSvc.settings._detailsMenuActions.value =
           _processDetailsMenuActions(map['detailsMenuActions'], SettingsSvc.settings.detailsMenuActions);
     }
+    if (map.containsKey('hoverActions')) {
+      SettingsSvc.settings.hoverActions.value = _processHoverActions(map['hoverActions']);
+    }
     if (map.containsKey('textFieldButtons')) {
       SettingsSvc.settings.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
     }
@@ -907,6 +915,7 @@ class Settings {
     s.actionList.value = _processActionList(map['actionList']);
     s._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], DetailsMenuAction.values);
     s.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
+    s.hoverActions.value = map.containsKey('hoverActions') ? _processHoverActions(map['hoverActions']) : defaultHoverActions;
 
     s.windowEffect.value = (kIsDesktop && Platform.isWindows)
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
@@ -946,6 +955,15 @@ class Settings {
     SettingsSvc.settings.textFieldButtons.value = TextFieldButton.values;
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
   }
+
+  /// Set the enabled desktop hover bar actions, in display order
+  void setHoverActions(List<HoverAction> actions) {
+    SettingsSvc.settings.hoverActions.value = actions;
+    // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too
+    unawaited(SettingsSvc.settings.saveOneAsync('hoverActions'));
+  }
+
+  void resetHoverActions() => setHoverActions(defaultHoverActions);
 
   void resetDetailsMenuActions() {
     SettingsSvc.settings._detailsMenuActions.value = DetailsMenuAction.values;
@@ -999,6 +1017,19 @@ List<String> _processActionList(dynamic rawJson) {
       ReactionTypes.DISLIKE,
       ReactionTypes.QUESTION
     ];
+  }
+}
+
+List<HoverAction> _processHoverActions(dynamic rawJson) {
+  try {
+    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List)
+        .cast<String>()
+        .map((s) => HoverAction.values.firstWhereOrNull((action) => action.name == s))
+        .nonNulls
+        .toList();
+  } catch (e) {
+    debugPrint("Using default hoverActions");
+    return defaultHoverActions;
   }
 }
 
