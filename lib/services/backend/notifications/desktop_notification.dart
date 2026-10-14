@@ -55,11 +55,12 @@ class DesktopMessageData {
 }
 
 class DesktopMessageInteraction {
-  const DesktopMessageInteraction({required this.data, this.action, this.reply});
+  const DesktopMessageInteraction({required this.data, this.action, this.reply, this.focusWindow = true});
 
   final DesktopMessageData data;
   final String? action;
   final String? reply;
+  final bool focusWindow;
 
   static DesktopMessageInteraction? fromResponse(NotificationResponse response) {
     final String source = response.actionId?.startsWith('dm:') ?? false ? response.actionId! : response.payload ?? '';
@@ -188,6 +189,10 @@ class DesktopNotifications {
     Logger.info('Replaying ${queued.length} notification interaction(s)', tag: 'DesktopNotifications');
     for (final DesktopMessageInteraction interaction in queued) {
       _dispatch(interaction);
+    }
+    final DesktopMessageInteraction last = queued.last;
+    if (last.reply != null || last.action != null) {
+      _dispatch(DesktopMessageInteraction(data: last.data, focusWindow: false));
     }
   }
 
