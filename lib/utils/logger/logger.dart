@@ -22,6 +22,12 @@ import 'outputs/rotating_file_output.dart';
 // ignore: non_constant_identifier_names
 BaseLogger get Logger => GetIt.I<BaseLogger>();
 
+// Top-level so it can be sent to the LogWriter isolate.
+String _rotatedLogName(DateTime _) {
+  final now = DateTime.now();
+  return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
+}
+
 enum LogLevel { INFO, WARN, ERROR, DEBUG, TRACE, FATAL }
 
 const Map<Level, bool> defaultExcludeBoxes = {
@@ -49,10 +55,7 @@ class BaseLogger {
       maxFileSizeKB: 1024 * 5, // 5 MB
       maxRotatedFilesCount: 5, // Total: 25 MB of logs before old logs are deleted
       encoding: utf8,
-      fileNameFormatter: (_) {
-        final now = DateTime.now();
-        return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
-      },
+      fileNameFormatter: _rotatedLogName,
     );
 
     // Wrap with ANSI stripper to ensure file is valid UTF-8
