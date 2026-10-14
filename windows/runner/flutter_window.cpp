@@ -7,6 +7,7 @@
 
 #include "flutter/generated_plugin_registrant.h"
 #include "splash_screen.h"
+#include "store_update.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -61,6 +62,8 @@ bool FlutterWindow::OnCreate() {
           result->NotImplemented();
         }
       });
+
+  store_channel_ = CreateStoreUpdateChannel(flutter_controller_->engine()->messenger(), GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
