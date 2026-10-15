@@ -67,7 +67,7 @@ class MessagePartContent extends StatelessWidget {
               // tapback can be associated with just one image/video, not the whole
               // gallery. Map reactions back to the specific attachment they landed on.
               final reactions = state.associatedMessages
-                  .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
+                  .where((e) => ReactionTypes.checkReactionType(e.associatedMessageType))
                   .toList();
               final reactionsByAttachmentKey = <String, List<Message>>{};
               for (int i = 0; i < messagePart.attachments.length; i++) {
