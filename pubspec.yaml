@@ -196,6 +196,11 @@ dependencies:
   uuid: any
 dependency_overrides:
   clock: ^1.1.2 # encrypter_plus
+  connectivity_plus: # Windows: runs connectivity queries on a worker thread, not the thread that handles keyboard input
+    git:
+      url: https://github.com/BlueBubblesApp/plus_plugins.git
+      ref: 2192beded6eff90d500173d601e2d3a1327d5ec2
+      path: packages/connectivity_plus/connectivity_plus
   flat_buffers: # RangeError on FlexBuffer resize: https://github.com/objectbox/objectbox-dart/issues/786
     git:
       url: https://github.com/google/flatbuffers.git
