@@ -213,7 +213,7 @@ class CacheService {
 
   // ── Execution ───────────────────────────────────────────────────────────
 
-  /// Runs [actions] one cache at a time, serialised behind any purge already in
+  /// Runs [actions] one cache at a time, serialized behind any purge already in
   /// flight so two triggers close together (pause, then the OS trim that
   /// follows it) cannot interleave on the same cache.
   Future<CachePurgeReport> _run(String reason, CachePurgeLevel? level, CachePurgePolicy actions) {

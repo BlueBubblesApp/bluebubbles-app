@@ -8,7 +8,7 @@ largest cached process first, and most of what this app holds while backgrounded
 | File | Contents |
 |------|----------|
 | `clearable_cache.dart` | `ClearableCache` interface, `CachePurgeLevel`, `CachePurgeAction`, `CachePurgeReport` |
-| `cache_service.dart` | `CacheService` (`CacheSvc`) — registry, granular ops, policy-driven purges, in-flight serialisation |
+| `cache_service.dart` | `CacheService` (`CacheSvc`) — registry, granular ops, policy-driven purges, in-flight serialization |
 | `app_caches.dart` | The built-in caches and `defaultAppCaches()`, registered in `StartupTasks.initStartupServices()` |
 
 ## Built-in caches

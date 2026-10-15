@@ -454,7 +454,7 @@ class _ReactionIconState extends CustomState<ReactionIcon, void, ConversationTil
       final latestMsg = controller.chat.dbLatestMessage.target;
       final isReaction = !isNullOrEmpty(latestMsg?.associatedMessageGuid);
       // Null-safe isFromMe: treat null as "from me" so we don't show the icon
-      // for messages with unknown sender, mirroring the text-bubble behaviour.
+      // for messages with unknown sender, mirroring the text-bubble behavior.
       final isNotFromMe = latestMsg?.isFromMe == false;
 
       return latestMsg != null && unread && isReaction && isNotFromMe

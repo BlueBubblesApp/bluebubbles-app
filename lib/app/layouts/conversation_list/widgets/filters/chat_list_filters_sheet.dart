@@ -25,7 +25,7 @@ void showChatListFilterSheet(
   // The legacy "Filter Unknown Senders" setting already owns known/unknown
   // sender classification globally (see ChatsService.getFilteredChats) — if a
   // stale Sender selection was persisted (e.g. via a saved default filter) from
-  // before this setting was turned on, normalize it so the greyed-out section
+  // before this setting was turned on, normalize it so the grayed-out section
   // doesn't silently show an inert selected chip.
   final legacyUnknownSenderFilterActive = SettingsSvc.settings.filterUnknownSenders.value;
   var current0 = current;
@@ -67,7 +67,7 @@ void showChatListFilterSheet(
               // Sender doesn't meaningfully apply to group chats (a group is always
               // treated as a "known" sender regardless of its participants) — reset
               // it to All whenever the user switches to the Group Chats chip so the
-              // greyed-out Sender section doesn't silently hold a stale selection.
+              // grayed-out Sender section doesn't silently hold a stale selection.
               senderFilter: typeFilter == ChatTypeFilter.group ? ChatSenderFilter.all : senderFilter,
               typeFilter: typeFilter,
               muteFilter: muteFilter,
