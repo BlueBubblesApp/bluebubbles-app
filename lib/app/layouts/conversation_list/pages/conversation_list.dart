@@ -150,8 +150,11 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
           SettingsSvc.settings.reachedConversationList.value = true;
           SettingsSvc.settings.saveOneAsync('reachedConversationList');
           t.cancel();
+          SettingsSvc.showPrivateApiTipIfNeeded();
         }
       });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => SettingsSvc.showPrivateApiTipIfNeeded());
     }
 
     // Extra safety check to make sure Android doesn't open the last chat when opening the app
