@@ -146,7 +146,7 @@ class _CacheTuningPanelState extends State<CacheTuningPanel> with ThemeHelpers, 
     final settings = SettingsSvc.settings;
     return SettingsScaffold(
       title: "Cache Tuning",
-      initialHeader: "Automatic Purging",
+      initialHeader: kIsDesktop ? "Caches" : "Automatic Purging",
       iosSubtitle: iosSubtitle,
       materialSubtitle: materialSubtitle,
       tileColor: tileColor,
@@ -155,43 +155,45 @@ class _CacheTuningPanelState extends State<CacheTuningPanel> with ThemeHelpers, 
         SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              SettingsSection(backgroundColor: tileColor, children: [
-                Obx(() => SettingsOptions<String>(
-                      initial: settings.cachePurgeBackgroundLevel.value,
-                      onChanged: (val) async {
-                        if (val == null) return;
-                        await _saveLevel(kCachePurgeBackgroundLevelKey, val);
-                      },
-                      options: _levelNames,
-                      title: "On Background",
-                      subtitle: "Runs when the app is sent to the background. "
-                          "Currently: ${_levelHelp(settings.cachePurgeBackgroundLevel.value)}.",
-                      secondaryColor: headerColor,
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.arrow_down_right_arrow_up_left,
-                        materialIcon: Icons.cleaning_services_outlined,
-                        containerColor: Colors.teal,
-                      ),
-                    )),
-                Obx(() => SettingsOptions<String>(
-                      initial: settings.cachePurgeMemoryPressureLevel.value,
-                      onChanged: (val) async {
-                        if (val == null) return;
-                        await _saveLevel(kCachePurgeMemoryPressureLevelKey, val);
-                      },
-                      options: _levelNames,
-                      title: "On Memory Pressure",
-                      subtitle: "Runs when the OS reports low memory. "
-                          "Currently: ${_levelHelp(settings.cachePurgeMemoryPressureLevel.value)}.",
-                      secondaryColor: headerColor,
-                      leading: const SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.exclamationmark_triangle,
-                        materialIcon: Icons.warning_amber_outlined,
-                        containerColor: Colors.orange,
-                      ),
-                    )),
-              ]),
-              SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Caches"),
+              // Desktop never backgrounds the app or gets the OS low-memory signal, so these never fire there.
+              if (!kIsDesktop)
+                SettingsSection(backgroundColor: tileColor, children: [
+                  Obx(() => SettingsOptions<String>(
+                        initial: settings.cachePurgeBackgroundLevel.value,
+                        onChanged: (val) async {
+                          if (val == null) return;
+                          await _saveLevel(kCachePurgeBackgroundLevelKey, val);
+                        },
+                        options: _levelNames,
+                        title: "On Background",
+                        subtitle: "Runs when the app is sent to the background. "
+                            "Currently: ${_levelHelp(settings.cachePurgeBackgroundLevel.value)}.",
+                        secondaryColor: headerColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.arrow_down_right_arrow_up_left,
+                          materialIcon: Icons.cleaning_services_outlined,
+                          containerColor: Colors.teal,
+                        ),
+                      )),
+                  Obx(() => SettingsOptions<String>(
+                        initial: settings.cachePurgeMemoryPressureLevel.value,
+                        onChanged: (val) async {
+                          if (val == null) return;
+                          await _saveLevel(kCachePurgeMemoryPressureLevelKey, val);
+                        },
+                        options: _levelNames,
+                        title: "On Memory Pressure",
+                        subtitle: "Runs when the OS reports low memory. "
+                            "Currently: ${_levelHelp(settings.cachePurgeMemoryPressureLevel.value)}.",
+                        secondaryColor: headerColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.exclamationmark_triangle,
+                          materialIcon: Icons.warning_amber_outlined,
+                          containerColor: Colors.orange,
+                        ),
+                      )),
+                ]),
+              if (!kIsDesktop) SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Caches"),
               SettingsSection(backgroundColor: tileColor, children: [
                 for (final cache in CacheSvc.caches)
                   Obx(() {
@@ -201,7 +203,7 @@ class _CacheTuningPanelState extends State<CacheTuningPanel> with ThemeHelpers, 
                       onChanged: (val) => _setExcluded(cache.id, !val),
                       title: cache.id,
                       subtitle: "${cache.description}. ${_sizeLabel(cache.id)}. "
-                          "Off leaves it alone during automatic purges.",
+                          "Off leaves it alone during ${kIsDesktop ? "purges" : "automatic purges"}.",
                       isThreeLine: true,
                       backgroundColor: tileColor,
                     );
@@ -257,7 +259,9 @@ class _CacheTuningPanelState extends State<CacheTuningPanel> with ThemeHelpers, 
                     onTap: _refresh,
                     title: "Last purge",
                     subtitle: report == null
-                        ? "No purge has run since launch. Background the app and come back, or use Purge Now."
+                        ? kIsDesktop
+                            ? "No purge has run since launch. Use Purge Now."
+                            : "No purge has run since launch. Background the app and come back, or use Purge Now."
                         : report.summarize(),
                     isThreeLine: true,
                     backgroundColor: tileColor,
