@@ -32,6 +32,11 @@ class FlutterWindow : public Win32Window {
 
   // Channel used to dismiss the native splash screen.
   std::unique_ptr<flutter::MethodChannel<>> splash_channel_;
+
+  // Delivers toast activations forwarded from a second instance (see toast_forwarder.h).
+  std::unique_ptr<flutter::MethodChannel<>> notification_channel_;
+
+  void ForwardToastActivation(const COPYDATASTRUCT& cds);
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
