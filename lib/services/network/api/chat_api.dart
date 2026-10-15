@@ -143,12 +143,13 @@ class ChatApi {
     });
   }
 
-  /// Mark a chat read by its [guid]
-  Future<Response> markRead(String guid, {CancelToken? cancelToken}) async {
+  /// Mark a chat read by its [guid]. [sendReceipt] false marks read without
+  /// sending a read receipt to the other iMessage users.
+  Future<Response> markRead(String guid, {bool sendReceipt = true, CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {
       final response = await _svc.dio.post(
         "${_svc.apiRoot}/chat/$guid/read",
-        queryParameters: _svc.buildQueryParams(),
+        queryParameters: {..._svc.buildQueryParams(), if (!sendReceipt) 'receipt': 'false'},
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
