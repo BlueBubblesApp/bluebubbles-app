@@ -11,7 +11,7 @@ class ErrorHelper {
   /// Uses the message's [errorMessage] field when available; falls back to a
   /// generic string for older/legacy entries that may not have it set.
   static String getErrorText(Message message) {
-    return message.errorMessage ?? "An unknown error occurred.";
+    return maskUrlPassword(message.errorMessage ?? "An unknown error occurred.");
   }
 
   /// Returns the dialog title for the given numeric error code.
