@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
+import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -201,6 +202,8 @@ class StartupTasks {
     NetworkTasks.registerIsolate(GetIt.I<GlobalIsolate>());
     GetIt.I.registerSingleton<IncrementalSyncIsolate>(IncrementalSyncIsolate());
     NetworkTasks.registerIsolate(GetIt.I<IncrementalSyncIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<GlobalIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<IncrementalSyncIsolate>());
 
     // Load FCM data into settings from the database
     // We only need to do this for the main startup

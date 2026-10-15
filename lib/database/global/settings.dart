@@ -490,7 +490,8 @@ class Settings {
     return map;
   }
 
-  static void updateFromMap(Map<String, dynamic> map) {
+  /// Pass [save] false when the values are already persisted (e.g. forwarded from an isolate that saved them).
+  static void updateFromMap(Map<String, dynamic> map, {bool save = true}) {
     SettingsSvc.settings.iCloudAccount.value = map['iCloudAccount'] ?? SettingsSvc.settings.iCloudAccount.value;
     SettingsSvc.settings.serverAddress.value = map['serverAddress'] ?? SettingsSvc.settings.serverAddress.value;
     SettingsSvc.settings.guidAuthKey.value = map['guidAuthKey'] ?? SettingsSvc.settings.guidAuthKey.value;
@@ -754,10 +755,9 @@ class Settings {
         map['replaceEmoticonsWithEmoji'] ?? SettingsSvc.settings.replaceEmoticonsWithEmoji.value;
     SettingsSvc.settings.lastReviewRequestTimestamp.value =
         map['lastReviewRequestTimestamp'] ?? SettingsSvc.settings.lastReviewRequestTimestamp.value;
-    SettingsSvc.settings.save();
 
-    if (!isIsolate) {
-      unawaited(PrefsInterface.syncAllSettings());
+    if (!isIsolate && save) {
+      unawaited(SettingsSvc.settings.saveAsync());
       EventDispatcherSvc.emit("theme-update", null);
     }
   }
