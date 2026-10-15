@@ -346,7 +346,8 @@ class AttachmentsService extends GetxService {
         return true;
       } else {
         List<ConnectivityResult> status = await (Connectivity().checkConnectivity());
-        return status.contains(ConnectivityResult.wifi);
+        // The setting is about sparing mobile data; a wired desktop reports ethernet, not wifi.
+        return status.contains(ConnectivityResult.wifi) || status.contains(ConnectivityResult.ethernet);
       }
     }
   }

@@ -493,8 +493,10 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       containerColor: Colors.teal,
                     ),
                     title: "Cache Tuning",
-                    subtitle: "Choose how much the app releases when it goes to the background, purge caches by hand, "
-                        "and watch what each purge frees.",
+                    subtitle: kIsDesktop
+                        ? "Purge caches by hand and watch what each purge frees."
+                        : "Choose how much the app releases when it goes to the background, purge caches by hand, "
+                            "and watch what each purge frees.",
                     trailing: const NextButton(),
                   ),
                 ]),
