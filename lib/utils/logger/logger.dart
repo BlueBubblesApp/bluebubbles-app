@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:bluebubbles/env.dart';
+import 'package:bluebubbles/services/backend/interfaces/log_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/outputs/log_stream_output.dart';
 import 'package:flutter/foundation.dart';
@@ -40,24 +41,27 @@ class BaseLogger {
   LoggerFactory.Logger _logger = LoggerFactory.Logger();
 
   final StreamController<String> logStream = StreamController<String>.broadcast();
-  final latestLogName = 'bluebubbles-latest.log';
 
-  LoggerFactory.LogOutput get fileOutput {
+  /// Each isolate logs to its own files (see [RotatingFileOutput]); main keeps the original names.
+  String get _filePrefix {
+    if (_isolateName == 'main') return 'bluebubbles';
+    return 'bluebubbles-${_isolateName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}';
+  }
+
+  // One instance per isolate: the logger is rebuilt on every settings change, and a new output each time
+  // would leave the old file handle open.
+  late final LoggerFactory.LogOutput fileOutput = () {
     final baseFileOutput = RotatingFileOutput(
       dirPath: logDir,
-      latestFileName: latestLogName,
+      filePrefix: _filePrefix,
       maxFileSizeKB: 1024 * 5, // 5 MB
-      maxRotatedFilesCount: 5, // Total: 25 MB of logs before old logs are deleted
+      maxRotatedFilesCount: 5, // Per isolate: 25 MB of logs before old logs are deleted
       encoding: utf8,
-      fileNameFormatter: (_) {
-        final now = DateTime.now();
-        return 'bluebubbles-${now.toIso8601String().split('T').first}-${now.millisecondsSinceEpoch ~/ 1000}.log';
-      },
     );
 
     // Wrap with ANSI stripper to ensure file is valid UTF-8
     return FileOutputWrapper(baseFileOutput);
-  }
+  }();
 
   LoggerFactory.LogOutput get defaultOutput {
     List<LogOutput> outputs = kDebugMode ? [DebugConsoleOutput()] : [];
@@ -127,18 +131,10 @@ class BaseLogger {
   String _isolateName = "main";
 
   Future<void> init() async {
-    // Ensure log directory and latest log file exist before AdvancedFileOutput
-    // initializes — it calls file.length() which throws PathNotFoundException if
-    // the file has not been created yet (e.g. first run or after cache clear).
-    if (!kIsWeb) {
-      final dir = Directory(logDir);
-      if (!dir.existsSync()) dir.createSync(recursive: true);
-      final latestLog = File(join(logDir, latestLogName));
-      if (!latestLog.existsSync()) latestLog.createSync();
-    }
-
+    // Before createLogger(): the file output is named after the isolate.
+    final name = isolateNameOverride ?? Isolate.current.debugName ?? "main";
+    _isolateName = logNamePrefix == null ? name : (name == "main" ? logNamePrefix! : "$logNamePrefix$name");
     _logger = createLogger();
-    _isolateName = isolateNameOverride ?? Isolate.current.debugName ?? "main";
 
     if (SettingsSvc.initCompleted.isCompleted) {
       currentLevel = SettingsSvc.settings.logLevel.value;
@@ -232,7 +228,12 @@ class BaseLogger {
       for (final logPath in logPaths) {
         await encoder.addFile(File(logPath));
       }
+      // The per-isolate files are hard to follow on their own; add them all merged into one timeline.
+      final File mergedFile = File(join(FilesystemSvc.appDocDir.path, "bluebubbles-merged.log"));
+      await LogInterface.writeMergedLog(mergedFile.path);
+      await encoder.addFile(mergedFile);
       await encoder.close();
+      mergedFile.deleteSync();
 
       return zippedLogFile.path;
     } catch (e, stackTrace) {
@@ -246,13 +247,51 @@ class BaseLogger {
       final Directory logDir = Directory(Logger.logDir);
       if (!logDir.existsSync()) return [];
 
-      final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(latestLogName)).toList();
-      if (logFiles.isEmpty) return [];
+      // Each isolate has its own latest file; merge them back into one timeline.
+      final latestFiles = logDir.listSync().whereType<File>().where((f) => f.path.endsWith('-latest.log'));
+      final entries = [
+        for (final file in latestFiles)
+          for (final entry in await _readTailEntries(file, maxLines))
+            (DateTime.tryParse(entry.split(' ').first) ?? DateTime(0), entry),
+      ];
+      // Stable, so entries with the same timestamp keep their order within a file.
+      mergeSort(entries, compare: (a, b) => a.$1.compareTo(b.$1));
+      final logs = entries.map((e) => e.$2).toList();
+      return logs.length > maxLines ? logs.sublist(logs.length - maxLines) : logs;
+    } catch (e, stackTrace) {
+      debugPrint('Error reading logs: $e\n$stackTrace');
+      return [];
+    }
+  }
 
-      final File logFile = logFiles.first as File;
-      if (!logFile.existsSync()) return [];
+  /// Writes every log file, rotated ones included, to [outPath] as one timeline. Each isolate rotates on its own
+  /// schedule, so merging only the latest files would leave uneven coverage. Holds every file in memory at once.
+  Future<void> writeMergedLog(String outPath) async {
+    final entries = <(DateTime, String)>[];
+    for (final file in Directory(logDir).listSync().whereType<File>().where((f) => f.path.endsWith('.log'))) {
+      try {
+        final lines = await file
+            .openRead()
+            .transform(const Utf8Decoder(allowMalformed: true))
+            .transform(const LineSplitter())
+            .toList();
+        entries.addAll(_joinEntries(lines).map((e) => (DateTime.tryParse(e.split(' ').first) ?? DateTime(0), e)));
+      } catch (e, stackTrace) {
+        debugPrint('Error reading ${file.path}: $e\n$stackTrace');
+      }
+    }
+    // Stable, so entries with the same timestamp keep their order within a file.
+    mergeSort(entries, compare: (a, b) => a.$1.compareTo(b.$1));
+    final sink = File(outPath).openWrite();
+    for (final entry in entries) {
+      sink.writeln(entry.$2);
+    }
+    await sink.close();
+  }
 
+  /// The last [maxLines] entries of [logFile], with multi-line entries joined.
+  Future<List<String>> _readTailEntries(File logFile, int maxLines) async {
+    try {
       final int fileSize = await logFile.length();
       if (fileSize == 0) return [];
 
@@ -267,31 +306,7 @@ class BaseLogger {
           .transform(const LineSplitter())
           .toList();
 
-      // Combine lines that are part of the same log message.
-      // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
-      //   ┌──...  (top border — skip)
-      //   │ 2024-...  (content with │ prefix — strip prefix)
-      //   └──...  (bottom border — skip)
-      // Stripping these allows the date-start check below to work for all levels.
-      final List<String> logs = [];
-      String currentLog = '';
-      final dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
-      for (final rawLine in lines) {
-        String line = rawLine.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
-
-        // Skip horizontal box border lines (┌, └, ├).
-        if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) continue;
-        // Strip the vertical-bar prefix used by boxed content lines.
-        if (line.startsWith('│ ')) line = line.substring(2);
-
-        if (dateStart.hasMatch(line)) {
-          if (currentLog.isNotEmpty) logs.add(currentLog);
-          currentLog = line;
-        } else if (currentLog.isNotEmpty) {
-          currentLog += '\n$line';
-        }
-      }
-      if (currentLog.isNotEmpty) logs.add(currentLog);
+      final logs = _joinEntries(lines);
 
       // Safety trim in case startOffset==0 and the file has more entries than maxLines.
       if (logs.length > maxLines) {
@@ -299,9 +314,38 @@ class BaseLogger {
       }
       return logs;
     } catch (e, stackTrace) {
-      debugPrint('Error reading logs: $e\n$stackTrace');
+      debugPrint('Error reading ${logFile.path}: $e\n$stackTrace');
       return [];
     }
+  }
+
+  /// Combines lines that are part of the same log message.
+  List<String> _joinEntries(List<String> lines) {
+    // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
+    //   ┌──...  (top border — skip)
+    //   │ 2024-...  (content with │ prefix — strip prefix)
+    //   └──...  (bottom border — skip)
+    // Stripping these allows the date-start check below to work for all levels.
+    final List<String> logs = [];
+    String currentLog = '';
+    final dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
+    for (final rawLine in lines) {
+      String line = rawLine.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
+
+      // Skip horizontal box border lines (┌, └, ├).
+      if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) continue;
+      // Strip the vertical-bar prefix used by boxed content lines.
+      if (line.startsWith('│ ')) line = line.substring(2);
+
+      if (dateStart.hasMatch(line)) {
+        if (currentLog.isNotEmpty) logs.add(currentLog);
+        currentLog = line;
+      } else if (currentLog.isNotEmpty) {
+        currentLog += '\n$line';
+      }
+    }
+    if (currentLog.isNotEmpty) logs.add(currentLog);
+    return logs;
   }
 
   /// Scans [file] backwards in 64 KB chunks looking for newline bytes followed
@@ -383,9 +427,17 @@ class BaseLogger {
       final Directory logDir = Directory(Logger.logDir);
       if (!logDir.existsSync()) return;
 
-      for (final file in logDir.listSync()) {
-        if (file is File) {
-          file.deleteSync();
+      for (final file in logDir.listSync().whereType<File>()) {
+        try {
+          // Every isolate keeps its latest file open; deleting it would throw on Windows and orphan the
+          // writer's handle elsewhere. Writers seek to the end, so they pick up the truncation.
+          if (file.path.endsWith('-latest.log')) {
+            file.writeAsBytesSync([]);
+          } else {
+            file.deleteSync();
+          }
+        } catch (e) {
+          debugPrint("Error clearing ${file.path}: $e");
         }
       }
     } catch (e, stackTrace) {
