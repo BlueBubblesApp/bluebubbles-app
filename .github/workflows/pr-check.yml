@@ -43,10 +43,10 @@ concurrency:
   group: pr-check-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only for every job that runs project or dependency code. Only prune-caches, which runs
+# no code from the repo, gets `actions: write`.
 permissions:
   contents: read
-  # Deleting superseded caches after a master save. Fork PRs still get a read-only token.
-  actions: write
 
 env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
@@ -66,7 +66,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        
+        with:
+          persist-credentials: false
+
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter
         with:
@@ -97,6 +99,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Setup Flutter
         uses: ./.github/actions/setup-flutter
@@ -140,6 +144,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Install system dependencies
         run: |
@@ -248,14 +254,29 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ steps.cache-gradle.outputs.cache-primary-key }}
 
-      # At ~4 GB, a superseded entry left for eviction pushes the repo well past the 10 GB limit.
-      - name: Delete older Gradle caches
-        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
+  # Deletes superseded master cache entries once the builds above have saved new ones; one full set
+  # is already close to the 10 GB repo limit, and a stale entry would otherwise sit there until
+  # eviction. Kept as its own job so `actions: write` (which can also dispatch workflows and delete
+  # run logs) never shares a runner with a build. No checkout: nothing from the repo runs here.
+  prune-caches:
+    needs: [analyze, build-windows, build-linux, build-android]
+    if: ${{ always() && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      # A family is a key minus its content hash/version (pub-Linux-X64, gradle-Linux-prod, ...);
+      # keep the newest entry of each and delete the rest. Only master's scope: PR scopes can't
+      # be read by anyone else and age out on their own.
+      - name: Delete superseded caches
+        # A failed cleanup only costs space until eviction; don't turn master red over it.
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-          PREFIX: gradle-${{ runner.os }}-
-          KEEP: ${{ steps.cache-gradle.outputs.cache-primary-key }}
+          FAMILY: ^(?<f>(fvm|pub|native-deps)-[^-]+-[^-]+|gradle-[^-]+-[^-]+)-
         run: |
-          gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
-            --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+          gh cache list -R "$GITHUB_REPOSITORY" --ref refs/heads/master --limit 1000 --json id,key,createdAt \
+            --jq 'map(.family = ([.key | capture(env.FAMILY).f][0])) | map(select(.family != null))
+              | group_by(.family) | .[] | sort_by(.createdAt) | reverse | .[1:][] | .id' \
+            | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
