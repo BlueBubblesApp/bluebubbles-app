@@ -60,9 +60,8 @@ Future<Null> main(List<String> arguments) async {
 
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
-Future<Null> bubble(List<String> args) async {
-  // args: the bubbled chat's ID, from BubbleActivity.
-  logNamePrefix = 'Bubble${args.firstOrNull ?? ''}';
+Future<Null> bubble() async {
+  logNamePrefix = 'Bubble';
   await initApp(true, []);
 }
 

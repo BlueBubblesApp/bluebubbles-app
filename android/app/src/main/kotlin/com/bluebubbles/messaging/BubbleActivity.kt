@@ -35,11 +35,6 @@ class BubbleActivity : FlutterFragmentActivity() {
         return "bubble"
     }
 
-    // Each bubbled chat gets its own activity and engine; the chat ID keeps their log files apart.
-    override fun getDartEntrypointArgs(): List<String> {
-        return listOf(intent.getIntExtra("notificationId", 0).toString())
-    }
-
     override fun onDestroy() {
         setEngine(null)
         super.onDestroy()
