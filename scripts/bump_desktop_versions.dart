@@ -3,6 +3,7 @@
 //   dart run scripts/bump_desktop_versions.dart --beta 2.1.0.0   # flatpak entry marked type="development"
 //   dart run scripts/bump_desktop_versions.dart 2.1.0.0          # full release; warns you to write the changelog
 //   dart run scripts/bump_desktop_versions.dart --tag 2.1.0+91 2.1.0.0   # desktop-only release tag
+//   dart run scripts/bump_desktop_versions.dart --test 2.1.0.12  # CI test build; see scripts/CLAUDE.md
 
 import 'dart:io';
 
@@ -35,9 +36,10 @@ RegExp line(String prefix) => RegExp('^$prefix[^\r\n]*', multiLine: true);
 
 void main(List<String> args) {
   final beta = args.contains('--beta');
+  final test = args.contains('--test');
   final positional = <String>[];
   for (var i = 0; i < args.length; i++) {
-    if (args[i] == '--beta') {
+    if (args[i] == '--beta' || args[i] == '--test') {
       continue;
     } else if (args[i] == '--tag') {
       tagOverride = i + 1 < args.length ? args[++i] : '';
@@ -53,8 +55,9 @@ void main(List<String> args) {
   }
   final version = positional.length == 1 ? positional.single : '';
 
-  if (!RegExp(r'^\d+\.\d+\.\d+\.0$').hasMatch(version)) {
+  if (!RegExp(test ? r'^\d+\.\d+\.\d+\.\d+$' : r'^\d+\.\d+\.\d+\.0$').hasMatch(version)) {
     stderr.writeln('usage: dart run scripts/bump_desktop_versions.dart [--beta] [--tag <tag>] <major.minor.patch.0>');
+    stderr.writeln('       dart run scripts/bump_desktop_versions.dart --test <major.minor.patch.revision>');
     stderr.writeln('   eg: dart run scripts/bump_desktop_versions.dart --beta 2.1.0.0');
     stderr.writeln('       (the 4th digit must be 0)');
     stderr.writeln('       --tag overrides the release tag in the download URLs; defaults to pubspec `version:`');
@@ -66,9 +69,11 @@ void main(List<String> args) {
   substitute('windows/runner/Runner.rc', line('#define VERSION_AS_STRING '), '#define VERSION_AS_STRING "$version"');
   substitute('windows/bluebubbles_installer_script.iss', line('#define MyAppVersion '),
       '#define MyAppVersion "$version"');
-  substitute('pubspec.yaml', line('  msix_version: '), '  msix_version: $version');
   substitute('snap/snapcraft.yaml', line('version: '), 'version: $version');
   substitute('linux/build.sh', RegExp(r"""jq '\.version = "[^"]*"'"""), """jq '.version = "$version"'""");
+  // The store msix is built from msix_version and must stay X.Y.Z.0; build.ps1 versions the sideload one.
+  if (test) return;
+  substitute('pubspec.yaml', line('  msix_version: '), '  msix_version: $version');
   // Screenshots are served from the tag, so they keep matching the release they're shown for.
   substitute(flatpakMetainfo, RegExp(r'/refs/tags/v[^/]*/'), '/refs/tags/v${releaseTag()}/');
 
