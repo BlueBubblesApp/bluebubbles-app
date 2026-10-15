@@ -145,23 +145,9 @@ if ($Phase -ne 'Build') {
             '--output-name', 'bluebubbles'
         )
         if ($env:SIGNED_MSIX_IDENTITY) { $msixArgs += @('--identity-name', $env:SIGNED_MSIX_IDENTITY) }
-        # Windows only upgrades to a higher version. Release tags (vX.Y.Z+N, vX.Y.Z+desktop.N) keep msix_version;
-        # every other CI build is versioned off the last release tag, since msix_version is already bumped to the
-        # unreleased version. The revision is runs since the tag's own build, not commits, so force-pushes and
-        # parallel branches can't make it go backwards. The store msix keeps msix_version: the Store requires revision 0.
-        if ($env:GITHUB_ACTIONS -and $env:GITHUB_REF_NAME -notmatch '^v\d+\.\d+\.\d+\+(desktop\.)?\d+$') {
-            $releaseTag = git describe --tags --abbrev=0 --match 'v*+*' --exclude '*-*' --exclude '*android*'
-            $tagSha = git rev-list -n 1 $releaseTag
-            $tagRun = gh api "repos/$env:GITHUB_REPOSITORY/actions/workflows/desktop-builds.yml/runs?head_sha=$tagSha" `
-                --jq '[.workflow_runs[].run_number] | min'
-            if ($tagRun) {
-                $revision = [int]$env:GITHUB_RUN_NUMBER - [int]$tagRun
-                $msixArgs += @('--version', "$($releaseTag -replace '^v(\d+\.\d+\.\d+).*', '$1').$revision")
-            } else {
-                # e.g. a fork, whose run history doesn't include the tag's build.
-                Write-Warning "No desktop-builds run found for release tag $releaseTag; keeping msix_version."
-            }
-        }
+        # Set by CI on test builds (see the version job in desktop-builds.yml). The store msix keeps
+        # msix_version, which the Store requires to end in .0.
+        if ($env:TEST_VERSION) { $msixArgs += @('--version', $env:TEST_VERSION) }
         Invoke-Checked $dartCmd run msix:create @msixArgs
         # fvm swallows the child exit code, so Invoke-Checked can't see a msix failure.
         if (-not (Test-Path 'windows\bluebubbles.msix')) { throw "msix:create did not produce windows\bluebubbles.msix — see the output above." }
