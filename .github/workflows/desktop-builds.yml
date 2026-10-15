@@ -23,6 +23,10 @@ on:
         description: "Sign with the release cert instead of the test cert (implies sign). Artifacts are still not attached to any release."
         type: boolean
         default: false
+      publish_snap:
+        description: "Publish the snap to the edge channel (tags always do)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -328,6 +332,115 @@ jobs:
         with:
           files: bluebubbles-linux-${{ matrix.arch }}.tar.gz
           draft: true
+
+  # Builds the snap from the tarball the linux job just made (snapcraft.yaml sources it from the
+  # repo root) and publishes it: release tags go to stable, beta (-b.) tags to beta, and manual
+  # publish_snap runs to edge only. Every publish also lands on edge so it tracks the newest build.
+  snap:
+    needs: linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bluebubbles-linux-${{ matrix.arch }}
+
+      - name: Build snap
+        id: build
+        uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bluebubbles-snap-${{ matrix.arch }}
+          path: ${{ steps.build.outputs.snap }}
+
+      - name: Publish to store
+        if: (startsWith(github.ref, 'refs/tags/') || inputs.publish_snap) && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        uses: snapcore/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          release: ${{ !startsWith(github.ref, 'refs/tags/') && 'edge' || contains(github.ref_name, '-b.') && 'beta,edge' || 'stable,beta,edge' }}
+
+  # Test-only .flatpak bundle: the live Flathub manifest with the bluebubbles sources swapped for
+  # this run's tarball and this checkout's flatpak/ files. Flathub itself still builds releases.
+  flatpak:
+    needs: linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Checkout Flathub manifest
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: flathub/app.bluebubbles.BlueBubbles
+          path: flathub
+          submodules: true
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bluebubbles-linux-${{ matrix.arch }}
+
+      - name: Point manifest at local sources
+        run: |
+          # The image is a Freedesktop SDK with no package manager; ruamel.yaml ships for flatpak-builder-lint.
+          python3 - <<'EOF'
+          import hashlib
+          from ruamel.yaml import YAML
+          yaml = YAML()
+          tarball = 'bluebubbles-linux-${{ matrix.arch }}.tar.gz'
+          # flatpak-builder keys a local archive's cache on the manifest fields, not the file, so without
+          # sha256 every run reuses the first cached build of the app.
+          sha256 = hashlib.sha256(open(tarball, 'rb').read()).hexdigest()
+          m = yaml.load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
+          m['modules'] = ['flathub/' + x if isinstance(x, str) else x for x in m['modules']]
+          bb = next(x for x in m['modules'] if isinstance(x, dict) and x['name'] == 'bluebubbles')
+          bb['sources'] = [
+              {'type': 'archive', 'path': tarball, 'sha256': sha256, 'dest': 'bluebubbles'},
+              {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.metainfo.xml'},
+              {'type': 'file', 'path': 'flatpak/icon/128x128.png'},
+              {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.desktop'},
+          ]
+          yaml.dump(m, open('app.bluebubbles.BlueBubbles.yml', 'w'))
+          EOF
+
+      - name: Build flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3
+        with:
+          manifest-path: app.bluebubbles.BlueBubbles.yml
+          bundle: bluebubbles-${{ matrix.arch }}.flatpak
+          artifact-name: bluebubbles-flatpak-${{ matrix.arch }}
+          arch: ${{ matrix.arch }}
+          # Passed to build-bundle as --runtime-repo so installing the bundle pulls the GNOME runtime.
+          repository-url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
   # Scans the released downloads with VirusTotal and writes the analysis links to the
   # job summary. Prefers the released installer/msix when present; falls back to the
