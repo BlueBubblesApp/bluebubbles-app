@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:bluebubbles/env.dart';
+import 'package:bluebubbles/services/backend/interfaces/log_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/outputs/log_stream_output.dart';
 import 'package:flutter/foundation.dart';
@@ -227,10 +228,12 @@ class BaseLogger {
       for (final logPath in logPaths) {
         await encoder.addFile(File(logPath));
       }
-      // The per-isolate files are hard to follow on their own; add every isolate's latest file merged into one timeline.
-      final merged = await getLogs(maxLines: 1 << 30);
-      encoder.addArchiveFile(ArchiveFile.string('bluebubbles-merged.log', '${merged.join('\n')}\n'));
+      // The per-isolate files are hard to follow on their own; add them all merged into one timeline.
+      final File mergedFile = File(join(FilesystemSvc.appDocDir.path, "bluebubbles-merged.log"));
+      await LogInterface.writeMergedLog(mergedFile.path);
+      await encoder.addFile(mergedFile);
       await encoder.close();
+      mergedFile.deleteSync();
 
       return zippedLogFile.path;
     } catch (e, stackTrace) {
@@ -261,6 +264,31 @@ class BaseLogger {
     }
   }
 
+  /// Writes every log file, rotated ones included, to [outPath] as one timeline. Each isolate rotates on its own
+  /// schedule, so merging only the latest files would leave uneven coverage. Holds every file in memory at once.
+  Future<void> writeMergedLog(String outPath) async {
+    final entries = <(DateTime, String)>[];
+    for (final file in Directory(logDir).listSync().whereType<File>().where((f) => f.path.endsWith('.log'))) {
+      try {
+        final lines = await file
+            .openRead()
+            .transform(const Utf8Decoder(allowMalformed: true))
+            .transform(const LineSplitter())
+            .toList();
+        entries.addAll(_joinEntries(lines).map((e) => (DateTime.tryParse(e.split(' ').first) ?? DateTime(0), e)));
+      } catch (e, stackTrace) {
+        debugPrint('Error reading ${file.path}: $e\n$stackTrace');
+      }
+    }
+    // Stable, so entries with the same timestamp keep their order within a file.
+    mergeSort(entries, compare: (a, b) => a.$1.compareTo(b.$1));
+    final sink = File(outPath).openWrite();
+    for (final entry in entries) {
+      sink.writeln(entry.$2);
+    }
+    await sink.close();
+  }
+
   /// The last [maxLines] entries of [logFile], with multi-line entries joined.
   Future<List<String>> _readTailEntries(File logFile, int maxLines) async {
     try {
@@ -278,31 +306,7 @@ class BaseLogger {
           .transform(const LineSplitter())
           .toList();
 
-      // Combine lines that are part of the same log message.
-      // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
-      //   ┌──...  (top border — skip)
-      //   │ 2024-...  (content with │ prefix — strip prefix)
-      //   └──...  (bottom border — skip)
-      // Stripping these allows the date-start check below to work for all levels.
-      final List<String> logs = [];
-      String currentLog = '';
-      final dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
-      for (final rawLine in lines) {
-        String line = rawLine.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
-
-        // Skip horizontal box border lines (┌, └, ├).
-        if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) continue;
-        // Strip the vertical-bar prefix used by boxed content lines.
-        if (line.startsWith('│ ')) line = line.substring(2);
-
-        if (dateStart.hasMatch(line)) {
-          if (currentLog.isNotEmpty) logs.add(currentLog);
-          currentLog = line;
-        } else if (currentLog.isNotEmpty) {
-          currentLog += '\n$line';
-        }
-      }
-      if (currentLog.isNotEmpty) logs.add(currentLog);
+      final logs = _joinEntries(lines);
 
       // Safety trim in case startOffset==0 and the file has more entries than maxLines.
       if (logs.length > maxLines) {
@@ -313,6 +317,35 @@ class BaseLogger {
       debugPrint('Error reading ${logFile.path}: $e\n$stackTrace');
       return [];
     }
+  }
+
+  /// Combines lines that are part of the same log message.
+  List<String> _joinEntries(List<String> lines) {
+    // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
+    //   ┌──...  (top border — skip)
+    //   │ 2024-...  (content with │ prefix — strip prefix)
+    //   └──...  (bottom border — skip)
+    // Stripping these allows the date-start check below to work for all levels.
+    final List<String> logs = [];
+    String currentLog = '';
+    final dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
+    for (final rawLine in lines) {
+      String line = rawLine.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
+
+      // Skip horizontal box border lines (┌, └, ├).
+      if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) continue;
+      // Strip the vertical-bar prefix used by boxed content lines.
+      if (line.startsWith('│ ')) line = line.substring(2);
+
+      if (dateStart.hasMatch(line)) {
+        if (currentLog.isNotEmpty) logs.add(currentLog);
+        currentLog = line;
+      } else if (currentLog.isNotEmpty) {
+        currentLog += '\n$line';
+      }
+    }
+    if (currentLog.isNotEmpty) logs.add(currentLog);
+    return logs;
   }
 
   /// Scans [file] backwards in 64 KB chunks looking for newline bytes followed

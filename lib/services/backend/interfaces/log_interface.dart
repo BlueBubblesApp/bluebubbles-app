@@ -24,4 +24,15 @@ class LogInterface {
     }
     return raw.map((e) => ParsedLogEntry.fromMap(Map<String, dynamic>.from(e as Map))).toList();
   }
+
+  /// Writes every log file merged into one timeline to [outPath]. Runs in the [GlobalIsolate], since it reads and
+  /// sorts every log file in full.
+  static Future<void> writeMergedLog(String outPath) async {
+    final data = {'outPath': outPath};
+    if (isIsolate) {
+      await LogActions.writeMergedLog(data);
+    } else {
+      await GetIt.I<GlobalIsolate>().send<void>(IsolateRequestType.writeMergedLog, input: data);
+    }
+  }
 }
