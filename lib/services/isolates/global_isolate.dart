@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 
 /// A base isolate manager for handling background tasks
 /// This class can be extended to create specialized isolates with different entry points
-/// Marker key for the "services initialised" message sent by the spawned isolate.
+/// Marker key for the "services initialized" message sent by the spawned isolate.
 const String _isolateReadyKey = '__isolateReady__';
 
 class GlobalIsolate {
@@ -32,7 +32,7 @@ class GlobalIsolate {
   /// Completer resolved when the spawned isolate sends back its SendPort.
   Completer<void>? _sendPortCompleter;
 
-  /// Completer resolved when the spawned isolate finishes initialising its services.
+  /// Completer resolved when the spawned isolate finishes initializing its services.
   ///
   /// The isolate sends its SendPort *before* running init, so between the handshake
   /// and this completer the isolate looks idle to us while it still has plugin calls
@@ -153,7 +153,7 @@ class GlobalIsolate {
       // Pass only the ReceivePort's SendPort and the RootIsolateToken.
       // The action map is NOT passed via args — each entry point resolves its own
       // action map via the defaultActionMap parameter inside the spawned isolate,
-      // which avoids any cross-isolate serialisation of function closures/typedefs.
+      // which avoids any cross-isolate serialization of function closures/typedefs.
       final rootToken = RootIsolateToken.instance;
       _isolate = await Isolate.spawn(
         getIsolateEntryPoint as void Function(List<dynamic>),
@@ -287,7 +287,7 @@ class GlobalIsolate {
     _drainCompleter = Completer<void>();
 
     if (_pendingRequests.isEmpty) {
-      Logger.info('$isolateDebugName draining complete (0 pending). Stopping once initialised.');
+      Logger.info('$isolateDebugName draining complete (0 pending). Stopping once initialized.');
       unawaited(_stopWhenInitialised()); // clears _drainCompleter and completes it
       return _drainCompleter!.future;
     }
@@ -420,7 +420,7 @@ class GlobalIsolate {
 
     if (message is Map<String, dynamic>) {
       if (message.containsKey(_isolateReadyKey)) {
-        Logger.debug('$isolateDebugName finished initialising services');
+        Logger.debug('$isolateDebugName finished initializing services');
         if (_initCompleter != null && !_initCompleter!.isCompleted) {
           _initCompleter!.complete();
         }
@@ -534,7 +534,7 @@ class GlobalIsolate {
     _idleTimer = Timer(idleTimeout!, () async {
       if (!_isRunning || _pendingRequests.isNotEmpty) return;
 
-      // Nor while services are still initialising — the isolate looks idle here but
+      // Nor while services are still initializing — the isolate looks idle here but
       // has plugin calls in flight, and killing it aborts the process.
       await _awaitInit();
       if (!_isRunning || _pendingRequests.isNotEmpty) return;
@@ -629,7 +629,7 @@ class GlobalIsolate {
     final RootIsolateToken? rootIsolateToken = args.length > 1 ? args[1] : null;
     // Use the action map supplied directly by the entry point (defaultActionMap).
     // This intentionally ignores args[2] — the action map is never passed across the
-    // isolate boundary because serialising generic Map<K, typedef> values is fragile
+    // isolate boundary because serializing generic Map<K, typedef> values is fragile
     // and has been observed to cause a TypeError in debug/JIT that kills the isolate
     // before the SendPort handshake can complete.
     final Map<IsolateRequestType, IsolateAction> actionMap = defaultActionMap;
@@ -639,7 +639,7 @@ class GlobalIsolate {
 
     // Create a receiver for the isolate and send the SendPort back to the main isolate
     // immediately, BEFORE initServices runs.  Any messages the main isolate sends while
-    // services are still initialising are buffered by ReceivePort and delivered once
+    // services are still initializing are buffered by ReceivePort and delivered once
     // receivePort.listen() is called below.  This prevents the startupTimeout from firing
     // when initServices is legitimately slow (e.g. JIT compilation in debug mode).
     final receivePort = ReceivePort();

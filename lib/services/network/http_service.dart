@@ -154,7 +154,7 @@ class HttpService implements BaseApi {
     }
     dio.interceptors.add(ApiInterceptor());
 
-    // Initialise sub-services after dio is ready.
+    // Initialize sub-services after dio is ready.
     server = ServerApi(this);
     fcm = FcmApi(this);
     attachment = AttachmentApi(this);
