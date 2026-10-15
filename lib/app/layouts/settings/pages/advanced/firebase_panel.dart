@@ -42,9 +42,11 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                       child: RichText(
                         text: TextSpan(
                           children: [
-                            const TextSpan(
-                                text:
-                                    "BlueBubbles' main notification provider is Google Firebase, utilizing Firebase Cloud Messaging (FCM). "),
+                            TextSpan(
+                                text: kIsDesktop
+                                    ? "BlueBubbles uses Google Firebase to find your server when its URL changes. "
+                                    : "BlueBubbles' main notification provider is Google Firebase, "
+                                        "utilizing Firebase Cloud Messaging (FCM). "),
                             const TextSpan(
                               text:
                                   "The server has an automated set up process built-in to make it easy to get set up with your very own Firebase Project. ",
@@ -74,7 +76,9 @@ class _FirebasePanelState extends State<FirebasePanel> with ThemeHelpers {
                   ],
                 ),
                 SettingsHeader(
-                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Firebase Cloud Messaging"),
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: kIsDesktop ? "Configuration" : "Firebase Cloud Messaging"),
                 Obx(() {
                   final statusOk = (kIsDesktop || SettingsSvc.settings.firstFcmRegisterDate.value != 0) &&
                       !SettingsSvc.fcmData.isNull;
