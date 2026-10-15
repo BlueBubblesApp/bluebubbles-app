@@ -96,8 +96,8 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           fvm-version: ${{ env.FVM_VERSION }}
 
+      # Restore-only: this runs on tags, whose cache scope no other run can read. pr-check keeps master's warm.
       - name: Restore Gradle cache
-        id: cache-gradle
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
@@ -158,16 +158,6 @@ jobs:
         if: always()
         run: |
           rm -f android/key.properties "$RUNNER_TEMP/release-keystore.jks"
-
-      # Tag-scoped caches are only readable by that same tag, so saving one would just evict master's.
-      - name: Save Gradle cache
-        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ steps.cache-gradle.outputs.cache-primary-key }}
 
       # Flutter lower-cases the flavor for APK filenames but not for bundle paths, and
       # that has moved around between versions, so find the file rather than hardcoding

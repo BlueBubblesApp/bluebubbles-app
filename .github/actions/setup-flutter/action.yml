@@ -35,6 +35,8 @@ runs:
       with:
         path: ~/.pub-cache
         key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+        # A PR that changes the lockfile can't save its own entry, so start from master's and fetch only the difference.
+        restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
 
     # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
     # from Git Bash on the Windows runner, and this form works on all three platforms.
@@ -44,20 +46,48 @@ runs:
 
     # No explicit status check, so the saves inherit the implicit success() — they never
     # persist a half-populated directory left behind by a step that failed.
+    # Master only: a PR's or tag's entry is readable by that ref alone, and at ~0.8 GB each
+    # they push master's shared entries out of the 10 GB repo limit.
     - name: Save Flutter SDK (fvm)
-      if: steps.cache-fvm.outputs.cache-hit != 'true'
+      if: github.ref == 'refs/heads/master' && steps.cache-fvm.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ~/fvm
         key: ${{ steps.cache-fvm.outputs.cache-primary-key }}
+
+    # A superseded entry would otherwise sit there until eviction, and one full set of master's caches is
+    # already close to the 10 GB limit. Needs `actions: write`; a failed cleanup never fails the build.
+    - name: Delete older Flutter SDK caches
+      if: github.ref == 'refs/heads/master' && steps.cache-fvm.outputs.cache-hit != 'true'
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PREFIX: fvm-${{ runner.os }}-${{ runner.arch }}-
+        KEEP: ${{ steps.cache-fvm.outputs.cache-primary-key }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+          --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+      shell: bash
 
     - name: Pub get
       run: dart pub global run fvm:main flutter pub get --enforce-lockfile
       shell: bash
 
     - name: Save pub packages
-      if: steps.cache-pub.outputs.cache-hit != 'true'
+      if: github.ref == 'refs/heads/master' && steps.cache-pub.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ~/.pub-cache
         key: ${{ steps.cache-pub.outputs.cache-primary-key }}
+
+    - name: Delete older pub caches
+      if: github.ref == 'refs/heads/master' && steps.cache-pub.outputs.cache-hit != 'true'
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PREFIX: pub-${{ runner.os }}-${{ runner.arch }}-
+        KEEP: ${{ steps.cache-pub.outputs.cache-primary-key }}
+      run: |
+        gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+          --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
+      shell: bash
