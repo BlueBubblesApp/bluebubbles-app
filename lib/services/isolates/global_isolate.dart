@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/services/isolates/isolate_actions.dart';
@@ -158,7 +159,8 @@ class GlobalIsolate {
       _isolate = await Isolate.spawn(
         getIsolateEntryPoint as void Function(List<dynamic>),
         [_receivePort!.sendPort, rootToken],
-        debugName: isolateDebugName,
+        // Globals aren't copied into the new isolate, so the bubble engine's prefix travels in its name.
+        debugName: '${logNamePrefix ?? ''}$isolateDebugName',
         onExit: _exitPort!.sendPort,
         onError: _errorPort!.sendPort,
       );
