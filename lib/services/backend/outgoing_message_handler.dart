@@ -622,7 +622,7 @@ class OutgoingMessageHandler {
   ///
   /// Attachment metadata carries the original source path so the file can be
   /// copied without loading it into memory (except GIFs, which need
-  /// optimisation).
+  /// optimization).
   Future<void> prepAttachment(Chat c, Message m, Attachment? attachment) async {
     if (attachment == null) {
       throw StateError('Missing attachment for sendAttachment prep on message ${m.guid}');

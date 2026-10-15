@@ -31,7 +31,7 @@ dart run scripts/bump_desktop_versions.dart --tag 2.1.0+91 2.1.0.0   # desktop-o
 
 `--tag` (also `--tag=…`) overrides the release tag the flatpak
 `<url>` and screenshots point at — use it when the desktop build gets its own tag instead of riding the pubspec one.
-A leading `v` and any `+` are normalised for you.
+A leading `v` and any `+` are normalized for you.
 
 Dart rather than shell so there's one implementation for both PowerShell and bash. It runs from any
 cwd and preserves each file's existing line endings (the working tree is CRLF under `core.autocrlf`
