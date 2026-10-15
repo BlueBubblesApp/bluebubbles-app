@@ -145,8 +145,9 @@ List<Widget> buildSettingItemList({
               ),
             ),
 
-          if (Platform.isAndroid) const SettingsDivider(),
-          if (Platform.isAndroid)
+          // Linux can't schedule notifications.
+          if (Platform.isAndroid || Platform.isWindows) const SettingsDivider(),
+          if (Platform.isAndroid || Platform.isWindows)
             SearchableSettingItem(
               title: "Message Reminders",
               searchTags: ["Message Reminders"],
