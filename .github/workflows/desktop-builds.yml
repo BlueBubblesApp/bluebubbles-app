@@ -40,11 +40,11 @@ env:
 
 jobs:
   # Test builds can't reuse the checked-in version: it's already bumped to the unreleased one, and Windows
-  # won't install an msix over one with the same or a higher version. So every build but a release tag is
-  # versioned <last release tag>.<runs since that tag's build>, which keeps going up across branches and
-  # force-pushes. Empty on release tags, so they ship the checked-in version.
+  # won't install an msix over one with the same or a higher version. So every manual run is versioned
+  # <last release tag>.<runs since that tag's build>, which keeps going up across branches and force-pushes.
+  # Tag pushes skip the steps and ship the checked-in version. The job itself always runs: the build jobs
+  # need it, and a skipped job would skip them too.
   version:
-    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
     permissions:
       contents: read
       actions: read
@@ -54,16 +54,17 @@ jobs:
       test-version: ${{ steps.version.outputs.test-version }}
     steps:
       - name: Checkout code
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
 
       - name: Compute test version
+        if: github.event_name == 'workflow_dispatch'
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+(desktop\.)?[0-9]+$ ]]; then exit 0; fi
           tag=$(git describe --tags --abbrev=0 --match 'v*+*' --exclude '*-*' --exclude '*android*')
           tag_run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/desktop-builds.yml/runs?head_sha=$(git rev-list -n 1 "$tag")" \
             --jq '[.workflow_runs[].run_number] | min // empty') || tag_run=''
