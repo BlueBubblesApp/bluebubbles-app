@@ -48,6 +48,8 @@ class RotatingFileOutput extends LogOutput {
 
   @override
   Future<void> init() async {
+    // Called again each time the logger is rebuilt around this output.
+    if (_raf != null) return;
     try {
       _file = File(join(dirPath, latestFileName));
       if (!_file!.existsSync()) {

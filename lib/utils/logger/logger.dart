@@ -47,7 +47,9 @@ class BaseLogger {
     return 'bluebubbles-${_isolateName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}';
   }
 
-  LoggerFactory.LogOutput get fileOutput {
+  // One instance per isolate: the logger is rebuilt on every settings change, and a new output each time
+  // would leave the old file handle open.
+  late final LoggerFactory.LogOutput fileOutput = () {
     final baseFileOutput = RotatingFileOutput(
       dirPath: logDir,
       filePrefix: _filePrefix,
@@ -58,7 +60,7 @@ class BaseLogger {
 
     // Wrap with ANSI stripper to ensure file is valid UTF-8
     return FileOutputWrapper(baseFileOutput);
-  }
+  }();
 
   LoggerFactory.LogOutput get defaultOutput {
     List<LogOutput> outputs = kDebugMode ? [DebugConsoleOutput()] : [];
