@@ -185,7 +185,7 @@ class AttachmentState {
     }
   }
 
-  /// Updates image dimensions simultaneously to minimise rebuilds.
+  /// Updates image dimensions simultaneously to minimize rebuilds.
   void updateDimensionsInternal(int? newWidth, int? newHeight) {
     if (width.value != newWidth) {
       width.value = newWidth;
@@ -293,7 +293,7 @@ class AttachmentState {
     if (uploadPreviewFile.value != file) uploadPreviewFile.value = file;
   }
 
-  /// Synchronises [downloadProgress] AND [resolvedFile] with [controller] for
+  /// Synchronizes [downloadProgress] AND [resolvedFile] with [controller] for
   /// the duration of the active download.
   ///
   /// Unlike the old [syncDownloadProgressInternal], this also sets up a

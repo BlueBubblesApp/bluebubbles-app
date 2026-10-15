@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Sentence-case section label for an [M3ESection] group. The accent colour is
-/// `colorScheme.primary`, which on the conversation details page is the chat's bubble colour.
+/// Sentence-case section label for an [M3ESection] group. The accent color is
+/// `colorScheme.primary`, which on the conversation details page is the chat's bubble color.
 class M3ESectionHeader extends StatelessWidget {
   final String label;
   final Widget? trailing;

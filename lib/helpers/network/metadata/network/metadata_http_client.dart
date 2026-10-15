@@ -113,7 +113,7 @@ class MetadataHttpClient {
   /// The old code sent either Dart's default `Dart/3.x (dart:io)` — which most
   /// large sites answer with a 403 or a JavaScript shell — or a Google+
   /// snippet-fetcher string for a service that was shut down in 2019. Sites
-  /// recognise and serve Open Graph tags to the Facebook crawler string, and
+  /// recognize and serve Open Graph tags to the Facebook crawler string, and
   /// the appended product token keeps us honest about who is actually asking.
   static const String userAgent =
       'Mozilla/5.0 (compatible; facebookexternalhit/1.1; +http://www.facebook.com/externalhit_uatext.php) '

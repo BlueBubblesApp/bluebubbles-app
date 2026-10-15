@@ -96,7 +96,7 @@ class CupertinoUrlPreview extends StatelessWidget {
               if (controller.needsManualLoad.value && !inReply) _buildLoadPreviewButton(context),
               if (controller.needsManualLoad.value && !inReply) const SizedBox(height: 8),
               // Two nested rows so the two trailing/leading elements can align
-              // differently: the spinner centres against the whole text block,
+              // differently: the spinner centers against the whole text block,
               // while the favicon stays level with the first line of it.
               Row(
                 // Full width with the spinner pushed to the trailing edge, rather
@@ -268,7 +268,7 @@ class CupertinoUrlPreview extends StatelessWidget {
   ///
   /// Trailing because the favicon leads; it sits in the space the favicon used
   /// to occupy, so nothing else on the card shifts while it is up. Vertically
-  /// centred against the text block by the row that holds it.
+  /// centered against the text block by the row that holds it.
   Widget _buildRefreshIndicator(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 10),
