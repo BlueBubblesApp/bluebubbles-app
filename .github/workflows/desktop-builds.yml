@@ -39,12 +39,50 @@ env:
   RELEASE_SIGNING: ${{ startsWith(github.ref, 'refs/tags/') || inputs.release_signing }}
 
 jobs:
+  # Test builds can't reuse the checked-in version: it's already bumped to the unreleased one, and Windows
+  # won't install an msix over one with the same or a higher version. So every build but a release tag is
+  # versioned <last release tag>.<runs since that tag's build>, which keeps going up across branches and
+  # force-pushes. Empty on release tags, so they ship the checked-in version.
+  version:
+    if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      test-version: ${{ steps.version.outputs.test-version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Compute test version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+(desktop\.)?[0-9]+$ ]]; then exit 0; fi
+          tag=$(git describe --tags --abbrev=0 --match 'v*+*' --exclude '*-*' --exclude '*android*')
+          tag_run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/desktop-builds.yml/runs?head_sha=$(git rev-list -n 1 "$tag")" \
+            --jq '[.workflow_runs[].run_number] | min // empty') || tag_run=''
+          if [ -z "$tag_run" ]; then
+            # e.g. a fork, whose run history doesn't include the tag's build.
+            echo "::warning::No desktop-builds run found for $tag; keeping the checked-in version."
+            exit 0
+          fi
+          base=${tag#v}
+          version="${base%%+*}.$((GITHUB_RUN_NUMBER - tag_run))"
+          echo "test-version=$version" >> "$GITHUB_OUTPUT"
+          echo "Test build version: $version" >> "$GITHUB_STEP_SUMMARY"
+
   windows:
+    needs: version
     # See the note at the top about android tags.
     if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
     permissions:
       contents: write
-      actions: read # build.ps1 looks up the release tag's run number
     runs-on: windows-latest
     timeout-minutes: 60
     env:
@@ -54,8 +92,6 @@ jobs:
         run: git config --system core.longpaths true
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0 # build.ps1 versions test msix builds off the last release tag
 
       # Also resolves dependencies, so build.ps1's own pub get below is a no-op.
       - name: Setup Flutter
@@ -70,6 +106,11 @@ jobs:
 
       - name: Cache native build downloads
         uses: ./.github/actions/cache-native-deps
+
+      - name: Stamp test version
+        if: needs.version.outputs.test-version != ''
+        run: dart scripts/bump_desktop_versions.dart --test "${{ needs.version.outputs.test-version }}"
+        shell: bash
 
       # Inno Setup 6 is preinstalled on the windows-latest runner image.
       - name: Build app (phase 1)
@@ -144,7 +185,7 @@ jobs:
           # MakeAppx requires ", " (comma-space) between RDNs — bare commas fail with 0x80080204.
           SIGNED_MSIX_PUBLISHER: "${{ env.RELEASE_SIGNING == 'true' && 'CN=SignPath Foundation, O=SignPath Foundation, L=Lewes, S=Delaware, C=US' || 'CN=Test certificate for ''BlueBubbles [OSS]''' }}"
           SIGNED_MSIX_IDENTITY: BlueBubbles.BlueBubbles
-          GH_TOKEN: ${{ github.token }}
+          TEST_VERSION: ${{ needs.version.outputs.test-version }}
 
       - name: Upload unsigned installer artifact
         id: upload-installer
@@ -275,6 +316,7 @@ jobs:
           draft: true
 
   linux:
+    needs: version
     # See the note at the top about android tags.
     if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'android')) }}
     permissions:
@@ -321,6 +363,10 @@ jobs:
       - name: Cache native build downloads
         uses: ./.github/actions/cache-native-deps
 
+      - name: Stamp test version
+        if: needs.version.outputs.test-version != ''
+        run: dart scripts/bump_desktop_versions.dart --test "${{ needs.version.outputs.test-version }}"
+
       - name: Build
         run: bash linux/build.sh
 
@@ -341,7 +387,7 @@ jobs:
   # repo root) and publishes it: release tags go to stable, beta (-b.) tags to beta, and manual
   # publish_snap runs to edge only. Every publish also lands on edge so it tracks the newest build.
   snap:
-    needs: linux
+    needs: [version, linux]
     strategy:
       fail-fast: false
       matrix:
@@ -363,6 +409,12 @@ jobs:
         with:
           name: bluebubbles-linux-${{ matrix.arch }}
 
+      # The app inside already carries the test version from the linux job; this is the snap's own.
+      - name: Stamp test version
+        if: needs.version.outputs.test-version != ''
+        run: |
+          sed -i 's/^version: .*/version: ${{ needs.version.outputs.test-version }}/' snap/snapcraft.yaml
+
       - name: Build snap
         id: build
         uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79
@@ -383,7 +435,7 @@ jobs:
   # Test-only .flatpak bundle: the live Flathub manifest with the bluebubbles sources swapped for
   # this run's tarball and this checkout's flatpak/ files. Flathub itself still builds releases.
   flatpak:
-    needs: linux
+    needs: [version, linux]
     strategy:
       fail-fast: false
       matrix:
@@ -417,8 +469,16 @@ jobs:
         run: |
           # The image is a Freedesktop SDK with no package manager; ruamel.yaml ships for flatpak-builder-lint.
           python3 - <<'EOF'
+          import datetime
           import hashlib
           from ruamel.yaml import YAML
+          # Flatpak takes its version from the newest <release>, so a test build gets its own.
+          version = '${{ needs.version.outputs.test-version }}'
+          if version:
+              metainfo = 'flatpak/app.bluebubbles.BlueBubbles.metainfo.xml'
+              release = f'<release date="{datetime.date.today()}" version="{version}" type="development" />'
+              xml = open(metainfo).read().replace('<releases>', f'<releases>\n    {release}', 1)
+              open(metainfo, 'w').write(xml)
           yaml = YAML()
           tarball = 'bluebubbles-linux-${{ matrix.arch }}.tar.gz'
           # flatpak-builder keys a local archive's cache on the manifest fields, not the file, so without
