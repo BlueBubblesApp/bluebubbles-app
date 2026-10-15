@@ -39,9 +39,10 @@ jobs:
     # Checking the tag ref and not just the name, otherwise a manual run from a branch
     # like joel/fix-desktop-notifs would skip too.
     if: ${{ !(startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, 'desktop')) }}
-    # Needed by the release attach step on the apk leg.
+    # Read-only: this job runs gradle plugins and pub build hooks, which could otherwise push
+    # to the repo or edit releases. The release job below does the one write.
     permissions:
-      contents: write
+      contents: read
     # Keeps the keystore secrets out of reach of workflows on other branches. Add a
     # required reviewer under Settings > Environments if you want runs that touch the
     # signing key to need approval.
@@ -95,18 +96,9 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           fvm-version: ${{ env.FVM_VERSION }}
-
-      # Restore-only: this runs on tags, whose cache scope no other run can read. pr-check keeps master's warm.
-      - name: Restore Gradle cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ matrix.flavor }}-${{ hashFiles('android/**/*.gradle', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-${{ matrix.flavor }}-
-            gradle-${{ runner.os }}-
+          # No caches in a signed build, Gradle's included: an entry is written by whatever ran in some
+          # earlier master build, so anything that ever got code execution there would ship here too.
+          cache: "false"
 
       # pubspec.yaml declares .env as an asset, so the build fails without it. The key
       # itself is desktop-only - dotenv.load() is behind `if (kIsDesktop)` in main.dart
@@ -189,16 +181,34 @@ jobs:
           name: ${{ matrix.artifact }}
           path: out/${{ matrix.filename }}
 
-      # APK only - the bundle is for Play and stays an artifact. Fires on any tag ref,
-      # which includes picking a tag in the Run workflow dropdown, not just a tag push.
-      #
-      # Keep draft: true. Without it the action publishes the release the moment this
-      # upload finishes, and android finishes well before the SignPath round trip in
-      # desktop-builds.yml, so the release would go live with the desktop artifacts
-      # still missing. It also means a mistaken run only adds an asset to a draft.
+  # APK only - the bundle is for Play and stays an artifact. Fires on any tag ref,
+  # which includes picking a tag in the Run workflow dropdown, not just a tag push.
+  #
+  # Its own job so the write token never shares a runner with the gradle build.
+  # Nothing from the repo runs here, so there's no checkout.
+  #
+  # Keep draft: true. Without it the action publishes the release the moment this
+  # upload finishes, and android finishes well before the SignPath round trip in
+  # desktop-builds.yml, so the release would go live with the desktop artifacts
+  # still missing. It also means a mistaken run only adds an asset to a draft.
+  release:
+    needs: build
+    # A failed aab leg fails `build` as a whole, but the APK leg may still have produced its
+    # artifact; if it didn't, the download below fails instead.
+    if: ${{ !cancelled() && needs.build.result != 'skipped' && startsWith(github.ref, 'refs/tags/') }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bluebubbles-android-apk
+          path: out
+
       - name: Attach APK to release
-        if: ${{ matrix.target == 'apk' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
-          files: out/${{ matrix.filename }}
+          files: out/bluebubbles-app-prod-release.apk
           draft: true
