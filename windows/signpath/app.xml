@@ -6,10 +6,6 @@
     </pe-file>
     <pe-file-set>
       <include path="d3dcompiler_47.dll" />
-      <include path="libEGL.dll" />
-      <include path="libGLESv2.dll" />
-      <include path="vk_swiftshader.dll" />
-      <include path="vulkan-1.dll" />
       <include path="WebView2Loader.dll" />
       <for-each>
         <authenticode-verify />
@@ -36,8 +32,10 @@
       <include path="flutter_windows.dll" />
       <include path="geolocator_windows_plugin.dll" />
       <include path="libbz2-1.dll" />
+      <include path="libEGL.dll" />
       <include path="libffmpegkit.dll" />
       <include path="libgcc_s_seh-1.dll" />
+      <include path="libGLESv2.dll" />
       <include path="libiconv-2.dll" />
       <include path="liblzma-5.dll" />
       <include path="libmpv-2.dll" />
@@ -65,6 +63,8 @@
       <include path="swscale-9.dll" />
       <include path="tray_manager_plugin.dll" />
       <include path="url_launcher_windows_plugin.dll" />
+      <include path="vk_swiftshader.dll" />
+      <include path="vulkan-1.dll" />
       <include path="window_manager_plugin.dll" />
       <include path="windows_taskbar_plugin.dll" />
       <include path="zlib.dll" />
