@@ -230,10 +230,9 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                for (Chat element in controller.selectedChats) {
-                                  ChatsSvc.removeChat(element);
-                                  ChatsSvc.softDeleteChat(element);
+                              onPressed: () async {
+                                for (final element in controller.selectedChats.toList()) {
+                                  await ChatsSvc.recoverablyDeleteChat(element);
                                 }
                                 controller.clearSelectedChats();
                               },

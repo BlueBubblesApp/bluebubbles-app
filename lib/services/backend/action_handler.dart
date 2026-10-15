@@ -153,8 +153,34 @@ class ActionHandler extends GetxService {
           // Route through ChatsService so the ChatState the conversation list
           // renders from is updated too. Writing only to the DB row leaves the
           // unread dot stale until the state is rebuilt (open chat / restart).
-          await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
+          await ChatsSvc.setChatHasUnreadFromServer(chat, !data["read"]!);
         }
+        return;
+      case "chat-deleted":
+        final chatGuid = data["chatGuid"] ?? data["guid"];
+        if (chatGuid is! String || chatGuid.isEmpty) {
+          Logger.warn("Ignoring chat-deleted event without a valid chat GUID", tag: "ActionHandler");
+          return;
+        }
+
+        final deletedChat = Chat.findOne(guid: chatGuid);
+        if (deletedChat == null) {
+          Logger.warn("Ignoring chat-deleted event for unknown chat $chatGuid", tag: "ActionHandler");
+          return;
+        }
+        if (deletedChat.dateDeleted != null) {
+          Logger.info("Ignoring duplicate chat-deleted event for $chatGuid", tag: "ActionHandler");
+          return;
+        }
+
+        if (ChatsSvc.hasLocalWorkForChat(chatGuid)) {
+          await ChatStateReconciler.deferDeletion(chatGuid);
+          Logger.warn("Deferring server chat deletion because $chatGuid has local work", tag: "ActionHandler");
+          return;
+        }
+
+        await ChatsSvc.softDeleteChatLocalOnly(deletedChat);
+        Logger.info("Applied server chat deletion for $chatGuid", tag: "ActionHandler");
         return;
       case "typing-indicator":
         final chat = ChatsSvc.findChatByGuid(data["guid"]);

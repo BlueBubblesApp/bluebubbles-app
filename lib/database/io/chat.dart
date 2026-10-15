@@ -16,6 +16,14 @@ import 'package:get/get.dart' hide Response;
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
+/// The unread state an incoming message should leave on its chat, or null to
+/// leave it unchanged. A message Apple already reports as read must not mark
+/// the chat unread: its read event can be applied before the message arrives.
+bool? unreadAfterIncomingMessage({required bool isFromMe, required DateTime? dateRead}) {
+  if (isFromMe) return false;
+  return dateRead == null ? true : null;
+}
+
 @Entity()
 class Chat {
   int? id;
@@ -421,10 +429,10 @@ class Chat {
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer) {
-      // Simple logic: mark read if from me, mark unread if not
-      if (message.isFromMe!) {
+      final unread = unreadAfterIncomingMessage(isFromMe: message.isFromMe!, dateRead: message.dateRead);
+      if (unread == false) {
         await toggleHasUnreadAsync(false, clearLocalNotifications: clearNotificationsIfFromMe, privateMark: false);
-      } else {
+      } else if (unread == true) {
         await toggleHasUnreadAsync(true, privateMark: false);
       }
     }

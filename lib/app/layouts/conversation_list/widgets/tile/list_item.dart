@@ -81,8 +81,41 @@ class ListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // No need for Obx here - ConversationTile handles its own reactivity
-    final tile = ConversationTile(
+    // ConversationTile handles its own reactivity; this Obx only tracks an in-flight delete.
+    final tile = Obx(() {
+      final deleting = ChatsSvc.pendingDeletes.contains(chat.guid);
+      return IgnorePointer(
+        ignoring: deleting,
+        child: Stack(
+          children: [
+            AnimatedOpacity(
+              opacity: deleting ? 0.4 : 1,
+              duration: const Duration(milliseconds: 150),
+              child: _tile,
+            ),
+            if (deleting)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Text("Deleting…", style: context.theme.textTheme.labelLarge),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    });
+
+    if (SettingsSvc.settings.swipableConversationTiles.value) {
+      return _swipable(tile);
+    } else {
+      return tile;
+    }
+  }
+
+  Widget get _tile => ConversationTile(
       key: Key(chat.guid),
       chat: chat,
       controller: controller,
@@ -97,11 +130,18 @@ class ListItem extends StatelessWidget {
       },
     );
 
-    if (SettingsSvc.settings.swipableConversationTiles.value) {
-      return Dismissible(
+  Widget _swipable(Widget tile) {
+    return Dismissible(
         background: (kIsDesktop || kIsWeb) ? null : Obx(() => slideBackground(chat, false)),
         secondaryBackground: (kIsDesktop || kIsWeb) ? null : Obx(() => slideBackground(chat, true)),
         key: UniqueKey(),
+        confirmDismiss: (direction) async {
+          final action = direction == DismissDirection.endToStart ? leftAction : rightAction;
+          if (action == MaterialSwipeAction.delete) {
+            return ChatsSvc.recoverablyDeleteChat(chat);
+          }
+          return true;
+        },
         onDismissed: (direction) {
           MaterialSwipeAction action;
           if (direction == DismissDirection.endToStart) {
@@ -121,8 +161,8 @@ class ListItem extends StatelessWidget {
               chat.toggleMuteAsync(chat.muteType != "mute");
             }
           } else if (action == MaterialSwipeAction.delete) {
-            ChatsSvc.removeChat(chat);
-            ChatsSvc.softDeleteChat(chat);
+            // Deletion completed in confirmDismiss so a failed server request
+            // cancels the dismiss and leaves the local tile untouched.
           } else if (action == MaterialSwipeAction.mark_read) {
             final chatState = ChatsSvc.getChatState(chat.guid);
             if (chatState != null) {
@@ -138,8 +178,5 @@ class ListItem extends StatelessWidget {
         },
         child: tile,
       );
-    } else {
-      return tile;
-    }
   }
 }
