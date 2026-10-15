@@ -129,7 +129,8 @@ class BaseLogger {
 
   Future<void> init() async {
     // Before createLogger(): the file output is named after the isolate.
-    _isolateName = isolateNameOverride ?? Isolate.current.debugName ?? "main";
+    final name = isolateNameOverride ?? Isolate.current.debugName ?? "main";
+    _isolateName = logNamePrefix == null ? name : (name == "main" ? logNamePrefix! : "$logNamePrefix$name");
     _logger = createLogger();
 
     if (SettingsSvc.initCompleted.isCompleted) {
