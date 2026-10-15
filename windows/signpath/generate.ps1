@@ -19,14 +19,15 @@ if (-not $ReleaseDir) {
 
 if (-not (Test-Path $ReleaseDir)) { throw "no Release build at $ReleaseDir" }
 
-# Vendor DLLs (ANGLE, SwiftShader, Vulkan, WebView2, D3D) arrive already signed by
-# Microsoft/Google: SignPath must verify those and sign everything else. Read that
-# split off the binaries themselves rather than keeping a list in sync by hand.
+# Microsoft-signed vendor DLLs (WebView2, D3D) are verified; everything else is signed.
+# That includes media_kit's Google-signed ANGLE/SwiftShader/Vulkan DLLs, whose signatures
+# SignPath stopped accepting. Read the split off the binaries themselves rather than
+# keeping a list in sync by hand.
 $dlls = Get-ChildItem "$ReleaseDir\*.dll" | Sort-Object Name
 if (-not $dlls) { throw "no DLLs in $ReleaseDir - is the build complete?" }
 
 $presigned = @($dlls | Get-AuthenticodeSignature |
-    Where-Object { $_.Status -ne 'NotSigned' } |
+    Where-Object { $_.Status -ne 'NotSigned' -and $_.SignerCertificate.Subject -match 'O=Microsoft Corporation' } |
     ForEach-Object { Split-Path $_.Path -Leaf })
 $unsigned = @($dlls.Name | Where-Object { $presigned -notcontains $_ })
 
@@ -34,7 +35,7 @@ function Includes($names, $indent) {
     ($names | ForEach-Object { "$indent<include path=`"$_`" />" }) -join "`n"
 }
 
-# App payload: sign the exe and every DLL we or a plugin built; verify the vendor ones.
+# App payload: sign the exe and every DLL; verify the Microsoft-signed ones.
 @"
 <?xml version="1.0" encoding="utf-8"?>
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
