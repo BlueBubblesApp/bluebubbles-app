@@ -35,6 +35,11 @@ class FlutterWindow : public Win32Window {
 
   // Channel for Microsoft Store in-app updates.
   std::unique_ptr<flutter::MethodChannel<>> store_channel_;
+
+  // Delivers toast activations forwarded from a second instance (see toast_forwarder.h).
+  std::unique_ptr<flutter::MethodChannel<>> notification_channel_;
+
+  void ForwardToastActivation(const COPYDATASTRUCT& cds);
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
