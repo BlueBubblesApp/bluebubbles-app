@@ -77,7 +77,8 @@ class NotificationsService {
   /// sends actions to the wrong app
   ///
   /// Store value must equal msix_config.toast_activator.clsid (pubspec.yaml), sideload
-  /// value --toast-activator-clsid (windows/build.ps1).
+  /// value --toast-activator-clsid (windows/build.ps1), exe value kExeToastActivatorClsid
+  /// (windows/runner/toast_forwarder.cpp).
   ///
   /// DO NOT CHANGE THESE
   static const String _storeMsixNotificationGuid = '1c09a4af-0327-4a79-a0f3-a1404df74ed1';

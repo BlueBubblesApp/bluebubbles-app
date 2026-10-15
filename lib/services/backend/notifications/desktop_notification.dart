@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_windows/src/details/notification_to_xml.dart';
 import 'package:timezone/timezone.dart';
@@ -163,7 +164,29 @@ class DesktopNotifications {
     }
   }
 
-  static void registerPlugin(FlutterLocalNotificationsPlugin plugin) => _plugin = plugin;
+  static void registerPlugin(FlutterLocalNotificationsPlugin plugin) {
+    _plugin = plugin;
+    if (Platform.isWindows) _forwardedActivations.setMethodCallHandler(_handleForwardedActivation);
+  }
+
+  /// Toast activations that Windows delivered to a second process instead of this one; the runner's
+  /// toast_forwarder hands them back here.
+  static const MethodChannel _forwardedActivations = MethodChannel('bluebubbles/notifications');
+
+  static Future<void> _handleForwardedActivation(MethodCall call) async {
+    if (call.method != 'activate') return;
+    final Map<dynamic, dynamic> args = call.arguments as Map;
+    final String payload = args['payload'] as String? ?? '';
+    Logger.info('Received toast activation forwarded from a second instance', tag: 'DesktopNotifications');
+    handleResponse(NotificationResponse(
+      notificationResponseType: payload.isEmpty
+          ? NotificationResponseType.selectedNotification
+          : NotificationResponseType.selectedNotificationAction,
+      payload: payload,
+      actionId: payload,
+      data: Map<String, dynamic>.from(args['data'] as Map? ?? const {}),
+    ));
+  }
 
   static void registerMessageInteractionHandler(
     FutureOr<void> Function(DesktopMessageInteraction interaction)? handler,
