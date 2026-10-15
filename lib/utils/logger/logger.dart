@@ -394,9 +394,17 @@ class BaseLogger {
       final Directory logDir = Directory(Logger.logDir);
       if (!logDir.existsSync()) return;
 
-      for (final file in logDir.listSync()) {
-        if (file is File) {
-          file.deleteSync();
+      for (final file in logDir.listSync().whereType<File>()) {
+        try {
+          // Every isolate keeps its latest file open; deleting it would throw on Windows and orphan the
+          // writer's handle elsewhere. Writers seek to the end, so they pick up the truncation.
+          if (file.path.endsWith('-latest.log')) {
+            file.writeAsBytesSync([]);
+          } else {
+            file.deleteSync();
+          }
+        } catch (e) {
+          debugPrint("Error clearing ${file.path}: $e");
         }
       }
     } catch (e, stackTrace) {

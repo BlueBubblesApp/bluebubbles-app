@@ -14,10 +14,15 @@ import 'package:path/path.dart';
 ///
 ///  * An event is written with a single synchronous write, so it reaches the OS
 ///    before the log call returns and survives the process crashing right after.
-///  * Dart never opens files with O_APPEND: [FileMode.append] seeks to the end once
-///    at open, and the single writer's position stays at the end from there on.
-///  * Rotation copies the file, truncates it in place and rewinds the handle to
-///    match, so the handle stays valid.
+///  * Dart never opens files with O_APPEND: [FileMode.append] seeks to the end only
+///    once, at open. So every write seeks to the end first, or a truncation by
+///    anyone else ([BaseLogger.clearLogs], another bubble rotating) would leave
+///    this handle at its old offset and the next write would pad the file with zeros.
+///  * Rotation copies the file and truncates it in place, so the handle stays valid.
+///
+/// Android bubbles are the one shared-writer case: every bubble engine logs under
+/// the same prefix. Seeking first keeps them from overwriting each other, but two
+/// writes in the same instant can still collide.
 ///
 /// All failures are swallowed so the logger never crashes the app.
 class RotatingFileOutput extends LogOutput {
@@ -66,6 +71,7 @@ class RotatingFileOutput extends LogOutput {
     final raf = _raf;
     if (raf == null || event.lines.isEmpty) return;
     try {
+      raf.setPositionSync(raf.lengthSync());
       // One write per event, never one per line, so multi-line events stay together.
       raf.writeFromSync(encoding.encode('${event.lines.join('\n')}\n'));
       if (raf.positionSync() >= _maxBytes) _rotate(raf);
@@ -74,12 +80,13 @@ class RotatingFileOutput extends LogOutput {
 
   void _rotate(RandomAccessFile raf) {
     try {
+      // Another writer may have rotated between our write and this check.
+      if (raf.lengthSync() < _maxBytes) return;
+
       final now = DateTime.now();
       final date = now.toIso8601String().split('T').first;
       _file!.copySync(join(dirPath, '$filePrefix-$date-${now.millisecondsSinceEpoch ~/ 1000}.log'));
       raf.truncateSync(0);
-      // Without O_APPEND the next write would land at the old offset, leaving a gap of zeros.
-      raf.setPositionSync(0);
       _pruneOldFiles();
     } catch (_) {
       // Rotation must never crash the logger. The file stays oversized and we
