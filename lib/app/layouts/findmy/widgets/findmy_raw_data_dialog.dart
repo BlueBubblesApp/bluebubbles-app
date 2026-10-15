@@ -15,10 +15,7 @@ class FindMyRawDataDialog extends StatelessWidget {
     final str = encoder.convert(item.toJson());
 
     return AlertDialog(
-      title: Text(
-        "Raw FindMy Data",
-        style: context.theme.textTheme.titleLarge,
-      ),
+      title: Text("Raw FindMy Data", style: context.theme.textTheme.titleLarge),
       backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
       content: SizedBox(
         width: NavigationSvc.width(context) * 3 / 5,
@@ -26,19 +23,18 @@ class FindMyRawDataDialog extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(10.0),
           decoration: BoxDecoration(
-              color: context.theme.colorScheme.surface, borderRadius: const BorderRadius.all(Radius.circular(10))),
-          child: SingleChildScrollView(
-            child: SelectableText(
-              str,
-              style: context.theme.textTheme.bodyLarge,
-            ),
+            color: context.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
           ),
+          child: SingleChildScrollView(child: SelectableText(str, style: context.theme.textTheme.bodyLarge)),
         ),
       ),
       actions: [
         TextButton(
-          child: Text("Close",
-              style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+          child: Text(
+            "Close",
+            style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ],
