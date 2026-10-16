@@ -1,4 +1,5 @@
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/ui/theme_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -40,7 +41,7 @@ class ChatDetailTheme {
     // and text sit on throughout this page, and using them as `primary` reads as low-contrast/muddy
     // (e.g. "Show more" text, the "Add people" tonal icon) especially in dark mode.
     return ChatDetailTheme(
-      theme: baseTheme,
+      theme: baseTheme.withEmojiFallback,
       headerColor: scaffoldHeaderColor,
       tileColor: scaffoldTileColor,
     );
