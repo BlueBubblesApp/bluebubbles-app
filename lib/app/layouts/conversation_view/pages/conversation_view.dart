@@ -243,7 +243,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
             : colorScheme.onBubble(context, chat.isIMessage);
 
         return Theme(
-          data: baseTheme.copyWith(
+          data: baseTheme.withEmojiFallback.copyWith(
             // Override primary color with our custom bubble color.
             primaryColor: bubbleColor,
             colorScheme: colorScheme.copyWith(

@@ -336,14 +336,14 @@ class Main extends StatelessWidget {
       builder: (theme, darkTheme) => GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'BlueBubbles',
-        theme: theme.copyWith(
+        theme: theme.withEmojiFallback.copyWith(
           appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0),
           dialogTheme: DialogThemeData(
             barrierColor: theme.colorScheme.shadow.withValues(alpha: 0.6),
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ),
-        darkTheme: darkTheme.copyWith(
+        darkTheme: darkTheme.withEmojiFallback.copyWith(
           appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0),
           dialogTheme: DialogThemeData(
             barrierColor: darkTheme.colorScheme.shadow.withValues(alpha: 0.6),
