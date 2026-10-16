@@ -27,6 +27,11 @@ import 'package:get_it/get_it.dart';
 // ignore: non_constant_identifier_names
 ChatsService get ChatsSvc => GetIt.I<ChatsService>();
 
+/// Server read events must still run notification cleanup when local state is
+/// already read. Duplicate unread events have no equivalent side effect.
+bool shouldApplyServerUnreadUpdate({required bool localUnread, required bool serverUnread}) =>
+    localUnread != serverUnread || !serverUnread;
+
 class ChatsService {
   static const batchSize = 100;
   int currentCount = 0;
@@ -1405,7 +1410,10 @@ class ChatsService {
   /// even when the conversation is open.
   Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
     final state = getChatState(chat.guid);
-    if (state != null && state.hasUnreadMessage.value == value) return;
+    if (state != null &&
+        !shouldApplyServerUnreadUpdate(localUnread: state.hasUnreadMessage.value, serverUnread: value)) {
+      return;
+    }
 
     final chatToUpdate = state?.chat ?? chat;
     await chatToUpdate.toggleHasUnreadAsync(
