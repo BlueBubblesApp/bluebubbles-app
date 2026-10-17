@@ -203,7 +203,7 @@ class UrlMetadata {
   }
 
   // ---------------------------------------------------------------------------
-  // Serialisation
+  // Serialization
   // ---------------------------------------------------------------------------
 
   /// Legacy keys written by the old `metadata_fetch`-based implementation.

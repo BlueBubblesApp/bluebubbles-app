@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
@@ -10,6 +11,7 @@ import 'package:get_it/get_it.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:network_tools/network_tools.dart'
     if (dart.library.html) 'package:bluebubbles/models/html/network_tools.dart';
+import 'package:universal_io/io.dart';
 
 class NetworkTasks {
   static Future<void>? _configureNetworkToolsFuture;
@@ -120,7 +122,7 @@ class NetworkTasks {
     await _configureNetworkToolsFuture;
 
     Logger.debug('Falling back to port scanning', tag: 'NetworkTasks');
-    final wifiIP = await NetworkInfo().getWifiIP();
+    final wifiIP = await _lanIPv4();
     if (wifiIP == null) {
       setOriginOverride(null);
       return;
@@ -144,6 +146,21 @@ class NetworkTasks {
       },
     );
     await completer.future;
+  }
+
+  /// The Wi-Fi IPv4 whose /24 gets scanned. On Windows network_info_plus answers through synchronous WLAN API FFI,
+  /// which can take seconds while the network is changing; on the main isolate that blocks the UI isolate and
+  /// freezes typing, so it runs in a short-lived isolate there.
+  static Future<String?> _lanIPv4() async {
+    if (kIsWeb || !Platform.isWindows) return NetworkInfo().getWifiIP();
+    return Isolate.run(() async {
+      final plugin = NetworkInfoPlusWindowsPlugin();
+      try {
+        return await plugin.getWifiIP();
+      } finally {
+        plugin.closeHandle();
+      }
+    });
   }
 
   /// Sets [HttpSvc.originOverride] and syncs the new value to registered isolates.

@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selec
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -175,8 +176,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     },
                     trailing: const NextButton(),
                   ),
-                  if (Platform.isAndroid) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (Platform.isAndroid || kIsDesktop)
                     Obx(
                       () => SettingsTile(
                           leading: const SettingsLeadingIcon(
@@ -184,7 +185,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             materialIcon: Icons.share,
                             containerColor: Colors.green,
                           ),
-                          title: "Download / Share Logs",
+                          title: "Download${kIsDesktop ? '' : ' / Share'} Logs",
                           subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
                           onTap: () async {
                             _refreshLogStats();
@@ -200,14 +201,30 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                               String filePath = await Logger.compressLogs();
                               final String fileName = File(filePath).uri.pathSegments.last;
 
+                              // The save dialog goes through the file chooser portal, so this also works in the
+                              // flatpak and snap sandboxes, which can't write to Downloads directly.
+                              if (kIsDesktop) {
+                                final String? savedPath = await saveFileAs(
+                                  fileName: fileName,
+                                  // Throws on Linux without an XDG Downloads dir; the dialog's default is fine then.
+                                  initialDirectory: await FilesystemSvc.downloadsDirectory
+                                      .then<String?>((dir) => dir, onError: (_) => null),
+                                  sourcePath: filePath,
+                                  allowedExtensions: ['zip'],
+                                );
+                                if (savedPath == null) return;
+                                showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
+                                await revealInFileManager(savedPath);
+                                return;
+                              }
+
                               try {
-                                final String savedPath = await FilesystemSvc.saveToDownloads(
+                                await FilesystemSvc.saveToDownloads(
                                   File(filePath),
                                   mimeType: 'application/zip',
                                 );
                                 showSnackbar("Logs Saved", "Saved $fileName to your Downloads folder.",
                                     type: SnackbarType.success);
-                                if (kIsDesktop) await launchUrl(Uri.file(savedPath));
                               } catch (_) {
                                 // saveToDownloads failed on Android — fall back to share sheet.
                                 Share.files([filePath], mimeType: 'application/zip');
@@ -476,8 +493,10 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       containerColor: Colors.teal,
                     ),
                     title: "Cache Tuning",
-                    subtitle: "Choose how much the app releases when it goes to the background, purge caches by hand, "
-                        "and watch what each purge frees.",
+                    subtitle: kIsDesktop
+                        ? "Purge caches by hand and watch what each purge frees."
+                        : "Choose how much the app releases when it goes to the background, purge caches by hand, "
+                            "and watch what each purge frees.",
                     trailing: const NextButton(),
                   ),
                 ]),

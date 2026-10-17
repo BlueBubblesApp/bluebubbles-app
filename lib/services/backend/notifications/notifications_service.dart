@@ -77,7 +77,8 @@ class NotificationsService {
   /// sends actions to the wrong app
   ///
   /// Store value must equal msix_config.toast_activator.clsid (pubspec.yaml), sideload
-  /// value --toast-activator-clsid (windows/build.ps1).
+  /// value --toast-activator-clsid (windows/build.ps1), exe value kExeToastActivatorClsid
+  /// (windows/runner/toast_forwarder.cpp).
   ///
   /// DO NOT CHANGE THESE
   static const String _storeMsixNotificationGuid = '1c09a4af-0327-4a79-a0f3-a1404df74ed1';
@@ -504,18 +505,15 @@ class NotificationsService {
 
     await playDesktopNotificationSound();
 
-    int? existingToast = activeToasts.remove(guid);
-    if (existingToast != null && attribution != null) {
-      await DesktopNotifications.cancel(existingToast);
-      existingToast = null;
-    }
-    if (existingToast == null) {
-      await DesktopNotifications.cancelGroup(guid);
-    }
+    // Always a fresh toast: replacing one in place while its banner is still up only updates Action Center —
+    // Windows plays the sound but leaves the old text on screen.
+    // The explicit cancel matters on Linux, where cancelGroup can't see live notifications.
+    final int? existingToast = activeToasts.remove(guid);
+    if (existingToast != null) await DesktopNotifications.cancel(existingToast);
+    await DesktopNotifications.cancelGroup(guid);
 
     final int? id = await DesktopNotifications.showMessage(
       group: guid,
-      replaceId: existingToast,
       avatarPath: path,
       title: displayTitle,
       body: body,
@@ -542,15 +540,15 @@ class NotificationsService {
   /// [persistPath] when the file must outlive this run (appTemp is wiped on startup).
   Future<(String, bool)> _chatAvatarPath(Chat chat, {String? persistPath}) async {
     if (chat.handles.length == 1 && chat.customAvatarPath == null) {
-      final contactV2 = chat.handles.first.contactsV2.firstOrNull;
+      final avatarPath = chat.handles.first.contactsV2.map((c) => c.avatarPath).nonNulls.firstOrNull;
       // A reserved character in the file name means a row written before avatar
       // names were sanitized (macOS contact IDs end in `:ABPerson`). Windows can
       // neither build a file URI for it nor read it back reliably, so regenerate
       // a composite instead of handing the toast a path it will choke on.
-      if (contactV2?.avatarPath != null &&
-          !hasReservedFileNameChars(basename(contactV2!.avatarPath!)) &&
-          await File(contactV2.avatarPath!).exists()) {
-        return (contactV2.avatarPath!, false);
+      if (avatarPath != null &&
+          !hasReservedFileNameChars(basename(avatarPath)) &&
+          await File(avatarPath).exists()) {
+        return (avatarPath, false);
       }
     }
     final Uint8List avatar = await avatarAsBytes(chat: chat, quality: 256);
@@ -629,7 +627,7 @@ class NotificationsService {
     }
 
     await _openChat(chat);
-    await showAndFocusWindow();
+    if (interaction.focusWindow) await showAndFocusWindow();
   }
 
   Future<void> _deleteTempFile(String path) async {

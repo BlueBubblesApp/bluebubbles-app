@@ -40,7 +40,7 @@ class ImageActions {
   /// Decodes a multi-resolution `.ico` file and re-encodes its largest frame as
   /// PNG. Flutter's `Image` widget has no ICO decoder — this is why the
   /// preview pipeline used to discard every favicon served as `image/x-icon` —
-  /// but the `image` package's own format sniffing already recognises ICO, so
+  /// but the `image` package's own format sniffing already recognizes ICO, so
   /// no extra dependency is needed to read it.
   /// Input: Map with 'bytes' key (Uint8List of the raw .ico file)
   /// Output: PNG-encoded bytes of the largest embedded frame, or null on
