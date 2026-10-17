@@ -115,6 +115,7 @@ static void my_application_activate(GApplication* application) {
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
   // Skia until flutter/flutter#192915 (Impeller flicker on VM/llvmpipe GPUs) is fixed.
   fl_dart_project_set_enable_impeller(project, FALSE);
+  fl_dart_project_set_ui_thread_policy(project, FL_UI_THREAD_POLICY_RUN_ON_SEPARATE_THREAD);
 
   FlView* view = fl_view_new(project);
 
