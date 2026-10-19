@@ -208,7 +208,21 @@ static void my_application_class_init(MyApplicationClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
 }
 
-static void my_application_init(MyApplication* self) {}
+// "app.quit": desktop shells call this for their "Quit" menu item (GNOME Shell's dock/overview
+// menu activates it when the app exports it, and only falls back to closing the windows when it
+// does not). Without it, "Quit" just closes the window, which Close to Tray turns into a hide, so
+// the app keeps running with no visible way back on desktops without a tray.
+static void quit_activated(GSimpleAction* action, GVariant* parameter, gpointer user_data) {
+  (void)action;
+  (void)parameter;
+  g_application_quit(G_APPLICATION(user_data));
+}
+
+static void my_application_init(MyApplication* self) {
+  // Registered here so it is exported when local_command_line registers the application.
+  static const GActionEntry app_actions[] = {{"quit", quit_activated, nullptr, nullptr, nullptr, {0}}};
+  g_action_map_add_action_entries(G_ACTION_MAP(self), app_actions, G_N_ELEMENTS(app_actions), self);
+}
 
 MyApplication* my_application_new() {
   return MY_APPLICATION(g_object_new(my_application_get_type(),
