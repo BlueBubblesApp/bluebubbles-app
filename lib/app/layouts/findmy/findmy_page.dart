@@ -425,6 +425,15 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
   /// the whole refresh window, including the automatic one on open.
   bool get _isRefreshing => !controller.canRefresh.value || controller.refreshing.value || controller.refreshing2.value;
 
+  /// A tap that lands before the spinner replaces the button must not start a
+  /// second, overlapping refresh.
+  void _startRefresh({required bool refreshDevices}) {
+    if (_isRefreshing) return;
+    controller.refreshing.value = true;
+    controller.refreshing2.value = true;
+    controller.getLocations(refreshDevices: refreshDevices);
+  }
+
   Widget _buildRefreshButton(BuildContext context, {required bool isTablet}) {
     return Positioned(
       top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
@@ -448,11 +457,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                       color: context.theme.colorScheme.onSurface,
                       size: 22,
                     ),
-                    onPressed: () {
-                      controller.refreshing.value = true;
-                      controller.refreshing2.value = true;
-                      controller.getLocations(refreshDevices: !isTablet);
-                    },
+                    onPressed: () => _startRefresh(refreshDevices: !isTablet),
                   ),
           ),
         ),
@@ -556,7 +561,10 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(
+                          // The header is built inside a LayoutBuilder, outside the page's
+                          // Obx, so the button tracks the refresh state itself.
+                          Obx(
+                            () => SizedBox(
                               width: 48,
                               height: 48,
                               child: Container(
@@ -575,14 +583,11 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                                           color: context.theme.colorScheme.onSurface,
                                           size: 22,
                                         ),
-                                        onPressed: () {
-                                          controller.refreshing.value = true;
-                                          controller.refreshing2.value = true;
-                                          controller.getLocations(refreshDevices: true);
-                                        },
+                                        onPressed: () => _startRefresh(refreshDevices: true),
                                       ),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),
