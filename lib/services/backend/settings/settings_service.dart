@@ -31,6 +31,16 @@ import 'package:get_it/get_it.dart';
 // ignore: non_constant_identifier_names
 SettingsService get SettingsSvc => GetIt.I<SettingsService>();
 
+bool shouldSuppressAndroidAppUpdate({
+  required String releaseCode,
+  required String currentBuildCode,
+  required String? ignoredReleaseCode,
+  required bool isDesktopRelease,
+}) {
+  if (isDesktopRelease || ignoredReleaseCode == releaseCode) return true;
+  return int.parse(releaseCode) <= int.parse(currentBuildCode);
+}
+
 class SettingsService {
   late Settings settings;
   late FCMData fcmData;
@@ -456,9 +466,12 @@ class SettingsService {
     if (Platform.isAndroid) {
       buildNumber =
           FilesystemSvc.packageInfo.buildNumber.lastChars(min(4, FilesystemSvc.packageInfo.buildNumber.length));
-      if (int.parse(code) <= int.parse(buildNumber) ||
-          PrefsSvc.server.getClientUpdateCheckCode() == code ||
-          (Platform.isAndroid && isDesktopRelease)) {
+      if (shouldSuppressAndroidAppUpdate(
+        releaseCode: code,
+        currentBuildCode: buildNumber,
+        ignoredReleaseCode: PrefsSvc.server.getClientUpdateCheckCode(),
+        isDesktopRelease: isDesktopRelease,
+      )) {
         available = false;
       }
     } else {
