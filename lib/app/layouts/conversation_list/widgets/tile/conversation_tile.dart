@@ -23,11 +23,10 @@ class ConversationTileController extends StatefulController {
   final RxBool shouldHighlight = false.obs;
   final RxBool shouldPartialHighlight = false.obs;
   final ChatState chatState;
-  /// Not final, with [onSelect]: tiles reuse a controller registered under the
-  /// chat's guid, so one created by another list (the iOS skin, or the main list
-  /// before the chat was archived) must pick up the selecting list's handler and
-  /// the list whose selection that handler writes to.
-  ConversationListController listController;
+  final ConversationListController listController;
+  /// Not final: tiles reuse a controller registered under the chat's guid, and
+  /// one created by a list without selection (the iOS skin) must still pick up
+  /// the handler when a selecting list (Material, Samsung) reuses it.
   Function(bool)? onSelect;
   final bool inSelectMode;
   final Widget? subtitle;
@@ -106,7 +105,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
     Widget? subtitle,
   }) : super(
             parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
-                ? adoptSelectHandler(Get.find<ConversationTileController>(tag: chat.guid), onSelect, controller)
+                ? adoptSelectHandler(Get.find<ConversationTileController>(tag: chat.guid), onSelect)
                 : Get.put(
                     ConversationTileController(
                       chatState: ChatsSvc.getOrCreateChatState(chat),
@@ -118,17 +117,13 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
                     tag: inSelectMode ? randomString(8) : chat.guid,
                     permanent: kIsDesktop || kIsWeb));
 
-  /// Gives a reused controller this tile's selection handler and the list it
-  /// selects into, so the highlight and tap-to-toggle read the same selection the
-  /// handler writes. A tile without a handler leaves both in place.
+  /// Gives a reused controller this tile's selection handler. A tile without one
+  /// leaves an existing handler in place.
   static ConversationTileController adoptSelectHandler(
     ConversationTileController controller,
     Function(bool)? onSelect,
-    ConversationListController listController,
   ) {
-    if (onSelect == null) return controller;
-    controller.onSelect = onSelect;
-    controller.listController = listController;
+    if (onSelect != null) controller.onSelect = onSelect;
     return controller;
   }
 
