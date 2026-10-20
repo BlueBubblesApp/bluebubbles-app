@@ -420,6 +420,20 @@ class FindMyController extends GetxController {
   /// will return the data for both endpoints. A server update will fix this, but for now,
   /// we will "patch" it by only "refreshing" devices when the user manually refreshes the data.
   Future<void> getLocations({bool refreshFriends = true, bool refreshDevices = false}) async {
+    try {
+      await _fetchLocations(refreshFriends: refreshFriends, refreshDevices: refreshDevices);
+    } finally {
+      // Every path should already clear these; this covers a throw (e.g. from the
+      // location permission check) that would otherwise leave the refresh button
+      // spinning until the page is reopened.
+      if (_isAlive) {
+        refreshing.value = false;
+        refreshing2.value = false;
+      }
+    }
+  }
+
+  Future<void> _fetchLocations({required bool refreshFriends, required bool refreshDevices}) async {
     if (!_isAlive) return;
     // Open the refresh window before awaiting anything, so progress shows for the
     // whole session rather than only after the slower device request returns.
@@ -512,7 +526,8 @@ class FindMyController extends GetxController {
         Logger.error("Failed to parse FindMy Friends location data!", error: e, trace: s);
         fetching2.value = null;
         refreshing2.value = false;
-        return;
+        // Fall through: devices still load, and only that path clears a manual
+        // refresh, so returning here left the refresh button spinning.
       }
     } else {
       fetching2.value = false;
