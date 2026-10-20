@@ -24,7 +24,10 @@ class ConversationTileController extends StatefulController {
   final RxBool shouldPartialHighlight = false.obs;
   final ChatState chatState;
   final ConversationListController listController;
-  final Function(bool)? onSelect;
+  /// Not final: tiles reuse a controller registered under the chat's guid, and
+  /// one created by a list without selection (the iOS skin) must still pick up
+  /// the handler when a selecting list (Material, Samsung) reuses it.
+  Function(bool)? onSelect;
   final bool inSelectMode;
   final Widget? subtitle;
 
@@ -102,7 +105,7 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
     Widget? subtitle,
   }) : super(
             parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
-                ? Get.find<ConversationTileController>(tag: chat.guid)
+                ? adoptSelectHandler(Get.find<ConversationTileController>(tag: chat.guid), onSelect)
                 : Get.put(
                     ConversationTileController(
                       chatState: ChatsSvc.getOrCreateChatState(chat),
@@ -113,6 +116,16 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
                     ),
                     tag: inSelectMode ? randomString(8) : chat.guid,
                     permanent: kIsDesktop || kIsWeb));
+
+  /// Gives a reused controller this tile's selection handler. A tile without one
+  /// leaves an existing handler in place.
+  static ConversationTileController adoptSelectHandler(
+    ConversationTileController controller,
+    Function(bool)? onSelect,
+  ) {
+    if (onSelect != null) controller.onSelect = onSelect;
+    return controller;
+  }
 
   @override
   State<ConversationTile> createState() => _ConversationTileState();
