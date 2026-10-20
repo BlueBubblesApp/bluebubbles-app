@@ -13,7 +13,10 @@ import 'package:universal_io/io.dart';
 ///
 /// Every consumer (the wrapper and the precache on conversation open) must build
 /// the provider through here. The image cache keys on the exact resize
-/// parameters, and a mismatch means a second full decode.
+/// parameters, and a mismatch means a second full decode. For the same reason
+/// the wrapper does not follow the live window size during a desktop drag-resize:
+/// it keeps the last settled size until the window stops moving (see
+/// `GradientBackground._geometryToDecodeFor`), or every frame would be a decode.
 ImageProvider chatBackgroundImageProvider(String path, BuildContext context) {
   return chatBackgroundImageProviderForWindow(
     path,

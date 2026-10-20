@@ -9,7 +9,6 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart';
@@ -608,12 +607,13 @@ class SocketService {
     final String attempted = password;
     try {
       await HttpSvc.server.ping();
-    } on DioException catch (e) {
-      if (e.response?.statusCode != 401 || attempted != password) return;
+    } catch (e) {
+      // A 401 arrives as a `Response`, not a `DioException` (see `httpStatusCodeOf`).
+      if (httpStatusCodeOf(e) != 401 || attempted != password) return;
       _rejectedPassword = attempted;
       authFailed.value = true;
       handleStatusUpdate(SocketState.error, "Incorrect password");
-    } catch (_) {}
+    }
   }
 
   /// The password can also be fixed server-side, so a flagged failure is re-checked on connect.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -25,11 +27,60 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
   late final RxBool adjustBackground = RxBool(ThemeSvc.isGradientBg(Get.context!));
   ChatState? _chatState;
 
+  /// How long the window has to hold one size before the static background is re-decoded for it.
+  static const Duration _resizeSettleDelay = Duration(milliseconds: 300);
+
+  /// The window geometry the static background was last decoded for. On desktop a drag-resize
+  /// changes `MediaQuery.sizeOf` every frame, and each distinct size is a distinct `ResizeImage`
+  /// key, so following it live meant a fresh disk read and full decode per frame. The provider is
+  /// built from this instead, and it only moves once the size has settled (see [_settledGeometry]).
+  (Size, double)? _settledGeometry;
+  Timer? _resizeDebounce;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _chatState = ChatsSvc.getChatState(controller.chat.guid);
+  }
+
+  @override
+  void dispose() {
+    _resizeDebounce?.cancel();
+    super.dispose();
+  }
+
+  /// The (logical size, device pixel ratio) to decode the static background for.
+  ///
+  /// Mobile returns the live value: its size only changes on rotation or fold, which is a single
+  /// step. Desktop returns the last settled value while a resize is in flight, so the already
+  /// decoded image keeps drawing (`BoxFit.cover` stretches it) and the decode happens once, after
+  /// the window has held still for [_resizeSettleDelay].
+  (Size, double) _geometryToDecodeFor(BuildContext context) {
+    final (Size, double) live = (MediaQuery.sizeOf(context), MediaQuery.devicePixelRatioOf(context));
+    if (!kIsDesktop) return live;
+
+    // The first real size is decoded for immediately; the debounce only applies to changes after
+    // that. An empty size (window not laid out yet) is passed through without being remembered,
+    // so the first proper size is not treated as a resize and delayed.
+    final (Size, double)? settled = _settledGeometry;
+    if (settled == null || settled.$1.isEmpty) {
+      if (!live.$1.isEmpty) _settledGeometry = live;
+      return live;
+    }
+    if (settled == live) {
+      _resizeDebounce?.cancel();
+      _resizeDebounce = null;
+      return settled;
+    }
+
+    _resizeDebounce?.cancel();
+    _resizeDebounce = Timer(_resizeSettleDelay, () {
+      _resizeDebounce = null;
+      if (!mounted) return;
+      setState(() => _settledGeometry = live);
+    });
+    return settled;
   }
 
   @override
@@ -79,11 +130,12 @@ class _GradientBackgroundState extends CustomState<GradientBackground, void, Con
             final String? bgPath = _chatState?.customBackgroundPath.value;
 
             if (bgPath != null) {
+              final (Size size, double dpr) = _geometryToDecodeFor(context);
               return Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     // Decoded at window size, not file size: see static_wallpaper_image.dart.
-                    image: chatBackgroundImageProvider(bgPath, context),
+                    image: chatBackgroundImageProviderForWindow(bgPath, size, dpr),
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.high,
                     onError: (_, _) {},

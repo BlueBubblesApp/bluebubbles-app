@@ -7,7 +7,9 @@
 Every avatar file decodes at `ContactAvatarWidget.avatarDecodeSize` (256 px), group photos included — never draw one
 with a bare `FileImage`, and keep the conversation list warm-up's `ResizeImage` params identical or its precache is
 never hit. Chat backgrounds go through `wallpaper/static_wallpaper_image.dart` for the same reason: decoded at window
-size, one provider shape for draw and precache, and left in the cache on close so reopening is instant.
+size, one provider shape for draw and precache, and left in the cache on close so reopening is instant. On desktop the
+wrapper (`GradientBackground`) debounces the window size it decodes for, so a drag-resize reuses the existing decode and
+only re-decodes once the window has held still.
 
 Always use these for any handle/contact avatar — don't build custom avatar UIs from scratch.
 Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `HexColor(handle!.color!)`.

@@ -44,29 +44,43 @@
   <launchable type="desktop-id">app.bluebubbles.BlueBubbles.desktop</launchable>
   <screenshots>
     <screenshot type="default" xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.2%2B92/flatpak/screenshots/Ios%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.3%2Bdesktop.93/flatpak/screenshots/Ios%20Skin.png</image>
       <caption>Chat with friends and family</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.2%2B92/flatpak/screenshots/Dark.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.3%2Bdesktop.93/flatpak/screenshots/Dark.png</image>
       <caption>Dark Mode</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.2%2B92/flatpak/screenshots/Settings.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.3%2Bdesktop.93/flatpak/screenshots/Settings.png</image>
       <caption>Extensive Customization</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.2%2B92/flatpak/screenshots/Material%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.3%2Bdesktop.93/flatpak/screenshots/Material%20Skin.png</image>
       <caption>Material Skin</caption>
     </screenshot>
     <screenshot xml:lang="en">
-      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.2%2B92/flatpak/screenshots/Samsung%20Skin.png</image>
+      <image>https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/refs/tags/v2.1.3%2Bdesktop.93/flatpak/screenshots/Samsung%20Skin.png</image>
       <caption>Samsung Skin</caption>
     </screenshot>
   </screenshots>
 
   <releases>
-    <release date="2026-09-29" version="2.1.2.0">
+    <release date="2026-10-12" version="2.1.3.0">
+      <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.3%2Bdesktop.93</url>
+      <description>
+        <p>The Big Stuff</p>
+        <ul>
+          <li>Fixes typing lag and sluggishness introduced in 2.1.2</li>
+          <li>Launching BlueBubbles while it's already running now brings up the existing window instead of opening a second copy</li>
+        </ul>
+        <p>The Small Stuff</p>
+        <ul>
+          <li>Fixes flickering on virtual machines and systems without GPU acceleration</li>
+        </ul>
+      </description>
+    </release>
+    <release date="2026-10-11" version="2.1.2.0">
       <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.2%2B92</url>
       <description>
         <p>The Big Stuff</p>
