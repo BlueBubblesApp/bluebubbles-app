@@ -46,6 +46,10 @@ enum IsolateEvent {
   ///   `total`     — `int` total units in the current stage (0 when indeterminate)
   ///   `bytes`     — `int` bytes measured so far, for a live-updating total
   storageAnalysisProgress,
+
+  /// Emitted when the isolate saves settings, so main and the other isolates can update their copies.
+  /// Payload: `Map<String, dynamic>` of the changed settings keys (same shape as `Settings.toMap()`).
+  settingsChanged,
 }
 
 /// A standard event message format for isolate-to-main communication

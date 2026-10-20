@@ -18,13 +18,16 @@ on:
   # cache needs a real compile to fill, which is why the old lightweight warm-cache job
   # wasn't enough (removed in c90f304).
   #
-  # Both expensive caches key on hashFiles('pubspec.lock'), so that's the only file whose
-  # changing invalidates them - about 1 commit in 11 here. The rest leave the entries
-  # valid, so there's no point rebuilding for them.
+  # These paths are the inputs to the expensive caches' keys (native deps hash pubspec.lock;
+  # Gradle also hashes the Android build files). Other commits leave the entries valid, so
+  # there's no point rebuilding for them.
   push:
     branches: [master]
     paths:
       - pubspec.lock
+      - android/**/*.gradle
+      - android/gradle.properties
+      - android/gradle/wrapper/gradle-wrapper.properties
 
   # Cache entries are evicted after 7 days without a read, so a quiet stretch would leave
   # the next PR cold whatever the lockfile did. Weekly sits right on that boundary, so
@@ -42,6 +45,8 @@ concurrency:
 
 permissions:
   contents: read
+  # Deleting superseded caches after a master save. Fork PRs still get a read-only token.
+  actions: write
 
 env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
@@ -205,8 +210,11 @@ jobs:
       - name: Write .env
         run: echo "KLIPY_API_KEY=" > .env
 
-      - name: Cache Gradle
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      # Restore-only on PRs: a ~4 GB entry in a PR's scope is useless to every other run
+      # and evicts master's. The push/schedule triggers keep master's copy fresh.
+      - name: Restore Gradle cache
+        id: cache-gradle
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             ~/.gradle/caches
@@ -230,3 +238,24 @@ jobs:
       # --no-pub: reuse the lockfile-enforced resolution from the Pub get step.
       - name: Build Android APK (prod)
         run: fvm flutter build apk --release --flavor prod --no-pub
+
+      - name: Save Gradle cache
+        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.cache-gradle.outputs.cache-primary-key }}
+
+      # At ~4 GB, a superseded entry left for eviction pushes the repo well past the 10 GB limit.
+      - name: Delete older Gradle caches
+        if: github.ref == 'refs/heads/master' && steps.cache-gradle.outputs.cache-hit != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: gradle-${{ runner.os }}-
+          KEEP: ${{ steps.cache-gradle.outputs.cache-primary-key }}
+        run: |
+          gh cache list -R "$GITHUB_REPOSITORY" --key "$PREFIX" --limit 100 --json id,key \
+            --jq '.[] | select(.key != env.KEEP) | .id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"

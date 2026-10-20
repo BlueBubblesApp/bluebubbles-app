@@ -37,7 +37,13 @@ enum DetailsMenuAction {
   Edit(PlatformSupport.all, CupertinoIcons.pencil, Icons.edit_outlined, "Edit"),
   Forward(PlatformSupport.all, CupertinoIcons.arrow_right, Icons.forward, "Forward"),
   StartConversation(PlatformSupport.all, CupertinoIcons.chat_bubble, Icons.message, "Start Conversation"),
-  CopySelection(PlatformSupport.all, CupertinoIcons.text_cursor, Icons.content_copy, "Copy Selection"),
+  // Android has its own text-selection UI, so this is desktop/web only.
+  CopySelection(
+    PlatformSupport.desktop | PlatformSupport.web,
+    CupertinoIcons.text_cursor,
+    Icons.content_copy,
+    "Copy Selection",
+  ),
   Delete(PlatformSupport.all, CupertinoIcons.trash, Icons.delete_outlined, "Delete"),
   Bookmark(PlatformSupport.all, CupertinoIcons.bookmark, Icons.bookmark_outlined, "Add/Remove Bookmark"),
   SelectMultiple(PlatformSupport.all, CupertinoIcons.checkmark_square, Icons.check_box_outlined, "Select Multiple"),

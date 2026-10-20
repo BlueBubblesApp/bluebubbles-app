@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
+import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -15,18 +14,8 @@ import 'package:flutter/widgets.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:on_exit/init.dart';
 import 'package:app_install_date/app_install_date.dart';
-import 'package:path/path.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:get_it/get_it.dart';
-
-class WindowEntry {
-  final String id;
-  final String name;
-
-  const WindowEntry(this.id, this.name);
-}
 
 class StartupTasks {
   static final Completer<void> uiReady = Completer<void>();
@@ -200,11 +189,6 @@ class StartupTasks {
       isBubble: isBubble,
     );
 
-    // Check if another instance is running (Linux Only).
-    // Automatically handled on Windows (I think)
-    Logger.info("Checking instance lock...");
-    await StartupTasks.checkInstanceLock();
-
     // The next thing we need to do is initialize the database.
     // If the database is not initialized, we cannot do anything.
     await _step("Opening database...");
@@ -218,6 +202,8 @@ class StartupTasks {
     NetworkTasks.registerIsolate(GetIt.I<GlobalIsolate>());
     GetIt.I.registerSingleton<IncrementalSyncIsolate>(IncrementalSyncIsolate());
     NetworkTasks.registerIsolate(GetIt.I<IncrementalSyncIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<GlobalIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<IncrementalSyncIsolate>());
 
     // Load FCM data into settings from the database
     // We only need to do this for the main startup
@@ -599,56 +585,6 @@ class StartupTasks {
     if (kIsDesktop && lifecycle != null) {
       lifecycle.windowFocused = true;
     }
-  }
-
-  static Future<void> checkInstanceLock() async {
-    if (!kIsDesktop || !Platform.isLinux) return;
-    Logger.debug("Starting process with PID $pid");
-
-    final lockFile = File(join(FilesystemSvc.appDocDir.path, 'bluebubbles.lck'));
-    final instanceFile = File(join(FilesystemSvc.appDocDir.path, '.instance'));
-    onExit(() {
-      if (lockFile.existsSync()) lockFile.deleteSync();
-    });
-
-    if (!lockFile.existsSync()) {
-      lockFile.createSync();
-    }
-    if (!instanceFile.existsSync()) {
-      instanceFile.createSync();
-    }
-
-    Logger.debug("Lockfile at ${lockFile.path}");
-    String _pid = lockFile.readAsStringSync();
-    String ps = Process.runSync('ps', ['-p', _pid]).stdout;
-    if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
-      Logger.debug("Another instance is running. Sending foreground signal");
-      instanceFile.openSync(mode: FileMode.write).closeSync();
-      exit(0);
-    }
-
-    lockFile.writeAsStringSync("$pid");
-    instanceFile.watch(events: FileSystemEvent.modify).listen((event) async {
-      Logger.debug("Got Signal to go to foreground");
-      doWhenWindowReady(() async {
-        await windowManager.show();
-        List<WindowEntry?> widAndNames = await (await Process.start('wmctrl', ['-pl']))
-            .stdout
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-            .map((split) => split[2] == "$pid" ? WindowEntry(split.first, split.last) : null)
-            .where((entry) => entry != null)
-            .toList();
-
-        for (WindowEntry? window in widAndNames) {
-          if (window?.name == "BlueBubbles") {
-            Process.runSync('wmctrl', ['-iR', window!.id]);
-            break;
-          }
-        }
-      });
-    });
   }
 }
 

@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/layouts/setup/dialogs/failed_to_connect_dialog.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,7 +31,7 @@ class _ConnectingDialogState extends State<ConnectingDialog> {
         HttpSvc.server.ping().then((_) {
           if (mounted) widget.onConnect(true);
         }, onError: (e) {
-          if (mounted && !(e is DioException && e.response?.statusCode == 401)) widget.onConnect(true);
+          if (mounted && httpStatusCodeOf(e) != 401) widget.onConnect(true);
         });
       } else if (event == SocketState.error) {
         widget.onConnect(false);
