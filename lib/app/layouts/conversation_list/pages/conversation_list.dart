@@ -23,7 +23,6 @@ import 'package:path/path.dart' hide context;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/cupertino_conversation_list.dart';
-import 'package:bluebubbles/app/layouts/conversation_list/helpers/recoverable_delete_batch.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/material_conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/samsung_conversation_list.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -62,36 +61,6 @@ class ConversationListController extends StatefulController {
       Get.find<ConversationTileController>(tag: c.guid).updateWidgets<SamsungConversationTile>(null);
     }
     updateSelectedChats();
-  }
-
-  Future<RecoverableDeleteBatchSummary> deleteSelectedChats({
-    @visibleForTesting Future<bool> Function(Chat chat)? deleteChat,
-    @visibleForTesting Chat? Function(String guid)? currentChat,
-    @visibleForTesting RecoverableDeleteBatchNotice? showNotice,
-  }) async {
-    final originalSelection = List<Chat>.of(selectedChats);
-    final result = await coordinateRecoverableDeleteBatch(
-      selectedChats: originalSelection,
-      deleteChat: deleteChat ?? (chat) => ChatsSvc.recoverablyDeleteChat(chat, notify: false),
-      currentChat: currentChat ?? (guid) => ChatsSvc.getChatState(guid)?.chat,
-      replaceSelection: (failures) {
-        selectedChats
-          ..clear()
-          ..addAll(failures);
-      },
-      showNotice: showNotice ??
-          (title, message, type) => showSnackbar(title, message, type: type, durationMs: 4000),
-    );
-    if (originalSelection.isEmpty) return result;
-
-    for (final chat in originalSelection) {
-      if (!Get.isRegistered<ConversationTileController>(tag: chat.guid)) continue;
-      final tileController = Get.find<ConversationTileController>(tag: chat.guid);
-      tileController.updateWidgets<MaterialConversationTile>(null);
-      tileController.updateWidgets<SamsungConversationTile>(null);
-    }
-    updateSelectedChats();
-    return result;
   }
 
   void updateMaterialFAB() {
