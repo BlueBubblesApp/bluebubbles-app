@@ -49,8 +49,7 @@ class FindMyMapWidget extends StatelessWidget {
               break;
             }
           }
-          // Wait for GPS before falling back to a marker, so the map doesn't open elsewhere and then jump.
-          final initialCenter = currentCenter ?? (controller.resolvingCurrentLocation.value ? null : markerCenter);
+          final initialCenter = selectFindMyInitialCenter(currentLocation: currentCenter, markerCenter: markerCenter);
 
           if (initialCenter == null) {
             final isLoading =

@@ -20,6 +20,7 @@ import 'package:bluebubbles/app/layouts/findmy/findmy_contact.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_friend_sort.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_format.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_cache.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_refresh_progress.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_scroll.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_items_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
@@ -62,6 +63,7 @@ class FindMyController extends GetxController {
   final RxBool canRefresh = false.obs;
   final RxBool hasMovedToCurrentLocation = false.obs;
   final RxBool resolvingCurrentLocation = true.obs;
+  final Rx<FindMyRefreshProgress> friendRefreshProgress = FindMyRefreshProgress.idle().obs;
 
   /// Insets of the map area the opening camera frames. On phones this is the
   /// part left visible with the drawer at its halfway point, so the framing
@@ -98,7 +100,6 @@ class FindMyController extends GetxController {
       if (event.type == 'new-findmy-location') _handleNewFindMyLocation(event.data);
     });
 
-    _scheduleRefreshGate();
     _setupRedactionListeners();
 
     // Each tab opens on its own framing, as Find My does.
@@ -116,6 +117,7 @@ class FindMyController extends GetxController {
     _refreshTimer = Timer(const Duration(seconds: 30), () {
       if (!_isAlive) return;
       canRefresh.value = true;
+      friendRefreshProgress.value = friendRefreshProgress.value.finish();
     });
   }
 
@@ -379,6 +381,7 @@ class FindMyController extends GetxController {
       Logger.info("Received new location for ${friend.handle?.address}");
       // Keep the last known good location when Apple pushes a no-fix or malformed update.
       if (!hasUsableFindMyLocation(friend)) return;
+      friendRefreshProgress.value = friendRefreshProgress.value.withUsableEvent(findMyFriendRefreshIdFor(friend));
       _withCachedFriendLocations([friend]);
       _locationCache.save();
 
@@ -418,6 +421,12 @@ class FindMyController extends GetxController {
   /// we will "patch" it by only "refreshing" devices when the user manually refreshes the data.
   Future<void> getLocations({bool refreshFriends = true, bool refreshDevices = false}) async {
     if (!_isAlive) return;
+    // Open the refresh window before awaiting anything, so progress shows for the
+    // whole session rather than only after the slower device request returns.
+    // Only events from this client-owned refresh session can count.
+    friendRefreshProgress.value = FindMyRefreshProgress.start();
+    canRefresh.value = false;
+    _scheduleRefreshGate();
 
     if (!(Platform.isLinux && !kIsWeb)) {
       LocationPermission granted = await Geolocator.checkPermission();
@@ -479,9 +488,14 @@ class FindMyController extends GetxController {
 
     if (response2.statusCode == 200 && response2.data['data'] != null) {
       try {
-        friends.value = _withCachedFriendLocations(
-          (response2.data['data'] as List).map((e) => FindMyFriend.fromJson(e)).toList().cast<FindMyFriend>(),
-        );
+        final roster = (response2.data['data'] as List)
+            .map((e) => FindMyFriend.fromJson(e))
+            .toList()
+            .cast<FindMyFriend>();
+        friends.value = _withCachedFriendLocations(roster);
+        if (refreshFriends) {
+          friendRefreshProgress.value = friendRefreshProgress.value.withRoster(roster.map(findMyFriendRefreshIdFor));
+        }
         _locationCache.save();
 
         _updateFriendLists();
@@ -558,10 +572,8 @@ class FindMyController extends GetxController {
 
     // Call the FindMy Friends refresh anyways so that new data comes through the socket
     if (!refreshFriends) {
+      friendRefreshProgress.value = friendRefreshProgress.value.withRoster(friends.map(findMyFriendRefreshIdFor));
       HttpSvc.icloud.refreshFriends();
-    } else {
-      canRefresh.value = false;
-      _scheduleRefreshGate();
     }
   }
 

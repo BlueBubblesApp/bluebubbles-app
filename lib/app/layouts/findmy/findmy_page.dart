@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_refresh_progress.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_devices_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_friends_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_items_tab_view.dart';
@@ -417,12 +418,13 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
   }
 
   Widget _buildUpdatingIndicator(BuildContext context) {
+    final label = findMyUpdatingLabel(controller.friendRefreshProgress.value);
     return Positioned(
       top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
       right: 20,
       child: Semantics(
         liveRegion: true,
-        label: "Updating locations",
+        label: label,
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
@@ -434,7 +436,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
             children: [
               buildProgressIndicator(context, size: 18),
               const SizedBox(width: 8),
-              Text("Updating locations…", style: context.theme.textTheme.bodyMedium),
+              Text(label, style: context.theme.textTheme.bodyMedium),
             ],
           ),
         ),
