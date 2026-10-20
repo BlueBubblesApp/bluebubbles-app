@@ -150,10 +150,10 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   /// Returns the parsed contents of [file], or null when it is missing, empty
   /// or unparseable. Empty means a reader caught an in-place write mid-truncate,
   /// never "no preferences set" — that is stored as `{}`.
-  Map<String, Object>? _parseFile(File file) {
+  Future<Map<String, Object>?> _parseFile(File file) async {
     try {
-      if (!file.existsSync()) return null;
-      final String contents = file.readAsStringSync();
+      if (!await file.exists()) return null;
+      final String contents = await file.readAsString();
       if (contents.isEmpty) return null;
       final Object? decoded = json.decode(contents);
       return decoded is Map ? decoded.cast<String, Object>() : null;
@@ -167,9 +167,9 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   }
 
   Future<Map<String, Object>> _readFile() async {
-    Map<String, Object>? prefs = _parseFile(await _getDataFile());
+    Map<String, Object>? prefs = await _parseFile(await _getDataFile());
     if (prefs == null) {
-      prefs = _parseFile(await _getBackupFile());
+      prefs = await _parseFile(await _getBackupFile());
       if (prefs != null) {
         _log('Preferences file unreadable, using backup');
       }
@@ -197,14 +197,19 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   /// Runs [action] while holding an exclusively created lock file — the only
   /// primitive that excludes both other isolates and other processes on all
   /// desktop platforms.
+  ///
+  /// All file work here and below uses the async dart:io APIs: on Windows the
+  /// main isolate shares its thread with the platform thread, and synchronous
+  /// I/O (including the fsync in [_atomicWrite]) stalled keyboard input for
+  /// hundreds of milliseconds per write on slow or AV-scanned disks.
   Future<T> _locked<T>(Future<T> Function() action) async {
     final File lockFile = File('${(await _getDataFile()).path}.lock');
     while (true) {
       try {
-        lockFile.createSync(recursive: true, exclusive: true);
+        await lockFile.create(recursive: true, exclusive: true);
         break;
       } on FileSystemException {
-        _breakStaleLock(lockFile);
+        await _breakStaleLock(lockFile);
         await Future.delayed(_lockRetryDelay);
       }
     }
@@ -212,7 +217,7 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       return await action();
     } finally {
       try {
-        lockFile.deleteSync();
+        await lockFile.delete();
       } on FileSystemException {
         // Best effort — a leftover lock is broken by _breakStaleLock later.
       }
@@ -220,11 +225,11 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   }
 
   /// Deletes the lock file if its holder appears to have died while holding it.
-  void _breakStaleLock(File lockFile) {
+  Future<void> _breakStaleLock(File lockFile) async {
     try {
-      if (DateTime.now().difference(lockFile.lastModifiedSync()) > _staleLockTimeout) {
+      if (DateTime.now().difference(await lockFile.lastModified()) > _staleLockTimeout) {
         _log('Breaking stale preferences lock');
-        lockFile.deleteSync();
+        await lockFile.delete();
       }
     } on FileSystemException {
       // Lock was released between the failed create and now — just retry.
@@ -241,12 +246,12 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
     final File tmp = File('${file.path}.tmp');
     final String contents = json.encode(prefs);
     try {
-      final RandomAccessFile raf = tmp.openSync(mode: FileMode.write);
+      final RandomAccessFile raf = await tmp.open(mode: FileMode.write);
       try {
-        raf.writeStringSync(contents);
-        raf.flushSync();
+        await raf.writeString(contents);
+        await raf.flush();
       } finally {
-        raf.closeSync();
+        await raf.close();
       }
       await moveFile(tmp, file.path);
     } on FileSystemException catch (e) {
@@ -254,14 +259,14 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       // (`File.copy` deletes the destination first), but an in-place write can.
       _log('Atomic preferences write failed, writing in place: $e');
       try {
-        file.writeAsStringSync(contents, flush: true);
+        await file.writeAsString(contents, flush: true);
       } on FileSystemException catch (e) {
         _log('Failed to save preferences: $e');
         return false;
       }
     }
     try {
-      file.copySync((await _getBackupFile()).path);
+      await file.copy((await _getBackupFile()).path);
     } on FileSystemException catch (e) {
       _log('Failed to refresh preferences backup: $e');
     }
@@ -276,18 +281,18 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
         final File file = await _getDataFile();
         final File backup = await _getBackupFile();
         try {
-          if (_parseFile(file) != null) {
-            if (!backup.existsSync()) file.copySync(backup.path);
+          if (await _parseFile(file) != null) {
+            if (!await backup.exists()) await file.copy(backup.path);
             return;
           }
-          if (file.existsSync()) {
+          if (await file.exists()) {
             final String quarantinePath = '${file.path}.corrupt-${DateTime.now().millisecondsSinceEpoch}';
             _log('Quarantining corrupt preferences file to $quarantinePath');
             await moveFile(file, quarantinePath);
           }
-          if (_parseFile(backup) != null) {
+          if (await _parseFile(backup) != null) {
             _log('Restoring preferences from backup');
-            backup.copySync(file.path);
+            await backup.copy(file.path);
           }
         } on FileSystemException catch (e) {
           _log('Corrupt-file recovery failed: $e');

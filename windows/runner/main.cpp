@@ -6,6 +6,7 @@
 
 #include "flutter_window.h"
 #include "splash_screen.h"
+#include "toast_forwarder.h"
 #include "utils.h"
 
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
@@ -13,6 +14,10 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  if (ForwardToastActivationToRunningInstance(kWindowClassName, L"BlueBubbles")) {
+    return EXIT_SUCCESS;
+  }
+
   if (std::wstring(command_line ? command_line : L"").find(L"minimized") == std::wstring::npos) {
     ShowSplashScreen(instance);
   }
@@ -28,6 +33,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
+  // Skia: Impeller (the default since Flutter 3.47) idles at ~3x the memory on Windows.
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
+  project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);
 
   std::vector<std::string> command_line_arguments = GetCommandLineArguments();
 

@@ -9,7 +9,7 @@ enum M3ESectionTone { neutral, error }
 /// The group fill is always derived from [backgroundColor] (the `tileColor` callers already
 /// compute, which carries window-effect alpha and any per-chat surface override) — never from
 /// `colorScheme.surfaceContainer*` directly, since that would break Mica/acrylic and per-chat
-/// themes. Any tonal step within the group is a lighten/darken of that same colour.
+/// themes. Any tonal step within the group is a lighten/darken of that same color.
 class M3ESection extends StatelessWidget {
   final List<Widget> children;
   final Color backgroundColor;

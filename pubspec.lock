@@ -396,11 +396,12 @@ packages:
   connectivity_plus:
     dependency: "direct main"
     description:
-      name: connectivity_plus
-      sha256: "25cebb79dfe304022550e0c3c893ae051ded07183d2607f7b88473cb3ade33cb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.3.0"
+      path: "packages/connectivity_plus/connectivity_plus"
+      ref: "2192beded6eff90d500173d601e2d3a1327d5ec2"
+      resolved-ref: "2192beded6eff90d500173d601e2d3a1327d5ec2"
+      url: "https://github.com/BlueBubblesApp/plus_plugins.git"
+    source: git
+    version: "7.3.1"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -567,7 +568,7 @@ packages:
     description:
       path: "."
       ref: "webkit2gtk-4.1"
-      resolved-ref: "4e1a29541a7356e23c53eb079cd3643899fc6fd4"
+      resolved-ref: "683143ea6ab4ef3a2a1572fcd23be3aa8d74979d"
       url: "https://github.com/BlueBubblesApp/flutter_desktop_webview_auth.git"
     source: git
     version: "0.0.16"
@@ -727,8 +728,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: bef0c248842d156153d041c810a53641fdb553c4
-      resolved-ref: bef0c248842d156153d041c810a53641fdb553c4
+      ref: "1131693155c2dd2dbc76fda2e1bd5618c7872e2c"
+      resolved-ref: "1131693155c2dd2dbc76fda2e1bd5618c7872e2c"
       url: "https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git"
     source: git
     version: "3.6.2"
@@ -1047,8 +1048,8 @@ packages:
     dependency: "direct overridden"
     description:
       path: flutter_local_notifications_windows
-      ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
-      resolved-ref: d57243a402e5b346ffa6c93ceff5ca5c403add35
+      ref: "41746ea32ec15af0e6b8042d9d5feb52e567af37"
+      resolved-ref: "41746ea32ec15af0e6b8042d9d5feb52e567af37"
       url: "https://github.com/jjoelj/flutter_local_notifications.git"
     source: git
     version: "3.1.1"

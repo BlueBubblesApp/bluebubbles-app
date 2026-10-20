@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class HexColor extends Color {
   HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
@@ -108,6 +109,19 @@ class BubbleText extends ThemeExtension<BubbleText> {
       bubbleText: TextStyle.lerp(bubbleText, other.bubbleText, t)!,
     );
   }
+}
+
+extension EmojiFontFallback on ThemeData {
+  /// Windows' own font fallback misses newer emoji (e.g. U+1FAEA), so name the emoji font explicitly. Apply to every
+  /// theme handed to a [Theme] widget, including per-chat themes resolved from [ThemeStruct]. No-op elsewhere.
+  ThemeData get withEmojiFallback => !Platform.isWindows
+      ? this
+      : copyWith(
+          textTheme: textTheme.apply(fontFamilyFallback: const ["Segoe UI Emoji"]),
+          extensions: extensions.values.map((e) => e is BubbleText
+              ? e.copyWith(bubbleText: e.bubbleText.apply(fontFamilyFallback: const ["Segoe UI Emoji"]))
+              : e),
+        );
 }
 
 /// Mixin to provide settings widgets with easy access to the commonly used

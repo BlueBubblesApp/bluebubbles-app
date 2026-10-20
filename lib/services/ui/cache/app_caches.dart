@@ -162,7 +162,7 @@ class AdaptiveThemeCache extends ClearableCache {
 /// activity to do what `FlutterActivityAndFragmentDelegate` does on an OS trim
 /// callback, which makes the purge explicit and logged instead of dependent on
 /// whether the OS happened to send one. Flutter echoes that purge back as a
-/// memory-pressure callback, which [CacheService.onMemoryPressure] recognises
+/// memory-pressure callback, which [CacheService.onMemoryPressure] recognizes
 /// via [CacheService.markEnginePurgeRequested] and ignores.
 class EngineResourceCache extends ClearableCache {
   @override

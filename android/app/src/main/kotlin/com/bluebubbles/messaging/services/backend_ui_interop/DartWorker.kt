@@ -301,7 +301,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
     /**
      * Registers only the plugins required for background notification and sync processing.
      * Heavy UI-only plugins (MLKit, camera, geolocator, printing, media, etc.) are excluded
-     * to reduce startup overhead and avoid unnecessary initialisation in a headless context.
+     * to reduce startup overhead and avoid unnecessary initialization in a headless context.
      */
     private fun registerWorkerPlugins(engine: FlutterEngine) {
         val plugins = engine.plugins
