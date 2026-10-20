@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/app/layouts/conversation_list/helpers/recoverable_delete_batch.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -25,19 +27,30 @@ void main() {
     final calls = <String>[];
     final replacements = <List<Chat>>[];
     final notices = <String>[];
+    final completions = [Completer<bool>(), Completer<bool>(), Completer<bool>()];
+    var completionIndex = 0;
 
-    final result = await coordinateRecoverableDeleteBatch(
+    final batch = coordinateRecoverableDeleteBatch(
       selectedChats: [first, failedCaptured, third],
-      deleteChat: (chat) async {
+      deleteChat: (chat) {
         calls.add(chat.guid);
-        return chat.guid != 'failed';
+        return completions[completionIndex++].future;
       },
       currentChat: (guid) => guid == 'failed' ? failedRestored : null,
       replaceSelection: (chats) => replacements.add(List<Chat>.of(chats)),
       showNotice: (title, message, type) => notices.add('$title|$message|${type.name}'),
     );
 
+    expect(calls, ['first']);
+    completions[0].complete(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['first', 'failed']);
+    completions[1].complete(false);
+    await Future<void>.delayed(Duration.zero);
     expect(calls, ['first', 'failed', 'third']);
+    completions[2].complete(true);
+    final result = await batch;
+
     expect(result.total, 3);
     expect(result.accepted, 2);
     expect(result.failed, 1);
