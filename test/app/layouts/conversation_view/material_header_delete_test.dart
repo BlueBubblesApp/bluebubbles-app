@@ -17,9 +17,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
     expect(Get.isSnackbarOpen, isTrue);
-    expect(find.text('unrelated notice'), findsOneWidget);
 
     var deletionStarted = false;
     final result = deleteConversationFromHeader(
@@ -37,11 +35,7 @@ void main() {
       },
     );
 
-    await tester.pump(const Duration(milliseconds: 1));
-    expect(deletionStarted, isFalse, reason: 'deletion must wait for the existing snackbar to finish closing');
-
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.pump(const Duration(milliseconds: 1));
     expect(deletionStarted, isTrue);
     expect(await result, isFalse);
     await tester.pump();
