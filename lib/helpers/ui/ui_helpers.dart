@@ -383,8 +383,7 @@ Future<void> showConversationTileMenu(
                       "Are you sure?",
                       style: context.theme.textTheme.titleLarge,
                     ),
-                    content: Text(
-                        "This conversation will be moved to Recently Deleted on your Apple devices and removed from this device.",
+                    content: Text("This chat will be deleted from this device only",
                         style: context.theme.textTheme.bodyLarge),
                     backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
                     actions: <Widget>[
@@ -401,8 +400,9 @@ Future<void> showConversationTileMenu(
                             style:
                                 context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
                         onPressed: () async {
-                          Navigator.pop(context); // Remove AlertDialog
-                          await ChatsSvc.recoverablyDeleteChat(chat);
+                          ChatsSvc.removeChat(chat);
+                          ChatsSvc.softDeleteChat(chat);
+                          Navigator.pop(context); //Remove AlertDialog
                         },
                       ),
                     ],

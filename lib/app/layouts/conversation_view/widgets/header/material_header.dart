@@ -126,7 +126,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                         barrierDismissible: false,
                         context: context,
                         title: "Are you sure?",
-                        body: "This conversation will be moved to Recently Deleted on your Apple devices and removed from this device.",
+                        body: "This chat will be deleted from this device only",
                         actions: <BBDialogAction>[
                           BBDialogAction(
                             text: "No",
@@ -141,8 +141,12 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                             text: "Yes",
                             isDestructive: true,
                             onPressed: () async {
+                              ChatsSvc.removeChat(controller.chat);
+                              ChatsSvc.softDeleteChat(controller.chat);
+                              if (Get.isSnackbarOpen) {
+                                Get.closeAllSnackbars();
+                              }
                               Navigator.of(context, rootNavigator: true).pop();
-                              await ChatsSvc.recoverablyDeleteChat(controller.chat);
                             },
                           ),
                         ],

@@ -179,7 +179,7 @@ class ActionHandler extends GetxService {
           return;
         }
 
-        await ChatsSvc.softDeleteChatLocalOnly(deletedChat);
+        await ChatsSvc.softDeleteChat(deletedChat);
         Logger.info("Applied server chat deletion for $chatGuid", tag: "ActionHandler");
         return;
       case "typing-indicator":
