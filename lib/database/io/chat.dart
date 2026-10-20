@@ -24,6 +24,13 @@ bool? unreadAfterIncomingMessage({required bool isFromMe, required DateTime? dat
   return dateRead == null ? true : null;
 }
 
+/// Whether a message from me must clear the chat's notifications itself.
+/// Normally they are cleared as a side effect of the chat flipping to read,
+/// but Apple's read sync can mark the chat read first, and then a reply sent
+/// from another device leaves the notification behind.
+bool clearNotificationsWithoutReadFlip({required bool isFromMe, required bool clearIfFromMe, required bool wasUnread}) =>
+    isFromMe && clearIfFromMe && !wasUnread;
+
 @Entity()
 class Chat {
   int? id;
@@ -431,7 +438,16 @@ class Chat {
     if (checkForMessageText && changeUnreadStatus && isNewer) {
       final unread = unreadAfterIncomingMessage(isFromMe: message.isFromMe!, dateRead: message.dateRead);
       if (unread == false) {
+        final wasUnread = hasUnreadMessage ?? false;
         await toggleHasUnreadAsync(false, clearLocalNotifications: clearNotificationsIfFromMe, privateMark: false);
+        if (clearNotificationsWithoutReadFlip(
+            isFromMe: message.isFromMe!, clearIfFromMe: clearNotificationsIfFromMe, wasUnread: wasUnread)) {
+          try {
+            await ChatInterface.clearNotificationForChat(chatId: id!, chatGuid: guid);
+          } catch (e, s) {
+            Logger.warn("Failed to clear notifications for a read chat", error: e, trace: s, tag: 'Chat');
+          }
+        }
       } else if (unread == true) {
         await toggleHasUnreadAsync(true, privateMark: false);
       }
