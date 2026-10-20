@@ -33,11 +33,12 @@ class FindMyFriendListTile extends StatelessWidget {
         stableId: findMyFriendRefreshIdFor(item),
         locatingInProgress: item.locatingInProgress,
       );
+      final address = controller.addressForFriend(item, preferLong: !withLocation);
       final displayLocation = hideContactInfo
           ? "Location"
           : withLocation
-          ? joinFindMyParts([controller.addressForFriend(item) ?? "No location found", age])
-          : (controller.addressForFriend(item, preferLong: true) ?? "No location found");
+          ? joinFindMyParts([address ?? "No location found", age])
+          : (address ?? "No location found");
 
       final handleState = item.handle != null ? HandleSvc.getOrCreateHandleState(item.handle!) : null;
       final displayName = hideContactInfo
@@ -103,7 +104,7 @@ class FindMyFriendListTile extends StatelessWidget {
                     distance: distance,
                     street: hideContactInfo
                         ? 'Location'
-                        : (controller.addressForFriend(item, preferLong: true) ?? 'No location found'),
+                        : (address ?? 'No location found'),
                     status: live ? 'Live' : age,
                     live: live,
                     onTap: markerPoint == null ? null : select,
