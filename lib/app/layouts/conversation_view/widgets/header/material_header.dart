@@ -19,10 +19,9 @@ import 'package:url_launcher/url_launcher.dart';
 Future<bool> deleteConversationFromHeader(
   Chat chat, {
   Future<bool> Function(Chat chat)? deleteChat,
-}) async {
-  while (Get.isSnackbarOpen) {
-    await Get.closeCurrentSnackbar();
-    await Future<void>.delayed(Duration.zero);
+}) {
+  if (Get.isSnackbarOpen) {
+    Get.closeAllSnackbars();
   }
   return (deleteChat ?? ChatsSvc.recoverablyDeleteChat)(chat);
 }
