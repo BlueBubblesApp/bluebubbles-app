@@ -63,19 +63,14 @@ class FindMyRefreshProgress {
   }
 }
 
-enum FindMyFriendRefreshState { updated, locating, lastKnownWaiting, unavailable }
-
-FindMyFriendRefreshState findMyFriendRefreshState(
+/// Whether a friend's row shows a spinner where its distance goes. During a
+/// refresh that lasts until this friend's location arrives; outside one, only
+/// while Apple is still locating them.
+bool findMyFriendRowSpinning(
   FindMyRefreshProgress progress, {
   required String? stableId,
   required bool locatingInProgress,
-  required bool hasUsableLocation,
 }) {
-  if (progress.wasUpdated(stableId)) return FindMyFriendRefreshState.updated;
-  if (locatingInProgress) return FindMyFriendRefreshState.locating;
-  if (hasUsableLocation) return FindMyFriendRefreshState.lastKnownWaiting;
-  return FindMyFriendRefreshState.unavailable;
+  if (progress.active) return !progress.wasUpdated(stableId);
+  return locatingInProgress;
 }
-
-String findMyUpdatingLabel(FindMyRefreshProgress progress) =>
-    progress.total == 0 ? "Updating locations…" : "Updating locations · ${progress.updated} of ${progress.total}";

@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
-import 'package:bluebubbles/app/layouts/findmy/findmy_refresh_progress.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_panel.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_devices_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_friends_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_items_tab_view.dart';
@@ -29,6 +29,7 @@ class FindMyPage extends StatefulWidget {
 class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateMixin {
   late final FindMyController controller;
   final ValueNotifier<double> _panelPosition = ValueNotifier<double>(0);
+  final FindMyPanelScrollController _panelScrollController = FindMyPanelScrollController();
 
   @override
   void initState() {
@@ -41,11 +42,15 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
         controller.popupController.hideAllPopups();
         controller.tabIndex.value = index;
       });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) openFindMyPanelAtSnapPoint(controller.panelController);
+    });
   }
 
   @override
   void dispose() {
     _panelPosition.dispose();
+    _panelScrollController.dispose();
     controller.tabController?.dispose();
     Get.delete<FindMyController>();
     super.dispose();
@@ -84,8 +89,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                   child: Stack(
                     children: [
                       FindMyMapWidget(controller: controller),
-                      if (!controller.canRefresh.value) _buildUpdatingIndicator(context),
-                      if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: true),
+                      if (!context.samsung) _buildRefreshButton(context, isTablet: true),
                       if (kIsDesktop) _buildDesktopTitleBar(context),
                     ],
                   ),
@@ -258,7 +262,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
   Widget _buildNormalLayout(BuildContext context) {
     const minPanelHeight = 50.0;
     final maxPanelHeight = MediaQuery.of(context).size.height * 0.75;
-    const snapPoint = 0.5;
+    const snapPoint = findMyPanelSnapPoint;
     return Obx(
       () => BBScaffold(
         backgroundColor: context.material ? context.tileColor : context.headerColor,
@@ -281,6 +285,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                 );
                 return SlidingUpPanel(
                   controller: controller.panelController,
+                  scrollController: _panelScrollController,
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(25.0),
@@ -354,8 +359,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                   child: buildBackButton(context, padding: const EdgeInsets.only(right: 2)),
                 ),
               ),
-            if (!controller.canRefresh.value) _buildUpdatingIndicator(context),
-            if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: false),
+            if (!context.samsung) _buildRefreshButton(context, isTablet: false),
             if (kIsDesktop) _buildDesktopTitleBar(context),
           ],
         ),
@@ -417,32 +421,9 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildUpdatingIndicator(BuildContext context) {
-    final label = findMyUpdatingLabel(controller.friendRefreshProgress.value);
-    return Positioned(
-      top: 10 + (kIsDesktop ? appWindow.titleBarHeight : MediaQuery.of(context).padding.top),
-      right: 20,
-      child: Semantics(
-        liveRegion: true,
-        label: label,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              buildProgressIndicator(context, size: 18),
-              const SizedBox(width: 8),
-              Text(label, style: context.theme.textTheme.bodyMedium),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  /// The round refresh button doubles as the refresh indicator: it spins for
+  /// the whole refresh window, including the automatic one on open.
+  bool get _isRefreshing => !controller.canRefresh.value || controller.refreshing.value || controller.refreshing2.value;
 
   Widget _buildRefreshButton(BuildContext context, {required bool isTablet}) {
     return Positioned(
@@ -458,8 +439,8 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
           ),
           child: SizedBox(
             width: 48,
-            child: controller.refreshing.value || controller.refreshing2.value
-                ? buildProgressIndicator(context)
+            child: _isRefreshing
+                ? Semantics(liveRegion: true, label: "Updating locations", child: buildProgressIndicator(context))
                 : IconButton(
                     iconSize: 22,
                     icon: Icon(
@@ -575,15 +556,18 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (controller.canRefresh.value)
-                            SizedBox(
+                          SizedBox(
                               width: 48,
                               height: 48,
                               child: Container(
                                 width: 48,
                                 margin: const EdgeInsets.only(right: 8),
-                                child: controller.refreshing.value || controller.refreshing2.value
-                                    ? buildProgressIndicator(context)
+                                child: _isRefreshing
+                                    ? Semantics(
+                                        liveRegion: true,
+                                        label: "Updating locations",
+                                        child: buildProgressIndicator(context),
+                                      )
                                     : IconButton(
                                         iconSize: 22,
                                         icon: Icon(
