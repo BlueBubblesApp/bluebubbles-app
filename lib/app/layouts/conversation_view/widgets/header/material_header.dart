@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart' hide BackButton;
@@ -13,6 +14,17 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+@visibleForTesting
+Future<bool> deleteConversationFromHeader(
+  Chat chat, {
+  Future<bool> Function(Chat chat)? deleteChat,
+}) {
+  if (Get.isSnackbarOpen) {
+    Get.closeAllSnackbars();
+  }
+  return (deleteChat ?? ChatsSvc.recoverablyDeleteChat)(chat);
+}
 
 class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
   const MaterialHeader({super.key, required this.controller});
@@ -142,7 +154,7 @@ class MaterialHeader extends StatelessWidget implements PreferredSizeWidget {
                             isDestructive: true,
                             onPressed: () async {
                               Navigator.of(context, rootNavigator: true).pop();
-                              await ChatsSvc.recoverablyDeleteChat(controller.chat);
+                              await deleteConversationFromHeader(controller.chat);
                             },
                           ),
                         ],

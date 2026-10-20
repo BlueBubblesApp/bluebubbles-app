@@ -1090,7 +1090,7 @@ class ChatsService {
   /// The local mutation is deliberately sequenced after the dedicated server
   /// endpoint succeeds. Any server failure leaves the chat and its transcript
   /// untouched on this device.
-  Future<bool> recoverablyDeleteChat(Chat chat) async {
+  Future<bool> recoverablyDeleteChat(Chat chat, {bool notify = true}) async {
     if (kIsWeb) return false;
     if (!pendingDeletes.add(chat.guid)) return false;
 
@@ -1111,12 +1111,14 @@ class ChatsService {
         trace: trace,
         tag: 'ChatsService',
       );
-      showSnackbar(
-        'Conversation not deleted',
-        'The deletion could not be completed. The conversation is still on this device.',
-        type: SnackbarType.error,
-        durationMs: 4000,
-      );
+      if (notify) {
+        showSnackbar(
+          'Conversation not deleted',
+          'The deletion could not be completed. The conversation is still on this device.',
+          type: SnackbarType.error,
+          durationMs: 4000,
+        );
+      }
       return false;
     } finally {
       pendingDeletes.remove(chat.guid);
