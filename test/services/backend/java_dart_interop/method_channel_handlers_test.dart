@@ -24,4 +24,14 @@ void main() {
 
     expect(result, isFalse);
   });
+
+  test('chat-read-status-changed in the headless worker does not touch the socket', () async {
+    final handlers = MethodChannelHandlers(_FakeMethodChannelService());
+
+    // The DartWorker never registers SocketService. A headless call must reach
+    // the payload check (retry) instead of throwing on the socket lookup.
+    final result = await handlers.handle(const MethodCall('chat-read-status-changed'), null);
+
+    expect(result, isFalse);
+  });
 }

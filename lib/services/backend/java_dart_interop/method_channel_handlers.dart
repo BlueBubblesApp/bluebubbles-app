@@ -346,11 +346,14 @@ class MethodChannelHandlers {
   }
 
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
-    if (shouldDropChatReadPush(
-      headless: service.headless,
-      isForeground: LifecycleSvc.isForeground,
-      socketConnected: SocketSvc.socket?.connected ?? false,
-    )) {
+    // The headless DartWorker never registers SocketService, so check headless
+    // before reading the lifecycle or socket state.
+    if (!service.headless &&
+        shouldDropChatReadPush(
+          headless: false,
+          isForeground: LifecycleSvc.isForeground,
+          socketConnected: SocketSvc.socket?.connected ?? false,
+        )) {
       return _ok();
     }
     if (arguments == null) return _retry();
