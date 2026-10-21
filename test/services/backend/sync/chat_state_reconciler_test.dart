@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('a newer authoritative snapshot repairs local state even when the baseline is unchanged', () {
     expect(
-      desiredUnreadFromSnapshot(hasTrustedBaseline: true, baselineHasChat: true, serverRead: false, localUnread: false),
+      desiredUnreadFromSnapshot(hasTrustedBaseline: true, serverRead: false, localUnread: false),
       isTrue,
     );
   });
@@ -13,7 +13,6 @@ void main() {
     expect(
       desiredUnreadFromSnapshot(
         hasTrustedBaseline: false,
-        baselineHasChat: false,
         serverRead: false,
         localUnread: false,
       ),
@@ -21,9 +20,17 @@ void main() {
     );
   });
 
+  test('a chat that first appears after the baseline takes Apple\'s read state', () {
+    // A new chat read on Apple before its live read event reached Android.
+    expect(
+      desiredUnreadFromSnapshot(hasTrustedBaseline: true, serverRead: true, localUnread: true),
+      isFalse,
+    );
+  });
+
   test('an authoritative snapshot does nothing when local state already matches', () {
     expect(
-      desiredUnreadFromSnapshot(hasTrustedBaseline: true, baselineHasChat: true, serverRead: false, localUnread: true),
+      desiredUnreadFromSnapshot(hasTrustedBaseline: true, serverRead: false, localUnread: true),
       isNull,
     );
   });

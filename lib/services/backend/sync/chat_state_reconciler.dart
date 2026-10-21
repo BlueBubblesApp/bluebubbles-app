@@ -11,16 +11,15 @@ final RegExp _decimalPointer = RegExp(r'^(0|[1-9][0-9]*)$');
 
 /// Returns the unread state a trusted snapshot should apply locally.
 ///
-/// The first snapshot only seeds a forward-sync baseline. Once that baseline
-/// contains the chat, each newer complete snapshot is Apple-authoritative and
-/// repairs local drift even when the persisted baseline itself did not change.
+/// The first snapshot only seeds a forward-sync baseline. After that, each
+/// newer complete snapshot is Apple-authoritative and repairs local drift,
+/// including for chats that first appeared since the previous snapshot.
 bool? desiredUnreadFromSnapshot({
   required bool hasTrustedBaseline,
-  required bool baselineHasChat,
   required bool serverRead,
   required bool localUnread,
 }) {
-  if (!hasTrustedBaseline || !baselineHasChat) return null;
+  if (!hasTrustedBaseline) return null;
   final desiredUnread = !serverRead;
   return desiredUnread == localUnread ? null : desiredUnread;
 }
@@ -345,12 +344,8 @@ class ChatStateReconciler {
       }
       if (entry == null) continue;
 
-      final previousReadState = baselineMatchesServer && baseline.schemaVersion == 3
-          ? baseline.readStates[chat.guid]
-          : null;
       final desiredUnread = desiredUnreadFromSnapshot(
         hasTrustedBaseline: baselineMatchesServer && baseline.schemaVersion == 3,
-        baselineHasChat: previousReadState != null,
         serverRead: entry.read,
         localUnread: chat.hasUnreadMessage ?? false,
       );
