@@ -60,6 +60,7 @@ class CupertinoHeader extends StatelessWidget {
                     children: [
                       const SyncIndicator(size: 16),
                       const SizedBox(width: 10.0),
+                      const CupertinoPreviewToggleButton(),
                       ClipOval(
                         child: Material(
                           color: context.theme.colorScheme.surfaceContainerHighest,
