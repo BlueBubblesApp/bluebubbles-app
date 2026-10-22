@@ -111,9 +111,8 @@ class SpellCheckTextEditingController extends TextEditingController {
     }
 
     final regExp = RegExp(r"(?<=^|[^a-zA-Z\d]):[^: \n]{2,}:", multiLine: true);
-    final matches = regExp.allMatches(newText);
-    if (matches.isNotEmpty) {
-      RegExpMatch match = matches.lastWhere((m) => m.start < newOffset);
+    final match = regExp.allMatches(newText).lastWhereOrNull((m) => m.start < newOffset);
+    if (match != null) {
       // Full emoji text (do not search for partial matches)
       String emojiName = newText.substring(match.start + 1, match.end - 1).toLowerCase();
       if (shortNameToEmoji.keys.contains(emojiName) || shortNameToSkinToneEmoji.keys.contains(emojiName)) {
