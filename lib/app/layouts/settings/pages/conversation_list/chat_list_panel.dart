@@ -517,6 +517,19 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                         const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                         SettingsSwitch(
                           onChanged: (bool val) async {
+                            SettingsSvc.settings.showPreviewToggleInHeader.value = val;
+                            await SettingsSvc.settings.saveOneAsync('showPreviewToggleInHeader');
+                          },
+                          initialVal: SettingsSvc.settings.showPreviewToggleInHeader.value,
+                          title: "Show Preview Toggle in Header",
+                          subtitle:
+                              "Adds a button next to search to quickly hide or show message previews, highlighted when previews are hidden",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
                             SettingsSvc.settings.showCustomGroupFilterChips.value = val;
                             await SettingsSvc.settings.saveOneAsync('showCustomGroupFilterChips');
                           },

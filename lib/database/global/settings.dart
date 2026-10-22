@@ -92,6 +92,7 @@ class Settings {
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
   final RxBool showFiltersInHeader = false.obs;
+  final RxBool showPreviewToggleInHeader = false.obs;
   final RxBool showCustomGroupFilterChips = false.obs;
   final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
@@ -389,6 +390,7 @@ class Settings {
       'hideKeyboardOnScroll': hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': moveChatCreatorToHeader.value,
       'showFiltersInHeader': showFiltersInHeader.value,
+      'showPreviewToggleInHeader': showPreviewToggleInHeader.value,
       'showCustomGroupFilterChips': showCustomGroupFilterChips.value,
       'cameraFAB': cameraFAB.value,
       'swipeToCloseKeyboard': swipeToCloseKeyboard.value,
@@ -580,6 +582,8 @@ class Settings {
         map['moveChatCreatorToHeader'] ?? SettingsSvc.settings.moveChatCreatorToHeader.value;
     SettingsSvc.settings.showFiltersInHeader.value =
         map['showFiltersInHeader'] ?? SettingsSvc.settings.showFiltersInHeader.value;
+    SettingsSvc.settings.showPreviewToggleInHeader.value =
+        map['showPreviewToggleInHeader'] ?? SettingsSvc.settings.showPreviewToggleInHeader.value;
     SettingsSvc.settings.showCustomGroupFilterChips.value =
         map['showCustomGroupFilterChips'] ?? SettingsSvc.settings.showCustomGroupFilterChips.value;
     SettingsSvc.settings.cameraFAB.value = map['cameraFAB'] ?? SettingsSvc.settings.cameraFAB.value;
@@ -834,6 +838,7 @@ class Settings {
     s.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'] ?? false;
     s.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'] ?? false;
     s.showFiltersInHeader.value = map['showFiltersInHeader'] ?? false;
+    s.showPreviewToggleInHeader.value = map['showPreviewToggleInHeader'] ?? false;
     s.showCustomGroupFilterChips.value = map['showCustomGroupFilterChips'] ?? false;
     s.cameraFAB.value = map['cameraFAB'] ?? false;
     s.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'] ?? false;
