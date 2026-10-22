@@ -136,6 +136,76 @@ class CupertinoChatListFilterButton extends StatelessWidget {
   }
 }
 
+Future<void> _toggleChatListPreviews() async {
+  SettingsSvc.settings.hideChatListPreviews.toggle();
+  await SettingsSvc.settings.saveOneAsync('hideChatListPreviews');
+}
+
+String _previewToggleTooltip(bool hidden) => hidden ? 'Show message previews' : 'Hide message previews';
+
+/// Header shortcut that toggles [Settings.hideChatListPreviews]. Shown when
+/// [Settings.showPreviewToggleInHeader] is on; highlighted while previews are hidden.
+class PreviewToggleButton extends StatelessWidget {
+  const PreviewToggleButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!SettingsSvc.settings.showPreviewToggleInHeader.value) return const SizedBox.shrink();
+      final hidden = SettingsSvc.settings.hideChatListPreviews.value;
+      return IconButton(
+        tooltip: _previewToggleTooltip(hidden),
+        onPressed: _toggleChatListPreviews,
+        icon: Icon(
+          hidden ? Icons.visibility_off : Icons.visibility_outlined,
+          color: hidden ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    });
+  }
+}
+
+/// iOS-style [PreviewToggleButton], matching the circular search/filter buttons
+/// in the Cupertino header. Includes its own trailing gap so nothing is left
+/// behind when hidden.
+class CupertinoPreviewToggleButton extends StatelessWidget {
+  const CupertinoPreviewToggleButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!SettingsSvc.settings.showPreviewToggleInHeader.value) return const SizedBox.shrink();
+      final hidden = SettingsSvc.settings.hideChatListPreviews.value;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: _previewToggleTooltip(hidden),
+            child: ClipOval(
+              child: Material(
+                color: context.theme.colorScheme.surfaceContainerHighest,
+                child: SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: InkWell(
+                    onTap: _toggleChatListPreviews,
+                    child: Icon(
+                      hidden ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye,
+                      color: hidden ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10.0),
+        ],
+      );
+    });
+  }
+}
+
 class OverflowMenu extends StatelessWidget {
   final bool extraItems;
   final ConversationListController? controller;
