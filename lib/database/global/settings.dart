@@ -84,6 +84,7 @@ class Settings {
   final RxBool sendWithReturn = false.obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
+  final RxBool hideChatListPreviews = false.obs;
   final RxBool smartReply = false.obs;
   final RxBool showSyncIndicator = true.obs;
   final RxInt sendDelay = 0.obs;
@@ -360,6 +361,7 @@ class Settings {
       'sendWithReturn': sendWithReturn.value,
       'doubleTapForDetails': doubleTapForDetails.value,
       'denseChatTiles': denseChatTiles.value,
+      'hideChatListPreviews': hideChatListPreviews.value,
       'smartReply': smartReply.value,
       'showSyncIndicator': showSyncIndicator.value,
       'sendDelay': sendDelay.value,
@@ -542,6 +544,8 @@ class Settings {
     SettingsSvc.settings.doubleTapForDetails.value =
         map['doubleTapForDetails'] ?? SettingsSvc.settings.doubleTapForDetails.value;
     SettingsSvc.settings.denseChatTiles.value = map['denseChatTiles'] ?? SettingsSvc.settings.denseChatTiles.value;
+    SettingsSvc.settings.hideChatListPreviews.value =
+        map['hideChatListPreviews'] ?? SettingsSvc.settings.hideChatListPreviews.value;
     SettingsSvc.settings.smartReply.value = map['smartReply'] ?? SettingsSvc.settings.smartReply.value;
     SettingsSvc.settings.showSyncIndicator.value =
         map['showSyncIndicator'] ?? SettingsSvc.settings.showSyncIndicator.value;
@@ -794,6 +798,7 @@ class Settings {
     s.sendWithReturn.value = map['sendWithReturn'] ?? false;
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
+    s.hideChatListPreviews.value = map['hideChatListPreviews'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
     s.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
     s.sendDelay.value = map['sendDelay'] ?? 0;
