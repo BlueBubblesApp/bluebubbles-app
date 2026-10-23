@@ -90,6 +90,20 @@ class ServerApi {
     });
   }
 
+  /// Fetch every message Apple currently holds in Recently Deleted, grouped
+  /// by chat, so a client that was offline can catch up on the
+  /// single-message deletes and restores it missed.
+  Future<Response> getRecoverableMessageSnapshot({CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.apiRoot}/server/recoverable-messages/snapshot",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Restart the server app services
   Future<Response> softRestart({CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {

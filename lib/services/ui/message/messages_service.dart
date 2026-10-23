@@ -1278,6 +1278,18 @@ class MessagesService extends GetxController {
     await _updateLatestMessageAfterDeletion(deletedGuid);
   }
 
+  /// Un-hide a message Apple moved back out of Recently Deleted (clears
+  /// dateDeleted) and put it back into the struct and MessageState.
+  /// The inverse of [softDeleteMessage]; if the restored message is newer than
+  /// the chat's current latest, the chat's latest message is updated too.
+  Future<void> restoreMessage(Message message) async {
+    final restoredGuid = message.guid!;
+    await Message.restore(restoredGuid);
+    message.dateDeleted = null;
+    struct.addMessages([message]);
+    ChatsSvc.updateChatLatestMessage(tag, message);
+  }
+
   /// If [deletedGuid] was the chat's latest message, fetches the new latest from the
   /// database and updates both [ChatState] and the [Chat] DB record.
   Future<void> _updateLatestMessageAfterDeletion(String deletedGuid) async {

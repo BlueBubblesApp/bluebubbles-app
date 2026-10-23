@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/sync/recoverable_message_reconciler.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -18,6 +19,25 @@ class ActionHandler extends GetxService {
   /// comes in with the same real GUID, it is removed here so the delayed
   /// `new-message` processing is skipped (the updated-message will handle it).
   final List<String> outOfOrderTempGuids = [];
+
+  /// Applies an Apple-side single-message delete or restore.
+  ///
+  /// Routed through MessagesService rather than written straight to the DB:
+  /// the conversation view filters on dateDeleted, but a struct that is
+  /// already built keeps showing the message until it is removed from it.
+  Future<void> handleRecoverableMessageEvent(RecoverableMessageEvent? event) async {
+    if (event == null) return;
+
+    final message = Message.findOne(guid: event.messageGuid);
+    if (message == null) return;
+
+    final service = MessagesSvc(event.chatGuid);
+    if (event.deleted) {
+      await service.softDeleteMessage(message);
+    } else {
+      await service.restoreMessage(message);
+    }
+  }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {
     final chat = await ChatsSvc.fetchChat(partialData.guid) ?? partialData;
@@ -181,6 +201,13 @@ class ActionHandler extends GetxService {
 
         await ChatsSvc.softDeleteChat(deletedChat);
         Logger.info("Applied server chat deletion for $chatGuid", tag: "ActionHandler");
+        return;
+      case "message-deleted":
+      case "message-restored":
+        // Apple moved a single message into, or back out of, Recently Deleted.
+        await handleRecoverableMessageEvent(
+          parseRecoverableMessageEvent(data, deleted: event == "message-deleted"),
+        );
         return;
       case "typing-indicator":
         final chat = ChatsSvc.findChatByGuid(data["guid"]);

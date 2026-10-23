@@ -12,6 +12,8 @@ abstract class MethodChannelInboundMethods {
   static const String markChatRead = 'MarkChatRead';
   static const String chatReadStatusChanged = 'chat-read-status-changed';
   static const String chatDeleted = 'chat-deleted';
+  static const String messageDeleted = 'message-deleted';
+  static const String messageRestored = 'message-restored';
   static const String mediaColors = 'MediaColors';
   static const String incomingFacetime = 'incoming-facetime';
   static const String ftCallStatusChanged = 'ft-call-status-changed';

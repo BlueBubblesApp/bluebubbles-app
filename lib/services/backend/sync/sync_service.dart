@@ -10,6 +10,7 @@ import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:bluebubbles/services/backend/sync/recoverable_message_reconciler.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
@@ -170,6 +171,11 @@ class SyncService {
           }
         }
       }
+
+      // Catch up on single-message deletes and restores that happened while
+      // this client was offline. Runs after the messages are in, so a message
+      // synced and deleted in the same window still ends up hidden.
+      await RecoverableMessageReconciler.run();
 
       chatStopwatch.stop();
       Logger.info(
