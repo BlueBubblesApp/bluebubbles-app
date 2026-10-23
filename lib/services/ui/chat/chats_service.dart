@@ -12,6 +12,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
+import 'package:bluebubbles/services/backend/sync/spam_flag_backfill.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -396,6 +397,12 @@ class ChatsService {
 
     // Initialize watchers AFTER loading all chats to avoid duplicates
     initDbWatchers();
+
+    // Chats stored before the server started reporting Messages' Spam
+    // verdict keep a null flag until something else fetches them, which
+    // leaves the Spam list empty. Backfill in the background: the list is
+    // already on screen by this point, and the pass only writes the flag.
+    unawaited(SpamFlagBackfill.run());
 
     // Set up global listeners for redacted mode settings
     _setupRedactedModeListeners();
