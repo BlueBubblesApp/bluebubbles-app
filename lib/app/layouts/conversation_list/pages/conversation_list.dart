@@ -34,6 +34,7 @@ import 'package:universal_io/io.dart';
 class ConversationListController extends StatefulController {
   final bool showArchivedChats;
   final bool showUnknownSenders;
+  final bool showSpamChats;
   final ScrollController iosScrollController = ScrollController();
   final ScrollController materialScrollController = ScrollController();
   final ScrollController samsungScrollController = ScrollController();
@@ -41,7 +42,8 @@ class ConversationListController extends StatefulController {
   bool showMaterialFABText = true;
   double materialScrollStartPosition = 0;
 
-  ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
+  ConversationListController(
+      {required this.showArchivedChats, required this.showUnknownSenders, this.showSpamChats = false});
 
   void updateSelectedChats() {
     if (SettingsSvc.settings.skin.value == Skins.Material) {
@@ -100,18 +102,22 @@ class ConversationListController extends StatefulController {
 }
 
 class ConversationList extends CustomStateful<ConversationListController> {
-  ConversationList({super.key, required bool showArchivedChats, required bool showUnknownSenders})
+  ConversationList(
+      {super.key, required bool showArchivedChats, required bool showUnknownSenders, bool showSpamChats = false})
       : super(
             parentController: Get.put(
                 ConversationListController(
                   showArchivedChats: showArchivedChats,
                   showUnknownSenders: showUnknownSenders,
+                  showSpamChats: showSpamChats,
                 ),
                 tag: showArchivedChats
                     ? "Archived"
                     : showUnknownSenders
                         ? "Unknown"
-                        : "Messages"));
+                        : showSpamChats
+                            ? "Spam"
+                            : "Messages"));
 
   @override
   State<StatefulWidget> createState() => _ConversationListState();
@@ -128,9 +134,11 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         ? "Archived"
         : controller.showUnknownSenders
             ? "Unknown"
-            : "Messages";
+            : controller.showSpamChats
+                ? "Spam"
+                : "Messages";
 
-    if (!kIsWeb && !controller.showArchivedChats && !controller.showUnknownSenders) {
+    if (!kIsWeb && !controller.showArchivedChats && !controller.showUnknownSenders && !controller.showSpamChats) {
       WidgetsBinding.instance.addObserver(this);
       ChatsSvc.loadedAllChats.future.then((_) => _precacheAvatars());
     }
@@ -232,7 +240,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       samsungSkin: SamsungConversationList(parentController: controller),
     );
 
-    if (controller.showArchivedChats || controller.showUnknownSenders) return child;
+    if (controller.showArchivedChats || controller.showUnknownSenders || controller.showSpamChats) return child;
 
     return BBScaffold(
       safeAreaLeft: false,

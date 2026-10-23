@@ -134,18 +134,27 @@ class ChatsService {
     return sortedChats[index];
   }
 
-  /// Get filtered chats (archived, unknown senders, pinned)
+  /// Get filtered chats (archived, unknown senders, spam, pinned)
   List<Chat> getFilteredChats({
     bool? showArchived,
     bool? showUnknown,
+    bool? showSpam,
     bool? pinnedOnly,
     bool? excludePinned,
     ChatListFilters? filters,
   }) {
     var chats = allChats;
 
+    // Chats Messages filed under Spam appear only in the Spam list, archived or
+    // not, like the iPhone's Spam folder.
+    if (showSpam == true) {
+      chats = chats.where((e) => e.isFilteredAsSpam == true).toList();
+    } else {
+      chats = chats.where((e) => e.isFilteredAsSpam != true).toList();
+    }
+
     // Apply archived filter
-    if (showArchived != null) {
+    if (showArchived != null && showSpam != true) {
       if (showArchived) {
         chats = chats.where((e) => e.isArchived ?? false).toList();
       } else {
@@ -154,7 +163,7 @@ class ChatsService {
     }
 
     // Apply unknown senders filter
-    if (showUnknown != null && SettingsSvc.settings.filterUnknownSenders.value) {
+    if (showUnknown != null && showSpam != true && SettingsSvc.settings.filterUnknownSenders.value) {
       if (showUnknown) {
         chats = chats.where((e) => !e.isGroup && e.handles.firstOrNull?.contactsV2.isEmpty != false).toList();
       } else {
@@ -751,6 +760,9 @@ class ChatsService {
       final isPinnedChanged = (updated.isPinned ?? false) != currentIsPinned;
       final sortOrderChanged =
           latestMessageChanged || latestMessageTimestampChanged || pinIndexChanged || isPinnedChanged;
+      // Moving into or out of Spam changes which list shows the chat, not its order.
+      final spamChanged =
+          updated.isFilteredAsSpam != null && updated.isFilteredAsSpam != state.chat.isFilteredAsSpam;
 
       if (updated != state.chat || override) {
         state.updateFromChat(updated);
@@ -759,6 +771,7 @@ class ChatsService {
       if (sortOrderChanged || override) {
         _repositionChat(state.chat, immediate: immediate);
       }
+      if (spamChanged) _scheduleListVersionUpdate(immediate: true);
 
       return true;
     }

@@ -507,6 +507,7 @@ class ChatState {
     chat.lockChatName = updatedChat.lockChatName;
     chat.lockChatIcon = updatedChat.lockChatIcon;
     chat.lastReadMessageGuid = updatedChat.lastReadMessageGuid;
+    chat.mergeSpamFlag(updatedChat);
 
     // Re-apply redaction over the fresh values if redacted mode is active.
     if (SettingsSvc.settings.redactedMode.value) {

@@ -20,6 +20,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
   bool get showArchived => controller.showArchivedChats;
 
   bool get showUnknown => controller.showUnknownSenders;
+  bool get showSpam => controller.showSpamChats;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                     NavigationSvc.listener.value;
                     return Container(
                       decoration: BoxDecoration(
-                        color: !NavigationSvc.isAvatarOnly(context) && !showArchived && !showUnknown
+                        color: !NavigationSvc.isAvatarOnly(context) && !showArchived && !showUnknown && !showSpam
                             ? context.theme.colorScheme.surfaceContainerHighest.withValues(
                                 alpha: SettingsSvc.settings.windowEffect.value == WindowEffect.disabled ? 1 : 0.7)
                             : Colors.transparent,
@@ -60,7 +61,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                             if (!NavigationSvc.isAvatarOnly(context))
                               Padding(
                                 padding: const EdgeInsets.only(left: 18, right: 10),
-                                child: (!showArchived && !showUnknown)
+                                child: (!showArchived && !showUnknown && !showSpam)
                                     ? SvgPicture.asset('assets/icon/bb-icon.svg',
                                         width: 26,
                                         height: 26,
@@ -78,7 +79,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                       ),
                               ),
                             if (!NavigationSvc.isAvatarOnly(context)) HeaderText(controller: controller, fontSize: 18),
-                            if (!NavigationSvc.isAvatarOnly(context) && !showArchived && !showUnknown)
+                            if (!NavigationSvc.isAvatarOnly(context) && !showArchived && !showUnknown && !showSpam)
                               Expanded(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,

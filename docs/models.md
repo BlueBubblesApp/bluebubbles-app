@@ -30,6 +30,7 @@ After any `@Entity` annotation change: run `dart run build_runner build`. Never 
 | `isPinned` | `bool?` | -- |
 | `hasUnreadMessage` | `bool?` | -- |
 | `displayName` | `String?` | Group chat name |
+| `isFilteredAsSpam` | `bool?` | Messages filed the chat under Spam (server-derived; `null` when the server predates the flag) |
 | `autoSendReadReceipts` | `bool?` | Per-chat override of the global setting |
 | `autoSendTypingIndicators` | `bool?` | Per-chat override of the global setting |
 | `textFieldText` | `String?` | Persisted draft text for the compose field |
