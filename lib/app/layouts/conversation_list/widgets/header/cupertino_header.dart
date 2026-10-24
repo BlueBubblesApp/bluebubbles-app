@@ -170,7 +170,9 @@ class CupertinoMiniHeader extends StatelessWidget {
                           ? "Archive"
                           : controller.showUnknownSenders
                               ? "Unknown Senders"
-                              : "Messages",
+                              : controller.showSpamChats
+                                  ? "Spam"
+                                  : "Messages",
                       style: context.textTheme.titleMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
                     ),
                   ),

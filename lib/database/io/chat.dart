@@ -32,6 +32,7 @@ class Chat {
   bool? hasUnreadMessage;
 
   String? displayName;
+  bool? isFilteredAsSpam;
   bool? autoSendReadReceipts;
   bool? autoSendTypingIndicators;
   String? textFieldText;
@@ -124,6 +125,7 @@ class Chat {
     this.muteArgs,
     this.hasUnreadMessage = false,
     this.displayName,
+    this.isFilteredAsSpam,
     String? customAvatar,
     String? customBackground,
     int? pinnedIndex,
@@ -166,6 +168,7 @@ class Chat {
       hasUnreadMessage: json["hasUnreadMessage"] ?? false,
       latestMessage: message,
       displayName: json["displayName"],
+      isFilteredAsSpam: json["isFilteredAsSpam"],
       customAvatar: json['_customAvatarPath'],
       customBackground: json['_customBackgroundPath'],
       pinnedIndex: json['_pinIndex'],
@@ -208,6 +211,7 @@ class Chat {
     bool updateLatestMessage = false,
     bool updateCustomThemes = false,
     bool updateWallpaperSettings = false,
+    bool updateIsFilteredAsSpam = false,
   }) async {
     if (kIsWeb) return this;
 
@@ -235,6 +239,7 @@ class Chat {
         'updateLatestMessage': updateLatestMessage,
         'updateCustomThemes': updateCustomThemes,
         'updateWallpaperSettings': updateWallpaperSettings,
+        'updateIsFilteredAsSpam': updateIsFilteredAsSpam,
       },
     );
 
@@ -287,6 +292,9 @@ class Chat {
 
   /// Return whether or not the notification should be muted
   bool shouldMuteNotification(Message? message) {
+    /// Messages filed this chat under Spam, which never notifies on the iPhone
+    if (isFilteredAsSpam == true) return true;
+
     /// Filter unknown senders & sender doesn't have a contact, then don't notify
     if (SettingsSvc.settings.filterUnknownSenders.value && handles.length == 1 && handles.first.contactsV2.isEmpty) {
       return true;
@@ -801,6 +809,7 @@ class Chat {
     }
     chatIdentifier ??= other.chatIdentifier;
     displayName ??= other.displayName;
+    isFilteredAsSpam ??= other.isFilteredAsSpam;
     if (handles.isEmpty) {
       handles.addAll(other.handles);
     }
@@ -817,6 +826,15 @@ class Chat {
     dynamicWallpaperId ??= other.dynamicWallpaperId;
     dynamicWallpaperConfig ??= other.dynamicWallpaperConfig;
     return this;
+  }
+
+  /// Copy Messages' Spam verdict from server data. Servers that predate the flag
+  /// send no value, which must not clear a verdict already stored.
+  /// Returns whether the stored value changed.
+  bool mergeSpamFlag(Chat other) {
+    if (other.isFilteredAsSpam == null || other.isFilteredAsSpam == isFilteredAsSpam) return false;
+    isFilteredAsSpam = other.isFilteredAsSpam;
+    return true;
   }
 
   static int sort(Chat? a, Chat? b) {
@@ -881,6 +899,7 @@ class Chat {
       "muteArgs": muteArgs,
       "isPinned": isPinned!,
       "displayName": displayName,
+      "isFilteredAsSpam": isFilteredAsSpam,
       "participants": participants.map((item) => item.toMap()).toList(),
       "hasUnreadMessage": hasUnreadMessage!,
       "_customAvatarPath": _customAvatarPath.value,

@@ -20,6 +20,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
       SettingsSvc.settings.windowEffect.value == WindowEffect.disabled ? headerColor : Colors.transparent;
   bool get showArchived => controller.showArchivedChats;
   bool get showUnknown => controller.showUnknownSenders;
+  bool get showSpam => controller.showSpamChats;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +72,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                   child: Align(
                     alignment: Alignment.bottomLeft,
                     child: Container(
-                      padding: EdgeInsets.only(left: showArchived || showUnknown ? 60 : 16),
+                      padding: EdgeInsets.only(left: showArchived || showUnknown || showSpam ? 60 : 16),
                       height: (kToolbarHeight + (kIsDesktop ? 20 : 0)),
                       child: Align(
                         alignment: Alignment.centerLeft,
@@ -97,19 +98,19 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          if (showArchived || showUnknown)
+                          if (showArchived || showUnknown || showSpam)
                             IconButton(
                                 onPressed: () async {
                                   Navigator.of(context).pop();
                                 },
                                 padding: EdgeInsets.zero,
                                 icon: buildBackButton(context)),
-                          if (!showArchived && !showUnknown) const SizedBox.shrink(),
+                          if (!showArchived && !showUnknown && !showSpam) const SizedBox.shrink(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (!showArchived && !showUnknown)
+                              if (!showArchived && !showUnknown && !showSpam)
                                 Padding(
                                     padding: const EdgeInsets.only(left: 2),
                                     child: IconButton(
@@ -121,7 +122,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                         color: context.theme.colorScheme.onSurfaceVariant,
                                       ),
                                     )),
-                              if (!showArchived && !showUnknown)
+                              if (!showArchived && !showUnknown && !showSpam)
                                 IconButton(
                                     onPressed: () async {
                                       NavigationSvc.pushLeft(
@@ -133,8 +134,8 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                       Icons.search,
                                       color: context.theme.colorScheme.onSurfaceVariant,
                                     )),
-                              if (!showArchived && !showUnknown) const ChatListFilterButton(),
-                              if (!showArchived && !showUnknown)
+                              if (!showArchived && !showUnknown && !showSpam) const ChatListFilterButton(),
+                              if (!showArchived && !showUnknown && !showSpam)
                                 const Padding(
                                   padding: EdgeInsets.only(right: 8.0),
                                   child: Material(
@@ -177,7 +178,9 @@ class _ExpandedHeaderTextState extends CustomState<ExpandedHeaderText, void, Con
                 ? "Archived"
                 : controller.showUnknownSenders
                     ? "Unknown Senders"
-                    : unreadChats > 0
+                    : controller.showSpamChats
+                        ? "Spam"
+                        : unreadChats > 0
                         ? "$unreadChats unread message${unreadChats > 1 ? "s" : ""}"
                         : "Messages",
         style: context.theme.textTheme.displaySmall!.copyWith(color: context.theme.colorScheme.onSurface),

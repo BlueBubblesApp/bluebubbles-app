@@ -35,7 +35,9 @@ class HeaderText extends StatelessWidget {
             ? "Archive"
             : controller.showUnknownSenders
                 ? "Unknown Senders"
-                : "Messages",
+                : controller.showSpamChats
+                    ? "Spam"
+                    : "Messages",
         style: context.textTheme.headlineLarge!.copyWith(
           color: context.theme.colorScheme.onSurface,
           fontWeight: FontWeight.w400,
@@ -264,6 +266,11 @@ class MaterialAvatarMenu extends StatelessWidget {
               onTap: () => hideMenu().then((_) => goToArchived(overlayContext)),
             ),
             MenuItemRow(
+              icon: Icons.report_outlined,
+              label: 'Spam',
+              onTap: () => hideMenu().then((_) => goToSpam(overlayContext)),
+            ),
+            MenuItemRow(
               icon: hasActiveChatFilter ? Icons.filter_list : Icons.filter_list_outlined,
               iconColor: hasActiveChatFilter ? overlayContext.theme.colorScheme.primary : null,
               label: 'Filter Chats',
@@ -373,6 +380,12 @@ class CupertinoOverflowMenu extends StatelessWidget {
           title: 'Archived',
           icon: CupertinoIcons.archivebox,
           onTap: () => goToArchived(context),
+        ),
+        PullDownMenuItem(
+          itemTheme: itemTheme,
+          title: 'Spam',
+          icon: CupertinoIcons.exclamationmark_octagon,
+          onTap: () => goToSpam(context),
         ),
         PullDownMenuItem(
           itemTheme: itemTheme,
@@ -553,6 +566,7 @@ Future<void> markAllAsReadRespectingFilter(BuildContext context, ConversationLis
     final guids = ChatsSvc.getFilteredChats(
       showArchived: controller?.showArchivedChats,
       showUnknown: controller?.showUnknownSenders,
+      showSpam: controller?.showSpamChats,
       filters: filters,
     ).map((c) => c.guid).toSet();
     await ChatsSvc.markAllAsRead(chatGuids: guids);
@@ -607,6 +621,17 @@ void goToArchived(BuildContext context) {
       ConversationList(
         showArchivedChats: true,
         showUnknownSenders: false,
+      ));
+}
+
+/// Chats Messages filed under Spam, which every other list leaves out.
+void goToSpam(BuildContext context) {
+  NavigationSvc.pushLeft(
+      context,
+      ConversationList(
+        showArchivedChats: false,
+        showUnknownSenders: false,
+        showSpamChats: true,
       ));
 }
 
