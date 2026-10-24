@@ -1652,6 +1652,18 @@ class ChatsService {
   /// post-deletion recompute, which must fall back to an older surviving message.
   /// [repositionImmediate] controls the chat list rebuild only — the ChatState update is always
   /// synchronous. Pass false when updating many chats in a row so the rebuilds coalesce.
+  /// Drops a chat's latest-message preview once the device holds no messages
+  /// for it, so an empty conversation stops previewing a hidden message.
+  void clearChatLatestMessage(String chatGuid) {
+    final state = getChatState(chatGuid);
+    if (state == null) return;
+
+    state.updateLatestMessageInternal(null);
+    state.updateSubtitleInternal(null);
+    state.chat.clearLatestMessage();
+    _repositionChat(state.chat, immediate: true);
+  }
+
   void updateChatLatestMessage(String chatGuid, Message message,
       {bool allowOlder = false, bool repositionImmediate = true}) {
     final state = getChatState(chatGuid);

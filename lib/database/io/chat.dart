@@ -59,6 +59,15 @@ class Chat {
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
 
+  /// Clears the cached latest message for a chat the device no longer holds
+  /// any messages for. The counterpart to [setLatestMessage]; without it the
+  /// stale pointer keeps feeding the conversation tile's preview.
+  void clearLatestMessage() {
+    dbLatestMessage.target = null;
+    dbOnlyLatestMessageDate = null;
+    unawaited(saveAsync(updateLatestMessage: true));
+  }
+
   /// Update the latest-message relation and its sort-key in one step.
   /// Persists both fields to the DB asynchronously (fire-and-forget).
   void setLatestMessage(Message m) {

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -231,6 +233,44 @@ class RecoverableMessageReconciler {
     }
   }
 
+  /// Corrects chats whose cached latest message is hidden.
+  ///
+  /// The conversation tile renders from the chat's stored latest-message
+  /// pointer rather than a live query, so a pointer left aimed at a hidden
+  /// message previews text the thread itself will not show. Hides applied
+  /// before this repair existed left exactly that state behind, and it cannot
+  /// fix itself: the message is already hidden, so nothing hides it again.
+  static Future<void> repairHiddenLatestMessages() async {
+    if (kIsWeb) return;
+
+    final query = Database.messages.query(Message_.dateDeleted.notNull()).build();
+    final hidden = query.find();
+    query.close();
+    if (hidden.isEmpty) return;
+
+    final hiddenGuids = hidden.map((message) => message.guid).whereType<String>().toSet();
+    var repaired = 0;
+
+    for (final chat in ChatsSvc.allChats) {
+      final pointer = chat.dbLatestMessage.target;
+      final pointerGuid = pointer?.guid;
+      if (pointerGuid == null || !hiddenGuids.contains(pointerGuid)) continue;
+
+      final surviving = Chat.getMessages(chat, limit: 1);
+      if (surviving.isEmpty) {
+        ChatsSvc.clearChatLatestMessage(chat.guid);
+      } else {
+        ChatsSvc.updateChatLatestMessage(chat.guid, surviving.first, allowOlder: true);
+      }
+      repaired++;
+    }
+
+    if (repaired > 0) {
+      Logger.info('Repaired $repaired chat tile(s) previewing a hidden message',
+          tag: 'RecoverableMessageReconciler');
+    }
+  }
+
   static Future<void> run() async {
     try {
       final response = await HttpSvc.server.getRecoverableMessageSnapshot();
@@ -284,6 +324,8 @@ class RecoverableMessageReconciler {
       // Commit only after every local change succeeded, so a partial failure
       // retries from the previous known-good baseline.
       await saveBaseline(actions.nextBaseline);
+
+      await repairHiddenLatestMessages();
 
       if (actions.seeded) {
         Logger.info('Seeded the Recently Deleted baseline (${actions.nextBaseline.length} message(s))',

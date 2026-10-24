@@ -1303,7 +1303,13 @@ class MessagesService extends GetxController {
       // The newest message was just deleted, so the surviving latest is older
       // than the current pointer — allow the downgrade here specifically.
       ChatsSvc.updateChatLatestMessage(tag, latest.first, allowOlder: true);
+      return;
     }
+
+    // Nothing survived: the hidden message was the only one this device held.
+    // The tile renders from the stored pointer rather than a live query, so
+    // leaving it would preview the hidden message beside an empty thread.
+    ChatsSvc.clearChatLatestMessage(tag);
   }
 
   /// Toggle bookmark status on a message
