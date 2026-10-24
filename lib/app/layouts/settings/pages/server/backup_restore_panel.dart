@@ -354,10 +354,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
       onYes: () async {
         Navigator.of(context, rootNavigator: true).pop();
         try {
-          // Sync markers are per-device; older backups still carry them.
-          Settings.updateFromMap(Map.of(item)
-            ..remove('lastIncrementalSync')
-            ..remove('lastIncrementalSyncRowId'));
+          Settings.updateFromMap(item, includeAll: false);
           showSnackbar("Success", "Settings restored successfully", type: SnackbarType.success);
           final pinnedChats = item["pinnedChats"] as List<dynamic>?;
           if (pinnedChats != null) {
@@ -570,9 +567,7 @@ class _BackupRestorePanelState extends State<BackupRestorePanel> with ThemeHelpe
         try {
           String jsonString = const Utf8Decoder().convert(res.files.first.bytes!);
           Map<String, dynamic> json = jsonDecode(jsonString);
-          Settings.updateFromMap(json
-            ..remove('lastIncrementalSync')
-            ..remove('lastIncrementalSyncRowId'));
+          Settings.updateFromMap(json, includeAll: false);
           showSnackbar("Success", "Settings restored successfully", type: SnackbarType.success);
           final pinnedChats = json["pinnedChats"] as List<dynamic>?;
           if (pinnedChats != null) {
