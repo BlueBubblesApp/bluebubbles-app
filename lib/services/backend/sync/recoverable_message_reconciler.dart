@@ -205,13 +205,17 @@ class RecoverableMessageReconciler {
     );
   }
 
-  /// Applies one catch-up hide/restore through the same service path the live
-  /// events use, so the message struct, the chat's latest-message pointer and
-  /// the conversation tile all stay consistent with the database.
+  /// Applies one catch-up hide or restore.
   ///
-  /// Falls back to a direct database write when the message's chat is missing
-  /// locally: there is no view to update in that case, and refusing would leave
-  /// Apple's deletion unapplied.
+  /// Prefers MessagesService so an OPEN conversation updates its message struct
+  /// and tile exactly as the live events do. That service only exists while the
+  /// chat's view is registered, though, and the catch-up runs over every chat —
+  /// almost all of them closed. Constructing it here throws
+  /// "Only UI owner code should create it", which aborted the whole pass and
+  /// left both the hide and the tile repair unapplied.
+  ///
+  /// So: use the service when it is already there, and otherwise write the
+  /// database and correct the chat tile directly.
   static Future<void> _applyThroughService(String guid, {required bool hide}) async {
     final message = Message.findOne(guid: guid);
     final chatGuid = message?.chat.target?.guid;
@@ -225,11 +229,32 @@ class RecoverableMessageReconciler {
       return;
     }
 
-    final service = MessagesSvc(chatGuid);
+    final service = maybeFindMessagesSvc(chatGuid);
+    if (service != null) {
+      if (hide) {
+        await service.softDeleteMessage(message);
+      } else {
+        await service.restoreMessage(message);
+      }
+      return;
+    }
+
+    // No open view. Write the database, then bring the chat tile back in line:
+    // it renders from the stored latest-message pointer, not a live query.
     if (hide) {
-      await service.softDeleteMessage(message);
+      await Message.softDelete(guid);
     } else {
-      await service.restoreMessage(message);
+      await Message.restore(guid);
+    }
+
+    final chat = ChatsSvc.findChatByGuid(chatGuid);
+    if (chat == null) return;
+
+    final surviving = Chat.getMessages(chat, limit: 1);
+    if (surviving.isEmpty) {
+      ChatsSvc.clearChatLatestMessage(chatGuid);
+    } else {
+      ChatsSvc.updateChatLatestMessage(chatGuid, surviving.first, allowOlder: true);
     }
   }
 
@@ -314,16 +339,36 @@ class RecoverableMessageReconciler {
       // database hides the row but leaves the already-built message struct and
       // the conversation tile's latestMessage pointer untouched, so the thread
       // renders empty while its tile still previews the hidden message.
+      // One unexpected failure must not abandon the rest of the pass, or the
+      // baseline save and the tile repair below. A single chat throwing here
+      // previously aborted everything.
+      var failed = 0;
       for (final guid in actions.toHide) {
-        await _applyThroughService(guid, hide: true);
+        try {
+          await _applyThroughService(guid, hide: true);
+        } catch (error, trace) {
+          failed++;
+          Logger.warn('Could not hide $guid', error: error, trace: trace, tag: 'RecoverableMessageReconciler');
+        }
       }
       for (final guid in actions.toRestore) {
-        await _applyThroughService(guid, hide: false);
+        try {
+          await _applyThroughService(guid, hide: false);
+        } catch (error, trace) {
+          failed++;
+          Logger.warn('Could not restore $guid', error: error, trace: trace, tag: 'RecoverableMessageReconciler');
+        }
+      }
+      if (failed > 0) {
+        Logger.warn('$failed Recently Deleted change(s) could not be applied',
+            tag: 'RecoverableMessageReconciler');
       }
 
       // Commit only after every local change succeeded, so a partial failure
       // retries from the previous known-good baseline.
-      await saveBaseline(actions.nextBaseline);
+      if (failed == 0) {
+        await saveBaseline(actions.nextBaseline);
+      }
 
       await repairHiddenLatestMessages();
 
