@@ -350,8 +350,6 @@ class Settings {
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'reduceMotion': reduceMotion.value,
-      'lastIncrementalSync': lastIncrementalSync.value,
-      'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       'refreshRate': refreshRate.value,
       'colorfulAvatars': colorfulAvatars.value,
       'colorfulBubbles': colorfulBubbles.value,
@@ -484,6 +482,8 @@ class Settings {
         'sendSoundPath': sendSoundPath.value,
         'receiveSoundPath': receiveSoundPath.value,
         'desktopNotificationSoundPath': desktopNotificationSoundPath.value,
+        'lastIncrementalSync': lastIncrementalSync.value,
+        'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       });
     }
 
