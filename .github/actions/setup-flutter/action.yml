@@ -15,10 +15,6 @@ runs:
     - name: Setup Dart
       uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
 
-    - name: Install fvm
-      run: dart pub global activate fvm "${{ inputs.fvm-version }}"
-      shell: bash
-
     # Split restore/save: actions/cache only writes when the whole job succeeds, so a
     # later analyze, compile or signing failure would discard a freshly downloaded SDK
     # and pub cache. Each save below runs as soon as its directory is populated instead.
@@ -37,6 +33,11 @@ runs:
         key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
         # A PR that changes the lockfile can't save its own entry, so start from master's and fetch only the difference.
         restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
+
+    # After the pub restore, which would otherwise swap in a snapshot built by an older setup-dart SDK.
+    - name: Install fvm
+      run: dart pub global activate fvm "${{ inputs.fvm-version }}"
+      shell: bash
 
     # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
     # from Git Bash on the Windows runner, and this form works on all three platforms.
