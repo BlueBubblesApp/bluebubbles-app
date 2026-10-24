@@ -27,6 +27,11 @@ import 'package:get_it/get_it.dart';
 // ignore: non_constant_identifier_names
 ChatsService get ChatsSvc => GetIt.I<ChatsService>();
 
+/// Server read events must still run notification cleanup when local state is
+/// already read. Duplicate unread events have no equivalent side effect.
+bool shouldApplyServerUnreadUpdate({required bool localUnread, required bool serverUnread}) =>
+    localUnread != serverUnread || !serverUnread;
+
 class ChatsService {
   static const batchSize = 100;
   int currentCount = 0;
@@ -1150,6 +1155,27 @@ class ChatsService {
     await init(force: true);
   }
 
+  /// Whether a server-originated deletion would discard local composition work.
+  bool hasLocalWorkForChat(String chatGuid) {
+    final hasPendingSend = GetIt.I.isRegistered<OutgoingMessageHandler>() &&
+        OutgoingMsgHandler.hasOutgoingWorkForChat(chatGuid);
+    final state = getChatState(chatGuid);
+    final hasPersistedDraft =
+        (state?.textFieldText.value?.isNotEmpty ?? false) || (state?.textFieldAttachments.isNotEmpty ?? false);
+    final active = activeChat;
+    if (active?.chat.guid != chatGuid) return hasPendingSend || hasPersistedDraft;
+
+    final controller = active?.controller;
+    final hasActiveDraft = controller != null &&
+        (controller.textController.text.isNotEmpty ||
+            controller.subjectTextController.text.isNotEmpty ||
+            controller.pickedAttachments.isNotEmpty ||
+            controller.showRecording.value ||
+            controller.scheduledDate.value != null ||
+            controller.replyToMessage != null);
+    return hasPendingSend || hasPersistedDraft || hasActiveDraft;
+  }
+
   /// Soft delete a chat with full UI cleanup and service state management
   Future<void> softDeleteChat(Chat chat) async {
     if (kIsWeb) return;
@@ -1331,6 +1357,29 @@ class ChatsService {
     state?.updateHasUnreadInternal(value);
   }
 
+  /// Apply unread state received from the server without echoing it back to Apple.
+  ///
+  /// This deliberately bypasses [_toggleChatHasUnread], whose active-chat logic
+  /// forces `privateMark` back to true. Reconciliation must remain local-only
+  /// even when the conversation is open.
+  Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null &&
+        !shouldApplyServerUnreadUpdate(localUnread: state.hasUnreadMessage.value, serverUnread: value)) {
+      return;
+    }
+
+    final chatToUpdate = state?.chat ?? chat;
+    await chatToUpdate.toggleHasUnreadAsync(
+      value,
+      force: true,
+      clearLocalNotifications: !value,
+      privateMark: false,
+    );
+    updateChat(chatToUpdate);
+    state?.updateHasUnreadInternal(value);
+  }
+
   /// Set chat muted status
   Future<void> setChatMuted(Chat chat, bool isMuted) async {
     final state = getChatState(chat.guid);
@@ -1357,6 +1406,19 @@ class ChatsService {
 
     // Update state if available
     state?.updateArchivedInternal(value);
+  }
+
+  /// Apply archive state received from the server without changing the local pin.
+  Future<void> setChatArchivedFromServer(Chat chat, bool value) async {
+    final state = getChatState(chat.guid);
+    if (state != null && state.isArchived.value == value) return;
+
+    final chatToUpdate = state?.chat ?? chat;
+    chatToUpdate.isArchived = value;
+    await chatToUpdate.saveAsync(updateIsArchived: true);
+    updateChat(chatToUpdate);
+    state?.updateArchivedInternal(value);
+    _scheduleListVersionUpdate(immediate: true);
   }
 
   /// Set chat auto send read receipts
@@ -1590,6 +1652,18 @@ class ChatsService {
   /// post-deletion recompute, which must fall back to an older surviving message.
   /// [repositionImmediate] controls the chat list rebuild only — the ChatState update is always
   /// synchronous. Pass false when updating many chats in a row so the rebuilds coalesce.
+  /// Drops a chat's latest-message preview once the device holds no messages
+  /// for it, so an empty conversation stops previewing a hidden message.
+  void clearChatLatestMessage(String chatGuid) {
+    final state = getChatState(chatGuid);
+    if (state == null) return;
+
+    state.updateLatestMessageInternal(null);
+    state.updateSubtitleInternal(null);
+    state.chat.clearLatestMessage();
+    _repositionChat(state.chat, immediate: true);
+  }
+
   void updateChatLatestMessage(String chatGuid, Message message,
       {bool allowOlder = false, bool repositionImmediate = true}) {
     final state = getChatState(chatGuid);

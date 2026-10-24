@@ -72,6 +72,20 @@ class MessageInterface {
     }
   }
 
+  static Future<void> restoreMessage({
+    required String guid,
+  }) async {
+    final data = {
+      'guid': guid,
+    };
+
+    if (isIsolate) {
+      return await MessageActions.restoreMessage(data);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<void>(IsolateRequestType.restoreMessage, input: data);
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchAssociatedMessagesAsync({
     required String messageGuid,
     required int? messageId,

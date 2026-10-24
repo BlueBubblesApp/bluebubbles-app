@@ -16,6 +16,21 @@ import 'package:get/get.dart' hide Response;
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
+/// The unread state an incoming message should leave on its chat, or null to
+/// leave it unchanged. A message Apple already reports as read must not mark
+/// the chat unread: its read event can be applied before the message arrives.
+bool? unreadAfterIncomingMessage({required bool isFromMe, required DateTime? dateRead}) {
+  if (isFromMe) return false;
+  return dateRead == null ? true : null;
+}
+
+/// Whether a message from me must clear the chat's notifications itself.
+/// Normally they are cleared as a side effect of the chat flipping to read,
+/// but Apple's read sync can mark the chat read first, and then a reply sent
+/// from another device leaves the notification behind.
+bool clearNotificationsWithoutReadFlip({required bool isFromMe, required bool clearIfFromMe, required bool wasUnread}) =>
+    isFromMe && clearIfFromMe && !wasUnread;
+
 @Entity()
 class Chat {
   int? id;
@@ -43,6 +58,15 @@ class Chat {
 
   @Property(uid: 526293286661780207)
   DateTime? dbOnlyLatestMessageDate;
+
+  /// Clears the cached latest message for a chat the device no longer holds
+  /// any messages for. The counterpart to [setLatestMessage]; without it the
+  /// stale pointer keeps feeding the conversation tile's preview.
+  void clearLatestMessage() {
+    dbLatestMessage.target = null;
+    dbOnlyLatestMessageDate = null;
+    unawaited(saveAsync(updateLatestMessage: true));
+  }
 
   /// Update the latest-message relation and its sort-key in one step.
   /// Persists both fields to the DB asynchronously (fire-and-forget).
@@ -421,10 +445,19 @@ class Chat {
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer) {
-      // Simple logic: mark read if from me, mark unread if not
-      if (message.isFromMe!) {
+      final unread = unreadAfterIncomingMessage(isFromMe: message.isFromMe!, dateRead: message.dateRead);
+      if (unread == false) {
+        final wasUnread = hasUnreadMessage ?? false;
         await toggleHasUnreadAsync(false, clearLocalNotifications: clearNotificationsIfFromMe, privateMark: false);
-      } else {
+        if (clearNotificationsWithoutReadFlip(
+            isFromMe: message.isFromMe!, clearIfFromMe: clearNotificationsIfFromMe, wasUnread: wasUnread)) {
+          try {
+            await ChatInterface.clearNotificationForChat(chatId: id!, chatGuid: guid);
+          } catch (e, s) {
+            Logger.warn("Failed to clear notifications for a read chat", error: e, trace: s, tag: 'Chat');
+          }
+        }
+      } else if (unread == true) {
         await toggleHasUnreadAsync(true, privateMark: false);
       }
     }

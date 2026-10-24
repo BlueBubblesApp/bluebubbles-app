@@ -14,6 +14,19 @@ import 'package:get_it/get_it.dart';
 
 import 'method_channel_constants.dart';
 
+/// Whether the FCM copy of a chat read-state event is guaranteed to be a
+/// duplicate of the socket copy.
+///
+/// Android can leave both the background-isolate marker and socket connected
+/// flag stale after the activity backgrounds. Only the actual UI lifecycle is
+/// strong enough evidence that the foreground socket will deliver the event.
+bool shouldDropChatReadPush({
+  required bool headless,
+  required bool isForeground,
+  required bool socketConnected,
+}) =>
+    !headless && isForeground && socketConnected;
+
 abstract class MethodChannelServiceDelegate {
   bool get headless;
   bool get shouldIgnoreMessage;
@@ -38,6 +51,9 @@ class MethodChannelHandlers {
       MethodChannelInboundMethods.replyChat: _handleReplyChat,
       MethodChannelInboundMethods.markChatRead: _handleMarkChatRead,
       MethodChannelInboundMethods.chatReadStatusChanged: _handleChatReadStatusChanged,
+      MethodChannelInboundMethods.chatDeleted: _handleChatDeleted,
+      MethodChannelInboundMethods.messageDeleted: _handleRecoverableMessageEvent,
+      MethodChannelInboundMethods.messageRestored: _handleRecoverableMessageEvent,
       MethodChannelInboundMethods.mediaColors: _handleMediaColors,
       MethodChannelInboundMethods.incomingFacetime: _handleIncomingFacetime,
       MethodChannelInboundMethods.ftCallStatusChanged: _handleFtCallStatusChanged,
@@ -56,6 +72,10 @@ class MethodChannelHandlers {
     if (handler == null) return _ok();
     return handler(call, arguments);
   }
+
+  /// Whether [method] is claimed by a handler. An unrouted method reports
+  /// success and the event is discarded, so this is worth asserting in tests.
+  bool hasHandlerFor(String method) => _handlers.containsKey(method);
 
   static Future<bool> _ok() => Future.value(true);
   static Future<bool> _retry() => Future.value(false);
@@ -332,24 +352,91 @@ class MethodChannelHandlers {
   }
 
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
-    if (!service.headless && LifecycleSvc.isAlive) return _ok();
+    // The headless DartWorker never registers SocketService, so check headless
+    // before reading the lifecycle or socket state.
+    if (!service.headless &&
+        shouldDropChatReadPush(
+          headless: false,
+          isForeground: LifecycleSvc.isForeground,
+          socketConnected: SocketSvc.socket?.connected ?? false,
+        )) {
+      return _ok();
+    }
+    if (arguments == null) return _retry();
     await Database.waitForInit();
     Logger.info('Received chat status change from FCM');
 
     try {
-      final Map<String, dynamic>? data = arguments;
-      if (!isNullOrEmpty(data)) {
-        final payload = ServerPayload.fromJson(data!);
-        final Chat? chat = Chat.findOne(guid: payload.data['chatGuid']);
-        if (chat == null || (payload.data['read'] != true && payload.data['read'] != false)) {
-          return await _retry();
-        }
-
-        chat.toggleHasUnreadAsync(!payload.data['read']!, privateMark: false);
-        return await _ok();
+      final payload = ServerPayload.fromJson(arguments);
+      final data = payload.data;
+      if (data['chatGuid'] is! String || (data['read'] != true && data['read'] != false)) {
+        return await _retry();
       }
 
-      return await _retry();
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatReadStatusChanged,
+        data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
+    } catch (e, s) {
+      Error.throwWithStackTrace(e, s);
+    }
+  }
+
+  Future<bool> _handleChatDeleted(MethodCall _, Map<String, dynamic>? arguments) async {
+    if (arguments == null) return _retry();
+    await Database.waitForInit();
+    Logger.info('Received chat deletion from push notification');
+
+    try {
+      final payload = ServerPayload.fromJson(arguments);
+      await MessageHandlerSvc.handleEvent(
+        MethodChannelInboundMethods.chatDeleted,
+        payload.data,
+        'MethodChannel',
+        useQueue: false,
+      );
+      return await _ok();
+    } catch (e, s) {
+      Error.throwWithStackTrace(e, s);
+    }
+  }
+
+  /// Apple moved a single message into, or back out of, Recently Deleted.
+  ///
+  /// Writes straight to the database. The headless DartWorker has no
+  /// MessagesService or ChatsService registered, so touching either would
+  /// throw `GetIt ... not registered` and the push would retry and be
+  /// dropped; when the UI is alive it handles the socket event instead and
+  /// this returns early.
+  /// Whether this isolate should apply the change itself.
+  ///
+  /// [headless] is read FIRST and short-circuits: the headless DartWorker has
+  /// no LifecycleService in GetIt, so evaluating `LifecycleSvc.isAlive` there
+  /// throws "not registered", the push retries five times and is dropped. When
+  /// the UI is alive it has already applied the socket event.
+  static bool shouldApplyInBackground(bool headless, bool Function() isAlive) => headless || !isAlive();
+
+  Future<bool> _handleRecoverableMessageEvent(MethodCall call, Map<String, dynamic>? arguments) async {
+    if (!shouldApplyInBackground(service.headless, () => LifecycleSvc.isAlive)) return _ok();
+    await Database.waitForInit();
+    Logger.info('Received ${call.method} from FCM');
+
+    try {
+      if (isNullOrEmpty(arguments)) return await _retry();
+      final payload = ServerPayload.fromJson(arguments!);
+      final messageGuid = payload.data['messageGuid'];
+      if (messageGuid is! String || messageGuid.isEmpty) return await _retry();
+      if (Message.findOne(guid: messageGuid) == null) return await _ok();
+
+      if (call.method == MethodChannelInboundMethods.messageDeleted) {
+        await Message.softDelete(messageGuid);
+      } else {
+        await Message.restore(messageGuid);
+      }
+      return await _ok();
     } catch (e, s) {
       return Future.error(e, s);
     }
