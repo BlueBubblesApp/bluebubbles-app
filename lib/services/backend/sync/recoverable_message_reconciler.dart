@@ -168,19 +168,22 @@ RecoverableMessageActions resolveRecoverableMessageActions({
 /// happens while connected; this covers the gap, the same way
 /// ChatStateReconciler does for chats.
 class RecoverableMessageReconciler {
-  /// Reads the GUIDs this client is hiding on Apple's behalf. A baseline
-  /// written against a different server address is not trusted: the GUIDs
-  /// would be meaningless, so that case re-seeds instead.
-  static ({bool trusted, Set<String> guids}) readBaseline(String serverAddress) {
+  /// Reads the GUIDs this client is hiding on Apple's behalf.
+  ///
+  /// The baseline is deliberately NOT keyed to the server address. Message
+  /// GUIDs are minted by Apple and are stable for the same Messages database,
+  /// while the address is not: a Cloudflare/ngrok quick tunnel mints a new URL
+  /// on every server restart. Keying on it made the baseline untrusted after
+  /// each restart, which re-seeded and silently disabled this catch-up — the
+  /// offline case it exists for. A migration path keeps older baselines that
+  /// still carry an address.
+  static ({bool trusted, Set<String> guids}) readBaseline() {
     final raw = PrefsSvc.database.getRecoverableMessageBaseline();
     if (raw == null) return (trusted: false, guids: <String>{});
 
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) throw const FormatException('malformed baseline');
-      if (decoded['serverAddress'] != serverAddress) {
-        return (trusted: false, guids: <String>{});
-      }
       final guids = decoded['guids'];
       if (guids is! List || guids.any((guid) => guid is! String || guid.isEmpty)) {
         throw const FormatException('malformed baseline guid');
@@ -193,10 +196,10 @@ class RecoverableMessageReconciler {
     }
   }
 
-  static Future<void> saveBaseline(String serverAddress, Set<String> guids) {
+  static Future<void> saveBaseline(Set<String> guids) {
     final sorted = guids.toList()..sort();
     return PrefsSvc.database.setRecoverableMessageBaseline(
-      jsonEncode({'serverAddress': serverAddress, 'guids': sorted}),
+      jsonEncode({'guids': sorted}),
     );
   }
 
@@ -256,8 +259,7 @@ class RecoverableMessageReconciler {
         if (Message.findOne(guid: guid) != null) knownGuids.add(guid);
       }
 
-      final serverAddress = SettingsSvc.settings.serverAddress.value;
-      final baseline = readBaseline(serverAddress);
+      final baseline = readBaseline();
 
       final actions = resolveRecoverableMessageActions(
         hasTrustedBaseline: baseline.trusted,
@@ -281,7 +283,7 @@ class RecoverableMessageReconciler {
 
       // Commit only after every local change succeeded, so a partial failure
       // retries from the previous known-good baseline.
-      await saveBaseline(serverAddress, actions.nextBaseline);
+      await saveBaseline(actions.nextBaseline);
 
       if (actions.seeded) {
         Logger.info('Seeded the Recently Deleted baseline (${actions.nextBaseline.length} message(s))',

@@ -215,15 +215,22 @@ class ChatStateReconciler {
     return result;
   }
 
-  static Set<String> _readDeferredDeletionGuids(String serverAddress) =>
-      _readDeferredDeletionsByServer()[serverAddress] ?? <String>{};
+  /// Deferred deletions were keyed by server address, which a quick tunnel
+  /// rotates on every restart — orphaning the queue so a deletion deferred
+  /// behind a draft was never applied. They are stored under a single stable
+  /// key now, and entries still filed under an address are folded in so
+  /// nothing already queued is lost.
+  static const String _deferredDeletionKey = '*';
 
-  static Future<void> _saveDeferredDeletionGuids(String serverAddress, Set<String> guids) async {
-    final byServer = _readDeferredDeletionsByServer();
-    if (guids.isEmpty) {
-      byServer.remove(serverAddress);
-    } else {
-      byServer[serverAddress] = {...guids};
+  static Set<String> _readDeferredDeletionGuids() =>
+      _readDeferredDeletionsByServer().values.expand((guids) => guids).toSet();
+
+  static Future<void> _saveDeferredDeletionGuids(Set<String> guids) async {
+    // Collapse to the stable key, discarding legacy per-address buckets whose
+    // contents the caller has already folded in via _readDeferredDeletionGuids.
+    final byServer = <String, Set<String>>{};
+    if (guids.isNotEmpty) {
+      byServer[_deferredDeletionKey] = {...guids};
     }
 
     final sortedServers = byServer.keys.toList()..sort();
@@ -241,9 +248,8 @@ class ChatStateReconciler {
     final completer = Completer<void>();
     _applyTail = _applyTail.then((_) async {
       try {
-        final serverAddress = SettingsSvc.settings.serverAddress.value;
-        final guids = _readDeferredDeletionGuids(serverAddress)..add(guid);
-        await _saveDeferredDeletionGuids(serverAddress, guids);
+        final guids = _readDeferredDeletionGuids()..add(guid);
+        await _saveDeferredDeletionGuids(guids);
         completer.complete();
       } catch (error, trace) {
         completer.completeError(error, trace);
@@ -306,12 +312,17 @@ class ChatStateReconciler {
 
     final baseline = _readBaseline();
     final serverAddress = SettingsSvc.settings.serverAddress.value;
-    final queuedDeletionGuids = _readDeferredDeletionGuids(serverAddress);
+    final queuedDeletionGuids = _readDeferredDeletionGuids();
     final confirmedQueuedDeletionGuids = queuedDeletionGuids.where((guid) {
       final entry = entries[guid];
       return entry == null || entry.messageCount == 0;
     }).toSet();
-    final baselineMatchesServer = baseline.initialized && baseline.serverAddress == serverAddress;
+    // Chat GUIDs, like message GUIDs, are Apple's and stable for the same
+    // Messages database; the server ADDRESS is not, because a quick tunnel
+    // mints a new URL on every restart. Requiring the address to match made
+    // the baseline untrusted after each restart, re-seeding and dropping the
+    // deletion history this reconciler depends on.
+    final baselineMatchesServer = baseline.initialized;
     if (baselineMatchesServer && generatedAt <= baseline.lastGeneratedAt) {
       Logger.warn('Chat snapshot was older than the applied baseline; refusing to reconcile');
       return const ChatSnapshotOutcome(skipped: true, reason: 'stale');
@@ -363,7 +374,7 @@ class ChatStateReconciler {
       serverAddress: serverAddress,
       lastGeneratedAt: generatedAt,
     );
-    await _saveDeferredDeletionGuids(serverAddress, remainingDeferredDeletionGuids);
+    await _saveDeferredDeletionGuids(remainingDeferredDeletionGuids);
 
     Logger.info(
       'Reconciled chat state: $readUpdated read updates, $deleted forward deletions '
