@@ -200,6 +200,34 @@ class RecoverableMessageReconciler {
     );
   }
 
+  /// Applies one catch-up hide/restore through the same service path the live
+  /// events use, so the message struct, the chat's latest-message pointer and
+  /// the conversation tile all stay consistent with the database.
+  ///
+  /// Falls back to a direct database write when the message's chat is missing
+  /// locally: there is no view to update in that case, and refusing would leave
+  /// Apple's deletion unapplied.
+  static Future<void> _applyThroughService(String guid, {required bool hide}) async {
+    final message = Message.findOne(guid: guid);
+    final chatGuid = message?.chat.target?.guid;
+
+    if (message == null || chatGuid == null) {
+      if (hide) {
+        await Message.softDelete(guid);
+      } else {
+        await Message.restore(guid);
+      }
+      return;
+    }
+
+    final service = MessagesSvc(chatGuid);
+    if (hide) {
+      await service.softDeleteMessage(message);
+    } else {
+      await service.restoreMessage(message);
+    }
+  }
+
   static Future<void> run() async {
     try {
       final response = await HttpSvc.server.getRecoverableMessageSnapshot();
@@ -239,11 +267,16 @@ class RecoverableMessageReconciler {
         locallyKnownGuids: knownGuids,
       );
 
+      // Route through MessagesService, exactly as the live `message-deleted` /
+      // `message-restored` events do. Writing dateDeleted straight to the
+      // database hides the row but leaves the already-built message struct and
+      // the conversation tile's latestMessage pointer untouched, so the thread
+      // renders empty while its tile still previews the hidden message.
       for (final guid in actions.toHide) {
-        await Message.softDelete(guid);
+        await _applyThroughService(guid, hide: true);
       }
       for (final guid in actions.toRestore) {
-        await Message.restore(guid);
+        await _applyThroughService(guid, hide: false);
       }
 
       // Commit only after every local change succeeded, so a partial failure
