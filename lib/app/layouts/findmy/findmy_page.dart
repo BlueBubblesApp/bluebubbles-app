@@ -51,7 +51,9 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
   void dispose() {
     _panelPosition.dispose();
     _panelScrollController.dispose();
-    controller.tabController?.dispose();
+    // The controller owns tabController and disposes it in onClose, which
+    // Get.delete triggers; disposing it here too trips the ChangeNotifier
+    // double-dispose assertion on every page close in debug builds.
     Get.delete<FindMyController>();
     super.dispose();
   }
