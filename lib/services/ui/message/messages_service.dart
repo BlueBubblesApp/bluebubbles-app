@@ -1287,6 +1287,11 @@ class MessagesService extends GetxController {
     await Message.restore(restoredGuid);
     message.dateDeleted = null;
     struct.addMessages([message]);
+    // Adding to the struct alone leaves the open list untouched: the view
+    // renders from its own message list and MessageStates, exactly as a new
+    // incoming message does, so take the same path.
+    getOrCreateState(message);
+    newFunc(message);
     ChatsSvc.updateChatLatestMessage(tag, message);
   }
 

@@ -325,7 +325,8 @@ class RecoverableMessageReconciler {
     final hiddenGuids = hidden.map((message) => message.guid).whereType<String>().toSet();
     var repaired = 0;
 
-    for (final chat in ChatsSvc.allChats) {
+    // Repositioning a chat mutates the sorted list, so iterate a copy.
+    for (final chat in ChatsSvc.allChats.toList()) {
       final pointer = chat.dbLatestMessage.target;
       final pointerGuid = pointer?.guid;
       if (pointerGuid == null || !hiddenGuids.contains(pointerGuid)) continue;

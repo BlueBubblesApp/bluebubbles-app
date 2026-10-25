@@ -69,7 +69,9 @@ class SyncService {
       // The cooldown protects the expensive message/contact sync, not the
       // authoritative read/deletion correction. A read-state event can be lost
       // while Android is backgrounded, and resume must still repair that drift.
+      // The same holds for single-message deletes and restores.
       await performChatStateReconcile();
+      await RecoverableMessageReconciler.run();
       return;
     }
 
