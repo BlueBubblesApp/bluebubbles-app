@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
 import 'package:bluebubbles/services/backend/sync/chat_state_transition.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -363,6 +364,17 @@ class ChatStateReconciler {
       if (desiredUnread != null) {
         await ChatsSvc.setChatHasUnreadFromServer(chat, desiredUnread);
         readUpdated++;
+      } else if (entry.read && !(chat.hasUnreadMessage ?? false)) {
+        // Local state already agrees the chat is read, so no flag changes, but
+        // a notification posted before the read arrived is still on screen.
+        // Cancelling is idempotent and cheap; without it a chat read on an
+        // Apple device while this client was offline keeps its notification
+        // until the next incoming message.
+        try {
+          await ChatInterface.clearNotificationForChat(chatId: chat.id!, chatGuid: chat.guid);
+        } catch (e, s) {
+          Logger.warn('Failed to clear a stale notification for ${chat.guid}', error: e, trace: s, tag: 'ChatStateReconciler');
+        }
       }
     }
 
