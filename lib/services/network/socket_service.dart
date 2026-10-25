@@ -367,6 +367,8 @@ class SocketService {
       s.on("chat-read-status-changed",
           (data) => MessageHandlerSvc.handleEvent("chat-read-status-changed", data, 'DartSocket')),
       s.on("chat-deleted", (data) => MessageHandlerSvc.handleEvent("chat-deleted", data, 'DartSocket')),
+      s.on("message-deleted", (data) => MessageHandlerSvc.handleEvent("message-deleted", data, 'DartSocket')),
+      s.on("message-restored", (data) => MessageHandlerSvc.handleEvent("message-restored", data, 'DartSocket')),
       s.on("imessage-aliases-removed",
           (data) => MessageHandlerSvc.handleEvent("imessage-aliases-removed", data, 'DartSocket')),
       // Live Find My updates. Re-broadcast through the event dispatcher rather than

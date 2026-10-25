@@ -27,16 +27,18 @@ class ActionHandler extends GetxService {
   /// already built keeps showing the message until it is removed from it.
   Future<void> handleRecoverableMessageEvent(RecoverableMessageEvent? event) async {
     if (event == null) return;
+    if (Message.findOne(guid: event.messageGuid) == null) return;
 
-    final message = Message.findOne(guid: event.messageGuid);
-    if (message == null) return;
-
-    final service = MessagesSvc(event.chatGuid);
-    if (event.deleted) {
-      await service.softDeleteMessage(message);
-    } else {
-      await service.restoreMessage(message);
-    }
+    // Same rules as the catch-up pass: a restore only un-hides a message this
+    // client hid on Apple's behalf, never one the user deleted in the app; and
+    // the open conversation is updated live when there is one, otherwise the
+    // database and the chat tile are written directly. MessagesService exists
+    // only while a conversation view is registered, so it cannot be created
+    // here for an arbitrary chat.
+    await RecoverableMessageReconciler.applyLiveEvent(
+      event.messageGuid,
+      hide: event.deleted,
+    );
   }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {

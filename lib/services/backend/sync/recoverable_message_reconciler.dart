@@ -125,6 +125,30 @@ RecoverableMessageSnapshot parseRecoverableMessageSnapshot(Map<String, dynamic> 
 /// Works out the minimum set of local changes that makes the device agree with
 /// Apple's Recently Deleted folder.
 ///
+/// Decides a single live `message-deleted` / `message-restored` event.
+///
+/// A hide always applies and joins the baseline, so a later restore is
+/// recognised as ours. A restore applies only to a GUID in the baseline: a
+/// message the user deleted in the app is never un-hidden by the server. The
+/// baseline is only rewritten when it was trusted to begin with; an untrusted
+/// baseline is reseeded by the next catch-up pass instead.
+({bool apply, Set<String>? nextBaseline}) resolveLiveRecoverableEvent({
+  required String guid,
+  required bool hide,
+  required bool hasTrustedBaseline,
+  required Set<String> baselineGuids,
+}) {
+  if (!hide && !baselineGuids.contains(guid)) return (apply: false, nextBaseline: null);
+  if (!hasTrustedBaseline) return (apply: true, nextBaseline: null);
+  final next = {...baselineGuids};
+  if (hide) {
+    next.add(guid);
+  } else {
+    next.remove(guid);
+  }
+  return (apply: true, nextBaseline: next);
+}
+
 /// Forward-only, like ChatStateReconciler. [baselineGuids] is what this client
 /// previously hid on Apple's behalf, and ONLY those GUIDs are ever un-hidden:
 /// a message the user deleted inside the app is also `dateDeleted`, and Apple
@@ -216,6 +240,31 @@ class RecoverableMessageReconciler {
   ///
   /// So: use the service when it is already there, and otherwise write the
   /// database and correct the chat tile directly.
+  /// Applies a live `message-deleted` / `message-restored` event.
+  ///
+  /// Hides always apply and are recorded in the baseline, so a later restore
+  /// is recognised as ours. A restore applies only to a message this client
+  /// hid on Apple's behalf; a message the user deleted in the app is never
+  /// un-hidden by the server. The catch-up pass enforces the same rule.
+  static Future<void> applyLiveEvent(String guid, {required bool hide}) async {
+    if (kIsWeb) return;
+    final baseline = readBaseline();
+    final decision = resolveLiveRecoverableEvent(
+      guid: guid,
+      hide: hide,
+      hasTrustedBaseline: baseline.trusted,
+      baselineGuids: baseline.guids,
+    );
+    if (!decision.apply) {
+      Logger.info('Ignoring restore for $guid: not hidden by this client', tag: 'RecoverableMessageReconciler');
+      return;
+    }
+    await _applyThroughService(guid, hide: hide);
+    if (decision.nextBaseline != null) {
+      await PrefsSvc.database.setRecoverableMessageBaseline(jsonEncode({'guids': decision.nextBaseline!.toList()}));
+    }
+  }
+
   static Future<void> _applyThroughService(String guid, {required bool hide}) async {
     final message = Message.findOne(guid: guid);
     final chatGuid = message?.chat.target?.guid;
