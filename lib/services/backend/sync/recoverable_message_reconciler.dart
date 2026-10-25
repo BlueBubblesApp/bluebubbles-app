@@ -125,6 +125,12 @@ RecoverableMessageSnapshot parseRecoverableMessageSnapshot(Map<String, dynamic> 
 /// Works out the minimum set of local changes that makes the device agree with
 /// Apple's Recently Deleted folder.
 ///
+/// A snapshot is stale when it was generated before the one whose result is
+/// already stored. A baseline without a timestamp (older format, or none yet)
+/// never makes a snapshot stale.
+bool isStaleRecoverableSnapshot({required int snapshotGeneratedAt, required int baselineGeneratedAt}) =>
+    baselineGeneratedAt > 0 && snapshotGeneratedAt > 0 && snapshotGeneratedAt < baselineGeneratedAt;
+
 /// Decides a single live `message-deleted` / `message-restored` event.
 ///
 /// A hide always applies and joins the baseline, so a later restore is
@@ -203,9 +209,9 @@ class RecoverableMessageReconciler {
   /// each restart, which re-seeded and silently disabled this catch-up — the
   /// offline case it exists for. A migration path keeps older baselines that
   /// still carry an address.
-  static ({bool trusted, Set<String> guids}) readBaseline() {
+  static ({bool trusted, Set<String> guids, int generatedAt}) readBaseline() {
     final raw = PrefsSvc.database.getRecoverableMessageBaseline();
-    if (raw == null) return (trusted: false, guids: <String>{});
+    if (raw == null) return (trusted: false, guids: <String>{}, generatedAt: 0);
 
     try {
       final decoded = jsonDecode(raw);
@@ -214,18 +220,23 @@ class RecoverableMessageReconciler {
       if (guids is! List || guids.any((guid) => guid is! String || guid.isEmpty)) {
         throw const FormatException('malformed baseline guid');
       }
-      return (trusted: true, guids: guids.cast<String>().toSet());
+      final generatedAt = decoded['generatedAt'];
+      return (
+        trusted: true,
+        guids: guids.cast<String>().toSet(),
+        generatedAt: generatedAt is int && generatedAt > 0 ? generatedAt : 0,
+      );
     } catch (error, trace) {
       Logger.warn('Recently Deleted baseline was malformed; reseeding',
           error: error, trace: trace, tag: 'RecoverableMessageReconciler');
-      return (trusted: false, guids: <String>{});
+      return (trusted: false, guids: <String>{}, generatedAt: 0);
     }
   }
 
-  static Future<void> saveBaseline(Set<String> guids) {
+  static Future<void> saveBaseline(Set<String> guids, {int generatedAt = 0}) {
     final sorted = guids.toList()..sort();
     return PrefsSvc.database.setRecoverableMessageBaseline(
-      jsonEncode({'guids': sorted}),
+      jsonEncode({'guids': sorted, 'generatedAt': generatedAt}),
     );
   }
 
@@ -261,7 +272,7 @@ class RecoverableMessageReconciler {
     }
     await _applyThroughService(guid, hide: hide);
     if (decision.nextBaseline != null) {
-      await PrefsSvc.database.setRecoverableMessageBaseline(jsonEncode({'guids': decision.nextBaseline!.toList()}));
+      await saveBaseline(decision.nextBaseline!, generatedAt: baseline.generatedAt);
     }
   }
 
@@ -360,6 +371,18 @@ class RecoverableMessageReconciler {
         );
         return;
       }
+      final priorBaseline = readBaseline();
+      if (isStaleRecoverableSnapshot(snapshotGeneratedAt: snapshot.generatedAt, baselineGeneratedAt: priorBaseline.generatedAt)) {
+        // A snapshot older than the one already applied (a delayed response
+        // overtaking a newer one) would re-hide messages Apple has since
+        // restored, or restore ones it has since deleted. Skip it; the next
+        // pass fetches a current one.
+        Logger.warn(
+          'Refusing to reconcile Recently Deleted: snapshot ${snapshot.generatedAt} is older than applied ${priorBaseline.generatedAt}',
+          tag: 'RecoverableMessageReconciler',
+        );
+        return;
+      }
 
       final serverDeleted = snapshot.allDeletedGuids;
 
@@ -417,7 +440,7 @@ class RecoverableMessageReconciler {
       // Commit only after every local change succeeded, so a partial failure
       // retries from the previous known-good baseline.
       if (failed == 0) {
-        await saveBaseline(actions.nextBaseline);
+        await saveBaseline(actions.nextBaseline, generatedAt: snapshot.generatedAt);
       }
 
       await repairHiddenLatestMessages();
