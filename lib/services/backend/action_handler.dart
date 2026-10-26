@@ -29,9 +29,7 @@ class ActionHandler extends GetxService {
     if (event == null) return;
     if (Message.findOne(guid: event.messageGuid) == null) return;
 
-    // Same rules as the catch-up pass: a restore only un-hides a message this
-    // client hid on Apple's behalf, never one the user deleted in the app; and
-    // the open conversation is updated live when there is one, otherwise the
+    // The open conversation is updated live when there is one, otherwise the
     // database and the chat tile are written directly. MessagesService exists
     // only while a conversation view is registered, so it cannot be created
     // here for an arbitrary chat.
