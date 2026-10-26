@@ -142,7 +142,9 @@ class ChatsService {
     bool? excludePinned,
     ChatListFilters? filters,
   }) {
-    var chats = allChats;
+    // Chats Messages filed under Spam are reviewed on the iPhone; Android
+    // leaves them out of every list.
+    var chats = allChats.where((e) => e.isFilteredAsSpam != true).toList();
 
     // Apply archived filter
     if (showArchived != null) {
@@ -593,7 +595,10 @@ class ChatsService {
 
   /// Recalculate the global unread count based on all chat states
   void _recalculateUnreadCount() {
-    final count = chatStates.values.where((state) => state.hasUnreadMessage.value).length;
+    // Spam chats are hidden and never notify, so they must not raise the badge.
+    final count = chatStates.values
+        .where((state) => state.hasUnreadMessage.value && state.chat.isFilteredAsSpam != true)
+        .length;
     if (unreadCount.value != count) {
       unreadCount.value = count;
     }
@@ -751,6 +756,9 @@ class ChatsService {
       final isPinnedChanged = (updated.isPinned ?? false) != currentIsPinned;
       final sortOrderChanged =
           latestMessageChanged || latestMessageTimestampChanged || pinIndexChanged || isPinnedChanged;
+      // Moving into or out of Spam changes whether the chat is listed at all.
+      final spamChanged =
+          updated.isFilteredAsSpam != null && updated.isFilteredAsSpam != state.chat.isFilteredAsSpam;
 
       if (updated != state.chat || override) {
         state.updateFromChat(updated);
@@ -758,6 +766,11 @@ class ChatsService {
 
       if (sortOrderChanged || override) {
         _repositionChat(state.chat, immediate: immediate);
+      }
+      if (spamChanged) {
+        _scheduleListVersionUpdate(immediate: true);
+        // The badge excludes spam, and its listener only fires on unread changes.
+        _recalculateUnreadCount();
       }
 
       return true;
