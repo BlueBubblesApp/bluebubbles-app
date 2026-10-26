@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/app/layouts/findmy/findmy_friend_sort.dart';
@@ -111,9 +112,19 @@ class FindMyLocationCache {
   final Map<String, FindMyCachedLocation> _entries;
   bool _dirty = false;
 
+  /// Whether friends' coordinates may be written to disk at all. Redacted
+  /// mode exists so the device can be shown to others without exposing
+  /// contacts; other people's locations are the clearest case of that.
+  static bool get persistenceAllowed => !SettingsSvc.settings.redactedMode.value;
+
   static FindMyLocationCache load() {
     final server = SettingsSvc.settings.serverAddress.value;
     final account = SettingsSvc.settings.iCloudAccount.value;
+    if (!persistenceAllowed) {
+      // Drop anything written before redaction was turned on.
+      unawaited(PrefsSvc.findMy.removeLocationCache());
+      return FindMyLocationCache(server, account);
+    }
     try {
       final raw = PrefsSvc.findMy.getLocationCache();
       if (raw == null) return FindMyLocationCache(server, account);
@@ -122,7 +133,12 @@ class FindMyLocationCache {
       // The iCloud account is only known once server details have loaded, so an
       // empty value on either side means "unknown", not "different account".
       final sameAccount = savedAccount.isEmpty || account.isEmpty || savedAccount == account;
-      if (json['server'] != server || !sameAccount) return FindMyLocationCache(server, account);
+      if (json['server'] != server || !sameAccount) {
+        // A different server or account: the stored locations belong to
+        // someone else's friends, so delete them rather than leave them on disk.
+        unawaited(PrefsSvc.findMy.removeLocationCache());
+        return FindMyLocationCache(server, account);
+      }
       final entries = <String, FindMyCachedLocation>{};
       for (final entry in (json['entries'] as Map<String, dynamic>).entries) {
         final location = FindMyCachedLocation.fromJson(entry.value as Map<String, dynamic>);
@@ -148,6 +164,7 @@ class FindMyLocationCache {
   Future<void> save() async {
     if (!_dirty) return;
     _dirty = false;
+    if (!persistenceAllowed) return;
     await PrefsSvc.findMy.setLocationCache(
       jsonEncode({
         'server': server,

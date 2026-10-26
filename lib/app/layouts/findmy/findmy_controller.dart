@@ -462,7 +462,11 @@ class FindMyController extends GetxController {
                 locationSub = Geolocator.getPositionStream().listen((event) async {
                   if (!_isAlive) return;
                   location.value = event;
-                  _updateFriendLists();
+                  // The list is sorted by distance from here, so every fix
+                  // would reorder rows under the user's finger. Re-sort only
+                  // when the device has moved far enough to change anything
+                  // visible; refreshes re-sort unconditionally.
+                  if (_shouldResortForMove(event)) _updateFriendLists();
                   buildLocationMarker(event);
 
                   if (!hasMovedToCurrentLocation.value) {
@@ -590,6 +594,22 @@ class FindMyController extends GetxController {
       friendRefreshProgress.value = friendRefreshProgress.value.withRoster(friends.map(findMyFriendRefreshIdFor));
       HttpSvc.icloud.refreshFriends();
     }
+  }
+
+  Position? _lastSortedPosition;
+
+  /// True when [next] is at least 100 m from the position the list was last
+  /// sorted against (or there is none yet). Records [next] when it returns true.
+  bool _shouldResortForMove(Position next) {
+    final last = _lastSortedPosition;
+    if (last == null) {
+      _lastSortedPosition = next;
+      return true;
+    }
+    final moved = Geolocator.distanceBetween(last.latitude, last.longitude, next.latitude, next.longitude);
+    if (moved < 100) return false;
+    _lastSortedPosition = next;
+    return true;
   }
 
   void _updateFriendLists() {

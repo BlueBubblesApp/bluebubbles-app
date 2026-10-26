@@ -9,6 +9,10 @@ class SharedPreferencesFindMyActions {
 
   String? getLocationCache() => service.i.getString(_locationCacheKey);
 
+  Future<void> removeLocationCache() async {
+    await service.i.remove(_locationCacheKey);
+  }
+
   Future<void> setLocationCache(String json) async {
     await service.i.setString(_locationCacheKey, json);
   }
