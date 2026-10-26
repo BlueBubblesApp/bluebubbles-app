@@ -1155,27 +1155,6 @@ class ChatsService {
     await init(force: true);
   }
 
-  /// Whether a server-originated deletion would discard local composition work.
-  bool hasLocalWorkForChat(String chatGuid) {
-    final hasPendingSend = GetIt.I.isRegistered<OutgoingMessageHandler>() &&
-        OutgoingMsgHandler.hasOutgoingWorkForChat(chatGuid);
-    final state = getChatState(chatGuid);
-    final hasPersistedDraft =
-        (state?.textFieldText.value?.isNotEmpty ?? false) || (state?.textFieldAttachments.isNotEmpty ?? false);
-    final active = activeChat;
-    if (active?.chat.guid != chatGuid) return hasPendingSend || hasPersistedDraft;
-
-    final controller = active?.controller;
-    final hasActiveDraft = controller != null &&
-        (controller.textController.text.isNotEmpty ||
-            controller.subjectTextController.text.isNotEmpty ||
-            controller.pickedAttachments.isNotEmpty ||
-            controller.showRecording.value ||
-            controller.scheduledDate.value != null ||
-            controller.replyToMessage != null);
-    return hasPendingSend || hasPersistedDraft || hasActiveDraft;
-  }
-
   /// Soft delete a chat with full UI cleanup and service state management
   Future<void> softDeleteChat(Chat chat) async {
     if (kIsWeb) return;
@@ -1408,19 +1387,6 @@ class ChatsService {
     state?.updateArchivedInternal(value);
   }
 
-  /// Apply archive state received from the server without changing the local pin.
-  Future<void> setChatArchivedFromServer(Chat chat, bool value) async {
-    final state = getChatState(chat.guid);
-    if (state != null && state.isArchived.value == value) return;
-
-    final chatToUpdate = state?.chat ?? chat;
-    chatToUpdate.isArchived = value;
-    await chatToUpdate.saveAsync(updateIsArchived: true);
-    updateChat(chatToUpdate);
-    state?.updateArchivedInternal(value);
-    _scheduleListVersionUpdate(immediate: true);
-  }
-
   /// Set chat auto send read receipts
   Future<void> setChatAutoSendReadReceipts(Chat chat, bool? value) async {
     final state = getChatState(chat.guid);
@@ -1642,16 +1608,6 @@ class ChatsService {
     state.updateLatestMessageInternal(value);
   }
 
-  /// Update chat latest message and subtitle in response to a new or updated message.
-  /// Called by IncomingMessageHandler and SyncService to keep ChatState as the single
-  /// source of truth for the conversation tile subtitle.
-  ///
-  /// Only moves the latest-message pointer forward in time — sync can report an
-  /// older delta message as a chat's latest, which would rewind its sort order.
-  /// The 2s tolerance allows a temp->real GUID swap. [allowOlder] opts out for the
-  /// post-deletion recompute, which must fall back to an older surviving message.
-  /// [repositionImmediate] controls the chat list rebuild only — the ChatState update is always
-  /// synchronous. Pass false when updating many chats in a row so the rebuilds coalesce.
   /// Drops a chat's latest-message preview once the device holds no messages
   /// for it, so an empty conversation stops previewing a hidden message.
   void clearChatLatestMessage(String chatGuid) {
@@ -1664,6 +1620,16 @@ class ChatsService {
     _repositionChat(state.chat, immediate: true);
   }
 
+  /// Update chat latest message and subtitle in response to a new or updated message.
+  /// Called by IncomingMessageHandler and SyncService to keep ChatState as the single
+  /// source of truth for the conversation tile subtitle.
+  ///
+  /// Only moves the latest-message pointer forward in time — sync can report an
+  /// older delta message as a chat's latest, which would rewind its sort order.
+  /// The 2s tolerance allows a temp->real GUID swap. [allowOlder] opts out for the
+  /// post-deletion recompute, which must fall back to an older surviving message.
+  /// [repositionImmediate] controls the chat list rebuild only — the ChatState update is always
+  /// synchronous. Pass false when updating many chats in a row so the rebuilds coalesce.
   void updateChatLatestMessage(String chatGuid, Message message,
       {bool allowOlder = false, bool repositionImmediate = true}) {
     final state = getChatState(chatGuid);

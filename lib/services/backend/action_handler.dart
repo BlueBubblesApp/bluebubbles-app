@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/services/backend/sync/recoverable_message_reconciler.dart';
+import 'package:bluebubbles/services/backend/sync/apple_state_catch_up.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -29,14 +29,7 @@ class ActionHandler extends GetxService {
     if (event == null) return;
     if (Message.findOne(guid: event.messageGuid) == null) return;
 
-    // The open conversation is updated live when there is one, otherwise the
-    // database and the chat tile are written directly. MessagesService exists
-    // only while a conversation view is registered, so it cannot be created
-    // here for an arbitrary chat.
-    await RecoverableMessageReconciler.applyLiveEvent(
-      event.messageGuid,
-      hide: event.deleted,
-    );
+    await RecoverableMessages.apply(event.messageGuid, hide: event.deleted);
   }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {
@@ -190,12 +183,6 @@ class ActionHandler extends GetxService {
         }
         if (deletedChat.dateDeleted != null) {
           Logger.info("Ignoring duplicate chat-deleted event for $chatGuid", tag: "ActionHandler");
-          return;
-        }
-
-        if (ChatsSvc.hasLocalWorkForChat(chatGuid)) {
-          await ChatStateReconciler.deferDeletion(chatGuid);
-          Logger.warn("Deferring server chat deletion because $chatGuid has local work", tag: "ActionHandler");
           return;
         }
 

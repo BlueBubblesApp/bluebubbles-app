@@ -8,7 +8,6 @@ export 'backend/outgoing_message_handler.dart';
 export 'backend/settings/settings_service.dart';
 export 'backend/settings/shared_preferences_service.dart';
 export 'backend/setup/setup_service.dart';
-export 'backend/sync/chat_state_reconciler.dart';
 export 'backend/sync/full_sync_manager.dart';
 export 'backend/sync/handle_sync_manager.dart';
 export 'backend/sync/incremental_sync_manager.dart';

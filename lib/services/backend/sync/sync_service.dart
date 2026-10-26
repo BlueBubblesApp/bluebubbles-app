@@ -10,7 +10,7 @@ import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:bluebubbles/services/backend/sync/recoverable_message_reconciler.dart';
+import 'package:bluebubbles/services/backend/sync/apple_state_catch_up.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
@@ -67,11 +67,9 @@ class SyncService {
         tag: 'Incremental Chat Sync',
       );
       // The cooldown protects the expensive message/contact sync, not the
-      // authoritative read/deletion correction. A read-state event can be lost
-      // while Android is backgrounded, and resume must still repair that drift.
-      // The same holds for single-message deletes and restores.
-      await performChatStateReconcile();
-      await RecoverableMessageReconciler.run();
+      // catch-up with Apple: a read or delete event can be missed while
+      // Android is backgrounded, and resume must still pick it up.
+      await AppleStateCatchUp.run();
       return;
     }
 
@@ -174,11 +172,6 @@ class SyncService {
         }
       }
 
-      // Catch up on single-message deletes and restores that happened while
-      // this client was offline. Runs after the messages are in, so a message
-      // synced and deleted in the same window still ends up hidden.
-      await RecoverableMessageReconciler.run();
-
       chatStopwatch.stop();
       Logger.info(
           'Incremental chat sync completed! Synced ${syncedMessages.length} messages across '
@@ -201,10 +194,10 @@ class SyncService {
       _lastIncrementalSyncTimestamp = null;
     }
 
-    // Deliberately not counted toward `errors`: this corrects drift rather than
-    // syncing data, and an older server without the endpoint must not make the
-    // user think their sync failed.
-    await performChatStateReconcile();
+    // Runs after the messages are in, so a message synced and deleted in the
+    // same window still ends up hidden. Not counted toward `errors`: an older
+    // server without the endpoints must not make the user think sync failed.
+    await AppleStateCatchUp.run();
 
     final contactSyncResult = await performContactSyncToHandles();
     final contactUploadResult = await performContactSyncToServer();
@@ -223,35 +216,6 @@ class SyncService {
     }
 
     isIncrementalSyncing.value = false;
-  }
-
-  /// Reconciles local chat state against the server's authoritative snapshot.
-  ///
-  /// Incremental sync pages forward through new and updated messages, so it can
-  /// only ever learn about things that still exist. Two kinds of change are
-  /// invisible to it: a read that happened while this device was offline (the
-  /// live event was never received) and a chat deleted on the Apple side (no
-  /// event is emitted for it at all). Both leave the device permanently out of
-  /// step, so reconcile once per sync rather than relying on events alone.
-  ///
-  /// Failures here are logged but not surfaced as sync errors: this is a
-  /// correction pass, and a server too old to serve the endpoint is a normal
-  /// condition rather than a fault.
-  Future<bool> performChatStateReconcile() async {
-    try {
-      final response = await HttpSvc.server.chatStateSnapshot();
-      final payload = response.data?['data'];
-      if (payload is! Map) {
-        Logger.warn('Chat state snapshot response had no data payload', tag: 'Chat State Reconcile');
-        return false;
-      }
-
-      await ChatStateReconciler.apply(Map<String, dynamic>.from(payload));
-      return true;
-    } catch (ex, stack) {
-      Logger.error('Chat state reconcile failed!', error: ex, trace: stack, tag: 'Chat State Reconcile');
-      return false;
-    }
   }
 
   Future<bool> performContactSyncToHandles() async {
