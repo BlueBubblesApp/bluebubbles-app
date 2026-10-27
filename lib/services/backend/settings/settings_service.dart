@@ -442,12 +442,13 @@ class SettingsService {
 
     final github = GitHub();
     final stream = github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app'));
-    // Desktop-only tags (v2.1.3+desktop.93) have no Android build number, so Android skips past them.
+    // Platform-only tags (v2.1.3+desktop.93, v2.1.5+android.95) are skipped by the other platform.
     final release = await stream.firstWhere((element) =>
         !(element.isDraft ?? false) &&
         !(element.isPrerelease ?? false) &&
         element.tagName != null &&
-        !(Platform.isAndroid && element.tagName!.split('+').last.contains('desktop')));
+        !(Platform.isAndroid && element.tagName!.split('+').last.contains('desktop')) &&
+        !(kIsDesktop && element.tagName!.split('+').last.contains('android')));
     final version = release.tagName!.split("+").first.replaceAll("v", "");
     final code = release.tagName!.split("+").last.split('-').first;
     final isDesktopRelease = release.tagName!.split('+').last.contains('desktop');
