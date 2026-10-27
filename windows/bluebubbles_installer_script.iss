@@ -41,6 +41,11 @@ begin
   Result := True;
 end;
 
+function LocalDumpsKeyMissing: Boolean;
+begin
+  Result := not RegKeyExists(HKLM64, 'Software\Microsoft\Windows\Windows Error Reporting\LocalDumps');
+end;
+
 [Dirs]
 Name: "{app}\bluebubbles_app.exe.WebView2"; Permissions: users-modify
 
@@ -77,6 +82,8 @@ Root: HKA; Subkey: "Software\Classes\imessage"; ValueType: "string"; ValueName: 
 Root: HKA; Subkey: "Software\Classes\imessage\DefaultIcon"; ValueType: "string"; ValueData: "{app}\{#MyAppExeName},0"
 Root: HKA; Subkey: "Software\Classes\imessage\shell\open\command"; ValueType: "string"; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 ; Engine crashes are __fastfail, which only out-of-process WER can dump. LocalDumps is only read from the 64-bit HKLM view.
+; The parent key existing turns on dumps for every app, so remove it on uninstall if we created it. Must precede the subkey.
+Root: HKLM64; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps"; Flags: uninsdeletekeyifempty; Check: IsAdminInstallMode and LocalDumpsKeyMissing
 Root: HKLM64; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: expandsz; ValueName: "DumpFolder"; ValueData: "%APPDATA%\BlueBubbles\bluebubbles\logs"; Flags: uninsdeletekey; Check: IsAdminInstallMode
 Root: HKLM64; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: dword; ValueName: "DumpCount"; ValueData: 5; Check: IsAdminInstallMode
 Root: HKLM64; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: dword; ValueName: "DumpType"; ValueData: 1; Check: IsAdminInstallMode
