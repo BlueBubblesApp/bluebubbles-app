@@ -215,7 +215,9 @@ class BaseLogger {
       if (zippedLogFile.existsSync()) zippedLogFile.deleteSync();
 
       final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
+      // .dmp files are Windows crash dumps that WER writes here.
+      final List<FileSystemEntity> logFiles =
+          files.where((file) => file.path.endsWith(".log") || file.path.endsWith(".dmp")).toList();
 
       if (logFiles.isEmpty) {
         throw Exception("No log files found to compress");

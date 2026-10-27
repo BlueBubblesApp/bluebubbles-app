@@ -76,6 +76,10 @@ Root: HKA; Subkey: "Software\Classes\imessage"; ValueType: "string"; ValueData: 
 Root: HKA; Subkey: "Software\Classes\imessage"; ValueType: "string"; ValueName: "URL Protocol"; ValueData: ""
 Root: HKA; Subkey: "Software\Classes\imessage\DefaultIcon"; ValueType: "string"; ValueData: "{app}\{#MyAppExeName},0"
 Root: HKA; Subkey: "Software\Classes\imessage\shell\open\command"; ValueType: "string"; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+; Engine crashes are __fastfail, which only out-of-process WER can dump. LocalDumps is only read from HKLM.
+Root: HKLM; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: expandsz; ValueName: "DumpFolder"; ValueData: "%APPDATA%\BlueBubbles\bluebubbles\logs"; Flags: uninsdeletekey; Check: IsAdminInstallMode
+Root: HKLM; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: dword; ValueName: "DumpCount"; ValueData: 5; Check: IsAdminInstallMode
+Root: HKLM; Subkey: "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\{#MyAppExeName}"; ValueType: dword; ValueName: "DumpType"; ValueData: 1; Check: IsAdminInstallMode
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

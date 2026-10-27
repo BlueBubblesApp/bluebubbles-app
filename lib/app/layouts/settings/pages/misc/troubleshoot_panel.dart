@@ -37,6 +37,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
   final RxnBool resyncingChats = RxnBool();
   final RxInt logFileCount = 0.obs;
   final RxInt logFileSize = 0.obs;
+  final RxInt crashDumpCount = 0.obs;
   final RxBool optimizationsDisabled = false.obs;
 
   bool isExportingLogs = false;
@@ -71,20 +72,26 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
 
   void _refreshLogStats() {
     int count = 0;
+    int dumps = 0;
     int sizeKb = 0;
 
     final Directory logDir = Directory(Logger.logDir);
     if (logDir.existsSync()) {
       final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
-      count = logFiles.length;
-
-      for (final file in logFiles) {
+      for (final file in files) {
+        if (file.path.endsWith(".log")) {
+          count++;
+        } else if (file.path.endsWith(".dmp")) {
+          dumps++;
+        } else {
+          continue;
+        }
         sizeKb += file.statSync().size ~/ 1024;
       }
     }
 
     logFileCount.value = count;
+    crashDumpCount.value = dumps;
     logFileSize.value = sizeKb;
   }
 
@@ -186,7 +193,9 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             containerColor: Colors.green,
                           ),
                           title: "Download${kIsDesktop ? '' : ' / Share'} Logs",
-                          subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
+                          subtitle: "${logFileCount.value} log file(s)"
+                              "${crashDumpCount.value > 0 ? " | ${crashDumpCount.value} crash dump(s)" : ""}"
+                              " | ${logFileSize.value} KB",
                           onTap: () async {
                             _refreshLogStats();
                             if (logFileCount.value == 0) {
