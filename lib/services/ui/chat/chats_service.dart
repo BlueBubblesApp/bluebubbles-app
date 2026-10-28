@@ -1342,6 +1342,12 @@ class ChatsService {
   /// forces `privateMark` back to true. Reconciliation must remain local-only
   /// even when the conversation is open.
   Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
+    // Remember the read before anything can short-circuit: a message sent
+    // before it can still arrive afterwards and must neither notify nor mark
+    // the chat unread again.
+    if (!value && GetIt.I.isRegistered<SharedPreferencesService>()) {
+      await PrefsSvc.messaging.setChatReadAt(chat.guid, DateTime.now());
+    }
     final state = getChatState(chat.guid);
     if (state != null &&
         !shouldApplyServerUnreadUpdate(localUnread: state.hasUnreadMessage.value, serverUnread: value)) {

@@ -11,17 +11,20 @@ import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bluebubbles/models/models.dart' show MessageSaveResult;
 import 'package:get/get.dart' hide Response;
+import 'package:get_it/get_it.dart';
 // (needed when generating objectbox model code)
 // ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
 /// The unread state an incoming message should leave on its chat, or null to
-/// leave it unchanged. A message Apple already reports as read must not mark
-/// the chat unread: its read event can be applied before the message arrives.
-bool? unreadAfterIncomingMessage({required bool isFromMe, required DateTime? dateRead}) {
+/// leave it unchanged. A message Apple already reports as read, or one sent
+/// before the chat was last read on an Apple device ([chatReadAt]), must not
+/// mark the chat unread: its read event can be applied before the message arrives.
+bool? unreadAfterIncomingMessage(
+    {required bool isFromMe, required DateTime? dateRead, DateTime? dateCreated, DateTime? chatReadAt}) {
   if (isFromMe) return false;
-  return dateRead == null ? true : null;
+  return dateRead == null && !isBeforeChatRead(dateCreated, chatReadAt) ? true : null;
 }
 
 /// Whether a message from me must clear the chat's notifications itself.
@@ -445,7 +448,13 @@ class Chat {
 
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer) {
-      final unread = unreadAfterIncomingMessage(isFromMe: message.isFromMe!, dateRead: message.dateRead);
+      final unread = unreadAfterIncomingMessage(
+        isFromMe: message.isFromMe!,
+        dateRead: message.dateRead,
+        dateCreated: message.dateCreated,
+        chatReadAt:
+            GetIt.I.isRegistered<SharedPreferencesService>() ? await PrefsSvc.messaging.getChatReadAt(guid) : null,
+      );
       if (unread == false) {
         final wasUnread = hasUnreadMessage ?? false;
         await toggleHasUnreadAsync(false, clearLocalNotifications: clearNotificationsIfFromMe, privateMark: false);

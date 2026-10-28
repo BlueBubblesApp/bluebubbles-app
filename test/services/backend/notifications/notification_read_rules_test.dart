@@ -9,4 +9,29 @@ void main() {
   test('an unread message still raises a notification', () {
     expect(skipNotificationForReadMessage(null), isFalse);
   });
+
+  group('a chat read on an Apple device before the notification is posted', () {
+    final readAt = DateTime(2026, 10, 28, 0, 35, 10, 287);
+
+    test('raises no notification for a message sent before the read', () {
+      // The push carrying the message was serialized before the read, so its
+      // dateRead is still null; the read event was handled first and found
+      // nothing to clear.
+      expect(
+        skipNotificationForReadMessage(null, dateCreated: DateTime(2026, 10, 28, 0, 35, 8, 679), chatReadAt: readAt),
+        isTrue,
+      );
+    });
+
+    test('still notifies for a message sent after the read', () {
+      expect(
+        skipNotificationForReadMessage(null, dateCreated: DateTime(2026, 10, 28, 0, 36), chatReadAt: readAt),
+        isFalse,
+      );
+    });
+
+    test('still notifies when the chat was never read elsewhere', () {
+      expect(skipNotificationForReadMessage(null, dateCreated: DateTime(2026, 10, 28, 0, 35, 8)), isFalse);
+    });
+  });
 }

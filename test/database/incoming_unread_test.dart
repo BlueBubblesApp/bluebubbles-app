@@ -16,6 +16,27 @@ void main() {
     expect(unreadAfterIncomingMessage(isFromMe: false, dateRead: DateTime(2026, 10, 8)), isNull);
   });
 
+  group('after the chat was read on an Apple device', () {
+    final readAt = DateTime(2026, 10, 28, 0, 35, 10, 287);
+
+    test('a message sent before the read leaves the read state alone', () {
+      // Its push still says unread, but it arrived after the read event.
+      expect(
+        unreadAfterIncomingMessage(
+            isFromMe: false, dateRead: null, dateCreated: DateTime(2026, 10, 28, 0, 35, 8, 679), chatReadAt: readAt),
+        isNull,
+      );
+    });
+
+    test('a message sent after the read marks the chat unread', () {
+      expect(
+        unreadAfterIncomingMessage(
+            isFromMe: false, dateRead: null, dateCreated: DateTime(2026, 10, 28, 0, 36), chatReadAt: readAt),
+        isTrue,
+      );
+    });
+  });
+
   group('clearing notifications for a message from me', () {
     test('clears them directly when Apple already marked the chat read', () {
       // A reply sent from the iPhone after Apple's read sync has no unread flag
