@@ -166,7 +166,7 @@ class ActionHandler extends GetxService {
           // Route through ChatsService so the ChatState the conversation list
           // renders from is updated too. Writing only to the DB row leaves the
           // unread dot stale until the state is rebuilt (open chat / restart).
-          await ChatsSvc.setChatHasUnreadFromServer(chat, !data["read"]!);
+          await ChatsSvc.setChatHasUnreadFromServer(chat, !data["read"]!, readAt: chatReadAtFromEvent(data));
         }
         return;
       case "chat-deleted":

@@ -32,6 +32,16 @@ ChatsService get ChatsSvc => GetIt.I<ChatsService>();
 bool shouldApplyServerUnreadUpdate({required bool localUnread, required bool serverUnread}) =>
     localUnread != serverUnread || !serverUnread;
 
+/// When Apple marked the chat read, from a `chat-read-status-changed` event.
+/// Null for unread events and for servers that don't send `readAt`: the
+/// phone's own clock would run late and could silence a message sent just
+/// after the read.
+DateTime? chatReadAtFromEvent(Map<String, dynamic> data) {
+  final readAt = data['readAt'];
+  if (data['read'] != true || readAt is! num) return null;
+  return DateTime.fromMillisecondsSinceEpoch(readAt.toInt());
+}
+
 class ChatsService {
   static const batchSize = 100;
   int currentCount = 0;
@@ -1341,12 +1351,12 @@ class ChatsService {
   /// This deliberately bypasses [_toggleChatHasUnread], whose active-chat logic
   /// forces `privateMark` back to true. Reconciliation must remain local-only
   /// even when the conversation is open.
-  Future<void> setChatHasUnreadFromServer(Chat chat, bool value) async {
-    // Remember the read before anything can short-circuit: a message sent
-    // before it can still arrive afterwards and must neither notify nor mark
-    // the chat unread again.
-    if (!value && GetIt.I.isRegistered<SharedPreferencesService>()) {
-      await PrefsSvc.messaging.setChatReadAt(chat.guid, DateTime.now());
+  Future<void> setChatHasUnreadFromServer(Chat chat, bool value, {DateTime? readAt}) async {
+    // Remember when Apple marked it read before anything can short-circuit: a
+    // message sent before then can still arrive afterwards and must neither
+    // notify nor mark the chat unread again.
+    if (!value && readAt != null && GetIt.I.isRegistered<SharedPreferencesService>()) {
+      await PrefsSvc.messaging.setChatReadAt(chat.guid, readAt);
     }
     final state = getChatState(chat.guid);
     if (state != null &&
