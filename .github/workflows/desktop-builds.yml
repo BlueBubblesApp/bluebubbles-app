@@ -41,7 +41,9 @@ env:
 jobs:
   # Test builds can't reuse the checked-in version: it's already bumped to the unreleased one, and Windows
   # won't install an msix over one with the same or a higher version. So every manual run is versioned
-  # <last release tag>.<runs since that tag's build>, which keeps going up across branches and force-pushes.
+  # <newest desktop release tag>.<runs since that tag's build>, which keeps going up across branches and
+  # force-pushes. That's the newest tag in the repo, not the nearest one: desktop releases are tagged on
+  # staging branches that don't merge back, so master's nearest tag can be several releases old.
   # Tag pushes skip the steps and ship the checked-in version. The job itself always runs: the build jobs
   # need it, and a skipped job would skip them too.
   version:
@@ -65,7 +67,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag=$(git describe --tags --abbrev=0 --match 'v*+*' --exclude '*-*' --exclude '*android*')
+          # Highest version first; skips Android-only and pre-release (-) tags.
+          tag=$(git tag -l 'v*+*' --sort=-v:refname | awk '!/-|android/ && !t { t = $0 } END { print t }')
+          if [ -z "$tag" ]; then
+            echo "::warning::No desktop release tag found; keeping the checked-in version."
+            exit 0
+          fi
           tag_run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/desktop-builds.yml/runs?head_sha=$(git rev-list -n 1 "$tag")" \
             --jq '[.workflow_runs[].run_number] | min // empty') || tag_run=''
           if [ -z "$tag_run" ]; then
