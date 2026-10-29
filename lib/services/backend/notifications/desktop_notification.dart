@@ -286,6 +286,21 @@ class DesktopNotifications {
     }
   }
 
+  /// Notifications scheduled with the OS and not shown yet, such as reminders. Windows only: the Linux
+  /// plugin can't schedule.
+  static Future<List<WindowsPendingNotificationRequest>> pendingRequests() async {
+    final FlutterLocalNotificationsWindows? windowsPlugin = _plugin
+        ?.resolvePlatformSpecificImplementation<FlutterLocalNotificationsWindows>();
+    if (windowsPlugin == null) return [];
+    try {
+      final List<PendingNotificationRequest> pending = await windowsPlugin.pendingNotificationRequests();
+      return pending.whereType<WindowsPendingNotificationRequest>().toList();
+    } catch (e, s) {
+      Logger.error('Failed to get pending desktop notifications', error: e, trace: s, tag: 'DesktopNotifications');
+      return [];
+    }
+  }
+
   static Future<void> cancelAll() async {
     _callbacks.clear();
     try {

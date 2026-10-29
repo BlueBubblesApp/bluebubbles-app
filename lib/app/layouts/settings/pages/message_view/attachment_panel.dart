@@ -256,8 +256,9 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                         options: SwipeDirection.values,
                         textProcessing: (val) => val.toString().split(".").last,
                         capitalize: false,
-                        title: "Swipe Direction",
-                        subtitle: "Set the swipe direction to go to previous media items",
+                        title: kIsDesktop ? "Arrow Key Direction" : "Swipe Direction",
+                        subtitle:
+                            "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",
                         secondaryColor: headerColor,
                         useModernMenu: true,
                       ),
