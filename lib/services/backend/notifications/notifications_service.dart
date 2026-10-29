@@ -504,18 +504,15 @@ class NotificationsService {
 
     await playDesktopNotificationSound();
 
-    int? existingToast = activeToasts.remove(guid);
-    if (existingToast != null && attribution != null) {
-      await DesktopNotifications.cancel(existingToast);
-      existingToast = null;
-    }
-    if (existingToast == null) {
-      await DesktopNotifications.cancelGroup(guid);
-    }
+    // Always a fresh toast: replacing one in place while its banner is still up only updates Action Center —
+    // Windows plays the sound but leaves the old text on screen.
+    // The explicit cancel matters on Linux, where cancelGroup can't see live notifications.
+    final int? existingToast = activeToasts.remove(guid);
+    if (existingToast != null) await DesktopNotifications.cancel(existingToast);
+    await DesktopNotifications.cancelGroup(guid);
 
     final int? id = await DesktopNotifications.showMessage(
       group: guid,
-      replaceId: existingToast,
       avatarPath: path,
       title: displayTitle,
       body: body,
