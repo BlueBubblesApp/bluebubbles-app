@@ -4,7 +4,6 @@ import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:bluebubbles/env.dart';
-import 'package:bluebubbles/services/backend/interfaces/log_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/outputs/log_stream_output.dart';
 import 'package:flutter/foundation.dart';
@@ -225,15 +224,14 @@ class BaseLogger {
 
       final encoder = ZipFileEncoder();
       encoder.create(zippedLogFile.path);
-      for (final logPath in logPaths) {
-        await encoder.addFile(File(logPath));
+      try {
+        for (final logPath in logPaths) {
+          await encoder.addFile(File(logPath));
+        }
+        await _addMergedLog(encoder, logDir.path);
+      } finally {
+        await encoder.close();
       }
-      // The per-isolate files are hard to follow on their own; add them all merged into one timeline.
-      final File mergedFile = File(join(FilesystemSvc.appDocDir.path, "bluebubbles-merged.log"));
-      await LogInterface.writeMergedLog(mergedFile.path);
-      await encoder.addFile(mergedFile);
-      await encoder.close();
-      mergedFile.deleteSync();
 
       return zippedLogFile.path;
     } catch (e, stackTrace) {
@@ -263,12 +261,36 @@ class BaseLogger {
     }
   }
 
-  /// Writes every log file, rotated ones included, to [outPath] as one timeline. Each isolate rotates on its own
-  /// schedule, so merging only the latest files would leave uneven coverage.
+  /// Adds every log file merged into one timeline, since the per-isolate files are hard to follow on their own.
+  /// Best-effort: the raw files are already in the zip, so a failed merge leaves it out rather than failing the export.
+  Future<void> _addMergedLog(ZipFileEncoder encoder, String logDir) async {
+    final File mergedFile = File(join(FilesystemSvc.appDocDir.path, "bluebubbles-merged.log"));
+    try {
+      await _writeMergedLogInIsolate(logDir, mergedFile.path);
+      await encoder.addFile(mergedFile);
+    } catch (e, stackTrace) {
+      warn("Leaving the merged log out of the export", error: e, trace: stackTrace);
+    } finally {
+      try {
+        if (mergedFile.existsSync()) mergedFile.deleteSync();
+      } catch (_) {}
+    }
+  }
+
+  /// Runs [_writeMergedLog] in a short-lived isolate of its own, which exits once it's done. The merge reads every
+  /// log file and needs nothing but their paths, so it doesn't tie up the UI or depend on the GlobalIsolate.
+  ///
+  /// Static, with only value parameters, so the closure can't capture `this` and its unsendable stream (see
+  /// ChatStatsController's isolate entry points).
+  static Future<void> _writeMergedLogInIsolate(String logDir, String outPath) =>
+      Isolate.run(() => _writeMergedLog(logDir, outPath), debugName: 'LogExport');
+
+  /// Writes every log file in [logDir], rotated ones included, to [outPath] as one timeline. Each isolate rotates on
+  /// its own schedule, so merging only the latest files would leave uneven coverage.
   ///
   /// Each writer's files are already in time order, so they're streamed oldest first and the streams merged,
   /// holding about one chunk per writer in memory rather than every file.
-  Future<void> writeMergedLog(String outPath) async {
+  static Future<void> _writeMergedLog(String logDir, String outPath) async {
     final sources = [for (final files in _logFilesByWriter(Directory(logDir))) _MergeSource(_readEntryBatches(files))];
     final sink = File(outPath).openWrite();
     try {
@@ -299,7 +321,7 @@ class BaseLogger {
 
   /// [dir]'s log files grouped by writer (file prefix), each group oldest first: rotated files by the epoch in their
   /// name, then the latest file. A file matching neither naming pattern is a group of its own.
-  List<List<File>> _logFilesByWriter(Directory dir) {
+  static List<List<File>> _logFilesByWriter(Directory dir) {
     final latestName = RegExp(r'^(.+)-latest\.log$');
     final rotatedName = RegExp(r'^(.+)-\d{4}-\d{2}-\d{2}-(\d+)\.log$');
     final groups = <String, List<(int, File)>>{};
@@ -318,7 +340,7 @@ class BaseLogger {
   }
 
   /// The entries of [files], in order, as one batch per chunk read.
-  Stream<List<String>> _readEntryBatches(List<File> files) async* {
+  static Stream<List<String>> _readEntryBatches(List<File> files) async* {
     for (final file in files) {
       // Entries never span files, so each file is joined on its own, like the tail reader does.
       final joiner = _EntryJoiner();

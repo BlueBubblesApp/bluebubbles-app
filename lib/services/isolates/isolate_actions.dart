@@ -118,7 +118,6 @@ class IsolateActons {
 
     // Log actions
     IsolateRequestType.getLogs: (data) => LogActions.getLogs(data as Map<String, dynamic>),
-    IsolateRequestType.writeMergedLog: (data) => LogActions.writeMergedLog(data as Map<String, dynamic>),
 
     // Send message (routed through isolate so sends survive backgrounding)
     IsolateRequestType.sendTextMessage: SendMessageActions.sendTextMessage,

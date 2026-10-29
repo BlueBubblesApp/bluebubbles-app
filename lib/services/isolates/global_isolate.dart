@@ -780,7 +780,6 @@ enum IsolateRequestType {
 
   // Log actions
   getLogs,
-  writeMergedLog,
 
   // Send message actions (routed through isolate so sends survive backgrounding)
   sendTextMessage,

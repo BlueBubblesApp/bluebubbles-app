@@ -12,10 +12,6 @@ class LogActions {
     return lines.map(_parseEntry).toList();
   }
 
-  static Future<void> writeMergedLog(Map<String, dynamic> data) async {
-    await Logger.writeMergedLog(data['outPath'] as String);
-  }
-
   static Map<String, dynamic> _parseEntry(String entry) {
     // Each entry is a full log record, possibly multi-line (stack traces etc.).
     // Format of the first line:
