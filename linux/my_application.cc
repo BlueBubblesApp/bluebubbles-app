@@ -215,11 +215,17 @@ static void my_application_class_init(MyApplicationClass* klass) {
 static void quit_activated(GSimpleAction* action, GVariant* parameter, gpointer user_data) {
   (void)action;
   (void)parameter;
-  g_application_quit(G_APPLICATION(user_data));
+  GtkApplication* app = GTK_APPLICATION(user_data);
+  // Mirrors Flutter's quit_application(): windows hold a ref back to the app (GNOME/gtk#6190).
+  g_autoptr(GList) windows = g_list_copy(gtk_application_get_windows(app));
+  for (GList* link = windows; link != nullptr; link = link->next) {
+    gtk_window_set_application(GTK_WINDOW(link->data), nullptr);
+  }
+  g_application_quit(G_APPLICATION(app));
 }
 
 static void my_application_init(MyApplication* self) {
-  // Registered here so it is exported when local_command_line registers the application.
+  // Added at init so it's already in place when local_command_line registers the app on D-Bus.
   static const GActionEntry app_actions[] = {{"quit", quit_activated, nullptr, nullptr, nullptr, {0}}};
   g_action_map_add_action_entries(G_ACTION_MAP(self), app_actions, G_N_ELEMENTS(app_actions), self);
 }
