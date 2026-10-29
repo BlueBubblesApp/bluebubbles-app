@@ -21,7 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// The visual content of a generic (non-media) file attachment: an icon on the
 /// left and the filename + type•size label on the right.  Contains no tap or
-/// interactive behaviour so it can be reused inside both [OtherFile] (which
+/// interactive behavior so it can be reused inside both [OtherFile] (which
 /// wraps it in an [InkWell]) and the upload-progress overlay (which sits on
 /// top of it).
 class OtherFileRow extends StatelessWidget {

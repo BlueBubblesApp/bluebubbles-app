@@ -16,7 +16,7 @@ import 'package:get/get.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:universal_io/io.dart';
 
-/// Reads [Settings.linkPreviewPolicy], honouring the boolean that preceded it.
+/// Reads [Settings.linkPreviewPolicy], honoring the boolean that preceded it.
 ///
 /// Installs that saw the interim `fetchUrlPreviews` flag carry their choice
 /// forward: off stays off, on becomes the contacts-only default rather than

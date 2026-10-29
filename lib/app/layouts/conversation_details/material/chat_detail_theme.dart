@@ -3,7 +3,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 
-/// Resolves the per-chat theme and scaffold header/tile colours used by the conversation
+/// Resolves the per-chat theme and scaffold header/tile colors used by the conversation
 /// details + attachments pages.
 ///
 /// Must be called from inside the `Obx` that already wraps this on both call sites — it reads

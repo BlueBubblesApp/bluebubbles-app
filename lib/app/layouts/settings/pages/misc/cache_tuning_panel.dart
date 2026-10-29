@@ -213,7 +213,7 @@ class _CacheTuningPanelState extends State<CacheTuningPanel> with ThemeHelpers, 
                   SettingsTile(
                     onTap: _busy ? null : () => _run(() => CacheSvc.purge(level, reason: 'developer tools')),
                     title: "Purge ${level.name}",
-                    subtitle: "${_levelHelp(level.name)}. Honours the per-cache switches above.",
+                    subtitle: "${_levelHelp(level.name)}. Honors the per-cache switches above.",
                     isThreeLine: true,
                     backgroundColor: tileColor,
                   ),

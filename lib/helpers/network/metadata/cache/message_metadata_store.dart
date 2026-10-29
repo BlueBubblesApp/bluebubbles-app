@@ -49,10 +49,10 @@ enum MetadataCacheSlot {
 
   /// Legacy boolean flag. Written, and cleared by [MessageMetadataStore.clear],
   /// purely so that downgrading the app keeps the old "don't refetch"
-  /// behaviour.
+  /// behavior.
   ///
   /// Deliberately **not** read: a row carrying only this flag was written by a
-  /// build with no retry TTL, so honouring it would preserve exactly the
+  /// build with no retry TTL, so honoring it would preserve exactly the
   /// "failed once, never retries" bug [MessageMetadataStore.retryAfter] exists
   /// to fix. Those rows are treated as expired instead — see
   /// [MessageMetadataStore.shouldFetch].

@@ -150,7 +150,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
         // Load messages if needed (check service flag to avoid redundant loads).
         // Wrap in try-catch: if loadChunk throws (e.g. server HTTP error for a
-        // brand-new chat), we must still initialise handlers and mark the view
+        // brand-new chat), we must still initialize handlers and mark the view
         // ready so pendingSend can fire and handleNewMessage works correctly.
         try {
           if (!service.messagesLoaded) {

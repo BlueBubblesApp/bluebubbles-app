@@ -1,4 +1,4 @@
-/// URL parsing, resolution and normalisation shared across the metadata stack.
+/// URL parsing, resolution and normalization shared across the metadata stack.
 abstract final class MetadataUrls {
   /// Matches a leading RFC 3986 scheme (`https:`, `mailto:`, `bbmsg:` ...).
   static final RegExp _schemePrefix = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.\-]*:');
@@ -55,7 +55,7 @@ abstract final class MetadataUrls {
 
   /// Parses [raw] into an absolute URL, defaulting a missing scheme to HTTPS.
   ///
-  /// Unlike the old `startsWith("http")` check this recognises any scheme, so
+  /// Unlike the old `startsWith("http")` check this recognizes any scheme, so
   /// `mailto:a@b.com` is parsed as a mailto URI (and later rejected by
   /// [UrlSafetyGuard]) rather than being mangled into
   /// `https://mailto:a@b.com`.
