@@ -118,11 +118,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   void _configureHandlers() {
     final ctrl = controller;
+    clipboardHandler = ClipboardPasteHandler(controller: ctrl, textController: ctrl?.textController ?? textController);
     if (ctrl == null) {
       emojiHandler = null;
       mentionHandler = null;
       keyboardHandler = null;
-      clipboardHandler = null;
       return;
     }
 
@@ -135,7 +135,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       messageTextController: textController,
       isChatCreator: focusNode != null,
     );
-    clipboardHandler = ClipboardPasteHandler(controller: ctrl);
   }
 
   bool get iOS => SettingsSvc.settings.skin.value == Skins.iOS;
