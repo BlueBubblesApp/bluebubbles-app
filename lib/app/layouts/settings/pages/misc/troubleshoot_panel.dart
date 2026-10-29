@@ -204,17 +204,24 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                               // The save dialog goes through the file chooser portal, so this also works in the
                               // flatpak and snap sandboxes, which can't write to Downloads directly.
                               if (kIsDesktop) {
-                                final String? savedPath = await saveFileAs(
-                                  fileName: fileName,
-                                  // Throws on Linux without an XDG Downloads dir; the dialog's default is fine then.
-                                  initialDirectory: await FilesystemSvc.downloadsDirectory
-                                      .then<String?>((dir) => dir, onError: (_) => null),
-                                  sourcePath: filePath,
-                                  allowedExtensions: ['zip'],
-                                );
-                                if (savedPath == null) return;
-                                showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
-                                await revealInFileManager(savedPath);
+                                try {
+                                  final String? savedPath = await saveFileAs(
+                                    fileName: fileName,
+                                    // Throws on Linux without an XDG Downloads dir; the dialog's default is fine then.
+                                    initialDirectory: await FilesystemSvc.downloadsDirectory
+                                        .then<String?>((dir) => dir, onError: (_) => null),
+                                    sourcePath: filePath,
+                                    allowedExtensions: ['zip'],
+                                  );
+                                  if (savedPath == null) return;
+                                  showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
+                                  await revealInFileManager(savedPath);
+                                } finally {
+                                  // Copied to where the user chose, or they cancelled; either way it's no longer needed.
+                                  try {
+                                    File(filePath).deleteSync();
+                                  } catch (_) {}
+                                }
                                 return;
                               }
 
