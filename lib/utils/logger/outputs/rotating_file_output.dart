@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
@@ -22,7 +23,9 @@ import 'package:path/path.dart';
 ///
 /// Android bubbles are the one shared-writer case: every bubble engine logs under
 /// the same prefix. Seeking first keeps them from overwriting each other, but two
-/// writes in the same instant can still collide.
+/// writes in the same instant can still collide. Rotation copies to a private
+/// name, truncates only if the length didn't change during the copy, and only
+/// then renames the copy into place, which leaves the same kind of tiny window.
 ///
 /// All failures are swallowed so the logger never crashes the app.
 class RotatingFileOutput extends LogOutput {
@@ -34,6 +37,8 @@ class RotatingFileOutput extends LogOutput {
 
   File? _file;
   RandomAccessFile? _raf;
+  DateTime? _lastRotationAttempt;
+  final int _copySuffix = Random().nextInt(1 << 32);
 
   RotatingFileOutput({
     required this.dirPath,
@@ -81,12 +86,35 @@ class RotatingFileOutput extends LogOutput {
   void _rotate(RandomAccessFile raf) {
     try {
       // Another writer may have rotated between our write and this check.
-      if (raf.lengthSync() < _maxBytes) return;
+      final length = raf.lengthSync();
+      if (length < _maxBytes) return;
 
+      // Rotated files are named by the second, and an attempt that fails below has copied the whole file, so try
+      // at most once a second.
       final now = DateTime.now();
+      if (_lastRotationAttempt != null && now.difference(_lastRotationAttempt!) < const Duration(seconds: 1)) return;
+      _lastRotationAttempt = now;
+
       final date = now.toIso8601String().split('T').first;
-      _file!.copySync(join(dirPath, '$filePrefix-$date-${now.millisecondsSinceEpoch ~/ 1000}.log'));
+      final rotated = File(join(dirPath, '$filePrefix-$date-${now.millisecondsSinceEpoch ~/ 1000}.log'));
+      // Another writer rotated this second.
+      if (rotated.existsSync()) return;
+
+      // Copied under a name only this instance uses, so a failed attempt never touches another writer's file.
+      final copy = File('${rotated.path}.$_copySuffix.tmp');
+      _file!.copySync(copy.path);
+      // Another writer wrote or rotated during the copy, so truncating would lose its lines. Retry later.
+      if (raf.lengthSync() != length) {
+        copy.deleteSync();
+        return;
+      }
       raf.truncateSync(0);
+      // Another writer rotated the same unchanged file alongside this one, so this copy is a duplicate.
+      if (rotated.existsSync()) {
+        copy.deleteSync();
+      } else {
+        copy.renameSync(rotated.path);
+      }
       _pruneOldFiles();
     } catch (_) {
       // Rotation must never crash the logger. The file stays oversized and we
