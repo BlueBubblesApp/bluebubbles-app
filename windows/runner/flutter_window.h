@@ -32,6 +32,9 @@ class FlutterWindow : public Win32Window {
 
   // Channel used to dismiss the native splash screen.
   std::unique_ptr<flutter::MethodChannel<>> splash_channel_;
+
+  // Channel for Microsoft Store in-app updates.
+  std::unique_ptr<flutter::MethodChannel<>> store_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
