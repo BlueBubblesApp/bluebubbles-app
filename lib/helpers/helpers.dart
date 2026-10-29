@@ -2,6 +2,7 @@ export 'backend/sync/sync_helpers.dart';
 export 'network/metadata_helper.dart';
 export 'network/network_error_handler.dart';
 export 'network/network_helpers.dart';
+export 'network/url_utils.dart';
 export 'network/network_tasks.dart';
 export 'types/classes/chat_service_type.dart';
 export 'types/extensions/extensions.dart';
