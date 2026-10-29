@@ -54,6 +54,9 @@ class RotatingFileOutput extends LogOutput {
   /// another isolate's `bluebubbles-globalisolate-…`.
   RegExp get _rotatedFilePattern => RegExp('^${RegExp.escape(filePrefix)}-\\d{4}-\\d{2}-\\d{2}-\\d+\\.log\$');
 
+  /// Matches this prefix's in-progress rotation copies (see [_rotate]).
+  RegExp get _copyFilePattern => RegExp('^${RegExp.escape(filePrefix)}-\\d{4}-\\d{2}-\\d{2}-\\d+\\.log\\.\\d+\\.tmp\$');
+
   int get _maxBytes => maxFileSizeKB * 1024;
 
   @override
@@ -69,6 +72,7 @@ class RotatingFileOutput extends LogOutput {
     } catch (_) {
       _raf = null;
     }
+    _removeStaleCopies();
   }
 
   @override
@@ -137,6 +141,21 @@ class RotatingFileOutput extends LogOutput {
       while (rotated.length > maxRotatedFilesCount) {
         try {
           rotated.removeAt(0).deleteSync();
+        } catch (_) {}
+      }
+    } catch (_) {}
+    _removeStaleCopies();
+  }
+
+  /// Deletes rotation copies left behind by a writer that died between copying and renaming. A recent one may be
+  /// another bubble's rotation still in progress, so only those over a minute old go.
+  void _removeStaleCopies() {
+    try {
+      final cutoff = DateTime.now().subtract(const Duration(minutes: 1));
+      for (final file in Directory(dirPath).listSync().whereType<File>()) {
+        if (!_copyFilePattern.hasMatch(basename(file.path))) continue;
+        try {
+          if (file.statSync().modified.isBefore(cutoff)) file.deleteSync();
         } catch (_) {}
       }
     } catch (_) {}
