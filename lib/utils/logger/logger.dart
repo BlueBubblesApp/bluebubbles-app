@@ -251,8 +251,7 @@ class BaseLogger {
       final latestFiles = logDir.listSync().whereType<File>().where((f) => f.path.endsWith('-latest.log'));
       final entries = [
         for (final file in latestFiles)
-          for (final entry in await _readTailEntries(file, maxLines))
-            (DateTime.tryParse(entry.split(' ').first) ?? DateTime(0), entry),
+          for (final entry in await _readTailEntries(file, maxLines)) (_entryTime(entry), entry),
       ];
       // Stable, so entries with the same timestamp keep their order within a file.
       mergeSort(entries, compare: (a, b) => a.$1.compareTo(b.$1));
@@ -596,9 +595,14 @@ class _MergeSource {
 
   void _setEntry(String value) {
     entry = value;
-    final space = value.indexOf(' ');
-    time = DateTime.tryParse(space < 0 ? value : value.substring(0, space)) ?? DateTime(0);
+    time = _entryTime(value);
   }
+}
+
+/// The timestamp an entry starts with, or year 0 if it doesn't parse, so such entries sort first.
+DateTime _entryTime(String entry) {
+  final space = entry.indexOf(' ');
+  return DateTime.tryParse(space < 0 ? entry : entry.substring(0, space)) ?? DateTime(0);
 }
 
 class Traceback implements Exception {
