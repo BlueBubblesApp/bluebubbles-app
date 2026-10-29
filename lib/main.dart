@@ -8,6 +8,7 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
+import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/network/http_overrides.dart';
@@ -60,6 +61,7 @@ Future<Null> main(List<String> arguments) async {
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
+  logNamePrefix = 'Bubble';
   await initApp(true, []);
 }
 

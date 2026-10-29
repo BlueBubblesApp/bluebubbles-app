@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selec
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -74,12 +75,12 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
 
     final Directory logDir = Directory(Logger.logDir);
     if (logDir.existsSync()) {
-      final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
-      count = logFiles.length;
-
-      for (final file in logFiles) {
-        sizeKb += file.statSync().size ~/ 1024;
+      for (final file in logDir.listSync().whereType<File>().where((file) => file.path.endsWith(".log"))) {
+        final int size = file.statSync().size;
+        // Clear Logs empties the latest files instead of deleting them, since they're open; those aren't logs.
+        if (size == 0) continue;
+        count++;
+        sizeKb += size ~/ 1024;
       }
     }
 
@@ -175,8 +176,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     },
                     trailing: const NextButton(),
                   ),
-                  if (Platform.isAndroid) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (Platform.isAndroid || kIsDesktop)
                     Obx(
                       () => SettingsTile(
                           leading: const SettingsLeadingIcon(
@@ -184,7 +185,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             materialIcon: Icons.share,
                             containerColor: Colors.green,
                           ),
-                          title: "Download / Share Logs",
+                          title: "Download${kIsDesktop ? '' : ' / Share'} Logs",
                           subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
                           onTap: () async {
                             _refreshLogStats();
@@ -200,14 +201,37 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                               String filePath = await Logger.compressLogs();
                               final String fileName = File(filePath).uri.pathSegments.last;
 
+                              // The save dialog goes through the file chooser portal, so this also works in the
+                              // flatpak and snap sandboxes, which can't write to Downloads directly.
+                              if (kIsDesktop) {
+                                try {
+                                  final String? savedPath = await saveFileAs(
+                                    fileName: fileName,
+                                    // Throws on Linux without an XDG Downloads dir; the dialog's default is fine then.
+                                    initialDirectory: await FilesystemSvc.downloadsDirectory
+                                        .then<String?>((dir) => dir, onError: (_) => null),
+                                    sourcePath: filePath,
+                                    allowedExtensions: ['zip'],
+                                  );
+                                  if (savedPath == null) return;
+                                  showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
+                                  await revealInFileManager(savedPath);
+                                } finally {
+                                  // Copied to where the user chose, or they cancelled; either way it's no longer needed.
+                                  try {
+                                    File(filePath).deleteSync();
+                                  } catch (_) {}
+                                }
+                                return;
+                              }
+
                               try {
-                                final String savedPath = await FilesystemSvc.saveToDownloads(
+                                await FilesystemSvc.saveToDownloads(
                                   File(filePath),
                                   mimeType: 'application/zip',
                                 );
                                 showSnackbar("Logs Saved", "Saved $fileName to your Downloads folder.",
                                     type: SnackbarType.success);
-                                if (kIsDesktop) await launchUrl(Uri.file(savedPath));
                               } catch (_) {
                                 // saveToDownloads failed on Android — fall back to share sheet.
                                 Share.files([filePath], mimeType: 'application/zip');
