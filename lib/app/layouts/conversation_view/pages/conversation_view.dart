@@ -213,6 +213,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void dispose() {
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
+    controller.deleteIfCurrent();
     super.dispose();
   }
 
