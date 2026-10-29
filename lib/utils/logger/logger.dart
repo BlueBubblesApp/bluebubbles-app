@@ -150,7 +150,7 @@ class BaseLogger {
   LoggerFactory.Logger createLogger() {
     return LoggerFactory.Logger(
       filter: currentFilter,
-      printer: LoggerFactory.PrettyPrinter(
+      printer: _MessageFirstPrinter(
         methodCount: 0,
         errorMethodCount: 25,
         lineLength: 120,
@@ -530,6 +530,37 @@ class BaseLogger {
   void test(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
       logger.f("${DateTime.now().toUtc().toIso8601String()} [TEST] [$_isolateName] [${tag ?? "BlueBubblesApp"}] $log",
           error: error, stackTrace: trace);
+}
+
+/// A [PrettyPrinter] that prints the message before the error and stack trace rather than after them. An entry's
+/// timestamp is in its message, so anything that splits the file into entries by timestamp (the log viewer, the
+/// merged export) would otherwise attach the trace to the entry above, which after merging can be another isolate's.
+class _MessageFirstPrinter extends LoggerFactory.PrettyPrinter {
+  _MessageFirstPrinter({
+    super.methodCount,
+    super.errorMethodCount,
+    super.lineLength,
+    super.colors,
+    super.printEmojis,
+    super.dateTimeFormat,
+    super.excludeBox,
+    super.noBoxingByDefault,
+    super.levelColors,
+  });
+
+  @override
+  List<String> log(LogEvent event) {
+    final lines = super.log(event);
+    // A boxed event has borders between its sections; leave it as is.
+    final boxed = !(excludeBox[event.level] ?? noBoxingByDefault);
+    final message = event.message;
+    if (boxed || message is! String) return lines;
+
+    // The message is printed last, one line per line of it.
+    final split = lines.length - message.split('\n').length;
+    if (split <= 0) return lines;
+    return [...lines.sublist(split), ...lines.sublist(0, split)];
+  }
 }
 
 /// Combines lines that are part of the same log message. Lines go in through [add]; finished entries come out of
