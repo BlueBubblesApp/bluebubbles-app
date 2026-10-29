@@ -8,6 +8,8 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "splash_screen.h"
 #include "store_update.h"
+#include "toast_forwarder.h"
+#include "utils.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -65,6 +67,10 @@ bool FlutterWindow::OnCreate() {
 
   store_channel_ = CreateStoreUpdateChannel(flutter_controller_->engine()->messenger(), GetHandle());
 
+  notification_channel_ = std::make_unique<flutter::MethodChannel<>>(
+      flutter_controller_->engine()->messenger(), "bluebubbles/notifications",
+      &flutter::StandardMethodCodec::GetInstance());
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -89,6 +95,14 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == WM_COPYDATA) {
+    const auto* cds = reinterpret_cast<const COPYDATASTRUCT*>(lparam);
+    if (cds != nullptr && cds->dwData == kToastActivationCopyDataId) {
+      ForwardToastActivation(*cds);
+      return TRUE;
+    }
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -106,4 +120,26 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+}
+
+void FlutterWindow::ForwardToastActivation(const COPYDATASTRUCT& cds) {
+  if (!notification_channel_ || cds.lpData == nullptr) return;
+  const std::wstring message(static_cast<const wchar_t*>(cds.lpData), cds.cbData / sizeof(wchar_t));
+
+  std::vector<std::string> parts;
+  size_t start = 0;
+  for (size_t end; (end = message.find(L'\0', start)) != std::wstring::npos; start = end + 1) {
+    parts.push_back(Utf8FromUtf16(message.substr(start, end - start).c_str()));
+  }
+  if (parts.empty()) return;
+
+  flutter::EncodableMap data;
+  for (size_t i = 1; i + 1 < parts.size(); i += 2) {
+    data[flutter::EncodableValue(parts[i])] = flutter::EncodableValue(parts[i + 1]);
+  }
+  notification_channel_->InvokeMethod(
+      "activate", std::make_unique<flutter::EncodableValue>(flutter::EncodableMap{
+                      {flutter::EncodableValue("payload"), flutter::EncodableValue(parts[0])},
+                      {flutter::EncodableValue("data"), flutter::EncodableValue(data)},
+                  }));
 }
