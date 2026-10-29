@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/network/url_utils.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -378,6 +379,10 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    // The underlying error (e.g. HttpException) can embed the request URI with
+    // the password, so mask it before it is logged or passed on to callers.
+    err = _maskDioException(err);
+
     // Get params without sensitive info
     final params = err.requestOptions.queryParameters;
     params.remove("guid");
@@ -435,5 +440,17 @@ class ApiInterceptor extends Interceptor {
       }, requestOptions: err.requestOptions, statusCode: 500));
     }
     return super.onError(err, handler);
+  }
+
+  static DioException _maskDioException(DioException err) {
+    final message = err.message == null ? null : maskUrlPassword(err.message!);
+    Object? error = err.error;
+    if (error != null) {
+      final text = error.toString();
+      final masked = maskUrlPassword(text);
+      if (masked != text) error = masked;
+    }
+    if (message == err.message && identical(error, err.error)) return err;
+    return err.copyWith(message: message, error: error);
   }
 }

@@ -1,6 +1,10 @@
+import 'package:bluebubbles/helpers/network/url_utils.dart';
 import 'package:logger/logger.dart';
 
-/// Wrapper for file output that strips ANSI color codes before writing
+final RegExp _ansiEscape = RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]');
+
+/// Wrapper for file output that strips ANSI color codes and masks server
+/// passwords in URLs before writing
 class FileOutputWrapper extends LogOutput {
   final LogOutput fileOutput;
 
@@ -8,8 +12,8 @@ class FileOutputWrapper extends LogOutput {
 
   @override
   void output(OutputEvent event) {
-    // Strip ANSI escape sequences from all lines before writing to file
-    final cleanedLines = event.lines.map((line) => line.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')).toList();
+    // Strip ANSI escape sequences and mask passwords before writing to file
+    final cleanedLines = event.lines.map((line) => maskUrlPassword(line.replaceAll(_ansiEscape, ''))).toList();
 
     // Save original lines to restore after output
     final originalLines = List<String>.from(event.lines);

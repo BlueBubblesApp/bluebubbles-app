@@ -543,7 +543,6 @@ void showSnackbar(String title, String message,
     int durationMs = 1500,
     String? actionLabel,
     VoidCallback? onAction}) {
-  message = maskUrlPassword(message);
   final isError = type == SnackbarType.error;
   if (!kIsDesktop && isError) {
     unawaited(showToast(message, isError: true));
