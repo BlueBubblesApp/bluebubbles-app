@@ -4,10 +4,6 @@
         <msix-file path="bluebubbles.msix">
             <pe-file-set>
                 <include path="d3dcompiler_47.dll" />
-                <include path="libEGL.dll" />
-                <include path="libGLESv2.dll" />
-                <include path="vk_swiftshader.dll" />
-                <include path="vulkan-1.dll" />
                 <include path="WebView2Loader.dll" />
                 <for-each>
                     <authenticode-verify />
