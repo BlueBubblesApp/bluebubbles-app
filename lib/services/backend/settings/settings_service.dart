@@ -496,6 +496,7 @@ class SettingsService {
   }
 
   Future<void> checkClientUpdate() async {
+    if (Platform.isWindows) return;
     late AppUpdateInfo updateInfo;
     if (Platform.isAndroid) {
       updateInfo = await AppInterface.checkForUpdate();
