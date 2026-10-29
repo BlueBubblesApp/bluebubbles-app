@@ -75,12 +75,12 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
 
     final Directory logDir = Directory(Logger.logDir);
     if (logDir.existsSync()) {
-      final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
-      count = logFiles.length;
-
-      for (final file in logFiles) {
-        sizeKb += file.statSync().size ~/ 1024;
+      for (final file in logDir.listSync().whereType<File>().where((file) => file.path.endsWith(".log"))) {
+        final int size = file.statSync().size;
+        // Clear Logs empties the latest files instead of deleting them, since they're open; those aren't logs.
+        if (size == 0) continue;
+        count++;
+        sizeKb += size ~/ 1024;
       }
     }
 

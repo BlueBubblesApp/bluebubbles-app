@@ -213,8 +213,12 @@ class BaseLogger {
       final File zippedLogFile = File(join(FilesystemSvc.appDocDir.path, "bluebubbles-logs-$date.zip"));
       if (zippedLogFile.existsSync()) zippedLogFile.deleteSync();
 
-      final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
+      // Skips the latest files Clear Logs emptied.
+      final List<File> logFiles = logDir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith(".log") && file.lengthSync() > 0)
+          .toList();
 
       if (logFiles.isEmpty) {
         throw Exception("No log files found to compress");
