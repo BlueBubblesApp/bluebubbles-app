@@ -265,28 +265,79 @@ class BaseLogger {
   }
 
   /// Writes every log file, rotated ones included, to [outPath] as one timeline. Each isolate rotates on its own
-  /// schedule, so merging only the latest files would leave uneven coverage. Holds every file in memory at once.
+  /// schedule, so merging only the latest files would leave uneven coverage.
+  ///
+  /// Each writer's files are already in time order, so they're streamed oldest first and the streams merged,
+  /// holding about one chunk per writer in memory rather than every file.
   Future<void> writeMergedLog(String outPath) async {
-    final entries = <(DateTime, String)>[];
-    for (final file in Directory(logDir).listSync().whereType<File>().where((f) => f.path.endsWith('.log'))) {
+    final sources = [for (final files in _logFilesByWriter(Directory(logDir))) _MergeSource(_readEntryBatches(files))];
+    final sink = File(outPath).openWrite();
+    try {
+      for (final source in sources) {
+        await source.load();
+      }
+      while (true) {
+        // The earliest entry; ties go to the first source, so the output is deterministic.
+        _MergeSource? next;
+        for (final source in sources) {
+          if (source.entry != null && (next == null || source.time.isBefore(next.time))) next = source;
+        }
+        if (next == null) break;
+        sink.writeln(next.entry);
+        if (!next.advanceInBatch()) {
+          // Let the file catch up before reading more, so unwritten output doesn't pile up in memory.
+          await sink.flush();
+          await next.load();
+        }
+      }
+    } finally {
+      await sink.close();
+      for (final source in sources) {
+        await source.cancel();
+      }
+    }
+  }
+
+  /// [dir]'s log files grouped by writer (file prefix), each group oldest first: rotated files by the epoch in their
+  /// name, then the latest file. A file matching neither naming pattern is a group of its own.
+  List<List<File>> _logFilesByWriter(Directory dir) {
+    final latestName = RegExp(r'^(.+)-latest\.log$');
+    final rotatedName = RegExp(r'^(.+)-\d{4}-\d{2}-\d{2}-(\d+)\.log$');
+    final groups = <String, List<(int, File)>>{};
+    for (final file in dir.listSync().whereType<File>()) {
+      final name = basename(file.path);
+      if (!name.endsWith('.log')) continue;
+      final latest = latestName.firstMatch(name);
+      final rotated = latest == null ? rotatedName.firstMatch(name) : null;
+      // The latest file sorts after every rotated one.
+      final order = rotated == null ? 1 << 62 : int.parse(rotated.group(2)!);
+      (groups[latest?.group(1) ?? rotated?.group(1) ?? name] ??= []).add((order, file));
+    }
+    return [
+      for (final group in groups.values) [for (final (_, file) in group..sort((a, b) => a.$1.compareTo(b.$1))) file],
+    ];
+  }
+
+  /// The entries of [files], in order, as one batch per chunk read.
+  Stream<List<String>> _readEntryBatches(List<File> files) async* {
+    for (final file in files) {
+      // Entries never span files, so each file is joined on its own, like the tail reader does.
+      final joiner = _EntryJoiner();
+      // Decoded and split synchronously per chunk; a stream of lines would cost an async step per line.
+      final input = const Utf8Decoder(allowMalformed: true)
+          .startChunkedConversion(const LineSplitter().startChunkedConversion(joiner));
       try {
-        final lines = await file
-            .openRead()
-            .transform(const Utf8Decoder(allowMalformed: true))
-            .transform(const LineSplitter())
-            .toList();
-        entries.addAll(_joinEntries(lines).map((e) => (DateTime.tryParse(e.split(' ').first) ?? DateTime(0), e)));
+        await for (final chunk in file.openRead()) {
+          input.add(chunk);
+          yield joiner.take();
+        }
+        input.close();
       } catch (e, stackTrace) {
         debugPrint('Error reading ${file.path}: $e\n$stackTrace');
       }
+      joiner.close();
+      yield joiner.take();
     }
-    // Stable, so entries with the same timestamp keep their order within a file.
-    mergeSort(entries, compare: (a, b) => a.$1.compareTo(b.$1));
-    final sink = File(outPath).openWrite();
-    for (final entry in entries) {
-      sink.writeln(entry.$2);
-    }
-    await sink.close();
   }
 
   /// The last [maxLines] entries of [logFile], with multi-line entries joined.
@@ -321,31 +372,10 @@ class BaseLogger {
 
   /// Combines lines that are part of the same log message.
   List<String> _joinEntries(List<String> lines) {
-    // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
-    //   ┌──...  (top border — skip)
-    //   │ 2024-...  (content with │ prefix — strip prefix)
-    //   └──...  (bottom border — skip)
-    // Stripping these allows the date-start check below to work for all levels.
-    final List<String> logs = [];
-    String currentLog = '';
-    final dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
-    for (final rawLine in lines) {
-      String line = rawLine.replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '');
-
-      // Skip horizontal box border lines (┌, └, ├).
-      if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) continue;
-      // Strip the vertical-bar prefix used by boxed content lines.
-      if (line.startsWith('│ ')) line = line.substring(2);
-
-      if (dateStart.hasMatch(line)) {
-        if (currentLog.isNotEmpty) logs.add(currentLog);
-        currentLog = line;
-      } else if (currentLog.isNotEmpty) {
-        currentLog += '\n$line';
-      }
-    }
-    if (currentLog.isNotEmpty) logs.add(currentLog);
-    return logs;
+    final joiner = _EntryJoiner();
+    lines.forEach(joiner.add);
+    joiner.close();
+    return joiner.take();
   }
 
   /// Scans [file] backwards in 64 KB chunks looking for newline bytes followed
@@ -479,6 +509,96 @@ class BaseLogger {
   void test(dynamic log, {String? tag, Object? error, StackTrace? trace}) =>
       logger.f("${DateTime.now().toUtc().toIso8601String()} [TEST] [$_isolateName] [${tag ?? "BlueBubblesApp"}] $log",
           error: error, stackTrace: trace);
+}
+
+/// Combines lines that are part of the same log message. Lines go in through [add]; finished entries come out of
+/// [take]. [close] finishes the entry in progress.
+class _EntryJoiner implements Sink<String> {
+  static final _dateStart = RegExp(r'^\d{4}-\d{2}-\d{2}');
+  static final _ansiEscape = RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]');
+
+  final StringBuffer _current = StringBuffer();
+  List<String> _entries = [];
+
+  /// The entries finished since the last call.
+  List<String> take() {
+    final entries = _entries;
+    _entries = [];
+    return entries;
+  }
+
+  @override
+  void add(String rawLine) {
+    // PrettyPrinter wraps ERROR/TRACE/FATAL entries in Unicode box borders:
+    //   ┌──...  (top border — skip)
+    //   │ 2024-...  (content with │ prefix — strip prefix)
+    //   └──...  (bottom border — skip)
+    // Stripping these allows the date-start check below to work for all levels.
+    String line = rawLine.replaceAll(_ansiEscape, '');
+
+    // Skip horizontal box border lines (┌, └, ├).
+    if (line.startsWith('┌') || line.startsWith('└') || line.startsWith('├')) return;
+    // Strip the vertical-bar prefix used by boxed content lines.
+    if (line.startsWith('│ ')) line = line.substring(2);
+
+    if (_dateStart.hasMatch(line)) {
+      close();
+      _current.write(line);
+    } else if (_current.isNotEmpty) {
+      _current.write('\n$line');
+    }
+  }
+
+  @override
+  void close() {
+    if (_current.isEmpty) return;
+    _entries.add(_current.toString());
+    _current.clear();
+  }
+}
+
+/// One writer's entries during a merge. Entries arrive in batches, so only moving past the end of a batch is
+/// asynchronous.
+class _MergeSource {
+  _MergeSource(Stream<List<String>> batches) : _batches = StreamIterator(batches);
+
+  final StreamIterator<List<String>> _batches;
+  List<String> _batch = const [];
+  int _index = 0;
+
+  /// The current entry, null once every batch is used up.
+  String? entry;
+
+  /// The current entry's timestamp.
+  DateTime time = DateTime(0);
+
+  /// Moves to the next entry in the current batch, returning false at the end of it; then call [load].
+  bool advanceInBatch() {
+    if (++_index >= _batch.length) return false;
+    _setEntry(_batch[_index]);
+    return true;
+  }
+
+  /// Moves to the first entry of the next non-empty batch.
+  Future<void> load() async {
+    while (await _batches.moveNext()) {
+      _batch = _batches.current;
+      _index = 0;
+      if (_batch.isNotEmpty) {
+        _setEntry(_batch.first);
+        return;
+      }
+    }
+    entry = null;
+  }
+
+  Future<void> cancel() => _batches.cancel();
+
+  void _setEntry(String value) {
+    entry = value;
+    final space = value.indexOf(' ');
+    time = DateTime.tryParse(space < 0 ? value : value.substring(0, space)) ?? DateTime(0);
+  }
 }
 
 class Traceback implements Exception {
