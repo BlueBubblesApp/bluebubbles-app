@@ -565,6 +565,7 @@ class Chat {
       chatId: chat.id!,
       chatGuid: chat.guid,
       participantsData: chat.handles.map((e) => e.toMap()).toList(),
+      chatStyle: chat.style ?? 0,
       offset: offset,
       limit: limit,
       includeDeleted: includeDeleted,
