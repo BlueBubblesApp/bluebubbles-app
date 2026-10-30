@@ -9,7 +9,6 @@ import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
-import "package:languagetool_textfield/src/core/enums/mistake_type.dart";
 import 'package:languagetool_textfield/languagetool_textfield.dart';
 import "package:languagetool_textfield/src/utils/closed_range.dart";
 import "package:languagetool_textfield/src/utils/keep_latest_response_service.dart";
@@ -47,8 +46,8 @@ class Mentionable {
 class SpellCheckTextEditingController extends TextEditingController {
   SpellCheckTextEditingController({super.text, this.focusNode}) {
     assert(focusNode != null || !(kIsDesktop || kIsWeb));
-    _languageCheckService = DebounceLangToolService(
-        LangToolService(LanguageToolClient(language: SettingsSvc.settings.spellcheckLanguage.value)),
+    _languageCheckService = DebounceLanguageCheckService(
+        LanguageToolService(LanguageToolClient(language: SettingsSvc.settings.spellcheckLanguage.value)),
         const Duration(milliseconds: 1000));
     _processMistakes(text);
   }
@@ -279,28 +278,8 @@ class SpellCheckTextEditingController extends TextEditingController {
     return mistake.copyWith(offset: newOffset);
   }
 
-  /// Returns color for mistake TextSpan style
-  Color _getMistakeColor(MistakeType type) {
-    switch (type) {
-      case MistakeType.misspelling:
-        return highlightStyle.misspellingMistakeColor;
-      case MistakeType.typographical:
-        return highlightStyle.typographicalMistakeColor;
-      case MistakeType.grammar:
-        return highlightStyle.grammarMistakeColor;
-      case MistakeType.uncategorized:
-        return highlightStyle.uncategorizedMistakeColor;
-      case MistakeType.nonConformance:
-        return highlightStyle.nonConformanceMistakeColor;
-      case MistakeType.style:
-        return highlightStyle.styleMistakeColor;
-      case MistakeType.other:
-        return highlightStyle.otherMistakeColor;
-    }
-  }
-
   OverlayEntry _createTooltip(BuildContext context, Offset offset, Mistake mistake, String mistakeText) {
-    final Color color = _getMistakeColor(mistake.type);
+    final Color color = highlightStyle.colors.colorOf(mistake.type);
     Iterable<String> replacements = mistake.replacements.take(15);
     return OverlayEntry(
       builder: (context) => Positioned(
@@ -391,9 +370,10 @@ class SpellCheckTextEditingController extends TextEditingController {
           final mistakeEnd = mistake.endOffset - offset;
           final mistakeText = chunk.substring(mistakeStart, mistakeEnd);
           final mistakeStyle = (style ?? const TextStyle()).copyWith(
-            backgroundColor: _getMistakeColor(mistake.type).withValues(alpha: highlightStyle.backgroundOpacity),
+            backgroundColor:
+                highlightStyle.colors.colorOf(mistake.type).withValues(alpha: highlightStyle.backgroundOpacity),
             decoration: highlightStyle.decoration,
-            decorationColor: _getMistakeColor(mistake.type),
+            decorationColor: highlightStyle.colors.colorOf(mistake.type),
             decorationThickness: highlightStyle.mistakeLineThickness,
           );
 

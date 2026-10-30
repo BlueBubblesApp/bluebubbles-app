@@ -20,7 +20,6 @@ import 'package:dio/io.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:universal_io/io.dart';
 import 'package:get_it/get_it.dart';
@@ -166,9 +165,6 @@ class HttpService implements BaseApi {
     faceTime = FaceTimeApi(this);
     icloud = iCloudApi(this);
     firebase = FirebaseApi(this);
-
-    // Uncomment to run tests on most API requests
-    // testAPI();
   }
 
   void updateHeaders() {
@@ -233,132 +229,6 @@ class HttpService implements BaseApi {
     downloadingFont.value = false;
     fontDownloadProgress.value = null;
     fontDownloadTotalSize.value = null;
-  }
-
-  /// Test most API GET requests (the ones that don't have required parameters)
-  void testAPI() {
-    Stopwatch s = Stopwatch();
-    group("API Service Test", () {
-      test("Ping", () async {
-        s.start();
-        var res = await server.ping();
-        expect(res.data['message'], "pong");
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Server Info", () async {
-        s.start();
-        var res = await server.info();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Server Stat Totals", () async {
-        s.start();
-        var res = await server.getTotalStats();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Server Stat Media", () async {
-        s.start();
-        var res = await server.getMediaStats();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Server Logs", () async {
-        s.start();
-        var res = await server.getLogs();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("FCM Client", () async {
-        s.start();
-        var res = await fcm.getServiceAccount();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Attachment Count", () async {
-        s.start();
-        var res = await attachment.getCount();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Chats", () async {
-        s.start();
-        var res = await chat.query();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Chat Count", () async {
-        s.start();
-        var res = await chat.getCount();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Message Count", () async {
-        s.start();
-        var res = await message.getCount();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("My Message Count", () async {
-        s.start();
-        var res = await message.getCount(onlyMe: true);
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Messages", () async {
-        s.start();
-        var res = await message.query();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Handle Count", () async {
-        s.start();
-        var res = await handle.handleCount();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("iCloud Contacts", () async {
-        s.start();
-        var res = await contact.fetchAll();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Theme Backup", () async {
-        s.start();
-        var res = await backup.getTheme();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Settings Backup", () async {
-        s.start();
-        var res = await backup.getSettings();
-        expect(res.data['status'], 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-      test("Landing Page", () async {
-        s.start();
-        var res = await server.landingPage();
-        expect(res.statusCode, 200);
-        s.stop();
-        Logger.info("Request took ${s.elapsedMilliseconds} ms");
-      });
-    });
   }
 }
 

@@ -43,11 +43,9 @@ import com.johnstef.flutter_user_certificates_android.FlutterUserCertificatesAnd
 import dev.fluttercommunity.plus.device_info.DeviceInfoPlusPlugin
 import dev.fluttercommunity.plus.packageinfo.PackageInfoPlugin
 import io.flutter.plugins.flutter_plugin_android_lifecycle.FlutterAndroidLifecyclePlugin
-import io.flutter.plugins.pathprovider.PathProviderPlugin
 import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin
 import io.objectbox.objectbox_flutter_libs.ObjectboxFlutterLibsPlugin
 import net.wolverinebeach.flutter_timezone.FlutterTimezonePlugin
-import org.unifiedpush.flutter.connector.Plugin as UnifiedPushConnectorPlugin
 
 class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWorker(context, workerParams) {
 
@@ -307,7 +305,6 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         val plugins = engine.plugins
         // Core Flutter platform channels
         plugins.add(FlutterAndroidLifecyclePlugin())
-        plugins.add(PathProviderPlugin())
         plugins.add(SharedPreferencesPlugin())
         // App information (used by FilesystemService and SettingsService init)
         plugins.add(PackageInfoPlugin())
@@ -316,13 +313,12 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         plugins.add(ObjectboxFlutterLibsPlugin())
         // Notifications
         plugins.add(FlutterLocalNotificationsPlugin())
-        // Transport security (custom user certificates; JniPlugin is a required dependency)
+        // JNI bridge: path_provider (2.3+) and flutter_user_certificates_android call Android through it
         plugins.add(JniPlugin())
+        // Transport security (custom user certificates)
         plugins.add(FlutterUserCertificatesAndroidPlugin())
         // Timezone (used during message date handling)
         plugins.add(FlutterTimezonePlugin())
-        // UnifiedPush
-        plugins.add(UnifiedPushConnectorPlugin())
     }
 
     // Dumb thing that appears to be necessary for Android 11 and under (see https://stackoverflow.com/questions/69684656/upgrading-to-workmanager-2-7-0-how-to-implement-getforegroundinfoasync-for-rxwo)

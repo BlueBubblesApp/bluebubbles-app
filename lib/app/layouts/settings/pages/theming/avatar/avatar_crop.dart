@@ -43,13 +43,10 @@ class _AvatarCropState extends State<AvatarCrop> with ThemeHelpers {
   }
 
   Future<void> _pickImageFromFiles() async {
-    final res = await FilePicker.pickFiles(
-      withData: true,
-      type: FileType.image,
-    );
-    if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+    final res = await FilePicker.pickFile(type: FileType.image);
+    if (res == null) return;
 
-    await _handlePickedImage(res.files.first.bytes!, fileName: res.files.first.name);
+    await _handlePickedImage(await res.readAsBytes(), fileName: res.name);
   }
 
   Future<void> _handlePickedImage(Uint8List bytes, {String? fileName}) async {

@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
-import 'package:chunked_stream/chunked_stream.dart';
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/cupertino.dart';
@@ -80,10 +79,10 @@ class TextFieldIconBar extends StatelessWidget {
             visualDensity: Platform.isAndroid ? VisualDensity.compact : null,
             onPressed: () async {
               if (kIsDesktop) {
-                final res = await FilePicker.pickFiles(withReadStream: true, allowMultiple: true);
-                if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
-                for (pf.PlatformFile e in res.files) {
-                  if (e.size / 1024000 > 1000) {
+                final res = await FilePicker.pickFiles();
+                for (pf.PlatformFile e in res) {
+                  final size = await e.length() ?? 0;
+                  if (size / 1024000 > 1000) {
                     showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
                         type: SnackbarType.error);
                     continue;
@@ -91,8 +90,8 @@ class TextFieldIconBar extends StatelessWidget {
                   controller.pickedAttachments.add(PlatformFile(
                     path: e.path,
                     name: e.name,
-                    size: e.size,
-                    bytes: await readByteStream(e.readStream!),
+                    size: size,
+                    bytes: await e.readAsBytes(),
                   ));
                 }
               } else if (kIsWeb) {
@@ -106,13 +105,10 @@ class TextFieldIconBar extends StatelessWidget {
                       ListTile(
                         title: Text("Upload file", style: Theme.of(context).textTheme.bodyLarge),
                         onTap: () async {
-                          final res = await FilePicker.pickFiles(withData: true, allowMultiple: true);
-                          if (res == null || res.files.isEmpty || res.files.first.bytes == null) {
-                            return;
-                          }
-
-                          for (pf.PlatformFile e in res.files) {
-                            if (e.size / 1024000 > 1000) {
+                          final res = await FilePicker.pickFiles();
+                          for (pf.PlatformFile e in res) {
+                            final size = await e.length() ?? 0;
+                            if (size / 1024000 > 1000) {
                               showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
                                   type: SnackbarType.error);
                               continue;
@@ -120,8 +116,8 @@ class TextFieldIconBar extends StatelessWidget {
                             controller.pickedAttachments.add(PlatformFile(
                               path: null,
                               name: e.name,
-                              size: e.size,
-                              bytes: e.bytes!,
+                              size: size,
+                              bytes: await e.readAsBytes(),
                             ));
                           }
                           Get.back();

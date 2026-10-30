@@ -35,7 +35,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   flutter::DartProject project(L"data");
   // Skia: Impeller (the default since Flutter 3.47) idles at ~3x the memory on Windows.
   project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
-  project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);
 
   std::vector<std::string> command_line_arguments = GetCommandLineArguments();
 

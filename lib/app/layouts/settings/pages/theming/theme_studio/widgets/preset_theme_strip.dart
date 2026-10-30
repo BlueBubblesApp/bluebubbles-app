@@ -6,7 +6,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 /// Two grouped sections — Light Themes and Dark Themes — each with a
 /// prominent full-width Default card (Bright White / OLED Dark) and a
@@ -848,20 +847,12 @@ class _ImportDialogState extends State<_ImportDialog> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['json', 'txt'],
     );
-    if (result == null || result.files.isEmpty) return;
-    final bytes = result.files.first.bytes;
-    final path = result.files.first.path;
-    String? json;
-    if (bytes != null) {
-      json = String.fromCharCodes(bytes);
-    } else if (path != null) {
-      json = await File(path).readAsString();
-    }
-    if (json != null) _textController.text = json;
+    if (result == null) return;
+    _textController.text = await result.xFile.readAsString();
   }
 
   Future<void> _doImport() async {

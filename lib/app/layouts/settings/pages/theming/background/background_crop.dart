@@ -264,14 +264,14 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
             backgroundColor: context.theme.colorScheme.primaryContainer,
           ),
           onPressed: () async {
-            final res = await FilePicker.pickFiles(
-              withData: true,
+            final res = await FilePicker.pickFile(
               type: FileType.custom,
               allowedExtensions: ['png', 'jpg', 'jpeg'],
             );
-            if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+            if (res == null) return;
+            final bytes = await res.readAsBytes();
             setState(() {
-              _imageData = res.files.first.bytes!;
+              _imageData = bytes;
               _croppedData = null;
               _currentStep = _EditStep.crop;
               _isLoading = true;

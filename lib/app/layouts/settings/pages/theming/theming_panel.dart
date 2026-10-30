@@ -527,17 +527,17 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                           onTap: () async {
                             if (kIsWeb) {
                               try {
-                                final res = await FilePicker.pickFiles(
-                                    withData: true, type: FileType.custom, allowedExtensions: ["ttf"]);
-                                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                                final res = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ["ttf"]);
+                                if (res == null) return;
+                                final bytes = await res.readAsBytes();
 
                                 final txn = FilesystemSvc.webDb.transaction("BBStore", idbModeReadWrite);
                                 final store = txn.objectStore("BBStore");
-                                await store.put(res.files.first.bytes!, "iosFont");
+                                await store.put(bytes, "iosFont");
                                 await txn.completed;
 
                                 final fontLoader = FontLoader("Apple Color Emoji");
-                                final cachedFontBytes = ByteData.view(res.files.first.bytes!.buffer);
+                                final cachedFontBytes = ByteData.view(bytes.buffer);
                                 fontLoader.addFont(
                                   Future<ByteData>.value(cachedFontBytes),
                                 );

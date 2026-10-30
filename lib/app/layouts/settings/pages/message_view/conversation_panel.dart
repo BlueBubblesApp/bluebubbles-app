@@ -280,12 +280,11 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                             ? basename(SettingsSvc.settings.sendSoundPath.value!).substring("send-".length)
                             : "Adds a sound to be played when sending a message",
                         onTap: () async {
-                          FilePickerResult? result = await FilePicker.pickFiles(type: FileType.audio, withData: true);
-                          if (result != null) {
-                            PlatformFile platformFile = result.files.first;
+                          PlatformFile? platformFile = await FilePicker.pickFile(type: FileType.audio);
+                          if (platformFile != null) {
                             String path = join(FilesystemSvc.soundsPath, "send-${platformFile.name}");
                             await File(path).create(recursive: true);
-                            await File(path).writeAsBytes(platformFile.bytes!);
+                            await File(path).writeAsBytes(await platformFile.readAsBytes());
                             SettingsSvc.settings.sendSoundPath.value = path;
                             await SettingsSvc.settings.saveOneAsync('sendSoundPath');
                           }
@@ -353,12 +352,11 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                             ? basename(SettingsSvc.settings.receiveSoundPath.value!).substring("receive-".length)
                             : "Adds a sound to be played when receiving a message",
                         onTap: () async {
-                          FilePickerResult? result = await FilePicker.pickFiles(type: FileType.audio, withData: true);
-                          if (result != null) {
-                            PlatformFile platformFile = result.files.first;
+                          PlatformFile? platformFile = await FilePicker.pickFile(type: FileType.audio);
+                          if (platformFile != null) {
                             String path = join(FilesystemSvc.soundsPath, "receive-${platformFile.name}");
                             await File(path).create(recursive: true);
-                            await File(path).writeAsBytes(platformFile.bytes!);
+                            await File(path).writeAsBytes(await platformFile.readAsBytes());
                             SettingsSvc.settings.receiveSoundPath.value = path;
                             await SettingsSvc.settings.saveOneAsync('receiveSoundPath');
                           }
