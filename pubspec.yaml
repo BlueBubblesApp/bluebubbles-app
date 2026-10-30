@@ -176,7 +176,7 @@ dependencies:
   store_checker: ^1.8.0
   synchronized: ^3.3.0+3
   supercharged: ^2.1.1
-  tray_manager: ^0.5.1
+  tray_manager: ^0.8.0
   unicode_emojis: ^0.5.1
   unifiedpush: ^5.0.2 # don't upgrade to v6 as it breaks the build. Might be due to firestore package conflicts.
   universal_html: ^2.2.4 # cross-platform dart:html implementation
