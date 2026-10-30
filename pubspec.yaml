@@ -95,7 +95,7 @@ dependencies:
   flutter_timezone: ^5.0.2
   fluttertoast: ^10.0.2
   geocoding: ^5.0.0
-  geolocator: ^14.0.2
+  geolocator: ^14.1.2
   gesture_x_detector: # support touchscreens properly
     git:
       url: https://github.com/BlueBubblesApp/xgesture_flutter.git
