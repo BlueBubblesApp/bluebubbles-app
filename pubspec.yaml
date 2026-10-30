@@ -143,7 +143,7 @@ dependencies:
   open_filex: ^5.0.0
   package_info_plus: ^10.2.2
   particles_flutter: ^3.2.0
-  pasteboard: ^0.5.0
+  pasteboard: ^0.6.0
   path_provider: ^2.1.5 # no web support
   path_provider_linux: ^2.2.1 # desktop shared_preferences store path resolution
   path_provider_windows: ^2.3.0 # desktop shared_preferences store path resolution
