@@ -155,7 +155,7 @@ dependencies:
   pull_down_button: ^0.10.2
   qr_flutter: ^4.1.0
   receive_intent: ^0.2.7 # mobile only
-  record: ^6.1.1
+  record: ^7.1.2
   reorderables: ^0.6.0
   saver_gallery: ^4.0.1
   screen_retriever: ^0.2.0
