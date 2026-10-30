@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:ui' as ui;
 
 import 'package:bluebubbles/app/components/bb_slider.dart';
@@ -55,7 +56,7 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
   /// interpolation, which aliases badly on a large downscale (see
   /// `ImageActions.generatePreview` for the same fix applied to attachment
   /// previews). No-op (returns [bytes] unchanged) when already within the cap.
-  Uint8List _capResolution(Uint8List bytes) {
+  static Uint8List _capResolution(Uint8List bytes) {
     final image = img.decodeImage(bytes);
     if (image == null) return bytes;
 
@@ -70,7 +71,7 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
 
   /// Re-encodes [bytes] as a high-quality JPEG for a reasonable file size.
   /// Falls back to the original (PNG) bytes if decoding fails for any reason.
-  Uint8List _encodeFinal(Uint8List bytes) {
+  static Uint8List _encodeFinal(Uint8List bytes) {
     final image = img.decodeImage(bytes);
     if (image == null) return bytes;
     return Uint8List.fromList(img.encodeJpg(image, quality: _jpegQuality));
@@ -115,9 +116,10 @@ class _BackgroundCropState extends State<BackgroundCrop> with ThemeHelpers {
 
   Future<void> _saveImage() async {
     _showSavingDialog();
-    final Uint8List capped = _capResolution(_croppedData!);
+    final Uint8List cropped = _croppedData!;
+    final Uint8List capped = await Isolate.run(() => _capResolution(cropped));
     final Uint8List blurred = await _applyBlurToImage(capped, _blurSigma);
-    final Uint8List finalData = _encodeFinal(blurred);
+    final Uint8List finalData = await Isolate.run(() => _encodeFinal(blurred));
     final String sanitizedGuid = FilesystemService.sanitizeGuid(chat.guid);
     final File file =
         File(p.join(FilesystemSvc.customBackgroundsPath, sanitizedGuid, "background-${finalData.length}.jpg"));
