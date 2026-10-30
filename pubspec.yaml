@@ -140,7 +140,7 @@ dependencies:
   passkit: any
   passkit_ui: any
   sqlite3_flutter_libs: ^0.5.24 # required for network_tools drift/ARP service on Android
-  open_filex: ^4.7.0
+  open_filex: ^5.0.0
   package_info_plus: ^10.2.2
   particles_flutter: ^3.2.0
   pasteboard: ^0.5.0
