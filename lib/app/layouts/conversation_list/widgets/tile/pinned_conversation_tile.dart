@@ -28,14 +28,11 @@ class PinnedConversationTile extends CustomStateful<ConversationTileController> 
     required ConversationListController controller,
     required this.avatarSize,
   }) : super(
-            parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
-                ? Get.find<ConversationTileController>(tag: chat.guid)
-                : Get.put(
-                    ConversationTileController(
-                      chatState: ChatsSvc.getOrCreateChatState(chat),
-                      listController: controller,
-                    ),
-                    tag: "${chat.guid}-pinned"));
+            parentController: ConversationTileController.resolve(
+              chat,
+              tag: "${chat.guid}-pinned",
+              listController: controller,
+            ));
 
   @override
   State<PinnedConversationTile> createState() => _PinnedConversationTileState();
