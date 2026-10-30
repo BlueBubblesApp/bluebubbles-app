@@ -1171,10 +1171,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_user_certificates_android
-      sha256: "084b44d1a1bed7fce7b39873d7ab67cbc3892677840899ef495d8827ef0422e9"
+      sha256: "39589cf24a8b6411e8288559d3a0632e280f22177874aff0a93e878a836f460f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1"
+    version: "0.1.0"
   flutter_web_plugins:
     dependency: transitive
     description: flutter

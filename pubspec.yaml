@@ -189,7 +189,7 @@ dependencies:
   win32: ^6.3.0
   window_manager: ^0.5.1
   windows_taskbar: ^1.1.2
-  flutter_user_certificates_android: ^0.0.1
+  flutter_user_certificates_android: ^0.1.0
 
   intl: any
   html: any
