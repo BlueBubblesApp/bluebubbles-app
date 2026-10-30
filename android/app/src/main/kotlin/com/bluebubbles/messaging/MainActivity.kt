@@ -3,12 +3,18 @@ package com.bluebubbles.messaging
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsAnimation
 import androidx.activity.ComponentActivity
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
 import com.bluebubbles.messaging.services.foreground.ForegroundServiceBroadcastReceiver
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.google.firebase.firestore.FirebaseFirestoreException
+import io.flutter.embedding.android.FlutterFragment
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -56,6 +62,37 @@ class MainActivity : FlutterFragmentActivity() {
                 _dartReady = ready
             }
         }
+    }
+
+    // Workaround for stale IME insets leaving half the screen blank on resume (#3377).
+    // Remove once https://github.com/flutter/flutter/pull/191453 lands in our Flutter version.
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+
+        window.decorView.setWindowInsetsAnimationCallback(
+            object : WindowInsetsAnimation.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+                override fun onProgress(
+                    insets: WindowInsets,
+                    runningAnimations: List<WindowInsetsAnimation>,
+                ) = insets
+
+                override fun onEnd(animation: WindowInsetsAnimation) {
+                    if ((animation.typeMask and WindowInsets.Type.ime()) != 0) reapplyInsets()
+                }
+            },
+        )
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) reapplyInsets()
+    }
+
+    // Posted so it runs after Flutter has applied any insets it deferred.
+    private fun reapplyInsets() {
+        val view = findViewById<View>(FlutterFragment.FLUTTER_VIEW_ID) ?: return
+        view.post { view.rootWindowInsets?.let(view::onApplyWindowInsets) }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
