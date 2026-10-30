@@ -170,7 +170,7 @@ dependencies:
   skeletonizer: ^3.0.0
   sliding_up_panel2: ^3.3.0+1
   slugify: ^2.0.0
-  smooth_page_indicator: ^2.0.1
+  smooth_page_indicator: ^3.0.0
   socket_io_client: ^3.1.2
   sprung: ^3.0.1
   store_checker: ^1.8.0
