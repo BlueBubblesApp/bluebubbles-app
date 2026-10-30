@@ -83,7 +83,7 @@ dependencies:
   flutter_displaymode: ^0.7.0 # android only
   flutter_image_compress: ^2.4.0
   flutter_improved_scrolling: ^0.0.3
-  flutter_keyboard_visibility: ^6.0.0 # no desktop support
+  flutter_keyboard_visibility: ^7.0.1 # no desktop support
   flutter_local_notifications: ^22.0.1
   flutter_map_marker_popup: ^8.1.0
   flutter_markdown_plus: ^1.0.7
