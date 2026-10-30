@@ -271,6 +271,7 @@ List<Widget> buildSettingItemList({
         SearchableSettingItem(
           title: "Notification Settings", // Title to search
           searchTags: [
+            "Override DND for Favorites",
             "Send Notifications on Chat List",
             "Notify for Reactions",
             "Notification Sound",
