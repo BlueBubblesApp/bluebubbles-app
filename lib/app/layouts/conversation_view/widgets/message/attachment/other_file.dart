@@ -88,9 +88,13 @@ class OtherFile extends StatelessWidget {
     super.key,
     required this.attachment,
     required this.file,
+    this.showJumpToMessage = false,
+    this.galleryAttachments,
   });
   final Attachment attachment;
   final PlatformFile file;
+  final bool showJumpToMessage;
+  final List<Attachment>? galleryAttachments;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +108,8 @@ class OtherFile extends StatelessWidget {
                 currentChat: currentChat,
                 attachment: attachment,
                 showInteractions: true,
+                showJumpToMessage: showJumpToMessage,
+                galleryAttachments: galleryAttachments,
               ),
             ),
           );
