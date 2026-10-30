@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dbus/dbus.dart';
 
@@ -21,10 +21,8 @@ class LinuxLauncherBadge {
   /// Desktop file ID for the current packaging: the Snap ships `<snap>_bluebubbles.desktop`;
   /// Flatpak and everything else use the application ID (`linux/CMakeLists.txt`).
   static String get desktopId {
-    final snapName = Platform.environment['SNAP_INSTANCE_NAME'] ?? Platform.environment['SNAP_NAME'];
-    if (snapName != null && snapName.isNotEmpty) return '${snapName}_bluebubbles.desktop';
-    final flatpakId = Platform.environment['FLATPAK_ID'];
-    if (flatpakId != null && flatpakId.isNotEmpty) return '$flatpakId.desktop';
+    if (isSnap) return '${snapInstanceName ?? 'bluebubbles'}_bluebubbles.desktop';
+    if (isFlatpak) return '${flatpakId!}.desktop';
     return 'app.bluebubbles.BlueBubbles.desktop';
   }
 

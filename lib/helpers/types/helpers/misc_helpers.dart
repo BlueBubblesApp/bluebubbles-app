@@ -52,6 +52,11 @@ bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment.containsK
 
 bool get isFlatpak => !kIsWeb && Platform.isLinux && Platform.environment.containsKey('FLATPAK_ID');
 
+String? get snapInstanceName =>
+    isSnap ? Platform.environment['SNAP_INSTANCE_NAME'] ?? Platform.environment['SNAP_NAME'] : null;
+
+String? get flatpakId => isFlatpak ? Platform.environment['FLATPAK_ID'] : null;
+
 bool get isMsix => !kIsWeb && Platform.isWindows && Platform.resolvedExecutable.contains('WindowsApps');
 
 bool get isStoreMsix => isMsix && Platform.resolvedExecutable.contains(r'\23344BlueBubbles.BlueBubbles_');
