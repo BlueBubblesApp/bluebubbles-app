@@ -98,6 +98,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                 style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onSurface),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textDirection: getTextDirection(text),
               ),
             ),
           ),
@@ -224,6 +225,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                                 builder: (context, snapshot) {
                                                   if (snapshot.data != null) {
                                                     return RichText(
+                                                      textDirection: getTextDirection(part.fullText),
                                                       text: TextSpan(
                                                         children: snapshot.data!,
                                                       ),

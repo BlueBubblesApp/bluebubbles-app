@@ -218,7 +218,10 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         SettingsSvc.settings.enablePrivateAPI.value &&
                         SettingsSvc.settings.privateSubjectLine.value &&
                         chat!.isIMessage)
-                      TextField(
+                      TextDirectionBuilder(
+                        controller: subjController!,
+                        builder: (context, direction) => TextField(
+                        textDirection: direction,
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller!.subjectFocusNode,
                         autocorrect: true,
@@ -255,7 +258,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         contentInsertionConfiguration:
                             ContentInsertionConfiguration(onContentInserted: onContentCommit),
-                      ),
+                      )),
                     if (!isChatCreator &&
                         SettingsSvc.settings.enablePrivateAPI.value &&
                         SettingsSvc.settings.privateSubjectLine.value &&
@@ -270,7 +273,10 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     Obx(() {
                       final chatTitle =
                           chat == null ? null : (ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle());
-                      return TextField(
+                      return TextDirectionBuilder(
+                        controller: txtController,
+                        builder: (context, direction) => TextField(
+                        textDirection: direction,
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller?.focusNode ?? focusNode,
                         autocorrect: true,
@@ -447,7 +453,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         contentInsertionConfiguration:
                             ContentInsertionConfiguration(onContentInserted: onContentCommit),
-                      );
+                      ));
                     }),
                   ],
                 ),
