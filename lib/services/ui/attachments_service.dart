@@ -299,14 +299,14 @@ class AttachmentsService extends GetxService {
                   file.bytes!,
                   quality: 100,
                   fileName: file.name,
-                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                   skipIfExists: false,
                 );
               } else {
                 await SaverGallery.saveFile(
                   filePath: file.path!,
                   fileName: file.name,
-                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                   skipIfExists: false,
                 );
               }
