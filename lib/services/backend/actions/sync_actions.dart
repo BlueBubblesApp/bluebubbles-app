@@ -186,6 +186,7 @@ class SyncActions {
         chatToSave.chatIdentifier ??= inputChat.chatIdentifier;
         chatToSave.style ??= inputChat.style;
         if (inputChat.isArchived == true) chatToSave.isArchived = true;
+        chatToSave.mergeSpamFlag(inputChat);
       }
 
       // Collect handles to link from the raw participants list.
