@@ -19,8 +19,8 @@ on:
   # wasn't enough (removed in c90f304).
   #
   # These paths are the inputs to the expensive caches' keys (native deps hash pubspec.lock;
-  # Gradle also hashes the Android build files). Other commits leave the entries valid, so
-  # there's no point rebuilding for them.
+  # Gradle also hashes the Android build files; the SDK cache keys on FLUTTER_VERSION in this
+  # file). Other commits leave the entries valid, so there's no point rebuilding for them.
   push:
     branches: [master]
     paths:
@@ -28,6 +28,8 @@ on:
       - android/**/*.gradle
       - android/gradle.properties
       - android/gradle/wrapper/gradle-wrapper.properties
+      - .github/workflows/pr-check.yml
+      - .github/actions/setup-flutter/**
 
   # Cache entries are evicted after 7 days without a read, so a quiet stretch would leave
   # the next PR cold whatever the lockfile did. Weekly sits right on that boundary, so
