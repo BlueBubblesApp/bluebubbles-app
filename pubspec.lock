@@ -1369,26 +1369,26 @@ packages:
     dependency: transitive
     description:
       name: google_mlkit_commons
-      sha256: "3e69fea4211727732cc385104e675ad1e40b29f12edd492ee52fa108423a6124"
+      sha256: "621e94de22fd0f1e902e593b892746d80ab7542b39c2552aa091d904eb82fc6f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.11.1"
+    version: "0.13.0"
   google_mlkit_entity_extraction:
     dependency: "direct main"
     description:
       name: google_mlkit_entity_extraction
-      sha256: a56536cbf14731829f9331694165518873eb0582fcdced9d453dfc90b9fb561b
+      sha256: "32448e0a60cb2a3c0a8aee8991e7a30c90b6a3852923e96a785835d4b783e310"
       url: "https://pub.dev"
     source: hosted
-    version: "0.15.3"
+    version: "0.17.1"
   google_mlkit_smart_reply:
     dependency: "direct main"
     description:
       name: google_mlkit_smart_reply
-      sha256: e5c691c9243b3b123dfb5681590a136165c7b6fd76fdec43775ca66373664bb9
+      sha256: f7c11e163efdc18b0da6bb671a9f75beb789f566df9aa57b5ffa224f5f8e9fd2
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.1"
+    version: "0.15.1"
   google_sign_in:
     dependency: "direct main"
     description:

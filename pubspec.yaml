@@ -104,8 +104,8 @@ dependencies:
   gif_view: ^1.0.3
   github: ^9.25.0
   google_fonts: ^8.0.2
-  google_mlkit_entity_extraction: ^0.15.3 # mobile only
-  google_mlkit_smart_reply: ^0.13.0 # mobile only
+  google_mlkit_entity_extraction: ^0.17.1 # mobile only
+  google_mlkit_smart_reply: ^0.15.1 # mobile only
   google_sign_in: ^7.1.1
   hand_signature: ^3.1.0+2
   idb_shim: ^2.6.1+7
