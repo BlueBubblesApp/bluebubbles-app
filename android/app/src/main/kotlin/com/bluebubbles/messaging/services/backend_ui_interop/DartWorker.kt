@@ -47,7 +47,6 @@ import io.flutter.plugins.pathprovider.PathProviderPlugin
 import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin
 import io.objectbox.objectbox_flutter_libs.ObjectboxFlutterLibsPlugin
 import net.wolverinebeach.flutter_timezone.FlutterTimezonePlugin
-import org.unifiedpush.flutter.connector.Plugin as UnifiedPushConnectorPlugin
 
 class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWorker(context, workerParams) {
 
@@ -321,8 +320,6 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         plugins.add(FlutterUserCertificatesAndroidPlugin())
         // Timezone (used during message date handling)
         plugins.add(FlutterTimezonePlugin())
-        // UnifiedPush
-        plugins.add(UnifiedPushConnectorPlugin())
     }
 
     // Dumb thing that appears to be necessary for Android 11 and under (see https://stackoverflow.com/questions/69684656/upgrading-to-workmanager-2-7-0-how-to-implement-getforegroundinfoasync-for-rxwo)

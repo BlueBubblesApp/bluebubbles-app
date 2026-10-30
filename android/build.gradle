@@ -15,7 +15,7 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-// Some transitive dependencies (e.g. unifiedpush_android) ship a Kotlin
+// Some transitive dependencies ship a Kotlin
 // languageVersion of 1.7, which the project's Kotlin Gradle plugin no longer
 // supports. Force a minimum supported language version across all modules.
 subprojects {
