@@ -115,7 +115,7 @@ dependencies:
   in_app_review: ^2.0.11
   in_app_update: ^5.0.0
   klipy_flutter: ^0.0.3
-  languagetool_textfield: ^0.1.1
+  languagetool_textfield: ^1.0.0
   launch_at_startup: # win32_registry 3
     git:
       url: https://github.com/BlueBubblesApp/launch_at_startup.git

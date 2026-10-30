@@ -1753,10 +1753,10 @@ packages:
     dependency: "direct main"
     description:
       name: languagetool_textfield
-      sha256: "53ae4016e0544daadae3594cb4a55e2c40fc3d533b6a64df9d0df1ede55c4437"
+      sha256: "81869d07c86094dfed76200a1542801e93325c33092ec0e75c759fb9b5858d5a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "1.0.0"
   latlong2:
     dependency: "direct main"
     description:
