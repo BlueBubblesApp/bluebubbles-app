@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/sync/apple_state_catch_up.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -18,6 +19,18 @@ class ActionHandler extends GetxService {
   /// comes in with the same real GUID, it is removed here so the delayed
   /// `new-message` processing is skipped (the updated-message will handle it).
   final List<String> outOfOrderTempGuids = [];
+
+  /// Applies an Apple-side single-message delete or restore.
+  ///
+  /// Routed through MessagesService rather than written straight to the DB:
+  /// the conversation view filters on dateDeleted, but a struct that is
+  /// already built keeps showing the message until it is removed from it.
+  Future<void> handleRecoverableMessageEvent(RecoverableMessageEvent? event) async {
+    if (event == null) return;
+    if (Message.findOne(guid: event.messageGuid) == null) return;
+
+    await RecoverableMessages.apply(event.messageGuid, hide: event.deleted);
+  }
 
   Future<Chat> handleNewOrUpdatedChat(Chat partialData) async {
     final chat = await ChatsSvc.fetchChat(partialData.guid) ?? partialData;
@@ -153,8 +166,35 @@ class ActionHandler extends GetxService {
           // Route through ChatsService so the ChatState the conversation list
           // renders from is updated too. Writing only to the DB row leaves the
           // unread dot stale until the state is rebuilt (open chat / restart).
-          await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
+          await ChatsSvc.setChatHasUnreadFromServer(chat, !data["read"]!, readAt: chatReadAtFromEvent(data));
         }
+        return;
+      case "chat-deleted":
+        final chatGuid = data["chatGuid"] ?? data["guid"];
+        if (chatGuid is! String || chatGuid.isEmpty) {
+          Logger.warn("Ignoring chat-deleted event without a valid chat GUID", tag: "ActionHandler");
+          return;
+        }
+
+        final deletedChat = Chat.findOne(guid: chatGuid);
+        if (deletedChat == null) {
+          Logger.warn("Ignoring chat-deleted event for unknown chat $chatGuid", tag: "ActionHandler");
+          return;
+        }
+        if (deletedChat.dateDeleted != null) {
+          Logger.info("Ignoring duplicate chat-deleted event for $chatGuid", tag: "ActionHandler");
+          return;
+        }
+
+        await ChatsSvc.softDeleteChat(deletedChat);
+        Logger.info("Applied server chat deletion for $chatGuid", tag: "ActionHandler");
+        return;
+      case "message-deleted":
+      case "message-restored":
+        // Apple moved a single message into, or back out of, Recently Deleted.
+        await handleRecoverableMessageEvent(
+          parseRecoverableMessageEvent(data, deleted: event == "message-deleted"),
+        );
         return;
       case "typing-indicator":
         final chat = ChatsSvc.findChatByGuid(data["guid"]);

@@ -23,6 +23,9 @@ SharedPreferencesService get PrefsSvc => GetIt.I<SharedPreferencesService>();
 class SharedPreferencesService {
   @Deprecated('Use categorized helpers on PrefsSvc instead of raw i access')
   late final SharedPreferencesWithCache i;
+  /// Same store as [i] without its cache, for values written by another
+  /// engine in this process (the app and the headless DartWorker).
+  late final SharedPreferencesAsync uncached;
   late final SharedPreferencesAdminActions admin;
   late final SharedPreferencesDatabaseActions database;
   late final SharedPreferencesDesktopActions desktop;
@@ -77,6 +80,7 @@ class SharedPreferencesService {
       await _migrateDataStoreToSharedPreferences();
     }
 
+    uncached = SharedPreferencesAsync(options: _options);
     i = await SharedPreferencesWithCache.create(
       sharedPreferencesOptions: _options,
       cacheOptions: const SharedPreferencesWithCacheOptions(),

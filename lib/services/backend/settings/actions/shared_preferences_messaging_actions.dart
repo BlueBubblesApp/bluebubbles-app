@@ -19,6 +19,7 @@ class SharedPreferencesMessagingActions {
   static const String _recentReplyKey = 'recent-reply';
   static const String _replyToMessagePrefix = 'replyToMessage';
   static const String _replyToMessagePartPrefix = 'replyToMessagePart';
+  static const String _chatReadAtPrefix = 'chatReadAt';
 
   final SharedPreferencesService service;
 
@@ -75,6 +76,18 @@ class SharedPreferencesMessagingActions {
   }
 
   String? getRecentReplyRaw() => service.i.getString(_recentReplyKey);
+
+  /// When the server last reported [chatGuid] read. Kept in prefs rather than
+  /// memory so the headless DartWorker engine and the app see the same value,
+  /// and read past the per-engine cache, which never sees the other's writes.
+  Future<DateTime?> getChatReadAt(String chatGuid) async {
+    final millis = await service.uncached.getInt('${_chatReadAtPrefix}_$chatGuid');
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  Future<void> setChatReadAt(String chatGuid, DateTime at) async {
+    await service.uncached.setInt('${_chatReadAtPrefix}_$chatGuid', at.millisecondsSinceEpoch);
+  }
 
   Future<void> setRecentReply({required String messageGuid, required String text}) async {
     await service.i.setString(_recentReplyKey, '$messageGuid/$text');
