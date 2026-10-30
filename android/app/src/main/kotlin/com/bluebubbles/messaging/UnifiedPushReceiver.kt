@@ -45,7 +45,6 @@ class UnifiedPushReceiver : MessagingReceiver() {
     override fun onMessage(context: Context, payload: ByteArray, instance: String) {
         val applicationContext = context.getApplicationContext()
         val msg = payload.toString(Charsets.UTF_8)
-        PersistentLog.i(applicationContext, tag, "UnifiedPush payload received (${payload.size} bytes)")
 
         try {
             val json = JsonParser.parseString(msg).asJsonObject
