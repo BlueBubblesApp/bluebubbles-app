@@ -261,10 +261,10 @@ class _AdvancedThemingContentState extends State<AdvancedThemingContent> with Th
                           subtitle: "Overwrite this theme by generating a color palette from an image",
                           backgroundColor: tileColor,
                           onTap: () async {
-                            final res = await FilePicker.pickFiles(
-                                withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
-                            if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
-                            final image = MemoryImage(res.files.first.bytes!);
+                            final res = await FilePicker.pickFile(
+                                type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
+                            if (res == null) return;
+                            final image = MemoryImage(await res.readAsBytes());
                             final swatch = await ColorScheme.fromImageProvider(
                                 provider: image, brightness: widget.isDarkMode ? Brightness.dark : Brightness.light);
                             oldData.value = currentTheme.data;

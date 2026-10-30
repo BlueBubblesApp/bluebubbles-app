@@ -500,10 +500,10 @@ class TextFieldComponentState extends State<TextFieldComponent> {
               visualDensity: Platform.isAndroid ? VisualDensity.compact : null,
               onPressed: () async {
                 if (kIsDesktop) {
-                  final res = await fp.FilePicker.pickFiles(withReadStream: true, allowMultiple: true);
-                  if (res == null || res.files.isEmpty || res.files.first.readStream == null) return;
-                  for (fp.PlatformFile e in res.files) {
-                    if (e.size / 1024000 > 1000) {
+                  final res = await fp.FilePicker.pickFiles();
+                  for (fp.PlatformFile e in res) {
+                    final size = await e.length() ?? 0;
+                    if (size / 1024000 > 1000) {
                       showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
                           type: SnackbarType.error);
                       continue;
@@ -511,8 +511,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     controller!.pickedAttachments.add(PlatformFile(
                       path: e.path,
                       name: e.name,
-                      size: e.size,
-                      bytes: await readByteStream(e.readStream!),
+                      size: size,
+                      bytes: await e.readAsBytes(),
                     ));
                   }
                 } else {
@@ -639,15 +639,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     }
 
     return KeyEventResult.ignored;
-  }
-
-  /// Convert a file stream to bytes
-  Future<Uint8List> readByteStream(Stream<List<int>> stream) async {
-    final chunks = <Uint8List>[];
-    await for (final chunk in stream) {
-      chunks.add(Uint8List.fromList(chunk));
-    }
-    return Uint8List.fromList(chunks.expand((e) => e).toList());
   }
 }
 

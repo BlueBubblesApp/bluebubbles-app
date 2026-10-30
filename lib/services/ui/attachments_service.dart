@@ -259,7 +259,6 @@ class AttachmentsService extends GetxService {
           initialDirectory: await FilesystemSvc.downloadsDirectory,
           sourcePath: file.path,
           bytes: file.path == null ? file.bytes : null,
-          allowedExtensions: file.extension != null ? [file.extension!] : null,
         );
       } catch (ex, stack) {
         Logger.error('Failed to save attachment!', error: ex, trace: stack);
@@ -286,7 +285,8 @@ class AttachmentsService extends GetxService {
         savePath = await FilePicker.getDirectoryPath(
           initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value,
           dialogTitle: 'Choose a location to save this file',
-          lockParentWindow: true,
+          windowsOptions: const WindowsOptions(lockParentWindow: true),
+          linuxOptions: const LinuxOptions(lockParentWindow: true),
         );
       } else {
         if (file.name.toLowerCase().endsWith(".mov")) {

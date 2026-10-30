@@ -52,27 +52,18 @@ Future<String?> saveFileAs({
   String? initialDirectory,
   String? sourcePath,
   Uint8List? bytes,
-  List<String>? allowedExtensions,
 }) async {
   assert(sourcePath != null || bytes != null, 'saveFileAs needs either a sourcePath or bytes');
-  final String? savePath = await FilePicker.saveFile(
+  final Uri? saved = await FilePicker.saveFile(
     initialDirectory: initialDirectory,
     dialogTitle: 'Choose a location to save this file',
     fileName: fileName,
-    lockParentWindow: true,
-    type: allowedExtensions != null ? FileType.custom : FileType.any,
-    allowedExtensions: allowedExtensions,
+    windowsOptions: const WindowsOptions(lockParentWindow: true),
+    linuxOptions: const LinuxOptions(lockParentWindow: true),
+    bytes: bytes ?? await File(sourcePath!).readAsBytes(),
   );
-  // Cancelled. Overwrite confirmation is the native dialog's job, so anything
-  // that comes back here is a location the user has agreed to write to.
-  if (savePath == null) return null;
 
-  if (sourcePath != null) {
-    await File(sourcePath).copy(savePath);
-  } else {
-    await File(savePath).writeAsBytes(bytes!);
-  }
-  return savePath;
+  return saved?.toFilePath();
 }
 
 Future<PlatformFile?> loadPathAsFile(String path) async {

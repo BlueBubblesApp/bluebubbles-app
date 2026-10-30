@@ -222,7 +222,6 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                                     initialDirectory: await FilesystemSvc.downloadsDirectory
                                         .then<String?>((dir) => dir, onError: (_) => null),
                                     sourcePath: filePath,
-                                    allowedExtensions: ['zip'],
                                   );
                                   if (savedPath == null) return;
                                   showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
