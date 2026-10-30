@@ -132,6 +132,19 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           isThreeLine: true,
                         )),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    Obx(() => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.hideChatListPreviews.value = val;
+                            await SettingsSvc.settings.saveOneAsync('hideChatListPreviews');
+                          },
+                          initialVal: SettingsSvc.settings.hideChatListPreviews.value,
+                          title: "Hide Message Previews",
+                          backgroundColor: tileColor,
+                          subtitle:
+                              "Shows only the contact name on the conversation list, hiding the latest message and drafts. Useful when screen sharing.",
+                          isThreeLine: true,
+                        )),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     if (!kIsDesktop && !kIsWeb && iOS)
                       const SettingsTile(
                         title: "Pin Configuration",
@@ -498,6 +511,19 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           title: "Show Filters in Header",
                           subtitle:
                               "Adds a shortcut button next to search to quickly open the chat list filters, highlighted when a filter is active",
+                          backgroundColor: tileColor,
+                          isThreeLine: true,
+                        ),
+                        const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                        SettingsSwitch(
+                          onChanged: (bool val) async {
+                            SettingsSvc.settings.showPreviewToggleInHeader.value = val;
+                            await SettingsSvc.settings.saveOneAsync('showPreviewToggleInHeader');
+                          },
+                          initialVal: SettingsSvc.settings.showPreviewToggleInHeader.value,
+                          title: "Show Preview Toggle in Header",
+                          subtitle:
+                              "Adds a button next to search to quickly hide or show message previews, highlighted when previews are hidden",
                           backgroundColor: tileColor,
                           isThreeLine: true,
                         ),

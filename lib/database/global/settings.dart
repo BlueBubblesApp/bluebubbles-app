@@ -84,6 +84,7 @@ class Settings {
   final RxBool sendWithReturn = false.obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
+  final RxBool hideChatListPreviews = false.obs;
   final RxBool smartReply = false.obs;
   final RxBool showSyncIndicator = true.obs;
   final RxInt sendDelay = 0.obs;
@@ -91,6 +92,7 @@ class Settings {
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
   final RxBool showFiltersInHeader = false.obs;
+  final RxBool showPreviewToggleInHeader = false.obs;
   final RxBool showCustomGroupFilterChips = false.obs;
   final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
@@ -376,6 +378,7 @@ class Settings {
       'sendWithReturn': sendWithReturn.value,
       'doubleTapForDetails': doubleTapForDetails.value,
       'denseChatTiles': denseChatTiles.value,
+      'hideChatListPreviews': hideChatListPreviews.value,
       'smartReply': smartReply.value,
       'showSyncIndicator': showSyncIndicator.value,
       'sendDelay': sendDelay.value,
@@ -383,6 +386,7 @@ class Settings {
       'hideKeyboardOnScroll': hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': moveChatCreatorToHeader.value,
       'showFiltersInHeader': showFiltersInHeader.value,
+      'showPreviewToggleInHeader': showPreviewToggleInHeader.value,
       'showCustomGroupFilterChips': showCustomGroupFilterChips.value,
       'cameraFAB': cameraFAB.value,
       'swipeToCloseKeyboard': swipeToCloseKeyboard.value,
@@ -558,6 +562,8 @@ class Settings {
     SettingsSvc.settings.doubleTapForDetails.value =
         map['doubleTapForDetails'] ?? SettingsSvc.settings.doubleTapForDetails.value;
     SettingsSvc.settings.denseChatTiles.value = map['denseChatTiles'] ?? SettingsSvc.settings.denseChatTiles.value;
+    SettingsSvc.settings.hideChatListPreviews.value =
+        map['hideChatListPreviews'] ?? SettingsSvc.settings.hideChatListPreviews.value;
     SettingsSvc.settings.smartReply.value = map['smartReply'] ?? SettingsSvc.settings.smartReply.value;
     SettingsSvc.settings.showSyncIndicator.value =
         map['showSyncIndicator'] ?? SettingsSvc.settings.showSyncIndicator.value;
@@ -570,6 +576,8 @@ class Settings {
         map['moveChatCreatorToHeader'] ?? SettingsSvc.settings.moveChatCreatorToHeader.value;
     SettingsSvc.settings.showFiltersInHeader.value =
         map['showFiltersInHeader'] ?? SettingsSvc.settings.showFiltersInHeader.value;
+    SettingsSvc.settings.showPreviewToggleInHeader.value =
+        map['showPreviewToggleInHeader'] ?? SettingsSvc.settings.showPreviewToggleInHeader.value;
     SettingsSvc.settings.showCustomGroupFilterChips.value =
         map['showCustomGroupFilterChips'] ?? SettingsSvc.settings.showCustomGroupFilterChips.value;
     SettingsSvc.settings.cameraFAB.value = map['cameraFAB'] ?? SettingsSvc.settings.cameraFAB.value;
@@ -810,6 +818,7 @@ class Settings {
     s.sendWithReturn.value = map['sendWithReturn'] ?? false;
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
+    s.hideChatListPreviews.value = map['hideChatListPreviews'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
     s.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
     s.sendDelay.value = map['sendDelay'] ?? 0;
@@ -817,6 +826,7 @@ class Settings {
     s.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'] ?? false;
     s.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'] ?? false;
     s.showFiltersInHeader.value = map['showFiltersInHeader'] ?? false;
+    s.showPreviewToggleInHeader.value = map['showPreviewToggleInHeader'] ?? false;
     s.showCustomGroupFilterChips.value = map['showCustomGroupFilterChips'] ?? false;
     s.cameraFAB.value = map['cameraFAB'] ?? false;
     s.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'] ?? false;
