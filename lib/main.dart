@@ -15,6 +15,8 @@ import 'package:bluebubbles/services/network/http_overrides.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/media_kit_hot_restart_fix.dart'
     if (dart.library.html) 'package:bluebubbles/utils/media_kit_hot_restart_fix_web.dart';
+import 'package:bluebubbles/utils/linux_launcher_badge.dart'
+    if (dart.library.html) 'package:bluebubbles/utils/linux_launcher_badge_web.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/startup/failure_to_start.dart';
@@ -558,6 +560,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
       }
 
       if (kIsDesktop) {
+        if (Platform.isLinux) {
+          /* ----- BADGE ICON LISTENER ----- */
+          Future<void> updateBadge(int count) =>
+              LinuxLauncherBadge.update(SettingsSvc.settings.windowsTaskbarBadge.value ? count : 0);
+
+          unawaited(updateBadge(ChatsSvc.unreadCount.value));
+          ChatsSvc.unreadCount.listen(updateBadge);
+        }
+
         if (Platform.isWindows) {
           /* ----- CONTACT IMAGE CACHE DELETION ----- */
           Directory temp = FilesystemSvc.appTemp;
