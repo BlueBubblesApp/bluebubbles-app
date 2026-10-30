@@ -18,6 +18,7 @@ class FindMyFriend {
     required this.lastUpdated,
     required this.status,
     required this.locatingInProgress,
+    required this.favoriteOrder,
   });
 
   final double? latitude;
@@ -32,10 +33,11 @@ class FindMyFriend {
   final DateTime? lastUpdated;
   final LocationStatus? status;
   final bool locatingInProgress;
+  final int? favoriteOrder;
 
   /// Stable identifier for matching and map marker keys.
   /// Prefers the hydrated handle key; falls back to the raw server address.
-  String? get stableId => handle?.uniqueAddressAndService ?? handleAddress;
+  String? get stableId => handle?.uniqueAddressAndService ?? handleAddress ?? title;
 
   factory FindMyFriend.fromJson(Map<String, dynamic> json) => FindMyFriend(
         latitude: json["coordinates"]?[0].toDouble(),
@@ -44,7 +46,7 @@ class FindMyFriend {
         shortAddress: json["short_address"],
         title: json["title"],
         subtitle: json["subtitle"],
-        handleAddress: json["handle"] ?? json["title"],
+        handleAddress: json["handle"],
         handle: json["handle"] == null && json["title"] == null
             ? null
             : Handle.findOne(addressAndService: HandleLookupKey(json["handle"] ?? json["title"], "iMessage")),
@@ -52,6 +54,7 @@ class FindMyFriend {
             (json["last_updated"] ?? 0) == 0 ? null : DateTime.fromMillisecondsSinceEpoch(json["last_updated"]),
         status: LocationStatus.values.firstWhereOrNull((e) => e.name == json["status"]),
         locatingInProgress: json["is_locating_in_progress"] ?? false,
+        favoriteOrder: (json["favorite_order"] as num?)?.toInt(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,5 +67,6 @@ class FindMyFriend {
         "last_updated": lastUpdated == null ? null : DateFormat("MMMM d, yyyy h:mm:ss a").format(lastUpdated!),
         "status": status?.name,
         "locating_in_progress": locatingInProgress,
+        "favorite_order": favoriteOrder,
       };
 }

@@ -10,13 +10,10 @@ class FindMyPinClipper extends CustomClipper<Path> {
     final path = Path();
     path.moveTo(size.width / 2, size.width / 2);
     path.addArc(
-        Rect.fromCenter(
-          center: Offset(size.width / 2, size.width / 2),
-          height: size.width,
-          width: size.width,
-        ),
-        4 * pi / 9,
-        -17 * pi / 9);
+      Rect.fromCenter(center: Offset(size.width / 2, size.width / 2), height: size.width, width: size.width),
+      4 * pi / 9,
+      -17 * pi / 9,
+    );
     path.lineTo(size.width / 2, size.height);
     path.close();
     return path;
@@ -33,20 +30,12 @@ class ClipShadowPath extends StatelessWidget {
   final CustomClipper<Path> clipper;
   final Widget child;
 
-  const ClipShadowPath({
-    super.key,
-    required this.shadow,
-    required this.clipper,
-    required this.child,
-  });
+  const ClipShadowPath({super.key, required this.shadow, required this.clipper, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _ClipShadowShadowPainter(
-        clipper: clipper,
-        shadow: shadow,
-      ),
+      painter: _ClipShadowShadowPainter(clipper: clipper, shadow: shadow),
       child: ClipPath(clipper: clipper, child: child),
     );
   }

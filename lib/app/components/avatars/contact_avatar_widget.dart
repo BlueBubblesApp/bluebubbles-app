@@ -9,6 +9,51 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
+/// Initials sized for a [size] avatar. Some hosts (Find My map markers) squeeze
+/// the avatar below its nominal size, so the initials stay on one line and
+/// shrink to fit rather than wrapping into a clipped second line.
+class ContactAvatarInitials extends StatelessWidget {
+  const ContactAvatarInitials({
+    super.key,
+    required this.initials,
+    required this.size,
+    required this.color,
+    this.textKey,
+  });
+
+  final String initials;
+  final double size;
+  final Color color;
+  final Key? textKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          initials,
+          key: textKey,
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            fontSize: size * 0.5,
+            height: 1.0,
+            leadingDistribution: TextLeadingDistribution.even,
+            color: color,
+          ),
+          textAlign: TextAlign.center,
+          textHeightBehavior: const TextHeightBehavior(
+            applyHeightToFirstAscent: false,
+            applyHeightToLastDescent: false,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ContactAvatarWidget extends StatefulWidget {
   const ContactAvatarWidget(
       {super.key,
@@ -133,23 +178,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
   /// is still decoding (frameBuilder), and when the image file fails to load.
   Widget _buildInitialsOrIcon(double size, bool iOS, String? initials) {
     if (!isNullOrEmpty(initials)) {
-      return SizedBox(
-        width: size,
-        child: Text(
-          initials!,
-          key: Key("$keyPrefix-avatar-text"),
-          style: TextStyle(
-            fontSize: size * 0.5,
-            height: 1.0,
-            leadingDistribution: TextLeadingDistribution.even,
-            color: material ? context.theme.colorScheme.surface : Colors.white,
-          ),
-          textAlign: TextAlign.center,
-          textHeightBehavior: const TextHeightBehavior(
-            applyHeightToFirstAscent: false,
-            applyHeightToLastDescent: false,
-          ),
-        ),
+      return ContactAvatarInitials(
+        initials: initials!,
+        size: size,
+        textKey: Key("$keyPrefix-avatar-text"),
+        color: material ? context.theme.colorScheme.surface : Colors.white,
       );
     }
     return Padding(
