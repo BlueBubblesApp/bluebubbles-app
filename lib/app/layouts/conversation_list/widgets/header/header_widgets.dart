@@ -63,6 +63,50 @@ class SyncIndicator extends StatelessWidget {
   }
 }
 
+/// Circular icon button used throughout the Cupertino conversation list header
+/// (search, filter, preview toggle, compose, camera, overflow menu).
+class CupertinoHeaderButton extends StatelessWidget {
+  const CupertinoHeaderButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.iconSize = 18,
+    this.iconColor,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final double iconSize;
+
+  /// Defaults to [ColorScheme.onSurfaceVariant].
+  final Color? iconColor;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = ClipOval(
+      child: Material(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: InkWell(
+            onTap: onTap,
+            child: Icon(
+              icon,
+              color: iconColor ?? context.theme.colorScheme.onSurfaceVariant,
+              size: iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null) return button;
+    return Tooltip(message: tooltip!, child: button);
+  }
+}
+
 /// Header "Filter Chats" shortcut button — Material/Samsung style, matching
 /// the existing search/camera [IconButton]s in those headers. Highlighted in
 /// [ColorScheme.primary] whenever a chat list filter is active; hidden
@@ -110,25 +154,12 @@ class CupertinoChatListFilterButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 10.0),
-          ClipOval(
-            child: Material(
-              color: context.theme.colorScheme.surfaceContainerHighest,
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: InkWell(
-                  child: Icon(
-                    hasActiveFilter
-                        ? CupertinoIcons.line_horizontal_3_decrease_circle_fill
-                        : CupertinoIcons.line_horizontal_3_decrease_circle,
-                    color:
-                        hasActiveFilter ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
-                    size: 18,
-                  ),
-                  onTap: () => openChatListFilterSheet(context),
-                ),
-              ),
-            ),
+          CupertinoHeaderButton(
+            icon: hasActiveFilter
+                ? CupertinoIcons.line_horizontal_3_decrease_circle_fill
+                : CupertinoIcons.line_horizontal_3_decrease_circle,
+            iconColor: hasActiveFilter ? context.theme.colorScheme.primary : null,
+            onTap: () => openChatListFilterSheet(context),
           ),
         ],
       );
@@ -136,10 +167,8 @@ class CupertinoChatListFilterButton extends StatelessWidget {
   }
 }
 
-Future<void> _toggleChatListPreviews() async {
-  SettingsSvc.settings.hideChatListPreviews.toggle();
-  await SettingsSvc.settings.saveOneAsync('hideChatListPreviews');
-}
+Future<void> _toggleChatListPreviews() =>
+    SettingsSvc.settings.setHideChatListPreviews(!SettingsSvc.settings.hideChatListPreviews.value);
 
 String _previewToggleTooltip(bool hidden) => hidden ? 'Show message previews' : 'Hide message previews';
 
@@ -179,25 +208,11 @@ class CupertinoPreviewToggleButton extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Tooltip(
-            message: _previewToggleTooltip(hidden),
-            child: ClipOval(
-              child: Material(
-                color: context.theme.colorScheme.surfaceContainerHighest,
-                child: SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: InkWell(
-                    onTap: _toggleChatListPreviews,
-                    child: Icon(
-                      hidden ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye,
-                      color: hidden ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          CupertinoHeaderButton(
+            icon: hidden ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye,
+            iconColor: hidden ? context.theme.colorScheme.primary : null,
+            tooltip: _previewToggleTooltip(hidden),
+            onTap: _toggleChatListPreviews,
           ),
           const SizedBox(width: 10.0),
         ],
@@ -495,23 +510,7 @@ class CupertinoOverflowMenu extends StatelessWidget {
           ),
       ],
       buttonBuilder: (context, showMenu) => ThemeSwitcher(
-          iOSSkin: ClipOval(
-            child: Material(
-              color: context.theme.colorScheme.surfaceContainerHighest,
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: InkWell(
-                  onTap: showMenu,
-                  child: Icon(
-                    Icons.more_horiz,
-                    color: context.theme.colorScheme.onSurfaceVariant,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          iOSSkin: CupertinoHeaderButton(icon: Icons.more_horiz, iconSize: 20, onTap: showMenu),
           materialSkin: const SizedBox.shrink(),
           samsungSkin: const SizedBox.shrink()),
       );

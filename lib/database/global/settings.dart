@@ -952,6 +952,13 @@ class Settings {
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
   }
 
+  /// Show or hide message previews on the conversation list. Shared by the
+  /// settings switch and the header toggle so the two stay in step.
+  Future<void> setHideChatListPreviews(bool hide) async {
+    SettingsSvc.settings.hideChatListPreviews.value = hide;
+    await SettingsSvc.settings.saveOneAsync('hideChatListPreviews');
+  }
+
   void resetTextFieldButtons() {
     SettingsSvc.settings.textFieldButtons.value = TextFieldButton.values;
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
