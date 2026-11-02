@@ -133,10 +133,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                         )),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     Obx(() => SettingsSwitch(
-                          onChanged: (bool val) async {
-                            SettingsSvc.settings.hideChatListPreviews.value = val;
-                            await SettingsSvc.settings.saveOneAsync('hideChatListPreviews');
-                          },
+                          onChanged: SettingsSvc.settings.setHideChatListPreviews,
                           initialVal: SettingsSvc.settings.hideChatListPreviews.value,
                           title: "Hide Message Previews",
                           backgroundColor: tileColor,
