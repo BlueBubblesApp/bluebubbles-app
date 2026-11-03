@@ -60,6 +60,21 @@ class MethodChannelHandlers {
   static Future<bool> _ok() => Future.value(true);
   static Future<bool> _retry() => Future.value(false);
 
+  /// ntfy cuts UnifiedPush messages off at 4096 bytes, so for a message with a long attachment
+  /// list UnifiedPushReceiver forwards only its GUID. Fetch the full message from the server and
+  /// return it in the shape a push carries; any other payload is returned as is.
+  Future<Map<String, dynamic>?> _fetchCutOffPayload(Map<String, dynamic>? arguments) async {
+    final guid = arguments?['guid'];
+    if (arguments?['data'] != null || guid is! String) return arguments;
+
+    Logger.info('Push for message $guid was cut off; fetching it from the server');
+    final response = await HttpSvc.message.fetchOne(
+      guid,
+      withQuery: 'chats,attachments,attributedBody,messageSummaryInfo,payloadData',
+    );
+    return {'data': response.data['data']};
+  }
+
   Future<bool> _handleNewServerUrl(MethodCall _, Map<String, dynamic>? arguments) async {
     if (arguments == null) return _retry();
     await Database.waitForInit();
@@ -97,7 +112,7 @@ class MethodChannelHandlers {
         return await _ok();
       }
 
-      final Map<String, dynamic>? data = arguments;
+      final Map<String, dynamic>? data = await _fetchCutOffPayload(arguments);
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
         await IncomingMsgHandler.handle(IncomingPayload(
@@ -137,7 +152,7 @@ class MethodChannelHandlers {
     }
 
     try {
-      final Map<String, dynamic>? data = arguments;
+      final Map<String, dynamic>? data = await _fetchCutOffPayload(arguments);
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
 

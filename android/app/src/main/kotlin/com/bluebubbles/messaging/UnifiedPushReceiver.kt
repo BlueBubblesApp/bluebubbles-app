@@ -3,7 +3,11 @@ package com.bluebubbles.messaging
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
+import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import java.io.StringReader
 
 import org.unifiedpush.android.connector.MessagingReceiver
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -47,7 +51,12 @@ class UnifiedPushReceiver : MessagingReceiver() {
         val msg = payload.toString(Charsets.UTF_8)
 
         try {
-            val json = JsonParser.parseString(msg).asJsonObject
+            val json = try {
+                JsonParser.parseString(msg).asJsonObject
+            } catch (e: JsonParseException) {
+                forwardCutOffMessage(applicationContext, msg, payload.size, e)
+                return
+            }
             val type: String = json.get("type")?.takeIf { it.isJsonPrimitive }?.asString ?: run {
                 PersistentLog.w(applicationContext, tag, "UnifiedPush payload missing type field (${payload.size} bytes)")
                 return
@@ -87,5 +96,46 @@ class UnifiedPushReceiver : MessagingReceiver() {
         } catch (e: Exception) {
             PersistentLog.e(applicationContext, tag, "Failed to process UnifiedPush message (${payload.size} bytes)", e)
         }
+    }
+
+    /**
+     * ntfy cuts UnifiedPush messages off at 4096 bytes, so a message with a long attachment list
+     * arrives as broken JSON. The server writes `type` first and the message's `guid` near the
+     * start of `data`, so both survive the cut: forward just those, and Dart fetches the full
+     * message from the server.
+     */
+    private fun forwardCutOffMessage(context: Context, msg: String, size: Int, error: Exception) {
+        var type: String? = null
+        var guid: String? = null
+        try {
+            val reader = JsonReader(StringReader(msg))
+            reader.beginObject()
+            while (reader.hasNext() && (type == null || guid == null)) {
+                when (reader.nextName()) {
+                    "type" -> type = reader.nextString()
+                    "data" -> if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+                        reader.beginObject()
+                        while (reader.hasNext() && guid == null) {
+                            if (reader.nextName() == "guid") guid = reader.nextString() else reader.skipValue()
+                        }
+                    } else {
+                        reader.skipValue()
+                    }
+                    else -> reader.skipValue()
+                }
+            }
+        } catch (_: Exception) {
+            // Expected once the reader reaches the cut; keep whatever was read before it.
+        }
+
+        val messageType = type
+        val messageGuid = guid
+        if (messageGuid == null || (messageType != "new-message" && messageType != "updated-message")) {
+            PersistentLog.e(context, tag, "Failed to process UnifiedPush message ($size bytes)", error)
+            return
+        }
+
+        PersistentLog.w(context, tag, "UnifiedPush $messageType payload was cut off ($size bytes); fetching message $messageGuid from the server")
+        DartWorkManager.createWorker(context, messageType, hashMapOf<String, Any?>("type" to messageType, "guid" to messageGuid)) {}
     }
 }
