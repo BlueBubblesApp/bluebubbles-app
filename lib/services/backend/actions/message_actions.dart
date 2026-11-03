@@ -166,6 +166,13 @@ class MessageActions {
           inputMessage.handleRelation.target = existing.handleRelation.target;
           inputMessage.handle = existing.handleRelation.target;
         }
+
+        // Preserve the chat relationship. inputMessage is rebuilt from a map, so its chat
+        // relation is empty, and putting it over the existing row without a chat would
+        // unlink the message from its chat and drop it from the conversation.
+        if (inputChat == null && existing.chat.hasValue) {
+          inputMessage.chat.targetId = existing.chat.targetId;
+        }
       }
 
       // Save the participant & set the handle ID to the new participant
