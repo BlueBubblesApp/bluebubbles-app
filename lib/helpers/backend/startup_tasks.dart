@@ -7,6 +7,7 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
+import 'package:bluebubbles/services/backend/sync/chatless_message_repair.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -459,6 +460,13 @@ class StartupTasks {
       } catch (ex, stack) {
         Logger.warn("Failed to check for client update!", error: ex, trace: stack);
       }
+    });
+
+    // One-time: relink messages that a link preview save left without a chat.
+    Future.delayed(const Duration(seconds: 45), () {
+      ChatlessMessageRepair.run().catchError((e, s) {
+        Logger.warn("Failed to repair chatless messages!", error: e, trace: s);
+      });
     });
 
     Logger.info("Updating share targets...");

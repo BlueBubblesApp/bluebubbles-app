@@ -171,4 +171,28 @@ class MessageInterface {
       return await GetIt.I<GlobalIsolate>().send<int>(IsolateRequestType.relinkMessagesToHandle, input: data);
     }
   }
+
+  /// GUIDs of sent/received messages that aren't linked to any chat.
+  static Future<List<String>> findChatlessMessageGuids() async {
+    if (isIsolate) {
+      return await MessageActions.findChatlessMessageGuids();
+    } else {
+      return await GetIt.I<GlobalIsolate>()
+          .send<List<String>>(IsolateRequestType.findChatlessMessageGuids, input: null);
+    }
+  }
+
+  /// Links each message in [chatGuids] (message GUID → chat GUID) to that chat if
+  /// it still has none. Returns the number of messages relinked.
+  static Future<int> relinkMessagesToChats({required Map<String, String> chatGuids}) async {
+    final data = {
+      'chatGuids': chatGuids,
+    };
+
+    if (isIsolate) {
+      return await MessageActions.relinkMessagesToChats(data);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<int>(IsolateRequestType.relinkMessagesToChats, input: data);
+    }
+  }
 }

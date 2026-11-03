@@ -298,4 +298,51 @@ class MessageActions {
       return toUpdate.length;
     });
   }
+
+  /// GUIDs of sent/received messages that aren't linked to any chat. Unsent
+  /// `temp-`/`error-` messages are skipped since the server has no record of them.
+  static Future<List<String>> findChatlessMessageGuids() async {
+    return Database.runInTransaction(TxMode.read, () {
+      final query = Database.messages.query(Message_.chat.equals(0).or(Message_.chat.isNull())).build();
+      final guidQuery = query.property(Message_.guid);
+      final guids = guidQuery.find();
+      guidQuery.close();
+      query.close();
+
+      return guids.where((guid) => !guid.startsWith('temp') && !guid.startsWith('error')).toList();
+    });
+  }
+
+  /// Links each message in `chatGuids` (message GUID → chat GUID) to that chat,
+  /// if the chat exists locally and the message still has no chat. Returns the
+  /// number of messages relinked.
+  static Future<int> relinkMessagesToChats(dynamic data) async {
+    final chatGuids = (data['chatGuids'] as Map).cast<String, String>();
+
+    return Database.runInTransaction(TxMode.write, () {
+      final messageBox = Database.messages;
+
+      final chatQuery = Database.chats.query(Chat_.guid.oneOf(chatGuids.values.toSet().toList())).build();
+      final chatIds = {for (final chat in chatQuery.find()) chat.guid: chat.id!};
+      chatQuery.close();
+
+      final messageQuery = messageBox.query(Message_.guid.oneOf(chatGuids.keys.toList())).build();
+      final messages = messageQuery.find();
+      messageQuery.close();
+
+      final toUpdate = <Message>[];
+      for (final message in messages) {
+        final chatId = chatIds[chatGuids[message.guid]];
+        if (chatId == null || message.chat.targetId != 0) continue;
+        message.chat.targetId = chatId;
+        toUpdate.add(message);
+      }
+
+      if (toUpdate.isNotEmpty) {
+        messageBox.putMany(toUpdate);
+      }
+
+      return toUpdate.length;
+    });
+  }
 }

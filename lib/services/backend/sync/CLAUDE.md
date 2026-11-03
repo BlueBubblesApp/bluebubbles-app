@@ -11,6 +11,12 @@
 | `handle_sync_manager.dart` | Syncs phone/email handles; requires server v1.5.2+; supports rollback |
 | `sync_manager_impl.dart` | Abstract base: `SyncStatus` enum, progress `double`, log output `RxList` |
 
+## One-time Repairs
+
+| File | Role |
+|------|------|
+| `chatless_message_repair.dart` | Relinks messages left with no chat (link-preview saves before the `saveMessageAsync` fix) by asking the server for each one's chat. Runs once from `StartupTasks.onStartup`; a `PrefsSvc.database` flag marks it done |
+
 ## Status Lifecycle
 ```
 IDLE → IN_PROGRESS → COMPLETED_SUCCESS

@@ -796,6 +796,8 @@ enum IsolateRequestType {
   findOneAsync,
   findAsync,
   relinkMessagesToHandle,
+  findChatlessMessageGuids,
+  relinkMessagesToChats,
 
   // CustomGroup actions
   getAllCustomGroups,

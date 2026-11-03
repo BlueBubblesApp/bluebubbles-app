@@ -61,6 +61,8 @@ class IsolateActons {
     IsolateRequestType.findOneAsync: MessageActions.findOneAsync,
     IsolateRequestType.findAsync: MessageActions.findAsync,
     IsolateRequestType.relinkMessagesToHandle: MessageActions.relinkMessagesToHandle,
+    IsolateRequestType.findChatlessMessageGuids: (_) => MessageActions.findChatlessMessageGuids(),
+    IsolateRequestType.relinkMessagesToChats: MessageActions.relinkMessagesToChats,
 
     // Chat
     IsolateRequestType.clearNotificationForChat: ChatActions.clearNotificationForChat,
