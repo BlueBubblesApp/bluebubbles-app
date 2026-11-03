@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
@@ -15,6 +16,7 @@ import 'package:bluebubbles/services/backend/notifications/desktop_notification.
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:app_install_date/app_install_date.dart';
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 
 class StartupTasks {
@@ -302,7 +304,15 @@ class StartupTasks {
     // if there is no network connection. The cause is not 100% known, but it likely
     // has to do with processing pressure, stale ports, or port binding exhaustion.
     if (SettingsSvc.settings.finishedSetup.value) {
-      unawaited(NetworkTasks.detectLocalhost().then((_) => SyncSvc.startIncrementalSync()));
+      unawaited(NetworkTasks.detectLocalhost().then((_) async {
+        // One-time: relink messages that a link preview save left without a chat (Desktop 2.1.4/2.1.5 only)
+        if (kIsDesktop) {
+          await _repairChatlessMessages().catchError((e, s) {
+            Logger.warn("Failed to repair chatless messages!", error: e, trace: s);
+          });
+        }
+        await SyncSvc.startIncrementalSync();
+      }));
     }
   }
 
@@ -474,6 +484,46 @@ class StartupTasks {
     }
 
     Logger.info("onStartup tasks complete");
+  }
+
+  /// In Desktop 2.1.4 and 2.1.5, saving a link's preview wrote the message back with no chat. Ask the server which
+  /// chat each affected message belongs to and link it back. A failed request retries next launch, unless the server
+  /// itself says the message no longer exists.
+  static Future<void> _repairChatlessMessages() async {
+    if (PrefsSvc.database.getChatlessMessageRepairDone()) return;
+
+    // Every preview save writes a `…FetchedAt` stamp or a `…Md5` image hash, so this matches only previewed links
+    final preview = Message_.dbMetadata.contains('FetchedAt').or(Message_.dbMetadata.contains('Md5'));
+    final query = Database.messages.query(Message_.chat.equals(0).and(preview)).build();
+    final messages = await query.findAsync();
+    query.close();
+
+    var retry = false;
+    for (final message in messages) {
+      // Unsent messages have no server record to look up
+      final guid = message.guid;
+      if (guid == null || guid.startsWith('temp') || guid.startsWith('error')) continue;
+
+      try {
+        final response = await HttpSvc.message.fetchOne(guid, withQuery: "chats");
+        final chats = (response.data['data']?['chats'] as List?) ?? const [];
+        final chatGuid = chats.whereType<Map>().firstOrNull?['guid'] as String?;
+        final chat = chatGuid == null ? null : Chat.findOne(guid: chatGuid);
+        if (chat == null) continue;
+        await message.saveAsync(chat: chat);
+        Logger.info("Relinked message $guid to chat $chatGuid");
+      } catch (e, s) {
+        Logger.warn("Failed to look up chat for message $guid", error: e, trace: s);
+        // Tunnels and proxies can also return a 404, so only the server's own error means the message is gone.
+        // Anything else retries next launch; stop now rather than wait out a timeout per message.
+        if (e is! Response || !'${e.data}'.contains('Message does not exist!')) {
+          retry = true;
+          break;
+        }
+      }
+    }
+
+    if (!retry) await PrefsSvc.database.setChatlessMessageRepairDone();
   }
 
   static Future<void> onAppResume() async {
