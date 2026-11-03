@@ -72,7 +72,6 @@
         <p>The Big Stuff</p>
         <ul>
           <li>Fixes messages with links disappearing from their conversation once the link preview loads, and restores messages that already disappeared</li>
-          <li>Fixes a crash when a message arrives while a conversation is still opening</li>
         </ul>
         <p>The Small Stuff</p>
         <ul>
