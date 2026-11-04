@@ -300,8 +300,18 @@ class Attachment {
   /// decode path (`SkPngCodec` doesn't implement `onGetScaledDimensions`), so a
   /// 12 MP conversion fully inflates to ~48 MB RGBA before downscaling *every
   /// time* it is drawn into a 200 pt bubble. JPEG at least gets DCT-domain 1/8
-  /// scaling. TIFF stays PNG — it may be a scan with alpha.
-  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) ? "jpg" : "png";
+  /// scaling. TIFF stays PNG — it may be a scan with alpha. So do see-through HEICs: see [isSeeThrough].
+  String get convertedExtension => (mimeType?.contains('image/hei') ?? false) && !isSeeThrough ? "jpg" : "png";
+
+  /// Stickers and Genmoji are HEICs with transparency, which a JPEG would fill in. Small, so PNG costs little.
+  bool get isSeeThrough {
+    if (mimeType == "image/heic-sequence") return true;
+    final parent = message.target;
+    if (parent == null) return false;
+    return parent.isSticker ||
+        ReactionTypes.isStickerTapback(parent.associatedMessageType) ||
+        parent.inlineAttachments.any((a) => a.guid == guid);
+  }
 
   String get convertedPath => "$path.$convertedExtension";
 
