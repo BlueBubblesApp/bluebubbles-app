@@ -19,6 +19,9 @@ class OpenPigeon {
 
   static const _channel = MethodChannel('com.bluebubbles.messaging/openpigeon');
   static final RxBool installed = false.obs;
+
+  /// The server has a subscription; the app-message routes refuse (402) without one.
+  static final RxBool licensed = false.obs;
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
   static VoidCallback? _onKeyboardSend;
 
@@ -27,7 +30,8 @@ class OpenPigeon {
       !kIsWeb &&
       Platform.isAndroid &&
       SettingsSvc.serverDetails.isV2Server &&
-      SettingsSvc.settings.enablePrivateAPI.value;
+      SettingsSvc.settings.enablePrivateAPI.value &&
+      licensed.value;
 
   static bool get available => supported && installed.value;
 
@@ -35,7 +39,7 @@ class OpenPigeon {
 
   static Future<void> init() async {
     _channel.setMethodCallHandler(_handle);
-    await refreshInstalled();
+    await refresh();
     EventDispatcherSvc.stream.listen((e) async {
       if (e.type != 'new-message' || !available) return;
       final message = e.data['message'] as Message;
@@ -45,7 +49,8 @@ class OpenPigeon {
     });
   }
 
-  static Future<void> refreshInstalled() async {
+  /// Re-checks the install and the server's license, either of which can change while the app is in the background.
+  static Future<void> refresh() async {
     if (kIsWeb || !Platform.isAndroid) return;
     try {
       installed.value = await _channel.invokeMethod<bool>('installed') ?? false;
@@ -53,7 +58,13 @@ class OpenPigeon {
       Logger.warn('Could not check for OpenPigeon', error: e, tag: 'OpenPigeon');
     } on MissingPluginException {
       // Engines other than MainActivity's have no OpenPigeon channel
+      return;
     }
+    licensed.value = SettingsSvc.serverDetails.isV2Server &&
+        await HttpSvc.server.subscription().then((r) => r.data['data']['tier'] != null).catchError((Object e) {
+          Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
+          return false;
+        });
   }
 
   static Future<void> openStore() => launchUrl(

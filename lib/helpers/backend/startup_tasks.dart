@@ -533,8 +533,8 @@ class StartupTasks {
   }
 
   static Future<void> onAppResume() async {
-    // OpenPigeon may have just been installed from the Play Store
-    unawaited(OpenPigeon.refreshInstalled());
+    // OpenPigeon may have just been installed, or the server licensed
+    unawaited(OpenPigeon.refresh());
     final LifecycleService? lifecycle =
         (GetIt.I.isRegistered<LifecycleService>() && GetIt.I.isReadySync<LifecycleService>())
             ? GetIt.I<LifecycleService>()
