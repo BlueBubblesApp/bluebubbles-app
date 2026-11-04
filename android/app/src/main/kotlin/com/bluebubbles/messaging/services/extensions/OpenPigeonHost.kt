@@ -112,7 +112,7 @@ object OpenPigeonHost {
 
     // Needs the activity's Dart engine alive; a turn played after the app was killed is left
     // to OpenPigeon's own retry.
-    private fun send(chatGuid: String, message: MadridMessage, fromKeyboard: Boolean, done: () -> Unit = {}) =
+    private fun send(chatGuid: String, message: MadridMessage, fromKeyboard: Boolean, done: () -> Unit = {}) {
         main.post {
             val args = mapOf(
                 "chatGuid" to chatGuid,
@@ -134,6 +134,7 @@ object OpenPigeonHost {
                 override fun notImplemented() {}
             })
         }
+    }
 
     private fun madridMessage(map: Map<*, *>) = MadridMessage().apply {
         messageGuid = map["messageGuid"] as String
