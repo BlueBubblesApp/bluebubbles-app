@@ -44,6 +44,7 @@ class SendMessageActions {
     final selectedMessageGuid = map['selectedMessageGuid'] as String;
     final reaction = map['reaction'] as String;
     final partIndex = map['partIndex'] as int?;
+    final emoji = map['emoji'] as String?;
 
     final response = await HttpSvc.message.sendTapback(
       chatGuid,
@@ -51,6 +52,7 @@ class SendMessageActions {
       selectedMessageGuid,
       reaction,
       partIndex: partIndex,
+      emoji: emoji,
     );
     return response.data as Map<String, dynamic>;
   }

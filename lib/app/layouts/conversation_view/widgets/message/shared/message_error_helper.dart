@@ -103,6 +103,7 @@ Future<void> retryReaction({
       message: Message(
         associatedMessageGuid: selected.guid,
         associatedMessageType: reaction.associatedMessageType,
+        associatedMessageEmoji: reaction.associatedMessageEmoji,
         associatedMessagePart: reaction.associatedMessagePart,
         dateCreated: DateTime.now(),
         hasAttachments: false,

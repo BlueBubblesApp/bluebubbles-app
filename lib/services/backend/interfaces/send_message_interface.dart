@@ -45,6 +45,7 @@ class SendMessageInterface {
     required String selectedMessageGuid,
     required String reaction,
     int? partIndex,
+    String? emoji,
   }) async {
     final data = {
       'chatGuid': chatGuid,
@@ -52,6 +53,7 @@ class SendMessageInterface {
       'selectedMessageGuid': selectedMessageGuid,
       'reaction': reaction,
       'partIndex': partIndex,
+      'emoji': emoji,
     };
     if (isIsolate) {
       return await SendMessageActions.sendTapback(data);

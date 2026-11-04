@@ -764,8 +764,9 @@ class OutgoingMessageHandler {
               chatGuid: c.guid,
               selectedMessageText: selected!.text ?? '',
               selectedMessageGuid: selected.guid!,
-              reaction: r,
+              reaction: ReactionTypes.wireReaction(r),
               partIndex: m.associatedMessagePart,
+              emoji: m.associatedMessageEmoji,
             ),
       onSuccess: (data) => _finalizeOutgoingSuccess(
         c, tempGuid, data,
