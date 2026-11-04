@@ -191,6 +191,9 @@ class AttachmentDownloadController extends GetxController {
   /// and the checks that follow it can't run the error path twice.
   bool _failed = false;
 
+  /// A 404 tries [_repairStaleGuid] once per controller.
+  bool _repairTried = false;
+
   AttachmentDownloadController({
     required this.attachment,
     Function(PlatformFile)? onComplete,
@@ -252,6 +255,34 @@ class AttachmentDownloadController extends GetxController {
     AttachmentDownloader._removeFromQueue(this);
   }
 
+  /// Swaps a stored GUID the server no longer knows for the current one, read from the attachment's message.
+  /// Messages renames some attachments (stickers) after the server has announced them, keeping the old GUID as
+  /// `originalGuid`; a client that stored the announced one 404s on it from then on.
+  Future<bool> _repairStaleGuid() async {
+    final oldGuid = attachment.guid!;
+    final messageGuid = attachment.message.target?.guid;
+    if (messageGuid == null) return false;
+    try {
+      final response = await HttpSvc.message.fetchOne(messageGuid, withQuery: "attachment");
+      final attachments = ((response.data['data']?['attachments'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((e) => e.cast<String, dynamic>())
+          .toList();
+      final match = attachments.firstWhereOrNull((a) => a['originalGuid'] == oldGuid) ??
+          (attachments.length == 1 ? attachments.single : null);
+      final newGuid = match?['guid'] as String?;
+      if (newGuid == null || newGuid == oldGuid) return false;
+
+      await Attachment.replaceAttachmentAsync(oldGuid, Attachment.fromMap(match!));
+      attachment.guid = newGuid;
+      Logger.info("Repaired stale attachment GUID $oldGuid -> $newGuid");
+      return true;
+    } catch (e, s) {
+      Logger.warn("Couldn't repair attachment GUID $oldGuid", error: e, trace: s);
+      return false;
+    }
+  }
+
   Future<void> fetchAttachment() async {
     if (attachment.guid == null || attachment.guid!.contains("temp")) return;
     if (_fetchStarted) return;
@@ -274,7 +305,7 @@ class AttachmentDownloadController extends GetxController {
     final savePath = kIsWeb ? null : attachment.path;
     final tempPath = savePath == null ? null : "$savePath.part";
 
-    var response = await HttpSvc.attachment
+    final Response? response = await HttpSvc.attachment
         .download(
       attachment.guid!,
       savePath: tempPath,
@@ -287,11 +318,22 @@ class AttachmentDownloadController extends GetxController {
         final int denominator = kIsWeb ? total : (attachment.totalBytes ?? total);
         setProgress(denominator > 0 ? count / denominator : 0);
       },
-    ).catchError((err, stack) async {
+    )
+        .then<Response?>((r) => r)
+        .catchError((err, stack) async {
+      // null: the GUID was stale and has been repaired, so retry under the new one
+      if (!_repairTried && err is DioException && err.response?.statusCode == 404) {
+        _repairTried = true;
+        if (await _repairStaleGuid()) return null;
+      }
       await _failDownload(tempPath, "request failed", error: err, trace: stack);
       return Response(requestOptions: RequestOptions(path: ''));
     });
 
+    if (response == null) {
+      _fetchStarted = false;
+      return fetchAttachment();
+    }
     if (_failed) return;
 
     Logger.info("Finished downloading attachment");
