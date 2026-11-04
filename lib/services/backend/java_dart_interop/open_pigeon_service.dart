@@ -22,16 +22,18 @@ class OpenPigeon {
 
   /// The server has a subscription; the app-message routes refuse (402) without one.
   static final RxBool licensed = false.obs;
+
+  /// Where the server says a subscription can be bought.
+  static String? purchaseUrl;
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
   static VoidCallback? _onKeyboardSend;
 
+  /// The server could carry games with a subscription, so they're shown, locked if it has none.
+  static bool get offered =>
+      !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server && SettingsSvc.settings.enablePrivateAPI.value;
+
   /// The server can carry the payloads; OpenPigeon may still need installing.
-  static bool get supported =>
-      !kIsWeb &&
-      Platform.isAndroid &&
-      SettingsSvc.serverDetails.isV2Server &&
-      SettingsSvc.settings.enablePrivateAPI.value &&
-      licensed.value;
+  static bool get supported => offered && licensed.value;
 
   static bool get available => supported && installed.value;
 
@@ -60,11 +62,18 @@ class OpenPigeon {
       // Engines other than MainActivity's have no OpenPigeon channel
       return;
     }
-    licensed.value = SettingsSvc.serverDetails.isV2Server &&
-        await HttpSvc.server.subscription().then((r) => r.data['data']['tier'] != null).catchError((Object e) {
-          Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
-          return false;
-        });
+    if (!SettingsSvc.serverDetails.isV2Server) {
+      licensed.value = false;
+      return;
+    }
+    try {
+      final data = (await HttpSvc.server.subscription()).data['data'] as Map<String, dynamic>;
+      purchaseUrl = (data['available_tiers'] as List?)?.whereType<Map>().firstOrNull?['purchase_url'] as String?;
+      licensed.value = data['tier'] != null;
+    } catch (e) {
+      Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
+      licensed.value = false;
+    }
   }
 
   static Future<void> openStore() => launchUrl(

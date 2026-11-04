@@ -1,9 +1,11 @@
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// A game bubble drawn by OpenPigeon, falling back to [fallback] until (or unless) the server's payload loads.
 class OpenPigeonLiveView extends StatefulWidget {
@@ -50,6 +52,7 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
 
 /// OpenPigeon's game picker. Closes itself once a game is sent.
 Future<void> showOpenPigeonPicker(BuildContext context, Chat chat) async {
+  if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
   if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
   OpenPigeon.onKeyboardSend(() => Navigator.of(context).maybePop());
   await showModalBottomSheet(
@@ -66,4 +69,25 @@ Future<void> showOpenPigeonPicker(BuildContext context, Chat chat) async {
     ),
   );
   OpenPigeon.onKeyboardSend(null);
+}
+
+Future<void> _showSubscriptionRequired(BuildContext context) async {
+  final url = OpenPigeon.purchaseUrl;
+  await showBBDialog(
+    context: context,
+    title: "Subscription Required",
+    body: "Playing games needs a BlueBubbles subscription on your server.",
+    actions: [
+      BBDialogAction(text: "Close", onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
+      if (url != null)
+        BBDialogAction(
+          text: "Learn More",
+          isDefault: true,
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
+            launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          },
+        ),
+    ],
+  );
 }
