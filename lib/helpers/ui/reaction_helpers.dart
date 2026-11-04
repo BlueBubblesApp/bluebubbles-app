@@ -97,7 +97,9 @@ class ReactionTypes {
     final type = message.associatedMessageType;
     if (isStickerTapback(type)) return type == STICKER ? "reacted with a sticker to" : "removed a sticker from";
     if (!isEmojiTapback(type)) return reactionToVerb[type];
+    // Synced before the server sent the emoji; the backfill fills it in
     final emoji = message.associatedMessageEmoji;
+    if (emoji == null) return type == EMOJI ? "reacted to" : "removed a reaction from";
     return type == EMOJI ? "reacted $emoji to" : "removed $emoji from";
   }
 }
