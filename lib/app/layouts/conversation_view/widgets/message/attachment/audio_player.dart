@@ -300,11 +300,19 @@ class _TranscriptState extends State<_Transcript> {
       padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 5),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: _Transcript.maxHeight),
-        child: Scrollbar(
-          controller: _scrollController,
-          child: SingleChildScrollView(
+        // Scrollbar insets its track by MediaQuery padding, which here is the conversation view's, not this box's
+        child: MediaQuery.removePadding(
+          context: context,
+          removeLeft: true,
+          removeTop: true,
+          removeRight: true,
+          removeBottom: true,
+          child: Scrollbar(
             controller: _scrollController,
-            child: Text(widget.text, style: context.theme.textTheme.bodySmall),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Text(widget.text, style: context.theme.textTheme.bodySmall),
+            ),
           ),
         ),
       ),
