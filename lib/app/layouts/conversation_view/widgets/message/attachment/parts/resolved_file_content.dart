@@ -124,7 +124,8 @@ class ResolvedFileContent extends StatelessWidget {
       return Padding(
         padding: showTail ? tailPadding : EdgeInsets.zero,
         child: AudioPlayer(
-          transcript: audioTranscript,
+          // The quoted copy in a reply bubble is height-capped; the transcript would overflow it
+          transcript: isInReply ? null : audioTranscript,
           attachment: attachment,
           file: file,
           controller: cvController,
