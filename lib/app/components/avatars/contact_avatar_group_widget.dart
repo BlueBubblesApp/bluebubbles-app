@@ -62,6 +62,9 @@ class ContactAvatarGroupWidget extends StatelessWidget {
   };
 
   List<Handle> _sortedHandles(List<Handle> handles) {
+    // One avatar per person: a chat can hold the same address's iMessage and SMS handles
+    final seen = <String>{};
+    handles = handles.where((h) => seen.add(h.address)).toList();
     final sorted = List<Handle>.from(handles);
     // Sort by the reactive HandleState avatar path — reading contactsV2 here
     // would run a lazy ToMany DB query per handle on every rebuild, and the
