@@ -36,6 +36,8 @@ class ServerInterface {
       macOSMinorVersion: response['macOSMinorVersion'] as int,
       serverVersion: response['serverVersion'] as String,
       serverVersionCode: response['serverVersionCode'] as int,
+      apiVersions: (response['apiVersions'] as List? ?? const []).cast<int>(),
+      serverBuildVersion: response['serverBuildVersion'] as String?,
     );
   }
 }

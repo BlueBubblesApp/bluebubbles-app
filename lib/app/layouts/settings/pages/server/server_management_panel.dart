@@ -121,7 +121,10 @@ class ServerManagementPanelController extends StatefulController {
         privateApiEnabled: response.data['data']['private_api'] ?? false,
         iCloudAccount: response.data['data']['detected_icloud'],
         proxyService: response.data['data']['proxy_service'],
+        apiVersions: (response.data['data']['api_versions'] as List? ?? const []).whereType<int>().toList(),
+        serverBuildVersion: response.data['data']['server_build_version'],
       );
+      unawaited(SettingsSvc.updateServerDetails(serverDetails.value));
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
       timeSync.value = response.data['data']['macos_time_sync'];
       hasCheckedStats.value = true;

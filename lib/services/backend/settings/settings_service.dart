@@ -54,6 +54,8 @@ class SettingsService {
       macOSMinorVersion: PrefsSvc.server.getMacOSMinorVersion() ?? 0,
       serverVersion: PrefsSvc.server.getServerVersion() ?? "0.0.0",
       serverVersionCode: PrefsSvc.server.getServerVersionCode() ?? 0,
+      apiVersions: PrefsSvc.server.getApiVersions(),
+      serverBuildVersion: PrefsSvc.server.getServerBuildVersion(),
     );
 
     if (!headless && !kIsWeb && !kIsDesktop) {
@@ -152,11 +154,16 @@ class SettingsService {
       final serverVersion = response.data['data']['server_version'];
       final code = Version.parse(serverVersion ?? "0.0.0");
       final versionCode = code.major * 100 + code.minor * 21 + code.patch;
+      // Saved even when absent, so pointing the client back at an older server clears them
+      final apiVersions = (response.data['data']['api_versions'] as List? ?? const []).whereType<int>().toList();
+      final buildVersion = response.data['data']['server_build_version'] as String? ?? "";
       await PrefsSvc.server.setServerDetails(
         macOSVersion: version,
         macOSMinorVersion: minorVersion,
         serverVersion: serverVersion,
         serverVersionCode: versionCode,
+        apiVersions: apiVersions,
+        serverBuildVersion: buildVersion,
       );
 
       if (toSave.isNotEmpty) {
@@ -168,6 +175,8 @@ class SettingsService {
         'macOSMinorVersion': minorVersion ?? 0,
         'serverVersion': serverVersion ?? "0.0.0",
         'serverVersionCode': versionCode,
+        'apiVersions': apiVersions,
+        'serverBuildVersion': buildVersion,
       };
     }
 
@@ -190,6 +199,8 @@ class SettingsService {
       macOSMinorVersion: detailsDict['macOSMinorVersion'] as int,
       serverVersion: detailsDict['serverVersion'] as String,
       serverVersionCode: detailsDict['serverVersionCode'] as int,
+      apiVersions: (detailsDict['apiVersions'] as List? ?? const []).cast<int>(),
+      serverBuildVersion: detailsDict['serverBuildVersion'] as String?,
     );
     _serverDetails.value = details;
     return details;
@@ -215,18 +226,24 @@ class SettingsService {
   /// and persists the new values to [PrefsSvc]. Safe to call fire-and-forget.
   Future<void> refreshServerDetails() async {
     try {
-      final details = await ServerInterface.getServerDetails();
-      _serverDetails.value = details;
-
-      await PrefsSvc.server.setServerDetails(
-        macOSVersion: details.macOSVersion,
-        macOSMinorVersion: details.macOSMinorVersion,
-        serverVersion: details.serverVersion,
-        serverVersionCode: details.serverVersionCode,
-      );
+      await updateServerDetails(await ServerInterface.getServerDetails());
     } catch (e, s) {
       Logger.warn("Failed to refresh server details", error: e, trace: s, tag: 'SettingsService');
     }
+  }
+
+  /// Replaces the cached [ServerDetails] with ones fetched elsewhere and persists them, so screens that
+  /// fetch `/server/info` themselves don't leave the cache showing the previous server.
+  Future<void> updateServerDetails(ServerDetails details) async {
+    _serverDetails.value = details;
+    await PrefsSvc.server.setServerDetails(
+      macOSVersion: details.macOSVersion,
+      macOSMinorVersion: details.macOSMinorVersion,
+      serverVersion: details.serverVersion,
+      serverVersionCode: details.serverVersionCode,
+      apiVersions: details.apiVersions,
+      serverBuildVersion: details.serverBuildVersion ?? "",
+    );
   }
 
   /// Returns the current cached [ServerDetails].

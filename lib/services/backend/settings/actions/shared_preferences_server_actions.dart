@@ -5,6 +5,8 @@ class SharedPreferencesServerActions {
   static const String _macOSMinorVersionKey = 'macos-minor-version';
   static const String _serverVersionKey = 'server-version';
   static const String _serverVersionCodeKey = 'server-version-code';
+  static const String _apiVersionsKey = 'server-api-versions';
+  static const String _serverBuildVersionKey = 'server-build-version';
   static const String _privateApiEnableTipKey = 'private-api-enable-tip';
   static const String _serverUpdateCheckKey = 'server-update-check';
   static const String _clientUpdateCheckKey = 'client-update-check';
@@ -21,11 +23,18 @@ class SharedPreferencesServerActions {
 
   int? getServerVersionCode() => service.i.getInt(_serverVersionCodeKey);
 
+  List<int> getApiVersions() =>
+      (service.i.getStringList(_apiVersionsKey) ?? const []).map(int.tryParse).whereType<int>().toList();
+
+  String? getServerBuildVersion() => service.i.getString(_serverBuildVersionKey);
+
   Future<void> setServerDetails({
     int? macOSVersion,
     int? macOSMinorVersion,
     String? serverVersion,
     int? serverVersionCode,
+    List<int>? apiVersions,
+    String? serverBuildVersion,
   }) async {
     if (macOSVersion != null) {
       await service.i.setInt(_macOSVersionKey, macOSVersion);
@@ -38,6 +47,12 @@ class SharedPreferencesServerActions {
     }
     if (serverVersionCode != null) {
       await service.i.setInt(_serverVersionCodeKey, serverVersionCode);
+    }
+    if (apiVersions != null) {
+      await service.i.setStringList(_apiVersionsKey, apiVersions.map((v) => v.toString()).toList());
+    }
+    if (serverBuildVersion != null) {
+      await service.i.setString(_serverBuildVersionKey, serverBuildVersion);
     }
   }
 
