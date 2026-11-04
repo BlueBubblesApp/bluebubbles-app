@@ -277,12 +277,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
           ...MessageHelper.buildEmojiText(draftBody, widget.style),
         ]);
       } else {
-        subtitleSpan = TextSpan(
-          children: MessageHelper.buildEmojiText(
-            "${!iOS && isFromMe ? "You: " : ""}$_subtitle",
-            widget.style.copyWith(fontStyle: !iOS && !material && !isDelivered ? FontStyle.italic : null),
-          ),
-        );
+        final style = widget.style.copyWith(fontStyle: !iOS && !material && !isDelivered ? FontStyle.italic : null);
+        final spans = MessageHelper.buildEmojiText("${!iOS && isFromMe ? "You: " : ""}$_subtitle", style);
+        final inline = latestMessage?.inlineAttachments ?? const <Attachment>[];
+        subtitleSpan = TextSpan(children: inline.isEmpty ? spans : withInlineAttachments(spans, inline, style));
       }
 
       final richText = RichText(

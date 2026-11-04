@@ -1616,8 +1616,8 @@ class ChatsService {
     final redacted = SettingsSvc.settings.redactedMode.value;
     final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
     final hideMessageContent = redacted && SettingsSvc.settings.hideMessageContent.value;
-    state.updateSubtitleInternal(
-        message.getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent));
+    state.updateSubtitleInternal(message.getNotificationText(
+        hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent, keepInlineAttachments: true));
     state.chat.setLatestMessage(message);
     _repositionChat(state.chat, immediate: repositionImmediate);
   }

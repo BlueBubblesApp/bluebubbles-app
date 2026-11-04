@@ -340,7 +340,40 @@ extension RandomListChoice<E> on List<E> {
 }
 
 extension MessageNotificationExtension on Message {
-  String getNotificationText({bool withSender = false, bool hideContactInfo = false, bool hideMessageContent = false}) {
+  /// Attachments drawn inside the text (Genmoji), in the order their U+FFFC placeholders appear. Empty unless every
+  /// attachment is one.
+  List<Attachment> get inlineAttachments {
+    final body = attributedBody.firstOrNull;
+    if (body == null || dbAttachments.isEmpty) return const [];
+    final textParts = body.runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
+    final guids = <String>[];
+    for (final run in body.runs.sorted((a, b) => a.range.first.compareTo(b.range.first))) {
+      if (!run.isAttachment) continue;
+      if (!textParts.contains(run.attributes?.messagePart)) return const [];
+      guids.add(run.attributes!.attachmentGuid!);
+    }
+    final byGuid = {for (final a in dbAttachments) a.guid: a};
+    final ordered = guids.map((g) => byGuid[g]).whereType<Attachment>().toList();
+    return ordered.length == dbAttachments.length ? ordered : const [];
+  }
+
+  /// The text of a message whose only attachments are [inlineAttachments], with a U+FFFC where each one goes when
+  /// [keepPlaceholders], else without them ("Genmoji" if nothing else is left). Null for any other message.
+  String? inlineAttachmentText({bool keepPlaceholders = false}) {
+    if (inlineAttachments.isEmpty) return null;
+    final text = attributedBody.first.string;
+    if (keepPlaceholders) return text.trim();
+    final words = text.replaceAll(String.fromCharCode(0xFFFC), ' ').replaceAll(RegExp(r' {2,}'), ' ').trim();
+    return words.isEmpty ? "Genmoji" : words;
+  }
+
+  /// [keepInlineAttachments] keeps a U+FFFC where each Genmoji goes, for a preview that draws them.
+  String getNotificationText({
+    bool withSender = false,
+    bool hideContactInfo = false,
+    bool hideMessageContent = false,
+    bool keepInlineAttachments = false,
+  }) {
     String compute() {
       if (isGroupEvent) return groupEventText;
       if (expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
@@ -383,6 +416,10 @@ extension MessageNotificationExtension on Message {
           return text;
         }
       }
+
+      // Genmoji sit inside the text, so the message reads as its text, not as attachments
+      final inlineText = inlineAttachmentText(keepPlaceholders: keepInlineAttachments);
+      if (inlineText != null) return "$sender$inlineText";
 
       // A sticker tapback's sticker is its attachment, but it reads as a reaction
       final stickerTapback = ReactionTypes.isStickerTapback(associatedMessageType);

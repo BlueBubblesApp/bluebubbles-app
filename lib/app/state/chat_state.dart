@@ -93,7 +93,7 @@ class ChatState {
         chatCreatorSubtitle = RxnString(chat.isGroup
             ? chat.getChatCreatorSubtitle()
             : (chat.handles.isNotEmpty ? (chat.handles.first.formattedAddress ?? chat.handles.first.address) : null)),
-        subtitle = RxnString(chat.dbLatestMessage.target?.getNotificationText()),
+        subtitle = RxnString(chat.dbLatestMessage.target?.getNotificationText(keepInlineAttachments: true)),
         latestMessage = Rxn<Message>(chat.dbLatestMessage.target),
         latestMessageStatus = Rx<MessageStatusIndicator>(
           chat.dbLatestMessage.target?.isFromMe != true
@@ -353,6 +353,7 @@ class ChatState {
     return message.getNotificationText(
       hideContactInfo: hideContactInfo,
       hideMessageContent: hideMessageContent,
+      keepInlineAttachments: true,
     );
   }
 

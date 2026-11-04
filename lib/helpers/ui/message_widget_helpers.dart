@@ -272,10 +272,12 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
   return _withInlineAttachments(textSpans, part, textStyle);
 }
 
-/// Swaps each U+FFFC in [spans] for the matching inline attachment (Genmoji) at text height.
-List<InlineSpan> _withInlineAttachments(List<InlineSpan> spans, MessagePart part, TextStyle style) {
-  if (!part.hasInlineAttachments) return spans;
-  final attachments = part.attachments.iterator;
+List<InlineSpan> _withInlineAttachments(List<InlineSpan> spans, MessagePart part, TextStyle style) =>
+    part.hasInlineAttachments ? withInlineAttachments(spans, part.attachments, style) : spans;
+
+/// Swaps each U+FFFC in [spans] for the next of [inline] (Genmoji), drawn at text height.
+List<InlineSpan> withInlineAttachments(List<InlineSpan> spans, Iterable<Attachment> inline, TextStyle style) {
+  final attachments = inline.iterator;
   final size = (style.fontSize ?? 14) * 1.25;
   return spans.expand<InlineSpan>((span) {
     if (span is! TextSpan || !(span.text?.contains('\uFFFC') ?? false)) return [span];
