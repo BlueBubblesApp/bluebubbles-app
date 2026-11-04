@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/app_interface.dart';
 import 'package:bluebubbles/services/backend/interfaces/server_interface.dart';
+import 'package:bluebubbles/services/backend/sync/server_v2_migrations.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -189,6 +190,15 @@ class SettingsService {
       return;
     }
     await _showPapiPopup();
+  }
+
+  Future<void> runServerV2Migrations() async {
+    final filled = await ServerV2Migrations.run();
+    if (filled == null) {
+      showSnackbar("Not Updated", "Your server didn't send the new data. Is it running v2?", type: SnackbarType.error);
+    } else {
+      showSnackbar("Messages Updated", "Updated $filled message(s).", type: SnackbarType.success);
+    }
   }
 
   /// Refreshes [serverDetails] in the background via [ServerInterface]

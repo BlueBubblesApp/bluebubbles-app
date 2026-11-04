@@ -339,6 +339,17 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Troubleshooting"),
                 SettingsSection(backgroundColor: tileColor, children: [
                   SettingsTile(
+                    onTap: () => SettingsSvc.runServerV2Migrations(),
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.arrow_2_circlepath,
+                      materialIcon: Icons.sync_alt,
+                      containerColor: Colors.blueAccent,
+                    ),
+                    title: "Run v2 Server Migrations",
+                    subtitle: "Refetch data that servers before v2 didn't send, like emoji tapbacks.",
+                  ),
+                  const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  SettingsTile(
                     onTap: () => NavigationSvc.pushSettings(context, const SoftDeletedChatsPanel()),
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.trash_slash,
