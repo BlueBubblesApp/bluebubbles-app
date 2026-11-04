@@ -82,8 +82,9 @@ class SettingsService {
         if (settings.allowUpsideDownRotation.value) DeviceOrientation.portraitDown,
       ]);
     }
-    // launch at startup - defer this so it doesn't block startup
-    if (kIsDesktop) {
+    // launch at startup - defer this so it doesn't block startup.
+    // Main isolate only: a background isolate can exit before Windows Hello replies, and the engine aborts on that reply
+    if (kIsDesktop && !headless) {
       Future.microtask(() async {
         if (Platform.isWindows) {
           try {
