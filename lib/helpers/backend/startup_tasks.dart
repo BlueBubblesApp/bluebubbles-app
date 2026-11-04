@@ -8,6 +8,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
+import 'package:bluebubbles/services/backend/sync/server_v2_migrations.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -311,6 +312,9 @@ class StartupTasks {
             Logger.warn("Failed to repair chatless messages!", error: e, trace: s);
           });
         }
+        await ServerV2Migrations.runOnce().catchError((e, s) {
+          Logger.warn("Failed to run v2 server migrations!", error: e, trace: s);
+        });
         await SyncSvc.startIncrementalSync();
       }));
     }

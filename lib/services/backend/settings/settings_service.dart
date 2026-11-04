@@ -195,7 +195,7 @@ class SettingsService {
   Future<void> runServerV2Migrations() async {
     final filled = await ServerV2Migrations.run();
     if (filled == null) {
-      showSnackbar("Not Updated", "Your server didn't send the new data. Is it running v2?", type: SnackbarType.error);
+      showSnackbar("Not Updated", "Couldn't reach your server, or it isn't running v2.", type: SnackbarType.error);
     } else {
       showSnackbar("Messages Updated", "Updated $filled message(s).", type: SnackbarType.success);
     }
