@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/ui/recent_emojis.dart';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
@@ -427,6 +428,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
         effectId: effect,
       ));
     }
+    // The composer's picker records what's picked in it; typed and pasted emoji only get here
+    unawaited(RecentEmojis.addFromText("${controller.subjectTextController.text} $text"));
     controller.pickedAttachments.clear();
     controller.textController.clear();
     controller.subjectTextController.clear();
