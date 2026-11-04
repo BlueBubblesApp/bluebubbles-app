@@ -156,6 +156,9 @@ class ServerDetails {
   /// Create new group chats via the Private API (v1.8.0).
   bool get supportsCreateGroupChat => _featureCode >= 268;
 
+  /// Several attachments in one message (v1.7.0).
+  bool get supportsMultiAttachmentSend => _featureCode >= 247;
+
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
 

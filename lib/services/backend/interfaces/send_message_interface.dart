@@ -90,6 +90,33 @@ class SendMessageInterface {
         .send<Map<String, dynamic>>(IsolateRequestType.sendMultipartMessage, input: data);
   }
 
+  /// Sends several attachments as one message and returns the decoded server response body. Each of [files] is
+  /// `{guid, path, name}`, in the order they should appear.
+  static Future<Map<String, dynamic>> sendMultiAttachmentMessage({
+    required String chatGuid,
+    required String tempGuid,
+    required List<Map<String, dynamic>> files,
+    String? effectId,
+    String? subject,
+    String? selectedMessageGuid,
+    int? partIndex,
+  }) async {
+    final data = {
+      'chatGuid': chatGuid,
+      'tempGuid': tempGuid,
+      'files': files,
+      'effectId': effectId,
+      'subject': subject,
+      'selectedMessageGuid': selectedMessageGuid,
+      'partIndex': partIndex,
+    };
+    if (isIsolate) {
+      return await SendMessageActions.sendMultiAttachmentMessage(data);
+    }
+    return await GetIt.I<GlobalIsolate>()
+        .send<Map<String, dynamic>>(IsolateRequestType.sendMultiAttachmentMessage, input: data);
+  }
+
   /// Sends an attachment and returns the decoded server response body.
   ///
   /// The isolate reads [filePath] from disk and constructs the multipart form

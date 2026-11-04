@@ -592,8 +592,9 @@ class IncomingMessageHandler {
   /// then assigns a real GUID.  This method resolves which local GUID to
   /// replace by index, using the following priority:
   ///
-  /// * If [existingGuid] starts with `temp-`, it was the attachment GUID
-  ///   (they are set equal at send time in `send_animation.dart`).
+  /// * If [existingGuid] starts with `temp-` and the message has one
+  ///   attachment, it was the attachment GUID (they are set equal at send time
+  ///   in `send_animation.dart`).
   /// * Otherwise look up the DB GUID via [existing.dbAttachments] by index —
   ///   this handles socket events that omit `tempGuid` (e.g. keyboard GIFs).
   ///
@@ -614,8 +615,9 @@ class IncomingMessageHandler {
       if (newAttachment == null) continue;
 
       // Resolve which local GUID currently owns this attachment slot.
+      // A multi-attachment send gives each temp attachment its own GUID, so those resolve by index below
       final String attachmentExistingGuid;
-      if (existingGuid.startsWith('temp-')) {
+      if (existingGuid.startsWith('temp-') && existing.dbAttachments.length <= 1) {
         attachmentExistingGuid = existingGuid;
       } else if (existing.dbAttachments.isNotEmpty && i < existing.dbAttachments.length) {
         attachmentExistingGuid = existing.dbAttachments[i].guid ?? existingGuid;

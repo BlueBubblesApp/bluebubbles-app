@@ -1,6 +1,7 @@
 import 'package:bluebubbles/models/models.dart' show AttachmentUploadProgress;
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/send_message_interface.dart';
@@ -46,7 +47,7 @@ class _OutgoingEntry {
 ///    so messages always arrive in the order the user sent them.
 ///
 /// 2. **Pre-send preparation** — `_buildOutgoingMessages` / `_persistOutgoingMessages`
-///    / `prepAttachment` write the temp message/attachment to the DB and the
+///    / `prepAttachments` write the temp message/attachment to the DB and the
 ///    MessagesService *before* the HTTP call is made, so the UI shows the
 ///    outgoing bubble immediately.
 ///
@@ -91,23 +92,25 @@ class OutgoingMessageHandler {
 
     final chatGuid = data['chatGuid'] as String?;
     final messageGuid = data['messageGuid'] as String?;
+    // A single-attachment send shares the message's GUID; a multi-attachment one names each attachment
+    final attachmentGuid = data['attachmentGuid'] as String? ?? messageGuid;
     final rawProgress = data['progress'];
     final progress = rawProgress is num ? rawProgress.toDouble().clamp(0.0, 1.0) : null;
 
-    if (chatGuid == null || messageGuid == null || progress == null) {
+    if (chatGuid == null || messageGuid == null || attachmentGuid == null || progress == null) {
       Logger.warn('Ignoring malformed attachment upload progress event: $data', tag: _tag);
       return;
     }
 
-    final inFlight = attachmentProgress.firstWhereOrNull((entry) => entry.guid == messageGuid);
+    final inFlight = attachmentProgress.firstWhereOrNull((entry) => entry.guid == attachmentGuid);
     if (inFlight != null) {
       inFlight.progress.value = progress;
     } else {
-      attachmentProgress.add(AttachmentUploadProgress(messageGuid, progress.obs));
+      attachmentProgress.add(AttachmentUploadProgress(attachmentGuid, progress.obs));
     }
 
     if (Get.isRegistered<MessagesService>(tag: chatGuid)) {
-      MessagesSvc(chatGuid).notifyAttachmentUploadProgress(messageGuid, messageGuid, progress);
+      MessagesSvc(chatGuid).notifyAttachmentUploadProgress(messageGuid, attachmentGuid, progress);
     }
   }
 
@@ -212,7 +215,7 @@ class OutgoingMessageHandler {
         _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
       }
     } else {
-      // Attachment: prepAttachment already saved it; keep the original item.
+      // Attachment: prepAttachments already saved it; keep the original item.
       _queue.add(_OutgoingEntry(item));
     }
 
@@ -230,6 +233,9 @@ class OutgoingMessageHandler {
   void _ensureTempGuid(OutgoingQueueItem item) {
     if (item.message.guid == null) item.message.generateTempGuid();
     if (item is OutgoingAttachment) item.attachment.guid = item.message.guid;
+    if (item is OutgoingMultiAttachment) {
+      item.attachments.forEachIndexed((i, a) => a.guid = OutgoingMultiAttachment.tempGuidFor(item.message.guid!, i));
+    }
   }
 
   /// Prep [item] with a bounded retry on transient failure.
@@ -252,7 +258,7 @@ class OutgoingMessageHandler {
   /// `(ok: false, ...)` once a terminal failure has been finalized (the caller
   /// should stop).
   Future<({bool ok, dynamic result})> _prepItemWithRetry(OutgoingQueueItem item) async {
-    final isAttachment = item is OutgoingAttachment;
+    final isAttachment = item is OutgoingAttachment || item is OutgoingMultiAttachment;
 
     List<Message>? built;
     if (!isAttachment) {
@@ -267,7 +273,11 @@ class OutgoingMessageHandler {
       attempts = attempt;
       try {
         if (isAttachment) {
-          await prepAttachment(item.chat, item.message, item.attachment);
+          await prepAttachments(
+            item.chat,
+            item.message,
+            item is OutgoingMultiAttachment ? item.attachments : [(item as OutgoingAttachment).attachment],
+          );
           return (ok: true, result: null);
         } else {
           return (
@@ -523,6 +533,9 @@ class OutgoingMessageHandler {
           typed.isAudioMessage,
           typed.attachment,
         );
+      case QueueType.sendMultiAttachment:
+        final typed = item as OutgoingMultiAttachment;
+        return sendMultiAttachment(typed.chat, typed.message, typed.attachments);
     }
   }
 
@@ -625,17 +638,41 @@ class OutgoingMessageHandler {
     return saved;
   }
 
-  /// Copies the attachment file to the local storage directory and saves the
-  /// message to the DB.
+  /// Copies each attachment file to the local storage directory and saves the
+  /// message, with all of [attachments], to the DB.
   ///
   /// Attachment metadata carries the original source path so the file can be
   /// copied without loading it into memory (except GIFs, which need
   /// optimization).
-  Future<void> prepAttachment(Chat c, Message m, Attachment? attachment) async {
-    if (attachment == null) {
-      throw StateError('Missing attachment for sendAttachment prep on message ${m.guid}');
+  Future<void> prepAttachments(Chat c, Message m, List<Attachment> attachments) async {
+    for (final attachment in attachments) {
+      await _stageAttachment(m, attachment);
     }
 
+    // ChatInterface.addMessageToChat returns a DB-hydrated Message loaded from
+    // the main isolate's Store (Database.messages.get(id)) after the
+    // GlobalIsolate transaction commits.  This object has its id set and its
+    // dbAttachments ToMany linked to the main Store, so _handleNewMessage can
+    // reload attachments from DB without racing against cross-isolate write timing.
+    final savedMessage = (await c.addMessage(m, attachments: attachments)).message;
+
+    // The DB write goes through the GlobalIsolate, so the main-isolate OB watch
+    // subscription won't fire for it.  Explicitly push the message into the view
+    // using the Store-hydrated object so _handleNewMessage can load dbAttachments.
+    if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+      await MessagesSvc(c.guid).addNewMessage(savedMessage);
+      // Register upload-in-progress state.  Must come after addNewMessage so the
+      // MessageState already exists.
+      for (final attachment in attachments) {
+        MessagesSvc(c.guid).notifyAttachmentUploadStarted(savedMessage, attachment);
+      }
+    }
+    // Update ChatState immediately so the tile reflects the outgoing attachment
+    // before the queue dispatches the HTTP call.
+    ChatsSvc.updateChatLatestMessage(c.guid, savedMessage);
+  }
+
+  Future<void> _stageAttachment(Message m, Attachment attachment) async {
     final progress = AttachmentUploadProgress(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
 
@@ -697,26 +734,6 @@ class OutgoingMessageHandler {
 
       attachment.isDownloaded = true;
     }
-
-    // ChatInterface.addMessageToChat returns a DB-hydrated Message loaded from
-    // the main isolate's Store (Database.messages.get(id)) after the
-    // GlobalIsolate transaction commits.  This object has its id set and its
-    // dbAttachments ToMany linked to the main Store, so _handleNewMessage can
-    // reload attachments from DB without racing against cross-isolate write timing.
-    final savedMessage = (await c.addMessage(m, attachments: [attachment])).message;
-
-    // The DB write goes through the GlobalIsolate, so the main-isolate OB watch
-    // subscription won't fire for it.  Explicitly push the message into the view
-    // using the Store-hydrated object so _handleNewMessage can load dbAttachments.
-    if (Get.isRegistered<MessagesService>(tag: c.guid)) {
-      await MessagesSvc(c.guid).addNewMessage(savedMessage);
-      // Register upload-in-progress state.  Must come after addNewMessage so the
-      // MessageState already exists.
-      MessagesSvc(c.guid).notifyAttachmentUploadStarted(savedMessage, attachment);
-    }
-    // Update ChatState immediately so the tile reflects the outgoing attachment
-    // before the queue dispatches the HTTP call.
-    ChatsSvc.updateChatLatestMessage(c.guid, savedMessage);
   }
 
   // ── Send methods ─────────────────────────────────────────────────────────
@@ -874,7 +891,7 @@ class OutgoingMessageHandler {
     // Save both GUIDs before any mutation — attachment.guid == m.guid by design
     // (set in send_animation.dart: attachment.guid = message.guid).
     final tempGuid = m.guid!;
-    // The temp message was already saved to DB in prepAttachment; update ChatState
+    // The temp message was already saved to DB in prepAttachments; update ChatState
     // subtitle immediately so the tile reflects the outgoing attachment.
 
     // Only update latest message if the attachment message is the current latest message.
@@ -886,7 +903,7 @@ class OutgoingMessageHandler {
     // On web the isolate path is not supported (web is deprecated).
     if (kIsWeb) return;
 
-    // Fail fast if the file was not staged correctly during prepAttachment.
+    // Fail fast if the file was not staged correctly during prepAttachments.
     if (!File(attachment.path).existsSync()) {
       Logger.error('Attachment file not found at ${attachment.path}', tag: _tag);
       return;
@@ -949,6 +966,78 @@ class OutgoingMessageHandler {
             MessagesSvc(c.guid).notifyAttachmentTransferError(errorMsg.guid!, attachment.guid!);
           }
           attachmentProgress.removeWhere((e) => e.guid == tempGuid);
+        },
+      ),
+    );
+  }
+
+  /// Sends [attachments] as one message: each file is uploaded, then a single multipart message names them all.
+  Future<void> sendMultiAttachment(Chat c, Message m, List<Attachment> attachments) async {
+    final tempGuid = m.guid!;
+
+    // Only update latest message if the attachment message is the current latest message.
+    if (ChatsSvc.getChatState(c.guid)?.latestMessage.value?.guid == m.guid) {
+      ChatsSvc.updateChatLatestMessage(c.guid, m);
+    }
+
+    if (kIsWeb) return;
+
+    final missing = attachments.where((a) => !File(a.path).existsSync());
+    if (missing.isNotEmpty) {
+      Logger.error('Attachment files not found: ${missing.map((a) => a.path).join(', ')}', tag: _tag);
+      return;
+    }
+
+    void clearProgress() => attachmentProgress.removeWhere((e) => attachments.any((a) => a.guid == e.guid));
+
+    return _sendWithRace(
+      tempGuid: tempGuid,
+      chat: c,
+      httpCall: () => SendMessageInterface.sendMultiAttachmentMessage(
+        chatGuid: c.guid,
+        tempGuid: tempGuid,
+        files: attachments.map((a) => {'guid': a.guid, 'path': a.path, 'name': a.transferName}).toList(),
+        subject: m.subject,
+        selectedMessageGuid: m.threadOriginatorGuid,
+        effectId: m.expressiveSendStyleId,
+        partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
+      ),
+      onSuccess: (Map<String, dynamic> data) async {
+        final newMessage = Message.fromMap(data['data']);
+        final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList();
+        // Parts keep their order on the server, so the nth attachment back is the nth one sent
+        for (int i = 0; i < min(attachments.length, responseAttachments.length); i++) {
+          final tempAttachmentGuid = attachments[i].guid!;
+          final a = responseAttachments[i];
+          try {
+            await _matchAttachmentWithExisting(c, tempAttachmentGuid, a);
+            if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+              MessagesSvc(c.guid).notifyAttachmentSendComplete(tempGuid, newMessage.guid!, tempAttachmentGuid, a);
+            }
+          } catch (e, st) {
+            Logger.warn('Failed to replace attachment $tempAttachmentGuid', error: e, trace: st, tag: _tag);
+          }
+        }
+        await _matchMessageWithExisting(c, tempGuid, newMessage);
+        clearProgress();
+      },
+      onError: (error, stack) => _finalizeOutgoingFailure(
+        c,
+        m,
+        tempGuid,
+        logMessage: 'Failed to send attachments',
+        error: error,
+        stack: stack,
+        onExtra: (errorMsg) async {
+          if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+            for (final a in attachments) {
+              MessagesSvc(c.guid).notifyAttachmentTransferError(errorMsg.guid!, a.guid!);
+            }
+          }
+          clearProgress();
         },
       ),
     );

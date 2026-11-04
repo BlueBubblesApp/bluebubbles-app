@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
 
-enum QueueType { sendMessage, sendReaction, sendAttachment, sendMultipart }
+enum QueueType { sendMessage, sendReaction, sendAttachment, sendMultipart, sendMultiAttachment }
 
 abstract class QueueItem {
   QueueType type;
@@ -99,4 +99,22 @@ class OutgoingMultipartMessage extends OutgoingQueueItem {
     this.isRetry = false,
     this.clearNotificationsIfFromMe = true,
   }) : super(type: QueueType.sendMultipart);
+}
+
+/// Several attachments sent as one message (`attachment/upload` + `message/multipart`). Each attachment's temp
+/// GUID is `<message temp GUID>-<index>`, see [tempGuidFor].
+class OutgoingMultiAttachment extends OutgoingQueueItem {
+  List<Attachment> attachments;
+  @override
+  bool isRetry;
+
+  OutgoingMultiAttachment({
+    super.completer,
+    required super.chat,
+    required super.message,
+    required this.attachments,
+    this.isRetry = false,
+  }) : super(type: QueueType.sendMultiAttachment);
+
+  static String tempGuidFor(String messageGuid, int index) => '$messageGuid-$index';
 }
