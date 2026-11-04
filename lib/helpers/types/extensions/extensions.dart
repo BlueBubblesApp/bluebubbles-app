@@ -296,7 +296,7 @@ extension TitleCase on String {
 
 // Returns the attachments as a string representation for message preview/notification text.
 /// [text] without its Genmoji placeholders (U+FFFC), or "Genmoji" if nothing else is left.
-String _withoutInlineAttachments(String text) {
+String withoutInlineAttachments(String text) {
   final words = text.replaceAll(String.fromCharCode(0xFFFC), ' ').replaceAll(RegExp(r' {2,}'), ' ').trim();
   return words.isEmpty ? "Genmoji" : words;
 }
@@ -368,7 +368,7 @@ extension MessageNotificationExtension on Message {
   String? inlineAttachmentText({bool keepPlaceholders = false}) {
     if (inlineAttachments.isEmpty) return null;
     final text = attributedBody.first.string;
-    return keepPlaceholders ? text.trim() : _withoutInlineAttachments(text);
+    return keepPlaceholders ? text.trim() : withoutInlineAttachments(text);
   }
 
   /// [keepInlineAttachments] keeps a U+FFFC where each Genmoji goes, for a preview that draws them.
@@ -480,7 +480,7 @@ extension MessageNotificationExtension on Message {
                   final substring = attrBod.string.substring(range.first, range.first + range.last);
                   messageText = messageText! + substring;
                 }
-                if (attachmentGuids.isNotEmpty) messageText = _withoutInlineAttachments(messageText!);
+                if (attachmentGuids.isNotEmpty) messageText = withoutInlineAttachments(messageText!);
               }
             }
             // fallback

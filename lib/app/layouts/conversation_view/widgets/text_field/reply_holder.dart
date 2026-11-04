@@ -175,12 +175,14 @@ class _ReplyText extends StatelessWidget {
       // This does not add anything to the DB and is just
       // in memory for the sake of displaying the correct text
       // for a particular message part.
+      // A Genmoji sits inside the text, so the part reads as that text
+      final bool inline = reply.hasInlineAttachments;
       final msg = Message(
-        text: reply.text,
+        text: inline ? withoutInlineAttachments(reply.text!) : reply.text,
         subject: reply.subject,
-        hasAttachments: reply.attachments.isNotEmpty,
+        hasAttachments: !inline && reply.attachments.isNotEmpty,
       )
-        ..dbAttachments.addAll(reply.attachments)
+        ..dbAttachments.addAll(inline ? const <Attachment>[] : reply.attachments)
         ..mergeWith(message!);
       return msg.getNotificationText(
         hideContactInfo: hideContactInfo,
