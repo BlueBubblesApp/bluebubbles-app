@@ -245,7 +245,12 @@ class ImageActions {
             : img.copyResize(image, height: maxDimension, interpolation: img.Interpolation.average);
       }
 
-      final encoded = img.encodeJpg(image, quality: quality);
+      // A JPEG fills in transparency, so a see-through image previews as PNG. Checked per pixel, not by channel
+      // count: plenty of opaque screenshots carry an unused alpha channel. The `.jpg` path is fine, as Flutter
+      // reads the format from the bytes.
+      final opaque = image.maxChannelValue;
+      final seeThrough = image.hasAlpha && image.any((p) => p.a < opaque);
+      final encoded = seeThrough ? img.encodePng(image) : img.encodeJpg(image, quality: quality);
       await File(outputPath).writeAsBytes(encoded);
       return true;
     } catch (e) {
