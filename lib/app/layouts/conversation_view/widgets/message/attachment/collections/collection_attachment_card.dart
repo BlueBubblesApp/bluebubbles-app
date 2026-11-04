@@ -131,7 +131,7 @@ class CollectionAttachmentCard extends StatelessWidget {
     return MessagePart(
       part: _partIdForAttachment(),
       attachments: [attachment],
-      shouldRedact: false,
+      shouldRedact: messagePart.shouldRedact,
       text: null,
       subject: null,
       mentions: const [],
