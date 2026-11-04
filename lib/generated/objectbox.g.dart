@@ -536,7 +536,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(13, 4148278195232901830),
     name: 'Message',
-    lastPropertyId: const obx_int.IdUid(54, 3645372489156688543),
+    lastPropertyId: const obx_int.IdUid(55, 4673117792989945365),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -809,6 +809,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(54, 3645372489156688543),
         name: 'metadata',
         type: 13,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(55, 4673117792989945365),
+        name: 'associatedMessageEmoji',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -1992,7 +1998,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final metadataOffset = object.metadata == null
             ? null
             : fbb.writeListInt8(obx_int.toFlexBuffer(object.metadata!));
-        fbb.startTable(55);
+        final associatedMessageEmojiOffset =
+            object.associatedMessageEmoji == null
+            ? null
+            : fbb.writeString(object.associatedMessageEmoji!);
+        fbb.startTable(56);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addInt64(1, object.originalROWID);
         fbb.addOffset(2, guidOffset);
@@ -2037,6 +2047,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(51, errorMessageOffset);
         fbb.addBool(52, object.hasEffectPlayed);
         fbb.addOffset(53, metadataOffset);
+        fbb.addOffset(54, associatedMessageEmojiOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -2166,6 +2177,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final associatedMessageTypeParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 60);
+        final associatedMessageEmojiParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 112);
         final expressiveSendStyleIdParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 62);
@@ -2244,6 +2258,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 associatedMessageGuid: associatedMessageGuidParam,
                 associatedMessagePart: associatedMessagePartParam,
                 associatedMessageType: associatedMessageTypeParam,
+                associatedMessageEmoji: associatedMessageEmojiParam,
                 expressiveSendStyleId: expressiveSendStyleIdParam,
                 hasAttachments: hasAttachmentsParam,
                 hasReactions: hasReactionsParam,
@@ -3232,6 +3247,11 @@ class Message_ {
   /// See [Message.hasEffectPlayed].
   static final hasEffectPlayed = obx.QueryBooleanProperty<Message>(
     _entities[5].properties[42],
+  );
+
+  /// See [Message.associatedMessageEmoji].
+  static final associatedMessageEmoji = obx.QueryStringProperty<Message>(
+    _entities[5].properties[44],
   );
 
   /// see [Message.dbAttachments]
