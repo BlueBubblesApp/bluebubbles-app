@@ -64,7 +64,7 @@ attachment.guid = message.guid;
 await OutgoingMsgHandler.queue(OutgoingAttachment(chat: ..., message: message, attachment: attachment, ...));
 ```
 
-**Several files at once** go as one message instead, when the server supports it (`supportsMultiAttachmentSend`, v2) and Private API attachment sends are on: one `Message` and an `OutgoingMultiAttachment` holding every attachment. Each attachment gets its own temp GUID, `<message temp GUID>-<index>`, so each has its own directory and upload state. `sendMultiAttachment()` uploads each file to `attachment/upload`, then sends one `message/multipart` naming the uploaded paths in order; the response's attachments are matched to the temp ones by position, as are the socket echo's (`_replaceAttachments`) and a retry's. Voice notes and app balloons always go one per message.
+**Several files at once** go as one message instead, when the server supports it (`supportsMultiAttachmentSend`, v2) and Private API attachment sends are on: one `Message` and an `OutgoingMultiAttachment` holding every attachment. Each attachment gets its own temp GUID, `<message temp GUID>-<index>`, so each has its own directory and upload state. `sendMultiAttachment()` uploads each file to `attachment/upload`, then sends one `message/multipart` naming the uploaded paths in order; the response's attachments are matched to the temp ones by file name, then position (the server doesn't promise their order), as are the socket echo's (`_replaceAttachments`). Voice notes and app balloons always go one per message.
 
 **Text/multipart messages do *not* call `generateTempGuid()` here** — the `Message` is built without a GUID and handed to `queue()` as-is:
 ```dart

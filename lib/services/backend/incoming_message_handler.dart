@@ -610,15 +610,21 @@ class IncomingMessageHandler {
     Message replacement,
     List<Attachment?> replacementAttachments,
   ) async {
+    final unmatched = existing.dbAttachments.toList();
     for (int i = 0; i < replacementAttachments.length; i++) {
       final newAttachment = replacementAttachments[i];
       if (newAttachment == null) continue;
 
       // Resolve which local GUID currently owns this attachment slot.
-      // A multi-attachment send gives each temp attachment its own GUID, so those resolve by index below
       final String attachmentExistingGuid;
       if (existingGuid.startsWith('temp-') && existing.dbAttachments.length <= 1) {
         attachmentExistingGuid = existingGuid;
+      } else if (existingGuid.startsWith('temp-')) {
+        // A multi-attachment send: each temp attachment has its own GUID, and the server doesn't promise their order
+        final match = unmatched.firstWhereOrNull((a) => a.transferName == newAttachment.transferName) ??
+            unmatched.firstOrNull;
+        if (match != null) unmatched.remove(match);
+        attachmentExistingGuid = match?.guid ?? existingGuid;
       } else if (existing.dbAttachments.isNotEmpty && i < existing.dbAttachments.length) {
         attachmentExistingGuid = existing.dbAttachments[i].guid ?? existingGuid;
       } else {

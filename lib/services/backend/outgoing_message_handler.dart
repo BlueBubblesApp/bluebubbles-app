@@ -1,7 +1,6 @@
 import 'package:bluebubbles/models/models.dart' show AttachmentUploadProgress;
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/send_message_interface.dart';
@@ -1008,10 +1007,13 @@ class OutgoingMessageHandler {
             .whereType<Map>()
             .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
             .toList();
-        // Parts keep their order on the server, so the nth attachment back is the nth one sent
-        for (int i = 0; i < min(attachments.length, responseAttachments.length); i++) {
-          final tempAttachmentGuid = attachments[i].guid!;
-          final a = responseAttachments[i];
+        // The server names each file as sent but doesn't promise their order, so match by name, then position
+        final unmatched = [...attachments];
+        for (final a in responseAttachments) {
+          final temp = unmatched.firstWhereOrNull((t) => t.transferName == a.transferName) ?? unmatched.firstOrNull;
+          if (temp == null) break;
+          unmatched.remove(temp);
+          final tempAttachmentGuid = temp.guid!;
           try {
             await _matchAttachmentWithExisting(c, tempAttachmentGuid, a);
             if (Get.isRegistered<MessagesService>(tag: c.guid)) {
