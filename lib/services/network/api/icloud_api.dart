@@ -71,12 +71,12 @@ class iCloudApi {
     });
   }
 
-  /// Get iCloud account contact
-  Future<Response> getAccountContact({CancelToken? cancelToken}) async {
+  /// Get the iCloud contact card: your own, or the one [address] shared with you
+  Future<Response> getAccountContact({String? address, CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {
       final response = await _svc.dio.get(
         "${_svc.apiRoot}/icloud/contact",
-        queryParameters: _svc.buildQueryParams(),
+        queryParameters: _svc.buildQueryParams({"address": ?address}),
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);

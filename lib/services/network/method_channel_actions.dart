@@ -14,10 +14,12 @@ class MethodChannelActions {
     await service.invokeMethod('open-browser', {'link': link});
   }
 
-  Future<void> openContactForm({required String address, required bool isEmail}) async {
+  Future<void> openContactForm({required String address, required bool isEmail, String? name, Uint8List? avatar}) async {
     await service.invokeMethod('open-contact-form', {
       'address': address,
       'address_type': isEmail ? 'email' : 'phone',
+      'name': ?name,
+      'avatar': ?avatar,
     });
   }
 
