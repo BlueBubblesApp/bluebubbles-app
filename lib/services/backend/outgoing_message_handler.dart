@@ -1007,10 +1007,13 @@ class OutgoingMessageHandler {
             .whereType<Map>()
             .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
             .toList();
-        // The server names each file as sent but doesn't promise their order, so match by name, then position
+        // By message part; the server doesn't promise the attachments' order, so name, then position, are fallbacks
         final unmatched = [...attachments];
         for (final a in responseAttachments) {
-          final temp = unmatched.firstWhereOrNull((t) => t.transferName == a.transferName) ?? unmatched.firstOrNull;
+          final partGuid = OutgoingMultiAttachment.sentTempGuid(tempGuid, newMessage, a);
+          final temp = unmatched.firstWhereOrNull((t) => partGuid != null && t.guid == partGuid) ??
+              unmatched.firstWhereOrNull((t) => t.transferName == a.transferName) ??
+              unmatched.firstOrNull;
           if (temp == null) break;
           unmatched.remove(temp);
           final tempAttachmentGuid = temp.guid!;
