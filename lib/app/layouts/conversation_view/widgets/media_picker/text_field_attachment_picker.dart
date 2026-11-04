@@ -253,7 +253,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
               ),
               if (OpenPigeon.offered && controller.chat.isIMessage)
                 _QuickActionItem(
-                  icon: OpenPigeon.licensed.value ? Icons.sports_esports_rounded : Icons.lock_rounded,
+                  icon: Icons.sports_esports_rounded,
                   label: 'Games',
                   color: const Color(0xFFD4A72C),
                   onTap: () => showOpenPigeonPicker(context, controller.chat),
