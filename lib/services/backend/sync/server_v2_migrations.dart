@@ -14,8 +14,11 @@ class ServerV2Migrations {
     if (await run() != null) await PrefsSvc.database.setServerV2MigrationsDone();
   }
 
-  /// Returns how many messages were updated, or null if a request failed or the server doesn't send v2 data.
-  static Future<int?> run() => _backfillTapbackEmoji();
+  /// Returns how many messages were updated, or null if a request failed or the server isn't v2.
+  static Future<int?> run() async {
+    if (!SettingsSvc.serverDetails.isV2Server) return null;
+    return _backfillTapbackEmoji();
+  }
 
   static Future<int?> _backfillTapbackEmoji() async {
     final query = Database.messages
@@ -31,10 +34,8 @@ class ServerV2Migrations {
     for (final reaction in missing) {
       try {
         final response = await HttpSvc.message.fetchOne(reaction.guid!);
-        final data = response.data['data'] as Map?;
-        // A server that doesn't send the field won't for any of the others either
-        if (data == null || !data.containsKey('associatedMessageEmoji')) return null;
-        final emoji = data['associatedMessageEmoji'] as String?;
+        // The server leaves the key out when chat.db has no emoji for this one, so skip it
+        final emoji = (response.data['data'] as Map?)?['associatedMessageEmoji'] as String?;
         if (emoji == null) continue;
 
         reaction.associatedMessageEmoji = emoji;
