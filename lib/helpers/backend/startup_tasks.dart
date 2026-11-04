@@ -279,6 +279,7 @@ class StartupTasks {
     await _waitForInterop(notifications: true);
 
     GetIt.I.registerSingleton<EventDispatcher>(EventDispatcher());
+    if (!kIsWeb && !kIsDesktop && !isBubble) unawaited(OpenPigeon.init());
 
     Logger.info("Registering CustomGroupsService...");
     GetIt.I.registerSingleton<CustomGroupsService>(CustomGroupsService());
@@ -532,6 +533,8 @@ class StartupTasks {
   }
 
   static Future<void> onAppResume() async {
+    // OpenPigeon may have just been installed from the Play Store
+    unawaited(OpenPigeon.refreshInstalled());
     final LifecycleService? lifecycle =
         (GetIt.I.isRegistered<LifecycleService>() && GetIt.I.isReadySync<LifecycleService>())
             ? GetIt.I<LifecycleService>()

@@ -79,7 +79,10 @@ class _GamePigeonState extends State<GamePigeon> with AutomaticKeepAliveClientMi
               overflow: TextOverflow.ellipsis,
             ),
           ),
-        )
+        ),
+        Obx(() => !OpenPigeon.installed.value && OpenPigeon.supported
+            ? const Center(child: TextButton(onPressed: OpenPigeon.openStore, child: Text("Play with OpenPigeon")))
+            : const SizedBox.shrink()),
       ],
     );
   }

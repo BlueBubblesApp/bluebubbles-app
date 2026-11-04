@@ -257,6 +257,50 @@ class MessageApi {
     });
   }
 
+  /// Get the decoded iMessage app payload (url, session id, captions) of message [guid]. v2 servers only.
+  Future<Response> getAppMessage(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.origin}/api/v2/message/app/$guid",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
+  /// Send an iMessage app balloon with the app's own payload [url], passed through untouched. v2 servers only.
+  Future<Response> sendAppMessage(
+    String chatGuid, {
+    required String balloonBundleId,
+    required String url,
+    String? sessionId,
+    String? appName,
+    int? appId,
+    String? summary,
+    String? caption,
+    CancelToken? cancelToken,
+  }) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.origin}/api/v2/message/app",
+        queryParameters: _svc.buildQueryParams(),
+        data: {
+          "chatGuid": chatGuid,
+          "balloonBundleId": balloonBundleId,
+          "url": url,
+          "sessionId": sessionId,
+          "appName": appName,
+          "appId": appId,
+          "summary": summary,
+          "caption": caption,
+        },
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageText]
   /// specifies the text of the message being reacted on, [selectedMessageGuid]
   /// is the guid of the message, and [reaction] is the reaction type.
