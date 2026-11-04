@@ -32,6 +32,11 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   late final String tag;
   bool fromChatCreator = false;
   bool fromSearchResult = false;
+
+  /// The ConversationView currently showing this controller. A rebuild in a new place (resizing across the
+  /// tablet-mode breakpoint moves the view between navigators) builds the new view before disposing the old one,
+  /// and both find this controller through [cvc]; only the owner may delete it.
+  Object? viewOwner;
   bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
