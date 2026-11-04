@@ -199,7 +199,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                       ),
                                     ),
                                   )
-                                : resolvedPart.attachments.isEmpty
+                                : resolvedPart.attachments.isEmpty || resolvedPart.hasInlineAttachments
                                     ? Container(
                                         color: hasBackground
                                             ? (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor())

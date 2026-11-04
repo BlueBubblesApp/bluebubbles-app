@@ -53,7 +53,8 @@ class MessagePartContent extends StatelessWidget {
     }
 
     // Text-only messages
-    if (messagePart.attachments.isEmpty && (messagePart.text != null || messagePart.subject != null)) {
+    if ((messagePart.attachments.isEmpty || messagePart.hasInlineAttachments) &&
+        (messagePart.text != null || messagePart.subject != null)) {
       return TextBubble(
         message: messagePart,
       );

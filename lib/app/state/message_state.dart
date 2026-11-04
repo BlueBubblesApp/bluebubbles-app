@@ -861,13 +861,19 @@ class MessageState extends StatefulController {
     final mainString = body.string;
     final list = <MessagePart>[];
     body.runs.sort((a, b) => a.range.first.compareTo(b.range.first));
+    final textParts = body.runs.where((e) => !e.isAttachment).map((e) => e.attributes?.messagePart).toSet();
     body.runs.forEachIndexed((i, e) async {
       if (e.attributes?.messagePart == null) return;
+      final isInline = e.isAttachment && textParts.contains(e.attributes!.messagePart);
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
         final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
         final currentLength = existingPart.text?.length ?? 0;
         existingPart.text = (existingPart.text ?? "") + newText;
+        if (isInline) {
+          final attachment = message.dbAttachments.firstWhereOrNull((a) => a.guid == e.attributes!.attachmentGuid);
+          if (attachment != null) existingPart.attachments.add(attachment);
+        }
         if (e.hasMention) {
           existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
@@ -890,7 +896,9 @@ class MessageState extends StatefulController {
 
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
-          text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
+          text: e.isAttachment && !isInline
+              ? null
+              : mainString.substring(e.range.first, e.range.first + e.range.last),
           attachments: foundAttachment != null ? [foundAttachment] : [],
           mentions: !e.hasMention
               ? []

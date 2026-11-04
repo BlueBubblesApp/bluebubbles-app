@@ -29,6 +29,9 @@ class MessagePart {
 
   bool get isPkPass => attachments.any((a) => a.isPkPass);
 
+  /// Genmoji: attachments sharing a part with text, each drawn at its U+FFFC in [text].
+  bool get hasInlineAttachments => attachments.isNotEmpty && (text?.contains('\uFFFC') ?? false);
+
   String? subject;
   late final String fakeSubject = faker.lorem.words(subject?.split(" ").length ?? 0).join(" ");
   String? get displaySubject {
@@ -176,7 +179,9 @@ class MessagePart {
   /// attachment, so a raw part holding several images *and* text still shows every image here. Its text isn't
   /// rendered either way (text and attachments in one part is a known gap, not handled by this branch).
   bool get isMediaCollection =>
-      attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
+      attachments.length > 1 &&
+      !hasInlineAttachments &&
+      attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }
 
 class Mention {
