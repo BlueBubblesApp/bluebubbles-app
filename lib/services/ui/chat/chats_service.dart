@@ -1107,6 +1107,7 @@ class ChatsService {
       messageIds: messages.map((e) => e.id!).toList(),
       handleIds: handleIds,
     );
+    await PrefsSvc.messaging.clearChat(chat.guid);
 
     // Remove from service state
     removeChat(chat);
@@ -1166,6 +1167,8 @@ class ChatsService {
     // Perform the actual DB soft delete
     await ChatInterface.softDeleteChat(chatData: chat.toMap());
     chat.clearTranscript();
+    // Its transcript is gone, so what was kept for it goes too
+    await PrefsSvc.messaging.clearChat(chat.guid);
 
     // Propagate dateDeleted to ChatState before removing it so any live
     // listeners (e.g. ConversationTileController) can react reactively.
