@@ -50,8 +50,7 @@ class ServerManagementPanelController extends StatefulController {
   @override
   void onReady() {
     super.onReady();
-    refreshServerStats();
-    refreshLocalStats();
+    refreshServerConnectionInfo();
   }
 
   Future<void> setStatsSource(IMessageStatsSource source) async {
@@ -90,8 +89,10 @@ class ServerManagementPanelController extends StatefulController {
     }
   }
 
-  Future<void> getServerStats() async {
-    await refreshServerStats();
+  /// Stats load only once iMessage Statistics is opened: the server's totals read its whole message database, which
+  /// on a slow disk holds up every other request to it.
+  Future<void> loadSelectedStatsIfEmpty() async {
+    if (getActiveStatsMap().isEmpty && !isActiveStatsLoading()) await refreshSelectedStats();
   }
 
   Future<void> refreshServerConnectionInfo() async {
@@ -150,11 +151,9 @@ class ServerManagementPanelController extends StatefulController {
       serverStats
         ..clear()
         ..addAll(merged);
-      await refreshServerConnectionInfo();
       return true;
     } catch (_) {
       serverStatsErrorMessage.value = "Could not retrieve statistics from your server";
-      await refreshServerConnectionInfo();
       return false;
     } finally {
       isLoadingServerStats.value = false;
