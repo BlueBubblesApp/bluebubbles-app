@@ -279,7 +279,9 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       } else {
         final style = widget.style.copyWith(fontStyle: !iOS && !material && !isDelivered ? FontStyle.italic : null);
         final spans = MessageHelper.buildEmojiText("${!iOS && isFromMe ? "You: " : ""}$_subtitle", style);
-        final inline = latestMessage?.inlineAttachments ?? const <Attachment>[];
+        final inline = _subtitle.contains(String.fromCharCode(0xFFFC))
+            ? latestMessage?.previewInlineAttachments ?? const <Attachment>[]
+            : const <Attachment>[];
         subtitleSpan = TextSpan(children: inline.isEmpty ? spans : withInlineAttachments(spans, inline, style));
       }
 

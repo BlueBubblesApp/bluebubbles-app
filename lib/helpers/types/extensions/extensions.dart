@@ -363,6 +363,13 @@ extension MessageNotificationExtension on Message {
     return ordered.length == dbAttachments.length ? ordered : const [];
   }
 
+  /// The Genmoji a preview of this message draws: its own, or for a tapback, those of the message it reacts to.
+  List<Attachment> get previewInlineAttachments {
+    final own = inlineAttachments;
+    if (own.isNotEmpty || associatedMessageGuid == null) return own;
+    return Message.findOne(guid: associatedMessageGuid)?.inlineAttachments ?? const [];
+  }
+
   /// The text of a message whose only attachments are [inlineAttachments], with a U+FFFC where each one goes when
   /// [keepPlaceholders], else without them ("Genmoji" if nothing else is left). Null for any other message.
   String? inlineAttachmentText({bool keepPlaceholders = false}) {
@@ -480,11 +487,13 @@ extension MessageNotificationExtension on Message {
                   final substring = attrBod.string.substring(range.first, range.first + range.last);
                   messageText = messageText! + substring;
                 }
-                if (attachmentGuids.isNotEmpty) messageText = withoutInlineAttachments(messageText!);
+                if (attachmentGuids.isNotEmpty) {
+                  messageText = keepInlineAttachments ? messageText!.trim() : withoutInlineAttachments(messageText!);
+                }
               }
             }
             // fallback
-            messageText ??= associatedMessage.inlineAttachmentText();
+            messageText ??= associatedMessage.inlineAttachmentText(keepPlaceholders: keepInlineAttachments);
             if (messageText == null) {
               if (associatedMessage.hasAttachments) {
                 attachment = true;
