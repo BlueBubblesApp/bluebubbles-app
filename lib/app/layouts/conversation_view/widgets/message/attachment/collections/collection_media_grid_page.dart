@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -63,15 +64,6 @@ class CollectionMediaGridPage extends StatefulWidget {
 class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with ThemeHelpers {
   final RxList<String> selected = <String>[].obs;
 
-  void _downloadAttachments(Iterable<Attachment> attachments) {
-    for (final a in attachments) {
-      final file = AttachmentsSvc.getContent(a, autoDownload: false);
-      if (file is PlatformFile) {
-        AttachmentsSvc.saveToDisk(file);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final chatState = ChatsSvc.getOrCreateChatState(widget.chat);
@@ -109,11 +101,10 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                         : context.theme.colorScheme.primary,
                   ),
                   onPressed: () {
-                    if (inSelectionMode) {
-                      _downloadAttachments(widget.media.where((e) => selected.contains(e.guid!)));
-                    } else {
-                      _downloadAttachments(widget.media);
-                    }
+                    CollectionDownloadButton.download(
+                      context,
+                      inSelectionMode ? widget.media.where((e) => selected.contains(e.guid!)).toList() : widget.media,
+                    );
                   },
                 );
               }),

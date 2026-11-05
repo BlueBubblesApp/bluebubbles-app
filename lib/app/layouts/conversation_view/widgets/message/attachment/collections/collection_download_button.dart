@@ -49,13 +49,30 @@ class CollectionDownloadButton extends StatelessWidget {
 
   final List<Attachment> attachments;
 
-  void _downloadAttachments() {
-    for (final a in attachments) {
-      final file = AttachmentsSvc.getContent(a, autoDownload: false);
-      if (file is PlatformFile) {
-        AttachmentsSvc.saveToDisk(file);
+  /// Saves [attachments] to disk, asking first when there's more than one.
+  static void download(BuildContext context, Iterable<Attachment> attachments) {
+    void save() {
+      for (final a in attachments) {
+        final file = AttachmentsSvc.getContent(a, autoDownload: false);
+        if (file is PlatformFile) {
+          AttachmentsSvc.saveToDisk(file);
+        }
       }
     }
+
+    final count = attachments.length;
+    if (count <= 1) return save();
+    showAreYouSure(
+      context,
+      title: "Download $count items?",
+      noText: "Cancel",
+      yesText: "Download",
+      onNo: () => Navigator.of(context, rootNavigator: true).pop(),
+      onYes: () {
+        Navigator.of(context, rootNavigator: true).pop();
+        save();
+      },
+    );
   }
 
   @override
@@ -63,7 +80,7 @@ class CollectionDownloadButton extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final outline = Theme.of(context).colorScheme.outline.withValues(alpha: 0.25);
     return GestureDetector(
-      onTap: _downloadAttachments,
+      onTap: () => download(context, attachments),
       child: Container(
         width: size,
         height: size,
