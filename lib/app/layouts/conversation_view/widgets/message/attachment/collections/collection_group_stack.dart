@@ -53,6 +53,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   static const _pastSlotOpacity = <double>[0.80, 0.60, 0.40];
 
   static const double _scrollAdvanceThreshold = 50.0;
+  static const Duration _slotAnimDuration = Duration(milliseconds: 180);
 
   int _currentIndex = 0;
   double _dragDx = 0;
@@ -453,20 +454,54 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     );
   }
 
-  Widget _buildCardContent({
+  /// Positions one card in the fan. Front, future and past cards all go through here and build the *same*
+  /// widget tree, differing only in properties. A card that moves between slots (front ↔ fan ↔ past) keeps
+  /// its element, so the media under it (video controller, decoded image) survives paging instead of being
+  /// remounted on every swipe.
+  Widget _slotCard({
     required Attachment attachment,
     required int attachmentIndex,
     required bool isCurrent,
-    required bool ignorePointer,
+    required double top,
+    required double left,
+    required double width,
+    required double height,
+    required double angle,
+    required Alignment pivot,
+    double opacity = 1.0,
   }) {
-    return CollectionAttachmentCard(
-      attachmentIndex: attachmentIndex,
-      messagePart: widget.messagePart,
-      ignorePointer: ignorePointer,
-      cvController: widget.cvController,
-      isEditing: widget.isEditing,
-      enableGestures: isCurrent,
-      reactionTailType: ReactionTailType.inside,
+    return AnimatedPositioned(
+      key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
+      duration: _slotAnimDuration,
+      curve: Curves.easeOutCubic,
+      top: top,
+      left: left,
+      child: AnimatedOpacity(
+        duration: _slotAnimDuration,
+        opacity: opacity,
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Transform.rotate(
+            angle: angle,
+            alignment: pivot,
+            // Front card: no tap handler and deferToChild, so its media's own gestures win. Other cards: tap jumps.
+            child: GestureDetector(
+              behavior: isCurrent ? HitTestBehavior.deferToChild : HitTestBehavior.opaque,
+              onTap: isCurrent ? null : () => _jumpTo(attachmentIndex),
+              child: CollectionAttachmentCard(
+                attachmentIndex: attachmentIndex,
+                messagePart: widget.messagePart,
+                ignorePointer: !isCurrent,
+                cvController: widget.cvController,
+                isEditing: widget.isEditing,
+                enableGestures: isCurrent,
+                reactionTailType: ReactionTailType.inside,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -486,41 +521,22 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     final dy = _fanSlotDy[slot] + overflowDepth;
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
-    final cardHeight = baseCardHeight * scale;
     // Scale-center so smaller cards don't poke out past the fan spread.
     final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
     final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;
 
-    final card = _buildCardContent(
+    return _slotCard(
       attachment: attachment,
       attachmentIndex: attachmentIndex,
       isCurrent: isCurrent,
-      ignorePointer: !isCurrent,
-    );
-
-    return AnimatedPositioned(
-      key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
       top: 1 + dy,
       left: fromLeft + dragOffset,
-      child: SizedBox(
-        width: cardWidth,
-        height: cardHeight,
-        child: Transform.rotate(
-          angle: angle.toDouble() + dragRotate,
-          alignment: Alignment.bottomLeft,
-          child: isCurrent
-              ? card
-              : GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _jumpTo(attachmentIndex),
-                  child: card,
-                ),
-        ),
-      ),
+      width: cardWidth,
+      height: baseCardHeight * scale,
+      angle: angle.toDouble() + dragRotate,
+      pivot: Alignment.bottomLeft,
     );
   }
 
@@ -533,43 +549,21 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   }) {
     // Mirror of the one-sided fan (negative dx/angle, opposite pivot); opacity only is past-specific.
     final slot = slotIndex.clamp(1, _visibleFanSlots - 1);
-    final angle = -_fanSlotAngle[slot];
     final scale = _fanSlotScale[slot];
-    final dy = _fanSlotDy[slot];
-    final opacity = _pastSlotOpacity[(slot - 1).clamp(0, _pastSlotOpacity.length - 1)];
     final cardWidth = baseCardWidth * scale;
-    final cardHeight = baseCardHeight * scale;
-    final slotDx = _fanSlotDx[slot];
-    final fromLeft = -slotDx + ((baseCardWidth - cardWidth) / 2);
+    final fromLeft = -_fanSlotDx[slot] + ((baseCardWidth - cardWidth) / 2);
 
-    return AnimatedPositioned(
-      key: ValueKey(attachment.guid ?? attachment.id ?? '${attachment.transferName}'),
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      top: 1 + dy,
+    return _slotCard(
+      attachment: attachment,
+      attachmentIndex: attachmentIndex,
+      isCurrent: false,
+      top: 1 + _fanSlotDy[slot],
       left: fromLeft,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 180),
-        opacity: opacity,
-        child: SizedBox(
-          width: cardWidth,
-          height: cardHeight,
-          child: Transform.rotate(
-            angle: angle.toDouble(),
-            alignment: Alignment.bottomRight,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _jumpTo(attachmentIndex),
-              child: _buildCardContent(
-                attachment: attachment,
-                attachmentIndex: attachmentIndex,
-                isCurrent: false,
-                ignorePointer: true,
-              ),
-            ),
-          ),
-        ),
-      ),
+      width: cardWidth,
+      height: baseCardHeight * scale,
+      angle: -_fanSlotAngle[slot],
+      pivot: Alignment.bottomRight,
+      opacity: _pastSlotOpacity[(slot - 1).clamp(0, _pastSlotOpacity.length - 1)],
     );
   }
 }

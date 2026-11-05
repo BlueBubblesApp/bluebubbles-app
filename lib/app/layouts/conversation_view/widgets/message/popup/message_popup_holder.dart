@@ -28,8 +28,8 @@ class MessagePopupHolder extends StatefulWidget {
   final ConversationViewController cvController;
   final bool isEditing;
 
-  /// When false, skips the [GestureDetector] and passes [child] through unchanged.
-  /// Used when deferring gestures to a descendant (e.g. collection cards).
+  /// When false, the [GestureDetector] registers no callbacks, so gestures fall through to descendants (e.g.
+  /// collection cards). The widget tree is the same either way, so toggling this never remounts [child].
   final bool enableGestures;
 
   @override
@@ -159,20 +159,21 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.enableGestures) return widget.child;
-
+    // Same tree whether or not gestures are enabled: collection cards flip enableGestures as they move to and
+    // from the front of the fan, and returning the bare child here would remount the media under it each time.
+    final disabled = !widget.enableGestures || widget.isEditing;
     return Obx(() {
       final isTempMessage = widget.controller.isSending.value;
       return GestureDetector(
         key: globalKey,
-        onDoubleTap: widget.isEditing
+        onDoubleTap: disabled
             ? null
             : SettingsSvc.settings.doubleTapForDetails.value || isTempMessage
                 ? () => openPopup()
                 : SettingsSvc.settings.enableQuickTapback.value && widget.cvController.chat.isIMessage
                     ? () => sendTapback(null, widget.part.part)
                     : null,
-        onLongPress: widget.isEditing
+        onLongPress: disabled
             ? null
             : SettingsSvc.settings.doubleTapForDetails.value &&
                     SettingsSvc.settings.enableQuickTapback.value &&
@@ -180,7 +181,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                     !isTempMessage
                 ? () => sendTapback(null, widget.part.part)
                 : () => openPopup(),
-        onSecondaryTapUp: widget.isEditing
+        onSecondaryTapUp: disabled
             ? null
             : (details) async {
                 if (!kIsWeb && !kIsDesktop) return;
