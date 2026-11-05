@@ -241,20 +241,174 @@ class AttachmentsService extends GetxService {
     return c;
   }
 
-  /// Saves each of [attachments] to the device (e.g. a "download all" action).
+  /// Saves [attachments] to the device as one batch (a "download all" / "save selected" action).
   ///
-  /// Attachments already on disk are saved right away; the rest are downloaded first and saved when their
-  /// download completes (joining any download already in progress). Attachments that can't be fetched from
-  /// the server (still sending, or no GUID) and have no local file are skipped.
-  void saveAllToDisk(Iterable<Attachment> attachments) {
-    for (final attachment in attachments) {
-      final content = getContent(attachment, autoDownload: false);
-      if (content is PlatformFile) {
-        unawaited(saveToDisk(content));
-      } else if (attachment.guid != null && !attachment.guid!.startsWith("temp")) {
-        AttachmentDownloader.startDownload(attachment, onComplete: (file) => saveToDisk(file));
+  /// Asks for a destination folder once, if this platform asks at all: always on desktop, and on Android only
+  /// with "Ask where to save". Any attachment that isn't on the device yet is downloaded first (joining a
+  /// download already in progress). Everything is then saved and one summary snackbar is shown. Attachments
+  /// that can't be fetched from the server (still sending, or no GUID) and have no local file count as failed.
+  ///
+  /// A single attachment goes through [saveToDisk], so it keeps the one-file flow (desktop "Save As").
+  Future<void> saveAllToDisk(Iterable<Attachment> attachments) async {
+    final list = attachments.toList();
+    if (list.isEmpty) return;
+
+    if (list.length == 1 || kIsWeb) {
+      // Web (deprecated) can only hand the browser one download per file.
+      for (final attachment in list) {
+        final file = await _resolveForSave(attachment);
+        if (file != null) await saveToDisk(file, isDocument: _isDocument(attachment));
+      }
+      return;
+    }
+
+    String? directory;
+    if (kIsDesktop) {
+      directory = await _pickSaveDirectory(initialDirectory: await FilesystemSvc.downloadsDirectory);
+      if (directory == null) return;
+    } else if (SettingsSvc.settings.askWhereToSave.value) {
+      directory = await _pickSaveDirectory(initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value);
+      if (directory == null) return;
+    }
+
+    final pending = list.where((a) => getContent(a, autoDownload: false) is! PlatformFile).length;
+    if (pending > 0) {
+      showSnackbar('Downloading', 'Downloading ${_attachmentCount(pending)} before saving…', durationMs: 3000);
+    }
+    final files = await Future.wait(list.map(_resolveForSave));
+
+    var saved = 0;
+    var savedToGallery = false;
+    String? savedToFolder;
+    for (int i = 0; i < list.length; i++) {
+      final file = files[i];
+      if (file == null) continue;
+      try {
+        if (kIsDesktop) {
+          await _copyIntoDirectory(file, directory!);
+          savedToFolder = directory;
+        } else {
+          final folder = await _writeOnMobile(file, directory: directory, isDocument: _isDocument(list[i]));
+          if (folder == null) {
+            savedToGallery = true;
+          } else {
+            savedToFolder = folder;
+          }
+        }
+        saved++;
+      } catch (e, s) {
+        Logger.error('Failed to save attachment ${list[i].guid}', error: e, trace: s, tag: 'AttachmentsService');
       }
     }
+
+    final failed = list.length - saved;
+    if (saved == 0) {
+      return showSnackbar('Error', 'Failed to save ${_attachmentCount(list.length)}!', type: SnackbarType.error);
+    }
+    final where = savedToGallery && savedToFolder != null
+        ? ''
+        : savedToGallery
+            ? ' to gallery'
+            : ' to ${FilesystemSvc.toDisplayPath(savedToFolder!)}';
+    final failedNote = failed > 0 ? ' ($failed failed)' : '';
+    final folder = savedToFolder;
+    showSnackbar(
+      'Success',
+      'Saved ${_attachmentCount(saved)}$where!$failedNote',
+      durationMs: 3000,
+      actionLabel: kIsDesktop && folder != null ? 'OPEN FOLDER' : null,
+      onAction: kIsDesktop && folder != null ? () => launchUrl(Uri.directory(folder)) : null,
+    );
+  }
+
+  static String _attachmentCount(int n) => n == 1 ? '1 attachment' : '$n attachments';
+
+  static bool _isDocument(Attachment a) => a.mimeStart != 'image' && a.mimeStart != 'video';
+
+  /// The attachment's file, downloading it first when it isn't on the device. Null when it can't be fetched
+  /// or the download fails.
+  Future<PlatformFile?> _resolveForSave(Attachment attachment) {
+    final content = getContent(attachment, autoDownload: false);
+    if (content is PlatformFile) return Future.value(content);
+    if (attachment.guid == null || attachment.guid!.startsWith("temp")) return Future.value(null);
+
+    final completer = Completer<PlatformFile?>();
+    AttachmentDownloader.startDownload(
+      attachment,
+      onComplete: (PlatformFile? file) {
+        if (!completer.isCompleted) completer.complete(file);
+      },
+      onError: () {
+        if (!completer.isCompleted) completer.complete(null);
+      },
+    );
+    return completer.future;
+  }
+
+  Future<String?> _pickSaveDirectory({String? initialDirectory}) => FilePicker.getDirectoryPath(
+        initialDirectory: initialDirectory,
+        dialogTitle: 'Choose a location to save these files',
+        windowsOptions: const WindowsOptions(lockParentWindow: true),
+        linuxOptions: const LinuxOptions(lockParentWindow: true),
+      );
+
+  /// Copies [file] into [directory] without overwriting: a name already taken gets " (1)", " (2)", ...
+  Future<void> _copyIntoDirectory(PlatformFile file, String directory) async {
+    final target = _availablePath(directory, file.name);
+    if (file.path != null) {
+      await File(file.path!).copy(target);
+    } else {
+      await File(target).writeAsBytes(file.bytes!);
+    }
+  }
+
+  static String _availablePath(String directory, String name) {
+    var candidate = join(directory, name);
+    final stem = basenameWithoutExtension(name);
+    final ext = extension(name);
+    for (var i = 1; File(candidate).existsSync(); i++) {
+      candidate = join(directory, '$stem ($i)$ext');
+    }
+    return candidate;
+  }
+
+  /// Android save without any prompt or snackbar. Returns the folder written to, or null when the file went to
+  /// the gallery. With [directory] (a folder the user picked) the file is written there; otherwise media goes to
+  /// the gallery (`.mov` to the pictures folder) and documents to the documents folder from settings.
+  Future<String?> _writeOnMobile(PlatformFile file, {String? directory, bool isDocument = false}) async {
+    String savePath;
+    if (directory != null) {
+      savePath = directory;
+    } else if (file.name.toLowerCase().endsWith(".mov")) {
+      savePath = join(FilesystemService.androidDownloadsPath, SettingsSvc.settings.autoSavePicsLocation.value);
+    } else {
+      if (!isDocument) {
+        try {
+          if (file.path == null && file.bytes != null) {
+            await SaverGallery.saveImage(
+              file.bytes!,
+              quality: 100,
+              fileName: file.name,
+              albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
+              skipIfExists: false,
+            );
+          } else {
+            await SaverGallery.saveFile(
+              filePath: file.path!,
+              fileName: file.name,
+              albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
+              skipIfExists: false,
+            );
+          }
+          return null;
+        } catch (_) {}
+      }
+      savePath = SettingsSvc.settings.autoSaveDocsLocation.value;
+    }
+
+    final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
+    await File(join(savePath, file.name)).writeAsBytes(bytes);
+    return savePath;
   }
 
   Future<void> saveToDisk(PlatformFile file, {bool isAutoDownload = false, bool isDocument = false}) async {
@@ -296,53 +450,25 @@ class AttachmentsService extends GetxService {
         type: SnackbarType.success,
       );
     } else {
-      String? savePath;
-
+      String? directory;
       if (SettingsSvc.settings.askWhereToSave.value && !isAutoDownload) {
-        savePath = await FilePicker.getDirectoryPath(
+        directory = await FilePicker.getDirectoryPath(
           initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value,
           dialogTitle: 'Choose a location to save this file',
           windowsOptions: const WindowsOptions(lockParentWindow: true),
           linuxOptions: const LinuxOptions(lockParentWindow: true),
         );
-      } else {
-        if (file.name.toLowerCase().endsWith(".mov")) {
-          savePath = join(FilesystemService.androidDownloadsPath, SettingsSvc.settings.autoSavePicsLocation.value);
-        } else {
-          if (!isDocument) {
-            try {
-              if (file.path == null && file.bytes != null) {
-                await SaverGallery.saveImage(
-                  file.bytes!,
-                  quality: 100,
-                  fileName: file.name,
-                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
-                  skipIfExists: false,
-                );
-              } else {
-                await SaverGallery.saveFile(
-                  filePath: file.path!,
-                  fileName: file.name,
-                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
-                  skipIfExists: false,
-                );
-              }
-              // Auto-download saves every incoming attachment, so only confirm saves the user asked for.
-              if (!isAutoDownload) showSnackbar('Success', 'Saved attachment to gallery!', type: SnackbarType.success);
-              return;
-            } catch (_) {}
-          }
-          savePath = SettingsSvc.settings.autoSaveDocsLocation.value;
-        }
+        if (directory == null) return;
       }
 
-      if (savePath != null) {
-        final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
-        await File(join(savePath, file.name)).writeAsBytes(bytes);
-        if (!isAutoDownload) {
-          showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(savePath)} folder!',
-              type: SnackbarType.success);
-        }
+      final folder = await _writeOnMobile(file, directory: directory, isDocument: isDocument);
+      // Auto-download saves every incoming attachment, so only confirm saves the user asked for.
+      if (isAutoDownload) return;
+      if (folder == null) {
+        showSnackbar('Success', 'Saved attachment to gallery!', type: SnackbarType.success);
+      } else {
+        showSnackbar('Success', 'Saved attachment to ${FilesystemSvc.toDisplayPath(folder)} folder!',
+            type: SnackbarType.success);
       }
     }
   }
