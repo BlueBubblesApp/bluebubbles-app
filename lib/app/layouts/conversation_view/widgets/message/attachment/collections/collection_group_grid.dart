@@ -11,6 +11,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 
 typedef _CellBuilder = Widget Function(int index, double width, double height, int? moreCount);
@@ -52,7 +53,7 @@ class CollectionGroupGrid extends StatefulWidget {
   State<CollectionGroupGrid> createState() => _CollectionGroupGridState();
 }
 
-class _CollectionGroupGridState extends State<CollectionGroupGrid> {
+class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHelpers {
   static const double _gap = 2.0;
   static const double _bannerAspect = 4 / 3;
   static const Duration _expandAnimDuration = Duration(milliseconds: 320);
@@ -234,15 +235,15 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   @override
   Widget build(BuildContext context) {
     final collection = MediaCollection.forPart(context, collectionPart: messagePart, cvController: cvController);
-    return MediaCollectionScope(collection: collection, child: _buildGrid(context, collection));
+    // Obx: the layout reads isFromMe, subject and parts (author-edge corners, title alignment).
+    return MediaCollectionScope(collection: collection, child: Obx(() => _buildGrid(context, collection)));
   }
 
   Widget _buildGrid(BuildContext context, MediaCollection collection) {
     final messageState = collection.messageState;
     final isFromMe = messageState.isFromMe.value;
-    final isIos = SettingsSvc.settings.skin.value == Skins.iOS;
     // Connected author-edge corners match text-bubble TailClipper: Material/Samsung only.
-    final connectCorners = !isIos;
+    final connectCorners = !iOS;
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
       cardRadius: CollectionStyle.cardRadius,
@@ -265,16 +266,13 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
         gridWidth: gridWidth,
         moreCount: moreCount,
         expanded: _expanded,
-        cellBuilder: (index, width, height, cellMoreCount) => CollectionAttachmentCard(
+        cellBuilder: (index, width, height, cellMoreCount) => CollectionAttachmentCard.gridCell(
           attachment: _attachments[index],
           attachmentIndex: index,
           messagePart: messagePart,
           cvController: cvController,
           isEditing: isEditing,
           enableGestures: true,
-          hideReactions: true,
-          showCardShadow: false,
-          mediaClipBorderRadius: BorderRadius.zero,
         ),
         moreOverlayBuilder: (index, width, height, cellMoreCount) {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
@@ -293,9 +291,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
-                    fontWeight: SettingsSvc.settings.skin.value == Skins.Material
-                        ? FontWeight.w500
-                        : FontWeight.w300,
+                    fontWeight: material ? FontWeight.w500 : FontWeight.w300,
                   ),
                 ),
               ),
@@ -319,9 +315,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
             collectionPart: messagePart,
             attachmentIndex: index,
             tightOverhang: true,
-            tailType: SettingsSvc.settings.skin.value == Skins.iOS
-                ? ReactionTailType.inside
-                : ReactionTailType.standard,
+            tailType: iOS ? ReactionTailType.inside : ReactionTailType.standard,
           );
         },
       ),
@@ -488,7 +482,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
       height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: context.theme.colorScheme.surfaceContainerHighest,
           borderRadius: borderRadius,
           boxShadow: CollectionStyle.cardShadow(context),
         ),

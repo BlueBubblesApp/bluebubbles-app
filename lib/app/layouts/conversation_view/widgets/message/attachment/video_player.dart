@@ -23,7 +23,7 @@ import 'package:universal_io/io.dart';
 
 /// Sizes [child] like [AspectRatio], but never shrinks width to satisfy a
 /// height constraint (mirrors how image_viewer.dart sizes images) — a fixed
-/// parent height (e.g. the gallery fan card) would otherwise force a
+/// parent height (e.g. a collection stack card) would otherwise force a
 /// narrower box for portrait-ish videos than for images in the same slot.
 Widget _boundedAspectRatio({required double ratio, required Widget child}) {
   return LayoutBuilder(

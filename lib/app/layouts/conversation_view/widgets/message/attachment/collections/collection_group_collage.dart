@@ -53,7 +53,7 @@ class CollectionGroupCollage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageState = MessageStateScope.of(context);
-    final isIOS = SettingsSvc.settings.skin.value == Skins.iOS;
+    final isIOS = context.iOS;
     // Calculated against screen width; maxCollageWidth caps size on larger screens.
     final cardWidth = math.min(
       NavigationSvc.width(context) * CollectionStyle.cardWidthFactor,

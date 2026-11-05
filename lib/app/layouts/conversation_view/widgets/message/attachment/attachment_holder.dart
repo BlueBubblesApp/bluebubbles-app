@@ -159,7 +159,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
   ///
   /// Null when the size isn't knowable or reserving it would be wrong:
   /// - dimensions haven't been extracted yet (nothing to reserve),
-  /// - reply bubbles and gallery cards, which impose their own geometry,
+  /// - reply bubbles and collection cards, which impose their own geometry,
   /// - non-images. Video is deliberately excluded: `VideoPlayer` doesn't size
   ///   itself from [Attachment.displayBox], so reserving that box would just
   ///   move the jump rather than remove it.

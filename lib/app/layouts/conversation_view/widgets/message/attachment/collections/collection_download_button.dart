@@ -2,7 +2,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// Circular download control for incoming iOS media collections.
 class CollectionDownloadButton extends StatelessWidget {
@@ -51,8 +51,8 @@ class CollectionDownloadButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final outline = Theme.of(context).colorScheme.outline.withValues(alpha: 0.25);
+    final primary = context.theme.colorScheme.primary;
+    final outline = context.theme.colorScheme.outline.withValues(alpha: 0.25);
     return GestureDetector(
       onTap: () => AttachmentsSvc.saveAllToDisk(attachments),
       child: Container(

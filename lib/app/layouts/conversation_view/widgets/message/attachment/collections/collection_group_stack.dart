@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 /// iOS fan stack for multi-attachment media collections.
 class CollectionGroupStack extends StatefulWidget {
@@ -64,7 +65,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
   List<Attachment> get _attachments => widget.messagePart.attachments;
 
-  bool get _isFromMe => MessageStateScope.messageOf(context).isFromMe == true;
+  bool get _isFromMe => MessageStateScope.of(context).isFromMe.value;
 
   @override
   void initState() {
@@ -78,7 +79,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     _dragStartPosition = null;
     _velocityTracker = null;
     _hapticGivenForCurrentEnd = false;
-    widget.cvController.isGalleryDragging = false;
+    widget.cvController.isCollectionDragging = false;
     super.dispose();
   }
 
@@ -188,7 +189,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       collectionPart: widget.messagePart,
       cvController: widget.cvController,
     );
-    return MediaCollectionScope(collection: collection, child: _buildStack(context, collection));
+    // Obx: the layout reads isFromMe (fan alignment, title side, download button side).
+    return MediaCollectionScope(collection: collection, child: Obx(() => _buildStack(context, collection)));
   }
 
   Widget _buildStack(BuildContext context, MediaCollection collection) {
@@ -284,7 +286,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     }
 
     // Listener wraps only the card canvas so pointer-down on the label does not
-    // set isGalleryDragging or claim the horizontal swipe for fan navigation.
+    // set isCollectionDragging or claim the horizontal swipe for fan navigation.
     final fanBody = CollectionDownloadButton.wrap(
       isFromMe: _isFromMe,
       contentWidth: fanCanvasWidth,
@@ -329,12 +331,12 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
               // GestureDetector ancestor in MessagesView) doesn't also react to the
               // same pointer — see conversation_view_controller.dart's field doc.
-              widget.cvController.isGalleryDragging = true;
+              widget.cvController.isCollectionDragging = true;
             },
             onPointerMove: (event) {
               if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
               // Bail out of fan drag when the pointer is clearly vertical so the
-              // conversation list can scroll and isGalleryDragging does not stick.
+              // conversation list can scroll and isCollectionDragging does not stick.
               final start = _dragStartPosition;
               if (start != null) {
                 final total = event.position - start;
@@ -343,7 +345,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                   _dragStartPosition = null;
                   _velocityTracker = null;
                   _hapticGivenForCurrentEnd = false;
-                  widget.cvController.isGalleryDragging = false;
+                  widget.cvController.isCollectionDragging = false;
                   if (mounted && _dragDx != 0) {
                     setState(() {
                       _dragDx = 0;
@@ -360,7 +362,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               _activeDragPointer = null;
               _dragStartPosition = null;
               _hapticGivenForCurrentEnd = false;
-              widget.cvController.isGalleryDragging = false;
+              widget.cvController.isCollectionDragging = false;
               final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
               _velocityTracker = null;
               if (_attachments.length <= 1) return;
@@ -372,7 +374,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               _dragStartPosition = null;
               _velocityTracker = null;
               _hapticGivenForCurrentEnd = false;
-              widget.cvController.isGalleryDragging = false;
+              widget.cvController.isCollectionDragging = false;
               if (_attachments.length <= 1) return;
               if (mounted) {
                 setState(() {
