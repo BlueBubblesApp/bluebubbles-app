@@ -442,10 +442,9 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
       // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
       // from the start-aligned label — no reservation (avoids a large title gap).
-      // Empty messageParts: only this collection's own tapbacks count, never whole-message reactions.
+      // Counts this collection's own tapbacks (every raw id it covers), not tapbacks on other bubbles.
       spacing: _isFromMe
           ? ReactionSpacing(
-              messageParts: const [],
               part: widget.messagePart,
               minHeightWhenNoReactions: 4,
             )
@@ -461,7 +460,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required bool ignorePointer,
   }) {
     return CollectionAttachmentCard(
-      attachment: attachment,
       attachmentIndex: attachmentIndex,
       messagePart: widget.messagePart,
       ignorePointer: ignorePointer,

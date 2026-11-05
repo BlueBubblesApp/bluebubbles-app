@@ -176,8 +176,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
         // through to the full parts list — that would show the whole message.
         final targetingPart = widget.isReplyThread && widget.replyPart != null;
         final matchedPart = targetingPart ? controller.partById(widget.replyPart!) : null;
-        final rawMessageParts = targetingPart
-            ? [
+        // displayParts is memoized, so collection parts keep their identity across rebuilds of this Obx.
+        final messageParts = targetingPart
+            ? MessagePart.collapseMediaCollections([
                 if (matchedPart != null)
                   matchedPart
                 else
@@ -185,9 +186,8 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                     part: widget.replyPart!,
                     text: "This message is no longer available",
                   ),
-              ]
-            : controller.parts.toList();
-        final messageParts = MessagePart.collapseMediaCollections(rawMessageParts);
+              ])
+            : controller.displayParts;
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
         // always safe to access, even when parts are added after initState.
@@ -309,7 +309,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                             child: e.isMediaCollection
                                                 ? SizedBox(height: message.isFromMe! ? 8 : 0)
                                                 : ReactionSpacing(
-                                                    messageParts: messageParts,
                                                     part: e,
                                                     minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
                                                   ),
@@ -325,7 +324,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                   : 0,
                                             )
                                           : ReactionSpacing(
-                                              messageParts: messageParts,
                                               part: e,
                                               minHeightWhenNoReactions: iOS &&
                                                       !widget.isReplyThread &&
@@ -413,7 +411,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                     ),
                                                   if (samsung)
                                                     SamsungTimestampObserver(
-                                                      messageParts: messageParts,
                                                       part: e,
                                                       cvController: widget.cvController,
                                                     ),
@@ -550,7 +547,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                 // associated with just one image/video in the collection.
                                                                 if (!e.isMediaCollection)
                                                                   MessageReactions(
-                                                                    messageParts: messageParts,
                                                                     part: e,
                                                                     chatGuid: chat.guid,
                                                                   ),
@@ -559,7 +555,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                             // Stickers are in the outer Stack so they contribute to
                                                             // the message holder's size but don't affect bubble alignment
                                                             StickerObserver(
-                                                              messageParts: messageParts,
                                                               part: e,
                                                               cvController: widget.cvController,
                                                             ),

@@ -116,7 +116,6 @@ class CollectionGroupCollage extends StatelessWidget {
     bool isIOS,
   ) {
     final card = CollectionAttachmentCard(
-      attachment: _attachments[index],
       attachmentIndex: index,
       messagePart: messagePart,
       cvController: cvController,

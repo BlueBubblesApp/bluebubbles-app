@@ -69,7 +69,6 @@ class CollectionAttachmentCard extends StatelessWidget {
   /// A free-standing card (collage, stack): skin radius, iOS shadow, and its own tapbacks.
   const CollectionAttachmentCard({
     super.key,
-    required this.attachment,
     required this.attachmentIndex,
     required this.messagePart,
     required this.cvController,
@@ -85,7 +84,6 @@ class CollectionAttachmentCard extends StatelessWidget {
   /// and shadow, and it paints every cell's tapbacks in one overlay above all cells so they aren't clipped.
   const CollectionAttachmentCard.gridCell({
     super.key,
-    required this.attachment,
     required this.attachmentIndex,
     required this.messagePart,
     required this.cvController,
@@ -97,7 +95,7 @@ class CollectionAttachmentCard extends StatelessWidget {
         showCardShadow = false,
         mediaClipBorderRadius = BorderRadius.zero;
 
-  final Attachment attachment;
+  /// Index into [messagePart]'s attachments.
   final int attachmentIndex;
   final MessagePart messagePart;
   final ConversationViewController cvController;
@@ -121,21 +119,6 @@ class CollectionAttachmentCard extends StatelessWidget {
   /// Media clip radius; null uses [CollectionStyle.cardBorderRadius]. Tapbacks are never clipped.
   final BorderRadius? mediaClipBorderRadius;
 
-  int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
-
-  MessagePart _scopedPart() {
-    return MessagePart(
-      part: _partIdForAttachment(),
-      attachments: [attachment],
-      shouldRedact: false,
-      text: null,
-      subject: null,
-      mentions: const [],
-      edits: const [],
-      isUnsent: false,
-    );
-  }
-
   /// [MessagePopupHolder] re-renders its child inside the popup route, outside the layout's
   /// [MediaCollectionScope]. Re-provide it (as the holder does for ChatStateScope) so fullscreen opened
   /// from the popup preview still pages through the collection.
@@ -147,7 +130,9 @@ class CollectionAttachmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scopedPart = _scopedPart();
+    // The attachment's own single-attachment part, built once with the collection (stable identity, source
+    // part's redaction / unsent flags) — what the popup and AttachmentHolder see.
+    final scopedPart = messagePart.itemPartFor(attachmentIndex);
     // Card owns shadow + clip so AttachmentHolder can stay fill-only.
     // Reactions stay outside the clip so tapbacks can overflow.
     final clipRadius = mediaClipBorderRadius ?? CollectionStyle.cardBorderRadius;

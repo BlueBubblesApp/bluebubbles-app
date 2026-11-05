@@ -14,7 +14,7 @@ Renders the tapback emoji row that appears above or below a message bubble.
 
 Reactions come from `MessageState.associatedMessages` (an `RxList<Message>`). Each associated message whose `associatedMessageType` is a tapback (`ReactionTypes.isTapback`, which also accepts removals like `"-love"`) is a reaction.
 
-Don't filter by hand — use `MessageState.tapbacksForBubble(part, bubbleCount:)` for a bubble (it matches every part id a collapsed collection covers) or `MessageState.tapbacksForPartId(id)` for a single attachment.
+Don't filter by hand — use `MessageState.tapbacksForBubble(part)` for a bubble (it matches every part id a collapsed collection covers, and shows every tapback when `displayParts` is a single bubble) or `MessageState.tapbacksForPartId(id)` for a single attachment.
 
 Use `ReactionTypes` string constants (from `lib/helpers/ui/`) — never hardcode reaction type strings.
 

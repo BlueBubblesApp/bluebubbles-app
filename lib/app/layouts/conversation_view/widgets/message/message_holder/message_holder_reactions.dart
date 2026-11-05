@@ -9,20 +9,18 @@ import 'package:get/get.dart';
 /// Isolated widget for reaction display
 /// Only rebuilds when MessageState.associatedMessages changes
 ///
-/// Not used for media-collection parts on iOS skin — those attach a reaction
-/// per attachment inside [CollectionGroupStack] instead, since a collection can
-/// bundle several originally-separate message parts (see
+/// Not used for media-collection parts on any skin — those show tapbacks per
+/// attachment (`CollectionAttachmentReactions`), since a collection can bundle
+/// several originally-separate message parts (see
 /// MessagePart.collapseMediaCollections) and a tapback is only ever
 /// associated with one of them.
 class ReactionObserver extends StatelessWidget {
   const ReactionObserver({
     super.key,
-    required this.messageParts,
     required this.part,
     required this.chatGuid,
   });
 
-  final List<MessagePart> messageParts;
   final MessagePart part;
   final String chatGuid;
 
@@ -32,7 +30,7 @@ class ReactionObserver extends StatelessWidget {
     return Obx(() {
       // Directly observe MessageState for all reactive data
       final isFromMe = state.isFromMe.value;
-      final reactionList = state.tapbacksForBubble(part, bubbleCount: messageParts.length);
+      final reactionList = state.tapbacksForBubble(part);
 
       return Positioned(
         top: ReactionHolder.bubbleOverhangTop,
@@ -52,12 +50,10 @@ class ReactionObserver extends StatelessWidget {
 class StickerObserver extends StatelessWidget {
   const StickerObserver({
     super.key,
-    required this.messageParts,
     required this.part,
     required this.cvController,
   });
 
-  final List<MessagePart> messageParts;
   final MessagePart part;
   final ConversationViewController cvController;
 
@@ -65,10 +61,7 @@ class StickerObserver extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = MessageStateScope.of(context);
     return Obx(() {
-      final allStickers = state.associatedMessages.where((e) => e.associatedMessageType == "sticker").toList();
-      final stickersForPart = messageParts.length == 1
-          ? allStickers
-          : allStickers.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)).toList();
+      final stickersForPart = state.stickersForBubble(part);
 
       if (stickersForPart.isEmpty) return const SizedBox.shrink();
 
@@ -85,12 +78,10 @@ class StickerObserver extends StatelessWidget {
 class ReactionSpacing extends StatelessWidget {
   const ReactionSpacing({
     super.key,
-    required this.messageParts,
     required this.part,
     this.minHeightWhenNoReactions = 0,
   });
 
-  final List<MessagePart> messageParts;
   final MessagePart part;
   final double minHeightWhenNoReactions;
 
@@ -100,7 +91,7 @@ class ReactionSpacing extends StatelessWidget {
       final state = MessageStateScope.of(context);
       // Reads associatedMessages, so this rebuilds when tapbacks change. Collapsed collection spans are
       // matched via MessagePart.coversPartId.
-      if (state.tapbacksForBubble(part, bubbleCount: messageParts.length).isNotEmpty) {
+      if (state.tapbacksForBubble(part).isNotEmpty) {
         return const SizedBox(height: 12.5);
       }
 

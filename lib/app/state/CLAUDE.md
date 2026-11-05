@@ -42,6 +42,11 @@ Also owns `attachmentStates: Map<String, AttachmentState>` keyed by attachment G
 connect styling) and `hasSubjectAbove` rather than comparing `part.part` against `parts.length`. All of them treat a
 collapsed media collection (`MessagePart.collapseMediaCollections`) as covering every raw id in its span.
 
+`displayParts` is `parts` as rendered (media runs collapsed into collection bubbles). It is memoized on the raw parts
+and the flags that affect collapsing, so it returns the same `MessagePart` instances across rebuilds — read it instead
+of calling `collapseMediaCollections` in a widget. `tapbacksForBubble` / `stickersForBubble` use its length to decide
+whether the message is a single bubble.
+
 ## AttachmentState Observable Fields
 | Field | Type | Driven by |
 |-------|------|-----------|

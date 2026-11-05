@@ -14,6 +14,7 @@ class MessagePart {
     required this.part,
     this.shouldRedact = false,
     this.attachmentPartIndices,
+    this.collectionItems,
   }) {
     if (attachments.isEmpty) attachments = [];
     if (mentions.isEmpty) mentions = [];
@@ -50,14 +51,30 @@ class MessagePart {
   List<MessagePart> edits;
   int part;
 
-  /// For collection parts created by collapsing consecutive media-only parts,
-  /// maps each attachment (by index) to its original message-part id.
-  /// Null for non-collection parts or single-source-part collections.
+  /// For collection parts built by [collapseMediaCollections], maps each attachment (by index) to its
+  /// original message-part id. Null for every part that didn't come out of a collapse.
   List<int>? attachmentPartIndices;
+
+  /// For collection parts built by [collapseMediaCollections], one single-attachment part per attachment
+  /// (by index). An attachment that was alone in its raw part reuses that raw part, so its flags
+  /// ([shouldRedact], [isUnsent]) stay live; the rest carry their source part's flags. Null otherwise.
+  List<MessagePart>? collectionItems;
 
   /// Returns the original message-part id for the attachment at [index].
   /// Falls back to [part] if [attachmentPartIndices] is not set.
   int partIdForAttachment(int index) => attachmentPartIndices?[index] ?? part;
+
+  /// The single-attachment part for the attachment at [index] of this collection: what a collection card
+  /// hands to [AttachmentHolder] and the per-card popup. Prefer this over building a part per build, so the
+  /// same instance comes back until the message's parts change.
+  MessagePart itemPartFor(int index) =>
+      collectionItems?[index] ??
+      MessagePart(
+        part: partIdForAttachment(index),
+        attachments: [attachments[index]],
+        shouldRedact: shouldRedact,
+        isUnsent: isUnsent,
+      );
 
   /// Whether this bubble covers the raw message-part id [partId].
   ///
@@ -82,7 +99,11 @@ class MessagePart {
   ///
   /// The collapsed part keeps the first raw id as [part] and records every attachment's original id in
   /// [attachmentPartIndices], so [coversPartId] / [coveredPartIds] still match reactions, threads and
-  /// trailing-bubble checks against any id in the span. Non-media parts pass through unchanged.
+  /// trailing-bubble checks against any id in the span. It also gets [collectionItems], one part per
+  /// attachment. Non-media parts pass through unchanged.
+  ///
+  /// Every call builds new collection parts. In the conversation view read [MessageState.displayParts], which
+  /// memoizes this so widgets keyed on part identity don't rebuild on every tick.
   static List<MessagePart> collapseMediaCollections(List<MessagePart> parts) {
     final collapsed = <MessagePart>[];
     int i = 0;
@@ -94,14 +115,23 @@ class MessagePart {
         continue;
       }
 
-      final groupedAttachments = <Attachment>[...current.attachments];
-      final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
-      int j = i + 1;
+      final groupedAttachments = <Attachment>[];
+      final groupedPartIndices = <int>[];
+      final items = <MessagePart>[];
+      int j = i;
       while (j < parts.length) {
         final next = parts[j];
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
+        items.addAll(next.attachments.length == 1
+            ? [next]
+            : next.attachments.map((a) => MessagePart(
+                  part: next.part,
+                  attachments: [a],
+                  shouldRedact: next.shouldRedact,
+                  isUnsent: next.isUnsent,
+                )));
         j++;
       }
 
@@ -116,6 +146,7 @@ class MessagePart {
           edits: const [],
           isUnsent: current.isUnsent,
           attachmentPartIndices: groupedPartIndices,
+          collectionItems: items,
         ));
       } else {
         collapsed.add(current);

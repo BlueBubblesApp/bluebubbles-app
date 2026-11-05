@@ -12,12 +12,10 @@ import 'package:get/get.dart';
 class SamsungTimestampObserver extends StatelessWidget {
   const SamsungTimestampObserver({
     super.key,
-    required this.messageParts,
     required this.part,
     required this.cvController,
   });
 
-  final List<MessagePart> messageParts;
   final MessagePart part;
   final ConversationViewController cvController;
 
@@ -27,7 +25,7 @@ class SamsungTimestampObserver extends StatelessWidget {
     return Obx(() {
       final isFromMe = ms.isFromMe.value;
       return Padding(
-        padding: ms.tapbacksForBubble(part, bubbleCount: messageParts.length).isNotEmpty
+        padding: ms.tapbacksForBubble(part).isNotEmpty
             ? EdgeInsets.only(left: isFromMe ? 0 : 10, right: isFromMe ? 20 : 0)
             : const EdgeInsets.only(right: 10),
         child: MessageTimestamp(controller: ms, cvController: cvController),

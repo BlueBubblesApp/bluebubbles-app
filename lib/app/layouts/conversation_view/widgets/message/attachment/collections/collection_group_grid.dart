@@ -171,7 +171,6 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
     final moreCount = cell.moreCount;
     return [
       CollectionAttachmentCard.gridCell(
-        attachment: _attachments[cell.index],
         attachmentIndex: cell.index,
         messagePart: messagePart,
         cvController: cvController,
