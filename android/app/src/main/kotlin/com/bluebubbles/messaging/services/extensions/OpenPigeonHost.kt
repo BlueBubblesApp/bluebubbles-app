@@ -43,6 +43,10 @@ object OpenPigeonHost {
     @Volatile private var channel: MethodChannel? = null
     private var extension: CompletableDeferred<IMadridExtension>? = null
 
+    /// Views on screen, which are loaded again if OpenPigeon's process dies: its sessions die with it, and a view's
+    /// tap would open a game it no longer knows. Main thread only.
+    private val views = mutableSetOf<ExtensionView>()
+
     fun register(engine: FlutterEngine, context: Context) {
         val app = context.applicationContext
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, "com.bluebubbles.messaging/openpigeon").apply {
@@ -89,15 +93,16 @@ object OpenPigeonHost {
                 deferred.complete(IMadridExtension.Stub.asInterface(binder))
             }
 
-            override fun onServiceDisconnected(name: ComponentName?) = drop()
-            override fun onBindingDied(name: ComponentName?) = drop()
-            override fun onNullBinding(name: ComponentName?) = drop()
+            override fun onServiceDisconnected(name: ComponentName?) = drop(reload = true)
+            override fun onBindingDied(name: ComponentName?) = drop(reload = true)
+            override fun onNullBinding(name: ComponentName?) = drop(reload = false)
 
-            private fun drop() {
+            private fun drop(reload: Boolean) {
                 reset(deferred)
                 try {
                     context.unbindService(this)
                 } catch (_: IllegalArgumentException) {}
+                if (reload) main.postDelayed({ views.toList().forEach { it.load() } }, 1_000)
             }
         }
         val bound = context.bindService(Intent().setClassName(PACKAGE, SERVICE), connection, Context.BIND_AUTO_CREATE)
@@ -203,17 +208,25 @@ object OpenPigeonHost {
         }
         private val messageHandle = messageHandle(chatGuid)
 
+        private val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
+        private val message = if (keyboard) null else madridMessage(args)
+
         init {
-            val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
-            val message = if (keyboard) null else madridMessage(args)
+            views.add(this)
+            load()
+            // A view that never arrives counts as a failure too
+            main.postDelayed({ if (container.childCount == 0) fail() }, 15_000)
+        }
+
+        /// Asks OpenPigeon for this view, which also (re)creates its session there.
+        fun load() {
+            if (disposed || failed) return
             withExtension(context.applicationContext, ::fail) {
                 show(
                     if (keyboard) it.keyboardOpened(viewCallback, keyboardHandle, userCount)
                     else it.getLiveView(viewCallback, message, messageHandle, userCount)
                 )
             }
-            // A view that never arrives counts as a failure too
-            main.postDelayed({ if (container.childCount == 0) fail() }, 15_000)
         }
 
         private fun show(views: RemoteViews?) {
@@ -243,6 +256,7 @@ object OpenPigeonHost {
 
         override fun dispose() {
             disposed = true
+            views.remove(this)
             if (keyboard) withExtension(context.applicationContext) { it.keyboardClosed() }
         }
     }
