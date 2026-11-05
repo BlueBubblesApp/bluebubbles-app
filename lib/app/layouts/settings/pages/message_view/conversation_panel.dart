@@ -1,4 +1,5 @@
 import 'package:audio_waveforms/audio_waveforms.dart' as aw;
+import 'package:bluebubbles/app/layouts/settings/pages/message_view/hover_actions_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/message_options_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/message_view/text_field_buttons_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
@@ -199,6 +200,16 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                       subtitle: "Choose which buttons appear next to the message text field, and their order",
                       onTap: () {
                         NavigationSvc.pushSettings(context, const TextFieldButtonsPanel());
+                      },
+                      trailing: const NextButton(),
+                    ),
+                  if (kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (kIsDesktop)
+                    SettingsTile(
+                      title: "Hover Actions",
+                      subtitle: "Choose which quick actions appear beside a message when hovering over it, and their order",
+                      onTap: () {
+                        NavigationSvc.pushSettings(context, const HoverActionsPanel());
                       },
                       trailing: const NextButton(),
                     ),

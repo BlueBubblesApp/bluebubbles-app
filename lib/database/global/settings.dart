@@ -237,6 +237,9 @@ class Settings {
   // Text field buttons — enabled buttons, in display order. Absent = hidden.
   final RxList<TextFieldButton> textFieldButtons = RxList.from(TextFieldButton.values);
 
+  // Desktop hover bar quick actions (up to 3), in display order
+  final RxList<DetailsMenuAction> hoverMenuActions = RxList<DetailsMenuAction>();
+
   // Message options order
   final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
 
@@ -414,6 +417,7 @@ class Settings {
       'actionList': List<String>.from(actionList),
       'detailsMenuActions': detailsMenuActions.map((action) => action.name).toList(),
       'textFieldButtons': textFieldButtons.map((button) => button.name).toList(),
+      'hoverMenuActions': hoverMenuActions.map((action) => action.name).toList(),
       'askWhereToSave': askWhereToSave.value,
       'statusIndicatorsOnChats': statusIndicatorsOnChats.value,
       'apiTimeout': apiTimeout.value,
@@ -739,6 +743,9 @@ class Settings {
       SettingsSvc.settings._detailsMenuActions.value =
           _processDetailsMenuActions(map['detailsMenuActions'], SettingsSvc.settings.detailsMenuActions);
     }
+    if (map.containsKey('hoverMenuActions')) {
+      SettingsSvc.settings.hoverMenuActions.value = _processHoverMenuActions(map['hoverMenuActions']);
+    }
     if (map.containsKey('textFieldButtons')) {
       SettingsSvc.settings.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
     }
@@ -923,6 +930,7 @@ class Settings {
     s.actionList.value = _processActionList(map['actionList']);
     s._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], DetailsMenuAction.values);
     s.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
+    s.hoverMenuActions.value = _processHoverMenuActions(map['hoverMenuActions']);
 
     s.windowEffect.value = (kIsDesktop && Platform.isWindows)
         ? WindowEffect.values.firstWhereOrNull((e) => e.name == map['windowEffect']) ?? WindowEffect.disabled
@@ -961,6 +969,13 @@ class Settings {
   void resetTextFieldButtons() {
     SettingsSvc.settings.textFieldButtons.value = TextFieldButton.values;
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
+  }
+
+  /// Set the desktop hover bar's quick actions, in display order
+  void setHoverMenuActions(List<DetailsMenuAction> actions) {
+    SettingsSvc.settings.hoverMenuActions.value = actions;
+    // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too
+    unawaited(SettingsSvc.settings.saveOneAsync('hoverMenuActions'));
   }
 
   void resetDetailsMenuActions() {
@@ -1015,6 +1030,19 @@ List<String> _processActionList(dynamic rawJson) {
       ReactionTypes.DISLIKE,
       ReactionTypes.QUESTION
     ];
+  }
+}
+
+List<DetailsMenuAction> _processHoverMenuActions(dynamic rawJson) {
+  if (rawJson == null) return [];
+  try {
+    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List)
+        .cast<String>()
+        .map((s) => DetailsMenuAction.values.firstWhereOrNull((action) => action.name == s))
+        .nonNulls
+        .toList();
+  } catch (e) {
+    return [];
   }
 }
 
