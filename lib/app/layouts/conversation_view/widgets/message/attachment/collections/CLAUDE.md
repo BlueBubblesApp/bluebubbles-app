@@ -43,8 +43,16 @@ when not `skinDefault` (Media Settings → Multi-Attachment Layout):
 - **Collage / stack:** card owns skin radius + iOS-only soft shadow; collage tilt (~0.75°) is iOS-only. Reactions sit outside the clip.
 - **Grid:** cells are `CollectionAttachmentCard.gridCell` (square, no shadow, no in-card tapbacks). The outer card owns the
   silhouette clip and the iOS-only shadow; tapbacks render in a second, unclipped layer positioned from the same
-  `CollectionGridLayout`. Material/Samsung tighten the author-edge corners against an adjacent subject / body
-  (`CollectionStyle.connectedCornerRadius`); iOS stays full-radius.
+  `CollectionGridLayout`. Material/Samsung tighten the author-edge corners against neighbouring bubbles using the same
+  `BubbleConnect.upper` / `.lower` rule as `TailClipper` bubbles, plus the subject bubble above
+  (`CollectionStyle.connectedCornerRadius`); iOS stays full-radius. Expansion (`+N` long-press) is remembered per
+  collection in `ConversationViewController.expandedCollectionGrids` while the chat is open.
+- **Skin checks** outside widgets (`CollectionStyle`, `resolveMediaCollectionLayout`, download button) use
+  `CurrentSkin` (`helpers/ui/theme_helpers.dart`); widgets use the `ThemeHelpers` / `context.iOS` getters.
+- **Size cutoff:** "small" vs "large" collections (the two layout settings) split at
+  `MediaCollectionLayout.smallMaxCount`; the settings labels derive from it.
+- **Tests:** `test/collections/` covers `CollectionGridLayout` packing and `collapseMediaCollections` /
+  `itemPartFor`.
 - **Reactions:** per attachment via `CollectionAttachmentReactions` (`MessageState.tapbacksForPartId`). Stack cards and
   the gallery page use the inside tail pinned to the trailing edge; collage and Material/Samsung grid follow the normal
   bubble rule (left of from-me, right of received).
