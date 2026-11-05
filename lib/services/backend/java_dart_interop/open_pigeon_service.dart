@@ -31,6 +31,11 @@ class OpenPigeon {
   /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
   static final RxSet<int> failedViews = <int>{}.obs;
 
+  /// The newest message seen in each game session, by session id. Only that one is live; older turns collapse to
+  /// the app's icon, as in Messages.
+  static final RxMap<String, ({String guid, DateTime date})> latestInSession =
+      <String, ({String guid, DateTime date})>{}.obs;
+
   /// The server could carry games with a subscription, so they're shown, locked if it has none.
   static bool get offered =>
       !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server && SettingsSvc.settings.enablePrivateAPI.value;
@@ -97,11 +102,11 @@ class OpenPigeon {
     final guid = message.guid!;
     final app = message.payloadData?.appData?.firstOrNull;
     if (app?.url != null && app?.sessionId != null) {
-      return Future.value(_madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
+      return Future.value(_noted(message, _madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption)));
     }
     return _payloads[guid] ??= HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
       final data = response.data['data'] as Map<String, dynamic>;
-      return _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']);
+      return _noted(message, _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']));
     }).catchError((Object e) {
       Logger.warn('Could not load OpenPigeon payload for $guid', error: e, tag: 'OpenPigeon');
       _payloads.remove(guid);
@@ -147,6 +152,15 @@ class OpenPigeon {
       summary: _string(game['ldText']),
       caption: _string(game['caption']),
     );
+  }
+
+  static Map<String, dynamic>? _noted(Message message, Map<String, dynamic>? payload) {
+    final session = payload?['session'] as String?;
+    if (session == null) return payload;
+    final date = message.dateCreated ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final latest = latestInSession[session];
+    if (latest == null || date.isAfter(latest.date)) latestInSession[session] = (guid: message.guid!, date: date);
+    return payload;
   }
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the

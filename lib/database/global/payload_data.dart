@@ -164,6 +164,7 @@ class iMessageAppData {
     this.userInfo,
     this.url,
     this.sessionId,
+    this.appIcon,
   });
 
   String? appName;
@@ -174,12 +175,16 @@ class iMessageAppData {
   /// The `MSSession` UUID every message of one app session (a game, say) shares.
   String? sessionId;
 
+  /// The app's icon (`ai`), base64.
+  String? appIcon;
+
   factory iMessageAppData.fromJson(Map<String, dynamic> json) => iMessageAppData(
         appName: json["an"],
         ldText: json["ldtext"],
         userInfo: json["userInfo"] == null ? null : UserInfo.fromJson(Map<String, dynamic>.from(json["userInfo"])),
         url: json["URL"]?["NS.relative"],
         sessionId: _sessionId(json["sessionIdentifier"]),
+        appIcon: _appIcon(json["ai"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -190,29 +195,38 @@ class iMessageAppData {
         },
         "userInfo": userInfo?.toJson(),
         "sessionIdentifier": sessionId,
+        "ai": appIcon,
       };
 
-  /// A stored string, or the archived `NSUUID` (`{NS.uuidbytes: ...}`). Servers write its bytes as base64 (Swift),
-  /// a byte list, or a Node `{type: Buffer, data: [...]}`.
+  /// A stored string, or the archived `NSUUID` (`{NS.uuidbytes: ...}`).
   static String? _sessionId(dynamic value) {
     if (value is String) return value.isEmpty ? null : value;
     if (value is! Map) return null;
-    var bytes = value["NS.uuidbytes"];
-    if (bytes is Map) bytes = bytes["data"];
-    List<int>? raw;
-    if (bytes is String) {
-      try {
-        raw = base64Decode(bytes);
-      } on FormatException {
-        return null;
-      }
-    } else if (bytes is List && bytes.every((b) => b is int)) {
-      raw = bytes.cast<int>();
-    }
+    final raw = _bytes(value["NS.uuidbytes"]);
     if (raw == null || raw.length != 16) return null;
     final hex = raw.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
     return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-"
         "${hex.substring(16, 20)}-${hex.substring(20)}";
+  }
+
+  /// Archived data, kept as base64 (which is also how it's stored).
+  static String? _appIcon(dynamic value) {
+    final raw = _bytes(value);
+    return raw == null || raw.isEmpty ? null : base64Encode(raw);
+  }
+
+  /// Archived `NSData`, which servers write as base64 (Swift), a byte list, or a Node `{type: Buffer, data: [...]}`.
+  static List<int>? _bytes(dynamic value) {
+    if (value is Map) value = value["data"];
+    if (value is String) {
+      try {
+        return base64Decode(value);
+      } on FormatException {
+        return null;
+      }
+    }
+    if (value is List && value.every((b) => b is int)) return value.cast<int>();
+    return null;
   }
 }
 

@@ -34,18 +34,47 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
         if (payload == null) return widget.fallback;
         // The size OpenPigeon composes its live views at
         final width = (MediaQuery.sizeOf(context).width * 0.6).roundToDouble() - 10;
-        return _OpenPigeonView(
-          viewType: 'openpigeon/live',
-          creationParams: {
-            ...payload,
-            'chatGuid': widget.chat.guid,
-            'userCount': OpenPigeon.userCount(widget.chat),
-          },
-          gestureRecognizers: {Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
-          fallback: widget.fallback,
-          child: (view) => SizedBox(width: width, height: 250, child: view),
-        );
+        final session = payload['session'] as String? ?? '';
+        return Obx(() {
+          final latest = OpenPigeon.latestInSession[session];
+          if (latest != null && latest.guid != widget.message.guid) {
+            return _CollapsedGame(icon: _decode(widget.message.payloadData?.appData?.firstOrNull?.appIcon));
+          }
+          return _OpenPigeonView(
+            viewType: 'openpigeon/live',
+            creationParams: {...payload, 'chatGuid': widget.chat.guid, 'userCount': OpenPigeon.userCount(widget.chat)},
+            gestureRecognizers: {Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
+            fallback: widget.fallback,
+            child: (view) => SizedBox(width: width, height: 250, child: view),
+          );
+        });
       },
+    );
+  }
+}
+
+/// An earlier turn of a game, shown as the app's icon.
+class _CollapsedGame extends StatelessWidget {
+  const _CollapsedGame({this.icon});
+
+  final Uint8List? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: icon == null
+            ? Icon(Icons.sports_esports_rounded, size: 36, color: context.theme.colorScheme.onSurfaceVariant)
+            : Image.memory(
+                icon!,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const Icon(Icons.sports_esports_rounded, size: 36),
+              ),
+      ),
     );
   }
 }
@@ -77,15 +106,17 @@ class _OpenPigeonViewState extends State<_OpenPigeonView> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (OpenPigeon.failedViews.contains(_viewId)) return widget.fallback;
-      return widget.child(AndroidView(
-        viewType: widget.viewType,
-        creationParams: widget.creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        gestureRecognizers: widget.gestureRecognizers,
-        onPlatformViewCreated: (id) {
-          if (mounted) setState(() => _viewId = id);
-        },
-      ));
+      return widget.child(
+        AndroidView(
+          viewType: widget.viewType,
+          creationParams: widget.creationParams,
+          creationParamsCodec: const StandardMessageCodec(),
+          gestureRecognizers: widget.gestureRecognizers,
+          onPlatformViewCreated: (id) {
+            if (mounted) setState(() => _viewId = id);
+          },
+        ),
+      );
     });
   }
 }
@@ -166,10 +197,7 @@ class OpenPigeonPendingGame extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded),
-                onPressed: () => controller.pendingGame.value = null,
-              ),
+              IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => controller.pendingGame.value = null),
             ],
           ),
         ),
