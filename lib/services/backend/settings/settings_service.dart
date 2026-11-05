@@ -454,7 +454,8 @@ class SettingsService {
         !(Platform.isAndroid && element.tagName!.split('+').last.contains('desktop')) &&
         !(kIsDesktop && element.tagName!.split('+').last.contains('android')));
     final version = release.tagName!.split("+").first.replaceAll("v", "");
-    final code = release.tagName!.split("+").last.split('-').first;
+    // The build after the "+", without a platform prefix: v2.1.5+95 and v2.1.5+android.95 are both 95
+    final code = release.tagName!.split("+").last.split('-').first.split('.').last;
     final isDesktopRelease = release.tagName!.split('+').last.contains('desktop');
 
     String buildNumber = "";
