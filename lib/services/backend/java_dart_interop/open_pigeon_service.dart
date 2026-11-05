@@ -26,7 +26,7 @@ class OpenPigeon {
   /// Where the server says a subscription can be bought.
   static String? purchaseUrl;
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
-  static VoidCallback? _onKeyboardSend;
+  static ValueChanged<Map<String, dynamic>>? _onKeyboardMessage;
 
   /// The server could carry games with a subscription, so they're shown, locked if it has none.
   static bool get offered =>
@@ -102,23 +102,31 @@ class OpenPigeon {
   /// Number of people in [chat], counting the user, which OpenPigeon uses to hide games.
   static int userCount(Chat chat) => chat.participants.length + 1;
 
-  /// Called by the game picker sheet so it can close once a game is sent.
-  static void onKeyboardSend(VoidCallback? callback) => _onKeyboardSend = callback;
+  /// Set by the game picker sheet: a picked game goes to the composer rather than straight out.
+  static void onKeyboardMessage(ValueChanged<Map<String, dynamic>>? callback) => _onKeyboardMessage = callback;
 
   static Future<bool> _handle(MethodCall call) async {
     if (call.method != 'send') return false;
     final args = (call.arguments as Map).cast<String, dynamic>();
-    if (args['fromKeyboard'] == true) _onKeyboardSend?.call();
+    if (args['fromKeyboard'] == true) {
+      _onKeyboardMessage?.call(args);
+      return true;
+    }
+    await sendGame(args['chatGuid'] as String, args);
+    return true;
+  }
+
+  /// Sends an OpenPigeon message ([game] holds its `url`, `session`, `ldText` and `caption`) to [chatGuid].
+  static Future<void> sendGame(String chatGuid, Map<String, dynamic> game) async {
     await HttpSvc.message.sendAppMessage(
-      args['chatGuid'] as String,
+      chatGuid,
       balloonBundleId: balloonBundleId,
-      url: args['url'] as String,
-      sessionId: args['session'] as String?,
+      url: game['url'] as String,
+      sessionId: game['session'] as String?,
       appName: 'GamePigeon',
       appId: 1124197642,
-      summary: args['ldText'] as String?,
-      caption: args['caption'] as String?,
+      summary: game['ldText'] as String?,
+      caption: game['caption'] as String?,
     );
-    return true;
   }
 }

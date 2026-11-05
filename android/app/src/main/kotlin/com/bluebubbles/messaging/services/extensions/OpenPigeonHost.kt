@@ -121,6 +121,7 @@ object OpenPigeonHost {
                 "session" to message.session,
                 "ldText" to message.ldText,
                 "caption" to message.caption,
+                "imageBase64" to message.imageBase64,
             )
             channel?.invokeMethod("send", args, object : MethodChannel.Result {
                 override fun success(result: Any?) {

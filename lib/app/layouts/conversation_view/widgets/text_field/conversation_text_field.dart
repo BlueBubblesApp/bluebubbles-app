@@ -347,6 +347,20 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
   Future<void> sendMessage({String? effect}) async {
     final text = controller.textController.text;
+    final game = controller.pendingGame.value;
+    if (game != null && controller.scheduledDate.value != null) {
+      return showSnackbar("Error", "Games can't be scheduled!", type: SnackbarType.error);
+    }
+    if (game != null) {
+      controller.pendingGame.value = null;
+      unawaited(OpenPigeon.sendGame(chat.guid, game).catchError((Object e) {
+        Logger.warn('Could not send the game', error: e, tag: 'OpenPigeon');
+        showSnackbar("Error", "Couldn't send the game", type: SnackbarType.error);
+      }));
+      if (text.isEmpty && controller.subjectTextController.text.isEmpty && controller.pickedAttachments.isEmpty) {
+        return;
+      }
+    }
     if (controller.scheduledDate.value != null) {
       final date = controller.scheduledDate.value!;
       if (date.isBefore(DateTime.now())) {

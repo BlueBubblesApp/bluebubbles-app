@@ -256,7 +256,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                   icon: Icons.sports_esports_rounded,
                   label: 'Games',
                   color: const Color(0xFFD4A72C),
-                  onTap: () => showOpenPigeonPicker(context, controller.chat),
+                  onTap: () => showOpenPigeonPicker(context, controller),
                 ),
             ],
           ),

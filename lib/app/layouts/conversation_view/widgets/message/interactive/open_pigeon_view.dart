@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// A game bubble drawn by OpenPigeon, falling back to [fallback] until (or unless) the server's payload loads.
@@ -50,11 +53,16 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
   }
 }
 
-/// OpenPigeon's game picker. Closes itself once a game is sent.
-Future<void> showOpenPigeonPicker(BuildContext context, Chat chat) async {
+/// OpenPigeon's game picker. A picked game waits in the composer until the user sends it.
+Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewController controller) async {
   if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
   if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
-  OpenPigeon.onKeyboardSend(() => Navigator.of(context).maybePop());
+  final chat = controller.chat;
+  OpenPigeon.onKeyboardMessage((game) {
+    controller.pendingGame.value = game;
+    controller.showAttachmentPicker.value = false;
+    Navigator.of(context).maybePop();
+  });
   await showModalBottomSheet(
     context: context,
     builder: (context) => SizedBox(
@@ -68,7 +76,50 @@ Future<void> showOpenPigeonPicker(BuildContext context, Chat chat) async {
       ),
     ),
   );
-  OpenPigeon.onKeyboardSend(null);
+  OpenPigeon.onKeyboardMessage(null);
+}
+
+/// The picked game, above the composer's text field.
+class OpenPigeonPendingGame extends StatelessWidget {
+  const OpenPigeonPendingGame({super.key, required this.controller});
+
+  final ConversationViewController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final game = controller.pendingGame.value;
+      if (game == null) return const SizedBox.shrink();
+      final image = game['imageBase64'] as String?;
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: Material(
+          color: context.theme.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            children: [
+              if (image != null) Image.memory(base64Decode(image), width: 72, height: 72, fit: BoxFit.cover),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(game['ldText'] as String? ?? "Game", style: context.theme.textTheme.titleSmall),
+                    if (game['caption'] != null) Text(game['caption'] as String, style: context.theme.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => controller.pendingGame.value = null,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
 }
 
 Future<void> _showSubscriptionRequired(BuildContext context) async {
