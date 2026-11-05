@@ -98,7 +98,6 @@ parts:
       cp -r ./* $CRAFT_PART_INSTALL/bin/
     stage-packages:
       - ffmpeg
-      - libayatana-appindicator3-1
       - libmpv2
       - libproxy1v5
       - pulseaudio-utils

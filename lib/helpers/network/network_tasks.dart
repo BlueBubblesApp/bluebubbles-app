@@ -149,8 +149,8 @@ class NetworkTasks {
   }
 
   /// The Wi-Fi IPv4 whose /24 gets scanned. On Windows network_info_plus answers through synchronous WLAN API FFI,
-  /// which can take seconds while the network is changing; on the main isolate that blocks the UI isolate and
-  /// freezes typing, so it runs in a short-lived isolate there.
+  /// which can take seconds while the network is changing; on the main isolate that blocks the merged UI/platform
+  /// thread and freezes typing, so it runs in a short-lived isolate there.
   static Future<String?> _lanIPv4() async {
     if (kIsWeb || !Platform.isWindows) return NetworkInfo().getWifiIP();
     return Isolate.run(() async {
