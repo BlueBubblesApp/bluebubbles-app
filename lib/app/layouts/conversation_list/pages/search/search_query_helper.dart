@@ -40,7 +40,7 @@ class SearchQueryHelper {
 
     final query = qBuilder.order(Message_.dateCreated, flags: Order.descending).build();
     query.limit = 50;
-    final results = query.find();
+    final results = await query.findAsync();
     query.close();
 
     final messages = results.map((e) {
