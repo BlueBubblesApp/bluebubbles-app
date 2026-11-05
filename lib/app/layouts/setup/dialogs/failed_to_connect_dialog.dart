@@ -1,3 +1,4 @@
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,11 +18,13 @@ class FailedToConnectDialog extends StatelessWidget {
       child: AlertDialog(
         backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
         title: Text(
-          "Failed To Connect!",
+          SocketSvc.authFailed.value ? "Incorrect Password" : "Failed To Connect!",
           style: context.theme.textTheme.titleLarge,
         ),
         content: Text(
-          "Please make sure you are connected to the internet and your server is online!",
+          SocketSvc.authFailed.value
+              ? "The server rejected the password. Check it and try again."
+              : "Please make sure you are connected to the internet and your server is online!",
           style: context.theme.textTheme.bodyLarge,
         ),
         actions: [

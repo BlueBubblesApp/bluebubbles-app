@@ -12,7 +12,7 @@ import 'package:bluebubbles/helpers/network/metadata/models/metadata_fetch_resul
 ///  * **Short-lived result cache** — repeated scrolls over the same message do
 ///    not re-hit the network.
 ///
-/// Keys are the *normalised URL*, not the message GUID. Keying by GUID meant
+/// Keys are the *normalized URL*, not the message GUID. Keying by GUID meant
 /// two messages linking the same page each paid for a fetch, and it was the
 /// source of the old cache-key mismatch between insertion and eviction.
 class MetadataMemoryCache {

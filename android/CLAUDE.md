@@ -42,11 +42,12 @@ The build runs on AGP 9 with `android.builtInKotlin=false` and `android.newDsl=f
 - **Plugins that skip KGP on AGP 9:** Flutter (3.47+) applies `kotlin-android` to any plugin
   that doesn't, so it has to stay declared in `settings.gradle`. Flutter detects that by
   text-matching each plugin's build file, so a plugin that applies KGP only behind an `if`
-  slips through. `file_picker` 11.x does this; the root `build.gradle` applies KGP to it
-  directly and sets its Kotlin `jvmTarget`. Without that, the app fails with
-  `FilePickerPlugin` "cannot find symbol".
-- **Kotlin language floor:** KGP 2.4 rejects `languageVersion` below 2.0, so the root
-  `build.gradle` forces 2.0 on all modules (some plugins pin 1.7/1.8).
+  slips through (`file_picker` 11.x did; its 13.x Android package, `android_file_picker`,
+  checks `builtInKotlin` itself). If a plugin fails with "cannot find symbol" on its Kotlin
+  classes, apply KGP to it from the root `build.gradle`.
+- **Kotlin language floor:** KGP 2.4 rejects `languageVersion` below 2.0. No current plugin
+  pins one (`unifiedpush_android` did, and is gone); if one comes back, force 2.0 on it
+  from the root `build.gradle`.
 - **Native libs:** AGP 9 rejects `android:extractNativeLibs` in the manifest, so packaging is
   set in `app/build.gradle`, per flavor. Sideloaded APKs (`prod` on GitHub releases, alpha,
   beta) keep libs compressed so the download stays small. The Play bundle (`prodNoAa`)

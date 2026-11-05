@@ -784,10 +784,10 @@ Future<void> paintAvatar(
   borderWidth ??= size * 0.05;
 
   // Check ContactV2 avatars from disk first (more efficient)
-  ContactV2? contactV2 = handle?.contactsV2.firstOrNull;
-  if (contactV2?.avatarPath != null) {
+  final avatarPath = handle?.contactsV2.map((c) => c.avatarPath).nonNulls.firstOrNull;
+  if (avatarPath != null) {
     try {
-      final avatarBytes = await File(contactV2!.avatarPath!).readAsBytes();
+      final avatarBytes = await File(avatarPath).readAsBytes();
       Uint8List? contactAvatar = await clip(avatarBytes, size: size.toInt(), circle: kIsDesktop || inGroup);
       if (contactAvatar != null) {
         canvas.drawImage(await loadImage(contactAvatar), offset, Paint());

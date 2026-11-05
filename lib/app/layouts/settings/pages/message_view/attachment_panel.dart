@@ -177,7 +177,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                               final savePath = await FilePicker.getDirectoryPath(
                                 initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value,
                                 dialogTitle: 'Choose a location to auto-save documents',
-                                lockParentWindow: true,
+                                windowsOptions: const WindowsOptions(lockParentWindow: true),
+                                linuxOptions: const LinuxOptions(lockParentWindow: true),
                               );
                               if (savePath != null) {
                                 SettingsSvc.settings.autoSaveDocsLocation.value = savePath;
@@ -256,8 +257,9 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                         options: SwipeDirection.values,
                         textProcessing: (val) => val.toString().split(".").last,
                         capitalize: false,
-                        title: "Swipe Direction",
-                        subtitle: "Set the swipe direction to go to previous media items",
+                        title: kIsDesktop ? "Arrow Key Direction" : "Swipe Direction",
+                        subtitle:
+                            "Set the ${kIsDesktop ? "arrow key" : "swipe direction"} to go to previous media items",
                         secondaryColor: headerColor,
                         useModernMenu: true,
                       ),

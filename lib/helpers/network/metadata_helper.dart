@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/network/metadata/metadata.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
@@ -221,7 +223,7 @@ abstract final class MetadataHelper {
       map[slot.imageHashKey] = downloaded.hash;
     }
     message.metadata = map;
-    if (!kIsWeb && message.id != null) message.save();
+    if (!kIsWeb && message.id != null) unawaited(message.saveAsync());
 
     return downloaded;
   }

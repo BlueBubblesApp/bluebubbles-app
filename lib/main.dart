@@ -8,6 +8,7 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/components/custom/custom_error_box.dart';
+import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/network/http_overrides.dart';
@@ -37,13 +38,13 @@ import 'package:get_it/get_it.dart';
 import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:tray_manager/tray_manager.dart';
+import 'package:tray_manager/tray_manager.dart'
+    show ContextMenuTrigger, ImageAsset, Menu, MenuItem, MenuItemClickedEvent, MenuItemType, TrayIcon, TrayIconClickedEvent;
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
@@ -60,6 +61,7 @@ Future<Null> main(List<String> arguments) async {
 @pragma('vm:entry-point')
 // ignore: prefer_void_to_null
 Future<Null> bubble() async {
+  logNamePrefix = 'Bubble';
   await initApp(true, []);
 }
 
@@ -277,26 +279,31 @@ class DesktopWindowListener extends WindowListener {
     LifecycleSvc.close();
   }
 
+  // A drag fires these dozens of times a second; only the final geometry needs saving.
   @override
-  void onWindowResized() async {
-    Size size = await windowManager.getSize();
-    await PrefsSvc.desktop.setWindowDimensions(width: size.width, height: size.height);
+  void onWindowResized() {
+    EasyDebounce.debounce('save-window-size', const Duration(milliseconds: 500), () async {
+      Size size = await windowManager.getSize();
+      await PrefsSvc.desktop.setWindowDimensions(width: size.width, height: size.height);
+    });
   }
 
   @override
-  void onWindowMoved() async {
-    Offset offset = await windowManager.getPosition();
-    await PrefsSvc.desktop.setWindowOffsets(x: offset.dx, y: offset.dy);
+  void onWindowMoved() {
+    EasyDebounce.debounce('save-window-position', const Duration(milliseconds: 500), () async {
+      Offset offset = await windowManager.getPosition();
+      await PrefsSvc.desktop.setWindowOffsets(x: offset.dx, y: offset.dy);
+    });
   }
 
   @override
   void onWindowEvent(String eventName) async {
     switch (eventName) {
       case "hide":
-        await setSystemTrayContextMenu(windowHidden: true);
+        updateSystemTrayToggle(windowHidden: true);
         break;
       case "show":
-        await setSystemTrayContextMenu(windowHidden: false);
+        updateSystemTrayToggle(windowHidden: false);
         break;
     }
   }
@@ -329,14 +336,14 @@ class Main extends StatelessWidget {
       builder: (theme, darkTheme) => GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'BlueBubbles',
-        theme: theme.copyWith(
+        theme: theme.withEmojiFallback.copyWith(
           appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0),
           dialogTheme: DialogThemeData(
             barrierColor: theme.colorScheme.shadow.withValues(alpha: 0.6),
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ),
-        darkTheme: darkTheme.copyWith(
+        darkTheme: darkTheme.withEmojiFallback.copyWith(
           appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0),
           dialogTheme: DialogThemeData(
             barrierColor: darkTheme.colorScheme.shadow.withValues(alpha: 0.6),
@@ -501,7 +508,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
+class _HomeState extends State<Home> with WidgetsBindingObserver {
   final ReceivePort port = ReceivePort();
   bool serverCompatible = true;
   bool fullyLoaded = false;
@@ -570,7 +577,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
           }
 
           unawaited(updateBadge(ChatsSvc.unreadCount.value));
-          ChatsSvc.unreadCount.listen(updateBadge);
+          // Each update is a shell COM call on the platform thread; syncs and mark-all-read change the count in bursts.
+          debounce<int>(ChatsSvc.unreadCount, updateBadge, time: const Duration(milliseconds: 250));
 
           /* ----- WINDOW EFFECT INITIALIZATION ----- */
           EventDispatcherSvc.stream.listen((event) async {
@@ -587,8 +595,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
         }
 
         /* ----- SYSTEM TRAY INITIALIZATION ----- */
-        await initSystemTray();
-        trayManager.addListener(this);
+        initSystemTray();
       }
 
       if (!SettingsSvc.settings.finishedSetup.value) {
@@ -604,40 +611,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
   }
 
   @override
-  void onTrayIconMouseDown() async {
-    await showAndFocusWindow();
-  }
-
-  @override
-  void onTrayIconRightMouseDown() async {
-    await trayManager.popUpContextMenu();
-  }
-
-  @override
-  void onTrayMenuItemClick(MenuItem menuItem) async {
-    switch (menuItem.key) {
-      case 'show_app':
-        await showAndFocusWindow();
-        break;
-      case 'hide_app':
-        await windowManager.hide();
-        break;
-      case 'close_app':
-        if (Platform.isLinux) exit(0);
-        await windowManager.setPreventClose(false);
-        await windowManager.close();
-        break;
-    }
-  }
-
-  @override
   void dispose() {
     // Clean up observer when app is fully closed
     WidgetsBinding.instance.removeObserver(this);
     windowManager.removeListener(DesktopWindowListener.instance);
-    if (kIsDesktop) {
-      trayManager.removeListener(this);
-    }
     super.dispose();
   }
 
@@ -700,29 +677,62 @@ class _HomeState extends State<Home> with WidgetsBindingObserver, TrayListener {
   }
 }
 
-Future<void> initSystemTray() async {
-  String path;
-  if (Platform.isWindows) {
-    path = 'assets/icon/icon.ico';
-  } else if (isFlatpak) {
-    path = 'app.bluebubbles.BlueBubbles';
-  } else if (isSnap) {
-    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
-  } else {
-    path = 'assets/icon/icon.png';
+// Kept for the app's lifetime: a garbage-collected TrayIcon removes the icon, and a collected MenuItem drops its
+// click listener.
+final List<Object> _trayHandles = [];
+MenuItem? _trayToggleItem;
+bool _trayWindowHidden = false;
+
+void initSystemTray() {
+  // Each call creates another icon, so a second one (Home's state rebuilt) would show two. Set only on success, so a
+  // failed attempt can be retried.
+  if (_trayToggleItem != null) return;
+
+  final trayIcon = TrayIcon.create();
+  final menu = Menu.create();
+  final toggleItem = MenuItem.createWithLabelAndType('Hide App', MenuItemType.normal);
+  final closeItem = MenuItem.createWithLabelAndType('Close App', MenuItemType.normal);
+  if (trayIcon == null || menu == null || toggleItem == null || closeItem == null) {
+    Logger.error("Failed to create the system tray icon", tag: "SystemTray");
+    return;
   }
 
-  await trayManager.setIcon(path);
-  if (Platform.isWindows) await trayManager.setToolTip("BlueBubbles");
-  await setSystemTrayContextMenu(windowHidden: !appWindow.isVisible);
+  // The icon reaches the panel as pixel data, so a path inside the flatpak or snap sandbox works.
+  trayIcon.icon = ImageAsset.fromAsset(Platform.isWindows ? 'assets/icon/icon.ico' : 'assets/icon/icon.png');
+  trayIcon.setTooltip("BlueBubbles");
+  trayIcon.setContextMenuTrigger(ContextMenuTrigger.rightClicked);
+  trayIcon.addListener((event) async {
+    if (event is TrayIconClickedEvent) await showAndFocusWindow();
+  });
+
+  toggleItem.addListener((event) async {
+    if (event is! MenuItemClickedEvent) return;
+    if (_trayWindowHidden) {
+      await showAndFocusWindow();
+    } else {
+      await windowManager.hide();
+    }
+  });
+  closeItem.addListener((event) async {
+    if (event is! MenuItemClickedEvent) return;
+    if (Platform.isLinux) exit(0);
+    await windowManager.setPreventClose(false);
+    await windowManager.close();
+  });
+
+  menu
+    ..addItem(toggleItem)
+    ..addSeparator()
+    ..addItem(closeItem);
+  trayIcon.setContextMenu(menu);
+  trayIcon.setVisible(true);
+
+  _trayHandles.addAll([trayIcon, menu, closeItem]);
+  _trayToggleItem = toggleItem;
+  updateSystemTrayToggle(windowHidden: !appWindow.isVisible);
 }
 
-Future<void> setSystemTrayContextMenu({bool windowHidden = false}) async {
-  await trayManager.setContextMenu(Menu(
-    items: [
-      MenuItem(label: windowHidden ? 'Show App' : 'Hide App', key: windowHidden ? 'show_app' : 'hide_app'),
-      MenuItem.separator(),
-      MenuItem(label: 'Close App', key: 'close_app'),
-    ],
-  ));
+void updateSystemTrayToggle({required bool windowHidden}) {
+  _trayWindowHidden = windowHidden;
+  _trayToggleItem?.label = windowHidden ? 'Show App' : 'Hide App';
 }

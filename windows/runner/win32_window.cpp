@@ -17,8 +17,6 @@ namespace {
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 
-constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
-
 /// Registry key for app theme preference.
 ///
 /// A value of 0 indicates apps should use dark mode. A non-zero or missing
@@ -308,6 +306,12 @@ bool Win32Window::SendAppLinkToInstance(const std::wstring& title) {
     // Find the window of First Instance
     HWND hwnd = FindWindow(kWindowClassName, title.c_str());
 
+    // The first instance may have no window anymore (e.g. it is still shutting down), so there is nothing to hand
+    // the link to. Start normally instead of exiting with nothing shown.
+    if (!hwnd) {
+      return false;
+    }
+
     // Dispatch new link to current window
     SendAppLink(hwnd);
 
@@ -327,7 +331,7 @@ bool Win32Window::SendAppLinkToInstance(const std::wstring& title) {
         break;
     }
 
-    SetWindowPos(0, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+    SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
     SetForegroundWindow(hwnd);
 
     return true;

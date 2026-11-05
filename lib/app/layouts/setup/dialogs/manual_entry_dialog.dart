@@ -183,8 +183,9 @@ class _ManualEntryDialogState extends State<ManualEntryDialog> {
             if (result) {
               retreiveFCMData();
             } else {
-              error.value =
-                  "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
+              error.value = SocketSvc.authFailed.value
+                  ? "Incorrect password. Check the server password and try again."
+                  : "Failed to connect to ${sanitizeServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
             }
           },
         );

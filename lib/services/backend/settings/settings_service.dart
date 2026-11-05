@@ -16,11 +16,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:github/github.dart' hide Source;
+import 'package:in_app_update/in_app_update.dart' as play;
 import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:store_checker/store_checker.dart';
 import 'package:bluebubbles/models/models.dart' show ServerDetails, AppUpdateInfo, ServerUpdateInfo;
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:dio/dio.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:version/version.dart';
@@ -166,11 +168,6 @@ class SettingsService {
         'macOSMinorVersion': minorVersion ?? 0,
         'serverVersion': serverVersion ?? "0.0.0",
         'serverVersionCode': versionCode,
-        'recommendPrivateApi': settings.finishedSetup.value &&
-            settings.reachedConversationList.value &&
-            !settings.enablePrivateAPI.value &&
-            settings.serverPrivateAPI.value == true &&
-            !PrefsSvc.server.hasSeenPrivateApiEnableTip(),
       };
     }
 
@@ -179,13 +176,12 @@ class SettingsService {
       'macOSMinorVersion': 0,
       'serverVersion': "0.0.0",
       'serverVersionCode': 0,
-      'recommendPrivateApi': false,
     };
   }
 
   /// Fetches server details via HTTP (main isolate), updates [serverDetails],
   /// and persists values to [PrefsSvc]. Also handles [iCloudAccount] and
-  /// [serverPrivateAPI] side effects and shows the PAPI popup when applicable.
+  /// [serverPrivateAPI] side effects.
   /// Used during the first-time setup flow.
   Future<ServerDetails> fetchServerDetails() async {
     final detailsDict = await getServerDetailsDict();
@@ -196,12 +192,22 @@ class SettingsService {
       serverVersionCode: detailsDict['serverVersionCode'] as int,
     );
     _serverDetails.value = details;
-
-    if (detailsDict['recommendPrivateApi'] as bool) {
-      await _showPapiPopup();
-    }
-
     return details;
+  }
+
+  /// Offers to turn on Private API features, once, when the server has them set up but the client doesn't.
+  ///
+  /// Called from the conversation list rather than during setup, because the popup needs a finished setup
+  /// and a conversation list to navigate back from.
+  Future<void> showPrivateApiTipIfNeeded() async {
+    if (!settings.finishedSetup.value ||
+        settings.enablePrivateAPI.value ||
+        settings.serverPrivateAPI.value != true ||
+        PrefsSvc.server.hasSeenPrivateApiEnableTip() ||
+        _showingPapiPopup) {
+      return;
+    }
+    await _showPapiPopup();
   }
 
   /// Refreshes [serverDetails] in the background via [ServerInterface]
@@ -440,8 +446,13 @@ class SettingsService {
 
     final github = GitHub();
     final stream = github.repositories.listReleases(RepositorySlug('bluebubblesapp', 'bluebubbles-app'));
-    final release = await stream.firstWhere(
-        (element) => !(element.isDraft ?? false) && !(element.isPrerelease ?? false) && element.tagName != null);
+    // Platform-only tags (v2.1.3+desktop.93, v2.1.5+android.95) are skipped by the other platform.
+    final release = await stream.firstWhere((element) =>
+        !(element.isDraft ?? false) &&
+        !(element.isPrerelease ?? false) &&
+        element.tagName != null &&
+        !(Platform.isAndroid && element.tagName!.split('+').last.contains('desktop')) &&
+        !(kIsDesktop && element.tagName!.split('+').last.contains('android')));
     final version = release.tagName!.split("+").first.replaceAll("v", "");
     final code = release.tagName!.split("+").last.split('-').first;
     final isDesktopRelease = release.tagName!.split('+').last.contains('desktop');
@@ -450,9 +461,7 @@ class SettingsService {
     if (Platform.isAndroid) {
       buildNumber =
           FilesystemSvc.packageInfo.buildNumber.lastChars(min(4, FilesystemSvc.packageInfo.buildNumber.length));
-      if (int.parse(code) <= int.parse(buildNumber) ||
-          PrefsSvc.server.getClientUpdateCheckCode() == code ||
-          (Platform.isAndroid && isDesktopRelease)) {
+      if (int.parse(code) <= int.parse(buildNumber) || PrefsSvc.server.getClientUpdateCheckCode() == code) {
         available = false;
       }
     } else {
@@ -466,7 +475,9 @@ class SettingsService {
         int.parse(FilesystemSvc.packageInfo.version.split(".")[1]),
         int.parse(FilesystemSvc.packageInfo.version.split(".")[2]),
       );
-      if (current.compareTo(latestRelease) < 0) {
+      if (current.compareTo(latestRelease) < 0 &&
+          PrefsSvc.server.getClientUpdateCheckCode() != code &&
+          await _isReleaseInStore(latestRelease)) {
         available = true;
       }
     }
@@ -483,6 +494,138 @@ class SettingsService {
     };
   }
 
+  /// Store listings lag behind GitHub releases, so only report an update once the install's store has it.
+  Future<bool> _isReleaseInStore(Version release) async {
+    if (!isSnap && !isFlatpak) return true;
+    try {
+      final dio = Dio();
+      String? storeVersion;
+      if (isSnap) {
+        final res = await dio.get("https://api.snapcraft.io/v2/snaps/info/bluebubbles?fields=version",
+            options: Options(headers: {'Snap-Device-Series': '16'}));
+        storeVersion = (res.data['channel-map'] as List)
+            .firstWhere((e) => e['channel']['name'] == 'stable')['version'] as String;
+      } else {
+        final res = await dio.get("https://flathub.org/api/v2/appstream/app.bluebubbles.BlueBubbles");
+        storeVersion = res.data['releases'][0]['version'] as String;
+      }
+      final parts = storeVersion.split('.').map(int.parse).toList();
+      return Version(parts[0], parts[1], parts[2]) >= release;
+    } catch (e, s) {
+      Logger.warn("Failed to check store version", error: e, trace: s);
+      return false;
+    }
+  }
+
+  /// Play installs can't use GitHub releases, so Play downloads the update in the background instead.
+  Future<void> _checkPlayUpdate() async {
+    try {
+      final info = await play.InAppUpdate.checkForUpdate();
+      final versionCode = info.availableVersionCode;
+      if (info.updateAvailability != play.UpdateAvailability.updateAvailable ||
+          !info.flexibleUpdateAllowed ||
+          versionCode == null ||
+          PrefsSvc.server.getClientUpdateCheckCode() == versionCode.toString()) {
+        return;
+      }
+      // Play only reports a version code, not a version name.
+      _showUpdateDialog(
+        code: versionCode.toString(),
+        version: null,
+        release: null,
+        actionText: "Install",
+        onAction: () async {
+          try {
+            if (await play.InAppUpdate.startFlexibleUpdate() != play.AppUpdateResult.success) return;
+            showSnackbar(
+              "Update Downloaded",
+              "Restart BlueBubbles to finish updating",
+              durationMs: 10000,
+              actionLabel: "Restart",
+              onAction: () => play.InAppUpdate.completeFlexibleUpdate(),
+            );
+          } catch (e, s) {
+            Logger.warn("Failed to start Play Store update", error: e, trace: s);
+          }
+        },
+      );
+    } catch (e, s) {
+      Logger.warn("Failed to check Play Store for updates", error: e, trace: s);
+    }
+  }
+
+  /// Store-signed MSIX installs can't upgrade from GitHub builds, so hand the update to the Store's install dialog.
+  Future<void> _checkMsStoreUpdate() async {
+    const channel = MethodChannel('bluebubbles/store');
+    try {
+      final storeVersion = await channel.invokeMethod<String>('checkUpdate');
+      if (storeVersion == null || PrefsSvc.server.getClientUpdateCheckCode() == storeVersion) return;
+      _showUpdateDialog(
+        code: storeVersion,
+        version: storeVersion.split('.').take(3).join('.'),
+        release: null,
+        actionText: "Install",
+        onAction: () async {
+          try {
+            await channel.invokeMethod('installUpdate');
+          } catch (e, s) {
+            Logger.warn("Failed to start Microsoft Store update", error: e, trace: s);
+          }
+        },
+      );
+    } catch (e, s) {
+      Logger.warn("Failed to check Microsoft Store for updates", error: e, trace: s);
+    }
+  }
+
+  /// [code] is saved on either button so each version is only offered once. [onAction] runs after the dialog closes.
+  void _showUpdateDialog({
+    required String code,
+    required String? version,
+    required Release? release,
+    required String actionText,
+    required Future<void> Function() onAction,
+  }) {
+    showBBDialog(
+      context: Get.context!,
+      title: "App Update Check",
+      content: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const SizedBox(height: 15.0),
+          const Text("Updates available:"),
+          const SizedBox(height: 15.0),
+          Text(
+            [
+              if (version != null) "Version: $version",
+              if (release != null) "Release Date: ${buildDate(release.createdAt)}",
+              if (release != null) "Release Name: ${release.name}",
+            ].join("\n"),
+          ),
+        ],
+      ),
+      actions: [
+        BBDialogAction(
+          text: actionText,
+          onPressed: () async {
+            await PrefsSvc.server.setClientUpdateCheckCode(code);
+            Navigator.of(Get.context!, rootNavigator: true).pop();
+            await onAction();
+          },
+        ),
+        BBDialogAction(
+          text: "OK",
+          isDefault: true,
+          onPressed: () async {
+            await PrefsSvc.server.setClientUpdateCheckCode(code);
+            Navigator.of(Get.context!, rootNavigator: true).pop();
+          },
+        ),
+      ],
+    );
+  }
+
   Future<AppUpdateInfo> checkForUpdate() async {
     final updateDict = await getAppUpdateDict();
     return AppUpdateInfo(
@@ -496,6 +639,10 @@ class SettingsService {
   }
 
   Future<void> checkClientUpdate() async {
+    if (Platform.isAndroid && await StoreChecker.getSource == Source.IS_INSTALLED_FROM_PLAY_STORE) {
+      return _checkPlayUpdate();
+    }
+    if (isStoreMsix) return _checkMsStoreUpdate();
     late AppUpdateInfo updateInfo;
     if (Platform.isAndroid) {
       updateInfo = await AppInterface.checkForUpdate();
@@ -504,38 +651,19 @@ class SettingsService {
     }
     if (!updateInfo.available) return;
 
-    showBBDialog(
-      context: Get.context!,
-      title: "App Update Check",
-      content: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const SizedBox(height: 15.0),
-          const Text("Updates available:"),
-          const SizedBox(height: 15.0),
-          Text(
-            "Version: ${updateInfo.version}\nRelease Date: ${buildDate(updateInfo.latestRelease.createdAt)}\nRelease Name: ${updateInfo.latestRelease.name}",
-          ),
-        ],
-      ),
-      actions: [
-        if (updateInfo.latestRelease.htmlUrl != null)
-          BBDialogAction(
-            text: "Download",
-            onPressed: () async {
-              await launchUrl(Uri.parse(updateInfo.latestRelease.htmlUrl!), mode: LaunchMode.externalApplication);
-            },
-          ),
-        BBDialogAction(
-          text: "OK",
-          isDefault: true,
-          onPressed: () async {
-            await PrefsSvc.server.setClientUpdateCheckCode(updateInfo.code);
-            Navigator.of(Get.context!, rootNavigator: true).pop();
-          },
-        ),
-      ],
+    _showUpdateDialog(
+      code: updateInfo.code,
+      version: updateInfo.version,
+      release: updateInfo.latestRelease,
+      actionText: "Download",
+      onAction: () async {
+        final url = isSnap
+            ? "https://snapcraft.io/bluebubbles"
+            : isFlatpak
+            ? "https://flathub.org/apps/app.bluebubbles.BlueBubbles"
+            : updateInfo.latestRelease.htmlUrl ?? "https://github.com/BlueBubblesApp/bluebubbles-app/releases";
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      },
     );
   }
 }

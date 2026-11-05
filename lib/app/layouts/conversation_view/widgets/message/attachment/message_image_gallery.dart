@@ -79,6 +79,8 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
   bool _labelHovered = false;
   final Map<String, Size> _imageSizes = {};
   int? _activeDragPointer;
+  Offset? _dragStart;
+  bool? _panHorizontal;
   VelocityTracker? _velocityTracker;
   ConversationViewController? _cvController;
   late final MessageState _ms;
@@ -246,6 +248,53 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       _currentIndex = (_currentIndex + direction).clamp(0, _attachments.length - 1);
     }
     widget.currentIndexNotifier?.value = _currentIndex;
+  }
+
+  void _dragBy(double dx) {
+    if (!widget.infiniteScroll) {
+      final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+      final atStart = _currentIndex == 0;
+      final atEnd = _currentIndex == _attachments.length - 1;
+      final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
+      final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
+
+      final draggingIntoBlockedEnd = (blockedPositive && dx > 0) || (blockedNegative && dx < 0);
+      if (draggingIntoBlockedEnd) {
+        if (!_hapticGivenForCurrentEnd) {
+          HapticFeedback.lightImpact();
+          _hapticGivenForCurrentEnd = true;
+        }
+        setState(() {
+          _dragDx += dx * 0.3;
+          if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+          if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+        });
+        return;
+      } else {
+        _hapticGivenForCurrentEnd = false;
+      }
+    }
+    setState(() {
+      _dragDx += dx;
+      _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+    });
+  }
+
+  void _endDrag(double velocity) {
+    final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
+    if (!commit) {
+      setState(() {
+        _dragDx = 0;
+      });
+      return;
+    }
+
+    final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
+    final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+    setState(() {
+      _advance(rawSign * fanFlip);
+      _dragDx = 0;
+    });
   }
 
   Attachment _attachmentAtOffset(int offset) {
@@ -420,7 +469,9 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         if (event is PointerScrollEvent && _attachments.length > 1) {
           GestureBinding.instance.pointerSignalResolver.register(event, (event) {
             final scrollEvent = event as PointerScrollEvent;
-            _scrollAccumulator += scrollEvent.scrollDelta.dy;
+            final delta = scrollEvent.scrollDelta;
+            final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
+            _scrollAccumulator += delta.dx.abs() > delta.dy.abs() ? delta.dx * fanFlip : delta.dy;
             if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
               final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
               _scrollAccumulator = 0;
@@ -439,6 +490,8 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       onPointerDown: (event) {
         if (_attachments.length <= 1) return;
         _activeDragPointer = event.pointer;
+        // Touch has to commit to a horizontal swipe first, otherwise scrolling the chat over the stack drags it.
+        _dragStart = event.kind == PointerDeviceKind.touch ? event.position : null;
         _velocityTracker = VelocityTracker.withKind(event.kind);
         _velocityTracker!.addPosition(event.timeStamp, event.position);
         // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
@@ -449,34 +502,18 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
       onPointerMove: (event) {
         if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
         _velocityTracker?.addPosition(event.timeStamp, event.position);
-        if (!widget.infiniteScroll) {
-          final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
-          final atStart = _currentIndex == 0;
-          final atEnd = _currentIndex == _attachments.length - 1;
-          final blockedPositive = (atStart && fanFlip > 0) || (atEnd && fanFlip < 0);
-          final blockedNegative = (atStart && fanFlip < 0) || (atEnd && fanFlip > 0);
-
-          final draggingIntoBlockedEnd =
-              (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
-          if (draggingIntoBlockedEnd) {
-            if (!_hapticGivenForCurrentEnd) {
-              HapticFeedback.lightImpact();
-              _hapticGivenForCurrentEnd = true;
-            }
-            setState(() {
-              _dragDx += event.delta.dx * 0.3;
-              if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-              if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-            });
+        if (_dragStart != null) {
+          final moved = event.position - _dragStart!;
+          if (moved.distance < kTouchSlop) return;
+          _dragStart = null;
+          if (moved.dy.abs() > moved.dx.abs()) {
+            _activeDragPointer = null;
+            _velocityTracker = null;
+            _cvController?.isGalleryDragging = false;
             return;
-          } else {
-            _hapticGivenForCurrentEnd = false;
           }
         }
-        setState(() {
-          _dragDx += event.delta.dx;
-          _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-        });
+        _dragBy(event.delta.dx);
       },
       onPointerUp: (event) {
         if (_activeDragPointer != event.pointer) return;
@@ -486,20 +523,7 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
         _velocityTracker = null;
         if (_attachments.length <= 1) return;
-        final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
-        if (!commit) {
-          setState(() {
-            _dragDx = 0;
-          });
-          return;
-        }
-
-        final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-        final fanFlip = widget.fanDirection == GalleryFanDirection.left ? -1 : 1;
-        setState(() {
-          _advance(rawSign * fanFlip);
-          _dragDx = 0;
-        });
+        _endDrag(velocity);
       },
       onPointerCancel: (event) {
         if (_activeDragPointer != event.pointer) return;
@@ -511,6 +535,30 @@ class _MessageImageGalleryState extends State<MessageImageGallery> with ThemeHel
         setState(() {
           _dragDx = 0;
         });
+      },
+      // Two-finger trackpad swipes (Windows/Linux). Same horizontal commit as touch so vertical
+      // swipes keep scrolling the chat.
+      onPointerPanZoomStart: (event) {
+        if (_attachments.length <= 1) return;
+        _panHorizontal = null;
+        _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.trackpad);
+      },
+      onPointerPanZoomUpdate: (event) {
+        if (_attachments.length <= 1 || _velocityTracker == null) return;
+        _velocityTracker!.addPosition(event.timeStamp, event.pan);
+        if (_panHorizontal == null) {
+          if (event.pan.distance < kTouchSlop) return;
+          _panHorizontal = event.pan.dx.abs() > event.pan.dy.abs();
+        }
+        if (_panHorizontal!) _dragBy(event.panDelta.dx);
+      },
+      onPointerPanZoomEnd: (event) {
+        final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+        _velocityTracker = null;
+        _hapticGivenForCurrentEnd = false;
+        if (_attachments.length <= 1 || _panHorizontal != true) return;
+        _panHorizontal = null;
+        _endDrag(velocity);
       },
       child: Column(
           mainAxisSize: MainAxisSize.min,

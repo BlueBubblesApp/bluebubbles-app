@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
+import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -15,18 +15,9 @@ import 'package:flutter/widgets.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_review/in_app_review.dart';
-import 'package:on_exit/init.dart';
 import 'package:app_install_date/app_install_date.dart';
-import 'package:path/path.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-
-class WindowEntry {
-  final String id;
-  final String name;
-
-  const WindowEntry(this.id, this.name);
-}
 
 class StartupTasks {
   static final Completer<void> uiReady = Completer<void>();
@@ -200,11 +191,6 @@ class StartupTasks {
       isBubble: isBubble,
     );
 
-    // Check if another instance is running (Linux Only).
-    // Automatically handled on Windows (I think)
-    Logger.info("Checking instance lock...");
-    await StartupTasks.checkInstanceLock();
-
     // The next thing we need to do is initialize the database.
     // If the database is not initialized, we cannot do anything.
     await _step("Opening database...");
@@ -218,6 +204,8 @@ class StartupTasks {
     NetworkTasks.registerIsolate(GetIt.I<GlobalIsolate>());
     GetIt.I.registerSingleton<IncrementalSyncIsolate>(IncrementalSyncIsolate());
     NetworkTasks.registerIsolate(GetIt.I<IncrementalSyncIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<GlobalIsolate>());
+    PrefsInterface.listenForIsolateSettings(GetIt.I<IncrementalSyncIsolate>());
 
     // Load FCM data into settings from the database
     // We only need to do this for the main startup
@@ -257,6 +245,13 @@ class StartupTasks {
     GetIt.I.registerSingleton<IntentsService>(IntentsService());
     GetIt.I.registerSingleton<SyncService>(SyncService());
     GetIt.I.registerSingleton<ThemesService>(ThemesService());
+
+    Logger.info("Registering CacheService...");
+    GetIt.I.registerSingleton<CacheService>(
+      CacheService()
+        ..registerAll(defaultAppCaches())
+        ..loadFromSettings(),
+    );
 
     // Parallelize independent services for faster startup
     await _step("Loading themes and contacts...", log: "Waiting for parallel services...");
@@ -309,7 +304,15 @@ class StartupTasks {
     // if there is no network connection. The cause is not 100% known, but it likely
     // has to do with processing pressure, stale ports, or port binding exhaustion.
     if (SettingsSvc.settings.finishedSetup.value) {
-      unawaited(NetworkTasks.detectLocalhost().then((_) => SyncSvc.startIncrementalSync()));
+      unawaited(NetworkTasks.detectLocalhost().then((_) async {
+        // One-time: relink messages that a link preview save left without a chat (Desktop 2.1.4/2.1.5 only)
+        if (kIsDesktop) {
+          await _repairChatlessMessages().catchError((e, s) {
+            Logger.warn("Failed to repair chatless messages!", error: e, trace: s);
+          });
+        }
+        await SyncSvc.startIncrementalSync();
+      }));
     }
   }
 
@@ -483,6 +486,46 @@ class StartupTasks {
     Logger.info("onStartup tasks complete");
   }
 
+  /// In Desktop 2.1.4 and 2.1.5, saving a link's preview wrote the message back with no chat. Ask the server which
+  /// chat each affected message belongs to and link it back. A failed request retries next launch, unless the server
+  /// itself says the message no longer exists.
+  static Future<void> _repairChatlessMessages() async {
+    if (PrefsSvc.database.getChatlessMessageRepairDone()) return;
+
+    // Every preview save writes a `…FetchedAt` stamp or a `…Md5` image hash, so this matches only previewed links
+    final preview = Message_.dbMetadata.contains('FetchedAt').or(Message_.dbMetadata.contains('Md5'));
+    final query = Database.messages.query(Message_.chat.equals(0).and(preview)).build();
+    final messages = await query.findAsync();
+    query.close();
+
+    var retry = false;
+    for (final message in messages) {
+      // Unsent messages have no server record to look up
+      final guid = message.guid;
+      if (guid == null || guid.startsWith('temp') || guid.startsWith('error')) continue;
+
+      try {
+        final response = await HttpSvc.message.fetchOne(guid, withQuery: "chats");
+        final chats = (response.data['data']?['chats'] as List?) ?? const [];
+        final chatGuid = chats.whereType<Map>().firstOrNull?['guid'] as String?;
+        final chat = chatGuid == null ? null : Chat.findOne(guid: chatGuid);
+        if (chat == null) continue;
+        await message.saveAsync(chat: chat);
+        Logger.info("Relinked message $guid to chat $chatGuid");
+      } catch (e, s) {
+        Logger.warn("Failed to look up chat for message $guid", error: e, trace: s);
+        // Tunnels and proxies can also return a 404, so only the server's own error means the message is gone.
+        // Anything else retries next launch; stop now rather than wait out a timeout per message.
+        if (e is! Response || !'${e.data}'.contains('Message does not exist!')) {
+          retry = true;
+          break;
+        }
+      }
+    }
+
+    if (!retry) await PrefsSvc.database.setChatlessMessageRepairDone();
+  }
+
   static Future<void> onAppResume() async {
     final LifecycleService? lifecycle =
         (GetIt.I.isRegistered<LifecycleService>() && GetIt.I.isReadySync<LifecycleService>())
@@ -551,7 +594,6 @@ class StartupTasks {
     // seconds when the server is unreachable — a serverInfo() call that runs to the
     // full apiTimeout, then a 255-address subnet scan — leaving the connection
     // indicator red for that entire window on every resume.
-    final String originBeforeProbe = HttpSvc.origin;
     if (Platform.isAndroid) {
       // Also restore the alive marker early: until it is back, LifecycleService.isAlive
       // reports false for a foreground app, which makes the method-channel handlers
@@ -561,18 +603,12 @@ class StartupTasks {
       }
 
       SocketSvc.restartSocket();
+    } else if (kIsDesktop && GetIt.I.isRegistered<SocketService>()) {
+      SocketSvc.checkConnection();
     }
 
     if (HttpSvc.originOverride == null && SettingsSvc.settings.localhostPort.value != null) {
       await NetworkTasks.detectLocalhost();
-
-      // The probe changes what the socket dials, and setting the override doesn't
-      // cycle the connection on its own. Rebuild only when the resolved origin
-      // actually moved — same rule SocketService applies for URL rediscovery.
-      if (Platform.isAndroid && HttpSvc.origin != originBeforeProbe) {
-        Logger.info("Local address changed to ${HttpSvc.origin} on resume, rebuilding socket");
-        SocketSvc.restartSocket();
-      }
     }
 
     // Flush any contact sync deferred while the app was backgrounded
@@ -599,56 +635,6 @@ class StartupTasks {
     if (kIsDesktop && lifecycle != null) {
       lifecycle.windowFocused = true;
     }
-  }
-
-  static Future<void> checkInstanceLock() async {
-    if (!kIsDesktop || !Platform.isLinux) return;
-    Logger.debug("Starting process with PID $pid");
-
-    final lockFile = File(join(FilesystemSvc.appDocDir.path, 'bluebubbles.lck'));
-    final instanceFile = File(join(FilesystemSvc.appDocDir.path, '.instance'));
-    onExit(() {
-      if (lockFile.existsSync()) lockFile.deleteSync();
-    });
-
-    if (!lockFile.existsSync()) {
-      lockFile.createSync();
-    }
-    if (!instanceFile.existsSync()) {
-      instanceFile.createSync();
-    }
-
-    Logger.debug("Lockfile at ${lockFile.path}");
-    String _pid = lockFile.readAsStringSync();
-    String ps = Process.runSync('ps', ['-p', _pid]).stdout;
-    if (kReleaseMode && "$pid" != _pid && ps.endsWith('bluebubbles\n')) {
-      Logger.debug("Another instance is running. Sending foreground signal");
-      instanceFile.openSync(mode: FileMode.write).closeSync();
-      exit(0);
-    }
-
-    lockFile.writeAsStringSync("$pid");
-    instanceFile.watch(events: FileSystemEvent.modify).listen((event) async {
-      Logger.debug("Got Signal to go to foreground");
-      doWhenWindowReady(() async {
-        await windowManager.show();
-        List<WindowEntry?> widAndNames = await (await Process.start('wmctrl', ['-pl']))
-            .stdout
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())
-            .map((line) => line.replaceAll(RegExp(r"\s+"), " ").split(" "))
-            .map((split) => split[2] == "$pid" ? WindowEntry(split.first, split.last) : null)
-            .where((entry) => entry != null)
-            .toList();
-
-        for (WindowEntry? window in widAndNames) {
-          if (window?.name == "BlueBubbles") {
-            Process.runSync('wmctrl', ['-iR', window!.id]);
-            break;
-          }
-        }
-      });
-    });
   }
 }
 

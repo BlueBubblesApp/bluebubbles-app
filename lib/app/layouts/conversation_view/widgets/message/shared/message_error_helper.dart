@@ -17,7 +17,7 @@ class ErrorHelper {
   /// Returns the dialog title for the given numeric error code.
   /// Client-side errors show their [ClientMessageError.friendlyTitle].
   /// Server-side errors (including the well-known code 22) fall back to
-  /// "iMessage Error (Code X)", and zero / unrecognised codes use a generic title.
+  /// "iMessage Error (Code X)", and zero / unrecognized codes use a generic title.
   static String getErrorTitle(int errorCode) {
     final clientError = ClientMessageErrorExtension.fromCode(errorCode);
     if (clientError != null) return clientError.friendlyTitle;

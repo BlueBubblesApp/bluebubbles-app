@@ -432,7 +432,7 @@ class ChatCreatorController extends StatefulController {
   /// library can't parse it (e.g. for short-codes or unconventional numbers).
   ///
   /// Uses [isPossibleNumber] rather than [isValidNumber] so that structurally-
-  /// correct numbers (right length for the region) are normalised even if they
+  /// correct numbers (right length for the region) are normalized even if they
   /// aren't in an active subscriber range (e.g. 555 numbers in the US).
   String normalizeToE164(String phone) {
     if (phone.startsWith('+')) return phone; // already has country code
@@ -672,7 +672,7 @@ class ChatCreatorController extends StatefulController {
     // - pendingSend path: data already captured above; dispose() must not re-save it as a draft.
     // - messageSentWithChat path: message sent via createChat; nothing left to draft.
     // Awaiting the DB clear ensures ConversationTextFieldState.getTextDraft() finds '' when
-    // the new ConversationView initialises, so the text field starts empty.
+    // the new ConversationView initializes, so the text field starts empty.
     // Also clear activeCVC.chat.textFieldText directly: cvc() may return an already-registered
     // CVC whose .chat is an older object instance than resolvedChat, so setChatTextFieldText
     // would update state.chat but not the CVC's own .chat — getTextDraft() reads the latter.

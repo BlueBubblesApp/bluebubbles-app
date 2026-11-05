@@ -8,7 +8,7 @@ import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 /// Reddit posts, comments and share links.
 ///
 /// The mobile and AMP hosts serve markup without usable metadata, and share
-/// links carry a long tail of correlation parameters. Normalising both onto
+/// links carry a long tail of correlation parameters. Normalizing both onto
 /// `www.reddit.com` is enough to get proper Open Graph tags back.
 class RedditSiteParser extends SiteMetadataParser {
   const RedditSiteParser();

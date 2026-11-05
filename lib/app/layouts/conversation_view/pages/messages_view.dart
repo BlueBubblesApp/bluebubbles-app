@@ -150,7 +150,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
 
         // Load messages if needed (check service flag to avoid redundant loads).
         // Wrap in try-catch: if loadChunk throws (e.g. server HTTP error for a
-        // brand-new chat), we must still initialise handlers and mark the view
+        // brand-new chat), we must still initialize handlers and mark the view
         // ready so pendingSend can fire and handleNewMessage works correctly.
         try {
           if (!service.messagesLoaded) {
@@ -431,6 +431,17 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
   void _applyNewMessage(Message message) async {
     // Check if widget is still mounted before processing
     if (!mounted) {
+      return;
+    }
+
+    // service.init() registers this callback before the initial loadChunk above
+    // has awaited, so a message arriving in that window (e.g. from incremental
+    // sync) lands here while the mixin's service reference is still null.
+    // MessagesService._handleNewMessage has already added the message to struct
+    // and created its MessageState, so the initializeMessagesService pass that
+    // follows the load picks it up — there is no built list to insert into yet.
+    if (!isMessagesServiceInitialized) {
+      Logger.debug("handleNewMessage: View not initialized yet, deferring ${message.guid} to initial load");
       return;
     }
 

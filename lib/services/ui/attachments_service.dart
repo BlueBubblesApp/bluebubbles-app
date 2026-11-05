@@ -259,7 +259,6 @@ class AttachmentsService extends GetxService {
           initialDirectory: await FilesystemSvc.downloadsDirectory,
           sourcePath: file.path,
           bytes: file.path == null ? file.bytes : null,
-          allowedExtensions: file.extension != null ? [file.extension!] : null,
         );
       } catch (ex, stack) {
         Logger.error('Failed to save attachment!', error: ex, trace: stack);
@@ -286,7 +285,8 @@ class AttachmentsService extends GetxService {
         savePath = await FilePicker.getDirectoryPath(
           initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value,
           dialogTitle: 'Choose a location to save this file',
-          lockParentWindow: true,
+          windowsOptions: const WindowsOptions(lockParentWindow: true),
+          linuxOptions: const LinuxOptions(lockParentWindow: true),
         );
       } else {
         if (file.name.toLowerCase().endsWith(".mov")) {
@@ -299,14 +299,14 @@ class AttachmentsService extends GetxService {
                   file.bytes!,
                   quality: 100,
                   fileName: file.name,
-                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                   skipIfExists: false,
                 );
               } else {
                 await SaverGallery.saveFile(
                   filePath: file.path!,
                   fileName: file.name,
-                  androidRelativePath: SettingsSvc.settings.autoSavePicsLocation.value,
+                  albumPath: SettingsSvc.settings.autoSavePicsLocation.value,
                   skipIfExists: false,
                 );
               }
@@ -330,9 +330,15 @@ class AttachmentsService extends GetxService {
     }
   }
 
-  Future<bool> canAutoDownload() async {
-    final canSave = (await Permission.storage.request()).isGranted;
-    if (!canSave) return false;
+  /// Whether auto-download is allowed by settings (and optional storage permission).
+  ///
+  /// [requestStoragePermission] is for in-conversation downloads. The pin-grid
+  /// preview path passes false so a list tile never pops a permission dialog.
+  Future<bool> canAutoDownload({bool requestStoragePermission = true}) async {
+    if (requestStoragePermission) {
+      final canSave = (await Permission.storage.request()).isGranted;
+      if (!canSave) return false;
+    }
     if (!SettingsSvc.settings.autoDownload.value) {
       return false;
     } else {
@@ -340,7 +346,8 @@ class AttachmentsService extends GetxService {
         return true;
       } else {
         List<ConnectivityResult> status = await (Connectivity().checkConnectivity());
-        return status.contains(ConnectivityResult.wifi);
+        // The setting is about sparing mobile data; a wired desktop reports ethernet, not wifi.
+        return status.contains(ConnectivityResult.wifi) || status.contains(ConnectivityResult.ethernet);
       }
     }
   }

@@ -22,19 +22,12 @@ class MessageHelper {
 
   static bool shouldShowBigEmoji(String text) {
     if (isNullOrEmptyString(text)) return false;
-    if (text.codeUnits.length == 1 && text.codeUnits.first == 9786) return true;
-
-    final darkSunglasses = RegExp('\u{1F576}');
-    if (emojiRegex.firstMatch(text) == null && !text.contains(darkSunglasses)) return false;
+    if (emojiRegex.firstMatch(text) == null) return false;
 
     List<RegExpMatch> matches = emojiRegex.allMatches(text).toList();
     List<String> items = matches.map((m) => m.toString()).toList();
 
-    String replaced = text
-        .replaceAll(emojiRegex, "")
-        .replaceAll(String.fromCharCode(65039), "")
-        .replaceAll(darkSunglasses, "")
-        .trim();
+    String replaced = text.replaceAll(emojiRegex, "").replaceAll(String.fromCharCode(65039), "").trim();
     return items.length <= 3 && replaced.isEmpty;
   }
 
@@ -49,8 +42,7 @@ class MessageHelper {
       ];
     }
 
-    RegExp _emojiRegex = RegExp("${emojiRegex.pattern}|\u{1F576}");
-    List<RegExpMatch> matches = _emojiRegex.allMatches(text).toList();
+    List<RegExpMatch> matches = emojiRegex.allMatches(text).toList();
     if (matches.isEmpty) {
       return [
         TextSpan(

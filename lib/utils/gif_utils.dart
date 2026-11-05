@@ -69,7 +69,7 @@ Uint8List rewriteZeroDelayGifFrames(Uint8List image) {
       if (next < 0) return image;
       i = next;
     } else {
-      // Not a block type we recognise — the structure isn't what we expect, so
+      // Not a block type we recognize — the structure isn't what we expect, so
       // stop rather than write into a position we can't account for.
       return image;
     }

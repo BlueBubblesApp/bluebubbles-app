@@ -52,6 +52,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
       if (widget.enablePrivateAPIonInit && SettingsSvc.settings.serverPrivateAPI.value == true) {
         SettingsSvc.settings.enablePrivateAPI.value = true;
         SettingsSvc.settings.privateAPISend.value = true;
+        await SettingsSvc.settings.saveManyAsync(['enablePrivateAPI', 'privateAPISend']);
         HttpSvc.server.info().then((response) {
           final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
           Version version = Version.parse(serverVersionStr);

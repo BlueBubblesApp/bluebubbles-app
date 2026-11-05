@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/components/custom/custom_cupertino_alert_dialog.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart' hide CupertinoAlertDialog, CupertinoDialogAction;
 import 'package:flutter/material.dart';
@@ -364,10 +365,18 @@ Future<DateTime?> showBBDateTimePicker({
     );
   }
 
-  final date = await showDatePicker(context: context, initialDate: initial, firstDate: first, lastDate: last);
+  final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      initialEntryMode: kIsDesktop ? DatePickerEntryMode.input : DatePickerEntryMode.calendar);
   if (date == null || !context.mounted) return null;
 
-  final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
+  final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+      initialEntryMode: kIsDesktop ? TimePickerEntryMode.input : TimePickerEntryMode.dial);
   if (time == null) return null;
 
   return DateTime(date.year, date.month, date.day, time.hour, time.minute);

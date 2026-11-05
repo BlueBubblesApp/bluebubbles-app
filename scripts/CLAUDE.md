@@ -17,7 +17,7 @@ Sets the 4-digit desktop version in every spot it's hardcoded:
 | `windows/runner/Runner.rc` | `VERSION_AS_NUMBER` (comma form) + `VERSION_AS_STRING` |
 | `windows/bluebubbles_installer_script.iss` | `MyAppVersion` |
 | `pubspec.yaml` | `msix_version` |
-| `snap/snapcraft.yaml` | `version` + both arch release-download URLs |
+| `snap/snapcraft.yaml` | `version` |
 | `linux/build.sh` | the `jq '.version = ...'` injection |
 | `flatpak/…metainfo.xml` | prepends a `<release>` entry dated today + repoints the tag-pinned screenshot URLs |
 
@@ -29,9 +29,13 @@ dart run scripts/bump_desktop_versions.dart 2.1.0.0          # full release; war
 dart run scripts/bump_desktop_versions.dart --tag 2.1.0+91 2.1.0.0   # desktop-only release tag
 ```
 
-`--tag` (also `--tag=…`) overrides the release tag the snapcraft download URLs and the flatpak
-`<url>` point at — use it when the desktop build gets its own tag instead of riding the pubspec one.
-A leading `v` and any `+` are normalised for you.
+`--test <X.Y.Z.N>` is for CI: `desktop-builds.yml` stamps every manual run with a test version so
+it installs over the previous one. It allows any 4th digit and skips `msix_version` (the store msix must
+stay `.0`; `build.ps1` versions the sideload msix itself) and the flatpak entry.
+
+`--tag` (also `--tag=…`) overrides the release tag the flatpak
+`<url>` and screenshots point at — use it when the desktop build gets its own tag instead of riding the pubspec one.
+A leading `v` and any `+` are normalized for you.
 
 Dart rather than shell so there's one implementation for both PowerShell and bash. It runs from any
 cwd and preserves each file's existing line endings (the working tree is CRLF under `core.autocrlf`
@@ -47,6 +51,6 @@ does repoint that entry's `<url>` if the tag changed, so a corrected `--tag` can
 re-running. Exits 1 if any expected line stops matching, so a renamed field fails loudly instead of
 silently skipping.
 
-`pubspec.yaml`'s `version:` (Flutter version+build) is bumped separately, by hand. The snapcraft
-download URLs and the flatpak `<url>` key off *that* value, not the 4-digit desktop version, so bump
+`pubspec.yaml`'s `version:` (Flutter version+build) is bumped separately, by hand. The flatpak
+`<url>` and screenshots key off *that* value, not the 4-digit desktop version, so bump
 pubspec first and this script will pick it up — or pass `--tag` when the desktop release has its own.

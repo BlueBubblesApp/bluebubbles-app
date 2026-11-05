@@ -25,7 +25,7 @@ class MessageEditEntry {
 ConversationViewController cvc(Chat chat, {String? tag}) =>
     Get.isRegistered<ConversationViewController>(tag: tag ?? chat.guid)
         ? Get.find<ConversationViewController>(tag: tag ?? chat.guid)
-        : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid);
+        : Get.put(ConversationViewController(chat, tag_: tag), tag: tag ?? chat.guid, permanent: true);
 
 class ConversationViewController extends StatefulController with GetSingleTickerProviderStateMixin {
   final Chat chat;
@@ -211,7 +211,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
-    scrollController.dispose();
+    // Chat switches close this before the old route unmounts, and disposing a FocusNode that a mounted field still
+    // holds corrupts the focus tree, leaving the next composer unable to take input. Wait for the unmount.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      scrollController.dispose();
+      focusNode.dispose();
+      subjectFocusNode.dispose();
+      textController.dispose();
+      subjectTextController.dispose();
+    });
     super.onClose();
   }
 
@@ -223,6 +231,21 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     if (controller == null) return;
     controller.player.pause();
     controller.player.dispose();
+  }
+
+  /// Disposes every cached inline video player and returns how many were released.
+  ///
+  /// Called by the cache service when the app is backgrounded or memory is low. A
+  /// `VideoPlayer` widget still holding one of these listens for the
+  /// `video-players-evicted` event and falls back to its thumbnail.
+  int disposeVideoPlayers() {
+    final released = videoPlayers.length;
+    for (final controller in videoPlayers.values) {
+      controller.player.pause();
+      controller.player.dispose();
+    }
+    videoPlayers.clear();
+    return released;
   }
 
   Future<void> scrollToBottom() async {
@@ -265,7 +288,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   void close() {
     updateSmartReplyLayout(visible: false, height: 0);
     ChatsSvc.setAllInactiveSync();
-    Get.delete<ConversationViewController>(tag: tag);
+    deleteIfCurrent();
+  }
+
+  /// Deletes this controller unless a newer one for the same chat has taken over its tag.
+  void deleteIfCurrent() {
+    if (Get.isRegistered<ConversationViewController>(tag: tag) &&
+        identical(Get.find<ConversationViewController>(tag: tag), this)) {
+      Get.delete<ConversationViewController>(tag: tag, force: true);
+    }
   }
 
   Future<void> saveReplyToMessageState() async {

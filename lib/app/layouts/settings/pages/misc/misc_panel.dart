@@ -163,9 +163,8 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                           )),
                   ],
                 ),
-              if (!kIsWeb && !kIsDesktop || SettingsSvc.canAuthenticate)
-                SettingsHeader(
-                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Speed & Responsiveness"),
+              SettingsHeader(
+                  iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Speed & Responsiveness"),
               Obx(() => SettingsSection(
                 backgroundColor: tileColor,
                 children: [

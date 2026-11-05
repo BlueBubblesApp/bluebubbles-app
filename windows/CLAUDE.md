@@ -6,6 +6,7 @@
 - `win32_window.cpp/h` — Win32 window base class (creation, message routing)
 - `utils.cpp/h` — UTF-8 / UTF-16 helpers
 - `splash_screen.cpp/h` — native splash screen shown before the Flutter engine attaches
+- `store_update.cpp/h` — `bluebubbles/store` channel: Microsoft Store in-app updates via `StoreContext` (`checkUpdate`, `installUpdate`). Only finds updates on the Store-signed install; `installUpdate` runs from the in-app update dialog's Install button. Needs C++20 (coroutines) + `windowsapp.lib`
 
 ## Installer
 - `build.ps1` — release build script (mirrors `linux/build.sh`). `-Phase` splits it so CI can sign the app payload between building and packaging:

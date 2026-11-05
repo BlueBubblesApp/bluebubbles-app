@@ -150,8 +150,11 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
           SettingsSvc.settings.reachedConversationList.value = true;
           SettingsSvc.settings.saveOneAsync('reachedConversationList');
           t.cancel();
+          SettingsSvc.showPrivateApiTipIfNeeded();
         }
       });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => SettingsSvc.showPrivateApiTipIfNeeded());
     }
 
     // Extra safety check to make sure Android doesn't open the last chat when opening the app
@@ -195,8 +198,12 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       if (state == null) continue;
       final customPath = state.customAvatarPath.value;
       if (customPath != null) {
-        // Group custom avatars render unresized (CircleAvatar + FileImage).
-        unawaited(precacheImage(FileImage(File(customPath)), context));
+        // Same ResizeImage params as ContactAvatarGroupWidget, or the warmed
+        // entry is never hit and the photo decodes a second time at full size.
+        unawaited(precacheImage(
+          ResizeImage(FileImage(File(customPath)), width: decodeSize, height: decodeSize),
+          context,
+        ));
         continue;
       }
       for (final hs in state.participants) {

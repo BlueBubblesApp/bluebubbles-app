@@ -101,11 +101,15 @@ Future<DateTime?> showTimeframePicker(String title, BuildContext context,
                 context: dialogContext,
                 initialDate: DateTime.now().toLocal(),
                 firstDate: DateTime.now().toLocal().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now().toLocal().add(const Duration(days: 365)));
+                lastDate: DateTime.now().toLocal().add(const Duration(days: 365)),
+                initialEntryMode: kIsDesktop ? DatePickerEntryMode.input : DatePickerEntryMode.calendar);
 
             // If the user selected a date and the time picker is enabled, show the time picker
             if (showHourPicker && finalDate != null) {
-              final messageTime = await showTimePicker(context: dialogContext, initialTime: TimeOfDay.now());
+              final messageTime = await showTimePicker(
+                  context: dialogContext,
+                  initialTime: TimeOfDay.now(),
+                  initialEntryMode: kIsDesktop ? TimePickerEntryMode.input : TimePickerEntryMode.dial);
               if (messageTime != null) {
                 finalDate =
                     DateTime(finalDate.year, finalDate.month, finalDate.day, messageTime.hour, messageTime.minute);

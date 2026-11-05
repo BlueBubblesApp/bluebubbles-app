@@ -89,7 +89,7 @@ extension ClientMessageErrorExtension on ClientMessageError {
 
 /// Returns a user-facing error message for an incoming server error code.
 /// Add specific mappings in the switch statement as needed.
-/// Defaults to "iMessage Error" for any unrecognised server code.
+/// Defaults to "iMessage Error" for any unrecognized server code.
 String serverErrorMessage(int code) {
   switch (code) {
     // Add specific server error code → message mappings here, e.g.:
@@ -247,9 +247,9 @@ final RegExp _bidiControls = RegExp('[\u{061C}\u{200E}\u{200F}\u{202A}-\u{202E}\
 final RegExp _exoticSpaces = RegExp('[\u{00A0}\u{2000}-\u{200B}\u{202F}\u{205F}\u{3000}\u{FEFF}]');
 
 extension InvisibleCharacters on String {
-  /// Strips bidi overrides and normalises exotic spaces to plain ones.
+  /// Strips bidi overrides and normalizes exotic spaces to plain ones.
   ///
-  /// Normalising the spaces *before* any whitespace collapse is what makes a
+  /// Normalizing the spaces *before* any whitespace collapse is what makes a
   /// string built entirely out of them correctly come out empty.
   String get withoutInvisibleFormatting => replaceAll(_bidiControls, '').replaceAll(_exoticSpaces, ' ');
 }

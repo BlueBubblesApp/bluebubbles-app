@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/network/metadata/util/metadata_urls.dart';
 ///
 /// The site line on a preview card is deliberately derived from the URL and
 /// never from `og:site_name` — see `UrlPreviewController.siteText`. That keeps
-/// a phishing page from labelling itself "Apple", but it also means the card
+/// a phishing page from labeling itself "Apple", but it also means the card
 /// says `chat.whatsapp.com` where every other messaging app says "WhatsApp".
 ///
 /// This layer buys the readability back without giving up the guarantee: the
@@ -19,7 +19,7 @@ abstract final class SiteDisplayNames {
   /// Host -> the name to render for it. Add entries here; this is intentionally
   /// a compile-time constant and not a user setting.
   ///
-  /// Keys are hosts, already normalised the way [_normalizeHost] normalises
+  /// Keys are hosts, already normalized the way [_normalizeHost] normalizes
   /// them: lowercase, no `www.`, no trailing dot. A key matches its own host
   /// and any subdomain of it, so `youtube.com` covers `m.youtube.com` while
   /// `music.apple.com` can still say something different from `apple.com`.

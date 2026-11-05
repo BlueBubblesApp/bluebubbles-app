@@ -4,7 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart';
 
-/// Shared initialisation and helper logic for all three conversation-list
+/// Shared initialization and helper logic for all three conversation-list
 /// trailing widgets (Cupertino, Material, Samsung).
 ///
 /// Apply with `with TrailingStateMixin<W>` on the State class, e.g.:

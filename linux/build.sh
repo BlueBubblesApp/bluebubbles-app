@@ -3,7 +3,7 @@ trap "exit" INT
 set -eux
 
 # Flutter version to build with; override with the FLUTTER_VERSION env var.
-FLUTTER_VERSION="${FLUTTER_VERSION:-3.47.4}"
+FLUTTER_VERSION="${FLUTTER_VERSION:-3.47.8}"
 
 cd "$(dirname "$0")/.."
 
@@ -34,7 +34,7 @@ fi
 # Inject version number into version.json
 tmp=$(mktemp)
 chmod 644 "$tmp"
-jq '.version = "2.1.1.0"' build/linux/$folder/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/$folder/release/bundle/data/flutter_assets/version.json
+jq '.version = "2.1.6.0"' build/linux/$folder/release/bundle/data/flutter_assets/version.json > "$tmp" && mv "$tmp" build/linux/$folder/release/bundle/data/flutter_assets/version.json
 chmod +x build/linux/$folder/release/bundle/bluebubbles
 
 tar czvf bluebubbles-linux-"$arch".tar.gz -C build/linux/$folder/release/bundle .

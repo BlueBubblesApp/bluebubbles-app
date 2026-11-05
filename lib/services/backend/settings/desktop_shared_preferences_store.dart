@@ -8,6 +8,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/types.dart';
 
 /// Windows/Linux replacement for the stock shared_preferences backend.
@@ -42,6 +43,10 @@ import 'package:shared_preferences_platform_interface/types.dart';
 /// directory to the real path behind the AppData redirect. Custom file names via
 /// platform-specific [SharedPreferencesOptions] subclasses are not supported;
 /// the app only ever uses the defaults.
+///
+/// [register] routes the legacy `SharedPreferences` API through this store
+/// too. It is still used by the legacy->async migration in
+/// `SharedPreferencesService.init()` and by emoji_picker_flutter.
 base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform {
   DesktopSharedPreferencesStore._();
 
@@ -53,15 +58,16 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
 
   Future<void> _writeQueue = Future.value();
 
-  /// Registers this store as the [SharedPreferencesAsyncPlatform] and
-  /// recovers a corrupt preferences file (quarantine + restore from backup)
-  /// before the legacy `SharedPreferences.getInstance()` (which throws on
-  /// unparseable JSON) gets a chance to read it. Must be called before any
-  /// prefs access in every isolate; only valid on Windows and Linux.
+  /// Recovers a corrupt preferences file (quarantine + restore from backup),
+  /// then registers this store as the [SharedPreferencesAsyncPlatform] and,
+  /// via [_DesktopLegacySharedPreferencesStore], as the legacy
+  /// [SharedPreferencesStorePlatform]. Must be called before any prefs access
+  /// in every isolate; only valid on Windows and Linux.
   static Future<void> register() async {
     final store = DesktopSharedPreferencesStore._();
     await store._recoverCorruptFile();
     SharedPreferencesAsyncPlatform.instance = store;
+    SharedPreferencesStorePlatform.instance = _DesktopLegacySharedPreferencesStore(store);
   }
 
   /// This store registers (and recovers/migrates) before [BaseLogger] exists
@@ -144,10 +150,10 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   /// Returns the parsed contents of [file], or null when it is missing, empty
   /// or unparseable. Empty means a reader caught an in-place write mid-truncate,
   /// never "no preferences set" — that is stored as `{}`.
-  Map<String, Object>? _parseFile(File file) {
+  Future<Map<String, Object>?> _parseFile(File file) async {
     try {
-      if (!file.existsSync()) return null;
-      final String contents = file.readAsStringSync();
+      if (!await file.exists()) return null;
+      final String contents = await file.readAsString();
       if (contents.isEmpty) return null;
       final Object? decoded = json.decode(contents);
       return decoded is Map ? decoded.cast<String, Object>() : null;
@@ -161,9 +167,9 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   }
 
   Future<Map<String, Object>> _readFile() async {
-    Map<String, Object>? prefs = _parseFile(await _getDataFile());
+    Map<String, Object>? prefs = await _parseFile(await _getDataFile());
     if (prefs == null) {
-      prefs = _parseFile(await _getBackupFile());
+      prefs = await _parseFile(await _getBackupFile());
       if (prefs != null) {
         _log('Preferences file unreadable, using backup');
       }
@@ -173,15 +179,17 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
 
   /// Read-modify-write under the cross-isolate lock. Operations within this
   /// isolate are additionally serialized through [_writeQueue] so they queue
-  /// up instead of spinning against each other on the lock file.
-  Future<void> _mutate(void Function(Map<String, Object> prefs) mutator) {
-    final Future<void> result = _writeQueue.then((_) => _locked(() async {
+  /// up instead of spinning against each other on the lock file. Completes
+  /// with whether the data file was written.
+  Future<bool> _mutate(void Function(Map<String, Object> prefs) mutator) {
+    final Future<bool> result = _writeQueue.then((_) => _locked(() async {
           final Map<String, Object> prefs = await _readFile();
           mutator(prefs);
-          await _atomicWrite(prefs);
+          return _atomicWrite(prefs);
         }));
     _writeQueue = result.catchError((Object e) {
       _log('Write failed: $e');
+      return false;
     });
     return result;
   }
@@ -189,14 +197,19 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   /// Runs [action] while holding an exclusively created lock file — the only
   /// primitive that excludes both other isolates and other processes on all
   /// desktop platforms.
+  ///
+  /// All file work here and below uses the async dart:io APIs: on Windows the
+  /// main isolate shares its thread with the platform thread, and synchronous
+  /// I/O (including the fsync in [_atomicWrite]) stalled keyboard input for
+  /// hundreds of milliseconds per write on slow or AV-scanned disks.
   Future<T> _locked<T>(Future<T> Function() action) async {
     final File lockFile = File('${(await _getDataFile()).path}.lock');
     while (true) {
       try {
-        lockFile.createSync(recursive: true, exclusive: true);
+        await lockFile.create(recursive: true, exclusive: true);
         break;
       } on FileSystemException {
-        _breakStaleLock(lockFile);
+        await _breakStaleLock(lockFile);
         await Future.delayed(_lockRetryDelay);
       }
     }
@@ -204,7 +217,7 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       return await action();
     } finally {
       try {
-        lockFile.deleteSync();
+        await lockFile.delete();
       } on FileSystemException {
         // Best effort — a leftover lock is broken by _breakStaleLock later.
       }
@@ -212,11 +225,11 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   }
 
   /// Deletes the lock file if its holder appears to have died while holding it.
-  void _breakStaleLock(File lockFile) {
+  Future<void> _breakStaleLock(File lockFile) async {
     try {
-      if (DateTime.now().difference(lockFile.lastModifiedSync()) > _staleLockTimeout) {
+      if (DateTime.now().difference(await lockFile.lastModified()) > _staleLockTimeout) {
         _log('Breaking stale preferences lock');
-        lockFile.deleteSync();
+        await lockFile.delete();
       }
     } on FileSystemException {
       // Lock was released between the failed create and now — just retry.
@@ -227,17 +240,18 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
   /// mid-write can never leave a truncated store behind. Then refreshes the
   /// backup from the just-written file — encoded from memory and still under
   /// the lock, so the backup is always a complete, parseable snapshot.
-  Future<void> _atomicWrite(Map<String, Object> prefs) async {
+  /// Returns false if the data file could not be written.
+  Future<bool> _atomicWrite(Map<String, Object> prefs) async {
     final File file = await _getDataFile();
     final File tmp = File('${file.path}.tmp');
     final String contents = json.encode(prefs);
     try {
-      final RandomAccessFile raf = tmp.openSync(mode: FileMode.write);
+      final RandomAccessFile raf = await tmp.open(mode: FileMode.write);
       try {
-        raf.writeStringSync(contents);
-        raf.flushSync();
+        await raf.writeString(contents);
+        await raf.flush();
       } finally {
-        raf.closeSync();
+        await raf.close();
       }
       await moveFile(tmp, file.path);
     } on FileSystemException catch (e) {
@@ -245,17 +259,18 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
       // (`File.copy` deletes the destination first), but an in-place write can.
       _log('Atomic preferences write failed, writing in place: $e');
       try {
-        file.writeAsStringSync(contents, flush: true);
+        await file.writeAsString(contents, flush: true);
       } on FileSystemException catch (e) {
         _log('Failed to save preferences: $e');
-        return;
+        return false;
       }
     }
     try {
-      file.copySync((await _getBackupFile()).path);
+      await file.copy((await _getBackupFile()).path);
     } on FileSystemException catch (e) {
       _log('Failed to refresh preferences backup: $e');
     }
+    return true;
   }
 
   /// Quarantines an unparseable preferences file and restores the last good
@@ -266,21 +281,69 @@ base class DesktopSharedPreferencesStore extends SharedPreferencesAsyncPlatform 
         final File file = await _getDataFile();
         final File backup = await _getBackupFile();
         try {
-          if (_parseFile(file) != null) {
-            if (!backup.existsSync()) file.copySync(backup.path);
+          if (await _parseFile(file) != null) {
+            if (!await backup.exists()) await file.copy(backup.path);
             return;
           }
-          if (file.existsSync()) {
+          if (await file.exists()) {
             final String quarantinePath = '${file.path}.corrupt-${DateTime.now().millisecondsSinceEpoch}';
             _log('Quarantining corrupt preferences file to $quarantinePath');
             await moveFile(file, quarantinePath);
           }
-          if (_parseFile(backup) != null) {
+          if (await _parseFile(backup) != null) {
             _log('Restoring preferences from backup');
-            backup.copySync(file.path);
+            await backup.copy(file.path);
           }
         } on FileSystemException catch (e) {
           _log('Corrupt-file recovery failed: $e');
         }
       });
+}
+
+/// Legacy `SharedPreferences` backend over the same file, lock and atomic writes.
+class _DesktopLegacySharedPreferencesStore extends SharedPreferencesStorePlatform {
+  _DesktopLegacySharedPreferencesStore(this._store);
+
+  /// The legacy API's no-argument getAll()/clear() are scoped to this prefix,
+  /// like the stock backends.
+  static const String _defaultPrefix = 'flutter.';
+
+  final DesktopSharedPreferencesStore _store;
+
+  static bool _matches(PreferencesFilter filter, String key) =>
+      key.startsWith(filter.prefix) && (filter.allowList?.contains(key) ?? true);
+
+  /// Like the stock backends, report failure as false instead of throwing
+  /// ([DesktopSharedPreferencesStore._mutate] already logs it).
+  Future<bool> _write(void Function(Map<String, Object> prefs) mutator) =>
+      _store._mutate(mutator).catchError((Object _) => false);
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) => _write((prefs) => prefs[key] = value);
+
+  @override
+  Future<bool> remove(String key) => _write((prefs) => prefs.remove(key));
+
+  @override
+  Future<bool> clear() => clearWithParameters(ClearParameters(filter: PreferencesFilter(prefix: _defaultPrefix)));
+
+  @override
+  Future<bool> clearWithPrefix(String prefix) =>
+      clearWithParameters(ClearParameters(filter: PreferencesFilter(prefix: prefix)));
+
+  @override
+  Future<bool> clearWithParameters(ClearParameters parameters) =>
+      _write((prefs) => prefs.removeWhere((key, _) => _matches(parameters.filter, key)));
+
+  @override
+  Future<Map<String, Object>> getAll() =>
+      getAllWithParameters(GetAllParameters(filter: PreferencesFilter(prefix: _defaultPrefix)));
+
+  @override
+  Future<Map<String, Object>> getAllWithPrefix(String prefix) =>
+      getAllWithParameters(GetAllParameters(filter: PreferencesFilter(prefix: prefix)));
+
+  @override
+  Future<Map<String, Object>> getAllWithParameters(GetAllParameters parameters) async =>
+      (await _store._readFile())..removeWhere((key, _) => !_matches(parameters.filter, key));
 }

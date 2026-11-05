@@ -117,7 +117,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     // If ChatCreator pre-queued a send before navigating here, fire it now.
     //
     // We wait on messagesViewReady instead of a bare addPostFrameCallback so
-    // that the send only fires after MessagesView has *fully* initialised —
+    // that the send only fires after MessagesView has *fully* initialized —
     // handlers registered AND _listKey recreated (async loadChunk path).
     // Without this wait the sendAnimation's addPostFrameCallback can fire
     // between the _listKey recreation and the following setState flush, so
@@ -150,7 +150,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
   @override
   void dispose() {
     // The widget can be torn down mid-flight (user leaves the chat while the
-    // bubble is travelling), in which case onEnd never runs. Open the gate here
+    // bubble is traveling), in which case onEnd never runs. Open the gate here
     // so anything deferred behind this send still reaches the list.
     controller.messageListGate.release();
     super.dispose();

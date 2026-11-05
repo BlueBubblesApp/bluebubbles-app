@@ -47,7 +47,7 @@ class _M3ETonalButtonState extends State<M3ETonalButton> {
     final enabled = widget.onPressed != null;
     // M3's disabled recipe: the container and its content keep their own hues
     // and drop to the standard opacities, rather than switching to a different
-    // colour role.
+    // color role.
     final containerColor =
         enabled ? colorScheme.secondaryContainer : colorScheme.onSurface.withValues(alpha: 0.12);
     final contentColor =

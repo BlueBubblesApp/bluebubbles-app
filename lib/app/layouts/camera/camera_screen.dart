@@ -300,7 +300,7 @@ class _VideoPreviewState extends State<_VideoPreview> {
                       ),
                     ),
 
-                    // Centre play/pause button
+                    // Center play/pause button
                     Center(
                       child: GestureDetector(
                         onTap: _togglePlay,

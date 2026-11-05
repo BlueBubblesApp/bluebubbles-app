@@ -15,7 +15,7 @@ Public entry point is `MetadataHelper` (`../metadata_helper.dart`), re-exported 
 | `network/` | HTTP client, SSRF guard, charset decoding, oEmbed, image downloader |
 | `sites/` | Per-site knowledge, registered in `SiteParserRegistry` |
 | `cache/` | In-memory single-flight cache + `Message.metadata` persistence |
-| `util/` | Text cleanup and URL resolution/normalisation |
+| `util/` | Text cleanup and URL resolution/normalization |
 
 ## Flow
 
@@ -35,7 +35,7 @@ MetadataHelper.fetchForMessage()
 ```
 
 Concurrent calls for the same URL collapse onto one request (`MetadataMemoryCache`),
-keyed by normalised URL — **not** by message GUID. `PreviewImageDownloader` single-flights the
+keyed by normalized URL — **not** by message GUID. `PreviewImageDownloader` single-flights the
 same way for image and icon downloads.
 
 Two widgets asking for the same preview at once is the normal case, not an edge case:
@@ -101,7 +101,7 @@ Legacy `metadata_fetch` keys are handled asymmetrically, on purpose:
 - `image` / `url` — **read and written**. `UrlMetadata.fromJson` understands them, so rows written
   by the old implementation still render.
 - `previewImageFetched` — **written only**, never read. It is kept so that downgrading the app
-  keeps the old "don't refetch" behaviour, but honouring it on the way *up* would restore exactly
+  keeps the old "don't refetch" behavior, but honoring it on the way *up* would restore exactly
   the "failed once, never retries" bug `retryAfter` exists to fix. Rows carrying only that flag are
   treated as expired and get one retry against the current parser.
 

@@ -1,11 +1,14 @@
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:universal_io/io.dart';
 
 class MessageRemindersPanel extends StatefulWidget {
   const MessageRemindersPanel({super.key});
@@ -25,7 +28,10 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
   }
 
   void getExistingMessages() async {
-    final _pending = await NotificationsSvc.flnp.pendingNotificationRequests();
+    // Windows schedules through the desktop plugin, which also holds other scheduled toasts.
+    final _pending = Platform.isWindows
+        ? (await DesktopNotifications.pendingRequests()).where((r) => NotificationsService.isReminderId(r.id)).toList()
+        : await NotificationsSvc.flnp.pendingNotificationRequests();
     setState(() {
       scheduled = _pending;
       fetching = false;
@@ -36,7 +42,18 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
     setState(() {
       scheduled.removeWhere((element) => element.id == item.id);
     });
-    NotificationsSvc.flnp.cancel(id: item.id);
+    if (Platform.isWindows) {
+      await DesktopNotifications.cancel(item.id);
+    } else {
+      await NotificationsSvc.flnp.cancel(id: item.id);
+    }
+  }
+
+  /// Android reminders carry their time in the payload; Windows reads it from the OS schedule.
+  DateTime? _reminderTime(PendingNotificationRequest item) {
+    if (item is WindowsPendingNotificationRequest) return item.scheduledDate;
+    final int? millis = int.tryParse(item.payload ?? '');
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
   }
 
   @override
@@ -81,15 +98,14 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
                           findChildIndexByKey(scheduled, key, (item) => item.id.toString()),
                       itemBuilder: (context, index) {
                         final item = scheduled[index];
+                        final chatTitle = (item.title ?? "").replaceAll("Reminder: ", "");
+                        final time = _reminderTime(item);
                         return ListTile(
                           key: ValueKey(item.id.toString()),
                           mouseCursor: MouseCursor.defer,
-                          title: Text(item.body!, maxLines: 2, overflow: TextOverflow.ellipsis),
-                          subtitle: int.tryParse(item.payload!) == null
-                              ? Text(item.title!.replaceAll("Reminder: ", ""))
-                              : Text(
-                                  "${item.title!.replaceAll("Reminder: ", "")}\n${buildFullDate(DateTime.fromMillisecondsSinceEpoch(int.parse(item.payload!)))}"),
-                          isThreeLine: int.tryParse(item.payload!) == null ? false : true,
+                          title: Text(item.body ?? "", maxLines: 2, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(time == null ? chatTitle : "$chatTitle\n${buildFullDate(time)}"),
+                          isThreeLine: time != null,
                           onTap: () async {
                             final finalDate = await showTimeframePicker("Select Reminder Time", context,
                                 presetsAhead: true,
@@ -104,7 +120,12 @@ class _MessageRemindersPanelState extends State<MessageRemindersPanel> with Them
                                 return;
                               }
                               deleteMessage(item);
-                              await NotificationsSvc.createReminder(null, null, finalDate,
+                              // Windows reminders link to their chat through the payload; keep that and the avatar.
+                              final chatGuid = item is WindowsPendingNotificationRequest
+                                  ? DesktopMessageData.fromPayload(item.payload ?? '')?.chatGuid
+                                  : null;
+                              await NotificationsSvc.createReminder(
+                                  chatGuid == null ? null : Chat.findOne(guid: chatGuid), null, finalDate,
                                   chatTitle: item.title, messageText: item.body);
                               showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
                               getExistingMessages();

@@ -69,6 +69,13 @@ static gboolean started_minimized(char** arguments) {
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
 
+  // A second launch forwards its activate here (GApplication uniqueness).
+  GList* windows = gtk_application_get_windows(GTK_APPLICATION(application));
+  if (windows != nullptr) {
+    gtk_window_present(GTK_WINDOW(windows->data));
+    return;
+  }
+
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
@@ -106,7 +113,8 @@ static void my_application_activate(GApplication* application) {
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
-  fl_dart_project_set_ui_thread_policy(project, FL_UI_THREAD_POLICY_RUN_ON_SEPARATE_THREAD);
+  // Skia until flutter/flutter#192915 (Impeller flicker on VM/llvmpipe GPUs) is fixed.
+  fl_dart_project_set_enable_impeller(project, FALSE);
 
   FlView* view = fl_view_new(project);
 
@@ -174,6 +182,12 @@ static gboolean my_application_local_command_line(GApplication* application, gch
      return TRUE;
   }
 
+  // Autostart while already running: don't raise the existing window.
+  if (g_application_get_is_remote(application) && started_minimized(self->dart_entrypoint_arguments)) {
+    *exit_status = 0;
+    return TRUE;
+  }
+
   g_application_activate(application);
   *exit_status = 0;
 
@@ -199,6 +213,6 @@ static void my_application_init(MyApplication* self) {}
 MyApplication* my_application_new() {
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID,
-                                     "flags", G_APPLICATION_NON_UNIQUE,
+                                     "flags", G_APPLICATION_DEFAULT_FLAGS,
                                      nullptr));
 }

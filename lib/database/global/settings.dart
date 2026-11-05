@@ -16,7 +16,7 @@ import 'package:get/get.dart';
 import 'package:logger/logger.dart' show Level;
 import 'package:universal_io/io.dart';
 
-/// Reads [Settings.linkPreviewPolicy], honouring the boolean that preceded it.
+/// Reads [Settings.linkPreviewPolicy], honoring the boolean that preceded it.
 ///
 /// Installs that saw the interim `fetchUrlPreviews` flag carry their choice
 /// forward: off stays off, on becomes the contacts-only default rather than
@@ -67,6 +67,16 @@ class Settings {
   final RxInt lastIncrementalSync = 0.obs;
   final RxInt lastIncrementalSyncRowId = 0.obs;
   final RxInt refreshRate = 0.obs;
+
+  /// `CacheService` purge level applied when the app is backgrounded on mobile:
+  /// "off", "light", "moderate" or "aggressive". Starts minor on purpose.
+  final RxString cachePurgeBackgroundLevel = "light".obs;
+
+  /// `CacheService` purge level applied on an OS memory-pressure signal.
+  final RxString cachePurgeMemoryPressureLevel = "moderate".obs;
+
+  /// Comma-separated `ClearableCache.id`s that automatic purges leave alone.
+  final RxString cachePurgeExcludedCaches = "".obs;
   final RxBool colorfulAvatars = false.obs;
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
@@ -325,6 +335,24 @@ class Settings {
     }
   }
 
+  /// Per-device keys left out of backups.
+  static const deviceLocalKeys = [
+    'iCloudAccount',
+    'guidAuthKey',
+    'serverAddress',
+    'customHeaders',
+    'finishedSetup',
+    'reachedConversationList',
+    'colorsFromMedia',
+    'userAvatarPath',
+    'firstFcmRegisterDate',
+    'sendSoundPath',
+    'receiveSoundPath',
+    'desktopNotificationSoundPath',
+    'lastIncrementalSync',
+    'lastIncrementalSyncRowId',
+  ];
+
   Map<String, dynamic> toMap({bool includeAll = true}) {
     Map<String, dynamic> map = {
       'autoDownload': autoDownload.value,
@@ -340,8 +368,6 @@ class Settings {
       'showIncrementalSync': showIncrementalSync.value,
       'highPerfMode': highPerfMode.value,
       'reduceMotion': reduceMotion.value,
-      'lastIncrementalSync': lastIncrementalSync.value,
-      'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
       'refreshRate': refreshRate.value,
       'colorfulAvatars': colorfulAvatars.value,
       'colorfulBubbles': colorfulBubbles.value,
@@ -455,29 +481,33 @@ class Settings {
       'lastReviewRequestTimestamp': lastReviewRequestTimestamp.value,
       'serverPrivateAPI': serverPrivateAPI.value,
       'iMessageStatsSource': iMessageStatsSource.value,
+      'cachePurgeBackgroundLevel': cachePurgeBackgroundLevel.value,
+      'cachePurgeMemoryPressureLevel': cachePurgeMemoryPressureLevel.value,
+      'cachePurgeExcludedCaches': cachePurgeExcludedCaches.value,
+      'iCloudAccount': iCloudAccount.value,
+      'guidAuthKey': guidAuthKey.value,
+      'serverAddress': serverAddress.value,
+      'customHeaders': Map<String, String>.from(customHeaders.value),
+      'finishedSetup': finishedSetup.value,
+      'reachedConversationList': reachedConversationList.value,
+      'colorsFromMedia': colorsFromMedia.value,
+      'userAvatarPath': userAvatarPath.value,
+      'firstFcmRegisterDate': firstFcmRegisterDate.value,
+      'sendSoundPath': sendSoundPath.value,
+      'receiveSoundPath': receiveSoundPath.value,
+      'desktopNotificationSoundPath': desktopNotificationSoundPath.value,
+      'lastIncrementalSync': lastIncrementalSync.value,
+      'lastIncrementalSyncRowId': lastIncrementalSyncRowId.value,
     };
-
-    if (includeAll) {
-      map.addAll({
-        'iCloudAccount': iCloudAccount.value,
-        'guidAuthKey': guidAuthKey.value,
-        'serverAddress': serverAddress.value,
-        'customHeaders': Map<String, String>.from(customHeaders.value),
-        'finishedSetup': finishedSetup.value,
-        'reachedConversationList': reachedConversationList.value,
-        'colorsFromMedia': colorsFromMedia.value,
-        'userAvatarPath': userAvatarPath.value,
-        'firstFcmRegisterDate': firstFcmRegisterDate.value,
-        'sendSoundPath': sendSoundPath.value,
-        'receiveSoundPath': receiveSoundPath.value,
-        'desktopNotificationSoundPath': desktopNotificationSoundPath.value,
-      });
-    }
+    if (!includeAll) map.removeWhere((k, _) => deviceLocalKeys.contains(k));
 
     return map;
   }
 
-  static void updateFromMap(Map<String, dynamic> map) {
+  /// Pass [save] false when the values are already persisted (e.g. forwarded from an isolate that saved them).
+  /// Pass [includeAll] false to ignore [deviceLocalKeys].
+  static void updateFromMap(Map<String, dynamic> map, {bool save = true, bool includeAll = true}) {
+    if (!includeAll) map = Map.of(map)..removeWhere((k, _) => deviceLocalKeys.contains(k));
     SettingsSvc.settings.iCloudAccount.value = map['iCloudAccount'] ?? SettingsSvc.settings.iCloudAccount.value;
     SettingsSvc.settings.serverAddress.value = map['serverAddress'] ?? SettingsSvc.settings.serverAddress.value;
     SettingsSvc.settings.guidAuthKey.value = map['guidAuthKey'] ?? SettingsSvc.settings.guidAuthKey.value;
@@ -627,6 +657,12 @@ class Settings {
     SettingsSvc.settings.serverPrivateAPI.value =
         map['serverPrivateAPI'] ?? SettingsSvc.settings.serverPrivateAPI.value;
     SettingsSvc.settings.iMessageStatsSource.value = (map['iMessageStatsSource'] == 'local') ? 'local' : 'server';
+    SettingsSvc.settings.cachePurgeBackgroundLevel.value =
+        map['cachePurgeBackgroundLevel'] ?? SettingsSvc.settings.cachePurgeBackgroundLevel.value;
+    SettingsSvc.settings.cachePurgeMemoryPressureLevel.value =
+        map['cachePurgeMemoryPressureLevel'] ?? SettingsSvc.settings.cachePurgeMemoryPressureLevel.value;
+    SettingsSvc.settings.cachePurgeExcludedCaches.value =
+        map['cachePurgeExcludedCaches'] ?? SettingsSvc.settings.cachePurgeExcludedCaches.value;
     SettingsSvc.settings.privateSendTypingIndicators.value =
         map['privateSendTypingIndicators'] ?? SettingsSvc.settings.privateSendTypingIndicators.value;
     SettingsSvc.settings.privateMarkChatAsRead.value =
@@ -735,10 +771,9 @@ class Settings {
         map['replaceEmoticonsWithEmoji'] ?? SettingsSvc.settings.replaceEmoticonsWithEmoji.value;
     SettingsSvc.settings.lastReviewRequestTimestamp.value =
         map['lastReviewRequestTimestamp'] ?? SettingsSvc.settings.lastReviewRequestTimestamp.value;
-    SettingsSvc.settings.save();
 
-    if (!isIsolate) {
-      unawaited(PrefsInterface.syncAllSettings());
+    if (!isIsolate && save) {
+      unawaited(SettingsSvc.settings.saveAsync());
       EventDispatcherSvc.emit("theme-update", null);
     }
   }
@@ -836,6 +871,9 @@ class Settings {
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.serverPrivateAPI.value = map['serverPrivateAPI'];
     s.iMessageStatsSource.value = (map['iMessageStatsSource'] == 'local') ? 'local' : 'server';
+    s.cachePurgeBackgroundLevel.value = map['cachePurgeBackgroundLevel'] ?? "light";
+    s.cachePurgeMemoryPressureLevel.value = map['cachePurgeMemoryPressureLevel'] ?? "moderate";
+    s.cachePurgeExcludedCaches.value = map['cachePurgeExcludedCaches'] ?? "";
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;

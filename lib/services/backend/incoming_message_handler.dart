@@ -869,7 +869,7 @@ class IncomingMessageHandler {
 
   // ── Receive sound ────────────────────────────────────────────────────────
 
-  /// Plays the configured receive sound, mirroring the original ActionHandler behaviour:
+  /// Plays the configured receive sound, mirroring the original ActionHandler behavior:
   /// * Android: only while the app process is alive, so headless wake-ups do not play audio.
   /// * Desktop: may play regardless of window focus.
   Future<void> _playReceiveSound() async {
