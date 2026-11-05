@@ -47,6 +47,11 @@ Future<void> moveFile(File source, String targetPath) async {
 
 /// Desktop "Save As": asks where to put the file, then puts it there. Returns
 /// the path it was saved to, or null if the user cancelled the dialog.
+///
+/// With [sourcePath], the file is copied on disk rather than read into memory:
+/// attachments and log archives can be hundreds of megabytes. `saveFile()`
+/// writes whatever bytes it is given to the chosen path on every desktop
+/// platform, so it is given none and the copy fills the file afterwards.
 Future<String?> saveFileAs({
   required String fileName,
   String? initialDirectory,
@@ -60,10 +65,26 @@ Future<String?> saveFileAs({
     fileName: fileName,
     windowsOptions: const WindowsOptions(lockParentWindow: true),
     linuxOptions: const LinuxOptions(lockParentWindow: true),
-    bytes: bytes ?? await File(sourcePath!).readAsBytes(),
+    bytes: sourcePath != null ? Uint8List(0) : bytes!,
   );
+  // Cancelled. Overwrite confirmation is the native dialog's job.
+  if (saved == null) return null;
 
-  return saved?.toFilePath();
+  final String savePath = saved.toFilePath();
+  if (sourcePath != null) {
+    try {
+      await File(sourcePath).copy(savePath);
+    } catch (_) {
+      // Don't leave the empty placeholder behind looking like a saved file.
+      try {
+        await File(savePath).delete();
+      } on FileSystemException {
+        // Already gone, or never written
+      }
+      rethrow;
+    }
+  }
+  return savePath;
 }
 
 Future<PlatformFile?> loadPathAsFile(String path) async {

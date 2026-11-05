@@ -684,6 +684,10 @@ MenuItem? _trayToggleItem;
 bool _trayWindowHidden = false;
 
 void initSystemTray() {
+  // Each call creates another icon, so a second one (Home's state rebuilt) would show two. Set only on success, so a
+  // failed attempt can be retried.
+  if (_trayToggleItem != null) return;
+
   final trayIcon = TrayIcon.create();
   final menu = Menu.create();
   final toggleItem = MenuItem.createWithLabelAndType('Hide App', MenuItemType.normal);
