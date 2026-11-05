@@ -25,6 +25,14 @@ class CollectionGroupGrid extends StatefulWidget {
   /// lazy building inside a message bubble), so bigger collections open the gallery page instead.
   static const int maxInPlaceTiles = 24;
 
+  /// Identifies a collection in [ConversationViewController.expandedCollectionGrids]: its first attachment's GUID
+  /// (unique to the collection), or null when that isn't known yet (a temp attachment still sending).
+  static String? expansionKey(MessagePart part) {
+    final guid = part.attachments.firstOrNull?.guid;
+    if (guid == null || guid.startsWith('temp')) return null;
+    return guid;
+  }
+
   const CollectionGroupGrid({
     super.key,
     required this.messagePart,
@@ -50,7 +58,16 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
 
   Duration get _layoutAnimDuration => _animatingExpand ? _expandAnimDuration : Duration.zero;
 
+  @override
+  void initState() {
+    super.initState();
+    final key = CollectionGroupGrid.expansionKey(messagePart);
+    _expanded = key != null && cvController.expandedCollectionGrids.contains(key);
+  }
+
   void _expand() {
+    final key = CollectionGroupGrid.expansionKey(messagePart);
+    if (key != null) cvController.expandedCollectionGrids.add(key);
     setState(() {
       _expanded = true;
       _animatingExpand = true;

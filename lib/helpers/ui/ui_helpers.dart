@@ -535,7 +535,7 @@ IconData getAttachmentIcon(String mimeType) {
 }
 
 /// Controls a snackbar's icon, colors and how long it stays up, and whether mobile shows a toast instead.
-enum SnackbarType { success, error }
+enum SnackbarType { success, error, info }
 
 /// Errors on mobile are native toasts; everything else is this snackbar on every platform.
 void showSnackbar(String title, String message,
@@ -564,10 +564,13 @@ void showSnackbar(String title, String message,
   final (background, foreground) = switch (type) {
     SnackbarType.error => (theme.colorScheme.errorContainer, theme.colorScheme.onErrorContainer),
     SnackbarType.success => (Color(green.get(dark ? 30 : 90)), Color(green.get(dark ? 90 : 10))),
+    // Neutral progress / notice, for things that haven't succeeded yet ("Downloading…").
+    SnackbarType.info => (theme.colorScheme.secondaryContainer, theme.colorScheme.onSecondaryContainer),
   };
   final icon = switch (type) {
     SnackbarType.error => iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline,
     SnackbarType.success => iOS ? CupertinoIcons.checkmark_circle : Icons.check_circle_outline,
+    SnackbarType.info => iOS ? CupertinoIcons.info_circle : Icons.info_outline,
   };
   Get.snackbar(
     title,

@@ -273,7 +273,8 @@ class AttachmentsService extends GetxService {
 
     final pending = list.where((a) => getContent(a, autoDownload: false) is! PlatformFile).length;
     if (pending > 0) {
-      showSnackbar('Downloading', 'Downloading ${_attachmentCount(pending)} before saving…', durationMs: 3000);
+      showSnackbar('Downloading', 'Downloading ${_attachmentCount(pending)} before saving…',
+          type: SnackbarType.info, durationMs: 3000);
     }
     final files = await Future.wait(list.map(_resolveForSave));
 
@@ -325,24 +326,52 @@ class AttachmentsService extends GetxService {
 
   static bool _isDocument(Attachment a) => a.mimeStart != 'image' && a.mimeStart != 'video';
 
-  /// The attachment's file, downloading it first when it isn't on the device. Null when it can't be fetched
-  /// or the download fails.
+  /// How long [saveAllToDisk] waits on a download that is running but has stopped making progress before
+  /// counting it as failed, so one stuck download can't hold back the rest of the batch and its summary.
+  /// Downloads still queued behind others (at most two run at once) don't count down.
+  static const Duration _stalledDownloadTimeout = Duration(minutes: 2);
+
+  /// The attachment's file, downloading it first when it isn't on the device. Null when it can't be fetched,
+  /// the download fails, or it stalls for [_stalledDownloadTimeout].
   Future<PlatformFile?> _resolveForSave(Attachment attachment) {
     final content = getContent(attachment, autoDownload: false);
     if (content is PlatformFile) return Future.value(content);
     if (attachment.guid == null || attachment.guid!.startsWith("temp")) return Future.value(null);
 
     final completer = Completer<PlatformFile?>();
-    AttachmentDownloader.startDownload(
+    void finish(PlatformFile? file) {
+      if (!completer.isCompleted) completer.complete(file);
+    }
+
+    final controller = AttachmentDownloader.startDownload(
       attachment,
-      onComplete: (PlatformFile? file) {
-        if (!completer.isCompleted) completer.complete(file);
-      },
-      onError: () {
-        if (!completer.isCompleted) completer.complete(null);
-      },
+      onComplete: (PlatformFile? file) => finish(file),
+      onError: () => finish(null),
     );
-    return completer.future;
+
+    // Restart the stall timer on every state / progress change; it only runs while actually downloading.
+    Timer? stallTimer;
+    void armStallTimer() {
+      stallTimer?.cancel();
+      if (controller.state.value != AttachmentDownloadState.downloading) return;
+      stallTimer = Timer(_stalledDownloadTimeout, () {
+        Logger.warn('Download of ${attachment.guid} stalled; leaving it out of the batch save',
+            tag: 'AttachmentsService');
+        finish(null);
+      });
+    }
+
+    final subscriptions = [
+      controller.state.listen((_) => armStallTimer()),
+      controller.progress.listen((_) => armStallTimer()),
+    ];
+    armStallTimer();
+    return completer.future.whenComplete(() {
+      stallTimer?.cancel();
+      for (final subscription in subscriptions) {
+        subscription.cancel();
+      }
+    });
   }
 
   Future<String?> _pickSaveDirectory({String? initialDirectory}) => FilePicker.getDirectoryPath(
