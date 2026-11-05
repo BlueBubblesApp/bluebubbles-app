@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/t
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/timestamp/message_timestamp.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,26 +15,19 @@ class SamsungTimestampObserver extends StatelessWidget {
     required this.messageParts,
     required this.part,
     required this.cvController,
-    required this.reactionsForPart,
   });
 
   final List<MessagePart> messageParts;
   final MessagePart part;
   final ConversationViewController cvController;
-  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
 
   @override
   Widget build(BuildContext context) {
     final ms = MessageStateScope.of(context);
     return Obx(() {
-      // Directly observe MessageState associatedMessages for reactivity
       final isFromMe = ms.isFromMe.value;
-      final associatedMessages = ms.associatedMessages;
-      final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
-          .toList();
       return Padding(
-        padding: (messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty
+        padding: ms.tapbacksForBubble(part, bubbleCount: messageParts.length).isNotEmpty
             ? EdgeInsets.only(left: isFromMe ? 0 : 10, right: isFromMe ? 20 : 0)
             : const EdgeInsets.only(right: 10),
         child: MessageTimestamp(controller: ms, cvController: cvController),

@@ -6,7 +6,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reacti
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
-import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
@@ -33,15 +32,6 @@ class CollectionMediaGridPage extends StatefulWidget {
 
 class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with ThemeHelpers {
   final RxList<String> selected = <String>[].obs;
-
-  void _downloadAttachments(Iterable<Attachment> attachments) {
-    for (final a in attachments) {
-      final file = AttachmentsSvc.getContent(a, autoDownload: false);
-      if (file is PlatformFile) {
-        AttachmentsSvc.saveToDisk(file);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,9 +69,9 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                   ),
                   onPressed: () {
                     if (inSelectionMode) {
-                      _downloadAttachments(collection.media.where((e) => selected.contains(e.guid!)));
+                      AttachmentsSvc.saveAllToDisk(collection.media.where((e) => selected.contains(e.guid!)));
                     } else {
-                      _downloadAttachments(collection.media);
+                      AttachmentsSvc.saveAllToDisk(collection.media);
                     }
                   },
                 );

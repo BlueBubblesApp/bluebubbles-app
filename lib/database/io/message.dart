@@ -622,7 +622,7 @@ class Message {
   List<Attachment> get previewAttachments => dbAttachments.where((e) => e.mimeType == null).toList();
 
   List<Message> get reactions => associatedMessages
-      .where((item) => ReactionTypes.toList().contains(item.associatedMessageType?.replaceAll("-", "")))
+      .where((item) => ReactionTypes.isTapback(item.associatedMessageType))
       .toList();
 
   MessageStatusIndicator get indicatorToShow {

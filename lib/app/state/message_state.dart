@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -148,6 +149,28 @@ class MessageState extends StatefulController {
     if (parts.isEmpty) return true;
     return p.coversPartId(parts.last.part);
   }
+
+  /// Whether the message's subject bubble renders directly above [p] (subject sits above the leading part).
+  /// Reactive when read inside an Obx (reads [subject]).
+  bool hasSubjectAbove(MessagePart p) {
+    final subjectText = subject.value;
+    return isLeadingMessagePart(p) && subjectText != null && subjectText.isNotEmpty;
+  }
+
+  /// Tapbacks drawn on [part]'s bubble, matched against every raw part id it covers.
+  ///
+  /// When the message renders as a single bubble ([bubbleCount] == 1) every tapback shows on it, whatever
+  /// part it targets. Reactive when read inside an Obx (reads [associatedMessages]).
+  List<Message> tapbacksForBubble(MessagePart part, {required int bubbleCount}) {
+    final tapbacks = associatedMessages.where((e) => ReactionTypes.isTapback(e.associatedMessageType));
+    if (bubbleCount == 1) return tapbacks.toList();
+    return tapbacks.where((e) => part.coversPartId(e.associatedMessagePart ?? 0)).toList();
+  }
+
+  /// Tapbacks targeting exactly the raw message-part id [partId] (one attachment inside a collection).
+  List<Message> tapbacksForPartId(int partId) => associatedMessages
+      .where((e) => ReactionTypes.isTapback(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
+      .toList();
 
   /// Whether [p]'s bubble visually joins the bubble below it (Material/Samsung multi-part styling).
   /// Always false on the iOS skin, which never connects part bubbles.

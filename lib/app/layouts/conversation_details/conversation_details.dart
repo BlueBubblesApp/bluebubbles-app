@@ -105,13 +105,7 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
                       color: context.theme.colorScheme.onSurface,
                     ),
                     onPressed: () {
-                      final attachments = media.where((e) => selected.contains(e.guid!));
-                      for (Attachment a in attachments) {
-                        final file = AttachmentsSvc.getContent(a, autoDownload: false);
-                        if (file is PlatformFile) {
-                          AttachmentsSvc.saveToDisk(file);
-                        }
-                      }
+                      AttachmentsSvc.saveAllToDisk(media.where((e) => selected.contains(e.guid!)));
                     },
                   );
                 } else {

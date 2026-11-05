@@ -49,21 +49,12 @@ class CollectionDownloadButton extends StatelessWidget {
 
   final List<Attachment> attachments;
 
-  void _downloadAttachments() {
-    for (final a in attachments) {
-      final file = AttachmentsSvc.getContent(a, autoDownload: false);
-      if (file is PlatformFile) {
-        AttachmentsSvc.saveToDisk(file);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final outline = Theme.of(context).colorScheme.outline.withValues(alpha: 0.25);
     return GestureDetector(
-      onTap: _downloadAttachments,
+      onTap: () => AttachmentsSvc.saveAllToDisk(attachments),
       child: Container(
         width: size,
         height: size,

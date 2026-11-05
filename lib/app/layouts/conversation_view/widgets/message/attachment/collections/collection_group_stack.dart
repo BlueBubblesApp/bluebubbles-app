@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_style.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
@@ -40,8 +41,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   static const double _swipeCommitThreshold = 70;
   static const double _maxDragDx = 140;
   static const double _maxWiggleDx = 20.0;
-  static const double _maxStackSizeFactor = 0.42;
-  static const double _maxStackWidth = 220.0;
 
   /// Portrait card aspect (width:height = 3:4).
   static const double _portraitAspect = 3 / 4;
@@ -195,8 +194,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget _buildStack(BuildContext context, MediaCollection collection) {
     // Calculated against screen width; maxStackWidth caps size on larger screens.
     final baseCardWidth = min(
-      NavigationSvc.width(context) * _maxStackSizeFactor,
-      _maxStackWidth,
+      NavigationSvc.width(context) * CollectionStyle.cardWidthFactor,
+      CollectionStyle.maxCardWidth,
     );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
@@ -418,32 +417,21 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     );
 
     // Title is iOS chrome only (same as grid). Material/Samsung forced stack stays cards-only.
-    if (SettingsSvc.settings.skin.value != Skins.iOS) return fanBody;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        CollectionTitle(
-          label: collection.title,
-          onTap: () => collection.openGallery(context),
-        ),
-        // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
-        // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
-        // from the start-aligned label — no reservation (avoids a large title gap).
-        // Empty messageParts: key off reactionsForPart only (not whole-message reactions).
-        if (_isFromMe)
-          ReactionSpacing(
-            messageParts: const [],
-            part: widget.messagePart,
-            reactionsForPart: (part, reactions) =>
-                reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0)),
-            minHeightWhenNoReactions: 4,
-          )
-        else
-          const SizedBox(height: 4),
-        fanBody,
-      ],
+    return CollectionTitledLayout(
+      collection: collection,
+      isFromMe: _isFromMe,
+      // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
+      // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
+      // from the start-aligned label — no reservation (avoids a large title gap).
+      // Empty messageParts: only this collection's own tapbacks count, never whole-message reactions.
+      spacing: _isFromMe
+          ? ReactionSpacing(
+              messageParts: const [],
+              part: widget.messagePart,
+              minHeightWhenNoReactions: 4,
+            )
+          : const SizedBox(height: 4),
+      child: fanBody,
     );
   }
 

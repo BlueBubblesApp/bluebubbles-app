@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:bluebubbles/database/models.dart';
@@ -238,6 +239,22 @@ class AttachmentsService extends GetxService {
         .map((v) => ContactEmail(address: v.toString(), label: ''))
         .toList();
     return c;
+  }
+
+  /// Saves each of [attachments] to the device (e.g. a "download all" action).
+  ///
+  /// Attachments already on disk are saved right away; the rest are downloaded first and saved when their
+  /// download completes (joining any download already in progress). Attachments that can't be fetched from
+  /// the server (still sending, or no GUID) and have no local file are skipped.
+  void saveAllToDisk(Iterable<Attachment> attachments) {
+    for (final attachment in attachments) {
+      final content = getContent(attachment, autoDownload: false);
+      if (content is PlatformFile) {
+        unawaited(saveToDisk(content));
+      } else if (attachment.guid != null && !attachment.guid!.startsWith("temp")) {
+        AttachmentDownloader.startDownload(attachment, onComplete: (file) => saveToDisk(file));
+      }
+    }
   }
 
   Future<void> saveToDisk(PlatformFile file, {bool isAutoDownload = false, bool isDocument = false}) async {

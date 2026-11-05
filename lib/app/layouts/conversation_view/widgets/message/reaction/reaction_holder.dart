@@ -76,6 +76,10 @@ class ReactionHolder extends StatefulWidget {
   final ReactionTailType tailType;
   final ReactionTailDirection? tailDirection;
 
+  /// How far a holder pinned to a bubble's top corner hangs past the bubble's top / side edge.
+  static const double bubbleOverhangTop = -14;
+  static const double bubbleOverhangSide = -20;
+
   @override
   State<ReactionHolder> createState() => _ReactionHolderState();
 }
@@ -130,8 +134,9 @@ class _ReactionHolderState extends State<ReactionHolder> {
         ? widget.tailDirection == ReactionTailDirection.left
         : isFromMe;
     return SizedBox(
-      height: widget.tailType == ReactionTailType.inside ? 40 : 35,
-      width: 35,
+      height:
+          widget.tailType == ReactionTailType.inside ? ReactionWidgetState.iosClipHeight : ReactionWidgetState.iosSize,
+      width: ReactionWidgetState.iosSize,
       child: Stack(
         clipBehavior: Clip.none,
         children: _cachedReactions

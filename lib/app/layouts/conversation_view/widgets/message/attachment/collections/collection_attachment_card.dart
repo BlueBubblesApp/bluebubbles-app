@@ -1,12 +1,11 @@
-import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_style.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,19 +37,17 @@ class CollectionAttachmentReactions extends StatelessWidget {
     return Obx(() {
       final isFromMe = state.isFromMe.value;
       final targetPart = collectionPart.partIdForAttachment(attachmentIndex);
-      final reactions = state.associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
-          .where((e) => (e.associatedMessagePart ?? 0) == targetPart)
-          .toList();
+      final reactions = state.tapbacksForPartId(targetPart);
       if (reactions.isEmpty) return const SizedBox.shrink();
 
       // Inside-tail (fan stack) stays on the trailing edge for both sides. Standard
       // (collage and similar) follows author side like a normal bubble.
       final forceTrailing = alignTrailing || tailType == ReactionTailType.inside;
       final alignRight = forceTrailing || !isFromMe;
-      final edge = tightOverhang ? -14.0 : -20.0;
+      // Grid cells share 2px gaps, so the tight variant hangs off 4px / 6px less than a normal bubble.
+      final edge = tightOverhang ? ReactionHolder.bubbleOverhangSide + 6 : ReactionHolder.bubbleOverhangSide;
       return Positioned(
-        top: tightOverhang ? -10.0 : -14.0,
+        top: tightOverhang ? ReactionHolder.bubbleOverhangTop + 4 : ReactionHolder.bubbleOverhangTop,
         left: alignRight ? null : edge,
         right: alignRight ? edge : null,
         child: ReactionHolder(
@@ -109,16 +106,8 @@ class CollectionAttachmentCard extends StatelessWidget {
   final bool showCardShadow;
 
   /// When set, clips media to this radius without clipping overflow tapbacks.
-  /// Grid passes [BorderRadius.zero]; collage/stack omit and use [mediaCardBorderRadius].
+  /// Grid passes [BorderRadius.zero]; collage/stack omit and use [CollectionStyle.cardBorderRadius].
   final BorderRadius? mediaClipBorderRadius;
-
-  static double get mediaCardRadius => switch (SettingsSvc.settings.skin.value) {
-        Skins.Samsung => 25.0,
-        Skins.iOS => 20.0,
-        Skins.Material => M3EShapes.lg,
-      };
-
-  static BorderRadius get mediaCardBorderRadius => BorderRadius.all(Radius.circular(mediaCardRadius));
 
   int _partIdForAttachment() => messagePart.partIdForAttachment(attachmentIndex);
 
@@ -149,20 +138,11 @@ class CollectionAttachmentCard extends StatelessWidget {
     final scopedPart = _scopedPart();
     // Card owns shadow + clip so AttachmentHolder can stay fill-only.
     // Reactions stay outside the clip so tapbacks can overflow.
-    final clipRadius = mediaClipBorderRadius ?? mediaCardBorderRadius;
-    final paintShadow = showCardShadow && SettingsSvc.settings.skin.value == Skins.iOS;
+    final clipRadius = mediaClipBorderRadius ?? CollectionStyle.cardBorderRadius;
     final media = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: clipRadius,
-        boxShadow: paintShadow
-            ? [
-                BoxShadow(
-                  color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : null,
+        boxShadow: showCardShadow ? CollectionStyle.cardShadow(context) : null,
       ),
       child: ClipRRect(
         borderRadius: clipRadius,

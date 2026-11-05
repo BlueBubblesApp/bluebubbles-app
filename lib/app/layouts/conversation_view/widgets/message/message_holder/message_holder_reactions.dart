@@ -2,7 +2,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,13 +20,11 @@ class ReactionObserver extends StatelessWidget {
     required this.messageParts,
     required this.part,
     required this.chatGuid,
-    required this.reactionsForPart,
   });
 
   final List<MessagePart> messageParts;
   final MessagePart part;
   final String chatGuid;
-  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
 
   @override
   Widget build(BuildContext context) {
@@ -35,16 +32,12 @@ class ReactionObserver extends StatelessWidget {
     return Obx(() {
       // Directly observe MessageState for all reactive data
       final isFromMe = state.isFromMe.value;
-      final associatedMessages = state.associatedMessages;
-      final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
-          .toList();
-      final reactionList = messageParts.length == 1 ? reactions : reactionsForPart(part, reactions).toList();
+      final reactionList = state.tapbacksForBubble(part, bubbleCount: messageParts.length);
 
       return Positioned(
-        top: -14,
-        left: isFromMe ? -20 : null,
-        right: isFromMe ? null : -20,
+        top: ReactionHolder.bubbleOverhangTop,
+        left: isFromMe ? ReactionHolder.bubbleOverhangSide : null,
+        right: isFromMe ? null : ReactionHolder.bubbleOverhangSide,
         child: ReactionHolder(
           reactions: reactionList,
         ),
@@ -94,27 +87,20 @@ class ReactionSpacing extends StatelessWidget {
     super.key,
     required this.messageParts,
     required this.part,
-    required this.reactionsForPart,
     this.minHeightWhenNoReactions = 0,
   });
 
   final List<MessagePart> messageParts;
   final MessagePart part;
-  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
   final double minHeightWhenNoReactions;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final state = MessageStateScope.of(context);
-      // Directly observe MessageState associatedMessages for reactivity
-      final associatedMessages = state.associatedMessages;
-      final reactions = associatedMessages
-          .where((e) => ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")))
-          .cast<Message>()
-          .toList();
-      // coversPartId covers collapsed collection spans via attachmentPartIndices.
-      if ((messageParts.length == 1 && reactions.isNotEmpty) || reactionsForPart(part, reactions).isNotEmpty) {
+      // Reads associatedMessages, so this rebuilds when tapbacks change. Collapsed collection spans are
+      // matched via MessagePart.coversPartId.
+      if (state.tapbacksForBubble(part, bubbleCount: messageParts.length).isNotEmpty) {
         return const SizedBox(height: 12.5);
       }
 

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_style.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -53,8 +54,6 @@ class CollectionGroupGrid extends StatefulWidget {
 
 class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   static const double _gap = 2.0;
-  static const double _maxGridSizeFactor = 0.75; // temporary: match bubble width
-  static const double _maxGridWidth = 280.0;
   static const double _bannerAspect = 4 / 3;
   static const Duration _expandAnimDuration = Duration(milliseconds: 320);
 
@@ -64,14 +63,6 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
   ConversationViewController get cvController => widget.cvController;
   bool get isEditing => widget.isEditing;
   List<Attachment> get _attachments => messagePart.attachments;
-
-  double get _cardRadius => CollectionAttachmentCard.mediaCardRadius;
-
-  double get _connectedCornerRadius =>
-      SettingsSvc.settings.skin.value == Skins.Samsung ? 12.0 : 5.0;
-
-  bool _hasSubjectAbove(MessageState messageState) =>
-      messageState.isLeadingMessagePart(messagePart) && !isNullOrEmpty(messageState.subject.value);
 
   bool _hasBodyBelow(MessageState messageState) {
     if (!isNullOrEmpty(messagePart.text)) return true;
@@ -254,13 +245,13 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
     final connectCorners = !isIos;
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
-      cardRadius: _cardRadius,
-      connectedRadius: _connectedCornerRadius,
+      cardRadius: CollectionStyle.cardRadius,
+      connectedRadius: CollectionStyle.connectedCornerRadius,
       isFromMe: isFromMe,
-      tightenTop: connectCorners && _hasSubjectAbove(messageState),
+      tightenTop: connectCorners && messageState.hasSubjectAbove(messagePart),
       tightenBottom: connectCorners && _hasBodyBelow(messageState),
     );
-    final gridWidth = min(NavigationSvc.width(context) * _maxGridSizeFactor, _maxGridWidth);
+    final gridWidth = min(NavigationSvc.width(context) * CollectionStyle.gridWidthFactor, CollectionStyle.maxGridWidth);
     final gridHeight = _gridHeight(count, gridWidth, expanded: _expanded);
     final moreCount = (!_expanded && count > 7) ? count - 7 : null;
 
@@ -373,21 +364,8 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
       ),
     );
 
-    // iOS stack chrome: title above the card. Material/Samsung stay grid-only.
-    if (!isIos) return gridBody;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        CollectionTitle(
-          label: collection.title,
-          onTap: () => collection.openGallery(context),
-        ),
-        const SizedBox(height: 4),
-        gridBody,
-      ],
-    );
+    // iOS chrome: title above the card. Material/Samsung stay grid-only.
+    return CollectionTitledLayout(collection: collection, isFromMe: isFromMe, child: gridBody);
   }
 
   Widget _buildCellLayout({
@@ -512,15 +490,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: borderRadius,
-          boxShadow: SettingsSvc.settings.skin.value == Skins.iOS
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
+          boxShadow: CollectionStyle.cardShadow(context),
         ),
         child: ClipRRect(borderRadius: borderRadius, child: child),
       ),

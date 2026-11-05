@@ -144,11 +144,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     final alwaysShowAvatars = SettingsSvc.settings.alwaysShowAvatars.value;
     final avatarScale = SettingsSvc.settings.avatarScale.value;
 
-    // Bubble-level reactions for [part], including any original ids in a collapsed collection span.
-    Iterable<Message> reactionsForPart(MessagePart part, List<Message> reactions) {
-      return reactions.where((s) => part.coversPartId(s.associatedMessagePart ?? 0));
-    }
-
     /// Layout tree
     /// - Timestamp
     /// - Stack (see code comment)
@@ -316,7 +311,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                 : ReactionSpacing(
                                                     messageParts: messageParts,
                                                     part: e,
-                                                    reactionsForPart: reactionsForPart,
                                                     minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
                                                   ),
                                           ),
@@ -333,7 +327,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                           : ReactionSpacing(
                                               messageParts: messageParts,
                                               part: e,
-                                              reactionsForPart: reactionsForPart,
                                               minHeightWhenNoReactions: iOS &&
                                                       !widget.isReplyThread &&
                                                       message.threadOriginatorGuid != null &&
@@ -423,7 +416,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                       messageParts: messageParts,
                                                       part: e,
                                                       cvController: widget.cvController,
-                                                      reactionsForPart: reactionsForPart,
                                                     ),
                                                   // otherwise show content
                                                   if (!message.isGroupEvent && !e.isUnsent)
@@ -561,7 +553,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     messageParts: messageParts,
                                                                     part: e,
                                                                     chatGuid: chat.guid,
-                                                                    reactionsForPart: reactionsForPart,
                                                                   ),
                                                               ],
                                                             ),
