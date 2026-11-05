@@ -13,7 +13,7 @@ import 'package:get/get.dart';
 /// Not used for media-collection parts on iOS skin — those attach a reaction
 /// per attachment inside [CollectionGroupStack] instead, since a collection can
 /// bundle several originally-separate message parts (see
-/// MessageHolder._collapseMediaCollectionParts) and a tapback is only ever
+/// MessagePart.collapseMediaCollections) and a tapback is only ever
 /// associated with one of them.
 class ReactionObserver extends StatelessWidget {
   const ReactionObserver({

@@ -13,13 +13,7 @@ class ChatMessages {
   List<Message> get reactions => _reactions.values.toList();
   List<Attachment> get attachments => _attachments.values.toList();
   List<Message> threads(String originatorGuid, int originatorPart, {bool returnOriginator = true}) =>
-      _threads[originatorGuid]
-          ?.values
-          .where((e) =>
-              (e.normalizedThreadPart == originatorPart && e.guid != originatorGuid) ||
-              (returnOriginator ? e.guid == originatorGuid : false))
-          .toList() ??
-      [];
+      threadsForParts(originatorGuid, [originatorPart], returnOriginator: returnOriginator);
 
   /// Returns replies whose [Message.normalizedThreadPart] matches any value in
   /// [originatorParts], plus the originator when [returnOriginator] is true.

@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -146,6 +147,20 @@ class MessageState extends StatefulController {
   bool isTrailingMessagePart(MessagePart p) {
     if (parts.isEmpty) return true;
     return p.coversPartId(parts.last.part);
+  }
+
+  /// Whether [p]'s bubble visually joins the bubble below it (Material/Samsung multi-part styling).
+  /// Always false on the iOS skin, which never connects part bubbles.
+  bool partConnectsLower(MessagePart p) {
+    if (SettingsSvc.settings.skin.value == Skins.iOS) return false;
+    final leading = isLeadingMessagePart(p);
+    return (!leading && !isTrailingMessagePart(p)) || (leading && parts.length > 1);
+  }
+
+  /// Whether [p]'s bubble visually joins the bubble above it. Always false on the iOS skin.
+  bool partConnectsUpper(MessagePart p) {
+    if (SettingsSvc.settings.skin.value == Skins.iOS) return false;
+    return !isLeadingMessagePart(p);
   }
 
   /// Reactive state for the handle that sent this message.

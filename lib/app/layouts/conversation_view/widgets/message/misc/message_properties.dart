@@ -47,7 +47,7 @@ class _MessagePropertiesState extends State<MessageProperties> with ThemeHelpers
         ? const <Message>[]
         : service.struct.threadsForParts(
             message.guid!,
-            widget.part.attachmentPartIndices ?? [widget.part.part],
+            widget.part.coveredPartIds,
             returnOriginator: false,
           );
     if (message.expressiveSendStyleId != null) {

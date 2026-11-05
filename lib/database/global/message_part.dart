@@ -70,6 +70,61 @@ class MessagePart {
     return part == partId;
   }
 
+  /// Every raw message-part id this bubble covers: the collapsed span for collections, else just [part].
+  /// Use for lookups keyed by part id (threads, reactions) so collapsed collections match all of their ids.
+  Iterable<int> get coveredPartIds {
+    final span = attachmentPartIndices;
+    if (span != null && span.isNotEmpty) return span;
+    return [part];
+  }
+
+  /// Collapses runs of consecutive media-only parts into one collection part for display.
+  ///
+  /// The collapsed part keeps the first raw id as [part] and records every attachment's original id in
+  /// [attachmentPartIndices], so [coversPartId] / [coveredPartIds] still match reactions, threads and
+  /// trailing-bubble checks against any id in the span. Non-media parts pass through unchanged.
+  static List<MessagePart> collapseMediaCollections(List<MessagePart> parts) {
+    final collapsed = <MessagePart>[];
+    int i = 0;
+    while (i < parts.length) {
+      final current = parts[i];
+      if (!current.isMediaOnlyPart) {
+        collapsed.add(current);
+        i++;
+        continue;
+      }
+
+      final groupedAttachments = <Attachment>[...current.attachments];
+      final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
+      int j = i + 1;
+      while (j < parts.length) {
+        final next = parts[j];
+        if (!next.isMediaOnlyPart) break;
+        groupedAttachments.addAll(next.attachments);
+        groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
+        j++;
+      }
+
+      if (groupedAttachments.length > 1) {
+        collapsed.add(MessagePart(
+          attachments: groupedAttachments,
+          // First raw id is the bubble's part id; attachmentPartIndices holds the
+          // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
+          part: current.part,
+          shouldRedact: current.shouldRedact,
+          mentions: const [],
+          edits: const [],
+          isUnsent: current.isUnsent,
+          attachmentPartIndices: groupedPartIndices,
+        ));
+      } else {
+        collapsed.add(current);
+      }
+      i = j;
+    }
+    return collapsed;
+  }
+
   bool get isEdited => edits.isNotEmpty;
   String? get url => text?.replaceAll("\n", " ").split(" ").firstWhereOrNull((String e) => e.hasUrl);
   String get fullText => sanitizeString([subject, text].where((e) => !isNullOrEmpty(e)).join("\n"));
@@ -83,7 +138,8 @@ class MessagePart {
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 
   /// True when this part's attachments form a multi-item media collection (>1 images/videos).
-  /// Used to route the part to [CollectionGroupStack] instead of [AttachmentHolder].
+  /// Routes the part to a collection layout (stack / collage / grid, see `resolveMediaCollectionLayout`)
+  /// instead of a single [AttachmentHolder].
   bool get isMediaCollection =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }

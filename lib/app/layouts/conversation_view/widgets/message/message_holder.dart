@@ -135,48 +135,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
     widget.cvController.lastFocusedNode.requestFocus();
   }
 
-  List<MessagePart> _collapseMediaCollectionParts(List<MessagePart> parts) {
-    final collapsed = <MessagePart>[];
-    int i = 0;
-    while (i < parts.length) {
-      final current = parts[i];
-      if (!current.isMediaOnlyPart) {
-        collapsed.add(current);
-        i++;
-        continue;
-      }
-
-      final groupedAttachments = <Attachment>[...current.attachments];
-      final groupedPartIndices = <int>[...List.filled(current.attachments.length, current.part)];
-      int j = i + 1;
-      while (j < parts.length) {
-        final next = parts[j];
-        if (!next.isMediaOnlyPart) break;
-        groupedAttachments.addAll(next.attachments);
-        groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
-        j++;
-      }
-
-      if (groupedAttachments.length > 1) {
-        collapsed.add(MessagePart(
-          attachments: groupedAttachments,
-          // First raw id is the bubble's part id; attachmentPartIndices holds the
-          // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
-          part: current.part,
-          shouldRedact: current.shouldRedact,
-          mentions: const [],
-          edits: const [],
-          isUnsent: current.isUnsent,
-          attachmentPartIndices: groupedPartIndices,
-        ));
-      } else {
-        collapsed.add(current);
-      }
-      i = j;
-    }
-    return collapsed;
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -234,7 +192,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                   ),
               ]
             : controller.parts.toList();
-        final messageParts = _collapseMediaCollectionParts(rawMessageParts);
+        final messageParts = MessagePart.collapseMediaCollections(rawMessageParts);
 
         // Grow per-part arrays so replyOffsets[index] and keys[index] are
         // always safe to access, even when parts are added after initState.
@@ -432,7 +390,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                           service.struct
                                                               .threadsForParts(
                                                                 message.guid!,
-                                                                e.attachmentPartIndices ?? [e.part],
+                                                                e.coveredPartIds,
                                                                 returnOriginator: false,
                                                               )
                                                               .isNotEmpty &&
@@ -488,14 +446,8 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                               clipper: TailClipper(
                                                                 isFromMe: isFromMe,
                                                                 showTail: false,
-                                                                connectLower: iOS
-                                                                    ? false
-                                                                    : (!controller.isLeadingMessagePart(e) &&
-                                                                            !controller.isTrailingMessagePart(e)) ||
-                                                                        (controller.isLeadingMessagePart(e) &&
-                                                                            controller.parts.length > 1),
-                                                                connectUpper:
-                                                                    iOS ? false : !controller.isLeadingMessagePart(e),
+                                                                connectLower: controller.partConnectsLower(e),
+                                                                connectUpper: controller.partConnectsUpper(e),
                                                               ),
                                                               child: TextBubble(
                                                                 subjectOnly: true,
@@ -587,18 +539,10 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                               showTail: !e.isPkPass &&
                                                                                   message.showTail(newerMessage) &&
                                                                                   controller.isTrailingMessagePart(e),
-                                                                              connectLower: iOS
-                                                                                  ? false
-                                                                                  : (!controller.isLeadingMessagePart(
-                                                                                          e) &&
-                                                                                      !controller.isTrailingMessagePart(
-                                                                                          e)) ||
-                                                                                      (controller.isLeadingMessagePart(
-                                                                                              e) &&
-                                                                                          controller.parts.length > 1),
-                                                                              connectUpper: iOS
-                                                                                  ? false
-                                                                                  : !controller.isLeadingMessagePart(e),
+                                                                              connectLower:
+                                                                                  controller.partConnectsLower(e),
+                                                                              connectUpper:
+                                                                                  controller.partConnectsUpper(e),
                                                                             ),
                                                                             child: inner,
                                                                           );
