@@ -245,6 +245,8 @@ dependency_overrides:
 
 dev_dependencies:
   build_runner: ^2.7.1
+  flutter_test:
+    sdk: flutter
   build_verify: ^3.1.0
   flutter_launcher_icons: ^0.14.3
   flutter_lints: ^6.0.0
@@ -273,9 +275,6 @@ objectbox:
   # Writes objectbox-model.json and objectbox.g.dart to lib/generated
   # This helps separate generated code from handwritten code.
   output_dir: generated
-
-#   flutter_test:
-#     sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
