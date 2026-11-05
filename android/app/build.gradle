@@ -45,7 +45,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.bluebubbles.messaging"
-    compileSdk 36
+    compileSdk 37 // permission_handler_android 14 requires it; targetSdk stays separate
     ndkVersion = "28.2.13676358"
 
     // Already the default on AGP 8, but AGP 9 flips resValues to false. The product flavors
