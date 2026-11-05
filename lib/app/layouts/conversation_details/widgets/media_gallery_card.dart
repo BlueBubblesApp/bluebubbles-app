@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,9 +21,17 @@ import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class MediaGalleryCard extends StatefulWidget {
-  const MediaGalleryCard({super.key, required this.attachment, this.showSenderAvatar = true});
+  const MediaGalleryCard({
+    super.key,
+    required this.attachment,
+    this.showSenderAvatar = true,
+    this.showJumpToMessage = false,
+    this.galleryAttachments,
+  });
   final Attachment attachment;
   final bool showSenderAvatar;
+  final bool showJumpToMessage;
+  final List<Attachment>? galleryAttachments;
 
   @override
   State<MediaGalleryCard> createState() => _MediaGalleryCardState();
@@ -152,9 +161,19 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
               opacity: 0.3,
               child: file.path != null
                   ? (attachment.mimeType?.startsWith("image") ?? false)
-                      ? ImageDisplay(attachment: attachment, file: file)
+                      ? ImageDisplay(
+                          attachment: attachment,
+                          file: file,
+                          showJumpToMessage: widget.showJumpToMessage,
+                          galleryAttachments: widget.galleryAttachments,
+                        )
                       : (attachment.mimeType?.startsWith("video") ?? false) && videoPreviewPath != null
-                          ? ImageDisplay(attachment: attachment, imagePath: videoPreviewPath)
+                          ? ImageDisplay(
+                              attachment: attachment,
+                              imagePath: videoPreviewPath,
+                              showJumpToMessage: widget.showJumpToMessage,
+                              galleryAttachments: widget.galleryAttachments,
+                            )
                           : const SizedBox.shrink()
                   : const SizedBox.shrink(),
             ),
@@ -323,6 +342,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
             file: file,
             showSenderAvatar: widget.showSenderAvatar,
             onPressChanged: _setPressed,
+            showJumpToMessage: widget.showJumpToMessage,
+            galleryAttachments: widget.galleryAttachments,
           );
           addPadding = false;
         } else if ((attachment.mimeType?.startsWith("video") ?? false) && !kIsDesktop && !kIsWeb) {
@@ -332,7 +353,9 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
                 imagePath: videoPreviewPath,
                 duration: duration,
                 showSenderAvatar: widget.showSenderAvatar,
-                onPressChanged: _setPressed);
+                onPressChanged: _setPressed,
+                showJumpToMessage: widget.showJumpToMessage,
+                galleryAttachments: widget.galleryAttachments);
             addPadding = false;
           } else if (videoPreviewFailed) {
             child = Text(
@@ -351,6 +374,8 @@ class _MediaGalleryCardState extends State<MediaGalleryCard> with AutomaticKeepA
           child = OtherFile(
             file: file,
             attachment: attachment,
+            showJumpToMessage: widget.showJumpToMessage,
+            galleryAttachments: widget.galleryAttachments,
           );
         }
       } else {
@@ -385,6 +410,8 @@ class ImageDisplay extends StatefulWidget {
     this.duration,
     this.showSenderAvatar = true,
     this.onPressChanged,
+    this.showJumpToMessage = false,
+    this.galleryAttachments,
   });
 
   final Attachment attachment;
@@ -393,6 +420,8 @@ class ImageDisplay extends StatefulWidget {
   final Duration? duration;
   final bool showSenderAvatar;
   final ValueChanged<bool>? onPressChanged;
+  final bool showJumpToMessage;
+  final List<Attachment>? galleryAttachments;
 
   @override
   State<ImageDisplay> createState() => _ImageDisplayState();
@@ -409,14 +438,18 @@ class _ImageDisplayState extends State<ImageDisplay> {
   @override
   Widget build(BuildContext context) {
     final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
+    final currentChat = ChatStateScope.maybeChatOf(context);
 
     return OpenContainer(
       transitionDuration: Durations.medium4,
       closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
       openBuilder: (_, closeContainer) {
         return ConversationFullscreenHolder(
+          currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,
+          showJumpToMessage: widget.showJumpToMessage,
+          galleryAttachments: widget.galleryAttachments,
         );
       },
       closedBuilder: (_, openContainer) {
