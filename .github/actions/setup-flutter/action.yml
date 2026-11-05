@@ -41,8 +41,11 @@ runs:
 
     # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
     # from Git Bash on the Windows runner, and this form works on all three platforms.
+    # --skip-pub-get: the "Pub get" step below is the one that resolves, against the lockfile.
+    # fvm's own pub get (run against a pub cache restored from an older lockfile) rewrote
+    # pubspec.lock without ffmpeg_kit_flutter_platform_interface, so --enforce-lockfile failed.
     - name: Select Flutter version
-      run: dart pub global run fvm:main use "${{ inputs.flutter-version }}" --force
+      run: dart pub global run fvm:main use "${{ inputs.flutter-version }}" --force --skip-pub-get
       shell: bash
 
     # No explicit status check, so the saves inherit the implicit success() — they never
