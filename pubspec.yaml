@@ -65,7 +65,7 @@ dependencies:
   ffmpeg_kit_flutter_new_min:
     git:
       url: https://github.com/BlueBubblesApp/ffmpeg_kit_flutter.git
-      ref: 97d7d4b8c7b456a8ef0177cacc2a1945d9b57012
+      ref: 642fcde45b18d78ac49575d6c07b0ebf7cd3d4e1
   # Must be >=2.3.0: https://github.com/QuisApp/flutter_contacts/issues/240
   flutter_contacts: ^2.3.1  # mobile only.
   file_picker: ^13.3.0
