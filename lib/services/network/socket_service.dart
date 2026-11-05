@@ -628,6 +628,7 @@ class SocketService {
 
   // ── Heartbeat ──────────────────────────────────────────────────────────────
 
+  @Deprecated('v1 servers only: v2 never acks client-sent events; remove with v1 support')
   void _startHeartbeat() {
     _stopHeartbeat();
     if (SettingsSvc.serverDetails.isV2Server) return;
@@ -643,10 +644,12 @@ class SocketService {
   }
 
   /// Checks a "connected" socket now instead of waiting for the next heartbeat.
+  @Deprecated('v1 servers only: v2 never acks client-sent events; remove with v1 support')
   void checkConnection() => _sendHeartbeat();
 
   /// Rebuilds rather than calling `connect()`: socket.io still believes the dead
   /// connection is up.
+  @Deprecated('v1 servers only: v2 never acks client-sent events; remove with v1 support')
   void _sendHeartbeat() {
     final Socket? s = socket;
     if (s == null || state.value != SocketState.connected || _heartbeatTimeoutTimer != null) return;

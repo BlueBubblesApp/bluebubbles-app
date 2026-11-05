@@ -152,8 +152,7 @@ class SettingsService {
       final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
       final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
       final serverVersion = response.data['data']['server_version'];
-      final code = Version.parse(serverVersion ?? "0.0.0");
-      final versionCode = code.major * 100 + code.minor * 21 + code.patch;
+      final versionCode = ServerDetails.versionCodeFor(serverVersion ?? "0.0.0");
       // Saved even when absent, so pointing the client back at an older server clears them
       final apiVersions = (response.data['data']['api_versions'] as List? ?? const []).whereType<int>().toList();
       final buildVersion = response.data['data']['server_build_version'] as String? ?? "";

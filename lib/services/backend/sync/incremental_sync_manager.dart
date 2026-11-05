@@ -185,6 +185,7 @@ class IncrementalSyncManager extends SyncManager {
     await syncMessagePages(total);
   }
 
+  @Deprecated('v1 servers before 1.2.0 only; remove with v1 support')
   Future<void> startPre_1_2_0() async {
     if (startTimestamp == null) {
       throw Exception("startTimestamp cannot be null for server versions < 1.2.0");

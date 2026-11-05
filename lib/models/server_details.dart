@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:version/version.dart';
 
 @immutable
 class ServerDetails {
@@ -47,15 +48,22 @@ class ServerDetails {
   // under several 1.x thresholds
   int get _featureCode => isV2Server ? 1 << 30 : serverVersionCode;
 
+  /// The v1 feature level for [serverVersion]: major * 100 + minor * 21 + patch, e.g. v1.6.0 → 226.
+  @Deprecated('v1-only: a 2.x scores under several 1.x thresholds. Gate new features on isV2Server')
+  static int versionCodeFor(String serverVersion) {
+    final v = Version.parse(serverVersion);
+    return v.major * 100 + v.minor * 21 + v.patch;
+  }
+
   // ---------------------------------------------------------------------------
-  // Server feature helpers
-  //
-  // Version code formula: major * 100 + minor * 21 + patch
-  // e.g. v1.6.0 → 1*100 + 6*21 + 0 = 226
+  // Server feature helpers (thresholds are [versionCodeFor] values)
   // ---------------------------------------------------------------------------
 
   /// Can restart the Private API helper bundle from the client (~v0.1.x).
   bool get supportsRestartPrivateApi => _featureCode >= 41;
+
+  /// Download the original, unconverted attachment (after v1.0.0).
+  bool get supportsOriginalDownload => _featureCode > 100;
 
   /// Min supported server version (v0.2.0).
   bool get minimumWebSupportedVersion => _featureCode >= 42;
