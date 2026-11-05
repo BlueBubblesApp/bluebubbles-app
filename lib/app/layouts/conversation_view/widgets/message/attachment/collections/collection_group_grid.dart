@@ -19,8 +19,12 @@ import 'package:flutter/services.dart';
 ///
 /// Tile packing lives in [CollectionGridLayout]; this widget renders it. Collections over
 /// [CollectionGridLayout.maxCollapsedTiles] show a `+N` tile — tap opens the collection gallery,
-/// long-press expands the remaining items in place.
+/// long-press expands the remaining items in place (or opens the gallery past [maxInPlaceTiles]).
 class CollectionGroupGrid extends StatefulWidget {
+  /// Largest collection the `+N` long-press expands in place. Expanding mounts every attachment at once (no
+  /// lazy building inside a message bubble), so bigger collections open the gallery page instead.
+  static const int maxInPlaceTiles = 24;
+
   const CollectionGroupGrid({
     super.key,
     required this.messagePart,
@@ -38,8 +42,25 @@ class CollectionGroupGrid extends StatefulWidget {
 
 class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHelpers {
   static const Duration _expandAnimDuration = Duration(milliseconds: 320);
+  static const Curve _expandCurve = Curves.easeOutCubic;
 
   bool _expanded = false;
+
+  /// True only while the expand animation runs. Layout changes otherwise (window resize, rotation) apply
+  /// immediately instead of trailing behind the new width.
+  bool _animatingExpand = false;
+
+  Duration get _layoutAnimDuration => _animatingExpand ? _expandAnimDuration : Duration.zero;
+
+  void _expand() {
+    setState(() {
+      _expanded = true;
+      _animatingExpand = true;
+    });
+    Future.delayed(_expandAnimDuration, () {
+      if (mounted) setState(() => _animatingExpand = false);
+    });
+  }
 
   MessagePart get messagePart => widget.messagePart;
   ConversationViewController get cvController => widget.cvController;
@@ -94,53 +115,40 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
     );
     final gridWidth = min(NavigationSvc.width(context) * CollectionStyle.gridWidthFactor, CollectionStyle.maxGridWidth);
     final layout = CollectionGridLayout.compute(count: count, width: gridWidth, expanded: _expanded);
-    final gridHeight = layout.height;
 
+    // One tree for collapsed and expanded: cells are keyed by attachment index and animate to their new rect,
+    // so expanding moves the visible media instead of rebuilding it, and only the newly shown cells mount.
     // Media is clipped to the silhouette; tapbacks sit in a second, unclipped layer above it so they can
     // overhang the cell edges. Both layers are positioned from the same layout.
-    final imageLayer = _wrapGridCard(
-      context,
+    final grid = SizedBox(
       width: gridWidth,
-      height: gridHeight,
-      borderRadius: silhouette,
-      child: _positionCells(layout, (cell) => _buildMediaCell(context, collection, cell)),
-    );
-    final reactionLayer = _positionCells(layout, _buildReactionCell);
-
-    final gridBody = AnimatedSize(
-      duration: _expandAnimDuration,
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: AnimatedSwitcher(
-        duration: _expandAnimDuration,
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        // Size to incoming child so AnimatedSize can grow; outgoing floats above.
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.hardEdge,
-          children: [
-            for (final child in previousChildren)
-              Positioned(top: 0, left: 0, right: 0, child: IgnorePointer(child: child)),
-            if (currentChild != null) currentChild,
-          ],
-        ),
-        child: KeyedSubtree(
-          key: ValueKey(_expanded),
-          child: CollectionDownloadButton.wrap(
-            isFromMe: isFromMe,
-            contentWidth: gridWidth,
-            contentHeight: gridHeight,
-            attachments: _attachments,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                imageLayer,
-                Positioned.fill(child: reactionLayer),
-              ],
-            ),
+      height: layout.height,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _wrapGridCard(
+            context,
+            width: gridWidth,
+            height: layout.height,
+            borderRadius: silhouette,
+            child: _positionCells(layout, (cell) => _buildMediaCell(context, collection, cell)),
           ),
-        ),
+          Positioned.fill(child: _positionCells(layout, _buildReactionCell)),
+        ],
+      ),
+    );
+
+    // AnimatedSize smooths the message list's growth when the grid expands.
+    final gridBody = AnimatedSize(
+      duration: _layoutAnimDuration,
+      curve: _expandCurve,
+      alignment: Alignment.topCenter,
+      child: CollectionDownloadButton.wrap(
+        isFromMe: isFromMe,
+        contentWidth: gridWidth,
+        contentHeight: layout.height,
+        attachments: _attachments,
+        child: grid,
       ),
     );
 
@@ -148,8 +156,9 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
     return CollectionTitledLayout(collection: collection, isFromMe: isFromMe, child: gridBody);
   }
 
-  /// Places one widget per tile of [layout]. Each tile is a non-clipping [Stack] so [Positioned] children
-  /// (tapbacks, overlays) work inside it.
+  /// Places one widget per tile of [layout], keyed by attachment index so a tile keeps its element when the
+  /// layout changes. Each tile is a non-clipping [Stack] so [Positioned] children (tapbacks, overlays) work
+  /// inside it. Tiles past [CollectionGridLayout.maxCollapsedTiles] only exist once expanded, so they fade in.
   Widget _positionCells(CollectionGridLayout layout, List<Widget> Function(CollectionGridCell cell) buildCell) {
     return SizedBox(
       width: layout.width,
@@ -158,12 +167,29 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
         clipBehavior: Clip.none,
         children: [
           for (final cell in layout.cells)
-            Positioned.fromRect(
+            AnimatedPositioned.fromRect(
+              key: ValueKey(cell.index),
+              duration: _layoutAnimDuration,
+              curve: _expandCurve,
               rect: cell.rect,
-              child: Stack(fit: StackFit.expand, clipBehavior: Clip.none, children: buildCell(cell)),
+              child: _fadeInIfRevealed(
+                cell.index,
+                Stack(fit: StackFit.expand, clipBehavior: Clip.none, children: buildCell(cell)),
+              ),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _fadeInIfRevealed(int index, Widget child) {
+    if (index < CollectionGridLayout.maxCollapsedTiles) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: _expandAnimDuration,
+      curve: Curves.easeOut,
+      builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+      child: child,
     );
   }
 
@@ -184,7 +210,11 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
             onTap: () => collection.openGallery(context),
             onLongPress: () {
               HapticFeedback.lightImpact();
-              setState(() => _expanded = true);
+              if (_attachments.length > CollectionGroupGrid.maxInPlaceTiles) {
+                collection.openGallery(context);
+              } else {
+                _expand();
+              }
             },
             child: ColoredBox(
               color: Colors.black54,
@@ -225,17 +255,19 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
     required BorderRadius borderRadius,
     required Widget child,
   }) {
-    return SizedBox(
+    // Animated so the silhouette (and its clip) grows with the cells when the grid expands.
+    return AnimatedContainer(
+      duration: _layoutAnimDuration,
+      curve: _expandCurve,
       width: width,
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.theme.colorScheme.surfaceContainerHighest,
-          borderRadius: borderRadius,
-          boxShadow: CollectionStyle.cardShadow(context),
-        ),
-        child: ClipRRect(borderRadius: borderRadius, child: child),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        borderRadius: borderRadius,
+        boxShadow: CollectionStyle.cardShadow(context),
       ),
+      child: child,
     );
   }
 }
