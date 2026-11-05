@@ -18,6 +18,7 @@ class FindMyFriend {
     required this.lastUpdated,
     required this.status,
     required this.locatingInProgress,
+    this.avatar,
   });
 
   final double? latitude;
@@ -32,6 +33,9 @@ class FindMyFriend {
   final DateTime? lastUpdated;
   final LocationStatus? status;
   final bool locatingInProgress;
+  // Base64-encoded contact photo from the server, when the friend's handle matches
+  // a contact with an image on the host. Null when the server has no photo.
+  final String? avatar;
 
   /// Stable identifier for matching and map marker keys.
   /// Prefers the hydrated handle key; falls back to the raw server address.
@@ -52,6 +56,7 @@ class FindMyFriend {
             (json["last_updated"] ?? 0) == 0 ? null : DateTime.fromMillisecondsSinceEpoch(json["last_updated"]),
         status: LocationStatus.values.firstWhereOrNull((e) => e.name == json["status"]),
         locatingInProgress: json["is_locating_in_progress"] ?? false,
+        avatar: json["avatar"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,5 +69,6 @@ class FindMyFriend {
         "last_updated": lastUpdated == null ? null : DateFormat("MMMM d, yyyy h:mm:ss a").format(lastUpdated!),
         "status": status?.name,
         "locating_in_progress": locatingInProgress,
+        "avatar": avatar,
       };
 }
