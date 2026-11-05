@@ -80,7 +80,12 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
         )
           ..dbAttachments.addAll(resolvedPart.attachments)
           ..mergeWith(message);
-        text = previewMessage.getNotificationText();
+        // Same redaction as the composer's reply preview (ReplyHolder).
+        final redacted = SettingsSvc.settings.redactedMode.value;
+        text = previewMessage.getNotificationText(
+          hideContactInfo: redacted && SettingsSvc.settings.hideContactInfo.value,
+          hideMessageContent: redacted && SettingsSvc.settings.hideMessageContent.value,
+        );
       }
       return MouseRegion(
         cursor: MouseCursor.defer,

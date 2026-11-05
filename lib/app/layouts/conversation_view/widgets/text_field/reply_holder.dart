@@ -169,11 +169,7 @@ class _ReplyText extends StatelessWidget {
   final DateTime? date;
   final bool isIOS;
 
-  String _getNotificationText() {
-    final redacted = SettingsSvc.settings.redactedMode.value;
-    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
-    final hideMessageContent = redacted && SettingsSvc.settings.hideMessageContent.value;
-
+  String _getNotificationText({required bool hideContactInfo, required bool hideMessageContent}) {
     if (reply is MessagePart) {
       // Create a fake message and append the attachments.
       // This does not add anything to the DB and is just
@@ -199,47 +195,55 @@ class _ReplyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final redacted = SettingsSvc.settings.redactedMode.value;
-    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
-    final handle = message?.handleRelation.target;
-    final handleState = handle != null ? HandleSvc.getOrCreateHandleState(handle) : null;
-    final replyDisplayName = message?.isFromMe == true
-        ? "Yourself"
-        : hideContactInfo
-            ? (handleState?.displayName.value ?? handleState?.fakeName ?? "Someone")
-            : (handleState?.displayName.value ?? handle?.displayName ?? "Unknown");
+    // Own Obx: this build runs separately from the parent's, so redacted-mode toggles and contact-name
+    // changes must be observed here to rebuild the preview.
+    return Obx(() {
+      final redacted = SettingsSvc.settings.redactedMode.value;
+      final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
+      final hideMessageContent = redacted && SettingsSvc.settings.hideMessageContent.value;
+      final handle = message?.handleRelation.target;
+      final handleState = handle != null ? HandleSvc.getOrCreateHandleState(handle) : null;
+      // HandleState.displayName already holds the fake name while contact info is redacted. Without a
+      // HandleState, never fall back to the real handle name when hiding contact info.
+      final replyDisplayName = message?.isFromMe == true
+          ? "Yourself"
+          : handleState?.displayName.value ?? (hideContactInfo ? "Someone" : handle?.displayName ?? "Unknown");
+      final notificationText = reply == null
+          ? null
+          : _getNotificationText(hideContactInfo: hideContactInfo, hideMessageContent: hideMessageContent);
 
-    return Text.rich(
-      TextSpan(children: [
-        if (isIOS && reply != null) const TextSpan(text: "Replying to "),
-        if (reply != null)
-          TextSpan(
-            children: MessageHelper.buildEmojiText(
-                replyDisplayName,
-                context.textTheme.bodyMedium!.copyWith(
-                  fontWeight: isIOS ? FontWeight.bold : FontWeight.w400,
-                )),
-          ),
-        if (date != null)
-          TextSpan(
-            text: "Scheduling for ${buildFullDate(date!)}",
-            style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
-          ),
-        if (!isIOS) const TextSpan(text: "\n"),
-        if (reply != null)
-          TextSpan(
+      return Text.rich(
+        TextSpan(children: [
+          if (isIOS && reply != null) const TextSpan(text: "Replying to "),
+          if (reply != null)
+            TextSpan(
               children: MessageHelper.buildEmojiText(
-            "${isIOS ? " - " : ""}${_getNotificationText()}",
-            context.textTheme.bodyMedium!
-                .copyWith(fontStyle: isIOS ? FontStyle.italic : null)
-                .apply(fontSizeFactor: isIOS ? 1 : 1.15),
-          )),
-      ]),
-      style: context.textTheme.labelLarge!.copyWith(
-        color: context.theme.colorScheme.onSurfaceVariant,
-      ),
-      maxLines: isIOS ? 1 : 2,
-      overflow: TextOverflow.ellipsis,
-    );
+                  replyDisplayName,
+                  context.textTheme.bodyMedium!.copyWith(
+                    fontWeight: isIOS ? FontWeight.bold : FontWeight.w400,
+                  )),
+            ),
+          if (date != null)
+            TextSpan(
+              text: "Scheduling for ${buildFullDate(date!)}",
+              style: context.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+            ),
+          if (!isIOS) const TextSpan(text: "\n"),
+          if (reply != null)
+            TextSpan(
+                children: MessageHelper.buildEmojiText(
+              "${isIOS ? " - " : ""}$notificationText",
+              context.textTheme.bodyMedium!
+                  .copyWith(fontStyle: isIOS ? FontStyle.italic : null)
+                  .apply(fontSizeFactor: isIOS ? 1 : 1.15),
+            )),
+        ]),
+        style: context.textTheme.labelLarge!.copyWith(
+          color: context.theme.colorScheme.onSurfaceVariant,
+        ),
+        maxLines: isIOS ? 1 : 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    });
   }
 }

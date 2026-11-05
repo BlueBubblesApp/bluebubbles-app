@@ -126,11 +126,17 @@ enum Skins {
 
 /// Layout used for multi-attachment media collections.
 /// [skinDefault] follows iOS: collage for 2–3 / stack for 4+; Material/Samsung: grid.
+/// Persisted by index — append new values, never reorder.
 enum MediaCollectionLayout {
-  skinDefault,
-  collage,
-  stack,
-  grid,
+  skinDefault("Default"),
+  collage("Collage"),
+  stack("Stack"),
+  grid("Grid");
+
+  const MediaCollectionLayout(this.label);
+
+  /// Settings label.
+  final String label;
 }
 
 enum SwipeDirection {

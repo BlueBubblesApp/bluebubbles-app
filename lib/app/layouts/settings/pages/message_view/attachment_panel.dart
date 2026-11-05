@@ -14,6 +14,30 @@ class AttachmentPanel extends StatefulWidget {
 }
 
 class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
+  /// One multi-attachment layout picker row (iOS shows the title as its own tile, like the other pickers here).
+  List<Widget> _collectionLayoutOption({
+    required String title,
+    required Rx<MediaCollectionLayout> setting,
+    required String settingKey,
+  }) {
+    return [
+      if (iOS) SettingsTile(title: title),
+      Obx(() => SettingsOptions<MediaCollectionLayout>(
+            initial: setting.value,
+            onChanged: (val) async {
+              if (val == null) return;
+              setting.value = val;
+              await SettingsSvc.settings.saveOneAsync(settingKey);
+            },
+            options: MediaCollectionLayout.values,
+            textProcessing: (val) => val.label,
+            capitalize: false,
+            title: title,
+            secondaryColor: headerColor,
+          )),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -212,53 +236,17 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                         subtitle: "Choose how multiple images and videos are arranged in conversations",
                       ),
                     ),
-                    if (iOS)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Text("2–3 Items", style: context.theme.textTheme.bodyLarge),
-                      ),
-                    Obx(() => SettingsOptions<MediaCollectionLayout>(
-                          initial: SettingsSvc.settings.mediaCollectionLayoutSmall.value,
-                          onChanged: (val) async {
-                            if (val == null) return;
-                            SettingsSvc.settings.mediaCollectionLayoutSmall.value = val;
-                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutSmall');
-                          },
-                          options: MediaCollectionLayout.values,
-                          textProcessing: (val) => switch (val) {
-                            MediaCollectionLayout.skinDefault => "Default",
-                            MediaCollectionLayout.collage => "Collage",
-                            MediaCollectionLayout.stack => "Stack",
-                            MediaCollectionLayout.grid => "Grid",
-                          },
-                          capitalize: false,
-                          title: "2–3 Items",
-                          secondaryColor: headerColor,
-                        )),
+                    ..._collectionLayoutOption(
+                      title: "2–3 Items",
+                      setting: SettingsSvc.settings.mediaCollectionLayoutSmall,
+                      settingKey: 'mediaCollectionLayoutSmall',
+                    ),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (iOS)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Text("4+ Items", style: context.theme.textTheme.bodyLarge),
-                      ),
-                    Obx(() => SettingsOptions<MediaCollectionLayout>(
-                          initial: SettingsSvc.settings.mediaCollectionLayoutLarge.value,
-                          onChanged: (val) async {
-                            if (val == null) return;
-                            SettingsSvc.settings.mediaCollectionLayoutLarge.value = val;
-                            await SettingsSvc.settings.saveOneAsync('mediaCollectionLayoutLarge');
-                          },
-                          options: MediaCollectionLayout.values,
-                          textProcessing: (val) => switch (val) {
-                            MediaCollectionLayout.skinDefault => "Default",
-                            MediaCollectionLayout.collage => "Collage",
-                            MediaCollectionLayout.stack => "Stack",
-                            MediaCollectionLayout.grid => "Grid",
-                          },
-                          capitalize: false,
-                          title: "4+ Items",
-                          secondaryColor: headerColor,
-                        )),
+                    ..._collectionLayoutOption(
+                      title: "4+ Items",
+                      setting: SettingsSvc.settings.mediaCollectionLayoutLarge,
+                      settingKey: 'mediaCollectionLayoutLarge',
+                    ),
                   ],
                 ),
                 SettingsHeader(

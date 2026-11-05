@@ -37,6 +37,11 @@ Key observables: `guid`, `text`, `dateDelivered`, `dateRead`, `dateEdited`, `err
 
 Also owns `attachmentStates: Map<String, AttachmentState>` keyed by attachment GUID.
 
+**Part helpers** — `parts` holds raw message parts keyed by part id (`MessagePart.part`), not list index. Use
+`partById`, `isLeadingMessagePart` / `isTrailingMessagePart`, `partConnectsUpper` / `partConnectsLower` (bubble
+connect styling) and `hasSubjectAbove` rather than comparing `part.part` against `parts.length`. All of them treat a
+collapsed media collection (`MessagePart.collapseMediaCollections`) as covering every raw id in its span.
+
 ## AttachmentState Observable Fields
 | Field | Type | Driven by |
 |-------|------|-----------|

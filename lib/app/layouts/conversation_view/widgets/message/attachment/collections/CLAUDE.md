@@ -2,19 +2,22 @@
 
 Renders a message part with 2+ media attachments as a collage, fan stack, or grid
 (instead of individual `AttachmentHolder`s). Dispatched from `MessagePartContent`
-when `MessagePart.isMediaCollection`.
+when `MessagePart.isMediaCollection` (consecutive media-only parts are merged first by
+`MessagePart.collapseMediaCollections`).
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `collection_group_collage.dart` | Overlapping collage (skin-default iOS 2–3) |
-| `collection_group_stack.dart` | Fan stack (skin-default iOS 4+) |
-| `collection_group_grid.dart` | Grid (skin-default Material/Samsung 2+; chrome + layout + reactions) |
-| `collection_attachment_card.dart` | Shared card chrome + `fill` media + per-attachment reactions |
-| `collection_title.dart` | Tappable “X Photos/Videos/Items” label (callers gate to iOS) |
+| `collection_group_stack.dart` | Fan stack (skin-default iOS 4+); swipe / wheel / trackpad paging |
+| `collection_group_grid.dart` | Grid (skin-default Material/Samsung 2+): renders `CollectionGridLayout` |
+| `collection_grid_layout.dart` | Pure tile packing for the grid — one `Rect` per attachment, no widgets |
+| `collection_attachment_card.dart` | Shared card chrome + `fill` media + per-attachment reactions; `.gridCell` for grid tiles |
+| `collection_style.dart` | `CollectionStyle` — card radius, connected-corner radius, iOS card shadow, width limits |
+| `collection_title.dart` | “X Photos/Videos/Items” label; `CollectionTitledLayout` places it (iOS skin only) |
 | `collection_download_button.dart` | Incoming download control — iOS only (`CollectionDownloadButton.wrap`) |
-| `collection_media_controller.dart` | `openGallery` → `CollectionMediaGridPage`; passed into Fullscreen from cards only |
+| `media_collection.dart` | `MediaCollection` value (media, title, `openGallery`) + `MediaCollectionScope` |
 | `collection_media_grid_page.dart` | Full-page collection gallery (`MediaGridSection`; no avatars; tapback overlays) |
 
 ## Layout Selection
@@ -34,19 +37,33 @@ when not `skinDefault` (Media Settings → Multi-Attachment Layout):
 ## Ownership
 
 - Parents size each card frame; `AttachmentHolder(fill: true)` fills it (popup skips fill).
-- Radii: `CollectionAttachmentCard.mediaCardRadius` — iOS 20 / Material `M3EShapes.lg` / Samsung 25.
+- Shared sizing / radii / shadow live in `CollectionStyle` — don't redefine them per layout.
+  Card radius: iOS 20 / Material `M3EShapes.lg` / Samsung 25.
 - **Collage / stack:** card owns skin radius + iOS-only soft shadow; collage tilt (~0.75°) is iOS-only. Reactions sit outside the clip.
-- **Grid:** no card shadow; outer `ClipRRect` owns the silhouette (same radius table); cells stay square. Reaction overlay sits above cells (author-edge, `tightOverhang`). Material/Samsung tighten author-edge corners when subject/body is adjacent; iOS stays full-radius.
-- **Title:** iOS stack/grid only (`CollectionTitle` → `openGallery`). Material/Samsung stay layout-only even when prefs force stack/grid.
-- **`+N` (grid, count > 7):** tap → gallery; long-press → expand remaining items in place. Segment packing lives in the `CollectionGroupGrid` class doc.
+- **Grid:** cells are `CollectionAttachmentCard.gridCell` (square, no shadow, no in-card tapbacks). The outer card owns the
+  silhouette clip and the iOS-only shadow; tapbacks render in a second, unclipped layer positioned from the same
+  `CollectionGridLayout`. Material/Samsung tighten the author-edge corners against an adjacent subject / body
+  (`CollectionStyle.connectedCornerRadius`); iOS stays full-radius.
+- **Reactions:** per attachment via `CollectionAttachmentReactions` (`MessageState.tapbacksForPartId`). Stack cards and
+  the gallery page use the inside tail pinned to the trailing edge; collage and Material/Samsung grid follow the normal
+  bubble rule (left of from-me, right of received).
+- **Title:** iOS stack/grid only, via `CollectionTitledLayout` → `MediaCollection.openGallery`. Material/Samsung stay layout-only even when prefs force stack/grid.
+- **`+N` (grid, count > `CollectionGridLayout.maxCollapsedTiles`):** tap → gallery; long-press → expand remaining items in place.
+- **Swipe-to-reply:** collage cards use `SwipeToReplyRow` (`misc/swipe_to_reply_wrapper.dart`). The stack has none —
+  horizontal drags page the fan. `MessageHolder` disables its per-part swipe for every collection.
 
 ## Gallery / Fullscreen
 
-- Cards pass `collectionController` into Fullscreen viewers (paging from `controller.media`).
-- Overview gallery cells omit the controller so the fullscreen grid button cannot nest.
+- Each layout provides `MediaCollectionScope`; `CollectionAttachmentCard` re-provides it around the child it hands to
+  `MessagePopupHolder` (the popup renders that child in its own route).
+- `ResolvedFileContent` / `VideoPlayer` read the scope when opening fullscreen: paging is limited to the collection and
+  `ConversationFullscreenHolder` gets an `onOpenCollectionGallery` callback for its grid button.
+- `CollectionMediaGridPage` is pushed as its own route, outside any scope, so fullscreen opened from it has no grid
+  button (no nesting).
 
 ## Related
 
 - Parent dispatcher: `../CLAUDE.md` (attachment/) and `../../misc/CLAUDE.md` (`MessagePartContent`)
 - Layout helper: `lib/helpers/ui/message_widget_helpers.dart` → `resolveMediaCollectionLayout`
+- Part-id helpers: `MessagePart.coversPartId` / `coveredPartIds`, `MessageState.isLeadingMessagePart` / `isTrailingMessagePart`
 - Fullscreen: `lib/app/layouts/fullscreen_media/CLAUDE.md`

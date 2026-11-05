@@ -172,10 +172,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                     if (_hasCollectionGallery)
                       IconButton(
                         onPressed: _openCollectionGallery,
-                        icon: Icon(
-                          CupertinoIcons.square_grid_2x2,
-                          color: context.theme.colorScheme.primary,
-                        ),
+                        icon: Icon(iOS ? CupertinoIcons.square_grid_2x2 : Icons.grid_view_outlined),
                       ),
                     if (_canReply)
                       IconButton(
