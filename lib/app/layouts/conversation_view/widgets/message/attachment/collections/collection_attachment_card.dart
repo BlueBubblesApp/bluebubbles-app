@@ -1,6 +1,6 @@
 import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/attachment_holder.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/message_popup_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
@@ -75,7 +75,6 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.messagePart,
     required this.cvController,
     required this.isEditing,
-    required this.collectionController,
     this.ignorePointer = false,
     this.enableGestures = false,
     this.reactionTailType = ReactionTailType.standard,
@@ -90,10 +89,6 @@ class CollectionAttachmentCard extends StatelessWidget {
   final MessagePart messagePart;
   final ConversationViewController cvController;
   final bool isEditing;
-
-  /// Scopes fullscreen paging via [CollectionMediaController.media] and shows the
-  /// collection-grid button. Overview gallery items use MediaGalleryCard instead (no controller).
-  final CollectionMediaController collectionController;
 
   /// When true, pointer events pass through to overlapping / background card.
   final bool ignorePointer;
@@ -140,6 +135,15 @@ class CollectionAttachmentCard extends StatelessWidget {
     );
   }
 
+  /// [MessagePopupHolder] re-renders its child inside the popup route, outside the layout's
+  /// [MediaCollectionScope]. Re-provide it (as the holder does for ChatStateScope) so fullscreen opened
+  /// from the popup preview still pages through the collection.
+  Widget _reprovideCollection(BuildContext context, Widget child) {
+    final collection = MediaCollectionScope.maybeOf(context);
+    if (collection == null) return child;
+    return MediaCollectionScope(collection: collection, child: child);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scopedPart = _scopedPart();
@@ -168,12 +172,14 @@ class CollectionAttachmentCard extends StatelessWidget {
           part: scopedPart,
           isEditing: isEditing,
           enableGestures: enableGestures,
-          child: IgnorePointer(
-            ignoring: ignorePointer,
-            child: AttachmentHolder(
-              message: scopedPart,
-              fill: true,
-              collectionController: collectionController,
+          child: _reprovideCollection(
+            context,
+            IgnorePointer(
+              ignoring: ignorePointer,
+              child: AttachmentHolder(
+                message: scopedPart,
+                fill: true,
+              ),
             ),
           ),
         ),

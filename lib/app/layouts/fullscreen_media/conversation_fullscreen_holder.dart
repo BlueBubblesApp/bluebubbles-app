@@ -1,5 +1,4 @@
 import 'package:bluebubbles/app/components/circle_progress_bar.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_image.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/fullscreen_video.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;
@@ -30,7 +29,7 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.replyMessage,
       this.replyPartIndex,
       this.galleryAttachments,
-      this.collectionController});
+      this.onOpenCollectionGallery});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -42,13 +41,12 @@ class ConversationFullscreenHolder extends StatefulWidget {
   final int? replyPartIndex;
 
   /// When non-null, the fullscreen carousel is limited to these attachments
-  /// instead of all images in the chat. Used when opening from a gallery card.
-  /// CollectionAttachmentCard omits this and scopes via [collectionController].media.
+  /// instead of all images in the chat (a media collection, or a filtered gallery).
   final List<Attachment>? galleryAttachments;
 
-  /// When set, the collection-grid button becomes available. Also scopes paging
-  /// when [galleryAttachments] is null (`galleryAttachments ?? controller.media`).
-  final CollectionMediaController? collectionController;
+  /// When set, shows a grid button that opens the enclosing media collection's gallery
+  /// (see `MediaCollection.openGallery`). Called with this screen's context.
+  final void Function(BuildContext context)? onOpenCollectionGallery;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -59,8 +57,8 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : maybeFindMessagesSvc(widget.currentChat!.guid);
 
-  /// Explicit list, else collection controller media, else chat-wide images.
-  List<Attachment>? get _scopedGallery => widget.galleryAttachments ?? widget.collectionController?.media;
+  /// Explicit list, else chat-wide images.
+  List<Attachment>? get _scopedGallery => widget.galleryAttachments;
 
   late List<Attachment> attachments = _scopedGallery != null
       ? List<Attachment>.from(_scopedGallery!)
@@ -90,10 +88,10 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
-  bool get _hasCollectionGallery => widget.collectionController != null;
+  bool get _hasCollectionGallery => widget.onOpenCollectionGallery != null;
 
   void _openCollectionGallery() {
-    widget.collectionController!.openGallery(context);
+    widget.onOpenCollectionGallery!(context);
   }
 
   @override

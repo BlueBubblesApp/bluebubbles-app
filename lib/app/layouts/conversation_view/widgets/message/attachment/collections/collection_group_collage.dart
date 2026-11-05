@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/slide_to_reply.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/swipe_to_reply_wrapper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
@@ -61,14 +61,9 @@ class CollectionGroupCollage extends StatelessWidget {
       NavigationSvc.width(context) * _maxCollageSizeFactor,
       _maxCollageWidth,
     );
-    final collectionController = CollectionMediaController(
-      chat: cvController.chat,
-      media: _attachments,
-      messageState: messageState,
-      collectionPart: messagePart,
-    );
+    final collection = MediaCollection.forPart(context, collectionPart: messagePart, cvController: cvController);
 
-    return Obx(() {
+    return MediaCollectionScope(collection: collection, child: Obx(() {
       final isFromMe = messageState.isFromMe.value;
       final heights = [for (final a in _attachments) _estimateHeight(a, cardWidth, messageState)];
       final tops = <double>[];
@@ -101,7 +96,7 @@ class CollectionGroupCollage extends StatelessWidget {
                 right: isFromMe
                     ? (_staggerInward(i, alignFirstToAuthor) ? _horizontalStagger : 0.0)
                     : null,
-                child: _buildCard(collectionController, i, cardWidth, heights[i], isFromMe, isIOS),
+                child: _buildCard(i, cardWidth, heights[i], isFromMe, isIOS),
               ),
           ],
         ),
@@ -114,11 +109,10 @@ class CollectionGroupCollage extends StatelessWidget {
         attachments: _attachments,
         child: collage,
       );
-    });
+    }));
   }
 
   Widget _buildCard(
-    CollectionMediaController collectionController,
     int index,
     double cardWidth,
     double cardHeight,
@@ -129,7 +123,6 @@ class CollectionGroupCollage extends StatelessWidget {
       attachment: _attachments[index],
       attachmentIndex: index,
       messagePart: messagePart,
-      collectionController: collectionController,
       cvController: cvController,
       isEditing: isEditing,
       enableGestures: true,

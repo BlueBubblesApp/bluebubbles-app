@@ -2,11 +2,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -243,13 +242,12 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final messageState = MessageStateScope.of(context);
-    final collectionController = CollectionMediaController(
-      chat: cvController.chat,
-      media: _attachments,
-      messageState: messageState,
-      collectionPart: messagePart,
-    );
+    final collection = MediaCollection.forPart(context, collectionPart: messagePart, cvController: cvController);
+    return MediaCollectionScope(collection: collection, child: _buildGrid(context, collection));
+  }
+
+  Widget _buildGrid(BuildContext context, MediaCollection collection) {
+    final messageState = collection.messageState;
     final isFromMe = messageState.isFromMe.value;
     final isIos = SettingsSvc.settings.skin.value == Skins.iOS;
     // Connected author-edge corners match text-bubble TailClipper: Material/Samsung only.
@@ -280,7 +278,6 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           attachment: _attachments[index],
           attachmentIndex: index,
           messagePart: messagePart,
-          collectionController: collectionController,
           cvController: cvController,
           isEditing: isEditing,
           enableGestures: true,
@@ -292,7 +289,7 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
           if (cellMoreCount == null || cellMoreCount <= 0) return null;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => collectionController.openGallery(context),
+            onTap: () => collection.openGallery(context),
             onLongPress: () {
               HapticFeedback.lightImpact();
               setState(() => _expanded = true);
@@ -384,8 +381,8 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
       crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         CollectionTitle(
-          label: collectionController.title,
-          onTap: () => collectionController.openGallery(context),
+          label: collection.title,
+          onTap: () => collection.openGallery(context),
         ),
         const SizedBox(height: 4),
         gridBody,

@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
@@ -182,24 +182,23 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     return (baseCardWidth / _portraitAspect).clamp(100.0, 500.0);
   }
 
-  CollectionMediaController _collectionController(BuildContext context) {
-    return CollectionMediaController(
-      chat: widget.cvController.chat,
-      media: _attachments,
-      messageState: MessageStateScope.of(context),
-      collectionPart: widget.messagePart,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final collection = MediaCollection.forPart(
+      context,
+      collectionPart: widget.messagePart,
+      cvController: widget.cvController,
+    );
+    return MediaCollectionScope(collection: collection, child: _buildStack(context, collection));
+  }
+
+  Widget _buildStack(BuildContext context, MediaCollection collection) {
     // Calculated against screen width; maxStackWidth caps size on larger screens.
     final baseCardWidth = min(
       NavigationSvc.width(context) * _maxStackSizeFactor,
       _maxStackWidth,
     );
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
-    final collectionController = _collectionController(context);
 
     // Horizontal spread of fanned cards behind the front card; sizes the canvas.
     final double maxFanDx;
@@ -240,7 +239,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         return _buildFanCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
-          collectionController: collectionController,
           slotIndex: i,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -258,7 +256,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         stackChildren.add(_buildPastCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
-          collectionController: collectionController,
           slotIndex: p.clamp(1, _visibleFanSlots - 1),
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -270,7 +267,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         stackChildren.add(_buildFanCard(
           attachment: _attachments[attachmentIndex],
           attachmentIndex: attachmentIndex,
-          collectionController: collectionController,
           slotIndex: f,
           baseCardWidth: baseCardWidth,
           baseCardHeight: baseCardHeight,
@@ -281,7 +277,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       stackChildren.add(_buildFanCard(
         attachment: _attachments[_currentIndex],
         attachmentIndex: _currentIndex,
-        collectionController: collectionController,
         slotIndex: 0,
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
@@ -430,8 +425,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       crossAxisAlignment: _isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         CollectionTitle(
-          label: collectionController.title,
-          onTap: () => collectionController.openGallery(context),
+          label: collection.title,
+          onTap: () => collection.openGallery(context),
         ),
         // From-me: reserve room for per-card tapbacks (top: -14) so they don't cover
         // the end-aligned label. From-other: tapbacks sit on the trailing edge, away
@@ -457,13 +452,11 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required int attachmentIndex,
     required bool isCurrent,
     required bool ignorePointer,
-    required CollectionMediaController collectionController,
   }) {
     return CollectionAttachmentCard(
       attachment: attachment,
       attachmentIndex: attachmentIndex,
       messagePart: widget.messagePart,
-      collectionController: collectionController,
       ignorePointer: ignorePointer,
       cvController: widget.cvController,
       isEditing: widget.isEditing,
@@ -475,7 +468,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget _buildFanCard({
     required Attachment attachment,
     required int attachmentIndex,
-    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -501,7 +493,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       attachmentIndex: attachmentIndex,
       isCurrent: isCurrent,
       ignorePointer: !isCurrent,
-      collectionController: collectionController,
     );
 
     return AnimatedPositioned(
@@ -531,7 +522,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   Widget _buildPastCard({
     required Attachment attachment,
     required int attachmentIndex,
-    required CollectionMediaController collectionController,
     required int slotIndex,
     required double baseCardWidth,
     required double baseCardHeight,
@@ -570,7 +560,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 attachmentIndex: attachmentIndex,
                 isCurrent: false,
                 ignorePointer: true,
-                collectionController: collectionController,
               ),
             ),
           ),

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/sending_opacity_wrapper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/upload_progress_content.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/not_loaded_content.dart';
@@ -27,8 +26,6 @@ class AttachmentHolder extends StatefulWidget {
     super.key,
     required this.message,
     this.fill = false,
-    this.galleryAttachments,
-    this.collectionController,
   });
 
   final MessagePart message;
@@ -36,11 +33,10 @@ class AttachmentHolder extends StatefulWidget {
   /// Cover-expand into a parent-fixed frame and suppress standalone bubble chrome
   /// (padding, selection tint, holder shadow/radius). Parents own clip/shadow.
   /// Disabled automatically inside [PopupScope].
+  ///
+  /// Collection-specific behavior (fullscreen paging, gallery button) comes from `MediaCollectionScope`,
+  /// not from parameters here.
   final bool fill;
-  final List<Attachment>? galleryAttachments;
-
-  /// When set, fullscreen viewers show a collection-grid button (omit when opened from the collections gallery).
-  final CollectionMediaController? collectionController;
 
   @override
   State<StatefulWidget> createState() => _AttachmentHolderState();
@@ -283,8 +279,6 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           isInReply: isInReply,
           forceAllCornersRounded: forceAllCornersRounded,
           fill: fill,
-          galleryAttachments: widget.galleryAttachments,
-          collectionController: widget.collectionController,
         );
       }
     }
@@ -301,8 +295,6 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
         isInReply: isInReply,
         forceAllCornersRounded: forceAllCornersRounded,
         fill: fill,
-        galleryAttachments: widget.galleryAttachments,
-        collectionController: widget.collectionController,
       );
     }
 
@@ -324,7 +316,7 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
           downloadController: download,
           isInReply: isInReply,
           isiOS: isiOS,
-          isInCollection: widget.fill,
+          fill: widget.fill,
           compact: compact,
           showTail: showTail,
           isFromMe: message.isFromMe!,
