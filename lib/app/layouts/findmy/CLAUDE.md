@@ -3,6 +3,7 @@
 ## Files
 - `findmy_page.dart` — main screen (map + list tabs)
 - `findmy_controller.dart` — state and logic: location polling, device/friend tracking
+- `findmy_handle_matcher.dart` — friend → handle/contact identity
 - `findmy_location_clipper.dart` — custom `CustomClipper` for location shape
 - `findmy_pin_clipper.dart` — custom `CustomClipper` for map pin shape
 

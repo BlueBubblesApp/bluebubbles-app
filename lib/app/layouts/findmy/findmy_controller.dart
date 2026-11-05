@@ -15,6 +15,7 @@ import 'package:sliding_up_panel2/sliding_up_panel2.dart';
 import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
+import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_location_clipper.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_pin_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -63,10 +64,18 @@ class FindMyController extends GetxController {
   StreamSubscription? _redactedModeListener;
   StreamSubscription? _hideContactInfoListener;
   StreamSubscription? _findMyLocationListener;
+  StreamSubscription? _contactIndexListener;
 
   @override
   void onInit() {
     super.onInit();
+    _contactIndexListener = FindMyHandleMatcher.indexCleared.listen((_) {
+      if (!_isAlive) return;
+      _rebuildAllMarkers();
+      friends.refresh();
+      friendsWithLocation.refresh();
+      friendsWithoutLocation.refresh();
+    });
     getLocations();
 
     // Listen via the event dispatcher rather than the socket itself — the socket is
@@ -366,6 +375,7 @@ class FindMyController extends GetxController {
 
   void buildFriendMarker(FindMyFriend friend) {
     final markerKey = friend.stableId ?? randomString(6);
+    final identity = FindMyHandleMatcher.resolveIdentity(friend);
     markers[markerKey] = Marker(
       key: ValueKey('friend-$markerKey'),
       point: markerPointForFriend(friend),
@@ -377,7 +387,10 @@ class FindMyController extends GetxController {
           child: Padding(
             padding: const EdgeInsets.all(3),
             child: ContactAvatarWidget(
-                editable: false, handle: friend.handle ?? Handle(address: friend.title ?? "Unknown")),
+              editable: false,
+              handle: identity.handle,
+              contact: identity.contact,
+            ),
           ),
         ),
       ),
@@ -442,6 +455,7 @@ class FindMyController extends GetxController {
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
     _findMyLocationListener?.cancel();
+    _contactIndexListener?.cancel();
     locationSub?.cancel();
     mapController.dispose();
     popupController.dispose();
