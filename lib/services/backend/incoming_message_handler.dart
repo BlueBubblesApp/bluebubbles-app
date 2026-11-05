@@ -341,7 +341,7 @@ class IncomingMessageHandler {
     // 4. Persist to DB.
     //    Only suppress the "from me" notification clear for reactions so that a
     //    notification-triggered reaction doesn't lose its source notification.
-    final clearNotificationFromMe = (m.isFromMe ?? false) && m.associatedMessageGuid == null;
+    final clearNotificationFromMe = (m.isFromMe ?? false) && !m.isReaction;
     final result = await c.addMessage(
       m,
       clearNotificationsIfFromMe: clearNotificationFromMe,

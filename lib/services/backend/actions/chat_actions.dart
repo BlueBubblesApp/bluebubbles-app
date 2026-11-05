@@ -317,7 +317,7 @@ class ChatActions {
       }
 
       // Handle associated messages (reactions)
-      if (inputMessage.associatedMessageType != null && inputMessage.associatedMessageGuid != null) {
+      if (inputMessage.associatedMessageType != null && inputMessage.isReaction) {
         final assocQuery = messageBox.query(Message_.guid.equals(inputMessage.associatedMessageGuid!)).build();
         assocQuery.limit = 1;
         final associatedMessage = assocQuery.findFirst();

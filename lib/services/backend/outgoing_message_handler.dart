@@ -620,12 +620,12 @@ class OutgoingMessageHandler {
       saved.add(hydrated);
 
       final msgSvcRegistered = Get.isRegistered<MessagesService>(tag: c.guid);
-      if (r != null && message.associatedMessageGuid != null && msgSvcRegistered) {
+      if (r != null && message.isReaction && msgSvcRegistered) {
         // Add temp reaction to UI immediately during prep so it appears without
         // waiting for the serial queue (fixes back-to-back text+reaction send delay).
         final parentState = MessagesSvc(c.guid).getMessageStateIfExists(message.associatedMessageGuid!);
         parentState?.addAssociatedMessageInternal(hydrated);
-      } else if (message.associatedMessageGuid == null && msgSvcRegistered) {
+      } else if (!message.isReaction && msgSvcRegistered) {
         await MessagesSvc(c.guid).addNewMessage(hydrated);
       }
     }
@@ -802,7 +802,7 @@ class OutgoingMessageHandler {
         // explicitly update the parent so the badge reflects the real reaction.
         onExtra: r != null
             ? (confirmed) async {
-                if (confirmed.associatedMessageGuid != null) {
+                if (confirmed.isReaction) {
                   final parentState =
                       maybeFindMessagesSvc(c.guid)?.getMessageStateIfExists(confirmed.associatedMessageGuid!);
                   if (parentState != null) {
@@ -826,7 +826,7 @@ class OutgoingMessageHandler {
         // top-level MessagesService entries, so the standard updateMessage call
         // inside _finalizeOutgoingFailure is a no-op for them.  Explicitly
         // update the parent so the error badge propagates to the UI.
-        onExtra: r != null && m.associatedMessageGuid != null
+        onExtra: r != null && m.isReaction
             ? (errorMsg) async {
                 maybeFindMessagesSvc(c.guid)
                     ?.getMessageStateIfExists(m.associatedMessageGuid!)

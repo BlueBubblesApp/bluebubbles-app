@@ -105,6 +105,19 @@ class ReactionTypes {
     if (emoji == null) return type == EMOJI ? "reacted to" : "removed a reaction from";
     return type == EMOJI ? "reacted $emoji to" : "removed $emoji from";
   }
+
+  /// Every associated message type that's a reaction to another message: the tapbacks and their removals by name,
+  /// IMCore's raw ids for those (tapbacks 2000-2007, removals 3000-3007, including emoji and sticker tapbacks) and
+  /// the legacy sticker. Other types, like the iMessage app session links (2 and 3), are messages in their own right.
+  static final List<String> associatedTypes = [
+    ...toList(),
+    ...toList().map((e) => "-$e"),
+    for (int i = 0; i <= 7; i++) ...["${2000 + i}", "${3000 + i}"],
+    "sticker",
+    "1000",
+  ];
+
+  static bool isReactionType(String? type) => associatedTypes.contains(type);
 }
 
 List<Message> getUniqueReactionMessages(List<Message> messages) {

@@ -780,7 +780,7 @@ class MessagesService extends GetxController {
     }
 
     // Handle reactions with improved reactivity
-    if (message.associatedMessageGuid != null) {
+    if (message.isReaction) {
       final parentMessage = struct.getMessage(message.associatedMessageGuid!);
       if (parentMessage != null) {
         // Add to parent's associated messages list
@@ -818,13 +818,13 @@ class MessagesService extends GetxController {
     }
 
     // Only call newFunc for non-reactions (regular messages)
-    if (message.associatedMessageGuid == null) {
+    if (!message.isReaction) {
       newFunc.call(message);
     }
 
     // Incrementally update indicator ownership for new outgoing messages.
     // Reactions don't carry receipt status so skip them.
-    if (message.associatedMessageGuid == null) {
+    if (!message.isReaction) {
       _updateIndicatorsForMessage(message);
     }
   }
@@ -1571,7 +1571,7 @@ class MessagesService extends GetxController {
             }
           }
         } else {
-          final reactions = syncResult.messages.where((e) => e.associatedMessageGuid != null);
+          final reactions = syncResult.messages.where((e) => e.isReaction);
           for (Message m in reactions) {
             final associatedMessage =
                 syncResult.messages.firstWhereOrNull((element) => element.guid == m.associatedMessageGuid);

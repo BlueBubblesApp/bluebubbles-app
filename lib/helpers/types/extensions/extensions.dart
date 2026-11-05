@@ -424,7 +424,7 @@ extension MessageNotificationExtension on Message {
         return "$sender$interactiveText";
       }
 
-      if (isNullOrEmpty(fullText) && !hasAttachments && isNullOrEmpty(associatedMessageGuid)) {
+      if (isNullOrEmpty(fullText) && !hasAttachments && !isReaction) {
         if (dateEdited != null) {
           return "${sender}Unsent message";
         }
@@ -466,7 +466,7 @@ extension MessageNotificationExtension on Message {
         // Fallback: message is marked as having attachments but they haven't loaded yet
         // (can happen with outgoing messages before the attachment links are fully persisted)
         return "${sender}Attachment";
-      } else if (!isNullOrEmpty(associatedMessageGuid)) {
+      } else if (isReaction) {
         // It's a reaction message, get the sender
         String reactionSender = isFromMe!
             ? 'You'

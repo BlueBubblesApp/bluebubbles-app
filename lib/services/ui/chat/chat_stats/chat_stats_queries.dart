@@ -19,7 +19,7 @@ class ChatStatsQueries {
     var cond = Message_.dateDeleted
         .isNull()
         .and(Message_.dateCreated.notNull())
-        .and(Message_.associatedMessageGuid.isNull())
+        .and(Message.notReactionCondition)
         .and(Message_.itemType.equals(0));
     if (sinceMillis != null) cond = cond.and(Message_.dateCreated.greaterOrEqual(sinceMillis));
     return cond;

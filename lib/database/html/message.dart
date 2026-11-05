@@ -312,6 +312,9 @@ class Message {
 
   bool get isInteractive => balloonBundleId != null && !isLegacyUrlPreview;
 
+  /// A tapback or sticker on another message; see the io [Message.isReaction].
+  bool get isReaction => associatedMessageGuid != null && ReactionTypes.isReactionType(associatedMessageType);
+
   String get interactiveText {
     String text = "";
     final temp =

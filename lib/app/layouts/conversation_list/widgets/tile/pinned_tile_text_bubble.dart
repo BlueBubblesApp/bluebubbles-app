@@ -74,7 +74,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     final chatState = controller.chatState;
     if (!chatState.hasUnreadMessage.value) return;
     final lastMessage = chatState.latestMessage.value;
-    if (lastMessage == null || lastMessage.isFromMe == true || lastMessage.associatedMessageGuid != null) {
+    if (lastMessage == null || lastMessage.isFromMe == true || lastMessage.isReaction) {
       return;
     }
     if (SettingsSvc.settings.highPerfMode.value) return;
@@ -153,7 +153,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
       final unread = chatState.hasUnreadMessage.value;
       // Null-safe isFromMe: treat null as false (unknown sender → show the bubble)
       final isFromMe = lastMessage?.isFromMe == true;
-      if (!unread || lastMessage?.associatedMessageGuid != null || isFromMe || isNullOrEmpty(subtitle)) {
+      if (!unread || (lastMessage?.isReaction ?? false) || isFromMe || isNullOrEmpty(subtitle)) {
         return const SizedBox.shrink();
       }
 
