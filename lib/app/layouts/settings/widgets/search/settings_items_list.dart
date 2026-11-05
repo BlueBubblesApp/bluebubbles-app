@@ -242,6 +242,7 @@ List<Widget> buildSettingItemList({
             "Enter Relative Path",
             "Save Documents Location",
             "Ask Where to Save Attachments",
+            "Multi-Attachment Layout",
             "Mute in Attachment Preview",
             "Mute in Fullscreen Player",
             "Arrow key direction",

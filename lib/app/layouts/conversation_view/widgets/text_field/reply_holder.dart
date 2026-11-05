@@ -26,22 +26,30 @@ class _ReplyHolderState extends State<ReplyHolder> with ThemeHelpers {
   Widget build(BuildContext context) {
     return Obx(() {
       final message = widget.controller.replyToMessage?.message;
-      final part = widget.controller.replyToMessage?.partIndex ?? 0;
+      final partIndex = widget.controller.replyToMessage?.partIndex ?? 0;
       final attachmentGuid = widget.controller.replyToMessage?.attachmentGuid;
       final chatGuid = message?.chat.target?.guid ?? ChatStateScope.maybeChatOf(context)?.guid;
-      final resolvedReply = message?.guid == null || chatGuid == null
-          ? message
-          : (maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(message!.guid!)?.parts[part] ?? message);
-      final reply = resolvedReply is MessagePart && attachmentGuid != null
+      MessagePart? matched;
+      if (message?.guid != null && chatGuid != null) {
+        final state = maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(message!.guid!);
+        if (state != null) {
+          if (attachmentGuid != null) {
+            matched = state.parts.firstWhereOrNull((p) => p.attachments.any((a) => a.guid == attachmentGuid));
+          }
+          matched ??= state.partById(partIndex);
+        }
+      }
+      final resolvedReply = matched ?? message;
+      final reply = matched != null && attachmentGuid != null
           ? MessagePart(
-              part: resolvedReply.part,
-              text: resolvedReply.text,
-              subject: resolvedReply.subject,
-              attachments: resolvedReply.attachments.where((a) => a.guid == attachmentGuid).toList(),
-              mentions: resolvedReply.mentions,
-              edits: resolvedReply.edits,
-              isUnsent: resolvedReply.isUnsent,
-              shouldRedact: resolvedReply.shouldRedact,
+              part: matched.part,
+              text: matched.text,
+              subject: matched.subject,
+              attachments: matched.attachments.where((a) => a.guid == attachmentGuid).toList(),
+              mentions: matched.mentions,
+              edits: matched.edits,
+              isUnsent: matched.isUnsent,
+              shouldRedact: matched.shouldRedact,
             )
           : resolvedReply;
       final date = widget.controller.scheduledDate.value;
@@ -162,6 +170,10 @@ class _ReplyText extends StatelessWidget {
   final bool isIOS;
 
   String _getNotificationText() {
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
+    final hideMessageContent = redacted && SettingsSvc.settings.hideMessageContent.value;
+
     if (reply is MessagePart) {
       // Create a fake message and append the attachments.
       // This does not add anything to the DB and is just
@@ -174,20 +186,36 @@ class _ReplyText extends StatelessWidget {
       )
         ..dbAttachments.addAll(reply.attachments)
         ..mergeWith(message!);
-      return msg.getNotificationText();
+      return msg.getNotificationText(
+        hideContactInfo: hideContactInfo,
+        hideMessageContent: hideMessageContent,
+      );
     }
-    return message!.getNotificationText();
+    return message!.getNotificationText(
+      hideContactInfo: hideContactInfo,
+      hideMessageContent: hideMessageContent,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    final hideContactInfo = redacted && SettingsSvc.settings.hideContactInfo.value;
+    final handle = message?.handleRelation.target;
+    final handleState = handle != null ? HandleSvc.getOrCreateHandleState(handle) : null;
+    final replyDisplayName = message?.isFromMe == true
+        ? "Yourself"
+        : hideContactInfo
+            ? (handleState?.displayName.value ?? handleState?.fakeName ?? "Someone")
+            : (handleState?.displayName.value ?? handle?.displayName ?? "Unknown");
+
     return Text.rich(
       TextSpan(children: [
         if (isIOS && reply != null) const TextSpan(text: "Replying to "),
         if (reply != null)
           TextSpan(
             children: MessageHelper.buildEmojiText(
-                message!.isFromMe! ? 'Yourself' : message!.handleRelation.target?.displayName ?? 'Unknown',
+                replyDisplayName,
                 context.textTheme.bodyMedium!.copyWith(
                   fontWeight: isIOS ? FontWeight.bold : FontWeight.w400,
                 )),

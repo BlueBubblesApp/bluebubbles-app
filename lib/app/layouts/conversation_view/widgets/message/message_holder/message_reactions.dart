@@ -17,7 +17,7 @@ class MessageReactions extends StatelessWidget {
   final List<MessagePart> messageParts;
   final MessagePart part;
   final String chatGuid;
-  final Iterable<Message> Function(int, List<Message>) reactionsForPart;
+  final Iterable<Message> Function(MessagePart, List<Message>) reactionsForPart;
 
   @override
   Widget build(BuildContext context) {

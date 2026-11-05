@@ -17,13 +17,19 @@ class SwipeToReplyWrapper extends StatefulWidget {
     required this.replyOffset,
     required this.cvController,
     required this.child,
+    this.attachmentGuid,
   });
 
   final bool enabled;
+
+  /// Message-part id being replied to
   final int partIndex;
   final RxDouble replyOffset;
   final ConversationViewController cvController;
   final Widget child;
+
+  /// When set, reply preview / send target a specific attachment within the part.
+  final String? attachmentGuid;
 
   @override
   State<SwipeToReplyWrapper> createState() => _SwipeToReplyWrapperState();
@@ -69,7 +75,11 @@ class _SwipeToReplyWrapperState extends State<SwipeToReplyWrapper> {
 
         // Trigger reply if threshold reached
         if (widget.replyOffset.value.abs() >= SlideToReply.replyThreshold) {
-          widget.cvController.replyToMessage = MessageReplyContext(message, widget.partIndex);
+          widget.cvController.replyToMessage = MessageReplyContext(
+            message,
+            widget.partIndex,
+            attachmentGuid: widget.attachmentGuid,
+          );
         }
 
         widget.replyOffset.value = 0;
