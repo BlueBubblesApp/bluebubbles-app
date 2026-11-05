@@ -28,6 +28,9 @@ class OpenPigeon {
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
   static ValueChanged<Map<String, dynamic>>? _onKeyboardMessage;
 
+  /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
+  static final RxSet<int> failedViews = <int>{}.obs;
+
   /// The server could carry games with a subscription, so they're shown, locked if it has none.
   static bool get offered =>
       !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server && SettingsSvc.settings.enablePrivateAPI.value;
@@ -37,7 +40,9 @@ class OpenPigeon {
 
   static bool get available => supported && installed.value;
 
-  static bool isGame(Message message) => message.balloonBundleId == balloonBundleId;
+  /// Matched on the suffix: the team id in the middle belongs to the developer and can change.
+  static bool isGame(Message message) =>
+      message.balloonBundleId?.endsWith(':com.gamerdelights.gamepigeon.ext') ?? false;
 
   static Future<void> init() async {
     _channel.setMethodCallHandler(_handle);
@@ -46,8 +51,13 @@ class OpenPigeon {
       if (e.type != 'new-message' || !available) return;
       final message = e.data['message'] as Message;
       if (!isGame(message) || message.guid == null) return;
-      final payload = await payloadFor(message.guid!);
-      if (payload != null) await _channel.invokeMethod('message-updated', payload);
+      final payload = await payloadFor(message);
+      if (payload == null) return;
+      try {
+        await _channel.invokeMethod('message-updated', payload);
+      } on PlatformException catch (e) {
+        Logger.warn('OpenPigeon could not take a new move', error: e, tag: 'OpenPigeon');
+      }
     });
   }
 
@@ -81,17 +91,17 @@ class OpenPigeon {
         mode: LaunchMode.externalApplication,
       );
 
-  /// The Madrid message fields for an app message, from the server's decoded payload.
-  static Future<Map<String, dynamic>?> payloadFor(String guid) {
+  /// The Madrid message fields for [message]: from its own payload when that carries the session, otherwise from
+  /// the server's decoded copy.
+  static Future<Map<String, dynamic>?> payloadFor(Message message) {
+    final guid = message.guid!;
+    final app = message.payloadData?.appData?.firstOrNull;
+    if (app?.url != null && app?.sessionId != null) {
+      return Future.value(_madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
+    }
     return _payloads[guid] ??= HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
       final data = response.data['data'] as Map<String, dynamic>;
-      return <String, dynamic>{
-        'messageGuid': guid,
-        'url': data['url'],
-        'session': data['session_id'],
-        'ldText': data['summary'],
-        'caption': data['caption'],
-      };
+      return _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']);
     }).catchError((Object e) {
       Logger.warn('Could not load OpenPigeon payload for $guid', error: e, tag: 'OpenPigeon');
       _payloads.remove(guid);
@@ -106,8 +116,17 @@ class OpenPigeon {
   static void onKeyboardMessage(ValueChanged<Map<String, dynamic>>? callback) => _onKeyboardMessage = callback;
 
   static Future<bool> _handle(MethodCall call) async {
+    final args = call.arguments is Map ? (call.arguments as Map).cast<String, dynamic>() : <String, dynamic>{};
+    if (call.method == 'view-failed') {
+      if (args['id'] is int) failedViews.add(args['id'] as int);
+      return true;
+    }
     if (call.method != 'send') return false;
-    final args = (call.arguments as Map).cast<String, dynamic>();
+    // OpenPigeon's messages are only checked for what sending needs; its payload is passed through untouched
+    if (args['chatGuid'] is! String || args['url'] is! String || (args['url'] as String).isEmpty) {
+      Logger.warn('Ignoring an OpenPigeon message without a payload', tag: 'OpenPigeon');
+      return false;
+    }
     if (args['fromKeyboard'] == true) {
       _onKeyboardMessage?.call(args);
       return true;
@@ -122,11 +141,26 @@ class OpenPigeon {
       chatGuid,
       balloonBundleId: balloonBundleId,
       url: game['url'] as String,
-      sessionId: game['session'] as String?,
+      sessionId: _string(game['session']),
       appName: 'GamePigeon',
       appId: 1124197642,
-      summary: game['ldText'] as String?,
-      caption: game['caption'] as String?,
+      summary: _string(game['ldText']),
+      caption: _string(game['caption']),
     );
   }
+
+  /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
+  /// server reports `NSUUID`'s uppercase.
+  static Map<String, dynamic>? _madrid(String guid, Object? url, Object? session, Object? ldText, Object? caption) {
+    if (url is! String || url.isEmpty) return null;
+    return {
+      'messageGuid': guid,
+      'url': url,
+      'session': _string(session)?.toLowerCase(),
+      'ldText': _string(ldText),
+      'caption': _string(caption),
+    };
+  }
+
+  static String? _string(Object? value) => value is String && value.isNotEmpty ? value : null;
 }

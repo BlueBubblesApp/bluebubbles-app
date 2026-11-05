@@ -50,7 +50,7 @@ object OpenPigeonHost {
                 when (call.method) {
                     "installed" -> result.success(isInstalled(app))
                     "message-updated" -> {
-                        val message = madridMessage(call.arguments as Map<*, *>)
+                        val message = madridMessage(call.arguments as? Map<*, *> ?: emptyMap<Any, Any>())
                         withExtension(app) { it.messageUpdated(message) }
                         result.success(null)
                     }
@@ -102,13 +102,16 @@ object OpenPigeonHost {
         deferred.completeExceptionally(IllegalStateException("OpenPigeon disconnected"))
     }
 
-    private fun withExtension(context: Context, block: (IMadridExtension) -> Unit) = scope.launch {
-        try {
-            block(withTimeout(10_000) { connect(context).await() })
-        } catch (e: Exception) {
-            Log.e(TAG, "OpenPigeon call failed", e)
+    // OpenPigeon is a separate app that can change under us, so anything it does wrong is logged, never thrown
+    private fun withExtension(context: Context, onError: () -> Unit = {}, block: (IMadridExtension) -> Unit) =
+        scope.launch {
+            try {
+                block(withTimeout(10_000) { connect(context).await() })
+            } catch (e: Exception) {
+                Log.e(TAG, "OpenPigeon call failed", e)
+                onError()
+            }
         }
-    }
 
     // Needs the activity's Dart engine alive; a turn played after the app was killed is left
     // to OpenPigeon's own retry.
@@ -138,8 +141,8 @@ object OpenPigeonHost {
     }
 
     private fun madridMessage(map: Map<*, *>) = MadridMessage().apply {
-        messageGuid = map["messageGuid"] as String
-        url = map["url"] as String
+        messageGuid = map["messageGuid"] as? String ?: ""
+        url = map["url"] as? String ?: ""
         session = map["session"] as String?
         ldText = map["ldText"] as String?
         caption = map["caption"] as String?
@@ -148,29 +151,34 @@ object OpenPigeonHost {
 
     private class ViewFactory(private val keyboard: Boolean) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
         override fun create(context: Context, viewId: Int, args: Any?): PlatformView =
-            ExtensionView(context, keyboard, args as Map<*, *>)
+            ExtensionView(context, keyboard, viewId, args as? Map<*, *> ?: emptyMap<Any, Any>())
     }
 
     private class ExtensionView(
         private val context: Context,
         private val keyboard: Boolean,
+        private val viewId: Int,
         args: Map<*, *>,
     ) : PlatformView {
         private val container = FrameLayout(context)
         @Volatile private var disposed = false
-        private val chatGuid = args["chatGuid"] as String
+        @Volatile private var failed = false
+        private val chatGuid = args["chatGuid"] as? String ?: ""
 
         private val viewCallback = object : IViewUpdateCallback.Stub() {
-            override fun updateView(views: RemoteViews) = show(views)
+            override fun updateView(views: RemoteViews?) = show(views)
         }
 
         // Outlive this view: OpenPigeon keeps the handle on its session and sends turns
         // through it from the game activity.
         private val keyboardHandle = object : IKeyboardHandle.Stub() {
-            override fun addMessage(message: MadridMessage) = send(chatGuid, message, fromKeyboard = true)
+            override fun addMessage(message: MadridMessage?) {
+                if (message != null) send(chatGuid, message, fromKeyboard = true)
+            }
         }
         private val messageHandle = object : IMessageViewHandle.Stub() {
-            override fun updateMessage(message: MadridMessage, callback: ITaskCompleteCallback?) =
+            override fun updateMessage(message: MadridMessage?, callback: ITaskCompleteCallback?) {
+                if (message == null) return
                 send(chatGuid, message, fromKeyboard = false) {
                     try {
                         callback?.complete()
@@ -178,6 +186,7 @@ object OpenPigeonHost {
                         Log.w(TAG, "OpenPigeon completion callback failed", e)
                     }
                 }
+            }
 
             override fun setSuppressNotifications(suppress: Boolean) {}
             override fun lock() {}
@@ -185,17 +194,20 @@ object OpenPigeonHost {
         }
 
         init {
-            val userCount = (args["userCount"] as Number).toInt()
+            val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
             val message = if (keyboard) null else madridMessage(args)
-            withExtension(context.applicationContext) {
+            withExtension(context.applicationContext, ::fail) {
                 show(
                     if (keyboard) it.keyboardOpened(viewCallback, keyboardHandle, userCount)
                     else it.getLiveView(viewCallback, message, messageHandle, userCount)
                 )
             }
+            // A view that never arrives counts as a failure too
+            main.postDelayed({ if (container.childCount == 0) fail() }, 15_000)
         }
 
-        private fun show(views: RemoteViews) {
+        private fun show(views: RemoteViews?) {
+            if (views == null) return fail()
             main.post {
                 if (disposed) return@post
                 try {
@@ -203,7 +215,17 @@ object OpenPigeonHost {
                     container.addView(views.apply(context, container))
                 } catch (e: Exception) {
                     Log.e(TAG, "Applying OpenPigeon views failed", e)
+                    fail()
                 }
+            }
+        }
+
+        /// Tells Dart to show its own fallback in place of this view.
+        private fun fail() {
+            main.post {
+                if (disposed || failed) return@post
+                failed = true
+                channel?.invokeMethod("view-failed", mapOf("id" to viewId))
             }
         }
 

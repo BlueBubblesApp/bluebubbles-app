@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
@@ -161,6 +163,7 @@ class iMessageAppData {
     this.ldText,
     this.userInfo,
     this.url,
+    this.sessionId,
   });
 
   String? appName;
@@ -168,11 +171,15 @@ class iMessageAppData {
   String? url;
   UserInfo? userInfo;
 
+  /// The `MSSession` UUID every message of one app session (a game, say) shares.
+  String? sessionId;
+
   factory iMessageAppData.fromJson(Map<String, dynamic> json) => iMessageAppData(
         appName: json["an"],
         ldText: json["ldtext"],
         userInfo: json["userInfo"] == null ? null : UserInfo.fromJson(Map<String, dynamic>.from(json["userInfo"])),
         url: json["URL"]?["NS.relative"],
+        sessionId: _sessionId(json["sessionIdentifier"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -182,7 +189,31 @@ class iMessageAppData {
           "NS.relative": url,
         },
         "userInfo": userInfo?.toJson(),
+        "sessionIdentifier": sessionId,
       };
+
+  /// A stored string, or the archived `NSUUID` (`{NS.uuidbytes: ...}`). Servers write its bytes as base64 (Swift),
+  /// a byte list, or a Node `{type: Buffer, data: [...]}`.
+  static String? _sessionId(dynamic value) {
+    if (value is String) return value.isEmpty ? null : value;
+    if (value is! Map) return null;
+    var bytes = value["NS.uuidbytes"];
+    if (bytes is Map) bytes = bytes["data"];
+    List<int>? raw;
+    if (bytes is String) {
+      try {
+        raw = base64Decode(bytes);
+      } on FormatException {
+        return null;
+      }
+    } else if (bytes is List && bytes.every((b) => b is int)) {
+      raw = bytes.cast<int>();
+    }
+    if (raw == null || raw.length != 16) return null;
+    final hex = raw.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
+    return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-"
+        "${hex.substring(16, 20)}-${hex.substring(20)}";
+  }
 }
 
 class UserInfo {

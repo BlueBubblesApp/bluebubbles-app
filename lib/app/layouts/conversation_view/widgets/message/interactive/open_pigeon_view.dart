@@ -23,7 +23,7 @@ class OpenPigeonLiveView extends StatefulWidget {
 }
 
 class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
-  late final Future<Map<String, dynamic>?> _payload = OpenPigeon.payloadFor(widget.message.guid!);
+  late final Future<Map<String, dynamic>?> _payload = OpenPigeon.payloadFor(widget.message);
 
   @override
   Widget build(BuildContext context) {
@@ -34,22 +34,59 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
         if (payload == null) return widget.fallback;
         // The size OpenPigeon composes its live views at
         final width = (MediaQuery.sizeOf(context).width * 0.6).roundToDouble() - 10;
-        return SizedBox(
-          width: width,
-          height: 250,
-          child: AndroidView(
-            viewType: 'openpigeon/live',
-            creationParams: {
-              ...payload,
-              'chatGuid': widget.chat.guid,
-              'userCount': OpenPigeon.userCount(widget.chat),
-            },
-            creationParamsCodec: const StandardMessageCodec(),
-            gestureRecognizers: {Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
-          ),
+        return _OpenPigeonView(
+          viewType: 'openpigeon/live',
+          creationParams: {
+            ...payload,
+            'chatGuid': widget.chat.guid,
+            'userCount': OpenPigeon.userCount(widget.chat),
+          },
+          gestureRecognizers: {Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
+          fallback: widget.fallback,
+          child: (view) => SizedBox(width: width, height: 250, child: view),
         );
       },
     );
+  }
+}
+
+/// An OpenPigeon platform view, replaced by [fallback] if OpenPigeon fails to fill it.
+class _OpenPigeonView extends StatefulWidget {
+  const _OpenPigeonView({
+    required this.viewType,
+    required this.creationParams,
+    required this.gestureRecognizers,
+    required this.fallback,
+    required this.child,
+  });
+
+  final String viewType;
+  final Map<String, dynamic> creationParams;
+  final Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers;
+  final Widget fallback;
+  final Widget Function(Widget view) child;
+
+  @override
+  State<_OpenPigeonView> createState() => _OpenPigeonViewState();
+}
+
+class _OpenPigeonViewState extends State<_OpenPigeonView> {
+  int? _viewId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (OpenPigeon.failedViews.contains(_viewId)) return widget.fallback;
+      return widget.child(AndroidView(
+        viewType: widget.viewType,
+        creationParams: widget.creationParams,
+        creationParamsCodec: const StandardMessageCodec(),
+        gestureRecognizers: widget.gestureRecognizers,
+        onPlatformViewCreated: (id) {
+          if (mounted) setState(() => _viewId = id);
+        },
+      ));
+    });
   }
 }
 
@@ -68,15 +105,25 @@ Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewControll
     builder: (context) => SizedBox(
       // OpenPigeon's keyboard height for BlueBubbles hosts
       height: 380,
-      child: AndroidView(
+      child: _OpenPigeonView(
         viewType: 'openpigeon/keyboard',
         creationParams: {'chatGuid': chat.guid, 'userCount': OpenPigeon.userCount(chat)},
-        creationParamsCodec: const StandardMessageCodec(),
         gestureRecognizers: {Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer())},
+        fallback: const Center(child: Text("Couldn't load games")),
+        child: (view) => view,
       ),
     ),
   );
   OpenPigeon.onKeyboardMessage(null);
+}
+
+Uint8List? _decode(Object? base64) {
+  if (base64 is! String) return null;
+  try {
+    return base64Decode(base64);
+  } on FormatException {
+    return null;
+  }
 }
 
 /// The picked game, above the composer's text field.
@@ -90,7 +137,9 @@ class OpenPigeonPendingGame extends StatelessWidget {
     return Obx(() {
       final game = controller.pendingGame.value;
       if (game == null) return const SizedBox.shrink();
-      final image = game['imageBase64'] as String?;
+      final image = _decode(game['imageBase64']);
+      final title = game['ldText'] is String ? game['ldText'] as String : "Game";
+      final caption = game['caption'] is String ? game['caption'] as String : null;
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Material(
@@ -99,14 +148,21 @@ class OpenPigeonPendingGame extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: Row(
             children: [
-              if (image != null) Image.memory(base64Decode(image), width: 72, height: 72, fit: BoxFit.cover),
+              if (image != null)
+                Image.memory(
+                  image,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox(width: 72, height: 72),
+                ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(game['ldText'] as String? ?? "Game", style: context.theme.textTheme.titleSmall),
-                    if (game['caption'] != null) Text(game['caption'] as String, style: context.theme.textTheme.bodySmall),
+                    Text(title, style: context.theme.textTheme.titleSmall),
+                    if (caption != null) Text(caption, style: context.theme.textTheme.bodySmall),
                   ],
                 ),
               ),
