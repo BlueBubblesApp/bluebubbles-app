@@ -38,7 +38,12 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
         return Obx(() {
           final latest = OpenPigeon.latestInSession[session];
           if (latest != null && latest.guid != widget.message.guid) {
-            return _CollapsedGame(icon: _decode(widget.message.payloadData?.appData?.firstOrNull?.appIcon));
+            return OpenPigeonCollapsedGame(
+              icon: _decode(widget.message.payloadData?.appData?.firstOrNull?.appIcon),
+              title: payload['ldText'] as String?,
+              caption: payload['caption'] as String?,
+              onTap: () => openOpenPigeonGame(context, widget.message, widget.chat),
+            );
           }
           return _OpenPigeonView(
             viewType: 'openpigeon/live',
@@ -53,29 +58,79 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
   }
 }
 
-/// An earlier turn of a game, shown as the app's icon.
-class _CollapsedGame extends StatelessWidget {
-  const _CollapsedGame({this.icon});
+/// A game message in compact form, as Messages shows earlier turns: the app's icon, the game and its caption.
+/// Also stands in for a game whose payload hasn't arrived yet.
+class OpenPigeonCollapsedGame extends StatelessWidget {
+  const OpenPigeonCollapsedGame({super.key, this.icon, this.title, this.caption, this.onTap});
 
   final Uint8List? icon;
+  final String? title;
+  final String? caption;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: icon == null
-            ? Icon(Icons.sports_esports_rounded, size: 36, color: context.theme.colorScheme.onSurfaceVariant)
-            : Image.memory(
-                icon!,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Icon(Icons.sports_esports_rounded, size: 36),
+    final fallbackIcon = Icon(
+      Icons.sports_esports_rounded,
+      size: 28,
+      color: context.theme.colorScheme.onSurfaceVariant,
+    );
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: icon == null
+                  ? SizedBox(width: 32, height: 32, child: fallbackIcon)
+                  : Image.memory(
+                      icon!,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => SizedBox(width: 32, height: 32, child: fallbackIcon),
+                    ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title ?? "GamePigeon",
+                    style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (caption != null)
+                    Text(
+                      caption!,
+                      style: context.theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+/// What tapping a game does when OpenPigeon isn't drawing it: explain the subscription, offer the install, or open
+/// the game.
+Future<void> openOpenPigeonGame(BuildContext context, Message message, Chat chat) async {
+  if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
+  if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
+  final payload = await OpenPigeon.payloadFor(message);
+  if (payload == null || !await OpenPigeon.open(payload, chat)) {
+    showSnackbar("Error", "Couldn't open the game", type: SnackbarType.error);
   }
 }
 

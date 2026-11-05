@@ -69,17 +69,18 @@ class _GamePigeonState extends State<GamePigeon> with AutomaticKeepAliveClientMi
               child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Center(
-            child: Text(
-              data.userInfo!.caption!.toUpperCase(),
-              style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+        if (data.userInfo?.caption != null)
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Center(
+              child: Text(
+                data.userInfo!.caption!.toUpperCase(),
+                style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
-        ),
         Obx(() => !OpenPigeon.installed.value && OpenPigeon.supported
             ? const Center(child: TextButton(onPressed: OpenPigeon.openStore, child: Text("Play with OpenPigeon")))
             : const SizedBox.shrink()),

@@ -54,6 +54,14 @@ object OpenPigeonHost {
                         withExtension(app) { it.messageUpdated(message) }
                         result.success(null)
                     }
+                    "open" -> {
+                        val args = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
+                        val message = madridMessage(args)
+                        val handle = messageHandle(args["chatGuid"] as? String ?: "")
+                        val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
+                        withExtension(app) { it.didTapTemplate(message, handle, userCount) }
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -140,6 +148,25 @@ object OpenPigeonHost {
         }
     }
 
+    /// Where OpenPigeon sends a game's turns. It keeps the handle on its session and uses it from the game activity,
+    /// so it can't depend on any view.
+    private fun messageHandle(chatGuid: String) = object : IMessageViewHandle.Stub() {
+        override fun updateMessage(message: MadridMessage?, callback: ITaskCompleteCallback?) {
+            if (message == null) return
+            send(chatGuid, message, fromKeyboard = false) {
+                try {
+                    callback?.complete()
+                } catch (e: Exception) {
+                    Log.w(TAG, "OpenPigeon completion callback failed", e)
+                }
+            }
+        }
+
+        override fun setSuppressNotifications(suppress: Boolean) {}
+        override fun lock() {}
+        override fun unlock() {}
+    }
+
     private fun madridMessage(map: Map<*, *>) = MadridMessage().apply {
         messageGuid = map["messageGuid"] as? String ?: ""
         url = map["url"] as? String ?: ""
@@ -169,29 +196,12 @@ object OpenPigeonHost {
             override fun updateView(views: RemoteViews?) = show(views)
         }
 
-        // Outlive this view: OpenPigeon keeps the handle on its session and sends turns
-        // through it from the game activity.
         private val keyboardHandle = object : IKeyboardHandle.Stub() {
             override fun addMessage(message: MadridMessage?) {
                 if (message != null) send(chatGuid, message, fromKeyboard = true)
             }
         }
-        private val messageHandle = object : IMessageViewHandle.Stub() {
-            override fun updateMessage(message: MadridMessage?, callback: ITaskCompleteCallback?) {
-                if (message == null) return
-                send(chatGuid, message, fromKeyboard = false) {
-                    try {
-                        callback?.complete()
-                    } catch (e: Exception) {
-                        Log.w(TAG, "OpenPigeon completion callback failed", e)
-                    }
-                }
-            }
-
-            override fun setSuppressNotifications(suppress: Boolean) {}
-            override fun lock() {}
-            override fun unlock() {}
-        }
+        private val messageHandle = messageHandle(chatGuid)
 
         init {
             val userCount = (args["userCount"] as? Number)?.toInt() ?: 2

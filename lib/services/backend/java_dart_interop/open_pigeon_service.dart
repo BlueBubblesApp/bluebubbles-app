@@ -140,6 +140,17 @@ class OpenPigeon {
     return true;
   }
 
+  /// Opens the game [payload] (from [payloadFor]) belongs to.
+  static Future<bool> open(Map<String, dynamic> payload, Chat chat) async {
+    try {
+      await _channel.invokeMethod('open', {...payload, 'chatGuid': chat.guid, 'userCount': userCount(chat)});
+      return true;
+    } on PlatformException catch (e) {
+      Logger.warn('Could not open the game', error: e, tag: 'OpenPigeon');
+      return false;
+    }
+  }
+
   /// Sends an OpenPigeon message ([game] holds its `url`, `session`, `ldText` and `caption`) to [chatGuid].
   static Future<void> sendGame(String chatGuid, Map<String, dynamic> game) async {
     await HttpSvc.message.sendAppMessage(

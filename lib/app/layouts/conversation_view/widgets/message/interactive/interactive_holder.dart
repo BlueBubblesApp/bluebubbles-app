@@ -49,6 +49,10 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
   /// OpenPigeon draws the bubble and handles its taps.
   bool get _usesOpenPigeon => OpenPigeon.available && OpenPigeon.isGame(message) && !message.isSending;
 
+  /// A game OpenPigeon could open (or explain the subscription for) but isn't drawing.
+  bool get _opensWithOpenPigeon =>
+      OpenPigeon.offered && OpenPigeon.isGame(message) && !message.isSending && controller.cvController != null;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -63,9 +67,13 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: (payloadData == null && !message.isLegacyUrlPreview) || _usesOpenPigeon
+            onTap: _usesOpenPigeon
                 ? null
-                : () async {
+                : _opensWithOpenPigeon
+                    ? () => openOpenPigeonGame(context, message, controller.cvController!.chat)
+                    : (payloadData == null && !message.isLegacyUrlPreview)
+                        ? null
+                        : () async {
                     String? url;
                     if (payloadData == null) {
                       url = message.url;
@@ -113,6 +121,10 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                               return Opacity(
                                   opacity: isTempMessage ? 0.5 : 1,
                                   child: Builder(builder: (context) {
+                                    // A game can always be drawn, even before its payload arrives
+                                    if (OpenPigeon.isGame(message) && (payloadData?.appData?.isEmpty ?? true)) {
+                                      return const OpenPigeonCollapsedGame();
+                                    }
                                     if (payloadData == null && !(message.isLegacyUrlPreview)) {
                                       switch (message.interactiveText) {
                                         case "Handwriten Message":
