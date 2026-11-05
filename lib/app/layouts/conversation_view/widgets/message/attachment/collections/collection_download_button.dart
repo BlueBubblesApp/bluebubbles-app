@@ -14,7 +14,7 @@ class CollectionDownloadButton extends StatelessWidget {
   static const double size = 34.0;
   static const double gap = 24.0;
 
-  static bool get isSupported => SettingsSvc.settings.skin.value == Skins.iOS;
+  static bool get isSupported => CurrentSkin.iOS;
 
   /// Places [child] beside the download control for incoming iOS collections.
   /// Returns [child] unchanged when from-me or skin unsupported.

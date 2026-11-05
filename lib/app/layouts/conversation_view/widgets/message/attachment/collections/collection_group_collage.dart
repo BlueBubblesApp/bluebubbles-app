@@ -19,13 +19,11 @@ class CollectionGroupCollage extends StatelessWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    required this.isEditing,
     this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
   final bool canSwipeToReply;
 
   static const double _horizontalStagger = 32.0;
@@ -119,7 +117,6 @@ class CollectionGroupCollage extends StatelessWidget {
       attachmentIndex: index,
       messagePart: messagePart,
       cvController: cvController,
-      isEditing: isEditing,
       enableGestures: true,
     );
 
@@ -136,8 +133,7 @@ class CollectionGroupCollage extends StatelessWidget {
           : card,
     );
 
-    final swipeEnabled = canSwipeToReply && !isEditing;
-    if (!swipeEnabled) return framed;
+    if (!canSwipeToReply) return framed;
 
     return SwipeToReplyRow(
       partIndex: messagePart.partIdForAttachment(index),

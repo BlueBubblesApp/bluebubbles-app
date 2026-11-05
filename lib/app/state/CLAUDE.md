@@ -38,9 +38,10 @@ Key observables: `guid`, `text`, `dateDelivered`, `dateRead`, `dateEdited`, `err
 Also owns `attachmentStates: Map<String, AttachmentState>` keyed by attachment GUID.
 
 **Part helpers** — `parts` holds raw message parts keyed by part id (`MessagePart.part`), not list index. Use
-`partById`, `isLeadingMessagePart` / `isTrailingMessagePart`, `partConnectsUpper` / `partConnectsLower` (bubble
-connect styling) and `hasSubjectAbove` rather than comparing `part.part` against `parts.length`. All of them treat a
-collapsed media collection (`MessagePart.collapseMediaCollections`) as covering every raw id in its span.
+`partById`, `isLeadingMessagePart` / `isTrailingMessagePart` and `hasSubjectAbove` rather than comparing `part.part`
+against `parts.length`. All of them treat a collapsed media collection (`MessagePart.collapseMediaCollections`) as
+covering every raw id in its span. Bubble connect styling (Material/Samsung) is `BubbleConnect.upper` / `.lower` in
+`conversation_view/widgets/message/misc/tail_clipper.dart`, built on these.
 
 `displayParts` is `parts` as rendered (media runs collapsed into collection bubbles). It is memoized on the raw parts
 and the flags that affect collapsing, so it returns the same `MessagePart` instances across rebuilds — read it instead

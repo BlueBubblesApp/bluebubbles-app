@@ -6,8 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_style.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
-import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -29,12 +29,10 @@ class CollectionGroupGrid extends StatefulWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    this.isEditing = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
 
   @override
   State<CollectionGroupGrid> createState() => _CollectionGroupGridState();
@@ -64,17 +62,9 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
 
   MessagePart get messagePart => widget.messagePart;
   ConversationViewController get cvController => widget.cvController;
-  bool get isEditing => widget.isEditing;
   List<Attachment> get _attachments => messagePart.attachments;
 
-  bool _hasBodyBelow(MessageState messageState) {
-    if (!isNullOrEmpty(messagePart.text)) return true;
-    return messageState.parts.any(
-      (p) => !messagePart.coversPartId(p.part) && p.part > messagePart.part && !isNullOrEmpty(p.text),
-    );
-  }
-
-  /// Tighten only the author-edge corner against subject (top) / body (bottom).
+  /// Tighten only the author-edge corner against the bubble above (or the subject) / below.
   /// iOS always keeps a full-radius card (same policy as text bubbles skipping TailClipper connect).
   BorderRadius _silhouetteBorderRadius({
     required double cardRadius,
@@ -103,15 +93,15 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
   Widget _buildGrid(BuildContext context, MediaCollection collection) {
     final messageState = collection.messageState;
     final isFromMe = messageState.isFromMe.value;
-    // Connected author-edge corners match text-bubble TailClipper: Material/Samsung only.
-    final connectCorners = !iOS;
+    // Connected author-edge corners follow the same BubbleConnect rule as TailClipper bubbles (Material/Samsung
+    // only). The subject bubble sits above the leading part, so it counts as a neighbour above too.
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
       cardRadius: CollectionStyle.cardRadius,
       connectedRadius: CollectionStyle.connectedCornerRadius,
       isFromMe: isFromMe,
-      tightenTop: connectCorners && messageState.hasSubjectAbove(messagePart),
-      tightenBottom: connectCorners && _hasBodyBelow(messageState),
+      tightenTop: BubbleConnect.upper(messageState, messagePart) || (!iOS && messageState.hasSubjectAbove(messagePart)),
+      tightenBottom: BubbleConnect.lower(messageState, messagePart),
     );
     final gridWidth = min(NavigationSvc.width(context) * CollectionStyle.gridWidthFactor, CollectionStyle.maxGridWidth);
     final layout = CollectionGridLayout.compute(count: count, width: gridWidth, expanded: _expanded);
@@ -200,7 +190,6 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHel
         attachmentIndex: cell.index,
         messagePart: messagePart,
         cvController: cvController,
-        isEditing: isEditing,
         enableGestures: true,
       ),
       if (moreCount != null && moreCount > 0)

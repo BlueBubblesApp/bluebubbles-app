@@ -435,8 +435,12 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                               clipper: TailClipper(
                                                                 isFromMe: isFromMe,
                                                                 showTail: false,
-                                                                connectLower: controller.partConnectsLower(e),
-                                                                connectUpper: controller.partConnectsUpper(e),
+                                                                // The collection grid tightens its top corners
+                                                                // against this subject (hasSubjectAbove), so
+                                                                // the subject tightens its bottom to match.
+                                                                connectLower: BubbleConnect.lower(controller, e) ||
+                                                                    (!iOS && e.isMediaCollection),
+                                                                connectUpper: BubbleConnect.upper(controller, e),
                                                               ),
                                                               child: TextBubble(
                                                                 subjectOnly: true,
@@ -492,7 +496,6 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                               MessagePartContent(
                                                                                 messagePart: e,
                                                                                 cvController: widget.cvController,
-                                                                                isEditing: isEditing(e.part),
                                                                                 canSwipeToReply: canSwipeToReply,
                                                                               ),
                                                                               if (message.isFromMe!)
@@ -529,9 +532,9 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                                   message.showTail(newerMessage) &&
                                                                                   controller.isTrailingMessagePart(e),
                                                                               connectLower:
-                                                                                  controller.partConnectsLower(e),
+                                                                                  BubbleConnect.lower(controller, e),
                                                                               connectUpper:
-                                                                                  controller.partConnectsUpper(e),
+                                                                                  BubbleConnect.upper(controller, e),
                                                                             ),
                                                                             child: inner,
                                                                           );

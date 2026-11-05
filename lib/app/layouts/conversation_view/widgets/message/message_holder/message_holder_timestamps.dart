@@ -75,8 +75,8 @@ class EditHistoryObserver extends StatelessWidget {
                                   showTail: !part.isPkPass &&
                                       message.showTail(newerMessage) &&
                                       ms.isTrailingMessagePart(part),
-                                  connectLower: ms.partConnectsLower(part),
-                                  connectUpper: ms.partConnectsUpper(part),
+                                  connectLower: BubbleConnect.lower(ms, part),
+                                  connectUpper: BubbleConnect.upper(ms, part),
                                 ),
                                 child: TextBubble(
                                   message: edit,

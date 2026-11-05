@@ -20,13 +20,11 @@ class MessagePartContent extends StatelessWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    required this.isEditing,
     this.canSwipeToReply = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
 
   /// Passed through to collage for per-card swipe-to-reply (stack has no swipe).
   final bool canSwipeToReply;
@@ -69,18 +67,15 @@ class MessagePartContent extends StatelessWidget {
           MediaCollectionLayout.collage => CollectionGroupCollage(
               messagePart: messagePart,
               cvController: cvController,
-              isEditing: isEditing,
               canSwipeToReply: canSwipeToReply,
             ),
           MediaCollectionLayout.stack => CollectionGroupStack(
               messagePart: messagePart,
               cvController: cvController,
-              isEditing: isEditing,
             ),
           MediaCollectionLayout.grid || MediaCollectionLayout.skinDefault => CollectionGroupGrid(
               messagePart: messagePart,
               cvController: cvController,
-              isEditing: isEditing,
             ),
         };
         final isFromMe = message.isFromMe == true;

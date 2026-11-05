@@ -171,6 +171,10 @@ class MessagePart {
   /// True when this part's attachments form a multi-item media collection (>1 images/videos).
   /// Routes the part to a collection layout (stack / collage / grid, see `resolveMediaCollectionLayout`)
   /// instead of a single [AttachmentHolder].
+  ///
+  /// Deliberately doesn't require `text == null` like [isMediaOnlyPart]: [AttachmentHolder] renders only the first
+  /// attachment, so a raw part holding several images *and* text still shows every image here. Its text isn't
+  /// rendered either way (text and attachments in one part is a known gap, not handled by this branch).
   bool get isMediaCollection =>
       attachments.length > 1 && attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
 }

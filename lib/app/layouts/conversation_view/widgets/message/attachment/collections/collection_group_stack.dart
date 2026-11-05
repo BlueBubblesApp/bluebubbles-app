@@ -23,14 +23,10 @@ class CollectionGroupStack extends StatefulWidget {
     super.key,
     required this.messagePart,
     required this.cvController,
-    required this.isEditing,
-    this.infiniteScroll = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
-  final bool infiniteScroll;
 
   @override
   State<CollectionGroupStack> createState() => _CollectionGroupStackState();
@@ -94,14 +90,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
   void _setCurrentIndex(int index, {bool resetDrag = false}) {
     if (_attachments.isEmpty) return;
-    int clamped;
-    if (widget.infiniteScroll) {
-      clamped = index % _attachments.length;
-      if (clamped < 0) clamped += _attachments.length;
-    } else {
-      clamped = index.clamp(0, _attachments.length - 1);
-    }
-    if (clamped < 0) return;
+    final clamped = index.clamp(0, _attachments.length - 1);
     if (clamped == _currentIndex && !resetDrag) return;
     _currentIndex = clamped;
     if (resetDrag) _dragDx = 0;
@@ -179,7 +168,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
         _advance(scrollDir);
         _dragDx = 0;
       });
-      if (_currentIndex == oldIndex && !widget.infiniteScroll) {
+      if (_currentIndex == oldIndex) {
         HapticFeedback.lightImpact();
       }
     });
@@ -254,30 +243,27 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     _endDrag(velocity);
   }
 
-  /// Applies a horizontal drag delta to the fan, with end-of-stack wiggle + haptic when not infinite.
+  /// Applies a horizontal drag delta to the fan, with an end-of-stack wiggle + haptic at either end.
   void _dragBy(double dx) {
     if (!mounted) return;
-    if (!widget.infiniteScroll) {
-      // Left advances / right goes back for both sides.
-      final blockedPositive = _currentIndex == 0;
-      final blockedNegative = _currentIndex == _attachments.length - 1;
+    // Left advances / right goes back for both sides.
+    final blockedPositive = _currentIndex == 0;
+    final blockedNegative = _currentIndex == _attachments.length - 1;
 
-      final draggingIntoBlockedEnd = (blockedPositive && dx > 0) || (blockedNegative && dx < 0);
-      if (draggingIntoBlockedEnd) {
-        if (!_hapticGivenForCurrentEnd) {
-          HapticFeedback.lightImpact();
-          _hapticGivenForCurrentEnd = true;
-        }
-        setState(() {
-          _dragDx += dx * 0.3;
-          if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-          if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-        });
-        return;
-      } else {
-        _hapticGivenForCurrentEnd = false;
+    final draggingIntoBlockedEnd = (blockedPositive && dx > 0) || (blockedNegative && dx < 0);
+    if (draggingIntoBlockedEnd) {
+      if (!_hapticGivenForCurrentEnd) {
+        HapticFeedback.lightImpact();
+        _hapticGivenForCurrentEnd = true;
       }
+      setState(() {
+        _dragDx += dx * 0.3;
+        if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+        if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+      });
+      return;
     }
+    _hapticGivenForCurrentEnd = false;
     setState(() {
       _dragDx += dx;
       _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
@@ -301,12 +287,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       _advance(rawSign);
       _dragDx = 0;
     });
-  }
-
-  int _indexAtOffset(int offset) {
-    var index = (_currentIndex + offset) % _attachments.length;
-    if (index < 0) index += _attachments.length;
-    return index;
   }
 
   double _computeBaseCardHeight(double baseCardWidth) {
@@ -333,13 +313,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     final baseCardHeight = _computeBaseCardHeight(baseCardWidth);
 
     // Horizontal spread of fanned cards behind the front card; sizes the canvas.
-    final double maxFanDx;
-    if (widget.infiniteScroll) {
-      maxFanDx = _fanSlotDx.last;
-    } else {
-      final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
-      maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
-    }
+    final layoutFuture = min(_attachments.length - 1, _visibleFanSlots - 1);
+    final maxFanDx = layoutFuture > 0 ? _fanSlotDx[layoutFuture] : 0.0;
     // Left-anchor for both sides so from-me front card is inset from the end-aligned
     // canvas by maxFanDx (future fan stays on-canvas). Tapbacks may overhang the
     // author edge — no extra reaction gutter.
@@ -348,7 +323,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
     final stackChildren = <Widget>[];
 
-    if (_attachments.length > 1 && (widget.infiniteScroll || _currentIndex < _attachments.length - 1)) {
+    if (_attachments.length > 1 && _currentIndex < _attachments.length - 1) {
       stackChildren.add(
         Positioned.fill(
           child: GestureDetector(
@@ -365,56 +340,42 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       );
     }
 
-    if (widget.infiniteScroll) {
-      stackChildren.addAll(List.generate(_attachments.length, (i) {
-        final attachmentIndex = _indexAtOffset(i);
-        return _buildFanCard(
-          attachment: _attachments[attachmentIndex],
-          attachmentIndex: attachmentIndex,
-          slotIndex: i,
-          baseCardWidth: baseCardWidth,
-          baseCardHeight: baseCardHeight,
-          isCurrent: i == 0,
-        );
-      }).reversed);
-    } else {
-      final futureCount = _attachments.length - _currentIndex - 1;
-      final pastCount = _currentIndex;
-      final visiblePast = min(pastCount, _maxPastCards);
-      final visibleFuture = min(futureCount, _visibleFanSlots - 1);
+    final futureCount = _attachments.length - _currentIndex - 1;
+    final pastCount = _currentIndex;
+    final visiblePast = min(pastCount, _maxPastCards);
+    final visibleFuture = min(futureCount, _visibleFanSlots - 1);
 
-      for (int p = visiblePast; p >= 1; p--) {
-        final attachmentIndex = _currentIndex - p;
-        stackChildren.add(_buildPastCard(
-          attachment: _attachments[attachmentIndex],
-          attachmentIndex: attachmentIndex,
-          slotIndex: p.clamp(1, _visibleFanSlots - 1),
-          baseCardWidth: baseCardWidth,
-          baseCardHeight: baseCardHeight,
-        ));
-      }
-
-      for (int f = visibleFuture; f >= 1; f--) {
-        final attachmentIndex = _currentIndex + f;
-        stackChildren.add(_buildFanCard(
-          attachment: _attachments[attachmentIndex],
-          attachmentIndex: attachmentIndex,
-          slotIndex: f,
-          baseCardWidth: baseCardWidth,
-          baseCardHeight: baseCardHeight,
-          isCurrent: false,
-        ));
-      }
-
-      stackChildren.add(_buildFanCard(
-        attachment: _attachments[_currentIndex],
-        attachmentIndex: _currentIndex,
-        slotIndex: 0,
+    for (int p = visiblePast; p >= 1; p--) {
+      final attachmentIndex = _currentIndex - p;
+      stackChildren.add(_buildPastCard(
+        attachment: _attachments[attachmentIndex],
+        attachmentIndex: attachmentIndex,
+        slotIndex: p.clamp(1, _visibleFanSlots - 1),
         baseCardWidth: baseCardWidth,
         baseCardHeight: baseCardHeight,
-        isCurrent: true,
       ));
     }
+
+    for (int f = visibleFuture; f >= 1; f--) {
+      final attachmentIndex = _currentIndex + f;
+      stackChildren.add(_buildFanCard(
+        attachment: _attachments[attachmentIndex],
+        attachmentIndex: attachmentIndex,
+        slotIndex: f,
+        baseCardWidth: baseCardWidth,
+        baseCardHeight: baseCardHeight,
+        isCurrent: false,
+      ));
+    }
+
+    stackChildren.add(_buildFanCard(
+      attachment: _attachments[_currentIndex],
+      attachmentIndex: _currentIndex,
+      slotIndex: 0,
+      baseCardWidth: baseCardWidth,
+      baseCardHeight: baseCardHeight,
+      isCurrent: true,
+    ));
 
     // Listener wraps only the card canvas so pointer-down on the label does not
     // set isCollectionDragging or claim the horizontal swipe for fan navigation.
@@ -494,7 +455,6 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 messagePart: widget.messagePart,
                 ignorePointer: !isCurrent,
                 cvController: widget.cvController,
-                isEditing: widget.isEditing,
                 enableGestures: isCurrent,
                 reactionTailType: ReactionTailType.inside,
               ),
@@ -513,16 +473,14 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     required double baseCardHeight,
     required bool isCurrent,
   }) {
-    final slot = slotIndex < _visibleFanSlots ? slotIndex : (_visibleFanSlots - 1);
-    final overflowDepth =
-        slotIndex >= _visibleFanSlots ? ((slotIndex - (_visibleFanSlots - 1)).clamp(0, 6) * 0.7) : 0.0;
+    final slot = slotIndex.clamp(0, _visibleFanSlots - 1);
     // One-sided fan: left grows with slot, positive angle, pivot bottom-left.
     final angle = slot == 0 ? 0.0 : _fanSlotAngle[slot];
-    final dy = _fanSlotDy[slot] + overflowDepth;
+    final dy = _fanSlotDy[slot];
     final scale = _fanSlotScale[slot];
     final cardWidth = baseCardWidth * scale;
     // Scale-center so smaller cards don't poke out past the fan spread.
-    final slotDx = slot < _fanSlotDx.length ? _fanSlotDx[slot] : _fanSlotDx.last;
+    final slotDx = _fanSlotDx[slot];
     final fromLeft = slotDx + ((baseCardWidth - cardWidth) / 2);
     final dragOffset = isCurrent ? _dragDx : 0.0;
     final dragRotate = isCurrent ? (_dragDx / 700) : 0.0;

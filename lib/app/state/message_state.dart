@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
@@ -210,20 +209,6 @@ class MessageState extends StatefulController {
   List<Message> tapbacksForPartId(int partId) => associatedMessages
       .where((e) => ReactionTypes.isTapback(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
       .toList();
-
-  /// Whether [p]'s bubble visually joins the bubble below it (Material/Samsung multi-part styling).
-  /// Always false on the iOS skin, which never connects part bubbles.
-  bool partConnectsLower(MessagePart p) {
-    if (SettingsSvc.settings.skin.value == Skins.iOS) return false;
-    final leading = isLeadingMessagePart(p);
-    return (!leading && !isTrailingMessagePart(p)) || (leading && parts.length > 1);
-  }
-
-  /// Whether [p]'s bubble visually joins the bubble above it. Always false on the iOS skin.
-  bool partConnectsUpper(MessagePart p) {
-    if (SettingsSvc.settings.skin.value == Skins.iOS) return false;
-    return !isLeadingMessagePart(p);
-  }
 
   /// Reactive state for the handle that sent this message.
   /// Null for outgoing messages or when no handle is attached.

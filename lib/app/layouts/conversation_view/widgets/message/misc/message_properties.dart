@@ -45,11 +45,7 @@ class _MessagePropertiesState extends State<MessageProperties> with ThemeHelpers
     // aggregate bubble-level count; open threads via per-card popup instead.
     final replyList = widget.part.isMediaCollection
         ? const <Message>[]
-        : service.struct.threadsForParts(
-            message.guid!,
-            widget.part.coveredPartIds,
-            returnOriginator: false,
-          );
+        : service.struct.threads(message.guid!, widget.part.part, returnOriginator: false);
     if (message.expressiveSendStyleId != null) {
       final effect =
           effectMap.entries.firstWhereOrNull((element) => element.value == message.expressiveSendStyleId)?.key ??

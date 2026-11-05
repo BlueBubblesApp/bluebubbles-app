@@ -237,13 +237,13 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                       ),
                     ),
                     ..._collectionLayoutOption(
-                      title: "2–3 Items",
+                      title: MediaCollectionLayout.smallRangeLabel,
                       setting: SettingsSvc.settings.mediaCollectionLayoutSmall,
                       settingKey: 'mediaCollectionLayoutSmall',
                     ),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
                     ..._collectionLayoutOption(
-                      title: "4+ Items",
+                      title: MediaCollectionLayout.largeRangeLabel,
                       setting: SettingsSvc.settings.mediaCollectionLayoutLarge,
                       settingKey: 'mediaCollectionLayoutLarge',
                     ),

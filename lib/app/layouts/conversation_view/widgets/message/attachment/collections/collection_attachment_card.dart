@@ -72,7 +72,6 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.attachmentIndex,
     required this.messagePart,
     required this.cvController,
-    required this.isEditing,
     this.ignorePointer = false,
     this.enableGestures = false,
     this.reactionTailType = ReactionTailType.standard,
@@ -87,7 +86,6 @@ class CollectionAttachmentCard extends StatelessWidget {
     required this.attachmentIndex,
     required this.messagePart,
     required this.cvController,
-    required this.isEditing,
     this.enableGestures = false,
   })  : ignorePointer = false,
         reactionTailType = ReactionTailType.standard,
@@ -99,7 +97,6 @@ class CollectionAttachmentCard extends StatelessWidget {
   final int attachmentIndex;
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
 
   /// When true, pointer events pass through to overlapping / background card.
   final bool ignorePointer;
@@ -147,7 +144,8 @@ class CollectionAttachmentCard extends StatelessWidget {
           controller: MessageStateScope.of(context),
           cvController: cvController,
           part: scopedPart,
-          isEditing: isEditing,
+          // Media parts can't be edited.
+          isEditing: false,
           enableGestures: enableGestures,
           child: _reprovideCollection(
             context,

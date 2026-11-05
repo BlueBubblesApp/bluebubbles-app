@@ -188,8 +188,8 @@ class _MessageContentBubble extends StatelessWidget {
       clipper: TailClipper(
         isFromMe: message.isFromMe!,
         showTail: !part.isPkPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part),
-        connectLower: controller.partConnectsLower(part),
-        connectUpper: controller.partConnectsUpper(part),
+        connectLower: BubbleConnect.lower(controller, part),
+        connectUpper: BubbleConnect.upper(controller, part),
       ),
       child: Stack(
         alignment: Alignment.centerRight,

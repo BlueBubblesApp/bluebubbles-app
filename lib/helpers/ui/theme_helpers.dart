@@ -126,6 +126,20 @@ extension EmojiFontFallback on ThemeData {
 
 /// Mixin to provide settings widgets with easy access to the commonly used
 /// theming values
+/// The active skin, for code without a [BuildContext] or [ThemeHelpers] (static styles, state classes, services).
+///
+/// Widgets keep using `iOS` / `material` / `samsung` from [ThemeHelpers] or [BuildContextThemeHelpers]; both
+/// read from here, so there's one definition of "which skin is on".
+abstract final class CurrentSkin {
+  static Skins get value => SettingsSvc.settings.skin.value;
+
+  static bool get iOS => value == Skins.iOS;
+
+  static bool get material => value == Skins.Material;
+
+  static bool get samsung => value == Skins.Samsung;
+}
+
 mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
   /// iOS skin [ListTile] subtitle [TextStyle]s
   TextStyle get iosSubtitle => context.theme.textTheme.labelLarge!.copyWith(
@@ -167,22 +181,22 @@ mixin ThemeHelpers<T extends StatefulWidget> on State<T> {
       Get.context!.width > 600 &&
       !LifecycleSvc.isBubble;
 
-  bool get iOS => SettingsSvc.settings.skin.value == Skins.iOS;
+  bool get iOS => CurrentSkin.iOS;
 
-  bool get material => SettingsSvc.settings.skin.value == Skins.Material;
+  bool get material => CurrentSkin.material;
 
-  bool get samsung => SettingsSvc.settings.skin.value == Skins.Samsung;
+  bool get samsung => CurrentSkin.samsung;
 
   Brightness get brightness => context.theme.colorScheme.brightness;
 }
 
 /// Extension to provide BuildContext with easy access to commonly used theme helper values
 extension BuildContextThemeHelpers on BuildContext {
-  bool get iOS => SettingsSvc.settings.skin.value == Skins.iOS;
+  bool get iOS => CurrentSkin.iOS;
 
-  bool get material => SettingsSvc.settings.skin.value == Skins.Material;
+  bool get material => CurrentSkin.material;
 
-  bool get samsung => SettingsSvc.settings.skin.value == Skins.Samsung;
+  bool get samsung => CurrentSkin.samsung;
 
   Color get _headerColor =>
       (ThemeSvc.inDarkMode(this) ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest)

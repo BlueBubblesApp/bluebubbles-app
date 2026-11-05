@@ -1,6 +1,5 @@
 import 'package:bluebubbles/app/components/m3e/m3e_shapes.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,7 +16,7 @@ abstract final class CollectionStyle {
   static const double maxGridWidth = 280.0;
 
   /// Card corner radius per skin.
-  static double get cardRadius => switch (SettingsSvc.settings.skin.value) {
+  static double get cardRadius => switch (CurrentSkin.value) {
         Skins.Samsung => 25.0,
         Skins.iOS => 20.0,
         Skins.Material => M3EShapes.lg,
@@ -25,15 +24,15 @@ abstract final class CollectionStyle {
 
   static BorderRadius get cardBorderRadius => BorderRadius.all(Radius.circular(cardRadius));
 
-  /// Radius of an author-edge corner that joins an adjacent subject / body bubble (Material and Samsung only).
+  /// Radius of an author-edge corner that joins a neighbouring bubble or the subject (Material and Samsung only).
   ///
   /// Material matches the 5px connected corner `TailClipper` draws on text bubbles. Samsung is rounder so the
   /// joint doesn't look pinched against its larger 25px card radius.
-  static double get connectedCornerRadius => SettingsSvc.settings.skin.value == Skins.Samsung ? 12.0 : 5.0;
+  static double get connectedCornerRadius => CurrentSkin.samsung ? 12.0 : 5.0;
 
   /// Soft card shadow, painted on the iOS skin only (null on Material / Samsung).
   static List<BoxShadow>? cardShadow(BuildContext context) {
-    if (SettingsSvc.settings.skin.value != Skins.iOS) return null;
+    if (!CurrentSkin.iOS) return null;
     return [
       BoxShadow(
         color: context.theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
