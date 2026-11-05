@@ -29,6 +29,10 @@ dart run scripts/bump_desktop_versions.dart 2.1.0.0          # full release; war
 dart run scripts/bump_desktop_versions.dart --tag 2.1.0+91 2.1.0.0   # desktop-only release tag
 ```
 
+`--test <X.Y.Z.N>` is for CI: `desktop-builds.yml` stamps every manual run with a test version so
+it installs over the previous one. It allows any 4th digit and skips `msix_version` (the store msix must
+stay `.0`; `build.ps1` versions the sideload msix itself) and the flatpak entry.
+
 `--tag` (also `--tag=…`) overrides the release tag the flatpak
 `<url>` and screenshots point at — use it when the desktop build gets its own tag instead of riding the pubspec one.
 A leading `v` and any `+` are normalized for you.

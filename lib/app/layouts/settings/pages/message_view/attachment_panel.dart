@@ -177,7 +177,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                               final savePath = await FilePicker.getDirectoryPath(
                                 initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value,
                                 dialogTitle: 'Choose a location to auto-save documents',
-                                lockParentWindow: true,
+                                windowsOptions: const WindowsOptions(lockParentWindow: true),
+                                linuxOptions: const LinuxOptions(lockParentWindow: true),
                               );
                               if (savePath != null) {
                                 SettingsSvc.settings.autoSaveDocsLocation.value = savePath;

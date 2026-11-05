@@ -19,8 +19,8 @@ on:
   # wasn't enough (removed in c90f304).
   #
   # These paths are the inputs to the expensive caches' keys (native deps hash pubspec.lock;
-  # Gradle also hashes the Android build files). Other commits leave the entries valid, so
-  # there's no point rebuilding for them.
+  # Gradle also hashes the Android build files; the SDK cache keys on FLUTTER_VERSION in this
+  # file). Other commits leave the entries valid, so there's no point rebuilding for them.
   push:
     branches: [master]
     paths:
@@ -28,6 +28,8 @@ on:
       - android/**/*.gradle
       - android/gradle.properties
       - android/gradle/wrapper/gradle-wrapper.properties
+      - .github/workflows/pr-check.yml
+      - .github/actions/setup-flutter/**
 
   # Cache entries are evicted after 7 days without a read, so a quiet stretch would leave
   # the next PR cold whatever the lockfile did. Weekly sits right on that boundary, so
@@ -142,9 +144,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Install system dependencies
+        # Azure's apt mirror occasionally crawls at ~100 KB/s; fail fast so the job can be re-run.
+        timeout-minutes: 10
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install -y --no-install-recommends \
             clang \
             cmake \
             ninja-build \
@@ -152,7 +156,6 @@ jobs:
             libgtk-3-dev \
             libwebkit2gtk-4.1-dev \
             libmpv-dev \
-            libayatana-appindicator3-dev \
             libnotify-dev \
             libjson-glib-dev
 

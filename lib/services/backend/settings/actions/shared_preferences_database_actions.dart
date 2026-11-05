@@ -6,6 +6,7 @@ class SharedPreferencesDatabaseActions {
   static const String _themesVersionKey = 'themesVersion';
   static const String _useCustomPathKey = 'use-custom-path';
   static const String _customPathKey = 'custom-path';
+  static const String _chatlessMessageRepairKey = 'chatlessMessageRepairDone';
 
   final SharedPreferencesService service;
 
@@ -20,6 +21,10 @@ class SharedPreferencesDatabaseActions {
   int getThemesVersion() => service.i.getInt(_themesVersionKey) ?? 0;
 
   Future<void> setThemesVersion(int version) => service.i.setInt(_themesVersionKey, version);
+
+  bool getChatlessMessageRepairDone() => service.i.getBool(_chatlessMessageRepairKey) ?? false;
+
+  Future<void> setChatlessMessageRepairDone() => service.i.setBool(_chatlessMessageRepairKey, true);
 
   bool shouldUseCustomPath() => service.i.getBool(_useCustomPathKey) == true;
 

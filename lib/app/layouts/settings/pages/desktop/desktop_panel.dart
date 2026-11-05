@@ -278,12 +278,11 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                                   .substring("notification-".length)
                               : "Adds a sound to be played with notifications. This is separate from the system notification settings.${Platform.isWindows ? " This will silence the system notification sound." : ""}",
                           onTap: () async {
-                            FilePickerResult? result = await FilePicker.pickFiles(type: FileType.audio, withData: true);
-                            if (result != null) {
-                              PlatformFile platformFile = result.files.first;
+                            PlatformFile? platformFile = await FilePicker.pickFile(type: FileType.audio);
+                            if (platformFile != null) {
                               String path = join(FilesystemSvc.soundsPath, "notification-${platformFile.name}");
                               await File(path).create(recursive: true);
-                              await File(path).writeAsBytes(platformFile.bytes!);
+                              await File(path).writeAsBytes(await platformFile.readAsBytes());
                               SettingsSvc.settings.desktopNotificationSoundPath.value = path;
                               await SettingsSvc.settings.saveOneAsync('desktopNotificationSoundPath');
                             }

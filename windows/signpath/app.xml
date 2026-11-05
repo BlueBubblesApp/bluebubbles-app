@@ -18,6 +18,7 @@
       <include path="avfilter-11.dll" />
       <include path="avformat-62.dll" />
       <include path="avutil-60.dll" />
+      <include path="cnativeapi.dll" />
       <include path="connectivity_plus_plugin.dll" />
       <include path="dartjni.dll" />
       <include path="desktop_drop_plugin.dll" />
@@ -61,7 +62,6 @@
       <include path="sqlite3.dll" />
       <include path="swresample-6.dll" />
       <include path="swscale-9.dll" />
-      <include path="tray_manager_plugin.dll" />
       <include path="url_launcher_windows_plugin.dll" />
       <include path="vk_swiftshader.dll" />
       <include path="vulkan-1.dll" />
