@@ -30,8 +30,9 @@ class ChatActions {
     if (shouldMarkOnServer &&
         SettingsSvc.settings.enablePrivateAPI.value &&
         SettingsSvc.settings.privateMarkChatAsRead.value) {
+      final sendReceipt = SettingsSvc.settings.privateSendReadReceipts.value;
       for (final c in chats) {
-        await HttpSvc.chat.markRead(c.guid);
+        await HttpSvc.chat.markRead(c.guid, sendReceipt: sendReceipt);
       }
     }
   }
@@ -43,7 +44,7 @@ class ChatActions {
 
     if (shouldMarkOnServer && SettingsSvc.settings.enablePrivateAPI.value) {
       if (markAsRead) {
-        await HttpSvc.chat.markRead(chatGuid);
+        await HttpSvc.chat.markRead(chatGuid, sendReceipt: SettingsSvc.settings.privateSendReadReceipts.value);
       } else {
         await HttpSvc.chat.markUnread(chatGuid);
       }
