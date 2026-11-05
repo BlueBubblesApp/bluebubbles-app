@@ -253,6 +253,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       final hasDraftAttachments = chatState.textFieldAttachments.isNotEmpty;
       final hasDraft = hasDraftText || hasDraftAttachments;
 
+      // When previews are hidden, render an empty line so tile height stays the same
+      // and the conversation list shows only the chat title.
+      final hidePreview = SettingsSvc.settings.hideChatListPreviews.value;
+
       final maxLines = SettingsSvc.settings.denseChatTiles.value ? 1 : 2;
       final lineHeight = (widget.style.fontSize ?? 14) * (widget.style.height ?? 1.5);
 
@@ -264,7 +268,9 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       final iconColor = isMonet ? context.theme.colorScheme.primary : context.theme.colorScheme.outline;
 
       final TextSpan subtitleSpan;
-      if (hasDraft) {
+      if (hidePreview) {
+        subtitleSpan = TextSpan(text: '', style: widget.style);
+      } else if (hasDraft) {
         final draftBody = hasDraftText ? draftText : 'Attachment';
         subtitleSpan = TextSpan(children: [
           TextSpan(

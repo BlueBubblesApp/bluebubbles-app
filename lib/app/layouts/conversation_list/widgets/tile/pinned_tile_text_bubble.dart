@@ -151,7 +151,8 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
       final unread = chatState.hasUnreadMessage.value;
       // Null-safe isFromMe: treat null as false (unknown sender → show the bubble)
       final isFromMe = lastMessage?.isFromMe == true;
-      if (!unread || lastMessage?.associatedMessageGuid != null || isFromMe || isNullOrEmpty(subtitle)) {
+      final hidePreview = SettingsSvc.settings.hideChatListPreviews.value;
+      if (hidePreview || !unread || lastMessage?.associatedMessageGuid != null || isFromMe || isNullOrEmpty(subtitle)) {
         return const SizedBox.shrink();
       }
 
