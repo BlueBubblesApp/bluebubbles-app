@@ -23,14 +23,14 @@ class ChatMessages {
 
   void addMessages(List<Message> __messages) {
     for (Message m in __messages) {
-      if (m.associatedMessageGuid != null) {
+      if (m.isReaction) {
         // add reactions
         _reactions[m.guid!] = m;
       } else {
         // add regular texts
         _messages[m.guid!] = m;
       }
-      if (m.threadOriginatorGuid != null && !m.guid!.startsWith("temp") && m.associatedMessageGuid == null) {
+      if (m.threadOriginatorGuid != null && !m.guid!.startsWith("temp") && !m.isReaction) {
         // add threaded messages
         _threads[m.threadOriginatorGuid!] ??= {};
         _threads[m.threadOriginatorGuid]![m.guid!] = m;

@@ -21,7 +21,7 @@ import 'package:get/get.dart';
 
 Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
   HapticFeedback.mediumImpact();
-  final messages = Chat.getMessages(c, getDetails: true).where((e) => e.associatedMessageGuid == null).toList();
+  final messages = Chat.getMessages(c, getDetails: true).where((e) => !e.isReaction).toList();
   await Navigator.push(
     Get.context!,
     PageRouteBuilder(
