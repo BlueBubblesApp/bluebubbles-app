@@ -2,8 +2,9 @@
 
 Renders a message part with 2+ media attachments as a collage, fan stack, or grid
 (instead of individual `AttachmentHolder`s). Dispatched from `MessagePartContent`
-when `MessagePart.isMediaCollection` (consecutive media-only parts are merged first by
-`MessagePart.collapseMediaCollections`).
+when `MessagePart.isMediaCollection`. Consecutive media-only parts are merged first by
+`MessagePart.collapseMediaCollections`, which `MessageHolder` reads through the memoized
+`MessageState.displayParts`, so a collection part (and its `MediaCollectionScope`) keeps its identity across rebuilds.
 
 ## Files
 
@@ -48,7 +49,16 @@ when not `skinDefault` (Media Settings → Multi-Attachment Layout):
   the gallery page use the inside tail pinned to the trailing edge; collage and Material/Samsung grid follow the normal
   bubble rule (left of from-me, right of received).
 - **Title:** iOS stack/grid only, via `CollectionTitledLayout` → `MediaCollection.openGallery`. Material/Samsung stay layout-only even when prefs force stack/grid.
-- **`+N` (grid, count > `CollectionGridLayout.maxCollapsedTiles`):** tap → gallery; long-press → expand remaining items in place.
+- **`+N` (grid, count > `CollectionGridLayout.maxCollapsedTiles`):** tap → gallery; long-press → expand remaining items in
+  place, up to `CollectionGroupGrid.maxInPlaceTiles` (bigger collections open the gallery instead). Expanding keeps one
+  tree: cells are keyed by index and animate to their new rects, so visible media isn't remounted.
+- **Per-card parts:** cards hand `MessagePart.itemPartFor(index)` to `AttachmentHolder` / the popup — one
+  single-attachment part per attachment, built with the collection, carrying its source part's flags. Don't build
+  parts in `build()`.
+- **Stack cards** all build the same widget tree (`_slotCard`) whether front, fanned or past, so paging never remounts
+  a card's media. `MessagePopupHolder` keeps its tree shape when `enableGestures` flips for the same reason.
+- **Download all:** `AttachmentsService.saveAllToDisk` — one folder prompt (desktop, or Android with "Ask where to
+  save"), downloads what's missing, then one summary snackbar.
 - **Swipe-to-reply:** collage cards use `SwipeToReplyRow` (`misc/swipe_to_reply_wrapper.dart`). The stack has none —
   horizontal drags page the fan. `MessageHolder` disables its per-part swipe for every collection.
 
