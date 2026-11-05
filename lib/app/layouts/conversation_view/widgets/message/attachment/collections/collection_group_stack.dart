@@ -75,11 +75,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
 
   @override
   void dispose() {
-    _activeDragPointer = null;
-    _dragStartPosition = null;
-    _velocityTracker = null;
-    _hapticGivenForCurrentEnd = false;
-    widget.cvController.isCollectionDragging = false;
+    _releasePointer();
     super.dispose();
   }
 
@@ -121,6 +117,140 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     setState(() {
       _setCurrentIndex(index, resetDrag: true);
     });
+  }
+
+  // ── Fan drag handling ──────────────────────────────────────────────────────
+
+  /// Wraps the card canvas in a raw pointer [Listener] that drives fan navigation.
+  ///
+  /// Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this swipe never has to
+  /// win a gesture-arena contest against a card's own recognizers — e.g. VideoPlayer registers
+  /// onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer holding the arena open was
+  /// swallowing fast horizontal swipes over video attachments while images (which register no onDoubleTap)
+  /// were unaffected. Listener never enters the arena, so it always sees the drag regardless of what the card
+  /// underneath does with the same pointer.
+  Widget _buildDragListener(Widget child) {
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerSignal: _onPointerSignal,
+      onPointerDown: _onPointerDown,
+      onPointerMove: _onPointerMove,
+      onPointerUp: _onPointerUp,
+      onPointerCancel: _onPointerCancel,
+      // Two-finger trackpad swipes (Windows/Linux). Same horizontal commit as touch so vertical
+      // swipes keep scrolling the chat.
+      onPointerPanZoomStart: _onPanZoomStart,
+      onPointerPanZoomUpdate: _onPanZoomUpdate,
+      onPointerPanZoomEnd: _onPanZoomEnd,
+      child: child,
+    );
+  }
+
+  bool get _canNavigate => _attachments.length > 1;
+
+  /// Forgets the tracked pointer and releases the drag claim on the conversation list.
+  void _releasePointer() {
+    _activeDragPointer = null;
+    _dragStartPosition = null;
+    _velocityTracker = null;
+    _hapticGivenForCurrentEnd = false;
+    widget.cvController.isCollectionDragging = false;
+  }
+
+  /// Returns the fan to rest without changing the current card.
+  void _springBack() {
+    if (!mounted) return;
+    setState(() => _dragDx = 0);
+  }
+
+  /// Mouse wheel / trackpad scroll events page through the fan.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || !_canNavigate) return;
+    GestureBinding.instance.pointerSignalResolver.register(event, (event) {
+      if (!mounted) return;
+      final delta = (event as PointerScrollEvent).scrollDelta;
+      _scrollAccumulator += delta.dx.abs() > delta.dy.abs() ? delta.dx : delta.dy;
+      if (_scrollAccumulator.abs() < _scrollAdvanceThreshold) return;
+      final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
+      _scrollAccumulator = 0;
+      final oldIndex = _currentIndex;
+      setState(() {
+        _advance(scrollDir);
+        _dragDx = 0;
+      });
+      if (_currentIndex == oldIndex && !widget.infiniteScroll) {
+        HapticFeedback.lightImpact();
+      }
+    });
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    if (!_canNavigate) return;
+    _activeDragPointer = event.pointer;
+    _dragStartPosition = event.position;
+    _velocityTracker = VelocityTracker.withKind(event.kind);
+    _velocityTracker!.addPosition(event.timeStamp, event.position);
+    // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
+    // GestureDetector ancestor in MessagesView) doesn't also react to the
+    // same pointer — see conversation_view_controller.dart's field doc.
+    widget.cvController.isCollectionDragging = true;
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    if (!_canNavigate || _activeDragPointer != event.pointer) return;
+    // Bail out of fan drag when the pointer is clearly vertical so the
+    // conversation list can scroll and isCollectionDragging does not stick.
+    final start = _dragStartPosition;
+    if (start != null) {
+      final total = event.position - start;
+      if (total.dy.abs() >= total.dx.abs() && total.distance >= 8.0) {
+        _releasePointer();
+        if (_dragDx != 0) _springBack();
+        return;
+      }
+    }
+    _velocityTracker?.addPosition(event.timeStamp, event.position);
+    _dragBy(event.delta.dx);
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    if (_activeDragPointer != event.pointer) return;
+    final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+    _releasePointer();
+    if (!_canNavigate) return;
+    _endDrag(velocity);
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    if (_activeDragPointer != event.pointer) return;
+    _releasePointer();
+    if (!_canNavigate) return;
+    _springBack();
+  }
+
+  void _onPanZoomStart(PointerPanZoomStartEvent event) {
+    if (!_canNavigate) return;
+    _panHorizontal = null;
+    _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.trackpad);
+  }
+
+  void _onPanZoomUpdate(PointerPanZoomUpdateEvent event) {
+    if (!_canNavigate || _velocityTracker == null) return;
+    _velocityTracker!.addPosition(event.timeStamp, event.pan);
+    if (_panHorizontal == null) {
+      if (event.pan.distance < kTouchSlop) return;
+      _panHorizontal = event.pan.dx.abs() > event.pan.dy.abs();
+    }
+    if (_panHorizontal!) _dragBy(event.panDelta.dx);
+  }
+
+  void _onPanZoomEnd(PointerPanZoomEndEvent event) {
+    final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+    _velocityTracker = null;
+    _hapticGivenForCurrentEnd = false;
+    if (!_canNavigate || _panHorizontal != true) return;
+    _panHorizontal = null;
+    _endDrag(velocity);
   }
 
   /// Applies a horizontal drag delta to the fan, with end-of-stack wiggle + haptic when not infinite.
@@ -292,130 +422,17 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
       contentWidth: fanCanvasWidth,
       contentHeight: fanCanvasHeight,
       attachments: _attachments,
-      child: Listener(
-            // Raw pointer tracking (instead of GestureDetector.onHorizontalDragUpdate/End) so this
-            // swipe never has to win a gesture-arena contest against a card's own recognizers — e.g.
-            // VideoPlayer registers onTap/onDoubleTap on the current card, and a DoubleTapGestureRecognizer
-            // holding the arena open was swallowing fast horizontal swipes over video attachments while
-            // images (which register no onDoubleTap) were unaffected. Listener never enters the arena, so
-            // it always sees the drag regardless of what the card underneath does with the same pointer.
-            behavior: HitTestBehavior.translucent,
-            onPointerSignal: (event) {
-              if (event is PointerScrollEvent && _attachments.length > 1) {
-                GestureBinding.instance.pointerSignalResolver.register(event, (event) {
-                  if (!mounted) return;
-                  final scrollEvent = event as PointerScrollEvent;
-                  final delta = scrollEvent.scrollDelta;
-                  _scrollAccumulator += delta.dx.abs() > delta.dy.abs() ? delta.dx : delta.dy;
-                  if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
-                    final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
-                    _scrollAccumulator = 0;
-                    final oldIndex = _currentIndex;
-                    setState(() {
-                      _advance(scrollDir);
-                      _dragDx = 0;
-                    });
-                    if (_currentIndex == oldIndex && !widget.infiniteScroll) {
-                      HapticFeedback.lightImpact();
-                    }
-                  }
-                });
-              }
-            },
-            onPointerDown: (event) {
-              if (_attachments.length <= 1) return;
-              _activeDragPointer = event.pointer;
-              _dragStartPosition = event.position;
-              _velocityTracker = VelocityTracker.withKind(event.kind);
-              _velocityTracker!.addPosition(event.timeStamp, event.position);
-              // Claim the drag so the list-wide timestamp-reveal swipe (a distinct
-              // GestureDetector ancestor in MessagesView) doesn't also react to the
-              // same pointer — see conversation_view_controller.dart's field doc.
-              widget.cvController.isCollectionDragging = true;
-            },
-            onPointerMove: (event) {
-              if (_attachments.length <= 1 || _activeDragPointer != event.pointer) return;
-              // Bail out of fan drag when the pointer is clearly vertical so the
-              // conversation list can scroll and isCollectionDragging does not stick.
-              final start = _dragStartPosition;
-              if (start != null) {
-                final total = event.position - start;
-                if (total.dy.abs() >= total.dx.abs() && total.distance >= 8.0) {
-                  _activeDragPointer = null;
-                  _dragStartPosition = null;
-                  _velocityTracker = null;
-                  _hapticGivenForCurrentEnd = false;
-                  widget.cvController.isCollectionDragging = false;
-                  if (mounted && _dragDx != 0) {
-                    setState(() {
-                      _dragDx = 0;
-                    });
-                  }
-                  return;
-                }
-              }
-              _velocityTracker?.addPosition(event.timeStamp, event.position);
-              _dragBy(event.delta.dx);
-            },
-            onPointerUp: (event) {
-              if (_activeDragPointer != event.pointer) return;
-              _activeDragPointer = null;
-              _dragStartPosition = null;
-              _hapticGivenForCurrentEnd = false;
-              widget.cvController.isCollectionDragging = false;
-              final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
-              _velocityTracker = null;
-              if (_attachments.length <= 1) return;
-              _endDrag(velocity);
-            },
-            onPointerCancel: (event) {
-              if (_activeDragPointer != event.pointer) return;
-              _activeDragPointer = null;
-              _dragStartPosition = null;
-              _velocityTracker = null;
-              _hapticGivenForCurrentEnd = false;
-              widget.cvController.isCollectionDragging = false;
-              if (_attachments.length <= 1) return;
-              if (mounted) {
-                setState(() {
-                  _dragDx = 0;
-                });
-              }
-            },
-            // Two-finger trackpad swipes (Windows/Linux). Same horizontal commit as touch so vertical
-            // swipes keep scrolling the chat.
-            onPointerPanZoomStart: (event) {
-              if (_attachments.length <= 1) return;
-              _panHorizontal = null;
-              _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.trackpad);
-            },
-            onPointerPanZoomUpdate: (event) {
-              if (_attachments.length <= 1 || _velocityTracker == null) return;
-              _velocityTracker!.addPosition(event.timeStamp, event.pan);
-              if (_panHorizontal == null) {
-                if (event.pan.distance < kTouchSlop) return;
-                _panHorizontal = event.pan.dx.abs() > event.pan.dy.abs();
-              }
-              if (_panHorizontal!) _dragBy(event.panDelta.dx);
-            },
-            onPointerPanZoomEnd: (event) {
-              final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
-              _velocityTracker = null;
-              _hapticGivenForCurrentEnd = false;
-              if (_attachments.length <= 1 || _panHorizontal != true) return;
-              _panHorizontal = null;
-              _endDrag(velocity);
-            },
-            child: SizedBox(
-              width: fanCanvasWidth,
-              height: fanCanvasHeight,
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: stackChildren,
-              ),
-            ),
+      child: _buildDragListener(
+        SizedBox(
+          width: fanCanvasWidth,
+          height: fanCanvasHeight,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: stackChildren,
           ),
+        ),
+      ),
     );
 
     // Title is iOS chrome only (same as grid). Material/Samsung forced stack stays cards-only.
