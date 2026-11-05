@@ -49,23 +49,26 @@ class FindMyController extends GetxController {
   final RxBool canRefresh = false.obs;
   final RxBool hasMovedToCurrentLocation = false.obs;
 
+  /// Each friend's matched handle/contact, keyed by [_identityKey]. Resolved once per location
+  /// update rather than in build(); widgets read it through [identityFor] inside their Obx.
+  final RxMap<String, FindMyFriendIdentity> identities = <String, FindMyFriendIdentity>{}.obs;
+  final FindMyHandleMatcher _matcher = FindMyHandleMatcher();
+
   StreamSubscription? locationSub;
   Timer? _refreshTimer;
   StreamSubscription? _redactedModeListener;
   StreamSubscription? _hideContactInfoListener;
   StreamSubscription? _findMyLocationListener;
-  StreamSubscription? _contactIndexListener;
+  Worker? _contactsWorker;
 
   @override
   void onInit() {
     super.onInit();
-    _contactIndexListener = FindMyHandleMatcher.indexCleared.listen((_) {
-      if (!_isAlive) return;
-      _rebuildAllMarkers();
-      friends.refresh();
-      friendsWithLocation.refresh();
-      friendsWithoutLocation.refresh();
-    });
+    // Contact syncs and handle edits can arrive in bursts; rebuild the index once they settle.
+    _contactsWorker = debounce(ContactsSvcV2.contactsRevision, (_) {
+      _matcher.reset();
+      unawaited(_resolveIdentities());
+    }, time: const Duration(seconds: 1));
     getLocations();
 
     // Listen via the event dispatcher rather than the socket itself — the socket is
@@ -105,6 +108,34 @@ class FindMyController extends GetxController {
       buildDeviceMarker(device);
     }
     markers.refresh();
+  }
+
+  String _identityKey(FindMyFriend friend) => friend.stableId ?? '';
+
+  /// The friend's resolved identity, or an empty one until resolution has run.
+  FindMyFriendIdentity identityFor(FindMyFriend friend) =>
+      identities[_identityKey(friend)] ?? const FindMyFriendIdentity();
+
+  /// Resolves [targets] (default: every friend) and rebuilds their map markers. The contact
+  /// index loads off the UI thread on first use, so markers built before this completes show
+  /// the previous identity (or a placeholder) for a moment.
+  Future<void> _resolveIdentities([List<FindMyFriend>? targets]) async {
+    await _matcher.load();
+    if (!_isAlive) return;
+
+    final resolveAll = targets == null;
+    final resolved = <String, FindMyFriendIdentity>{
+      for (final friend in targets ?? friends) _identityKey(friend): _matcher.resolve(friend),
+    };
+    if (resolveAll) {
+      identities.assignAll(resolved);
+    } else {
+      identities.addAll(resolved);
+    }
+
+    for (final friend in targets ?? friendsWithLocation) {
+      if (friend.latitude != null && friend.longitude != null) buildFriendMarker(friend);
+    }
   }
 
   LatLng markerPointForFriend(FindMyFriend friend) => resolveFindMyMarkerPoint(
@@ -149,6 +180,7 @@ class FindMyController extends GetxController {
             friends.where((item) => (item.latitude ?? 0) == 0 && (item.longitude ?? 0) == 0).toList();
 
         buildFriendMarker(friend);
+        unawaited(_resolveIdentities([friend]));
       }
     } catch (e, s) {
       Logger.warn("Failed to fetch FindMy locations", error: e, trace: s, tag: 'FindMyController');
@@ -220,6 +252,7 @@ class FindMyController extends GetxController {
         for (FindMyFriend e in friendsWithLocation) {
           buildFriendMarker(e);
         }
+        unawaited(_resolveIdentities());
         fetching2.value = false;
         refreshing2.value = false;
       } catch (e, s) {
@@ -324,7 +357,7 @@ class FindMyController extends GetxController {
 
   void buildFriendMarker(FindMyFriend friend) {
     final markerKey = friend.stableId ?? randomString(6);
-    final identity = FindMyHandleMatcher.resolveIdentity(friend);
+    final identity = identityFor(friend);
     markers[markerKey] = Marker(
       key: ValueKey('friend-$markerKey'),
       point: markerPointForFriend(friend),
@@ -337,7 +370,7 @@ class FindMyController extends GetxController {
             padding: const EdgeInsets.all(3),
             child: ContactAvatarWidget(
               editable: false,
-              handle: identity.handle,
+              handle: identity.avatarHandle(friend),
               contact: identity.contact,
             ),
           ),
@@ -404,7 +437,7 @@ class FindMyController extends GetxController {
     _redactedModeListener?.cancel();
     _hideContactInfoListener?.cancel();
     _findMyLocationListener?.cancel();
-    _contactIndexListener?.cancel();
+    _contactsWorker?.dispose();
     locationSub?.cancel();
     mapController.dispose();
     popupController.dispose();

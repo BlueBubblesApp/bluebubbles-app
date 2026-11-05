@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -10,6 +9,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
+import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -50,6 +50,11 @@ class ContactServiceV2 {
   /// Set when contact change events arrive while the app is backgrounded;
   /// consumed by [runPendingContactSync] on the next app resume.
   bool _pendingContactSync = false;
+
+  /// Bumped on every [notifyHandlesUpdated] call, including contact syncs that changed no
+  /// handles. UI that derives its own view of contacts (e.g. Find My's address → contact
+  /// index) watches this with `ever`/`debounce` or reads it in `Obx` to know when to recompute.
+  final RxInt contactsRevision = 0.obs;
 
   bool get hasContactAccessSync {
     return _hasContactAccess;
@@ -299,7 +304,7 @@ class ContactServiceV2 {
   /// Notify the UI that certain handles have been updated.
   /// Pushes fresh DB data into the HandleState registry so reactive Obx() widgets rebuild.
   void notifyHandlesUpdated(List<int> handleIds) {
-    FindMyHandleMatcher.clearContactIndex();
+    contactsRevision.value++;
     if (handleIds.isEmpty) return;
 
     // Push refreshed Handle data into the HandleState registry

@@ -3,7 +3,7 @@
 ## Files
 - `findmy_page.dart` — main screen (map + list tabs)
 - `findmy_controller.dart` — state and logic: location polling, device/friend tracking
-- `findmy_handle_matcher.dart` — friend → handle/contact identity
+- `findmy_handle_matcher.dart` — friend → handle/contact identity. Instance owned by `FindMyController`; contact index loads off-thread, keys are exact (email / E.164), ambiguous addresses dropped. Controller stores results in `identities` (RxMap, read via `identityFor()` in Obx) and re-resolves on `ContactsSvcV2.contactsRevision` (debounced)
 - `findmy_location_clipper.dart` — custom `CustomClipper` for location shape
 - `findmy_pin_clipper.dart` — custom `CustomClipper` for map pin shape
 

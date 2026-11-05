@@ -1,6 +1,5 @@
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/findmy/findmy_controller.dart';
-import 'package:bluebubbles/app/layouts/findmy/findmy_handle_matcher.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_raw_data_dialog.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -35,7 +34,7 @@ class FindMyFriendListTile extends StatelessWidget {
               ? ("${item.shortAddress ?? "No location found"}$lastUpdatedSuffix")
               : (item.longAddress ?? "No location found");
 
-      final identity = FindMyHandleMatcher.resolveIdentity(item);
+      final identity = controller.identityFor(item);
       final handleState = identity.handle != null ? HandleSvc.getOrCreateHandleState(identity.handle!) : null;
       final displayName = hideContactInfo
           ? (handleState?.fakeName ?? 'Contact')
@@ -46,7 +45,11 @@ class FindMyFriendListTile extends StatelessWidget {
 
       return ListTile(
         mouseCursor: MouseCursor.defer,
-        leading: ContactAvatarWidget(handle: identity.handle, contact: identity.contact),
+        leading: ContactAvatarWidget(
+          handle: identity.avatarHandle(item),
+          contact: identity.contact,
+          editable: identity.avatarEditable,
+        ),
         title: Text(displayName),
         subtitle: Text(displayLocation),
         trailing: withLocation && hasLocation

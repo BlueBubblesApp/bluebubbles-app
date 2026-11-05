@@ -30,6 +30,25 @@ String formatPhoneNumber(dynamic item) {
   return formatted ?? address;
 }
 
+/// Canonical E.164 form of [phone] (e.g. `+12125551234`), or null when it can't be parsed.
+///
+/// Numbers without a leading `+` are read in [region] (default: the device's country), so
+/// `(212) 555-1234` and `+1 212 555 1234` give the same key. Unlike [getPhoneNumberVariants],
+/// numbers that only share trailing digits (`+1 212 555 1234` vs `+1 312 555 1234`) never do.
+String? normalizeToE164(String phone, {String? region}) {
+  final trimmed = phone.trim();
+  if (trimmed.isEmpty || trimmed.isEmail) return null;
+  try {
+    final util = PhoneNumberUtil.instance;
+    final parsed =
+        util.parse(trimmed, trimmed.startsWith('+') ? null : (region ?? Get.deviceLocale?.countryCode ?? 'US'));
+    if (!util.isPossibleNumber(parsed)) return null;
+    return util.format(parsed, PhoneNumberFormat.e164);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Generate multiple normalized variants of a phone number to handle country code mismatches
 ///
 /// Returns a set of normalized phone numbers including:
