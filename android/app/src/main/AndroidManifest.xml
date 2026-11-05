@@ -81,7 +81,6 @@
         android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"
-        android:extractNativeLibs="true"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <receiver android:name=".services.intents.InternalIntentReceiver" />

@@ -34,6 +34,15 @@ runs:
         # A PR that changes the lockfile can't save its own entry, so start from master's and fetch only the difference.
         restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
 
+    # A fallback restore comes from an older lockfile, and its git dependency checkouts can't
+    # be trusted to match this one's refs: after the ffmpeg_kit fork bump, the stale checkout
+    # resolved without ffmpeg_kit_flutter_platform_interface and --enforce-lockfile failed.
+    # Git deps are small; refetch them. An exact hit was saved from this very lockfile.
+    - name: Drop git dependencies from a fallback pub cache
+      if: steps.cache-pub.outputs.cache-hit != 'true'
+      run: rm -rf ~/.pub-cache/git
+      shell: bash
+
     # After the pub restore, which would otherwise swap in a snapshot built by an older setup-dart SDK.
     - name: Install fvm
       run: dart pub global activate fvm "${{ inputs.fvm-version }}"
@@ -41,8 +50,10 @@ runs:
 
     # `dart pub global run fvm:main` rather than the `fvm` shim: the shim isn't callable
     # from Git Bash on the Windows runner, and this form works on all three platforms.
+    # --skip-pub-get: the "Pub get" step below resolves against the lockfile; fvm's own pub get
+    # would only run an unenforced resolution first.
     - name: Select Flutter version
-      run: dart pub global run fvm:main use "${{ inputs.flutter-version }}" --force
+      run: dart pub global run fvm:main use "${{ inputs.flutter-version }}" --force --skip-pub-get
       shell: bash
 
     # No explicit status check, so the saves inherit the implicit success() — they never
