@@ -111,7 +111,13 @@ class IncrementalSyncManager extends SyncManager {
     // Check the server version and sync differently based on the version.
     // This is due to bugs in certain server versions as well as new features
     // in server versions to make the sync more efficient.
-    final serverDetails = SettingsSvc.serverDetails;
+    var serverDetails = SettingsSvc.serverDetails;
+    // The GlobalIsolate only loads these from its own prefs cache at isolate start, so they're
+    // still empty in the first session after setup and every sync would take the slow path.
+    if (serverDetails.serverVersionCode == 0) {
+      await SettingsSvc.refreshServerDetails();
+      serverDetails = SettingsSvc.serverDetails;
+    }
 
     try {
       // If we've don't have a startRowId (null or 0), then sync using timestamps

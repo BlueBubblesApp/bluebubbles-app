@@ -291,7 +291,7 @@ class MessageState extends StatefulController {
     return attachmentStates[attachmentGuid]!;
   }
 
-  /// Synchronises [attachmentStates] with [updatedAttachments].
+  /// Synchronizes [attachmentStates] with [updatedAttachments].
   ///
   /// * Existing states (same GUID) are updated via [AttachmentState.updateFromAttachment]
   ///   without resetting active transfer states.

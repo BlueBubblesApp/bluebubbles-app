@@ -54,7 +54,7 @@ class StorageActions {
   }
 
   /// Total size and file count of a flat directory. Used for caches that are
-  /// not organised per attachment GUID.
+  /// not organized per attachment GUID.
   static _DirTotals _measureFlatDir(String path) {
     final dir = Directory(path);
     if (!dir.existsSync()) return const _DirTotals(bytes: 0, files: 0);

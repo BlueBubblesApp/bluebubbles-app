@@ -30,7 +30,7 @@ class ConnectionServerTile extends StatelessWidget {
           subtitle = "Disconnected";
           break;
         case SocketState.error:
-          subtitle = "Error";
+          subtitle = SocketSvc.authFailed.value ? "Incorrect password" : "Error";
           break;
         case SocketState.connecting:
           subtitle = "Connecting";

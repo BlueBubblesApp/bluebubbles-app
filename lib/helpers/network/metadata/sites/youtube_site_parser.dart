@@ -37,7 +37,7 @@ class YouTubeSiteParser extends SiteMetadataParser {
   Uri prepare(Uri url) {
     final id = videoId(url);
     if (id == null) {
-      // Not a video link (a channel, a search). Still worth normalising the
+      // Not a video link (a channel, a search). Still worth normalizing the
       // mobile host so the desktop markup is served.
       return MetadataUrls.stripTrackingParams(_desktopHost(url), extra: _noiseParams);
     }

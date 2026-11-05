@@ -276,14 +276,10 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   }
 
   Future<void> _handleFilePicker() async {
-    final res = await FilePicker.pickFiles(
-      withReadStream: true,
-      allowMultiple: true,
-    );
-    if (res == null || res.files.isEmpty) return;
-
-    for (pf.PlatformFile file in res.files) {
-      if (file.size / 1024000 > 1000) {
+    final res = await FilePicker.pickFiles();
+    for (pf.PlatformFile file in res) {
+      final size = await file.length() ?? 0;
+      if (size / 1024000 > 1000) {
         showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.", type: SnackbarType.error);
         continue;
       }
@@ -291,7 +287,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
         path: file.path,
         name: file.name,
         bytes: null,
-        size: file.size,
+        size: size,
       ));
     }
   }

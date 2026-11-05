@@ -136,7 +136,10 @@ class FindMyMapWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(displayName, style: context.theme.textTheme.labelLarge),
-              Text(hideContactInfo ? "Location" : (item.longAddress ?? "No location found"),
+              Text(
+                  hideContactInfo
+                      ? "Location"
+                      : (controller.addressForFriend(item, preferLong: true) ?? "No location found"),
                   style: context.theme.textTheme.bodySmall),
               if (item.lastUpdated != null && item.status != LocationStatus.live)
                 Text("Last updated ${buildDate(item.lastUpdated)}", style: context.theme.textTheme.bodySmall),

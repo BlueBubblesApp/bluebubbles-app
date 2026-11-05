@@ -69,7 +69,7 @@ abstract final class HtmlBodyDecoder {
   /// Windows-1252 differs from Latin-1 only in the 0x80-0x9F range, which is
   /// where the smart quotes and dashes that infest real-world titles live.
   ///
-  /// Pages labelled `iso-8859-1` are overwhelmingly Windows-1252 in practice,
+  /// Pages labeled `iso-8859-1` are overwhelmingly Windows-1252 in practice,
   /// and the HTML spec mandates treating them as such.
   static const List<int> _cp1252Overrides = [
     0x20AC, // 0x80 euro

@@ -33,8 +33,6 @@ class PrefsActions {
   static Future<void> syncAllSettings(dynamic data) async {
     final settingsData = data['settings'] as Map<String, dynamic>;
 
-    // Directly update the isolate's settings by creating a new Settings instance from the map
-    // We can't use Settings.updateFromMap because it calls save() which triggers UI operations
     final newSettings = Settings.fromMap(settingsData);
 
     // Replace the settings in the SettingsService

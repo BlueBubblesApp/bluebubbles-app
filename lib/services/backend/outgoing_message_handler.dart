@@ -622,7 +622,7 @@ class OutgoingMessageHandler {
   ///
   /// Attachment metadata carries the original source path so the file can be
   /// copied without loading it into memory (except GIFs, which need
-  /// optimisation).
+  /// optimization).
   Future<void> prepAttachment(Chat c, Message m, Attachment? attachment) async {
     if (attachment == null) {
       throw StateError('Missing attachment for sendAttachment prep on message ${m.guid}');
@@ -899,7 +899,7 @@ class OutgoingMessageHandler {
         final newMessage = Message.fromMap(data['data']);
         final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
             .whereType<Map>()
-            .map((e) => Attachment.fromMap(e.cast<String, Object>()))
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
             .toList();
         // Swap attachment GUIDs first, then swap the message GUID.
         for (final a in responseAttachments) {

@@ -166,6 +166,7 @@ class Temp {
 
 class Attachment_ {
   static final guid = Temp();
+  static final message = Temp();
 }
 
 /// [Chat] entity fields to define ObjectBox queries.

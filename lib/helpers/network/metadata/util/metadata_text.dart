@@ -56,9 +56,9 @@ abstract final class MetadataText {
     'trade': '\u{2122}',
   };
 
-  /// Normalises [raw] and returns `null` when nothing usable is left.
+  /// Normalizes [raw] and returns `null` when nothing usable is left.
   ///
-  /// Strips bidi overrides and normalises exotic spaces (via
+  /// Strips bidi overrides and normalizes exotic spaces (via
   /// [InvisibleCharacters.withoutInvisibleFormatting] — page markup is not the
   /// only place those show up, so the character classes live with the other
   /// string extensions). Then trims, collapses internal whitespace runs (a

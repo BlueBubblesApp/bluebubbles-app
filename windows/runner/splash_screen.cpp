@@ -330,7 +330,8 @@ void Paint(HWND hwnd) {
       RECT cb = CloseButtonRect(w);
       if (g_close_hot) {
         Gdiplus::SolidBrush disc(Gdiplus::Color(38, channel, channel, channel));
-        g.FillEllipse(&disc, cb.left, cb.top, cb.right - cb.left, cb.bottom - cb.top);
+        g.FillEllipse(&disc, static_cast<INT>(cb.left), static_cast<INT>(cb.top), static_cast<INT>(cb.right - cb.left),
+                      static_cast<INT>(cb.bottom - cb.top));
       }
       Gdiplus::Pen x_pen(Gdiplus::Color(g_close_hot ? 235 : 150, channel, channel, channel),
                          static_cast<Gdiplus::REAL>(std::max(1, S(2))));

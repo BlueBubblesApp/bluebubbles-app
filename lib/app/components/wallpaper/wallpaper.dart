@@ -5,6 +5,7 @@ export 'dynamic_wallpaper_view.dart';
 export 'floating_wallpaper.dart';
 export 'moving_background_wallpaper.dart';
 export 'particles_wallpaper.dart';
+export 'static_wallpaper_image.dart';
 export 'theme_wallpaper_palette.dart';
 export 'wallpaper_config_codec.dart';
 export 'wave_wallpaper.dart';

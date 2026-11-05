@@ -111,7 +111,7 @@ class PreviewImageDownloader {
     'image/vnd.microsoft.icon',
   };
 
-  /// Longest side an optimised preview image is resized down to.
+  /// Longest side an optimized preview image is resized down to.
   ///
   /// Mirrors `AttachmentsSvc`'s base, and for the same reason: an og:image is
   /// routinely 1200x630 or larger, but a link card draws it at a few hundred
@@ -341,7 +341,7 @@ class PreviewImageDownloader {
 
   /// Reads the intrinsic size from the image header without decoding pixels.
   ///
-  /// Returns null for formats `image_size_getter` does not recognise, in which
+  /// Returns null for formats `image_size_getter` does not recognize, in which
   /// case the dimension check is skipped rather than failing the image.
   (int, int)? _dimensions(Uint8List bytes) {
     try {

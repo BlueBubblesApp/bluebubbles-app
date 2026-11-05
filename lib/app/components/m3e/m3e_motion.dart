@@ -39,7 +39,7 @@ abstract final class M3EMotion {
   static const spatialDefault = M3EMotionSpec(Durations.medium2, emphasized);
   static const spatialSlow = M3EMotionSpec(Durations.long2, emphasized);
 
-  // Effects — colour, opacity, elevation. No overshoot.
+  // Effects — color, opacity, elevation. No overshoot.
   static const effectsFast = M3EMotionSpec(Durations.short3, Easing.standard);
   static const effectsDefault = M3EMotionSpec(Durations.medium1, Easing.standard);
 

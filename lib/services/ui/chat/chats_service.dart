@@ -405,6 +405,8 @@ class ChatsService {
       /* ----- IMESSAGE:// HANDLER ----- */
       final _appLinks = AppLinks();
       _appLinks.stringLinkStream.listen((String string) async {
+        // Second instances forward their argument here, including COM launches the toast forwarder couldn't handle.
+        Logger.info("Received app link: $string", tag: "ChatsService");
         if (!string.startsWith("imessage://")) return;
         final uri = Uri.tryParse(string
             .replaceFirst("imessage://", "imessage:")

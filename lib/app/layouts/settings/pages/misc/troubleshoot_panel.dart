@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/sync_time_range_dialog.dart';
 import 'package:bluebubbles/app/layouts/settings/dialogs/sync_dialog.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/misc/cache_tuning_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/handle_audit_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/soft_deleted_chats_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/misc/logging_panel.dart';
@@ -10,6 +11,7 @@ import 'package:bluebubbles/app/layouts/settings/widgets/content/log_level_selec
 import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
+import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -35,6 +37,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
   final RxnBool resyncingChats = RxnBool();
   final RxInt logFileCount = 0.obs;
   final RxInt logFileSize = 0.obs;
+  final RxInt crashDumpCount = 0.obs;
   final RxBool optimizationsDisabled = false.obs;
 
   bool isExportingLogs = false;
@@ -69,20 +72,28 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
 
   void _refreshLogStats() {
     int count = 0;
+    int dumps = 0;
     int sizeKb = 0;
 
     final Directory logDir = Directory(Logger.logDir);
     if (logDir.existsSync()) {
-      final List<FileSystemEntity> files = logDir.listSync();
-      final List<FileSystemEntity> logFiles = files.where((file) => file.path.endsWith(".log")).toList();
-      count = logFiles.length;
-
-      for (final file in logFiles) {
-        sizeKb += file.statSync().size ~/ 1024;
+      for (final file in logDir.listSync().whereType<File>()) {
+        final bool isLog = file.path.endsWith(".log");
+        if (!isLog && !file.path.endsWith(".dmp")) continue;
+        final int size = file.statSync().size;
+        // Clear Logs empties the latest files instead of deleting them, since they're open; those aren't logs.
+        if (size == 0) continue;
+        if (isLog) {
+          count++;
+        } else {
+          dumps++;
+        }
+        sizeKb += size ~/ 1024;
       }
     }
 
     logFileCount.value = count;
+    crashDumpCount.value = dumps;
     logFileSize.value = sizeKb;
   }
 
@@ -174,8 +185,8 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     },
                     trailing: const NextButton(),
                   ),
-                  if (Platform.isAndroid) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  if (Platform.isAndroid)
+                  if (Platform.isAndroid || kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (Platform.isAndroid || kIsDesktop)
                     Obx(
                       () => SettingsTile(
                           leading: const SettingsLeadingIcon(
@@ -183,8 +194,10 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                             materialIcon: Icons.share,
                             containerColor: Colors.green,
                           ),
-                          title: "Download / Share Logs",
-                          subtitle: "${logFileCount.value} log file(s) | ${logFileSize.value} KB",
+                          title: "Download${kIsDesktop ? '' : ' / Share'} Logs",
+                          subtitle: "${logFileCount.value} log file(s)"
+                              "${crashDumpCount.value > 0 ? " | ${crashDumpCount.value} crash dump(s)" : ""}"
+                              " | ${logFileSize.value} KB",
                           onTap: () async {
                             _refreshLogStats();
                             if (logFileCount.value == 0) {
@@ -199,14 +212,36 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                               String filePath = await Logger.compressLogs();
                               final String fileName = File(filePath).uri.pathSegments.last;
 
+                              // The save dialog goes through the file chooser portal, so this also works in the
+                              // flatpak and snap sandboxes, which can't write to Downloads directly.
+                              if (kIsDesktop) {
+                                try {
+                                  final String? savedPath = await saveFileAs(
+                                    fileName: fileName,
+                                    // Throws on Linux without an XDG Downloads dir; the dialog's default is fine then.
+                                    initialDirectory: await FilesystemSvc.downloadsDirectory
+                                        .then<String?>((dir) => dir, onError: (_) => null),
+                                    sourcePath: filePath,
+                                  );
+                                  if (savedPath == null) return;
+                                  showSnackbar("Logs Saved", "Saved $fileName.", type: SnackbarType.success);
+                                  await revealInFileManager(savedPath);
+                                } finally {
+                                  // Copied to where the user chose, or they cancelled; either way it's no longer needed.
+                                  try {
+                                    File(filePath).deleteSync();
+                                  } catch (_) {}
+                                }
+                                return;
+                              }
+
                               try {
-                                final String savedPath = await FilesystemSvc.saveToDownloads(
+                                await FilesystemSvc.saveToDownloads(
                                   File(filePath),
                                   mimeType: 'application/zip',
                                 );
                                 showSnackbar("Logs Saved", "Saved $fileName to your Downloads folder.",
                                     type: SnackbarType.success);
-                                if (kIsDesktop) await launchUrl(Uri.file(savedPath));
                               } catch (_) {
                                 // saveToDownloads failed on Android — fall back to share sheet.
                                 Share.files([filePath], mimeType: 'application/zip');
@@ -462,6 +497,23 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                     title: "Audit Handles",
                     subtitle: "Scans local handles for a missing originalROWID (the server-side ID used to link "
                         "messages to their sender) and lets you try to repair the affected ones.",
+                    trailing: const NextButton(),
+                  ),
+                ]),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Memory"),
+                SettingsSection(backgroundColor: tileColor, children: [
+                  SettingsTile(
+                    onTap: () => NavigationSvc.pushSettings(context, const CacheTuningPanel()),
+                    leading: const SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.memories,
+                      materialIcon: Icons.memory,
+                      containerColor: Colors.teal,
+                    ),
+                    title: "Cache Tuning",
+                    subtitle: kIsDesktop
+                        ? "Purge caches by hand and watch what each purge frees."
+                        : "Choose how much the app releases when it goes to the background, purge caches by hand, "
+                            "and watch what each purge frees.",
                     trailing: const NextButton(),
                   ),
                 ]),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/network/metadata/models/url_metadata.dart';
 import 'package:flutter/foundation.dart';
@@ -49,10 +51,10 @@ enum MetadataCacheSlot {
 
   /// Legacy boolean flag. Written, and cleared by [MessageMetadataStore.clear],
   /// purely so that downgrading the app keeps the old "don't refetch"
-  /// behaviour.
+  /// behavior.
   ///
   /// Deliberately **not** read: a row carrying only this flag was written by a
-  /// build with no retry TTL, so honouring it would preserve exactly the
+  /// build with no retry TTL, so honoring it would preserve exactly the
   /// "failed once, never retries" bug [MessageMetadataStore.retryAfter] exists
   /// to fix. Those rows are treated as expired instead — see
   /// [MessageMetadataStore.shouldFetch].
@@ -189,7 +191,9 @@ abstract final class MessageMetadataStore {
   static void _save(Message message, Map<String, dynamic> map) {
     message.metadata = map;
     if (kIsWeb || message.id == null) return;
-    message.save();
+    // Off the main isolate: a synchronous write waits out any write transaction a sync holds, which on Windows
+    // also blocks keyboard input since the main isolate shares the platform thread.
+    unawaited(message.saveAsync());
   }
 
   static String? _string(dynamic value) => value is String && value.isNotEmpty ? value : null;

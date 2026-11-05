@@ -1,5 +1,8 @@
 gradle-wrapper.jar
 /.gradle
+# Gradle 9 writes reports/problems/ here regardless of the buildDirectory reassignment
+# in build.gradle; actual build output still goes to the repo-root /build/.
+/build/
 /captures/
 /gradlew
 /gradlew.bat

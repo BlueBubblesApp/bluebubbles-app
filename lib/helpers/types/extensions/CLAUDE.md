@@ -10,7 +10,7 @@ Extension methods on: `String`, `DateTime`, `Color`, `List`, `int`, `Uint8List`,
 
 Two worth knowing about because they're easy to reimplement badly:
 - `Uri.hostMatches(domain)` / `Uri.hostMatchesAny(domains)` — subdomain-aware host matching. Compares label-wise, so `notyoutube.com` does not match `youtube.com`. Use this instead of a bare `endsWith`.
-- `String.withoutInvisibleFormatting` — strips bidi overrides (RTL spoofing) and normalises non-breaking/zero-width spaces. Apply to any untrusted text before display or before a whitespace collapse.
+- `String.withoutInvisibleFormatting` — strips bidi overrides (RTL spoofing) and normalizes non-breaking/zero-width spaces. Apply to any untrusted text before display or before a whitespace collapse.
 
 ## Usage
 ```dart

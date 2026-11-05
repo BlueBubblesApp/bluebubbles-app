@@ -60,6 +60,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
   bool _hapticGivenForCurrentEnd = false;
   int? _activeDragPointer;
   Offset? _dragStartPosition;
+  bool? _panHorizontal;
   VelocityTracker? _velocityTracker;
 
   List<Attachment> get _attachments => widget.messagePart.attachments;
@@ -119,6 +120,55 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
     HapticFeedback.lightImpact();
     setState(() {
       _setCurrentIndex(index, resetDrag: true);
+    });
+  }
+
+  /// Applies a horizontal drag delta to the fan, with end-of-stack wiggle + haptic when not infinite.
+  void _dragBy(double dx) {
+    if (!mounted) return;
+    if (!widget.infiniteScroll) {
+      // Left advances / right goes back for both sides.
+      final blockedPositive = _currentIndex == 0;
+      final blockedNegative = _currentIndex == _attachments.length - 1;
+
+      final draggingIntoBlockedEnd = (blockedPositive && dx > 0) || (blockedNegative && dx < 0);
+      if (draggingIntoBlockedEnd) {
+        if (!_hapticGivenForCurrentEnd) {
+          HapticFeedback.lightImpact();
+          _hapticGivenForCurrentEnd = true;
+        }
+        setState(() {
+          _dragDx += dx * 0.3;
+          if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
+          if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
+        });
+        return;
+      } else {
+        _hapticGivenForCurrentEnd = false;
+      }
+    }
+    setState(() {
+      _dragDx += dx;
+      _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
+    });
+  }
+
+  /// Commits or springs back the fan drag at the end of a swipe.
+  void _endDrag(double velocity) {
+    if (!mounted) return;
+    final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
+    if (!commit) {
+      setState(() {
+        _dragDx = 0;
+      });
+      return;
+    }
+
+    // Negative drag (left) advances; positive (right) goes back — same for both sides.
+    final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
+    setState(() {
+      _advance(rawSign);
+      _dragDx = 0;
     });
   }
 
@@ -259,7 +309,8 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 GestureBinding.instance.pointerSignalResolver.register(event, (event) {
                   if (!mounted) return;
                   final scrollEvent = event as PointerScrollEvent;
-                  _scrollAccumulator += scrollEvent.scrollDelta.dy;
+                  final delta = scrollEvent.scrollDelta;
+                  _scrollAccumulator += delta.dx.abs() > delta.dy.abs() ? delta.dx : delta.dy;
                   if (_scrollAccumulator.abs() >= _scrollAdvanceThreshold) {
                     final scrollDir = _scrollAccumulator > 0 ? 1 : -1;
                     _scrollAccumulator = 0;
@@ -308,38 +359,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                 }
               }
               _velocityTracker?.addPosition(event.timeStamp, event.position);
-              if (!widget.infiniteScroll) {
-                // Left advances / right goes back for both sides.
-                final atStart = _currentIndex == 0;
-                final atEnd = _currentIndex == _attachments.length - 1;
-                final blockedPositive = atStart;
-                final blockedNegative = atEnd;
-
-                final draggingIntoBlockedEnd =
-                    (blockedPositive && event.delta.dx > 0) || (blockedNegative && event.delta.dx < 0);
-                if (draggingIntoBlockedEnd) {
-                  if (!_hapticGivenForCurrentEnd) {
-                    HapticFeedback.lightImpact();
-                    _hapticGivenForCurrentEnd = true;
-                  }
-                  if (mounted) {
-                    setState(() {
-                      _dragDx += event.delta.dx * 0.3;
-                      if (blockedPositive) _dragDx = _dragDx.clamp(0.0, _maxWiggleDx);
-                      if (blockedNegative) _dragDx = _dragDx.clamp(-_maxWiggleDx, 0.0);
-                    });
-                  }
-                  return;
-                } else {
-                  _hapticGivenForCurrentEnd = false;
-                }
-              }
-              if (mounted) {
-                setState(() {
-                  _dragDx += event.delta.dx;
-                  _dragDx = _dragDx.clamp(-_maxDragDx, _maxDragDx);
-                });
-              }
+              _dragBy(event.delta.dx);
             },
             onPointerUp: (event) {
               if (_activeDragPointer != event.pointer) return;
@@ -350,24 +370,7 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
               final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
               _velocityTracker = null;
               if (_attachments.length <= 1) return;
-              final bool commit = _dragDx.abs() >= _swipeCommitThreshold || velocity.abs() > 700;
-              if (!commit) {
-                if (mounted) {
-                  setState(() {
-                    _dragDx = 0;
-                  });
-                }
-                return;
-              }
-
-              // Negative drag (left) advances; positive (right) goes back — same for both sides.
-              final rawSign = (_dragDx != 0 ? _dragDx : velocity) < 0 ? 1 : -1;
-              if (mounted) {
-                setState(() {
-                  _advance(rawSign);
-                  _dragDx = 0;
-                });
-              }
+              _endDrag(velocity);
             },
             onPointerCancel: (event) {
               if (_activeDragPointer != event.pointer) return;
@@ -382,6 +385,30 @@ class _CollectionGroupStackState extends State<CollectionGroupStack> with ThemeH
                   _dragDx = 0;
                 });
               }
+            },
+            // Two-finger trackpad swipes (Windows/Linux). Same horizontal commit as touch so vertical
+            // swipes keep scrolling the chat.
+            onPointerPanZoomStart: (event) {
+              if (_attachments.length <= 1) return;
+              _panHorizontal = null;
+              _velocityTracker = VelocityTracker.withKind(PointerDeviceKind.trackpad);
+            },
+            onPointerPanZoomUpdate: (event) {
+              if (_attachments.length <= 1 || _velocityTracker == null) return;
+              _velocityTracker!.addPosition(event.timeStamp, event.pan);
+              if (_panHorizontal == null) {
+                if (event.pan.distance < kTouchSlop) return;
+                _panHorizontal = event.pan.dx.abs() > event.pan.dy.abs();
+              }
+              if (_panHorizontal!) _dragBy(event.panDelta.dx);
+            },
+            onPointerPanZoomEnd: (event) {
+              final velocity = _velocityTracker?.getVelocity().pixelsPerSecond.dx ?? 0;
+              _velocityTracker = null;
+              _hapticGivenForCurrentEnd = false;
+              if (_attachments.length <= 1 || _panHorizontal != true) return;
+              _panHorizontal = null;
+              _endDrag(velocity);
             },
             child: SizedBox(
               width: fanCanvasWidth,

@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 /// The background is a heavily-blurred, [BoxFit.cover] copy of the image that
 /// fills all available space. The foreground is the same image centered with
 /// [BoxFit.contain], so portrait or landscape images are never clipped or
-/// anchored off-centre.
+/// anchored off-center.
 ///
 /// This widget fills its parent — wrap in a [SizedBox] or [ConstrainedBox] to
 /// control the canvas dimensions.

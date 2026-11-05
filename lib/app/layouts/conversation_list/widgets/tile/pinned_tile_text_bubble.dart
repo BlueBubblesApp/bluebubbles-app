@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
+import 'package:bluebubbles/app/components/attachment_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
   const PinnedTileTextBubble({
@@ -25,6 +29,8 @@ class PinnedTileTextBubble extends CustomStateful<ConversationTileController> {
 
 class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, ConversationTileController> {
   final bool leftSide = Random().nextBool();
+  final List<Worker> _previewWorkers = [];
+  String? _requestedDownloadGuid;
 
   Chat get chat => widget.chat;
   double get size => widget.size;
@@ -38,6 +44,79 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     // keep controller in memory since the widget is part of a list
     // (it will be disposed when scrolled out of view)
     forceDelete = false;
+    _previewWorkers.addAll([
+      ever(controller.chatState.latestMessage, (_) => _maybeDownloadPreview()),
+      ever(controller.chatState.hasUnreadMessage, (_) => _maybeDownloadPreview()),
+      ever(SettingsSvc.settings.autoDownload, (_) {
+        _requestedDownloadGuid = null;
+        _maybeDownloadPreview();
+      }),
+      ever(SettingsSvc.settings.onlyWifiDownload, (_) {
+        _requestedDownloadGuid = null;
+        _maybeDownloadPreview();
+      }),
+    ]);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeDownloadPreview());
+  }
+
+  @override
+  void dispose() {
+    for (final worker in _previewWorkers) {
+      worker.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Download the latest unread image/video so the pin bubble can show a thumb
+  /// without opening the thread.
+  void _maybeDownloadPreview() {
+    if (!mounted || kIsWeb) return;
+    final chatState = controller.chatState;
+    if (!chatState.hasUnreadMessage.value) return;
+    final lastMessage = chatState.latestMessage.value;
+    if (lastMessage == null || lastMessage.isFromMe == true || lastMessage.associatedMessageGuid != null) {
+      return;
+    }
+    if (SettingsSvc.settings.highPerfMode.value) return;
+    if (SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideAttachments.value) {
+      return;
+    }
+    if (!SettingsSvc.settings.autoDownload.value) return;
+
+    final attachments = AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+    final preview = AttachmentPreview.firstPreviewableAttachment(attachments);
+    if (preview == null) return;
+    if (AttachmentsSvc.hasLocalFile(preview)) return;
+
+    final guid = preview.guid;
+    if (guid == null || guid.startsWith('temp') || guid == _requestedDownloadGuid) return;
+    _requestedDownloadGuid = guid;
+
+    unawaited(_downloadPreview(preview));
+  }
+
+  Future<void> _downloadPreview(Attachment attachment) async {
+    if (!await AttachmentsSvc.canAutoDownload(requestStoragePermission: false)) {
+      _requestedDownloadGuid = null;
+      return;
+    }
+    if (!mounted) return;
+    AttachmentDownloader.startDownload(
+      attachment,
+      onComplete: (_) {
+        unawaited(_onPreviewDownloaded(attachment));
+      },
+      onError: () {
+        _requestedDownloadGuid = null;
+      },
+    );
+  }
+
+  Future<void> _onPreviewDownloaded(Attachment attachment) async {
+    if (attachment.mimeStart == 'video' && File(attachment.path).existsSync()) {
+      await AttachmentsSvc.getVideoThumbnail(attachment.path);
+    }
+    if (mounted) setState(() {});
   }
 
   List<Color> getBubbleColors(Message? lastMessage) {
@@ -76,6 +155,18 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         return const SizedBox.shrink();
       }
 
+      final attachments = lastMessage == null
+          ? const <Attachment>[]
+          : AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+      final previewAttachment = AttachmentPreview.firstPreviewableAttachment(attachments);
+      final showPreview = previewAttachment != null &&
+          AttachmentPreview.canShow(previewAttachment, generateVideoThumbnail: true);
+      // Prefer a real "1 Photo" label over the stale "Attachment" fallback when
+      // we had to re-query attachments that the cached latest message missed.
+      final label = showPreview
+          ? subtitle
+          : _attachmentLabel(attachments, lastMessage) ?? subtitle;
+
       final background = getBubbleColors(lastMessage).first.withValues(alpha: 0.95);
       return Align(
         // Groups: bubble grows up from its Positioned anchor → top-left align.
@@ -84,8 +175,8 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
             chat.isGroup ? Alignment.topLeft : (effectiveLeftSide ? Alignment.centerLeft : Alignment.centerRight),
         child: Padding(
           padding: EdgeInsets.only(
-            left: effectiveLeftSide ? size * 0.06 : size * 0.02,
-            right: effectiveLeftSide ? size * 0.02 : size * 0.06,
+            left: effectiveLeftSide ? size * 0.04 : size * 0.01,
+            right: effectiveLeftSide ? size * 0.01 : size * 0.04,
           ),
           child: Stack(
             clipBehavior: Clip.none,
@@ -110,29 +201,17 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 3.0,
-                          horizontal: 6.0,
+                        padding: EdgeInsets.symmetric(
+                          vertical: showPreview ? 2.0 : 3.0,
+                          horizontal: showPreview ? 2.0 : 6.0,
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(size * 0.125),
                           color: background,
                         ),
-                        child: Text(
-                          subtitle,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: clampDouble((size ~/ 30).toDouble(), 1, 2).toInt(),
-                          textAlign: TextAlign.center,
-                          style: context.theme.textTheme.bodySmall!.copyWith(
-                            fontSize: (size / 12).clamp(
-                              context.theme.textTheme.bodySmall!.fontSize! * 0.85,
-                              double.infinity,
-                            ),
-                            color: SettingsSvc.settings.colorfulBubbles.value
-                                ? getBubbleColors(lastMessage).first.oppositeLightenOrDarken(75)
-                                : context.theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        child: showPreview
+                            ? _previewContent(previewAttachment)
+                            : _subtitleText(label, lastMessage),
                       ),
                     ),
                   ),
@@ -160,6 +239,47 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         ),
       );
     });
+  }
+
+  /// In-memory "1 Photo" text from [attachments] when the cached subtitle is
+  /// the empty-relation fallback ("Attachment").
+  String? _attachmentLabel(List<Attachment> attachments, Message? lastMessage) {
+    if (attachments.isEmpty) return null;
+    final msg = Message(
+      text: lastMessage?.text,
+      subject: lastMessage?.subject,
+      hasAttachments: true,
+    )..dbAttachments.addAll(attachments);
+    return msg.getNotificationText();
+  }
+
+  Widget _previewContent(Attachment attachment) {
+    final thumbSize = size * 0.45;
+    const pad = 2.0;
+    return AttachmentPreview(
+      attachment: attachment,
+      size: thumbSize,
+      borderRadius: BorderRadius.circular(max(0, size * 0.125 - pad)),
+      generateVideoThumbnail: true,
+    );
+  }
+
+  Widget _subtitleText(String text, Message? lastMessage) {
+    return Text(
+      text,
+      overflow: TextOverflow.ellipsis,
+      maxLines: clampDouble((size ~/ 30).toDouble(), 1, 2).toInt(),
+      textAlign: TextAlign.center,
+      style: context.theme.textTheme.bodySmall!.copyWith(
+        fontSize: (size / 12).clamp(
+          context.theme.textTheme.bodySmall!.fontSize! * 0.85,
+          double.infinity,
+        ),
+        color: SettingsSvc.settings.colorfulBubbles.value
+            ? getBubbleColors(lastMessage).first.oppositeLightenOrDarken(75)
+            : context.theme.colorScheme.onSurfaceVariant,
+      ),
+    );
   }
 }
 

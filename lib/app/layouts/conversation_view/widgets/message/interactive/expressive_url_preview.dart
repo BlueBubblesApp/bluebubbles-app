@@ -258,7 +258,7 @@ class ExpressiveUrlPreview extends StatelessWidget {
   ///
   /// Trailing because the favicon leads; it sits in the space the favicon used
   /// to occupy, so nothing else on the card shifts while it is up. Vertically
-  /// centred against the text block by the row that holds it.
+  /// centered against the text block by the row that holds it.
   Widget _buildRefreshIndicator(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: M3ESpacing.md),

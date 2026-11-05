@@ -40,7 +40,7 @@ class ImageActions {
   /// Decodes a multi-resolution `.ico` file and re-encodes its largest frame as
   /// PNG. Flutter's `Image` widget has no ICO decoder — this is why the
   /// preview pipeline used to discard every favicon served as `image/x-icon` —
-  /// but the `image` package's own format sniffing already recognises ICO, so
+  /// but the `image` package's own format sniffing already recognizes ICO, so
   /// no extra dependency is needed to read it.
   /// Input: Map with 'bytes' key (Uint8List of the raw .ico file)
   /// Output: PNG-encoded bytes of the largest embedded frame, or null on
@@ -63,12 +63,55 @@ class ImageActions {
       // file listed first, not necessarily the largest). Pick the biggest so a
       // favicon does not get stuck at a 16x16 frame when a 256x256 one shipped
       // alongside it.
-      final frame = decoded.frames.reduce((a, b) => a.width * a.height >= b.width * b.height ? a : b);
-
-      return Uint8List.fromList(img.encodePng(frame));
+      return _encodeLargestFrame(decoded);
     } catch (e) {
       Logger.warn('Error converting ICO to PNG: $e');
       return null;
+    }
+  }
+
+  static Uint8List _encodeLargestFrame(img.Image image) {
+    final frame = image.frames.reduce((a, b) => a.width * a.height >= b.width * b.height ? a : b);
+    return Uint8List.fromList(img.encodePng(frame, singleFrame: true));
+  }
+
+  /// Rewrites the animated PNG at [path] as a plain PNG of its largest frame.
+  /// Returns true when the file was rewritten.
+  static bool flattenAnimatedPng(String path) {
+    try {
+      if (!_isApng(path)) return false;
+
+      final decoded = img.decodePng(File(path).readAsBytesSync());
+      if (decoded == null || !decoded.hasAnimation) return false;
+
+      // Renamed over the original so a crash mid-write can't truncate a file messages point at.
+      final temp = File('$path.tmp')..writeAsBytesSync(_encodeLargestFrame(decoded), flush: true);
+      temp.renameSync(path);
+      return true;
+    } catch (e) {
+      Logger.warn('Error flattening animated PNG: $e');
+      return false;
+    }
+  }
+
+  /// Walks chunk headers only: acTL must precede the first IDAT, so the pixel data is never read.
+  static bool _isApng(String path) {
+    final file = File(path).openSync();
+    try {
+      final length = file.lengthSync();
+      var pos = 8; // PNG signature
+      while (pos + 8 <= length) {
+        file.setPositionSync(pos);
+        final header = file.readSync(8);
+        if (header.length < 8) return false;
+        final type = String.fromCharCodes(header, 4, 8);
+        if (type == 'acTL') return true;
+        if (type == 'IDAT') return false;
+        pos += 12 + ByteData.sublistView(header).getUint32(0); // length + type + data + CRC
+      }
+      return false;
+    } finally {
+      file.closeSync();
     }
   }
 

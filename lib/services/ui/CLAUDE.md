@@ -21,6 +21,7 @@ All are GetX singletons. Shorthand getters live in `lib/services/services.dart`.
 - `navigator/navigator_service.dart` (`NavigationSvc`) — GetX-based app routing; always use this over `Navigator.of(context)` directly
 - `attachments_service.dart` — tracks file attachments in the composer + send progress state
 - `unifiedpush.dart` — push notification provider abstraction (UnifiedPush protocol)
+- `cache/cache_service.dart` (`CacheSvc`) — registry of clearable in-memory caches plus per-level purge policies; `LifecycleService` purges on background and on memory pressure → `cache/CLAUDE.md`
 
 ## Key Separation Rule
 `ChatState` / `MessageState` (in `lib/app/state/`) are what widgets **read**.
