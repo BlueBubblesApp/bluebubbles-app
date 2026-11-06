@@ -190,6 +190,14 @@ class OutgoingMessageHandler {
     // centralized rather than left to convention).
     _ensureTempGuid(item);
 
+    // Refused before prep writes a temp message, so it can't become a failed bubble whose retry fails the same way
+    final unsendable = item.reaction == null ? null : _unsendableTapbackReason(item.reaction!, item.message);
+    if (unsendable != null) {
+      Logger.warn("Not sending tapback: $unsendable", tag: _tag);
+      item.completer?.completeError(StateError(unsendable));
+      return;
+    }
+
     // Prep the item (writes temp messages / copies attachment files to disk),
     // retrying a transient failure and surfacing a terminal one as a failed
     // message so it is never silently dropped. See [_prepItemWithRetry].
@@ -744,11 +752,14 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
+    final unsendable = r == null ? null : _unsendableTapbackReason(r, m);
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => r == null
+      httpCall: () => unsendable != null
+          ? Future.error(Exception(unsendable))
+          : r == null
           ? SendMessageInterface.sendTextMessage(
               chatGuid: c.guid,
               tempGuid: tempGuid,
@@ -764,8 +775,9 @@ class OutgoingMessageHandler {
               chatGuid: c.guid,
               selectedMessageText: selected!.text ?? '',
               selectedMessageGuid: selected.guid!,
-              reaction: r,
+              reaction: ReactionTypes.wireReaction(r),
               partIndex: m.associatedMessagePart,
+              emoji: ReactionTypes.isEmojiTapback(r) ? m.associatedMessageEmoji : null,
             ),
       onSuccess: (data) => _finalizeOutgoingSuccess(
         c, tempGuid, data,
@@ -1196,5 +1208,14 @@ class OutgoingMessageHandler {
     }
 
     _isProcessing = false;
+  }
+
+  /// Why tapback [type] on [m] can't be sent, or null if it can.
+  static String? _unsendableTapbackReason(String type, Message m) {
+    if (ReactionTypes.isStickerTapback(type)) return "Sticker tapbacks can't be sent from here";
+    if (!ReactionTypes.isEmojiTapback(type)) return null;
+    if (isNullOrEmpty(m.associatedMessageEmoji)) return "This emoji tapback has no emoji";
+    if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
+    return null;
   }
 }
