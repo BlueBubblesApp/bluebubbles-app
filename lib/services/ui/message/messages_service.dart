@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
@@ -763,15 +764,11 @@ class MessagesService extends GetxController {
   /// The on-screen half of [MessageActions.retireEarlierTurns]: a turn that arrives while this chat is open, live, by
   /// sync or as our own send, collapses the earlier turns of its session already showing.
   void _retireEarlierTurns(Message turn) {
-    final first = turn.associatedMessageGuid;
-    final date = turn.dateCreated;
-    if (turn.balloonBundleId == null || turn.associatedMessageType != '2' || first == null || date == null) return;
+    if (!AppSessionTypes.replacesEarlierTurns(turn)) return;
     for (final state in messageStates.values) {
-      final m = state.message;
-      if (m.guid == turn.guid || m.associatedMessageType == '3') continue;
-      if (m.guid != first && m.associatedMessageGuid != first) continue;
-      if (m.dateCreated == null || !m.dateCreated!.isBefore(date)) continue;
-      state.updateAssociatedMessageInfoInternal(associatedMessageGuid: first, associatedMessageType: '3');
+      if (!AppSessionTypes.isReplacedBy(state.message, turn)) continue;
+      state.updateAssociatedMessageInfoInternal(
+          associatedMessageGuid: turn.associatedMessageGuid, associatedMessageType: AppSessionTypes.SUPERSEDED);
     }
   }
 

@@ -79,9 +79,7 @@ class OpenPigeon {
   /// about a game once it's been tapped.
   static final Set<String> _openedSessions = {};
 
-  /// Matched on the suffix: the team id in the middle belongs to the developer and can change.
-  static bool isGame(Message message) =>
-      message.balloonBundleId?.endsWith(':com.gamerdelights.gamepigeon.ext') ?? false;
+  static bool isGame(Message message) => AppSessionTypes.isGamePigeon(message.balloonBundleId);
 
   static Future<void> init() async {
     _channel.setMethodCallHandler(_handle);
@@ -252,7 +250,8 @@ class OpenPigeon {
   /// A game turn a newer turn of the same session has replaced. Messages hides these when sent and shrinks them to
   /// the app's icon and the game when received. Messages links every turn to the session's first message as type 2,
   /// then rewrites the replaced ones to 3 (MessageActions.retireEarlierTurns does the same for turns sync brings in).
-  static bool isEarlierTurn(Message message) => isGame(message) && message.associatedMessageType == '3';
+  static bool isEarlierTurn(Message message) =>
+      isGame(message) && message.associatedMessageType == AppSessionTypes.SUPERSEDED;
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
   /// server reports `NSUUID`'s uppercase.

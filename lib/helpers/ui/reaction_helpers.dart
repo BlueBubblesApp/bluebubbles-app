@@ -108,7 +108,8 @@ class ReactionTypes {
 
   /// Every associated message type that's a reaction to another message: the tapbacks and their removals by name,
   /// IMCore's raw ids for those (tapbacks 2000-2007, removals 3000-3007, including emoji and sticker tapbacks) and
-  /// the legacy sticker. Other types, like the iMessage app session links (2 and 3), are messages in their own right.
+  /// the legacy sticker. Other types, like the iMessage app session links ([AppSessionTypes.UPDATE] and
+  /// [AppSessionTypes.SUPERSEDED]), are messages in their own right.
   static final List<String> associatedTypes = [
     ...toList(),
     ...toList().map((e) => "-$e"),
@@ -118,6 +119,64 @@ class ReactionTypes {
   ];
 
   static bool isReactionType(String? type) => associatedTypes.contains(type);
+}
+
+/// How iMessage apps link the messages of one session (a game, a poll) through the associated message columns.
+/// Every turn after the first is [UPDATE], pointing at the session's first message; Messages rewrites a turn a newer
+/// one replaced to [SUPERSEDED], the first turn pointing at itself.
+class AppSessionTypes {
+  // ignore: non_constant_identifier_names
+  static const String UPDATE = "2";
+  // ignore: non_constant_identifier_names
+  static const String SUPERSEDED = "3";
+
+  /// One participant's vote on a poll, pointing at the poll's latest state
+  // ignore: non_constant_identifier_names
+  static const String POLL_VOTE = "4000";
+
+  /// In the balloon bundle id of every iMessage app message, and of no built-in balloon
+  static const String extensionBalloonPlugin = "MSMessageExtensionBalloonPlugin";
+
+  /// Matched on the suffix: the team id in the middle belongs to the developer and can change.
+  static const String _gamePigeonSuffix = ":com.gamerdelights.gamepigeon.ext";
+
+  static bool isAppBalloon(String? balloonBundleId) => balloonBundleId?.contains(extensionBalloonPlugin) ?? false;
+
+  static bool isGamePigeon(String? balloonBundleId) => balloonBundleId?.endsWith(_gamePigeonSuffix) ?? false;
+
+  /// Whether [turn] replaces the earlier turns of its session, which are then [isReplacedBy] it. GamePigeon only: a
+  /// poll keeps every state it was re-sent in as an [UPDATE] (its votes name the latest), and other apps are unmeasured.
+  static bool replacesEarlierTurns(Message turn) =>
+      isGamePigeon(turn.balloonBundleId) &&
+      turn.associatedMessageType == UPDATE &&
+      turn.associatedMessageGuid != null &&
+      turn.guid != null &&
+      turn.dateCreated != null;
+
+  /// Whether [earlier] is a turn of [turn]'s session that [turn] replaced: the session's first message or another
+  /// [UPDATE] to it, from the same app and sent before. Never a reaction (a tapback or sticker on the first message
+  /// points at it too) and never one already [SUPERSEDED].
+  static bool isReplacedBy(Message earlier, Message turn) {
+    final first = turn.associatedMessageGuid;
+    if (earlier.guid == null || earlier.guid == turn.guid) return false;
+    if (earlier.guid != first && earlier.associatedMessageGuid != first) return false;
+    final type = earlier.associatedMessageType;
+    if (type != null && type != UPDATE) return false;
+    if (earlier.guid != first && type != UPDATE) return false;
+    final sameApp = earlier.balloonBundleId == turn.balloonBundleId ||
+        (isGamePigeon(earlier.balloonBundleId) && isGamePigeon(turn.balloonBundleId));
+    if (!sameApp) return false;
+    return earlier.dateCreated != null && earlier.dateCreated!.isBefore(turn.dateCreated!);
+  }
+
+  /// The type to keep when a message typed [current] is replaced by one typed [incoming]. Messages never takes a
+  /// replaced app turn back, so a [SUPERSEDED] turn stays one when a stale copy still says [UPDATE] (or nothing).
+  static String? mergedType(String? balloonBundleId, String? current, String? incoming) {
+    if (current == SUPERSEDED && isAppBalloon(balloonBundleId) && (incoming == null || incoming == UPDATE)) {
+      return current;
+    }
+    return incoming ?? current;
+  }
 }
 
 List<Message> getUniqueReactionMessages(List<Message> messages) {

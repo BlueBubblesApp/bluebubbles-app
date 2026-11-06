@@ -1,25 +1,26 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 class MessageActions {
-  /// Marks the turns of [turn]'s iMessage app session that it replaced as type 3, linked to the session's first message
-  /// (which links to itself), as Messages does once a newer turn arrives. Messages rewrites those rows in place, so
-  /// sync, which only fetches new rows, would never see it. Runs inside a write transaction.
+  /// Marks the turns of [turn]'s iMessage app session that it replaced as [AppSessionTypes.SUPERSEDED], linked to the
+  /// session's first message (which links to itself), as Messages does once a newer turn arrives. Messages rewrites
+  /// those rows in place, so sync, which only fetches new rows, would never see it. Which rows count is
+  /// [AppSessionTypes.isReplacedBy], shared with the on-screen copy in MessagesService. Runs inside a write transaction.
   static void retireEarlierTurns(Message turn) {
-    final first = turn.associatedMessageGuid;
-    if (turn.balloonBundleId == null || turn.associatedMessageType != '2' || first == null) return;
-    if (turn.guid == null || turn.dateCreated == null) return;
+    if (!AppSessionTypes.replacesEarlierTurns(turn)) return;
+    final first = turn.associatedMessageGuid!;
     final query = Database.messages
         .query((Message_.guid.equals(first) | Message_.associatedMessageGuid.equals(first)) &
             Message_.guid.notEquals(turn.guid!) &
             Message_.dateCreated.lessThan(turn.dateCreated!.millisecondsSinceEpoch))
         .build();
-    final earlier = query.find().where((m) => m.associatedMessageType != '3').toList();
+    final earlier = query.find().where((m) => AppSessionTypes.isReplacedBy(m, turn)).toList();
     query.close();
     for (final message in earlier) {
-      message.associatedMessageType = '3';
+      message.associatedMessageType = AppSessionTypes.SUPERSEDED;
       message.associatedMessageGuid = first;
     }
     if (earlier.isNotEmpty) Database.messages.putMany(earlier);
