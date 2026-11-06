@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reacti
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -135,7 +136,8 @@ class StickerSpace extends StatelessWidget {
           stickers: state
               .stickersForBubble(part)
               .expand((e) => e.dbAttachments)
-              .where((a) => StickerPlacement.tryParse(a.stickerPlacement) != null)
+              .map((a) => PlacedSticker.of(a, a.guid == null ? null : state.stickerSizes[a.guid]))
+              .nonNulls
               .toList(),
           isFromMe: state.message.isFromMe ?? false,
           columnWidth: columnWidth,
@@ -152,7 +154,7 @@ class _StickerOverhang extends SingleChildRenderObjectWidget {
     required Widget super.child,
   });
 
-  final List<Attachment> stickers;
+  final List<PlacedSticker> stickers;
   final bool isFromMe;
   final double columnWidth;
 
@@ -170,8 +172,9 @@ class _StickerOverhang extends SingleChildRenderObjectWidget {
 class _RenderStickerOverhang extends RenderShiftedBox {
   _RenderStickerOverhang(this._stickers, this._isFromMe, this._columnWidth) : super(null);
 
-  List<Attachment> _stickers;
-  set stickers(List<Attachment> value) {
+  List<PlacedSticker> _stickers;
+  set stickers(List<PlacedSticker> value) {
+    if (listEquals(_stickers, value)) return;
     _stickers = value;
     markNeedsLayout();
   }

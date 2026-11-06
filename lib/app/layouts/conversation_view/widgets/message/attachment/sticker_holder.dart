@@ -1,10 +1,39 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
+
+/// A placed sticker as [StickerHolder.space] lays it out: where its sender put it, and its image's size in pixels
+@immutable
+class PlacedSticker {
+  const PlacedSticker(this.placement, this.pixels);
+
+  final StickerPlacement placement;
+  final Size pixels;
+
+  /// [attachment] as placed, or null when it has no placement. [decoded] is its image's size once that has loaded,
+  /// which wins over the attachment's dimensions: it's what draws.
+  static PlacedSticker? of(Attachment attachment, [Size? decoded]) {
+    final placement = StickerPlacement.tryParse(attachment.stickerPlacement);
+    if (placement == null) return null;
+    return PlacedSticker(placement, decoded ?? Size(_known(attachment.width), _known(attachment.height)));
+  }
+
+  // The server sends 0 for dimensions it didn't read, and sync doesn't ask for them
+  static double _known(int? pixels) =>
+      pixels != null && pixels > 0 ? pixels.toDouble() : StickerHolder._fallbackPixels;
+
+  @override
+  bool operator ==(Object other) => other is PlacedSticker && other.placement == placement && other.pixels == pixels;
+
+  @override
+  int get hashCode => Object.hash(placement, pixels);
+}
 
 class StickerHolder extends StatefulWidget {
   const StickerHolder({
@@ -35,10 +64,11 @@ class StickerHolder extends StatefulWidget {
   }
 
   /// Where a placed sticker draws (its rotated bounding box) relative to a [bubble] of that size
-  static Rect placedRect(StickerPlacement p, Attachment attachment, Size bubble, bool isFromMe) {
+  static Rect placedRect(PlacedSticker sticker, Size bubble, bool isFromMe) {
+    final p = sticker.placement;
     final scale = p.scale / _stickerPixelRatio;
-    final w = (attachment.width ?? _fallbackPixels) * scale;
-    final h = (attachment.height ?? _fallbackPixels) * scale;
+    final w = sticker.pixels.width * scale;
+    final h = sticker.pixels.height * scale;
     final cosA = cos(p.rotation).abs(), sinA = sin(p.rotation).abs();
     return Rect.fromCenter(
       center: placedCenter(p, bubble, isFromMe),
@@ -49,12 +79,10 @@ class StickerHolder extends StatefulWidget {
 
   /// Room [StickerSpace] adds around a [bubble] so it covers all of its placed [stickers]. On the column-edge side
   /// this moves the bubble inward (as Messages does), as far as the column allows.
-  static EdgeInsets space(Iterable<Attachment> stickers, Size bubble, bool isFromMe, double columnWidth) {
+  static EdgeInsets space(Iterable<PlacedSticker> stickers, Size bubble, bool isFromMe, double columnWidth) {
     double left = 0, top = 0, right = 0, bottom = 0;
     for (final sticker in stickers) {
-      final placement = StickerPlacement.tryParse(sticker.stickerPlacement);
-      if (placement == null) continue;
-      final rect = placedRect(placement, sticker, bubble, isFromMe);
+      final rect = placedRect(sticker, bubble, isFromMe);
       left = max(left, -rect.left);
       top = max(top, -rect.top);
       right = max(right, rect.right - bubble.width);
@@ -72,7 +100,7 @@ class StickerHolder extends StatefulWidget {
   }
 
   /// Size assumed for a sticker image whose dimensions the server didn't send
-  static const int _fallbackPixels = 300;
+  static const double _fallbackPixels = 300;
 
   /// Pixels per point of a sticker image at scale 1, as Messages draws it on an iPhone
   static const double _stickerPixelRatio = 3;
@@ -91,6 +119,18 @@ class _StickerHolderState extends State<StickerHolder> {
   Iterable<Message> get messages => widget.stickerMessages;
 
   final Map<String, Attachment> _stickerPaths = {};
+
+  /// Where [_measure] reports each placed sticker's decoded size, for [StickerSpace]
+  MessageState? _state;
+
+  /// Guids of the placed stickers whose image size is being or has been read
+  final Set<String> _measured = {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _state = MessageStateScope.maybeOf(context);
+  }
 
   @override
   void initState() {
@@ -111,14 +151,37 @@ class _StickerHolderState extends State<StickerHolder> {
         if (_stickerPaths.containsKey(pathName)) continue;
 
         if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
-          AttachmentDownloader.startDownload(attachment, onComplete: (_) {
-            if (mounted) setState(() => _stickerPaths[pathName] = attachment);
-          });
+          AttachmentDownloader.startDownload(attachment, onComplete: (_) => _markReady(attachment));
         } else {
-          if (mounted) setState(() => _stickerPaths[pathName] = attachment);
+          _markReady(attachment);
         }
       }
     }
+  }
+
+  void _markReady(Attachment attachment) {
+    if (!mounted) return;
+    setState(() => _stickerPaths[attachment.path] = attachment);
+    _measure(attachment);
+  }
+
+  /// Reports a placed sticker's decoded size, so the room [StickerSpace] keeps for it matches what draws even when
+  /// the attachment has no dimensions. It resolves the same provider [_image] draws, so it shares the decode.
+  void _measure(Attachment attachment) {
+    final state = _state;
+    final guid = attachment.guid;
+    if (!widget.placed || state == null || guid == null || !_measured.add(guid)) return;
+    final stream = _provider(attachment, StickerHolder._stickerPixelRatio).resolve(ImageConfiguration.empty);
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        state.updateStickerSizeInternal(guid, Size(info.image.width.toDouble(), info.image.height.toDouble()));
+        info.dispose();
+        stream.removeListener(listener);
+      },
+      onError: (_, _) => stream.removeListener(listener),
+    );
+    stream.addListener(listener);
   }
 
   // Stickers never take input, so they can't block interaction with the message under them
@@ -189,9 +252,10 @@ class _StickerHolderState extends State<StickerHolder> {
     );
   }
 
-  Widget _image(Attachment attachment, [FilterQuality quality = FilterQuality.none, double scale = 1]) => Image.file(
-        File(attachment.path),
-        scale: scale,
+  ImageProvider _provider(Attachment attachment, double scale) => FileImage(File(attachment.path), scale: scale);
+
+  Widget _image(Attachment attachment, [FilterQuality quality = FilterQuality.none, double scale = 1]) => Image(
+        image: _provider(attachment, scale),
         gaplessPlayback: true,
         filterQuality: quality,
         // Pops in once it has loaded; a sticker already in the image cache is just drawn, so scrolling doesn't replay it
