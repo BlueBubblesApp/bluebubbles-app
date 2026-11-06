@@ -144,12 +144,13 @@ class _StickerHolderState extends State<StickerHolder> {
         scale: scale,
         gaplessPlayback: true,
         filterQuality: quality,
+        // Pops in once it has loaded; a sticker already in the image cache is just drawn, so scrolling doesn't replay it
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
           if (wasSynchronouslyLoaded) return child;
-          return AnimatedOpacity(
-            opacity: frame == null ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
+          return AnimatedScale(
+            scale: frame == null ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutBack,
             child: child,
           );
         },
