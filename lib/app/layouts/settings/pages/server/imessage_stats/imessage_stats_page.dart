@@ -18,6 +18,7 @@ class _IMessageStatsPageState extends CustomState<IMessageStatsPage, void, Serve
   void initState() {
     super.initState();
     forceDelete = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.loadSelectedStatsIfEmpty());
   }
 
   @override
