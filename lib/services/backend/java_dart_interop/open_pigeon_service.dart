@@ -5,6 +5,7 @@ import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -113,8 +114,27 @@ class OpenPigeon {
       licensed.value = false;
       return;
     }
+    final dio.Response response;
     try {
-      final data = (await HttpSvc.server.subscription()).data['data'] as Map<String, dynamic>;
+      response = await HttpSvc.server.subscription();
+    } catch (e) {
+      // A 4xx is the server's answer. Anything else (a timeout, no connection, a 5xx) says nothing about the license,
+      // so the last answer stands rather than locking games every time a resume beats the network
+      final status = switch (e) {
+        dio.Response() => e.statusCode,
+        dio.DioException() => e.response?.statusCode,
+        _ => null,
+      };
+      if (status != null && status >= 400 && status < 500) {
+        Logger.warn('The server refused the subscription check ($status)', tag: 'OpenPigeon');
+        licensed.value = false;
+      } else {
+        Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
+      }
+      return;
+    }
+    try {
+      final data = response.data['data'] as Map<String, dynamic>;
       final tiers = (data['available_tiers'] as List? ?? const []).whereType<Map>().toList();
       final pro = tiers.firstWhereOrNull((t) => t['id'] == 'pro');
       final held = tiers.firstWhereOrNull((t) => t['id'] == data['tier']);
@@ -124,8 +144,8 @@ class OpenPigeon {
       licensed.value = data['tier'] != null &&
           (held == null || pro == null || (held['rank'] as int) >= (pro['rank'] as int));
     } catch (e) {
-      Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
-      licensed.value = false;
+      // A reply this build can't read isn't an answer either
+      Logger.warn('Could not read the server subscription', error: e, tag: 'OpenPigeon');
     }
   }
 
