@@ -260,6 +260,14 @@ class Message {
     } catch (e, s) {
       Logger.error('Failed to parse payload data!', error: e, trace: s);
     }
+    // v2 servers decode the app balloon's archive themselves (`with=appPayload`), and read fields ours misses
+    final appPayload = json['appPayload'];
+    final app = payloadData?.appData?.firstOrNull;
+    if (appPayload is Map && app != null) {
+      app.sessionId = appPayload['session_id'] as String? ?? app.sessionId;
+      app.ldText = appPayload['summary'] as String? ?? app.ldText;
+      app.url = appPayload['url'] as String? ?? app.url;
+    }
 
     return Message(
       id: json["ROWID"] ?? json['id'],

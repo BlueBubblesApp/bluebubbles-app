@@ -1667,7 +1667,12 @@ class MessagesService extends GetxController {
       int offset = 0,
       int limit = 100}) async {
     Completer<List<dynamic>> completer = Completer();
-    final withQuery = <String>["attributedBody", "messageSummaryInfo", "payloadData"];
+    final withQuery = <String>[
+      "attributedBody",
+      "messageSummaryInfo",
+      "payloadData",
+      if (SettingsSvc.serverDetails.isV2Server) "appPayload",
+    ];
     if (withChats) withQuery.add("chat");
     if (withAttachments) withQuery.add("attachment");
     if (withHandles) withQuery.add("handle");

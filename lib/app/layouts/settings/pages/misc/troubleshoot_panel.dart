@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/chat_selector_view/chat_selector_view.dart';
@@ -15,6 +16,7 @@ import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
+import 'package:bluebubbles/services/backend/sync/server_v2_migrations.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:flutter/cupertino.dart';
@@ -95,6 +97,29 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
     logFileCount.value = count;
     crashDumpCount.value = dumps;
     logFileSize.value = sizeKb;
+  }
+
+  Future<void> _runServerV2Migrations() async {
+    final step = "Checking messages...".obs;
+    final progress = RxnDouble();
+    unawaited(showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Obx(() => BBProgressDialog(title: step.value, progress: progress.value)),
+      ),
+    ));
+    final filled = await ServerV2Migrations.run(onProgress: (s, p) {
+      step.value = s;
+      progress.value = p;
+    });
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    if (filled == null) {
+      showSnackbar("Not Updated", "Couldn't reach your server, or it isn't running v2.", type: SnackbarType.error);
+    } else {
+      showSnackbar("Messages Updated", "Updated $filled message(s).", type: SnackbarType.success);
+    }
   }
 
   @override
@@ -339,7 +364,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Troubleshooting"),
                 SettingsSection(backgroundColor: tileColor, children: [
                   SettingsTile(
-                    onTap: () => SettingsSvc.runServerV2Migrations(),
+                    onTap: _runServerV2Migrations,
                     leading: const SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.arrow_2_circlepath,
                       materialIcon: Icons.sync_alt,

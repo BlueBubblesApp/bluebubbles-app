@@ -7,6 +7,9 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 
+/// What a migration pass is doing, and how far through it is (0 to 1).
+typedef ServerV2MigrationProgress = void Function(String step, double progress);
+
 /// Fills in data that servers older than v2 never sent, for messages already synced from them.
 /// Sync never refetches old messages, so this has to ask the server again.
 class ServerV2Migrations {
@@ -24,21 +27,62 @@ class ServerV2Migrations {
   /// Returns how many messages were updated, or null if the server couldn't be reached or isn't v2. A message whose
   /// own request fails is skipped and left for a manual run. Joins a pass that's already running rather than starting
   /// a second.
-  static Future<int?> run() => _running ??= _run().whenComplete(() => _running = null);
+  static Future<int?> run({ServerV2MigrationProgress? onProgress}) =>
+      _running ??= _run(onProgress).whenComplete(() => _running = null);
 
-  static Future<int?> _run() async {
+  static Future<int?> _run(ServerV2MigrationProgress? onProgress) async {
     if (!SettingsSvc.serverDetails.isV2Server) return null;
-    final emoji = await _backfillTapbackEmoji();
+    final emoji = await _backfillTapbackEmoji(onProgress);
     if (emoji == null) return null;
-    final genmoji = await _backfillGenmoji();
+    final genmoji = await _backfillGenmoji(onProgress);
     if (genmoji == null) return null;
-    final stickers = await _backfillStickerPlacement();
+    final stickers = await _backfillStickerPlacement(onProgress);
     if (stickers == null) return null;
-    return emoji + genmoji + stickers;
+    final payloads = await _backfillAppPayloads(onProgress);
+    if (payloads == null) return null;
+    return emoji + genmoji + stickers + payloads;
+  }
+
+  /// App balloons saved before the client kept their session and icon, or before sync asked for `appPayload`, whose
+  /// session our archive decoding misses on some messages (a game's opening one). Re-fetched and re-parsed whole.
+  static Future<int?> _backfillAppPayloads(ServerV2MigrationProgress? onProgress) async {
+    final query = Database.messages
+        .query(Message_.balloonBundleId.contains("MSMessageExtensionBalloonPlugin").and(Message_.guid.notNull()))
+        .build();
+    final stale = (await runAsync(() => query.find())).where(_isOnServer).where((message) {
+      final app = message.payloadData?.appData?.firstOrNull;
+      return app != null && (app.sessionId == null || app.appIcon == null);
+    }).toList();
+    query.close();
+
+    int filled = 0;
+    for (final (i, message) in stale.indexed) {
+      onProgress?.call("Updating iMessage apps", i / stale.length);
+      try {
+        final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "payloadData,appPayload");
+        final data = response.data['data'];
+        if (data is! Map) continue;
+        final fresh = Message.fromMap(Map<String, dynamic>.from(data)).payloadData;
+        if (fresh?.appData?.firstOrNull == null) continue;
+
+        // Re-read, so anything saved to it while the request was out isn't overwritten
+        final current = Database.messages.get(message.id!);
+        if (current == null) continue;
+        current.payloadData = fresh;
+        Database.messages.put(current);
+        filled++;
+      } catch (e, s) {
+        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        Logger.warn("Failed to backfill the app payload of ${message.guid}",
+            error: e, trace: s, tag: "ServerV2Migrations");
+        return null;
+      }
+    }
+    return filled;
   }
 
   /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.
-  static Future<int?> _backfillStickerPlacement() async {
+  static Future<int?> _backfillStickerPlacement(ServerV2MigrationProgress? onProgress) async {
     final query =
         Database.messages.query(Message_.associatedMessageType.equals("sticker").and(Message_.guid.notNull())).build();
     final missing = (await runAsync(() => query.find()))
@@ -48,7 +92,8 @@ class ServerV2Migrations {
     query.close();
 
     int filled = 0;
-    for (final sticker in missing) {
+    for (final (i, sticker) in missing.indexed) {
+      onProgress?.call("Updating stickers", i / missing.length);
       try {
         final response = await HttpSvc.message.fetchOne(sticker.guid!, withQuery: "attachment");
         final remote = (((response.data['data'] as Map?)?['attachments'] as List?) ?? const [])
@@ -96,7 +141,7 @@ class ServerV2Migrations {
   }
 
   /// Re-fetches attributed bodies saved before the client kept the Genmoji marker, `__kIMEmojiImageAttributeName`.
-  static Future<int?> _backfillGenmoji() async {
+  static Future<int?> _backfillGenmoji(ServerV2MigrationProgress? onProgress) async {
     final query = Database.messages
         .query(Message_.dbAttributedBody.contains("__kIMFileTransferGUIDAttributeName").and(Message_.guid.notNull()))
         .build();
@@ -109,7 +154,8 @@ class ServerV2Migrations {
     query.close();
 
     int filled = 0;
-    for (final message in candidates) {
+    for (final (i, message) in candidates.indexed) {
+      onProgress?.call("Updating Genmoji", i / candidates.length);
       try {
         final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "attributedBody");
         final data = response.data['data'];
@@ -140,7 +186,7 @@ class ServerV2Migrations {
   /// Whether [message] is on the server, rather than a local one still sending or that failed to.
   static bool _isOnServer(Message message) => !message.guid!.startsWith("temp") && !message.guid!.startsWith("error");
 
-  static Future<int?> _backfillTapbackEmoji() async {
+  static Future<int?> _backfillTapbackEmoji(ServerV2MigrationProgress? onProgress) async {
     final query = Database.messages
         .query(Message_.associatedMessageType
             .oneOf([ReactionTypes.EMOJI, ReactionTypes.REMOVED_EMOJI])
@@ -152,7 +198,8 @@ class ServerV2Migrations {
 
     int filled = 0;
     int failed = 0;
-    for (final reaction in missing) {
+    for (final (i, reaction) in missing.indexed) {
+      onProgress?.call("Updating emoji tapbacks", i / missing.length);
       final Response response;
       try {
         response = await HttpSvc.message.fetchOne(reaction.guid!);
