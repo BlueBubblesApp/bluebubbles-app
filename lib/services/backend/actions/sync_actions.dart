@@ -1,6 +1,7 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -73,7 +74,8 @@ class SyncActions {
     // -------------------------------------------------------------------------
     // Single write transaction
     // -------------------------------------------------------------------------
-    return Database.runInTransaction(TxMode.write, () {
+    final moves = <RekeyedFileMove>[];
+    final result = Database.runInTransaction(TxMode.write, () {
       final handleBox = Database.handles;
       final chatBox = Database.chats;
       final messageBox = Database.messages;
@@ -95,7 +97,7 @@ class SyncActions {
           _syncMessagesInTx(messagesData, chatData, chatsMap, handlesByRowId, messageBox);
 
       // Step 3 – Sync attachments (via Attachment.message.target — no applyToDb needed)
-      _syncAttachmentsInTx(messagesData, messagesByGuid, attachmentBox, messageBox);
+      moves.addAll(_syncAttachmentsInTx(messagesData, messagesByGuid, attachmentBox, messageBox));
 
       // Step 4 – Update each chat's latestMessage
       final updatedChatIds = _updateLatestMessages(chatsMap, chatBox);
@@ -105,6 +107,8 @@ class SyncActions {
         'chatIds': updatedChatIds,
       };
     });
+    AttachmentActions.moveRekeyedFiles(moves);
+    return result;
   }
 
   // ---------------------------------------------------------------------------
@@ -321,7 +325,8 @@ class SyncActions {
   /// `Attachment.message.target` (the owning ToOne side of the backlink).
   /// Also ensures [Message.hasAttachments] is set to `true` on any owner message
   /// that received at least one attachment in this sync.
-  static void _syncAttachmentsInTx(
+  /// Returns the files of renamed attachments, to move once the transaction commits.
+  static List<RekeyedFileMove> _syncAttachmentsInTx(
     List<Map<String, dynamic>> messagesData,
     Map<String, Message> messagesByGuid,
     Box<Attachment> attachmentBox,
@@ -343,9 +348,10 @@ class SyncActions {
       }
     }
 
-    if (attachmentMaps.isEmpty) return;
+    if (attachmentMaps.isEmpty) return const [];
 
     final inputAttachments = attachmentMaps.map((a) => Attachment.fromMap(a)).toList();
+    final moves = AttachmentActions.adoptRekeyedGuids(inputAttachments);
     final inputGuids = inputAttachments.map((a) => a.guid!).toList();
 
     final existingQuery = attachmentBox.query(Attachment_.guid.oneOf(inputGuids)).build();
@@ -379,6 +385,7 @@ class SyncActions {
     if (messagesNeedingFlagUpdate.isNotEmpty) {
       messageBox.putMany(messagesNeedingFlagUpdate.toList());
     }
+    return moves;
   }
 
   /// Query the DB for each chat's true latest message and persist it.

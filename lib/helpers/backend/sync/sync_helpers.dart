@@ -1,5 +1,6 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 
@@ -95,6 +96,7 @@ import 'package:collection/collection.dart';
 // }
 
 List<Attachment> syncAttachments(List<Attachment> attachments) {
+  AttachmentActions.moveRekeyedFiles(AttachmentActions.adoptRekeyedGuids(attachments));
   // Get a list of the GUIDs
   List<String> inputAttachmentGuids = attachments.map((element) => element.guid!).toList();
 
