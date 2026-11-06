@@ -203,12 +203,12 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
         controller.associatedMessageType.value;
         if (!widget.isReplyThread && OpenPigeon.isEarlierTurn(message)) {
           // Hidden, but the next message's time is measured against this one, so it keeps any separator it starts
-          if (isFromMe) return TimestampSeparator(olderMessage: olderMessage);
+          if (isFromMe) return Center(child: TimestampSeparator(olderMessage: olderMessage));
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TimestampSeparator(olderMessage: olderMessage),
+              Center(child: TimestampSeparator(olderMessage: olderMessage)),
               Padding(
                 padding: EdgeInsets.only(left: showAvatar || alwaysShowAvatars ? 35.0 * avatarScale + 15 : 15),
                 child: OpenPigeonEarlierTurn(
