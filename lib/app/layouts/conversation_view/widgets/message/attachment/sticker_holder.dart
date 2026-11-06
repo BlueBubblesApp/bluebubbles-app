@@ -116,9 +116,14 @@ class StickerHolder extends StatefulWidget {
 }
 
 class _StickerHolderState extends State<StickerHolder> {
-  Iterable<Message> get messages => widget.stickerMessages;
+  /// This holder's sticker attachments, in the order their messages were sent, so later stickers draw on top
+  List<Attachment> _stickers = const [];
 
-  final Map<String, Attachment> _stickerPaths = {};
+  /// Guids of the stickers whose image is on disk, ready to draw
+  final Set<String> _ready = {};
+
+  /// Guids being downloaded, so an update doesn't add another callback to the same download
+  final Set<String> _downloading = {};
 
   /// Where [_measure] reports each placed sticker's decoded size, for [StickerSpace]
   MessageState? _state;
@@ -145,23 +150,48 @@ class _StickerHolderState extends State<StickerHolder> {
   }
 
   Future<void> loadStickers() async {
-    for (Message msg in messages) {
-      for (Attachment attachment in msg.dbAttachments) {
-        final pathName = attachment.path;
-        if (_stickerPaths.containsKey(pathName)) continue;
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
+    final messages = widget.stickerMessages.toList()
+      ..sort((a, b) {
+        final byDate = (a.dateCreated ?? epoch).compareTo(b.dateCreated ?? epoch);
+        return byDate != 0 ? byDate : (a.id ?? 0).compareTo(b.id ?? 0);
+      });
+    // Rebuilt from the current messages each time, so a sticker that left (unsent, or moved to the other holder once
+    // its placement arrived) stops drawing here
+    _stickers = [
+      for (final message in messages)
+        for (final attachment in message.dbAttachments)
+          if (attachment.guid != null &&
+              (!widget.placed || StickerPlacement.tryParse(attachment.stickerPlacement) != null))
+            attachment,
+    ];
+    final guids = _stickers.map((a) => a.guid!).toSet();
+    _ready.retainAll(guids);
 
-        if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
-          AttachmentDownloader.startDownload(attachment, onComplete: (_) => _markReady(attachment));
-        } else {
-          _markReady(attachment);
-        }
+    for (final attachment in List.of(_stickers)) {
+      final guid = attachment.guid!;
+      if (_ready.contains(guid) || _downloading.contains(guid)) continue;
+      final exists = await FileSystemEntity.type(attachment.path) != FileSystemEntityType.notFound;
+      if (!mounted || _ready.contains(guid) || _downloading.contains(guid)) continue;
+      if (exists) {
+        _markReady(guid, attachment);
+      } else {
+        _downloading.add(guid);
+        AttachmentDownloader.startDownload(
+          attachment,
+          onComplete: (_) {
+            _downloading.remove(guid);
+            _markReady(guid, attachment);
+          },
+          onError: () => _downloading.remove(guid),
+        );
       }
     }
   }
 
-  void _markReady(Attachment attachment) {
+  void _markReady(String guid, Attachment attachment) {
     if (!mounted) return;
-    setState(() => _stickerPaths[attachment.path] = attachment);
+    setState(() => _ready.add(guid));
     _measure(attachment);
   }
 
@@ -196,8 +226,9 @@ class _StickerHolderState extends State<StickerHolder> {
 
   @override
   Widget build(BuildContext context) {
-    if (_stickerPaths.isEmpty) return const SizedBox.shrink();
-    if (widget.placed) return _buildPlaced();
+    final ready = _stickers.where((a) => _ready.contains(a.guid)).toList();
+    if (ready.isEmpty) return const SizedBox.shrink();
+    if (widget.placed) return _buildPlaced(ready);
 
     return _shrinkable(
       ConstrainedBox(
@@ -205,9 +236,10 @@ class _StickerHolderState extends State<StickerHolder> {
         child: Wrap(
           spacing: 4,
           runSpacing: 4,
-          children: _stickerPaths.values
+          children: ready
               .map(
                 (attachment) => ConstrainedBox(
+                  key: ValueKey(attachment.guid),
                   constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
                   child: _image(attachment),
                 ),
@@ -219,13 +251,13 @@ class _StickerHolderState extends State<StickerHolder> {
   }
 
   // The position is a fraction of the parent's size, so it's scaled by ours. `scale` applies to the sticker's own size.
-  Widget _buildPlaced() {
+  Widget _buildPlaced(List<Attachment> ready) {
     return LayoutBuilder(builder: (context, constraints) {
       final bubble = constraints.biggest;
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          for (final attachment in _stickerPaths.values)
+          for (final attachment in ready)
             if (StickerPlacement.tryParse(attachment.stickerPlacement) case final p?) _placed(attachment, p, bubble),
         ],
       );
@@ -235,6 +267,7 @@ class _StickerHolderState extends State<StickerHolder> {
   Widget _placed(Attachment attachment, StickerPlacement p, Size bubble) {
     final center = StickerHolder.placedCenter(p, bubble, widget.isFromMe);
     return Positioned(
+      key: ValueKey(attachment.guid),
       left: center.dx,
       top: center.dy,
       child: FractionalTranslation(
