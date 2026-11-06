@@ -46,6 +46,11 @@ class Attachment {
   String? get dbMetadata => metadata == null ? null : jsonEncode(metadata);
   set dbMetadata(String? json) => metadata = json == null ? null : jsonDecode(json) as Map<String, dynamic>;
 
+  /// The guid this attachment was first delivered under. Messages re-keys a row after delivery, so a client can hold
+  /// this one while the server now serves another; see `AttachmentActions.adoptRekeyedGuids`.
+  @Transient()
+  String? originalGuid;
+
   Attachment({
     this.id,
     this.originalROWID,
@@ -58,6 +63,7 @@ class Attachment {
     this.height,
     this.width,
     this.metadata,
+    this.originalGuid,
     this.exif,
     this.bytes,
     this.webUrl,
@@ -100,6 +106,7 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
+      originalGuid: json["originalGuid"],
       exif: exif is String ? null : exif,
       hasLivePhoto: json["hasLivePhoto"] ?? false,
       isDownloaded: json["isDownloaded"] ?? false,
@@ -404,6 +411,7 @@ class Attachment {
     "height": height,
     "width": width,
     "metadata": jsonEncode(metadata),
+    if (originalGuid != null) "originalGuid": originalGuid,
     "exif": jsonEncode(exif),
     "hasLivePhoto": hasLivePhoto,
     "isDownloaded": isDownloaded,

@@ -1,9 +1,41 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/descriptors/attachment_query_descriptor.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
+import 'package:universal_io/io.dart';
 
 class AttachmentActions {
+  /// Renames rows still saved under an attachment's [Attachment.originalGuid] to the guid the server now serves, so
+  /// the guid lookups that follow find them. Call before matching incoming attachments by guid.
+  static void adoptRekeyedGuids(Iterable<Attachment> incoming) {
+    final renamed = {
+      for (final a in incoming)
+        if (a.guid != null && a.originalGuid != null && a.originalGuid != a.guid) a.originalGuid!: a.guid!,
+    };
+    if (renamed.isEmpty) return;
+
+    final query = Database.attachments.query(Attachment_.guid.oneOf(renamed.keys.toList())).build();
+    final stale = query.find();
+    query.close();
+    for (final row in stale) {
+      final newGuid = renamed[row.guid]!;
+      if (findOne(newGuid) != null) {
+        Logger.warn("Both ${row.guid} and its new guid $newGuid are saved; leaving them", tag: "AttachmentActions");
+        continue;
+      }
+      final oldDirectory = Directory(row.directory);
+      row.guid = newGuid;
+      try {
+        if (oldDirectory.existsSync()) oldDirectory.renameSync(row.directory);
+      } catch (e) {
+        // The file downloads again under the new guid
+        Logger.warn("Couldn't move ${oldDirectory.path} to ${row.directory}", error: e, tag: "AttachmentActions");
+      }
+      Database.attachments.put(row);
+    }
+  }
+
   static Attachment? findOne(String guid) {
     final queryBuilder = Database.attachments.query(Attachment_.guid.equals(guid));
     queryBuilder.link(Attachment_.message);
@@ -20,6 +52,7 @@ class AttachmentActions {
 
     return Database.runInTransaction(TxMode.write, () {
       final attachment = Attachment.fromMap(attachmentData);
+      adoptRekeyedGuids([attachment]);
 
       /// Find an existing attachment with message relationship loaded
       Attachment? existing = AttachmentActions.findOne(attachment.guid!);
@@ -62,6 +95,7 @@ class AttachmentActions {
 
     /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
     final attachments = map.values.flattened.toList();
+    adoptRekeyedGuids(attachments);
 
     /// find existing attachments using query descriptor
     final guids = attachments.map((e) => e.guid!).toList();

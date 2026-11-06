@@ -1,5 +1,6 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -377,6 +378,7 @@ class ChatActions {
 
           // Process and link attachments if present
           if (inputAttachments.isNotEmpty) {
+            AttachmentActions.adoptRekeyedGuids(inputAttachments);
             for (final attachment in inputAttachments) {
               // Find existing attachment
               final attachQuery = attachmentBox.query(Attachment_.guid.equals(attachment.guid ?? '')).build();
