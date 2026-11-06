@@ -179,7 +179,7 @@ class Attachment {
     newAttachment.metadata = updatedAttachment.metadata;
     newAttachment.exif = updatedAttachment.exif;
     // Preserve isDownloaded from the DB record — the action layer does not overwrite it,
-    // so if prepAttachment set it to true the value survives the GUID swap.
+    // so if prepAttachments set it to true the value survives the GUID swap.
     newAttachment.isDownloaded = updatedAttachment.isDownloaded;
 
     return newAttachment;

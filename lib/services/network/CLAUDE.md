@@ -9,7 +9,7 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 |---|---|---|---|
 | `server` | `ServerApi` | `api/server_api.dart` | `ping`, `lockMac`, `restartImessage`, `serverInfo`, `softRestart`, `hardRestart`, `checkUpdate`, `installUpdate`, `getTotalStats`, `getMediaStats`, `getLogs`, `landingPage` |
 | `fcm` | `FcmApi` | `api/fcm_api.dart` | `addDevice`, `getServiceAccount` |
-| `attachment` | `AttachmentApi` | `api/attachment_api.dart` | `fetch`, `download`, `downloadLivePhoto`, `downloadBlurhash`, `getCount` |
+| `attachment` | `AttachmentApi` | `api/attachment_api.dart` | `fetch`, `download`, `downloadLivePhoto`, `downloadBlurhash`, `upload`, `getCount` |
 | `chat` | `ChatApi` | `api/chat_api.dart` | `query`, `getMessages`, `modifyParticipant`, `leave`, `setDisplayName`, `create`, `getCount`, `fetchOne`, `markRead`, `markUnread`, `getIcon`, `setIcon`, `removeIcon`, `delete`, `deleteMessage` |
 | `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendMultipart`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
 | `handle` | `HandleApi` | `api/handle_api.dart` | `handleCount`, `handles`, `handle`, `handleFocusState`, `handleiMessageState`, `handleFaceTimeState` |

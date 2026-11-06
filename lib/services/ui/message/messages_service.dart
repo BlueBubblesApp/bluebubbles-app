@@ -174,7 +174,7 @@ class MessagesService extends GetxController {
       // Re-apply uploading state for any attachment that is still actively
       // being sent.  When MessagesService is torn down (user navigates away)
       // and then re-created (user re-enters), AttachmentState is constructed
-      // fresh from the persisted data.  Because prepAttachment sets
+      // fresh from the persisted data.  Because prepAttachments sets
       // isDownloaded=true before the upload completes, the constructor
       // defaults those attachments to transferState=complete/isSending=false,
       // hiding the in-progress send overlay.  This call corrects that.
@@ -247,7 +247,7 @@ class MessagesService extends GetxController {
   }
 
   /// Notifies that an attachment upload is starting (called from
-  /// [OutgoingMessageHandler.prepAttachment] before the HTTP call is made).
+  /// [OutgoingMessageHandler.prepAttachments] before the HTTP call is made).
   ///
   /// Ensures the message and attachment are registered in the state maps and
   /// transitions the attachment to [AttachmentTransferState.uploading].
@@ -274,7 +274,7 @@ class MessagesService extends GetxController {
 
     // Populate uploadPreviewFile so the UI can show the image behind the
     // progress overlay while the upload is in flight.  The file was already
-    // copied to attachment.path by prepAttachment.
+    // copied to attachment.path by prepAttachments.
     if (!kIsWeb && attachment.transferName != null) {
       final path = attachment.path;
       if (path.isNotEmpty && File(path).existsSync()) {
@@ -463,7 +463,7 @@ class MessagesService extends GetxController {
 
     // Force-complete the state.  updateFromAttachment's isDownloaded guard
     // may skip the transition when isDownloaded was already true (set in
-    // prepAttachment), so we do it explicitly here.
+    // prepAttachments), so we do it explicitly here.
     state.updateIsDownloadedInternal(true);
     state.updateActiveDownloadInternal(null);
     if (state.transferState.value != AttachmentTransferState.complete) {
@@ -765,7 +765,7 @@ class MessagesService extends GetxController {
     struct.addMessages([message]);
 
     // Create or update MessageState for this message.
-    // If it already exists (e.g. created by prepAttachment before the ObjectBox
+    // If it already exists (e.g. created by prepAttachments before the ObjectBox
     // watch fired), update the metadata rather than overwriting transfer states.
     if (message.guid != null) {
       if (!messageStates.containsKey(message.guid!)) {
@@ -1183,56 +1183,70 @@ class MessagesService extends GetxController {
     //   (a) the server's socket echo carries a tempGuid that exists in the DB
     //       (preventing a spurious duplicate message in the list), and
     //   (b) the attachment progress / state map keys stay consistent across
-    //       prepAttachment → sendAttachment → onSuccess/onError.
+    //       prepAttachments → sendAttachment → onSuccess/onError.
     // The attachment.guid == message.guid invariant is established in
     // send_animation.dart for initial sends; we must restore it on retry.
-    for (Attachment? a in message.dbAttachments) {
-      if (a == null) continue;
+    // In the order they were created, which is the order they were sent in
+    final attachments = message.dbAttachments.toList()..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+    final isMultiAttachment = attachments.length > 1;
+    for (int i = 0; i < attachments.length; i++) {
+      final a = attachments[i];
       final oldAttGuid = a.guid!;
+      // A multi-attachment message gives each attachment its own temp GUID
+      final newAttGuid = isMultiAttachment ? OutgoingMultiAttachment.tempGuidFor(message.guid!, i) : message.guid!;
 
       // Read bytes while the file is still at the old (pre-rename) path.
       a.bytes = await File(a.path).readAsBytes();
 
       // Move the attachment directory so the file is immediately accessible
       // at the new guid-based path.  This lets _restoreInFlightAttachmentStates
-      // populate uploadPreviewFile even before prepAttachment runs.
+      // populate uploadPreviewFile even before prepAttachments runs.
       if (!kIsWeb) {
         final oldDir = Directory("${Attachment.baseDirectory}/$oldAttGuid");
-        final newDir = Directory("${Attachment.baseDirectory}/${message.guid}");
+        final newDir = Directory("${Attachment.baseDirectory}/$newAttGuid");
         if (oldDir.existsSync() && !newDir.existsSync()) {
           oldDir.renameSync(newDir.path);
         }
       }
 
       // Sync attachment GUID with the new temp message GUID.
-      a.guid = message.guid;
+      a.guid = newAttGuid;
 
       // Persist the updated GUID to DB immediately (in-place update via
       // existing ObjectBox ID).  Without this there is a window between
-      // retryFailedMessage returning and prepAttachment's c.addMessage call
+      // retryFailedMessage returning and prepAttachments's c.addMessage call
       // where message.dbAttachments is empty, causing _restoreInFlightAttachmentStates
       // to skip the message on re-entry and the progress overlay to never show.
       await a.saveAsync(message);
 
       // Pre-register in attachmentProgress so _restoreInFlightAttachmentStates
-      // finds the entry the moment the user re-enters, even before prepAttachment
-      // runs its own add.  prepAttachment will add a second entry for the same
+      // finds the entry the moment the user re-enters, even before prepAttachments
+      // runs its own add.  prepAttachments will add a second entry for the same
       // guid; both are cleaned up together by the removeWhere in onSuccess/onError.
-      if (!OutgoingMsgHandler.attachmentProgress.any((e) => e.guid == message.guid)) {
-        OutgoingMsgHandler.attachmentProgress.add(AttachmentUploadProgress(message.guid!, 0.0.obs));
+      if (!OutgoingMsgHandler.attachmentProgress.any((e) => e.guid == newAttGuid)) {
+        OutgoingMsgHandler.attachmentProgress.add(AttachmentUploadProgress(newAttGuid, 0.0.obs));
       }
 
       // Reset the existing AttachmentState in-place (re-key + uploading transition)
       // so the widget's Obx sees isSending=true without needing a full rebuild.
       final attState = messageState.attachmentStates.remove(oldAttGuid);
       if (attState != null) {
-        attState.resetForRetryInternal(message.guid!);
-        messageState.attachmentStates[message.guid!] = attState;
+        attState.resetForRetryInternal(newAttGuid);
+        messageState.attachmentStates[newAttGuid] = attState;
       }
     }
 
     // Queue for sending (message already in UI, just updated)
-    if (message.dbAttachments.isNotEmpty) {
+    if (isMultiAttachment) {
+      OutgoingMsgHandler.queue(
+        OutgoingMultiAttachment(
+          chat: chat,
+          message: message,
+          attachments: attachments,
+          isRetry: true,
+        ),
+      );
+    } else if (message.dbAttachments.isNotEmpty) {
       OutgoingMsgHandler.queue(
         OutgoingAttachment(
           chat: chat,

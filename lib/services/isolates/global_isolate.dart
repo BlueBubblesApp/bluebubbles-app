@@ -787,6 +787,7 @@ enum IsolateRequestType {
   sendTapback,
   sendMultipartMessage,
   sendAttachmentMessage,
+  sendMultiAttachmentMessage,
 
   // Message actions
   replaceMessage,

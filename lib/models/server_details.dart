@@ -91,7 +91,7 @@ class ServerDetails {
   bool get isV1Server => apiVersions != null && !isV2Server;
 
   // v2 reports a 1.x feature level, which gates as usual. A 2.x would score 200 by the formula below, under several
-  // 1.x thresholds
+  // 1.x thresholds. Gate a feature 1.x servers have on this; one only v2 has, on isV2Server
   int get _featureCode =>
       isV2Server && (int.tryParse(serverVersion.split('.').first) ?? 0) >= 2 ? 1 << 30 : serverVersionCode;
 
@@ -155,6 +155,9 @@ class ServerDetails {
 
   /// Create new group chats via the Private API (v1.8.0).
   bool get supportsCreateGroupChat => _featureCode >= 268;
+
+  /// Several attachments in one message (v1.7.0).
+  bool get supportsMultiAttachmentSend => _featureCode >= 247;
 
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
