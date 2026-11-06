@@ -96,7 +96,7 @@ import 'package:collection/collection.dart';
 // }
 
 List<Attachment> syncAttachments(List<Attachment> attachments) {
-  AttachmentActions.adoptRekeyedGuids(attachments);
+  AttachmentActions.moveRekeyedFiles(AttachmentActions.adoptRekeyedGuids(attachments));
   // Get a list of the GUIDs
   List<String> inputAttachmentGuids = attachments.map((element) => element.guid!).toList();
 

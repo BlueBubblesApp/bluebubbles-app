@@ -5,35 +5,33 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:universal_io/io.dart';
 
+/// A file or directory to move once the transaction that renamed its attachment has committed
+typedef RekeyedFileMove = ({String from, String to});
+
 class AttachmentActions {
   /// Renames rows still saved under an attachment's [Attachment.originalGuid] to the guid the server now serves, so
   /// the guid lookups that follow find them. Call before matching incoming attachments by guid. A row saved under
   /// both guids is the same attachment twice, so the old one is removed.
-  static void adoptRekeyedGuids(Iterable<Attachment> incoming) {
+  ///
+  /// Returns the files to move to the new guids: pass them to [moveRekeyedFiles] after the transaction commits, so a
+  /// rollback can't leave a file where its row doesn't point.
+  static List<RekeyedFileMove> adoptRekeyedGuids(Iterable<Attachment> incoming) {
     final renamed = {
       for (final a in incoming)
         if (a.guid != null && a.originalGuid != null && a.originalGuid != a.guid) a.originalGuid!: a.guid!,
     };
-    if (renamed.isEmpty) return;
+    if (renamed.isEmpty) return const [];
 
     final query = Database.attachments.query(Attachment_.guid.oneOf(renamed.keys.toList())).build();
     final stale = query.find();
     query.close();
+    final moves = <RekeyedFileMove>[];
     for (final row in stale) {
       final newGuid = renamed[row.guid]!;
       final current = findOne(newGuid);
       if (current != null) {
-        // Saved under both guids, the same attachment twice: keep the new row, with the old one's file and message
-        // when it has none
-        try {
-          final oldFile = File(row.path);
-          if (!File(current.path).existsSync() && oldFile.existsSync()) {
-            File(current.path).parent.createSync(recursive: true);
-            oldFile.renameSync(current.path);
-          }
-        } catch (e) {
-          Logger.warn("Couldn't move ${row.path} to ${current.path}", error: e, tag: "AttachmentActions");
-        }
+        // Keep the old row's file and message when the new row has none
+        if (!File(current.path).existsSync()) moves.add((from: row.path, to: current.path));
         if (!current.message.hasValue && row.message.hasValue) {
           current.message.target = row.message.target;
           Database.attachments.put(current);
@@ -41,15 +39,31 @@ class AttachmentActions {
         Database.attachments.remove(row.id!);
         continue;
       }
-      final oldDirectory = Directory(row.directory);
+      final from = row.directory;
       row.guid = newGuid;
-      try {
-        if (oldDirectory.existsSync()) oldDirectory.renameSync(row.directory);
-      } catch (e) {
-        // The file downloads again under the new guid
-        Logger.warn("Couldn't move ${oldDirectory.path} to ${row.directory}", error: e, tag: "AttachmentActions");
-      }
+      moves.add((from: from, to: row.directory));
       Database.attachments.put(row);
+    }
+    return moves;
+  }
+
+  /// Moves the files [adoptRekeyedGuids] renamed the rows of. Nothing is overwritten, and a file that can't move
+  /// downloads again under its new guid.
+  static void moveRekeyedFiles(List<RekeyedFileMove> moves) {
+    for (final move in moves) {
+      try {
+        final type = FileSystemEntity.typeSync(move.from);
+        final taken = FileSystemEntity.typeSync(move.to) != FileSystemEntityType.notFound;
+        if (type == FileSystemEntityType.notFound || taken) continue;
+        if (type == FileSystemEntityType.directory) {
+          Directory(move.from).renameSync(move.to);
+        } else {
+          File(move.to).parent.createSync(recursive: true);
+          File(move.from).renameSync(move.to);
+        }
+      } catch (e) {
+        Logger.warn("Couldn't move ${move.from} to ${move.to}", error: e, tag: "AttachmentActions");
+      }
     }
   }
 
@@ -67,9 +81,10 @@ class AttachmentActions {
     final attachmentData = data['attachmentData'] as Map<String, dynamic>;
     final messageData = data['messageData'] as Map<String, dynamic>?;
 
-    return Database.runInTransaction(TxMode.write, () {
+    final moves = <RekeyedFileMove>[];
+    final id = Database.runInTransaction(TxMode.write, () {
       final attachment = Attachment.fromMap(attachmentData);
-      adoptRekeyedGuids([attachment]);
+      moves.addAll(adoptRekeyedGuids([attachment]));
 
       /// Find an existing attachment with message relationship loaded
       Attachment? existing = AttachmentActions.findOne(attachment.guid!);
@@ -97,6 +112,8 @@ class AttachmentActions {
       // Return just the ID for efficient transfer across isolates
       return attachment.id!;
     });
+    moveRekeyedFiles(moves);
+    return id;
   }
 
   static Future<void> bulkSaveAttachmentsAsync(dynamic data) async {
@@ -112,7 +129,7 @@ class AttachmentActions {
 
     /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
     final attachments = map.values.flattened.toList();
-    adoptRekeyedGuids(attachments);
+    moveRekeyedFiles(adoptRekeyedGuids(attachments));
 
     /// find existing attachments using query descriptor
     final guids = attachments.map((e) => e.guid!).toList();

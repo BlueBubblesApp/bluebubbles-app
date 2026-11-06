@@ -235,7 +235,8 @@ class ChatActions {
     final latestMessageData = data['latestMessageData'] as Map<String, dynamic>;
     final checkForMessageText = data['checkForMessageText'] as bool;
 
-    return Database.runInTransaction(TxMode.write, () {
+    final moves = <RekeyedFileMove>[];
+    final result = Database.runInTransaction(TxMode.write, () {
       final messageBox = Database.messages;
       final attachmentBox = Database.attachments;
       final handleBox = Database.handles;
@@ -378,7 +379,7 @@ class ChatActions {
 
           // Process and link attachments if present
           if (inputAttachments.isNotEmpty) {
-            AttachmentActions.adoptRekeyedGuids(inputAttachments);
+            moves.addAll(AttachmentActions.adoptRekeyedGuids(inputAttachments));
             for (final attachment in inputAttachments) {
               // Find existing attachment
               final attachQuery = attachmentBox.query(Attachment_.guid.equals(attachment.guid ?? '')).build();
@@ -428,6 +429,8 @@ class ChatActions {
         'isNewer': isNewerInIsolate,
       };
     });
+    AttachmentActions.moveRekeyedFiles(moves);
+    return result;
   }
 
   static Future<List<int>> loadSupplementalData(dynamic data) async {
