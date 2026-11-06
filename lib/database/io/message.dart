@@ -48,6 +48,7 @@ class Message {
   int? associatedMessagePart;
   String? associatedMessageType;
   // The emoji of an emoji tapback (type 2006/3006), sent by servers that read chat.db's associated_message_emoji
+  @Property(uid: 4673117792989945365)
   String? associatedMessageEmoji;
   String? expressiveSendStyleId;
   Handle? handle;

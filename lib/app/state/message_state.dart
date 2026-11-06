@@ -193,7 +193,7 @@ class MessageState extends StatefulController {
   /// When the message renders as a single bubble ([displayParts] has one entry) every tapback shows on it,
   /// whatever part it targets. Reactive when read inside an Obx (reads [associatedMessages] and [parts]).
   List<Message> tapbacksForBubble(MessagePart part) =>
-      _associatedForBubble(part, ReactionTypes.isTapback);
+      _associatedForBubble(part, (e) => ReactionTypes.isTapbackType(e.associatedMessageType));
 
   /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
   List<Message> stickersForBubble(MessagePart part) =>
@@ -207,7 +207,7 @@ class MessageState extends StatefulController {
 
   /// Tapbacks targeting exactly the raw message-part id [partId] (one attachment inside a collection).
   List<Message> tapbacksForPartId(int partId) => associatedMessages
-      .where((e) => ReactionTypes.isTapback(e) && (e.associatedMessagePart ?? 0) == partId)
+      .where((e) => ReactionTypes.isTapbackType(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
       .toList();
 
   /// Reactive state for the handle that sent this message.

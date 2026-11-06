@@ -81,12 +81,16 @@ class ReactionTypes {
   static bool isRemoval(String? type) =>
       type != null && (type.startsWith("-") || type == REMOVED_EMOJI || type == REMOVED_STICKER);
 
-  /// Emoji tapbacks synced before the client stored the emoji stay hidden until the backfill fills it in.
+  static bool isTapbackType(String? type) =>
+      isEmojiTapback(type) || isStickerTapback(type) || toList().contains(type?.replaceAll("-", ""));
+
+  /// Whether [message] is a tapback we can draw. Emoji tapbacks synced before the client stored the emoji stay hidden
+  /// until the backfill fills it in. Pick each sender's latest with [isTapbackType] first, so a hidden one still
+  /// replaces their earlier tapback.
   static bool isTapback(Message message) {
     final type = message.associatedMessageType;
     if (isEmojiTapback(type)) return message.associatedMessageEmoji?.isNotEmpty ?? false;
-    if (isStickerTapback(type)) return true;
-    return toList().contains(type?.replaceAll("-", ""));
+    return isTapbackType(type);
   }
 
   static String emojiFor(Message message) =>
@@ -116,10 +120,10 @@ List<Message> getUniqueReactionMessages(List<Message> messages) {
     if (!handleCache.contains(cache) && !kIsWeb) {
       handleCache.add(cache);
       // Only add the reaction if it's not a "negative"
-      if (!ReactionTypes.isRemoval(msg.associatedMessageType)) {
+      if (!ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {
         output.add(msg);
       }
-    } else if (kIsWeb && !ReactionTypes.isRemoval(msg.associatedMessageType)) {
+    } else if (kIsWeb && !ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {
       output.add(msg);
     }
   }
