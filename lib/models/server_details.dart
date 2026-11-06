@@ -162,6 +162,11 @@ class ServerDetails {
   /// Read the name and photo someone shared, and share your own with a chat (v1.9.0, Big Sur+).
   bool get supportsNameSharing => _featureCode >= 289 && isMinBigSur;
 
+  /// Ask Messages to scan sent text for links (`ddScan`), so a URL goes out with a preview. 1.x's helper crashes
+  /// Messages scanning on Sonoma and later (Apple Silicon). v2's is only measured on macOS 27; it guards the crash
+  /// 1.x hit (the scan callback's argument order), sending unscanned instead, but 14 to 26 are untested
+  bool get supportsLinkScan => isV2Server || !isMinSonoma;
+
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
 

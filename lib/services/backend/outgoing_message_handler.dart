@@ -785,7 +785,7 @@ class OutgoingMessageHandler {
               effectId: m.expressiveSendStyleId,
               subject: m.subject,
               partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-              ddScan: !SettingsSvc.serverDetails.isMinSonoma && m.text!.hasUrl,
+              ddScan: SettingsSvc.serverDetails.supportsLinkScan && m.text!.hasUrl,
             )
           : SendMessageInterface.sendTapback(
               chatGuid: c.guid,
@@ -867,7 +867,7 @@ class OutgoingMessageHandler {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-        ddScan: !SettingsSvc.serverDetails.isMinSonoma && parts.any((e) => e['text'].toString().hasUrl),
+        ddScan: SettingsSvc.serverDetails.supportsLinkScan && parts.any((e) => e['text'].toString().hasUrl),
       ),
       onSuccess: (data) => _finalizeOutgoingSuccess(c, tempGuid, data),
       onError: (error, stack) => _finalizeOutgoingFailure(
