@@ -384,11 +384,14 @@ extension MessageNotificationExtension on Message {
         }
       }
 
+      // A sticker tapback's sticker is its attachment, but it reads as a reaction
+      final stickerTapback = ReactionTypes.isStickerTapback(associatedMessageType);
+
       // If there are attachments, return the number of attachments
-      if (dbAttachments.isNotEmpty) {
+      if (!stickerTapback && dbAttachments.isNotEmpty) {
         if (isSticker) return "${sender}1 Sticker";
         return "$sender${_getAttachmentText(dbAttachments.toList())}";
-      } else if (hasAttachments) {
+      } else if (!stickerTapback && hasAttachments) {
         // Fallback: message is marked as having attachments but they haven't loaded yet
         // (can happen with outgoing messages before the attachment links are fully persisted)
         return "${sender}Attachment";
@@ -400,8 +403,7 @@ extension MessageNotificationExtension on Message {
         // fetch the associated message object
         Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
         if (associatedMessage != null) {
-          // grab the verb we'll use from the reactionToVerb map
-          String? verb = ReactionTypes.reactionToVerb[associatedMessageType];
+          String? verb = ReactionTypes.verbFor(this);
           // we need to check balloonBundleId first because for some reason
           // game pigeon messages have the text "�"
           if (associatedMessage.isInteractive) {

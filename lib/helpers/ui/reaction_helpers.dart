@@ -26,11 +26,6 @@ class ReactionTypes {
     ];
   }
 
-  /// Whether [associatedMessageType] is a tapback, added or removed ("-love" counts). False for stickers
-  /// and other associated-message kinds.
-  static bool isTapback(String? associatedMessageType) =>
-      toList().contains(associatedMessageType?.replaceAll("-", ""));
-
   static final Map<String, String> reactionToVerb = {
     LOVE: "loved",
     LIKE: "liked",
@@ -63,6 +58,53 @@ class ReactionTypes {
     "❗": EMPHASIZE,
     "❓": QUESTION,
   };
+
+  // Servers send these as IMCore's raw type ids, with the emoji in associatedMessageEmoji
+  // ignore: non_constant_identifier_names
+  static const String EMOJI = "2006";
+  // ignore: non_constant_identifier_names
+  static const String REMOVED_EMOJI = "3006";
+
+  // The sticker is the tapback message's attachment
+  // ignore: non_constant_identifier_names
+  static const String STICKER = "2007";
+  // ignore: non_constant_identifier_names
+  static const String REMOVED_STICKER = "3007";
+
+  static bool isEmojiTapback(String? type) => type == EMOJI || type == REMOVED_EMOJI;
+
+  /// What `/message/react` takes for [type]: emoji tapbacks are `emoji` / `-emoji` with the emoji sent beside it.
+  static String wireReaction(String type) => !isEmojiTapback(type) ? type : (type == EMOJI ? "emoji" : "-emoji");
+
+  static bool isStickerTapback(String? type) => type == STICKER || type == REMOVED_STICKER;
+
+  static bool isRemoval(String? type) =>
+      type != null && (type.startsWith("-") || type == REMOVED_EMOJI || type == REMOVED_STICKER);
+
+  static bool isTapbackType(String? type) =>
+      isEmojiTapback(type) || isStickerTapback(type) || toList().contains(type?.replaceAll("-", ""));
+
+  /// Whether [message] is a tapback we can draw. Emoji tapbacks synced before the client stored the emoji stay hidden
+  /// until the backfill fills it in. Pick each sender's latest with [isTapbackType] first, so a hidden one still
+  /// replaces their earlier tapback.
+  static bool isTapback(Message message) {
+    final type = message.associatedMessageType;
+    if (isEmojiTapback(type)) return message.associatedMessageEmoji?.isNotEmpty ?? false;
+    return isTapbackType(type);
+  }
+
+  static String emojiFor(Message message) =>
+      message.associatedMessageEmoji ?? reactionToEmoji[message.associatedMessageType] ?? "X";
+
+  static String? verbFor(Message message) {
+    final type = message.associatedMessageType;
+    if (isStickerTapback(type)) return type == STICKER ? "reacted with a sticker to" : "removed a sticker from";
+    if (!isEmojiTapback(type)) return reactionToVerb[type];
+    // Synced before the server sent the emoji; the backfill fills it in
+    final emoji = message.associatedMessageEmoji;
+    if (emoji == null) return type == EMOJI ? "reacted to" : "removed a reaction from";
+    return type == EMOJI ? "reacted $emoji to" : "removed $emoji from";
+  }
 }
 
 List<Message> getUniqueReactionMessages(List<Message> messages) {
@@ -78,10 +120,10 @@ List<Message> getUniqueReactionMessages(List<Message> messages) {
     if (!handleCache.contains(cache) && !kIsWeb) {
       handleCache.add(cache);
       // Only add the reaction if it's not a "negative"
-      if (!msg.associatedMessageType!.startsWith("-")) {
+      if (!ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {
         output.add(msg);
       }
-    } else if (kIsWeb && !msg.associatedMessageType!.startsWith("-")) {
+    } else if (kIsWeb && !ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {
       output.add(msg);
     }
   }

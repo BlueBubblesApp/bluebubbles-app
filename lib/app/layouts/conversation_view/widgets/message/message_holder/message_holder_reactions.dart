@@ -91,7 +91,7 @@ class ReactionSpacing extends StatelessWidget {
       final state = MessageStateScope.of(context);
       // Reads associatedMessages, so this rebuilds when tapbacks change. Collapsed collection spans are
       // matched via MessagePart.coversPartId.
-      if (state.tapbacksForBubble(part).isNotEmpty) {
+      if (state.hasVisibleTapbacks(part)) {
         return const SizedBox(height: 12.5);
       }
 

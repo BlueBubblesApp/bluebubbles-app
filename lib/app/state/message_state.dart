@@ -193,7 +193,11 @@ class MessageState extends StatefulController {
   /// When the message renders as a single bubble ([displayParts] has one entry) every tapback shows on it,
   /// whatever part it targets. Reactive when read inside an Obx (reads [associatedMessages] and [parts]).
   List<Message> tapbacksForBubble(MessagePart part) =>
-      _associatedForBubble(part, (e) => ReactionTypes.isTapback(e.associatedMessageType));
+      _associatedForBubble(part, (e) => ReactionTypes.isTapbackType(e.associatedMessageType));
+
+  /// Whether [part]'s bubble draws any tapback: each sender's latest, minus removals and emoji tapbacks still waiting
+  /// on their emoji. Layout that makes room for the tapback row should read this, not [tapbacksForBubble].
+  bool hasVisibleTapbacks(MessagePart part) => getUniqueReactionMessages(tapbacksForBubble(part)).isNotEmpty;
 
   /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
   List<Message> stickersForBubble(MessagePart part) =>
@@ -207,7 +211,7 @@ class MessageState extends StatefulController {
 
   /// Tapbacks targeting exactly the raw message-part id [partId] (one attachment inside a collection).
   List<Message> tapbacksForPartId(int partId) => associatedMessages
-      .where((e) => ReactionTypes.isTapback(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
+      .where((e) => ReactionTypes.isTapbackType(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
       .toList();
 
   /// Reactive state for the handle that sent this message.
@@ -688,6 +692,8 @@ class MessageState extends StatefulController {
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
     message.balloonBundleId = updatedMessage.balloonBundleId;
+    // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
+    message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
     message.dateDeleted = updatedMessage.dateDeleted;
     message.metadata = updatedMessage.metadata;
