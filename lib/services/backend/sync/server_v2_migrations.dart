@@ -75,10 +75,16 @@ class ServerV2Migrations {
               ?.addAssociatedMessageInternal(current);
         }
       } catch (e, s) {
-        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        if (_isNotFound(e)) continue;
+        if (_isConnectionFailure(e)) {
+          // Every later request would fail the same way; the next launch retries the rest
+          Logger.warn("Stopped backfilling sticker placements: couldn't reach the server",
+              error: e, trace: s, tag: "ServerV2Migrations");
+          return null;
+        }
+        // Only this message: skip it rather than let it block the rest on every launch
         Logger.warn("Failed to backfill the placement of sticker ${sticker.guid}",
             error: e, trace: s, tag: "ServerV2Migrations");
-        return null;
       }
     }
     return filled;
