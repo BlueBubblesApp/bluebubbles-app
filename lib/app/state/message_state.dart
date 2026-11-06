@@ -195,6 +195,10 @@ class MessageState extends StatefulController {
   List<Message> tapbacksForBubble(MessagePart part) =>
       _associatedForBubble(part, (e) => ReactionTypes.isTapbackType(e.associatedMessageType));
 
+  /// Whether [part]'s bubble draws any tapback: each sender's latest, minus removals and emoji tapbacks still waiting
+  /// on their emoji. Layout that makes room for the tapback row should read this, not [tapbacksForBubble].
+  bool hasVisibleTapbacks(MessagePart part) => getUniqueReactionMessages(tapbacksForBubble(part)).isNotEmpty;
+
   /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
   List<Message> stickersForBubble(MessagePart part) =>
       _associatedForBubble(part, (e) => e.associatedMessageType == "sticker");
