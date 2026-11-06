@@ -187,8 +187,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     });
   }
 
-  /// How many actions fit under the message on iOS, keeping the picker clear of the reaction details pinned at
-  /// the top. The rest go under "More...".
+  /// How many actions fit under the message on iOS without covering the reaction details; the rest go under "More...".
   void _fitMenu() {
     final childHeight = _measuredChildHeight ?? widget.size.height;
     final detailsHeight = reactions.isEmpty ? 0.0 : _detailsKey.currentContext?.size?.height ?? 0;
@@ -241,9 +240,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   }
 
 
-  // Drawn like the emoji in reaction bubbles (ReactionWidget._customGlyph), which centre correctly: a 1em line
-  // box scaled to fill a fixed box (what the iOS circle leaves inside the emoji padding; Material items have no
-  // fixed size of their own). 26 rather than the icons' 22 so the glyph reads the same size as them.
+  // Drawn like ReactionWidget._customGlyph, which centres emoji correctly. 26, not the icons' 22, so they read the same
   Widget _emojiTapbackGlyph(String emoji) => SizedBox.square(
         dimension: 26,
         child: FittedBox(
@@ -253,8 +250,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
         ),
       );
 
-  /// Fades the row's first and last few pixels, so an item scrolled half out of view fades rather than being cut.
-  /// Narrow enough that a fully visible item's glyph, 11 in from its edge, is untouched.
+  /// Fades the row's edges, so an item scrolled half out of view fades rather than being cut.
   Widget _fadeScrollEdges(Widget child) => ShaderMask(
         blendMode: BlendMode.dstIn,
         shaderCallback: (bounds) {
@@ -290,8 +286,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   Color _tapbackPanelColor(BuildContext context) =>
       context.theme.colorScheme.surfaceContainerHighest.withAlpha(iOS ? 150 : 255).lightenOrDarken(iOS ? 0 : 10);
 
-  // On iOS the "shadow" is the panel's own translucent colour laid under it, which is what gives the panel its
-  // density; anything meant to match the panel needs it too
+  // On iOS this "shadow" is the panel's own colour laid under it, which gives it its density
   Shadow _tapbackPanelShadow(BuildContext context) => iOS
       ? BoxShadow(color: _tapbackPanelColor(context))
       : BoxShadow(color: context.theme.colorScheme.shadow, blurRadius: 2);
@@ -361,18 +356,13 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     // overall screen width. widget.childPosition.dx already reflects any avatar space the bubble
     // was pushed past, so no avatar/group special-casing is needed here.
     final double screenWidth = NavigationSvc.width(widthContext);
-    // childPosition is in this popup's own coordinates: the whole window on iOS (opened over everything, so the
-    // chat list isn't subtracted), the conversation pane elsewhere. Measure a received message's room against
-    // that, not the pane width, or the chat list's width is lost.
+    // childPosition is relative to the whole window on iOS and to the conversation pane elsewhere
     final double popupWidth = iOS ? context.width : screenWidth;
     final double reactionPickerAvailableWidth = message.isFromMe!
         ? screenWidth - _edgeMargin - _edgeMargin
         : popupWidth - (widget.childPosition.dx + 10) - _edgeMargin;
     final double reactionItemWidth = iOS ? 45.0 : 44.0; // icon/emoji + its fixed padding, see item build below
-    // + container padding
-    // Emoji tapbacks need the v2 server's emoji field and Messages on macOS 15. Like Messages, the six tapbacks
-    // are followed by your current emoji (tap to take it back) and recent ones, all in one row that scrolls
-    // sideways, with a button underneath that opens the full picker.
+    // Emoji tapbacks need a v2 server and macOS 15. As in Messages: one scrolling row of tapbacks, yours, then recents
     final emojiTapbacks = _emojiTapbacksSupported;
     final ownEmoji = selfReaction == ReactionTypes.EMOJI ? selfEmoji : null;
     final tapbackItems = [
@@ -633,8 +623,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                               }).toList(),
                                             );
                                             if (!emojiTapbacks) return row;
-                                            // About 7.5 items wide at most, so the half item at the scroll edge shows
-                                            // it scrolls; the add circle beside the panel needs room on screen too
+                                            // At most about 7.5 items, so the half item shows the row scrolls
                                             return ConstrainedBox(
                                               constraints: BoxConstraints(
                                                   maxWidth: max(

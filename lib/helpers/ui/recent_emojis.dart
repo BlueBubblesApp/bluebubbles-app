@@ -3,8 +3,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emoji_picker;
 import 'package:flutter/widgets.dart';
 
-/// The emoji pickers' typed-emoji recents (emoji_picker_flutter's own list in prefs), fed from outside the pickers
-/// too: emoji typed or pasted into a sent message. Tapbacks keep their own list (PrefsSvc.messaging).
+/// The emoji pickers' recents, also fed by emoji in sent messages. Tapbacks keep their own (PrefsSvc.messaging).
 class RecentEmojis {
   // From the set the composer's picker shows, so an emoji added here keeps the name its search matches on
   static final Map<String, emoji_picker.Emoji> _byChar = {

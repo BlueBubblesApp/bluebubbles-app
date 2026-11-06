@@ -30,17 +30,13 @@ class SharedPreferencesMessagingActions {
 
   SharedPreferencesMessagingActions(this.service);
 
-  /// Emoji used as tapbacks: those used in [chatGuid] first, then the rest of everywhere. Each list is ordered most
-  /// used first, and of equal use the most recent first. Kept apart from the emoji pickers' recents, which are what
-  /// people type: the two sets tend to differ.
+  /// Tapback emoji used in [chatGuid], then everywhere else, each most used first and ties most recent first.
   List<String> getRecentTapbackEmojis({required String chatGuid}) => {
         ..._tapbackEmojiUsage(_chatTapbackEmojiKey(chatGuid)).map((u) => u.emoji),
         ..._tapbackEmojiUsage(_tapbackEmojiUsageKey).map((u) => u.emoji),
       }.toList();
 
-  /// Counts a use of [emoji] in [chatGuid] and overall. A full list drops its least used, longest unused emoji, so
-  /// a new one isn't pushed out by its own low count. The two lists evict independently: an emoji kept for one
-  /// chat survives churn everywhere else.
+  /// Counts a use of [emoji] in [chatGuid] and overall. A full list drops its least used, longest unused emoji.
   Future<void> addRecentTapbackEmoji(String emoji, {required String chatGuid}) async {
     await _countTapbackEmoji(_tapbackEmojiUsageKey, emoji, _tapbackEmojiLimit);
     await _countTapbackEmoji(_chatTapbackEmojiKey(chatGuid), emoji, _chatTapbackEmojiLimit);
