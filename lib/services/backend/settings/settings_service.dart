@@ -328,8 +328,6 @@ class SettingsService {
   /// Returns the current cached [ServerDetails].
   ServerDetails get serverDetails => _serverDetails.value;
 
-  Stream<ServerDetails> get serverDetailsChanges => _serverDetails.stream;
-
   /// Group chats can be created on macOS <= Catalina or
   /// if the Private API is enabled, and the server supports it (v1.8.0).
   bool canCreateGroupChat() {

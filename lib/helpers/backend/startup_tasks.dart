@@ -603,8 +603,7 @@ class StartupTasks {
       }
 
       SocketSvc.restartSocket();
-    } else if (kIsDesktop && GetIt.I.isRegistered<SocketService>() && SettingsSvc.serverDetails.isV1Server) {
-      // Not on v2: with no heartbeat to send, checking means rebuilding the socket (and an onConnect) on every focus
+    } else if (kIsDesktop && GetIt.I.isRegistered<SocketService>()) {
       SocketSvc.checkConnection();
     }
 
