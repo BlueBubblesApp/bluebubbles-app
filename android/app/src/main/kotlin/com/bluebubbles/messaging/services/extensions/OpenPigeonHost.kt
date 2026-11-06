@@ -74,7 +74,7 @@ object OpenPigeonHost {
                     "open" -> {
                         val args = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
                         val message = madridMessage(args)
-                        val handle = messageHandle(args["chatGuid"] as? String ?: "")
+                        val handle = messageHandle(args["chatGuid"] as? String ?: "", args["balloonBundleId"] as? String)
                         val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
                         // Answered once OpenPigeon has taken it, so Dart can say when the game didn't open
                         withExtension(app, {
@@ -242,11 +242,18 @@ object OpenPigeonHost {
 
     // Needs the activity's Dart engine alive; a turn played after the app was killed is left
     // to OpenPigeon's own retry.
-    private fun send(chatGuid: String, message: MadridMessage, fromKeyboard: Boolean, done: () -> Unit = {}) {
+    private fun send(
+        chatGuid: String,
+        message: MadridMessage,
+        fromKeyboard: Boolean,
+        balloonBundleId: String? = null,
+        done: () -> Unit = {},
+    ) {
         main.post {
             val args = mapOf(
                 "chatGuid" to chatGuid,
                 "fromKeyboard" to fromKeyboard,
+                "balloonBundleId" to balloonBundleId,
                 "url" to message.url,
                 "session" to message.session,
                 "ldText" to message.ldText,
@@ -274,10 +281,11 @@ object OpenPigeonHost {
 
     /// Where OpenPigeon sends a game's turns. It keeps the handle on its session and uses it from the game activity,
     /// so it can't depend on any view.
-    private fun messageHandle(chatGuid: String) = object : IMessageViewHandle.Stub() {
+    /// [balloonBundleId] is the opened game's own, so its turns go out under the id the session was started with.
+    private fun messageHandle(chatGuid: String, balloonBundleId: String?) = object : IMessageViewHandle.Stub() {
         override fun updateMessage(message: MadridMessage?, callback: ITaskCompleteCallback?) {
             if (message == null) return
-            send(chatGuid, message, fromKeyboard = false) {
+            send(chatGuid, message, fromKeyboard = false, balloonBundleId = balloonBundleId) {
                 try {
                     callback?.complete()
                 } catch (e: Exception) {

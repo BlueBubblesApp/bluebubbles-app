@@ -160,11 +160,13 @@ class OpenPigeon {
     final guid = message.guid!;
     final app = message.payloadData?.appData?.firstOrNull;
     if (app?.url != null && app?.sessionId != null) {
-      return Future.value(_madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
+      return Future.value(
+          _madrid(guid, message.balloonBundleId, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
     }
     return _payloads[guid] ??= HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
       final data = response.data['data'] as Map<String, dynamic>;
-      return _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']);
+      return _madrid(
+          guid, message.balloonBundleId, data['url'], data['session_id'], data['summary'], data['caption']);
     }).catchError((Object e) {
       Logger.warn('Could not load OpenPigeon payload for $guid', error: e, tag: 'OpenPigeon');
       _payloads.remove(guid);
@@ -243,7 +245,7 @@ class OpenPigeon {
         dateCreated: DateTime.now(),
         isFromMe: true,
         handleId: 0,
-        balloonBundleId: balloonBundleId,
+        balloonBundleId: _gameBundleId(game['balloonBundleId']),
         hasAttachments: gameImage(game) != null,
         payloadData: PayloadData(type: PayloadType.app, appData: [
           iMessageAppData(
@@ -255,6 +257,13 @@ class OpenPigeon {
           ),
         ]),
       );
+
+  /// The extension's own part of [balloonBundleId], the same whichever developer team id precedes it.
+  static final _extensionSuffix = balloonBundleId.substring(balloonBundleId.lastIndexOf(':'));
+
+  /// The balloon id a turn goes out under: the one its game was opened from, so the server threads it into that
+  /// session (it matches the id exactly), or GamePigeon's current one for a new game.
+  static String _gameBundleId(Object? id) => id is String && id.endsWith(_extensionSuffix) ? id : balloonBundleId;
 
   /// The picture OpenPigeon drew for [game], if it sent one.
   static Uint8List? gameImage(Map<String, dynamic> game) {
@@ -275,10 +284,21 @@ class OpenPigeon {
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
   /// server reports `NSUUID`'s uppercase.
-  static Map<String, dynamic>? _madrid(String guid, Object? url, Object? session, Object? ldText, Object? caption) {
+  ///
+  /// `balloonBundleId` isn't a Madrid field: it rides along so a game opened from [guid] sends its turns under the id
+  /// its session started with.
+  static Map<String, dynamic>? _madrid(
+    String guid,
+    String? bundleId,
+    Object? url,
+    Object? session,
+    Object? ldText,
+    Object? caption,
+  ) {
     if (url is! String || url.isEmpty) return null;
     return {
       'messageGuid': guid,
+      'balloonBundleId': bundleId,
       'url': url,
       'session': _string(session)?.toLowerCase(),
       'ldText': _string(ldText),
