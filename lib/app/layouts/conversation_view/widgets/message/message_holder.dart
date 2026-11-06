@@ -202,7 +202,8 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
         // Read so a game turn collapses when an update marks it replaced
         controller.associatedMessageType.value;
         if (!widget.isReplyThread && OpenPigeon.isEarlierTurn(message)) {
-          if (isFromMe) return const SizedBox.shrink();
+          // Hidden, but the next message's time is measured against this one, so it keeps any separator it starts
+          if (isFromMe) return TimestampSeparator(olderMessage: olderMessage);
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
