@@ -10,9 +10,13 @@ class StickerHolder extends StatefulWidget {
     required this.controller,
     this.placed = false,
     this.hidden = false,
+    this.isFromMe = false,
   });
   final Iterable<Message> stickerMessages;
   final ConversationViewController controller;
+
+  /// Which side of the parent bubble its tail is on
+  final bool isFromMe;
 
   /// Draw each sticker where its sender put it, relative to the parent bubble this fills
   final bool placed;
@@ -96,7 +100,9 @@ class _StickerHolderState extends State<StickerHolder> {
   // size. Not clamped: senders can hang a sticker off any edge.
   Widget _buildPlaced() {
     return LayoutBuilder(builder: (context, constraints) {
-      final width = constraints.maxWidth;
+      // The bubble's body: not the gutter its tail draws in (see TailClipper), and inset a little on the other side
+      final left = widget.isFromMe ? _bodyInset : _tailGutter;
+      final width = constraints.maxWidth - _tailGutter - _bodyInset;
       final height = constraints.maxHeight;
       return Stack(
         clipBehavior: Clip.none,
@@ -104,7 +110,7 @@ class _StickerHolderState extends State<StickerHolder> {
           final p = attachment.stickerPlacement!;
           double v(String key) => (p[key] as num).toDouble();
           return Positioned(
-            left: v('xScalar') * width,
+            left: left + v('xScalar') * width,
             top: v('yScalar') * height,
             child: FractionalTranslation(
               translation: const Offset(-0.5, -0.5),
@@ -126,6 +132,12 @@ class _StickerHolderState extends State<StickerHolder> {
 
   /// Pixels per point of a sticker image at scale 1, as Messages draws it on an iPhone
   static const double _stickerPixelRatio = 3;
+
+  /// Width [TailClipper] keeps for the tail on that side of every bubble
+  static const double _tailGutter = 10;
+
+  /// Matched by eye against an iPhone's placement of the same stickers
+  static const double _bodyInset = 4;
 
   Widget _image(Attachment attachment, [FilterQuality quality = FilterQuality.none, double scale = 1]) => Image.file(
         File(attachment.path),

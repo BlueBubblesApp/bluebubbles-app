@@ -77,6 +77,7 @@ class StickerObserver extends StatelessWidget {
         controller: cvController,
         placed: placed,
         hidden: state.showingPopup.value,
+        isFromMe: state.message.isFromMe ?? false,
       );
       return placed ? Positioned.fill(child: holder) : holder;
     });
