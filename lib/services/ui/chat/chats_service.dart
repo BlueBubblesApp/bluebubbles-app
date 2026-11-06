@@ -11,6 +11,7 @@ import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
+import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -1107,9 +1108,16 @@ class ChatsService {
       messageIds: messages.map((e) => e.id!).toList(),
       handleIds: handleIds,
     );
+    await _clearChatPrefs(chat.guid);
 
     // Remove from service state
     removeChat(chat);
+  }
+
+  /// Forgets the prefs kept for [chatGuid]: its tapback emoji, its saved reply and being the chat to reopen.
+  Future<void> _clearChatPrefs(String chatGuid) async {
+    await PrefsSvc.messaging.clearChat(chatGuid);
+    await PrefsInterface.saveReplyToMessageState(chatGuid, null, null);
   }
 
   /// Performs a full messaging reset: wipes all Messages, Attachments, Chats,
@@ -1140,6 +1148,9 @@ class ChatsService {
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
     }
+    // By key, so chats that were never loaded (or were deleted before their prefs were cleared) go too
+    await PrefsSvc.messaging.clearAllChats();
+    await PrefsInterface.clearAllReplyToMessageStates();
     HandleSvc.reset();
 
     // Use init() rather than reset() so the empty-database case is handled
@@ -1166,6 +1177,11 @@ class ChatsService {
     // Perform the actual DB soft delete
     await ChatInterface.softDeleteChat(chatData: chat.toMap());
     chat.clearTranscript();
+    // The DB row's draft is cleared, but this object can be reused if the chat comes back
+    chat.textFieldText = null;
+    chat.textFieldAttachments = [];
+    // Its transcript is gone, so what was kept for it goes too
+    await _clearChatPrefs(chat.guid);
 
     // Propagate dateDeleted to ChatState before removing it so any live
     // listeners (e.g. ConversationTileController) can react reactively.

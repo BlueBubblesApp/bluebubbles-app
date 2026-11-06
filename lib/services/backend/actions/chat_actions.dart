@@ -196,6 +196,9 @@ class ChatActions {
       if (dbChat != null) {
         dbChat.dateDeleted = DateTime.now().toUtc();
         dbChat.hasUnreadMessage = false;
+        // The row stays, so its draft would come back with the chat
+        dbChat.textFieldText = null;
+        dbChat.textFieldAttachments = [];
         chatBox.put(dbChat);
       }
     });

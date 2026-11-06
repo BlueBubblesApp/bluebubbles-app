@@ -21,6 +21,14 @@ class PrefsInterface {
     }
   }
 
+  static Future<void> clearAllReplyToMessageStates() async {
+    if (isIsolate) {
+      return await PrefsActions.clearAllReplyToMessageStates(null);
+    } else {
+      return await GetIt.I<GlobalIsolate>().send<void>(IsolateRequestType.clearAllReplyToMessageStates);
+    }
+  }
+
   static Future<Map<String, dynamic>?> loadReplyToMessageState(String chatGuid) async {
     final data = {
       'chatGuid': chatGuid,
