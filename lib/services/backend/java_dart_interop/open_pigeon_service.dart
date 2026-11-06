@@ -8,6 +8,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -201,8 +202,7 @@ class OpenPigeon {
       Logger.warn("Ignoring an OpenPigeon turn for a chat that isn't saved", tag: 'OpenPigeon');
       return false;
     }
-    await sendGame(chat, args);
-    return true;
+    return await sendGame(chat, args);
   }
 
   /// Opens the game [payload] (from [payloadFor]) belongs to.
@@ -218,25 +218,65 @@ class OpenPigeon {
   }
 
   /// Queues an OpenPigeon message ([game] holds its `url`, `session`, `ldText`, `caption` and `imageBase64`) in
-  /// [chat], drawn at once like any other send.
-  static Future<void> sendGame(Chat chat, Map<String, dynamic> game) async {
+  /// [chat], drawn at once like any other send. False, after telling the user, when its picture is one the server
+  /// would refuse, so it isn't queued only to fail on every retry.
+  static Future<bool> sendGame(Chat chat, Map<String, dynamic> game) async {
+    var image = gameImage(game);
+    if (image != null && image.length > _maxImageBytes) image = await _shrink(image);
+    final type = image == null ? null : _imageType(image);
+    if (image != null && (type == null || image.length > _maxImageBytes)) {
+      Logger.warn("Not sending a game whose picture the server won't take (${image.length} bytes)",
+          tag: 'OpenPigeon');
+      showSnackbar("Error", "This game's picture can't be sent", type: SnackbarType.error);
+      return false;
+    }
     final message = gameMessage(game)..generateTempGuid();
-    final image = gameImage(game);
     await OutgoingMsgHandler.queue(OutgoingAppMessage(
       chat: chat,
       message: message,
-      attachment: image == null
+      attachment: image == null || type == null
           ? null
           : Attachment(
               guid: message.guid,
               isOutgoing: true,
-              mimeType: 'image/jpeg',
-              uti: 'public.jpeg',
-              transferName: 'game.jpg',
+              mimeType: type.mimeType,
+              uti: type.uti,
+              transferName: 'game.${type.extension}',
               totalBytes: image.length,
               bytes: image,
             ),
     ));
+    return true;
+  }
+
+  /// The most a balloon's picture may be, as the server caps it (`AppPreviewImage.maximumBytes`).
+  static const _maxImageBytes = 4 * 1024 * 1024;
+
+  /// [image] re-encoded as a smaller JPEG, or unchanged if it can't be.
+  static Future<Uint8List> _shrink(Uint8List image) async {
+    try {
+      return await FlutterImageCompress.compressWithList(image, minWidth: 1280, minHeight: 1280, quality: 80);
+    } catch (e) {
+      Logger.warn('Could not shrink a game picture', error: e, tag: 'OpenPigeon');
+      return image;
+    }
+  }
+
+  /// [bytes]' type, read from the bytes themselves as the server does: JPEG, PNG or HEIC, the three it accepts.
+  static ({String mimeType, String uti, String extension})? _imageType(Uint8List bytes) {
+    bool startsWith(List<int> magic, [int offset = 0]) =>
+        bytes.length >= offset + magic.length && magic.indexed.every((e) => bytes[offset + e.$1] == e.$2);
+    if (startsWith(const [0xFF, 0xD8, 0xFF])) return (mimeType: 'image/jpeg', uti: 'public.jpeg', extension: 'jpg');
+    if (startsWith(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+      return (mimeType: 'image/png', uti: 'public.png', extension: 'png');
+    }
+    // An ISO base-media `ftyp` box naming a HEIF brand
+    if (bytes.length >= 12 &&
+        startsWith(ascii.encode('ftyp'), 4) &&
+        const ['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1'].contains(String.fromCharCodes(bytes.sublist(8, 12)))) {
+      return (mimeType: 'image/heic', uti: 'public.heic', extension: 'heic');
+    }
+    return null;
   }
 
   /// The message [game] becomes once sent, so it can be drawn the same way before then.
