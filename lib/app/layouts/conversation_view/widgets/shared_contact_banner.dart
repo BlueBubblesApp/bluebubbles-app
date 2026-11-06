@@ -11,9 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:get/get.dart';
 
-/// Messages' name and photo sharing: offers to add people who aren't contacts with the name and photo they shared,
-/// to update a contact's photo when they share a new one (Android), and to share yours. A shared name is only ever a
-/// suggestion, never used as the person's display name.
+/// Messages' name and photo sharing: offers to add or update contacts from what people shared, and to share yours.
+/// A shared name is only a suggestion, never a display name.
 class SharedContactBanner extends StatefulWidget {
   const SharedContactBanner({super.key, required this.chat});
 
