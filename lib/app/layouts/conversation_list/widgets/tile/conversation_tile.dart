@@ -227,10 +227,11 @@ class ChatSubtitle extends CustomStateful<ConversationTileController> {
 class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTileController> {
   // previewInlineAttachments can hit the DB, so it runs once per subtitle rather than on every rebuild
   String? _cachedInlineKey;
-  List<Attachment> _cachedInline = const [];
+  List<Attachment?> _cachedInline = const [];
 
-  List<Attachment> _inlineAttachments(Message? message, String subtitle) {
-    final key = "${message?.guid}|$subtitle";
+  List<Attachment?> _inlineAttachments(Message? message, String subtitle) {
+    // The attachment count too: a Genmoji linked after the first build doesn't change the subtitle
+    final key = "${message?.guid}|${message?.dbAttachments.length}|$subtitle";
     if (_cachedInlineKey != key) {
       _cachedInlineKey = key;
       _cachedInline = message?.previewInlineAttachments ?? const [];
@@ -294,7 +295,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         final spans = MessageHelper.buildEmojiText("${!iOS && isFromMe ? "You: " : ""}$_subtitle", style);
         final inline = _subtitle.contains(objectReplacementChar)
             ? _inlineAttachments(latestMessage, _subtitle)
-            : const <Attachment>[];
+            : const <Attachment?>[];
         subtitleSpan = TextSpan(children: inline.isEmpty ? spans : withInlineAttachments(spans, inline, style));
       }
 

@@ -241,12 +241,16 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     });
   }
 
+  /// [message]'s attachments to preview. Genmoji drawn inside the text read as that text, so they aren't any.
+  List<Attachment> _previewAttachments(Message message) {
+    final inline = message.inlineAttachmentGuids;
+    return AttachmentPreview.attachmentsFor(message, chatGuid: chat.guid)
+        .where((a) => !inline.contains(a.guid))
+        .toList();
+  }
+
   /// In-memory "1 Photo" text from [attachments] when the cached subtitle is
   /// the empty-relation fallback ("Attachment").
-  // A Genmoji message reads as its text, so its Genmoji aren't previews
-  List<Attachment> _previewAttachments(Message message) =>
-      message.inlineAttachments.isNotEmpty ? const [] : AttachmentPreview.attachmentsFor(message, chatGuid: chat.guid);
-
   String? _attachmentLabel(List<Attachment> attachments, Message? lastMessage) {
     if (attachments.isEmpty) return null;
     final msg = Message(

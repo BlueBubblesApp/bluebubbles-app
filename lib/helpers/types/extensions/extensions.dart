@@ -347,27 +347,43 @@ extension RandomListChoice<E> on List<E> {
 }
 
 extension MessageNotificationExtension on Message {
-  /// The Genmoji drawn inside [part]'s text (every part's when null), in the order their U+FFFC placeholders appear.
-  List<Attachment> inlineAttachmentsIn([int? part]) {
+  /// The guids of the Genmoji drawn inside their part's text.
+  Set<String?> get inlineAttachmentGuids =>
+      attributedBody.firstOrNull?.inlineRuns.map((r) => r.attributes!.attachmentGuid).toSet() ?? const {};
+
+  /// The Genmoji drawn inside [part]'s text (every part's when null), one per U+FFFC placeholder in their order. One
+  /// that isn't loaded is null, so the ones after it keep their places.
+  List<Attachment?> inlineAttachmentsIn([int? part]) {
     final body = attributedBody.firstOrNull;
-    if (body == null || dbAttachments.isEmpty) return const [];
+    if (body == null) return const [];
     final byGuid = {for (final a in dbAttachments) a.guid: a};
     return body.inlineRuns
         .where((r) => part == null || r.attributes?.messagePart == part)
         .sorted((a, b) => a.range.first.compareTo(b.range.first))
         .map((r) => byGuid[r.attributes!.attachmentGuid])
-        .whereType<Attachment>()
         .toList();
   }
 
   /// [inlineAttachmentsIn] every part, or empty unless every attachment is one.
-  List<Attachment> get inlineAttachments {
-    final inline = inlineAttachmentsIn();
-    return inline.length == dbAttachments.length ? inline : const [];
+  List<Attachment?> get inlineAttachments {
+    final body = attributedBody.firstOrNull;
+    if (body == null || dbAttachments.isEmpty) return const [];
+    final guids = inlineAttachmentGuids;
+    // Every U+FFFC in the text must be a Genmoji, or the placeholders wouldn't line up with them
+    final onlyInline = dbAttachments.every((a) => guids.contains(a.guid)) &&
+        body.runs.where((r) => r.isAttachment).every((r) => guids.contains(r.attributes!.attachmentGuid));
+    return onlyInline ? inlineAttachmentsIn() : const [];
+  }
+
+  /// The attachments a preview counts and shows: all but the Genmoji drawn inside the text, unless that's all of them.
+  List<Attachment> get nonInlineAttachments {
+    final guids = inlineAttachmentGuids;
+    final rest = dbAttachments.where((a) => !guids.contains(a.guid)).toList();
+    return rest.isEmpty ? dbAttachments.toList() : rest;
   }
 
   /// The Genmoji a preview of this message draws: its own, or a tapback's reacted part's. Hits the DB for tapbacks.
-  List<Attachment> get previewInlineAttachments {
+  List<Attachment?> get previewInlineAttachments {
     final own = inlineAttachments;
     if (own.isNotEmpty || associatedMessageGuid == null) return own;
     final reacted = Message.findOne(guid: associatedMessageGuid);
@@ -445,7 +461,7 @@ extension MessageNotificationExtension on Message {
       // If there are attachments, return the number of attachments
       if (!stickerTapback && dbAttachments.isNotEmpty) {
         if (isSticker) return "${sender}1 Sticker";
-        return "$sender${_getAttachmentText(dbAttachments.toList())}";
+        return "$sender${_getAttachmentText(nonInlineAttachments)}";
       } else if (!stickerTapback && hasAttachments) {
         // Fallback: message is marked as having attachments but they haven't loaded yet
         // (can happen with outgoing messages before the attachment links are fully persisted)
@@ -506,7 +522,7 @@ extension MessageNotificationExtension on Message {
             if (messageText == null) {
               if (associatedMessage.hasAttachments) {
                 attachment = true;
-                messageText = _getAttachmentText(associatedMessage.dbAttachments.toList());
+                messageText = _getAttachmentText(associatedMessage.nonInlineAttachments);
               } else {
                 messageText = (associatedMessage.subject ?? "") +
                     (!isNullOrEmpty(associatedMessage.subject?.trim()) ? "\n" : "") +
