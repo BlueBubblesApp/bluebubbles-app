@@ -75,13 +75,12 @@ object OpenPigeonHost {
                     "snapshot" -> {
                         val args = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
                         val message = madridMessage(args)
-                        val handle = messageHandle(args["chatGuid"] as? String ?: "")
                         val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
                         val density = app.resources.displayMetrics.density
                         val width = ((args["width"] as? Number)?.toDouble() ?: 0.0).times(density).toInt()
                         val maxHeight = ((args["maxHeight"] as? Number)?.toDouble() ?: 0.0).times(density).toInt()
                         withExtension(app, { main.post { result.success(null) } }) {
-                            val views = it.getLiveView(ignoredViewUpdates, message, handle, userCount)
+                            val views = it.getLiveView(ignoredViewUpdates, message, inertHandle, userCount)
                             main.post { result.success(views?.let { v -> render(app, v, width, maxHeight) }) }
                         }
                     }
@@ -95,6 +94,18 @@ object OpenPigeonHost {
     /// A snapshot is taken once, so later updates to its view are dropped.
     private val ignoredViewUpdates = object : IViewUpdateCallback.Stub() {
         override fun updateView(views: RemoteViews?) {}
+    }
+
+    /// The handle a snapshot's live view gets. Drawing a bubble is not the user playing, so nothing sent through it
+    /// goes out; only a game the user opened gets a handle that sends.
+    private val inertHandle = object : IMessageViewHandle.Stub() {
+        override fun updateMessage(message: MadridMessage?, callback: ITaskCompleteCallback?) {
+            Log.w(TAG, "Ignoring a message sent from a snapshot's view")
+        }
+
+        override fun setSuppressNotifications(suppress: Boolean) {}
+        override fun lock() {}
+        override fun unlock() {}
     }
 
     /// Lays [views] out off screen [width] pixels wide and draws them into a PNG. The height is the layout's own, up to
@@ -189,8 +200,13 @@ object OpenPigeonHost {
                 "imageBase64" to message.imageBase64,
             )
             channel?.invokeMethod("send", args, object : MethodChannel.Result {
+                // Dart answers false for a message it dropped, which OpenPigeon must not be told was sent
                 override fun success(result: Any?) {
-                    scope.launch { done() }
+                    if (result == true) {
+                        scope.launch { done() }
+                    } else {
+                        Log.w(TAG, "Dart did not take the OpenPigeon message")
+                    }
                 }
 
                 override fun error(code: String, msg: String?, details: Any?) {
