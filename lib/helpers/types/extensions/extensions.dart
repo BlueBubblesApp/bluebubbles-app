@@ -297,7 +297,7 @@ extension TitleCase on String {
 /// [text] without its Genmoji placeholders (U+FFFC), or "Genmoji" if nothing else is left.
 String withoutInlineAttachments(String text) {
   // Each run of Genmoji takes the spaces beside it, so only the person's own spacing is left
-  final words = text.replaceAll(RegExp(' ?(?: ?￼)+ ?'), ' ').trim();
+  final words = text.replaceAll(RegExp(' ?(?: ?$objectReplacementChar)+ ?'), ' ').trim();
   return words.isEmpty ? "Genmoji" : words;
 }
 

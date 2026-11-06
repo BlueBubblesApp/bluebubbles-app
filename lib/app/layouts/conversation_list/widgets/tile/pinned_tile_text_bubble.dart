@@ -148,7 +148,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
       final lastMessage = chatState.latestMessage.value;
       // The subtitle keeps a U+FFFC per Genmoji for the chat list, which this plain text can't draw
       final rawSubtitle = chatState.subtitle.value ?? '';
-      final subtitle = rawSubtitle.contains('￼') ? withoutInlineAttachments(rawSubtitle) : rawSubtitle;
+      final subtitle = rawSubtitle.contains(objectReplacementChar) ? withoutInlineAttachments(rawSubtitle) : rawSubtitle;
 
       final unread = chatState.hasUnreadMessage.value;
       // Null-safe isFromMe: treat null as false (unknown sender → show the bubble)

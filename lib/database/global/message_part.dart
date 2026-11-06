@@ -30,7 +30,7 @@ class MessagePart {
   bool get isPkPass => attachments.any((a) => a.isPkPass);
 
   /// Genmoji: attachments sharing a part with text, each drawn at its U+FFFC in [text].
-  bool get hasInlineAttachments => attachments.isNotEmpty && (text?.contains('\uFFFC') ?? false);
+  bool get hasInlineAttachments => attachments.isNotEmpty && (text?.contains(objectReplacementChar) ?? false);
 
   String? subject;
   late final String fakeSubject = faker.lorem.words(subject?.split(" ").length ?? 0).join(" ");

@@ -280,8 +280,8 @@ List<InlineSpan> withInlineAttachments(List<InlineSpan> spans, Iterable<Attachme
   final attachments = inline.iterator;
   final size = (style.fontSize ?? 14) * 1.25;
   return spans.expand<InlineSpan>((span) {
-    if (span is! TextSpan || !(span.text?.contains('\uFFFC') ?? false)) return [span];
-    final pieces = span.text!.split('\uFFFC');
+    if (span is! TextSpan || !(span.text?.contains(objectReplacementChar) ?? false)) return [span];
+    final pieces = span.text!.split(objectReplacementChar);
     return [
       for (int i = 0; i < pieces.length; i++) ...[
         if (i > 0)
