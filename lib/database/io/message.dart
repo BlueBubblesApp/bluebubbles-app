@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/message_interface.dart';
 import 'package:collection/collection.dart';
@@ -260,13 +260,25 @@ class Message {
     } catch (e, s) {
       Logger.error('Failed to parse payload data!', error: e, trace: s);
     }
-    // v2 servers decode the app balloon's archive themselves (`with=appPayload`), and read fields ours misses
+    // v2 servers decode the app balloon's archive themselves (`with=appPayload`), and read fields ours misses. Where
+    // ours found no app at all, theirs is the app
     final appPayload = json['appPayload'];
     final app = payloadData?.appData?.firstOrNull;
     if (appPayload is Map && app != null) {
       app.sessionId = appPayload['session_id'] as String? ?? app.sessionId;
       app.ldText = appPayload['summary'] as String? ?? app.ldText;
       app.url = appPayload['url'] as String? ?? app.url;
+    } else if (appPayload is Map) {
+      final caption = appPayload['caption'] as String?;
+      payloadData = PayloadData(type: PayloadType.app, appData: [
+        iMessageAppData(
+          appName: appPayload['app_name'] as String?,
+          ldText: appPayload['summary'] as String?,
+          url: appPayload['url'] as String?,
+          sessionId: appPayload['session_id'] as String?,
+          userInfo: caption == null ? null : UserInfo(caption: caption),
+        ),
+      ]);
     }
 
     return Message(
