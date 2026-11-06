@@ -83,7 +83,7 @@ class SettingsService {
       ]);
     }
     // launch at startup - defer this so it doesn't block startup.
-    // Main isolate only: a background isolate can exit before Windows Hello replies, and the engine aborts on that reply
+    // Main isolate only: the engine aborts if a background isolate exits before Windows Hello replies
     if (kIsDesktop && !headless) {
       Future.microtask(() async {
         if (Platform.isWindows) {
