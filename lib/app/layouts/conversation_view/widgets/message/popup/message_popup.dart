@@ -694,7 +694,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           message.isFromMe! &&
           !widget.controller.isSending.value &&
           SettingsSvc.serverDetails.supportsEditAndUnsend &&
-          (part.text?.isNotEmpty ?? false))
+          (part.text?.isNotEmpty ?? false) &&
+          // Its text holds a U+FFFC per Genmoji, which an edit would send as plain text
+          !part.hasInlineAttachments)
         DetailsMenuActionWidget(
           onTap: () => popup_message_actions.edit(_buildActionContext(DetailsMenuAction.Edit)),
           customTitle: canEdit ? 'Edit' : 'Edit (too old)',
