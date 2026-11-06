@@ -645,9 +645,13 @@ class MessageState extends StatefulController {
       message.associatedMessageGuid = associatedMessageGuid;
     }
 
-    if (associatedMessageType != null && this.associatedMessageType.value != associatedMessageType) {
-      this.associatedMessageType.value = associatedMessageType;
-      message.associatedMessageType = associatedMessageType;
+    // A replaced app turn stays replaced when a stale copy still says type 2
+    final type = associatedMessageType == null
+        ? null
+        : AppSessionTypes.mergedType(message.balloonBundleId, this.associatedMessageType.value, associatedMessageType);
+    if (type != null && this.associatedMessageType.value != type) {
+      this.associatedMessageType.value = type;
+      message.associatedMessageType = type;
     }
 
     if (associatedMessagePart != null && this.associatedMessagePart.value != associatedMessagePart) {

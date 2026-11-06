@@ -81,9 +81,14 @@ class MessageActions {
           inputNewMessage.didNotifyRecipient ? inputNewMessage.didNotifyRecipient : existing.didNotifyRecipient;
       existing.error = inputNewMessage.error;
       existing.errorMessage = inputNewMessage.errorMessage;
-      // An iMessage app turn is re-linked when a newer turn replaces it (type 2 to 3, or a first turn to itself)
-      existing.associatedMessageGuid = inputNewMessage.associatedMessageGuid ?? existing.associatedMessageGuid;
-      existing.associatedMessageType = inputNewMessage.associatedMessageType ?? existing.associatedMessageType;
+      // An iMessage app turn is re-linked when a newer turn replaces it (type 2 to 3, or a first turn to itself), and
+      // never back: a stale copy that still says type 2 leaves a replaced turn as it is
+      final type = AppSessionTypes.mergedType(existing.balloonBundleId ?? inputNewMessage.balloonBundleId,
+          existing.associatedMessageType, inputNewMessage.associatedMessageType);
+      if (type == inputNewMessage.associatedMessageType) {
+        existing.associatedMessageGuid = inputNewMessage.associatedMessageGuid ?? existing.associatedMessageGuid;
+      }
+      existing.associatedMessageType = type;
 
       try {
         messageBox.put(existing, mode: PutMode.update);
