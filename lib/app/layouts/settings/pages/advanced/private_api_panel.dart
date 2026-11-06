@@ -18,13 +18,7 @@ class PrivateAPIPanelController extends StatefulController {
   void onReady() {
     super.onReady();
     HttpSvc.server.info().then((response) {
-      final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
-      serverDetails.value = ServerDetails(
-        macOSVersion: SettingsSvc.serverDetails.macOSVersion,
-        macOSMinorVersion: SettingsSvc.serverDetails.macOSMinorVersion,
-        serverVersion: serverVersionStr,
-        serverVersionCode: ServerDetails.versionCodeFor(serverVersionStr),
-      );
+      serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
     });
   }
 }
@@ -52,13 +46,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
         SettingsSvc.settings.privateAPISend.value = true;
         await SettingsSvc.settings.saveManyAsync(['enablePrivateAPI', 'privateAPISend']);
         HttpSvc.server.info().then((response) {
-          final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
-          controller.serverDetails.value = ServerDetails(
-            macOSVersion: SettingsSvc.serverDetails.macOSVersion,
-            macOSMinorVersion: SettingsSvc.serverDetails.macOSMinorVersion,
-            serverVersion: serverVersionStr,
-            serverVersionCode: ServerDetails.versionCodeFor(serverVersionStr),
-          );
+          controller.serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
         });
       }
     });

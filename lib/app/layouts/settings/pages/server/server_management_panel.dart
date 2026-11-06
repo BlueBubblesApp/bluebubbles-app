@@ -108,20 +108,7 @@ class ServerManagementPanelController extends StatefulController {
     }
 
     await HttpSvc.server.info().then((response) {
-      final String macOSVersionStr = response.data['data']['os_version'] ?? '0.0';
-      final String serverVersionStr = response.data['data']['server_version'] ?? '0.0.0';
-      final osParts = macOSVersionStr.split('.');
-      serverDetails.value = ServerDetails(
-        macOSVersion: int.tryParse(osParts.isNotEmpty ? osParts[0] : '0') ?? 0,
-        macOSMinorVersion: int.tryParse(osParts.length > 1 ? osParts[1] : '0') ?? 0,
-        serverVersion: serverVersionStr,
-        serverVersionCode: ServerDetails.versionCodeFor(serverVersionStr),
-        privateApiEnabled: response.data['data']['private_api'] ?? false,
-        iCloudAccount: response.data['data']['detected_icloud'],
-        proxyService: response.data['data']['proxy_service'],
-        apiVersions: (response.data['data']['api_versions'] as List? ?? const []).whereType<int>().toList(),
-        serverBuildVersion: response.data['data']['server_build_version'],
-      );
+      serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
       unawaited(SettingsSvc.updateServerDetails(serverDetails.value));
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
       timeSync.value = response.data['data']['macos_time_sync'];

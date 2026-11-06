@@ -11,8 +11,9 @@ class ServerDetails {
   final String? iCloudAccount;
   final String? proxyService;
 
-  /// API generations the server implements, from `api_versions`; empty for servers that predate it.
-  final List<int> apiVersions;
+  /// API generations the server implements, from `api_versions`; empty for servers that predate it, and null until
+  /// the server's details have been fetched.
+  final List<int>? apiVersions;
 
   /// The server's own build version, from `server_build_version`. [serverVersion] stays the
   /// v1 feature level (1.x) so that older clients' feature gates keep working.
@@ -26,9 +27,52 @@ class ServerDetails {
     this.privateApiEnabled,
     this.iCloudAccount,
     this.proxyService,
-    this.apiVersions = const [],
+    this.apiVersions,
     this.serverBuildVersion,
   });
+
+  /// From `/server/info`'s `data`.
+  factory ServerDetails.fromServerInfo(Map<String, dynamic> data) {
+    final os = (data['os_version'] as String? ?? '').split('.');
+    final serverVersion = data['server_version'] as String? ?? '0.0.0';
+    final build = data['server_build_version'] as String?;
+    return ServerDetails(
+      macOSVersion: int.tryParse(os.first) ?? 11,
+      macOSMinorVersion: os.length > 1 ? int.tryParse(os[1]) ?? 0 : 0,
+      serverVersion: serverVersion,
+      serverVersionCode: versionCodeFor(serverVersion),
+      privateApiEnabled: data['private_api'] as bool?,
+      iCloudAccount: data['detected_icloud'] as String?,
+      proxyService: data['proxy_service'] as String?,
+      apiVersions: (data['api_versions'] as List? ?? const []).whereType<int>().toList(),
+      serverBuildVersion: build == null || build.isEmpty ? null : build,
+    );
+  }
+
+  /// For passing between isolates; see [fromMap].
+  Map<String, dynamic> toMap() => {
+        'macOSVersion': macOSVersion,
+        'macOSMinorVersion': macOSMinorVersion,
+        'serverVersion': serverVersion,
+        'serverVersionCode': serverVersionCode,
+        'privateApiEnabled': privateApiEnabled,
+        'iCloudAccount': iCloudAccount,
+        'proxyService': proxyService,
+        'apiVersions': apiVersions,
+        'serverBuildVersion': serverBuildVersion,
+      };
+
+  factory ServerDetails.fromMap(Map<String, dynamic> map) => ServerDetails(
+        macOSVersion: map['macOSVersion'] as int,
+        macOSMinorVersion: map['macOSMinorVersion'] as int,
+        serverVersion: map['serverVersion'] as String,
+        serverVersionCode: map['serverVersionCode'] as int,
+        privateApiEnabled: map['privateApiEnabled'] as bool?,
+        iCloudAccount: map['iCloudAccount'] as String?,
+        proxyService: map['proxyService'] as String?,
+        apiVersions: (map['apiVersions'] as List?)?.cast<int>(),
+        serverBuildVersion: map['serverBuildVersion'] as String?,
+      );
 
   const ServerDetails.empty()
       : macOSVersion = 0,
@@ -38,14 +82,18 @@ class ServerDetails {
         privateApiEnabled = null,
         iCloudAccount = null,
         proxyService = null,
-        apiVersions = const [],
+        apiVersions = null,
         serverBuildVersion = null;
 
-  bool get isV2Server => apiVersions.contains(2);
+  bool get isV2Server => apiVersions?.contains(2) ?? false;
 
-  // A v2 server reports a 1.x feature level today, but the formula below would score a 2.x as 200,
-  // under several 1.x thresholds
-  int get _featureCode => isV2Server ? 1 << 30 : serverVersionCode;
+  /// Known to be a 1.x server, which a fetch of its details has confirmed.
+  bool get isV1Server => apiVersions != null && !isV2Server;
+
+  // v2 reports a 1.x feature level, which gates as usual. A 2.x would score 200 by the formula below, under several
+  // 1.x thresholds
+  int get _featureCode =>
+      isV2Server && (int.tryParse(serverVersion.split('.').first) ?? 0) >= 2 ? 1 << 30 : serverVersionCode;
 
   /// The v1 feature level for [serverVersion]: major * 100 + minor * 21 + patch, e.g. v1.6.0 → 226.
   @Deprecated('v1-only: a 2.x scores under several 1.x thresholds. Gate new features on isV2Server')

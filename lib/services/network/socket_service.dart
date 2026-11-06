@@ -162,6 +162,7 @@ class SocketService {
   final Map<String, _ErrorLogState> _errorLog = {};
 
   StreamSubscription? _connectivitySubscription;
+  StreamSubscription? _serverDetailsSubscription;
   bool _networkAvailable = true;
   Timer? _connectivityReconnectTimer;
 
@@ -176,6 +177,10 @@ class SocketService {
     Logger.debug("Initializing socket service...");
     startSocket();
     _checkConnectivity();
+    // Whether the server acks heartbeats is only known once its details arrive, and changes with the server
+    _serverDetailsSubscription ??= SettingsSvc.serverDetailsChanges.listen((_) {
+      if (state.value == SocketState.connected) _startHeartbeat();
+    });
     Logger.debug("Initialized socket service");
   }
 
@@ -630,7 +635,7 @@ class SocketService {
   @Deprecated('v1 servers only: v2 never acks client-sent events; remove with v1 support')
   void _startHeartbeat() {
     _stopHeartbeat();
-    if (SettingsSvc.serverDetails.isV2Server) return;
+    if (!SettingsSvc.serverDetails.isV1Server) return;
     _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) => _sendHeartbeat());
   }
 
@@ -642,9 +647,12 @@ class SocketService {
     _heartbeatMisses = 0;
   }
 
-  /// Checks a "connected" socket now instead of waiting for the next heartbeat.
-  @Deprecated('v1 servers only: v2 never acks client-sent events; remove with v1 support')
-  void checkConnection() => _sendHeartbeat();
+  /// Checks a "connected" socket now instead of waiting for the next heartbeat. Without one to ask (v2, or details not
+  /// fetched yet), it rebuilds: resume and network changes are when a dead socket goes unnoticed.
+  void checkConnection() {
+    if (SettingsSvc.serverDetails.isV1Server) return _sendHeartbeat();
+    if (socket != null && state.value == SocketState.connected) restartSocket();
+  }
 
   /// Rebuilds rather than calling `connect()`: socket.io still believes the dead
   /// connection is up.
@@ -652,7 +660,7 @@ class SocketService {
   void _sendHeartbeat() {
     final Socket? s = socket;
     if (s == null || state.value != SocketState.connected || _heartbeatTimeoutTimer != null) return;
-    if (SettingsSvc.serverDetails.isV2Server) return;
+    if (!SettingsSvc.serverDetails.isV1Server) return;
 
     _heartbeatTimeoutTimer = Timer(_heartbeatTimeout, () {
       _heartbeatTimeoutTimer = null;

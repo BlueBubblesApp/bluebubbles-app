@@ -23,10 +23,14 @@ class SharedPreferencesServerActions {
 
   int? getServerVersionCode() => service.i.getInt(_serverVersionCodeKey);
 
-  List<int> getApiVersions() =>
-      (service.i.getStringList(_apiVersionsKey) ?? const []).map(int.tryParse).whereType<int>().toList();
+  List<int>? getApiVersions() =>
+      service.i.getStringList(_apiVersionsKey)?.map(int.tryParse).whereType<int>().toList();
 
-  String? getServerBuildVersion() => service.i.getString(_serverBuildVersionKey);
+  /// Saved as "" for a server without one, so a switch to it clears the last server's
+  String? getServerBuildVersion() {
+    final version = service.i.getString(_serverBuildVersionKey);
+    return version == null || version.isEmpty ? null : version;
+  }
 
   Future<void> setServerDetails({
     int? macOSVersion,

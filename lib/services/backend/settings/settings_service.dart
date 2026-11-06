@@ -149,42 +149,18 @@ class SettingsService {
         toSave.add('serverPrivateAPI');
       }
 
-      final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
-      final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
-      final serverVersion = response.data['data']['server_version'];
-      final versionCode = ServerDetails.versionCodeFor(serverVersion ?? "0.0.0");
-      // Saved even when absent, so pointing the client back at an older server clears them
-      final apiVersions = (response.data['data']['api_versions'] as List? ?? const []).whereType<int>().toList();
-      final buildVersion = response.data['data']['server_build_version'] as String? ?? "";
-      await PrefsSvc.server.setServerDetails(
-        macOSVersion: version,
-        macOSMinorVersion: minorVersion,
-        serverVersion: serverVersion,
-        serverVersionCode: versionCode,
-        apiVersions: apiVersions,
-        serverBuildVersion: buildVersion,
-      );
+      final details = ServerDetails.fromServerInfo(response.data['data']);
+      await _saveServerDetails(details);
 
       if (toSave.isNotEmpty) {
         await settings.saveManyAsync(toSave);
       }
 
-      return {
-        'macOSVersion': version ?? 11,
-        'macOSMinorVersion': minorVersion ?? 0,
-        'serverVersion': serverVersion ?? "0.0.0",
-        'serverVersionCode': versionCode,
-        'apiVersions': apiVersions,
-        'serverBuildVersion': buildVersion,
-      };
+      return details.toMap();
     }
 
-    return {
-      'macOSVersion': 11,
-      'macOSMinorVersion': 0,
-      'serverVersion': "0.0.0",
-      'serverVersionCode': 0,
-    };
+    // Empty rather than defaults, which would overwrite what's known about the server
+    return {};
   }
 
   /// Fetches server details via HTTP (main isolate), updates [serverDetails],
@@ -193,14 +169,9 @@ class SettingsService {
   /// Used during the first-time setup flow.
   Future<ServerDetails> fetchServerDetails() async {
     final detailsDict = await getServerDetailsDict();
-    final details = ServerDetails(
-      macOSVersion: detailsDict['macOSVersion'] as int,
-      macOSMinorVersion: detailsDict['macOSMinorVersion'] as int,
-      serverVersion: detailsDict['serverVersion'] as String,
-      serverVersionCode: detailsDict['serverVersionCode'] as int,
-      apiVersions: (detailsDict['apiVersions'] as List? ?? const []).cast<int>(),
-      serverBuildVersion: detailsDict['serverBuildVersion'] as String?,
-    );
+    final details = detailsDict.isEmpty
+        ? const ServerDetails(macOSVersion: 11, macOSMinorVersion: 0, serverVersion: "0.0.0", serverVersionCode: 0)
+        : ServerDetails.fromMap(detailsDict);
     _serverDetails.value = details;
     return details;
   }
@@ -234,6 +205,10 @@ class SettingsService {
   /// Caches and persists [details] fetched elsewhere, so the cache doesn't keep showing the previous server.
   Future<void> updateServerDetails(ServerDetails details) async {
     _serverDetails.value = details;
+    await _saveServerDetails(details);
+  }
+
+  Future<void> _saveServerDetails(ServerDetails details) async {
     await PrefsSvc.server.setServerDetails(
       macOSVersion: details.macOSVersion,
       macOSMinorVersion: details.macOSMinorVersion,
@@ -352,6 +327,8 @@ class SettingsService {
 
   /// Returns the current cached [ServerDetails].
   ServerDetails get serverDetails => _serverDetails.value;
+
+  Stream<ServerDetails> get serverDetailsChanges => _serverDetails.stream;
 
   /// Group chats can be created on macOS <= Catalina or
   /// if the Private API is enabled, and the server supports it (v1.8.0).
