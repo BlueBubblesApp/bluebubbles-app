@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/services/backend/settings/shared_preferences_service.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 
 class ReplyToMessageState {
   final String messageGuid;
@@ -42,6 +43,9 @@ class SharedPreferencesMessagingActions {
       _tapbackEmojiQueue = _tapbackEmojiQueue.then((_) async {
         await _countTapbackEmoji(_tapbackEmojiUsageKey, emoji, _tapbackEmojiLimit);
         await _countTapbackEmoji(_chatTapbackEmojiKey(chatGuid), emoji, _chatTapbackEmojiLimit);
+        // Caught so one failed write doesn't fail every count queued after it
+      }).catchError((Object e, StackTrace s) {
+        Logger.warn("Couldn't count tapback emoji $emoji", error: e, trace: s, tag: "TapbackEmoji");
       });
 
   // Each count reads, changes and rewrites a list, so overlapping ones would lose a use
