@@ -595,8 +595,9 @@ class IncomingMessageHandler {
   /// * If [existingGuid] starts with `temp-` and the message has one
   ///   attachment, it was the attachment GUID (they are set equal at send time
   ///   in `send_animation.dart`).
-  /// * Otherwise look up the DB GUID via [existing.dbAttachments] by index —
-  ///   this handles socket events that omit `tempGuid` (e.g. keyboard GIFs).
+  /// * Otherwise match [existing.dbAttachments] by GUID, then by index when no
+  ///   server attachment claims the row there — this handles socket events
+  ///   that omit `tempGuid` (e.g. keyboard GIFs).
   ///
   /// ### Parallel-delivery
   ///
@@ -629,8 +630,18 @@ class IncomingMessageHandler {
         if (match == null) continue;
         unmatched.remove(match);
         attachmentExistingGuid = match.guid!;
-      } else if (existing.dbAttachments.isNotEmpty && i < existing.dbAttachments.length) {
-        attachmentExistingGuid = existing.dbAttachments[i].guid ?? existingGuid;
+      } else if (existing.dbAttachments.isNotEmpty) {
+        // Real GUIDs: the server doesn't promise the attachments' order, so match by GUID, and by position only
+        // when no server attachment claims the row there
+        final positional = i < existing.dbAttachments.length ? existing.dbAttachments[i] : null;
+        final match = unmatched.firstWhereOrNull((a) => a.guid == newAttachment.guid) ??
+            (positional != null &&
+                    unmatched.contains(positional) &&
+                    !replacementAttachments.any((r) => r?.guid == positional.guid)
+                ? positional
+                : null);
+        if (match != null) unmatched.remove(match);
+        attachmentExistingGuid = match?.guid ?? existingGuid;
       } else {
         attachmentExistingGuid = existingGuid;
       }
@@ -643,8 +654,8 @@ class IncomingMessageHandler {
         if (alreadyPresent != null) {
           await Attachment.replaceAttachmentAsync(newAttachment.guid, newAttachment);
 
-          // Delete the stale temp record if it's distinct from the real one.
-          if (attachmentExistingGuid != newAttachment.guid) {
+          // Delete the stale temp record if it's distinct from the real one. A real GUID is another attachment.
+          if (attachmentExistingGuid != newAttachment.guid && attachmentExistingGuid.startsWith('temp-')) {
             final staleTemp = await Attachment.findOneAsync(attachmentExistingGuid);
             if (staleTemp != null) await Attachment.deleteAsync(staleTemp.guid!);
           }
