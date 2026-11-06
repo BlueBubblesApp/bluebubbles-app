@@ -1,6 +1,7 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
+import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -45,42 +46,21 @@ class ServerV2Migrations {
     return emoji + genmoji + stickers + payloads + turns;
   }
 
-  /// iMessage app turns saved before the client kept a replaced turn's rewrite to type 3 (linked to itself, for a
-  /// session's first message), so earlier turns of a game showed in full. Turns already type 3 are settled.
+  /// Game turns saved before the client mirrored Messages' rewrite of a replaced turn to type 3, so earlier turns of a
+  /// game showed in full. Settled locally, as a new turn settles them: every stored type-2 turn retires the turns of
+  /// its session it replaced. Returns how many were rewritten.
   static Future<int?> _backfillAppTurns(ServerV2MigrationProgress? onProgress) async {
-    final query = Database.messages
-        .query(Message_.balloonBundleId
-            .contains("MSMessageExtensionBalloonPlugin")
-            .and(Message_.associatedMessageType.notEquals("3").or(Message_.associatedMessageType.isNull())))
-        .build();
-    final stale = (await runAsync(() => query.find())).where(_isOnServer).toList();
-    query.close();
-
-    int filled = 0;
-    for (final (i, message) in stale.indexed) {
-      onProgress?.call("Updating iMessage app turns", i / stale.length);
-      try {
-        final response = await HttpSvc.message.fetchOne(message.guid!);
-        final data = response.data['data'];
-        if (data is! Map) continue;
-        final type = data['associatedMessageType'] as String?;
-        final guid = data['associatedMessageGuid'] as String?;
-        if (type == message.associatedMessageType && guid == message.associatedMessageGuid) continue;
-
-        // Re-read, so anything saved to it while the request was out isn't overwritten
-        final current = Database.messages.get(message.id!);
-        if (current == null) continue;
-        current.associatedMessageType = type;
-        current.associatedMessageGuid = guid;
-        Database.messages.put(current);
-        filled++;
-      } catch (e, s) {
-        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
-        Logger.warn("Failed to backfill the app turn of ${message.guid}", error: e, trace: s, tag: "ServerV2Migrations");
-        return null;
-      }
-    }
-    return filled;
+    onProgress?.call("Updating iMessage app turns", 0);
+    return runAsync(() => Database.runInTransaction(TxMode.write, () {
+          final query = Database.messages
+              .query(Message_.balloonBundleId
+                  .contains(AppSessionTypes.extensionBalloonPlugin)
+                  .and(Message_.associatedMessageType.equals(AppSessionTypes.UPDATE)))
+              .build();
+          final turns = query.find();
+          query.close();
+          return turns.fold<int>(0, (retired, turn) => retired + MessageActions.retireEarlierTurns(turn).length);
+        }));
   }
 
   /// App balloons saved before the client kept their session, without their payload (as a push delivers them), or
