@@ -38,7 +38,7 @@ class ServerV2Migrations {
     final query = Database.messages
         .query(Message_.dbAttributedBody.contains("__kIMFileTransferGUIDAttributeName").and(Message_.guid.notNull()))
         .build();
-    final candidates = (await runAsync(() => query.find())).where((message) {
+    final candidates = (await runAsync(() => query.find())).where(_isOnServer).where((message) {
       final body = message.attributedBody.firstOrNull;
       if (body == null || body.runs.any((r) => r.isEmojiImage)) return false;
       final textParts = body.runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
@@ -55,8 +55,10 @@ class ServerV2Migrations {
         final fresh = Message.fromMap(Map<String, dynamic>.from(data)).attributedBody;
         if (!fresh.any((b) => b.runs.any((r) => r.isEmojiImage))) continue;
 
-        message.attributedBody = fresh;
-        Database.messages.put(message);
+        final current = Database.messages.get(message.id!);
+        if (current == null) continue;
+        current.attributedBody = fresh;
+        Database.messages.put(current);
         filled++;
       } catch (e, s) {
         if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
