@@ -36,7 +36,8 @@ class SharedPreferencesMessagingActions {
         ..._tapbackEmojiUsage(_tapbackEmojiUsageKey).map((u) => u.emoji),
       }.toList();
 
-  /// Counts a use of [emoji] in [chatGuid] and overall. A full list drops its least used, longest unused emoji.
+  /// Counts a use of [emoji] in [chatGuid] and overall. A full list keeps [emoji] and drops the least used, longest
+  /// unused of the others.
   Future<void> addRecentTapbackEmoji(String emoji, {required String chatGuid}) =>
       _tapbackEmojiQueue = _tapbackEmojiQueue.then((_) async {
         await _countTapbackEmoji(_tapbackEmojiUsageKey, emoji, _tapbackEmojiLimit);
@@ -52,9 +53,12 @@ class SharedPreferencesMessagingActions {
     final usage = _tapbackEmojiUsage(key);
     final index = usage.indexWhere((u) => u.emoji == emoji);
     final count = index == -1 ? 1 : usage.removeAt(index).count + 1;
-    usage.add((emoji: emoji, count: count, lastUsed: DateTime.now().millisecondsSinceEpoch));
-    _sortTapbackEmojiUsage(usage);
-    final kept = usage.take(limit).map((u) => {'e': u.emoji, 'n': u.count, 't': u.lastUsed}).toList();
+    // The one just used always stays: ranked with the rest, a new emoji (one use) would be the first dropped from a
+    // list that's full of emoji used more, so it could never get in
+    final kept = [
+      (emoji: emoji, count: count, lastUsed: DateTime.now().millisecondsSinceEpoch),
+      ...usage.take(limit - 1),
+    ].map((u) => {'e': u.emoji, 'n': u.count, 't': u.lastUsed}).toList();
     await service.i.setString(key, jsonEncode(kept));
   }
 
