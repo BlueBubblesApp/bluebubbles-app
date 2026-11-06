@@ -692,6 +692,8 @@ class MessageState extends StatefulController {
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
     message.balloonBundleId = updatedMessage.balloonBundleId;
+    // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
+    message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
     message.dateDeleted = updatedMessage.dateDeleted;
     message.metadata = updatedMessage.metadata;
