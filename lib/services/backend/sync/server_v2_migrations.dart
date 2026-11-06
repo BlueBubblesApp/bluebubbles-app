@@ -55,18 +55,23 @@ class ServerV2Migrations {
             .whereType<Map>()
             .map((a) => Attachment.fromMap(a.cast<String, dynamic>()))
             .toList();
-        AttachmentActions.adoptRekeyedGuids(remote);
-        final current = Database.messages.get(sticker.id!);
-        if (current == null) continue;
+        final moves = <RekeyedFileMove>[];
         var changed = false;
-        for (final a in current.dbAttachments) {
-          final placement = remote.firstWhereOrNull((r) => r.guid == a.guid)?.stickerPlacement;
-          if (a.stickerPlacement != null || placement == null) continue;
-          a.stickerPlacement = placement;
-          Database.attachments.put(a);
-          changed = true;
-        }
-        if (!changed) continue;
+        final current = Database.runInTransaction(TxMode.write, () {
+          moves.addAll(AttachmentActions.adoptRekeyedGuids(remote));
+          final current = Database.messages.get(sticker.id!);
+          if (current == null) return null;
+          for (final a in current.dbAttachments) {
+            final placement = remote.firstWhereOrNull((r) => r.guid == a.guid)?.stickerPlacement;
+            if (a.stickerPlacement != null || placement == null) continue;
+            a.stickerPlacement = placement;
+            Database.attachments.put(a);
+            changed = true;
+          }
+          return current;
+        });
+        AttachmentActions.moveRekeyedFiles(moves);
+        if (current == null || !changed) continue;
         filled++;
         final chatGuid = current.chat.target?.guid;
         if (chatGuid != null && current.associatedMessageGuid != null) {
