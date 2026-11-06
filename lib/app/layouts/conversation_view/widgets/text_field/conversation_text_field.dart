@@ -358,6 +358,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       // Queued like any send, so it's drawn sending at once and a failure can be retried
       unawaited(OpenPigeon.sendGame(chat, game));
       if (text.isEmpty && controller.subjectTextController.text.isEmpty && controller.pickedAttachments.isEmpty) {
+        // Nothing else to send, but the send is still done with whatever it was replying to, as a text send is
+        controller.replyToMessage = null;
         return;
       }
     }
