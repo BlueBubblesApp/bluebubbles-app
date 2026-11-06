@@ -27,10 +27,25 @@ class OpenPigeonGameBubble extends StatefulWidget {
 class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
   Future<Uint8List?>? _snapshot;
 
+  /// Decoded once rather than per build, which also keeps [Image.memory] from reloading it each time.
+  Uint8List? _cachedIcon;
+
+  @override
+  void initState() {
+    super.initState();
+    _cachedIcon = decodeBase64(widget.data.appIcon);
+  }
+
+  @override
+  void didUpdateWidget(OpenPigeonGameBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data.appIcon != widget.data.appIcon) _cachedIcon = decodeBase64(widget.data.appIcon);
+  }
+
   @override
   Widget build(BuildContext context) {
     final compact = OpenPigeonCollapsedGame(
-      icon: decodeBase64(widget.data.appIcon),
+      icon: _cachedIcon,
       title: widget.data.ldText,
       caption: widget.data.userInfo?.caption,
     );
@@ -127,7 +142,7 @@ class OpenPigeonCollapsedGame extends StatelessWidget {
 }
 
 /// An earlier turn the other player sent, as Messages shows it: the app's icon and the game on one quiet line.
-class OpenPigeonEarlierTurn extends StatelessWidget {
+class OpenPigeonEarlierTurn extends StatefulWidget {
   const OpenPigeonEarlierTurn({super.key, required this.data, this.onTap});
 
   /// Null until the turn's payload arrives
@@ -135,11 +150,32 @@ class OpenPigeonEarlierTurn extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<OpenPigeonEarlierTurn> createState() => _OpenPigeonEarlierTurnState();
+}
+
+class _OpenPigeonEarlierTurnState extends State<OpenPigeonEarlierTurn> {
+  /// Decoded once rather than per build, which also keeps [Image.memory] from reloading it each time.
+  Uint8List? _cachedIcon;
+
+  @override
+  void initState() {
+    super.initState();
+    _cachedIcon = decodeBase64(widget.data?.appIcon);
+  }
+
+  @override
+  void didUpdateWidget(OpenPigeonEarlierTurn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data?.appIcon != widget.data?.appIcon) _cachedIcon = decodeBase64(widget.data?.appIcon);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final icon = decodeBase64(data?.appIcon);
+    final icon = _cachedIcon;
+    final data = widget.data;
     const fallback = SizedBox(width: 24, height: 18);
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
