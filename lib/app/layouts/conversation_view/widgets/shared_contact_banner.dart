@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -38,46 +39,71 @@ class _SharedCard {
 }
 
 class _SharedContactBannerState extends State<SharedContactBanner> {
-  /// Chats whose banners were dismissed this session
-  static final Set<String> _dismissed = {};
+  /// Chats whose add or share offers were dismissed this session
+  static final Set<String> _dismissedAdds = {};
+  static final Set<String> _dismissedShares = {};
 
   Chat get chat => widget.chat;
   final List<_SharedCard> _adds = [];
   final List<_SharedCard> _updates = [];
   bool _offerShare = false;
+  Uint8List? _myAvatar;
 
   @override
   void initState() {
     super.initState();
     if (!SettingsSvc.settings.enablePrivateAPI.value ||
         !SettingsSvc.serverDetails.supportsNameSharing ||
-        !chat.isIMessage ||
-        _dismissed.contains(chat.guid)) {
+        !chat.isIMessage) {
       return;
     }
-    _loadOffer();
-    _loadSharedCards();
+    if (!_dismissedShares.contains(chat.guid)) _loadOffer();
+    // Desktop has no address book to add to or update
+    if (!kIsDesktop) _loadSharedCards();
   }
 
   Future<void> _loadOffer() async {
     try {
       final offer = (await HttpSvc.chat.shouldShareContact(chat.guid)).data['data'] == true;
-      if (offer && mounted) setState(() => _offerShare = true);
+      if (!offer) return;
+      final myCard = await _readCard();
+      if (mounted) {
+        setState(() {
+          _offerShare = true;
+          _myAvatar = myCard?.avatar;
+        });
+      }
     } catch (e) {
       Logger.warn('Could not check name and photo sharing for ${chat.guid}', error: e, tag: 'SharedContact');
+    }
+  }
+
+  /// The card [address] shared with you, or your own without one
+  Future<({String? name, Uint8List? avatar})?> _readCard({String? address}) async {
+    try {
+      final data = (await HttpSvc.icloud.getAccountContact(address: address)).data['data'];
+      if (data is! Map) return null;
+      final name = data['name'] as String?;
+      final avatar = data['avatar'] as String?;
+      if (isNullOrEmpty(name) && isNullOrEmpty(avatar)) return null;
+      return (name: isNullOrEmpty(name) ? null : name, avatar: isNullOrEmpty(avatar) ? null : base64Decode(avatar!));
+    } catch (e) {
+      Logger.warn('Could not read the contact card ${address ?? 'of this account'}', error: e, tag: 'SharedContact');
+      return null;
     }
   }
 
   Future<void> _loadSharedCards() async {
     final participants = chat.participants.isNotEmpty ? chat.participants : chat.handles.toList();
     for (final handle in participants) {
+      // Photo updates need a native contact to write to
+      if (handle.contactsV2.isNotEmpty && !handle.contactsV2.any((c) => c.isNative)) continue;
+      if (handle.contactsV2.isEmpty && _dismissedAdds.contains(chat.guid)) continue;
       final card = await _fetchCard(handle);
       if (card == null || !mounted) continue;
       if (handle.contactsV2.isEmpty) {
         setState(() => _adds.add(card));
-      } else if (!kIsDesktop &&
-          card.contact != null &&
-          card.photoHash != null &&
+      } else if (card.photoHash != null &&
           PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != card.photoHash) {
         setState(() => _updates.add(card));
       }
@@ -85,30 +111,26 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   }
 
   Future<_SharedCard?> _fetchCard(Handle handle) async {
-    try {
-      final data = (await HttpSvc.icloud.getAccountContact(address: handle.address)).data['data'];
-      if (data is! Map) return null;
-      final name = data['name'] as String?;
-      final avatar = data['avatar'] as String?;
-      if (isNullOrEmpty(name) && isNullOrEmpty(avatar)) return null;
-      return _SharedCard(handle, isNullOrEmpty(name) ? null : name, isNullOrEmpty(avatar) ? null : base64Decode(avatar!));
-    } catch (e) {
-      Logger.warn('Could not read the contact card ${handle.address} shared', error: e, tag: 'SharedContact');
-      return null;
-    }
+    final card = await _readCard(address: handle.address);
+    return card == null ? null : _SharedCard(handle, card.name, card.avatar);
   }
 
-  void _dismiss() {
-    _dismissed.add(chat.guid);
+  void _dismissAdds() {
+    _dismissedAdds.add(chat.guid);
+    setState(() => _adds.clear());
+  }
+
+  void _dismissUpdates() {
     // A dismissed photo isn't offered again until they share a different one
     for (final card in _updates) {
       PrefsSvc.messaging.setSeenSharedPhoto(card.handle.address, card.photoHash!);
     }
-    setState(() {
-      _adds.clear();
-      _updates.clear();
-      _offerShare = false;
-    });
+    setState(() => _updates.clear());
+  }
+
+  void _dismissShare() {
+    _dismissedShares.add(chat.guid);
+    setState(() => _offerShare = false);
   }
 
   Future<void> _share() async {
@@ -125,34 +147,12 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   Future<void> _addContact(_SharedCard card) async {
     setState(() => _adds.remove(card));
     final address = card.handle.address;
-    if (!kIsDesktop) {
-      await MethodChannelSvc.actions.openContactForm(
-        address: address,
-        isEmail: address.isEmail,
-        name: card.name,
-        avatar: card.avatar,
-      );
-      return;
-    }
-    // Desktop contacts come from the server, so the contact is created there
-    final name = card.name ?? address;
-    try {
-      await HttpSvc.contact.create([
-        {
-          'displayName': name,
-          'firstName': name.split(' ').first,
-          'lastName': name.contains(' ') ? name.substring(name.indexOf(' ') + 1) : null,
-          'phoneNumbers': [if (!address.isEmail) address],
-          'emails': [if (address.isEmail) address],
-          'avatar': card.avatar == null ? null : base64Encode(card.avatar!),
-        }
-      ]);
-      await ContactsSvcV2.syncContactsToHandles();
-      showSnackbar("Contact Added", "$name was added to your contacts");
-    } catch (e) {
-      Logger.warn('Could not add $address to contacts', error: e, tag: 'SharedContact');
-      showSnackbar("Error", "Couldn't add $name to your contacts", type: SnackbarType.error);
-    }
+    await MethodChannelSvc.actions.openContactForm(
+      address: address,
+      isEmail: address.isEmail,
+      name: card.name,
+      avatar: card.avatar,
+    );
   }
 
   Future<void> _updatePhoto(_SharedCard card) async {
@@ -210,47 +210,58 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
       final cards = <Widget>[
         if (_adds.length == 1)
           _BannerCard(
-            avatar: _adds.single.avatar,
+            avatars: [_adds.single.avatar],
             text: "${_adds.single.name ?? _adds.single.handle.displayName} shared their name and photo",
             action: "Add to Contacts",
             onAction: () => _addContact(_adds.single),
-            onDismiss: _dismiss,
+            onDismiss: _dismissAdds,
           ),
         if (_adds.length > 1)
           _BannerCard(
+            avatars: _adds.map((c) => c.avatar).toList(),
             text: "${_adds.length} people shared their name and photo",
             action: "View",
             onAction: () => _showList(_adds, "Add", _addContact),
-            onDismiss: _dismiss,
+            onDismiss: _dismissAdds,
           ),
         if (_updates.length == 1)
           _BannerCard(
-            avatar: _updates.single.avatar,
-            text: "${_updates.single.label} shared a new photo",
+            avatars: [_updates.single.avatar],
+            text: "New contact photo available",
             action: "Update",
             onAction: () => _updatePhoto(_updates.single),
-            onDismiss: _dismiss,
+            onDismiss: _dismissUpdates,
           ),
         if (_updates.length > 1)
           _BannerCard(
-            text: "${_updates.length} contacts shared new photos",
+            avatars: _updates.map((c) => c.avatar).toList(),
+            text: "${_updates.length} people updated contact information",
             action: "View",
             onAction: () => _showList(_updates, "Update", _updatePhoto),
-            onDismiss: _dismiss,
+            onDismiss: _dismissUpdates,
           ),
         if (_offerShare)
           _BannerCard(
+            avatars: [_myAvatar],
             text: "Share your name and photo?",
             action: "Share",
             onAction: _share,
-            onDismiss: _dismiss,
+            onDismiss: _dismissShare,
           ),
       ];
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: cards.expandIndexed((i, card) => [if (i > 0) const SizedBox(height: 8), card]).toList(),
+      return ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.7),
+              border: Border(
+                bottom: BorderSide(color: context.theme.colorScheme.outlineVariant.withValues(alpha: 0.25), width: 0.5),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Column(mainAxisSize: MainAxisSize.min, children: cards),
+          ),
         ),
       );
     });
@@ -275,29 +286,51 @@ class _SharedAvatar extends StatelessWidget {
 
 class _BannerCard extends StatelessWidget {
   const _BannerCard({
-    this.avatar,
+    this.avatars = const [null],
     required this.text,
     required this.action,
     required this.onAction,
     required this.onDismiss,
   });
 
-  final Uint8List? avatar;
+  final List<Uint8List?> avatars;
   final String text;
   final String action;
   final VoidCallback onAction;
   final VoidCallback onDismiss;
 
+  Widget _avatarStack(BuildContext context) {
+    final shown = avatars.take(3).toList();
+    if (shown.length == 1) return _SharedAvatar(shown.single);
+    return SizedBox(
+      width: 36 + (shown.length - 1) * 16,
+      height: 36,
+      child: Stack(
+        children: shown
+            .mapIndexed((i, avatar) => Positioned(
+                  left: i * 16,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.theme.colorScheme.surfaceContainerHigh, width: 1.5),
+                    ),
+                    child: _SharedAvatar(avatar),
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.theme.colorScheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
         child: Row(
           children: [
-            _SharedAvatar(avatar),
+            _avatarStack(context),
             const SizedBox(width: 12),
             Expanded(child: Text(text, style: context.theme.textTheme.bodyMedium)),
             TextButton(onPressed: onAction, child: Text(action)),
