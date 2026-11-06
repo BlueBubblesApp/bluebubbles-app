@@ -2,7 +2,6 @@ import 'package:async_task/async_task.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/task_logger.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
@@ -86,33 +85,11 @@ Iterable<T> intersperse<T>(T element, Iterable<T> iterable) sync* {
   }
 }
 
+/// `m:ss`, or `h:mm:ss` from an hour up.
 String prettyDuration(Duration duration) {
-  var components = <String>[];
-
-  var days = duration.inDays;
-  if (days != 0) {
-    components.add('$days:');
-  }
-  var hours = duration.inHours % 24;
-  if (hours != 0) {
-    components.add('${hours < 10 ? '0' : ''}$hours:');
-  }
-  var minutes = duration.inMinutes % 60;
-  if (minutes != 0) {
-    components.add('${minutes < 10 ? '0' : ''}$minutes:');
-  }
-
-  var seconds = duration.inSeconds % 60;
-  if (components.isEmpty || seconds != 0) {
-    if (components.isEmpty) {
-      components.add('00:');
-    }
-    components.add('${seconds < 10 ? '0' : ''}$seconds');
-  }
-  var joined = components.join();
-  if (joined.characters.first == '0') {
-    return joined.substring(1);
-  } else {
-    return joined;
-  }
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes % 60;
+  final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+  if (hours == 0) return '$minutes:$seconds';
+  return '$hours:${minutes.toString().padLeft(2, '0')}:$seconds';
 }
