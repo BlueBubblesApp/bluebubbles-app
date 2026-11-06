@@ -155,6 +155,30 @@ class ChatApi {
     });
   }
 
+  /// Whether Messages would offer to share your name and photo with chat [guid]. `data` is a bare bool.
+  Future<Response> shouldShareContact(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.apiRoot}/chat/$guid/share/contact/status",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
+  /// Share your name and photo with chat [guid]
+  Future<Response> shareContact(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.apiRoot}/chat/$guid/share/contact",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Mark a chat unread by its [guid]
   Future<Response> markUnread(String guid, {CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {

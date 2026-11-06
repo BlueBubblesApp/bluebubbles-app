@@ -26,6 +26,7 @@ class SharedPreferencesMessagingActions {
   static const int _tapbackEmojiLimit = 28;
   // Enough for a chat's own favourites; kept short since there's one list per chat
   static const int _chatTapbackEmojiLimit = 8;
+  static const String _seenSharedPhotoPrefix = 'seen-shared-photo';
 
   final SharedPreferencesService service;
 
@@ -116,6 +117,13 @@ class SharedPreferencesMessagingActions {
   String _replyMessageKey(String chatGuid) => '${_replyToMessagePrefix}_$chatGuid';
 
   String _replyMessagePartKey(String chatGuid) => '${_replyToMessagePartPrefix}_$chatGuid';
+
+  /// Hash of the last photo [address] shared that the user updated their contact with or dismissed.
+  String? getSeenSharedPhoto(String address) => service.i.getString('${_seenSharedPhotoPrefix}_$address');
+
+  Future<void> setSeenSharedPhoto(String address, String hash) async {
+    await service.i.setString('${_seenSharedPhotoPrefix}_$address', hash);
+  }
 
   String? getLastOpenedChat() => service.i.getString(_lastOpenedChatKey);
 

@@ -159,6 +159,9 @@ class ServerDetails {
   /// Several attachments in one message (v1.7.0).
   bool get supportsMultiAttachmentSend => _featureCode >= 247;
 
+  /// Read the name and photo someone shared, and share your own with a chat (v1.9.0, Big Sur+).
+  bool get supportsNameSharing => _featureCode >= 289 && isMinBigSur;
+
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
 
