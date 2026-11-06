@@ -110,11 +110,18 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
         child: Obx(() => BBProgressDialog(title: step.value, progress: progress.value)),
       ),
     ));
-    final filled = await ServerV2Migrations.run(onProgress: (s, p) {
-      step.value = s;
-      progress.value = p;
-    });
-    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    int? filled;
+    try {
+      filled = await ServerV2Migrations.run(onProgress: (s, p) {
+        step.value = s;
+        progress.value = p;
+      });
+    } catch (e, s) {
+      Logger.error('Updating messages from the server failed', error: e, trace: s, tag: 'TroubleshootPanel');
+    } finally {
+      // The dialog can't be dismissed, so it has to come down however the pass ends
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    }
     if (filled == null) {
       showSnackbar("Not Updated", "Couldn't reach your server, or it isn't running v2.", type: SnackbarType.error);
     } else {
