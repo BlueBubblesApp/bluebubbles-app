@@ -28,6 +28,16 @@ class ContactAvatarWidget extends StatefulWidget {
   /// must use identical ResizeImage params for its precached entry to be hit.
   static const int avatarDecodeSize = 256;
 
+  /// The one image provider every avatar file is drawn and precached with. `fit` keeps the
+  /// photo's aspect ratio (fits it inside avatarDecodeSize²); callers crop with BoxFit.cover.
+  /// Decoding to an exact square squashed portrait/landscape contact photos.
+  static ImageProvider avatarImage(String path) => ResizeImage(
+        FileImage(File(path)),
+        width: avatarDecodeSize,
+        height: avatarDecodeSize,
+        policy: ResizeImagePolicy.fit,
+      );
+
   final Handle? handle;
   final ContactV2? contact;
   final double? size;
@@ -259,10 +269,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
                 final initials = cachedInitials?.substring(0, iOS ? null : 1);
                 // Use ContactV2 avatar (from file path)
                 return SizedBox.expand(
-                  child: Image.file(
-                    File(contactV2Avatar),
-                    cacheHeight: ContactAvatarWidget.avatarDecodeSize,
-                    cacheWidth: ContactAvatarWidget.avatarDecodeSize,
+                  child: Image(
+                    image: ContactAvatarWidget.avatarImage(contactV2Avatar),
                     // Bilinear so the canonical 256px decode downscales cleanly
                     // to the small on-screen sizes (nearest-neighbor aliases).
                     filterQuality: FilterQuality.low,
