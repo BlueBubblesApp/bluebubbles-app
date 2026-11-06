@@ -16,8 +16,9 @@ class ServerV2Migrations {
 
   static Future<int?>? _running;
 
-  /// Returns how many messages were updated, or null if a request failed or the server isn't v2. Joins a pass that's
-  /// already running rather than starting a second.
+  /// Returns how many messages were updated, or null if the server couldn't be reached or isn't v2. A message whose
+  /// own request fails is skipped and left for a manual run. Joins a pass that's already running rather than starting
+  /// a second.
   static Future<int?> run() => _running ??= _run().whenComplete(() => _running = null);
 
   static Future<int?> _run() async {
@@ -39,34 +40,68 @@ class ServerV2Migrations {
     query.close();
 
     int filled = 0;
+    int failed = 0;
     for (final reaction in missing) {
+      final Response response;
       try {
-        final response = await HttpSvc.message.fetchOne(reaction.guid!);
-        // The server leaves the key out when chat.db has no emoji for this one, so skip it
-        final emoji = (response.data['data'] as Map?)?['associatedMessageEmoji'] as String?;
-        if (emoji == null) continue;
-
-        // Re-read, so anything saved to it while the request was out isn't overwritten
-        final current = Database.messages.get(reaction.id!);
-        if (current == null) continue;
-        current.associatedMessageEmoji = emoji;
-        Database.messages.put(current);
-        filled++;
-        final chatGuid = current.chat.target?.guid;
-        if (chatGuid != null && current.associatedMessageGuid != null) {
-          maybeFindMessagesSvc(chatGuid)
-              ?.getMessageStateIfExists(current.associatedMessageGuid!)
-              ?.addAssociatedMessageInternal(current);
-        }
+        response = await HttpSvc.message.fetchOne(reaction.guid!);
       } catch (e, s) {
-        // Tunnels and proxies can also return a 404, so only the server's own error means the message is gone.
-        // Anything else retries next launch; stop now rather than wait out a timeout per message.
-        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        if (_isNotFound(e)) continue;
+        if (_isConnectionFailure(e)) {
+          // Every later request would fail the same way; the next launch retries the rest
+          Logger.warn("Stopped backfilling tapback emoji: couldn't reach the server",
+              error: e, trace: s, tag: "ServerV2Migrations");
+          return null;
+        }
+        // Only this message: skip it rather than let it block the rest on every launch
+        failed++;
         Logger.warn("Failed to backfill emoji for tapback ${reaction.guid}",
             error: e, trace: s, tag: "ServerV2Migrations");
-        return null;
+        continue;
+      }
+
+      // The server leaves the key out when chat.db has no emoji for this one, so skip it
+      final emoji = (response.data['data'] as Map?)?['associatedMessageEmoji'] as String?;
+      if (emoji == null) continue;
+
+      // Re-read, so anything saved to it while the request was out isn't overwritten
+      final updated = Database.messages.get(reaction.id!);
+      if (updated == null) continue;
+      updated.associatedMessageEmoji = emoji;
+      Database.messages.put(updated);
+      filled++;
+
+      final chatGuid = updated.chat.target?.guid;
+      if (chatGuid != null && updated.associatedMessageGuid != null) {
+        maybeFindMessagesSvc(chatGuid)
+            ?.getMessageStateIfExists(updated.associatedMessageGuid!)
+            ?.addAssociatedMessageInternal(updated);
       }
     }
+    if (failed > 0) {
+      Logger.warn("Skipped $failed tapback(s) whose emoji couldn't be fetched", tag: "ServerV2Migrations");
+    }
     return filled;
+  }
+
+  /// The message is gone from the server. The status alone can also come from a tunnel or proxy, but either way
+  /// there's nothing to fetch for this one.
+  static bool _isNotFound(Object e) =>
+      e is Response && (e.statusCode == 404 || '${e.data}'.contains('Message does not exist!'));
+
+  /// Whether [e] means no request will get through right now: no server URL, no response at all (offline, refused,
+  /// timed out), a rejected password, or a proxy or tunnel that can't reach the server (502 and up; the server's own
+  /// errors are 500).
+  static bool _isConnectionFailure(Object e) {
+    if (e is String) return true; // runApiGuarded's "No server URL!"
+    final status = e is Response ? e.statusCode : (e is DioException ? e.response?.statusCode : null);
+    if (status == 401 || (status != null && status >= 502)) return true;
+    if (e is DioException) return e.response == null;
+    if (e is Response) {
+      // ApiInterceptor resolves a timeout into a synthesized 500 with this error type
+      final error = e.data is Map ? (e.data as Map)['error'] : null;
+      return error is Map && error['type'] == 'timeout';
+    }
+    return false;
   }
 }
