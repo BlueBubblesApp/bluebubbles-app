@@ -81,8 +81,7 @@ class ReactionTypes {
   static bool isRemoval(String? type) =>
       type != null && (type.startsWith("-") || type == REMOVED_EMOJI || type == REMOVED_STICKER);
 
-  /// Whether [message] is a tapback we can render. Emoji tapbacks synced before the
-  /// client stored the emoji stay hidden until the backfill fills it in.
+  /// Emoji tapbacks synced before the client stored the emoji stay hidden until the backfill fills it in.
   static bool isTapback(Message message) {
     final type = message.associatedMessageType;
     if (isEmojiTapback(type)) return message.associatedMessageEmoji?.isNotEmpty ?? false;

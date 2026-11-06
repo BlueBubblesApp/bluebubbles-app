@@ -403,7 +403,6 @@ extension MessageNotificationExtension on Message {
         // fetch the associated message object
         Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
         if (associatedMessage != null) {
-          // grab the verb we'll use for this reaction
           String? verb = ReactionTypes.verbFor(this);
           // we need to check balloonBundleId first because for some reason
           // game pigeon messages have the text "�"
