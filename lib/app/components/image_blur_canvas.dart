@@ -36,6 +36,7 @@ class ImageBlurCanvas extends StatelessWidget {
         fit: background ? BoxFit.cover : BoxFit.contain,
         alignment: Alignment.center,
         cacheWidth: background ? 64 : cacheWidth,
+        gaplessPlayback: true,
       );
     }
     return Image.memory(
@@ -43,6 +44,7 @@ class ImageBlurCanvas extends StatelessWidget {
       fit: background ? BoxFit.cover : BoxFit.contain,
       alignment: Alignment.center,
       cacheWidth: background ? 64 : cacheWidth,
+      gaplessPlayback: true,
     );
   }
 
@@ -51,7 +53,8 @@ class ImageBlurCanvas extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final rawWidth = (constraints.maxWidth * MediaQuery.of(context).devicePixelRatio).round().abs();
-        final cacheWidth = rawWidth > 0 ? rawWidth : 1;
+        // Stepped so animated resizes (e.g. the selection shrink) reuse one decode instead of one per frame
+        final cacheWidth = rawWidth > 0 ? (rawWidth / 128).ceil() * 128 : 1;
         return Stack(
           fit: StackFit.expand,
           children: [

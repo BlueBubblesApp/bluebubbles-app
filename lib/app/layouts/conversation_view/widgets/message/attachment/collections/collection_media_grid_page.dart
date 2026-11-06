@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/layouts/conversation_details/material/chat_detail_theme.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/widgets/sections/media/media_grid_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
@@ -68,11 +69,10 @@ class _CollectionMediaGridPageState extends State<CollectionMediaGridPage> with 
                         : context.theme.colorScheme.primary,
                   ),
                   onPressed: () {
-                    if (inSelectionMode) {
-                      AttachmentsSvc.saveAllToDisk(collection.media.where((e) => selected.contains(e.guid!)));
-                    } else {
-                      AttachmentsSvc.saveAllToDisk(collection.media);
-                    }
+                    CollectionDownloadButton.download(
+                      context,
+                      inSelectionMode ? collection.media.where((e) => selected.contains(e.guid!)) : collection.media,
+                    );
                   },
                 );
               }),

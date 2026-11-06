@@ -49,12 +49,37 @@ class CollectionDownloadButton extends StatelessWidget {
 
   final List<Attachment> attachments;
 
+  /// Saves [attachments] to the device via [AttachmentsService.saveAllToDisk], confirming first when there's more
+  /// than one, so a stray tap can't start a mass download.
+  ///
+  /// Skips the confirmation when the save itself asks for a destination folder
+  /// ([AttachmentsService.batchSaveAsksForFolder]): that picker already lets the user back out, and asking twice
+  /// is noise.
+  static void download(BuildContext context, Iterable<Attachment> attachments) {
+    final list = attachments.toList();
+    void save() => AttachmentsSvc.saveAllToDisk(list);
+
+    final count = list.length;
+    if (count <= 1 || AttachmentsSvc.batchSaveAsksForFolder) return save();
+    showAreYouSure(
+      context,
+      title: "Download $count items?",
+      noText: "Cancel",
+      yesText: "Download",
+      onNo: () => Navigator.of(context, rootNavigator: true).pop(),
+      onYes: () {
+        Navigator.of(context, rootNavigator: true).pop();
+        save();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = context.theme.colorScheme.primary;
     final outline = context.theme.colorScheme.outline.withValues(alpha: 0.25);
     return GestureDetector(
-      onTap: () => AttachmentsSvc.saveAllToDisk(attachments),
+      onTap: () => download(context, attachments),
       child: Container(
         width: size,
         height: size,

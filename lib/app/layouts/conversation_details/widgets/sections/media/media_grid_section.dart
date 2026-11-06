@@ -54,6 +54,53 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
   static const int _chunkSize = 24;
   late int _displayCount = widget.fullPage ? _chunkSize : kAttachmentPreviewLimit;
   bool _loadingMore = false;
+  final RxnString _hovered = RxnString();
+  final RxnString _hoveredCircle = RxnString();
+
+  void _toggle(Attachment attachment) {
+    if (!widget.selected.remove(attachment.guid)) widget.selected.add(attachment.guid!);
+  }
+
+  /// Desktop selects with a corner checkbox instead of long press.
+  Widget _selectCircle(BuildContext context, Attachment attachment, bool isSelected) {
+    final hovered = _hoveredCircle.value == attachment.guid;
+    const motion = M3EMotion.spatialFast;
+    return Positioned(
+      right: 8,
+      bottom: 8,
+      child: MouseRegion(
+        onEnter: (_) => _hoveredCircle.value = attachment.guid,
+        onExit: (_) {
+          if (_hoveredCircle.value == attachment.guid) _hoveredCircle.value = null;
+        },
+        child: GestureDetector(
+          onTap: () => _toggle(attachment),
+          child: AnimatedScale(
+            scale: hovered ? 1.15 : 1,
+            duration: motion.duration,
+            curve: motion.curve,
+            child: AnimatedContainer(
+              duration: motion.duration,
+              curve: motion.curve,
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? context.theme.colorScheme.primary
+                    : (hovered ? Colors.white38 : Colors.black26),
+                border: isSelected ? null : Border.all(color: Colors.white, width: 2),
+              ),
+              child: isSelected
+                  ? Icon(iOS ? CupertinoIcons.check_mark : Icons.check,
+                      color: context.theme.colorScheme.onPrimary, size: 16)
+                  : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   List<Attachment> get _filteredMedia => applyMediaFilters(
         widget.media,
@@ -115,6 +162,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
     return Obx(() {
       final isSelected = widget.selected.contains(attachment.guid);
+      final showCircle = kIsDesktop && (widget.selected.isNotEmpty || _hovered.value == attachment.guid);
       const motion = M3EMotion.spatialFast;
       // Only the thumbnail is clipped (with an animated radius), never the cell, so
       // [MediaGridSection.cellOverlayBuilder] content such as tapbacks can overhang the tile.
@@ -126,35 +174,23 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
             ClipRRect(borderRadius: BorderRadius.circular(radius), clipBehavior: Clip.antiAlias, child: child),
         child: thumbnail,
       );
-      return AnimatedContainer(
+      Widget cell = AnimatedContainer(
         duration: motion.duration,
         curve: motion.curve,
         margin: EdgeInsets.all(isSelected ? 10 : 0),
         child: GestureDetector(
-          onTap: widget.selected.isNotEmpty
-              ? () {
-                  if (widget.selected.contains(attachment.guid)) {
-                    widget.selected.remove(attachment.guid!);
-                  } else {
-                    widget.selected.add(attachment.guid!);
-                  }
-                }
-              : null,
-          onLongPress: () {
-            if (widget.selected.contains(attachment.guid)) {
-              widget.selected.remove(attachment.guid!);
-            } else {
-              widget.selected.add(attachment.guid!);
-            }
-          },
+          onTap: widget.selected.isNotEmpty ? () => _toggle(attachment) : null,
+          onLongPress: kIsDesktop ? null : () => _toggle(attachment),
           child: AbsorbPointer(
             absorbing: widget.selected.isNotEmpty,
             child: Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
-                clippedThumbnail,
-                if (isSelected)
+                // Sized by the thumbnail, so the circle sits on the image rather than the cell's corner. It sits
+                // outside the thumbnail's clip so the animated corner radius never trims it.
+                Stack(children: [clippedThumbnail, if (showCircle) _selectCircle(context, attachment, isSelected)]),
+                if (isSelected && !kIsDesktop)
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -174,6 +210,14 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
             ),
           ),
         ),
+      );
+      if (!kIsDesktop) return cell;
+      return MouseRegion(
+        onEnter: (_) => _hovered.value = attachment.guid,
+        onExit: (_) {
+          if (_hovered.value == attachment.guid) _hovered.value = null;
+        },
+        child: cell,
       );
     });
   }

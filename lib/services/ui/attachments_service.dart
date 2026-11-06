@@ -266,7 +266,7 @@ class AttachmentsService extends GetxService {
     if (kIsDesktop) {
       directory = await _pickSaveDirectory(initialDirectory: await FilesystemSvc.downloadsDirectory);
       if (directory == null) return;
-    } else if (SettingsSvc.settings.askWhereToSave.value) {
+    } else if (batchSaveAsksForFolder) {
       directory = await _pickSaveDirectory(initialDirectory: SettingsSvc.settings.autoSaveDocsLocation.value);
       if (directory == null) return;
     }
@@ -321,6 +321,11 @@ class AttachmentsService extends GetxService {
       onAction: kIsDesktop && folder != null ? () => launchUrl(Uri.directory(folder)) : null,
     );
   }
+
+  /// Whether [saveAllToDisk] (for more than one attachment) starts by asking for a destination folder: always on
+  /// desktop, and on Android with "Ask where to save". Callers that would otherwise confirm a multi-file save can
+  /// skip their own prompt then.
+  bool get batchSaveAsksForFolder => !kIsWeb && (kIsDesktop || SettingsSvc.settings.askWhereToSave.value);
 
   static String _attachmentCount(int n) => n == 1 ? '1 attachment' : '$n attachments';
 
