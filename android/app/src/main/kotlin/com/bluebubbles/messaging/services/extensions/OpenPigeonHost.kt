@@ -74,8 +74,13 @@ object OpenPigeonHost {
                         val message = madridMessage(args)
                         val handle = messageHandle(args["chatGuid"] as? String ?: "")
                         val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
-                        withExtension(app) { it.didTapTemplate(message, handle, userCount) }
-                        result.success(null)
+                        // Answered once OpenPigeon has taken it, so Dart can say when the game didn't open
+                        withExtension(app, {
+                            main.post { result.error("unavailable", "OpenPigeon couldn't open the game", null) }
+                        }) {
+                            it.didTapTemplate(message, handle, userCount)
+                            main.post { result.success(null) }
+                        }
                     }
                     // A still of a game's live view, for turns that carry no image of their own. Width and maxHeight
                     // are logical pixels; the reply is PNG bytes, or null.
