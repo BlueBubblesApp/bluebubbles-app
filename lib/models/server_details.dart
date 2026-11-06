@@ -91,8 +91,7 @@ class ServerDetails {
   bool get isV1Server => apiVersions != null && !isV2Server;
 
   // v2 reports a 1.x feature level, which gates as usual. A 2.x would score 200 by the formula below, under several
-  // 1.x thresholds
-  @Deprecated('v1-only: a 2.x scores under several 1.x thresholds. Gate new features on isV2Server')
+  // 1.x thresholds. Gate a feature 1.x servers have on this; one only v2 has, on isV2Server
   int get _featureCode =>
       isV2Server && (int.tryParse(serverVersion.split('.').first) ?? 0) >= 2 ? 1 << 30 : serverVersionCode;
 
