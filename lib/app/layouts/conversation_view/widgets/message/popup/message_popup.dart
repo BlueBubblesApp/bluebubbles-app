@@ -230,8 +230,6 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           : context.height - materialOffset)
       .clamp(0, context.height - (narrowScreen ? 200 : 125));
 
-  bool get _emojiTapbacksSupported => SettingsSvc.serverDetails.isV2Server && SettingsSvc.serverDetails.isMinSequoia;
-
   Future<void> _pickEmojiTapback() async {
     final picked = await showEmojiTapbackPicker(context);
     if (picked != null && mounted) _sendEmojiTapback(picked);
@@ -276,7 +274,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   /// The tapback panel with the add-emoji circle beside it, on the side away from the screen edge it's pinned to.
   Widget _withAddEmojiCircle(Widget panel) {
-    if (!_emojiTapbacksSupported) return panel;
+    if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return panel;
     // Level with the panel's pill; ReactionPickerClipper keeps its bottom 15 for the thought-bubble dots
     final circle = Padding(
       padding: const EdgeInsets.only(top: 5),
@@ -372,7 +370,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
         : popupWidth - (widget.childPosition.dx + 10) - _edgeMargin;
     final double reactionItemWidth = iOS ? 45.0 : 44.0; // icon/emoji + its fixed padding, see item build below
     // Emoji tapbacks need a v2 server and macOS 15. As in Messages: one scrolling row of tapbacks, yours, then recents
-    final emojiTapbacks = _emojiTapbacksSupported;
+    final emojiTapbacks = SettingsSvc.serverDetails.supportsEmojiTapbacks;
     final ownEmoji = selfReaction == ReactionTypes.EMOJI ? selfEmoji : null;
     final tapbackItems = [
       ...ReactionTypes.toList(),
