@@ -1033,8 +1033,9 @@ class OutgoingMessageHandler {
             Logger.warn('Failed to replace attachment $tempAttachmentGuid', error: e, trace: st, tag: _tag);
           }
         }
-        // The socket's copy can still match these; until then they'd show as sending forever
-        if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+        // The socket's copy can still match these; until then they'd show as sending forever. A reply without
+        // attachments (the server stopped waiting for the row) says nothing about them, so the update matches them
+        if (responseAttachments.isNotEmpty && Get.isRegistered<MessagesService>(tag: c.guid)) {
           for (final a in unmatched) {
             MessagesSvc(c.guid).notifyAttachmentTransferError(tempGuid, a.guid!);
           }
