@@ -7,7 +7,8 @@ import 'package:universal_io/io.dart';
 
 class AttachmentActions {
   /// Renames rows still saved under an attachment's [Attachment.originalGuid] to the guid the server now serves, so
-  /// the guid lookups that follow find them. Call before matching incoming attachments by guid.
+  /// the guid lookups that follow find them. Call before matching incoming attachments by guid. A row saved under
+  /// both guids is the same attachment twice, so the old one is removed.
   static void adoptRekeyedGuids(Iterable<Attachment> incoming) {
     final renamed = {
       for (final a in incoming)
@@ -20,8 +21,24 @@ class AttachmentActions {
     query.close();
     for (final row in stale) {
       final newGuid = renamed[row.guid]!;
-      if (findOne(newGuid) != null) {
-        Logger.warn("Both ${row.guid} and its new guid $newGuid are saved; leaving them", tag: "AttachmentActions");
+      final current = findOne(newGuid);
+      if (current != null) {
+        // Saved under both guids, the same attachment twice: keep the new row, with the old one's file and message
+        // when it has none
+        try {
+          final oldFile = File(row.path);
+          if (!File(current.path).existsSync() && oldFile.existsSync()) {
+            File(current.path).parent.createSync(recursive: true);
+            oldFile.renameSync(current.path);
+          }
+        } catch (e) {
+          Logger.warn("Couldn't move ${row.path} to ${current.path}", error: e, tag: "AttachmentActions");
+        }
+        if (!current.message.hasValue && row.message.hasValue) {
+          current.message.target = row.message.target;
+          Database.attachments.put(current);
+        }
+        Database.attachments.remove(row.id!);
         continue;
       }
       final oldDirectory = Directory(row.directory);
