@@ -89,8 +89,7 @@ class ServerManagementPanelController extends StatefulController {
     }
   }
 
-  /// Stats load only once iMessage Statistics is opened: the server's totals read its whole message database, which
-  /// on a slow disk holds up every other request to it.
+  /// Stats load only when opened: the server's totals scan its whole database, holding up its other requests.
   Future<void> loadSelectedStatsIfEmpty() async {
     if (getActiveStatsMap().isEmpty && !isActiveStatsLoading()) await refreshSelectedStats();
   }
