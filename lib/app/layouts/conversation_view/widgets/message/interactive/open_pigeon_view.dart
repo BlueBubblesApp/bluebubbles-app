@@ -247,15 +247,18 @@ class OpenPigeonKeyboard extends StatefulWidget {
 }
 
 class _OpenPigeonKeyboardState extends State<OpenPigeonKeyboard> {
+  /// A method rather than a closure, so dispose can name this picker's callback and leave a newer one's in place.
+  void _onPick(Map<String, dynamic> game) => widget.controller.pendingGame.value = game;
+
   @override
   void initState() {
     super.initState();
-    OpenPigeon.onKeyboardMessage((game) => widget.controller.pendingGame.value = game);
+    OpenPigeon.onKeyboardMessage(widget.controller.chat.guid, _onPick);
   }
 
   @override
   void dispose() {
-    OpenPigeon.onKeyboardMessage(null);
+    OpenPigeon.clearKeyboardMessage(_onPick);
     super.dispose();
   }
 

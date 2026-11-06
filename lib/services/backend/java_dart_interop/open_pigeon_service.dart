@@ -33,7 +33,7 @@ class OpenPigeon {
   /// Where the server says a subscription can be bought.
   static String? purchaseUrl;
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
-  static ValueChanged<Map<String, dynamic>>? _onKeyboardMessage;
+  static ({String chatGuid, ValueChanged<Map<String, dynamic>> callback})? _keyboard;
 
   /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
   static final RxSet<int> failedViews = <int>{}.obs;
@@ -178,8 +178,15 @@ class OpenPigeon {
   /// Number of people in [chat], counting the user, which OpenPigeon uses to hide games.
   static int userCount(Chat chat) => chat.isGroup ? chat.handles.length + 1 : 2;
 
-  /// Set by the game picker sheet: a picked game goes to the composer rather than straight out.
-  static void onKeyboardMessage(ValueChanged<Map<String, dynamic>>? callback) => _onKeyboardMessage = callback;
+  /// Set by the game picker for [chatGuid]: a game picked there goes to its composer rather than straight out.
+  static void onKeyboardMessage(String chatGuid, ValueChanged<Map<String, dynamic>> callback) =>
+      _keyboard = (chatGuid: chatGuid, callback: callback);
+
+  /// Clears [callback], unless a newer picker has already replaced it.
+  static void clearKeyboardMessage(ValueChanged<Map<String, dynamic>> callback) {
+    // Tear-offs of one object's method are equal, not identical
+    if (_keyboard?.callback == callback) _keyboard = null;
+  }
 
   static Future<bool> _handle(MethodCall call) async {
     final args = call.arguments is Map ? (call.arguments as Map).cast<String, dynamic>() : <String, dynamic>{};
@@ -194,7 +201,13 @@ class OpenPigeon {
       return false;
     }
     if (args['fromKeyboard'] == true) {
-      _onKeyboardMessage?.call(args);
+      // A late pick from a picker since closed must not land in another chat's composer
+      final keyboard = _keyboard;
+      if (keyboard == null || keyboard.chatGuid != args['chatGuid']) {
+        Logger.warn('Ignoring a game picked in a chat whose picker is closed', tag: 'OpenPigeon');
+        return false;
+      }
+      keyboard.callback(args);
       return true;
     }
     final chat = Chat.findOne(guid: args['chatGuid'] as String);
