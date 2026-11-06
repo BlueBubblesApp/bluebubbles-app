@@ -103,7 +103,7 @@ class ReactionDetails extends StatelessWidget {
                               : Center(
                                   child: Builder(builder: (context) {
                                     if (ReactionTypes.isStickerTapback(message.associatedMessageType)) {
-                                      return StickerTapbackImage(reaction: message);
+                                      return StickerTapbackImage(attachment: message.dbAttachments.firstOrNull);
                                     }
                                     final text = Text(
                                       ReactionTypes.emojiFor(message),

@@ -114,7 +114,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   Widget? _customGlyph(Message reaction) {
     final type = reaction.associatedMessageType;
     if (ReactionTypes.isStickerTapback(type)) {
-      return StickerTapbackImage(reaction: reaction);
+      return StickerTapbackImage(attachment: reaction.dbAttachments.firstOrNull);
     }
     if (!ReactionTypes.isEmojiTapback(type)) return null;
     return FittedBox(

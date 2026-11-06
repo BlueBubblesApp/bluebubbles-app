@@ -294,6 +294,13 @@ extension TitleCase on String {
   }
 }
 
+/// [text] without its Genmoji placeholders (U+FFFC), or "Genmoji" if nothing else is left.
+String withoutInlineAttachments(String text) {
+  // Each run of Genmoji takes the spaces beside it, so only the person's own spacing is left
+  final words = text.replaceAll(RegExp(' ?(?: ?$objectReplacementChar)+ ?'), ' ').trim();
+  return words.isEmpty ? "Genmoji" : words;
+}
+
 // Returns the attachments as a string representation for message preview/notification text.
 String _getAttachmentText(List<Attachment?> attachments) {
   Map<String, int> counts = {};
@@ -340,7 +347,67 @@ extension RandomListChoice<E> on List<E> {
 }
 
 extension MessageNotificationExtension on Message {
-  String getNotificationText({bool withSender = false, bool hideContactInfo = false, bool hideMessageContent = false}) {
+  /// The guids of the Genmoji drawn inside their part's text.
+  Set<String?> get inlineAttachmentGuids =>
+      attributedBody.firstOrNull?.inlineRuns.map((r) => r.attributes!.attachmentGuid).toSet() ?? const {};
+
+  /// The Genmoji drawn inside [part]'s text (every part's when null), one per U+FFFC placeholder in their order. One
+  /// that isn't loaded is null, so the ones after it keep their places.
+  List<Attachment?> inlineAttachmentsIn([int? part]) {
+    final body = attributedBody.firstOrNull;
+    if (body == null) return const [];
+    final byGuid = {for (final a in dbAttachments) a.guid: a};
+    return body.inlineRuns
+        .where((r) => part == null || r.attributes?.messagePart == part)
+        .sorted((a, b) => a.range.first.compareTo(b.range.first))
+        .map((r) => byGuid[r.attributes!.attachmentGuid])
+        .toList();
+  }
+
+  /// [inlineAttachmentsIn] every part, or empty unless every attachment is one.
+  List<Attachment?> get inlineAttachments {
+    final body = attributedBody.firstOrNull;
+    if (body == null || dbAttachments.isEmpty) return const [];
+    final guids = inlineAttachmentGuids;
+    // Every U+FFFC in the text must be a Genmoji, or the placeholders wouldn't line up with them
+    final onlyInline = dbAttachments.every((a) => guids.contains(a.guid)) &&
+        body.runs.where((r) => r.isAttachment).every((r) => guids.contains(r.attributes!.attachmentGuid));
+    return onlyInline ? inlineAttachmentsIn() : const [];
+  }
+
+  /// The attachments a preview counts and shows: all but the Genmoji drawn inside the text, unless that's all of them.
+  List<Attachment> get nonInlineAttachments {
+    final guids = inlineAttachmentGuids;
+    final rest = dbAttachments.where((a) => !guids.contains(a.guid)).toList();
+    return rest.isEmpty ? dbAttachments.toList() : rest;
+  }
+
+  /// The Genmoji a preview of this message draws: its own, or a tapback's reacted part's. Hits the DB for tapbacks.
+  List<Attachment?> get previewInlineAttachments {
+    final own = inlineAttachments;
+    if (own.isNotEmpty || associatedMessageGuid == null) return own;
+    final reacted = Message.findOne(guid: associatedMessageGuid);
+    if (reacted == null) return const [];
+    return associatedMessagePart != null && reacted.attributedBody.isNotEmpty
+        ? reacted.inlineAttachmentsIn(associatedMessagePart)
+        : reacted.inlineAttachments;
+  }
+
+  /// The text of a message whose only attachments are Genmoji, keeping their U+FFFC when [keepPlaceholders].
+  String? inlineAttachmentText({bool keepPlaceholders = false}) {
+    if (inlineAttachments.isEmpty) return null;
+    final body = attributedBody.first.string;
+    final text = isNullOrEmpty(subject) ? body : "$subject\n$body";
+    return keepPlaceholders ? text.trim() : withoutInlineAttachments(text);
+  }
+
+  /// [keepInlineAttachments] keeps a U+FFFC where each Genmoji goes, for a preview that draws them.
+  String getNotificationText({
+    bool withSender = false,
+    bool hideContactInfo = false,
+    bool hideMessageContent = false,
+    bool keepInlineAttachments = false,
+  }) {
     String compute() {
       if (isGroupEvent) return groupEventText;
       if (expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
@@ -384,13 +451,17 @@ extension MessageNotificationExtension on Message {
         }
       }
 
+      // Genmoji sit inside the text, so the message reads as its text, not as attachments
+      final inlineText = inlineAttachmentText(keepPlaceholders: keepInlineAttachments);
+      if (inlineText != null) return "$sender$inlineText";
+
       // A sticker tapback's sticker is its attachment, but it reads as a reaction
       final stickerTapback = ReactionTypes.isStickerTapback(associatedMessageType);
 
       // If there are attachments, return the number of attachments
       if (!stickerTapback && dbAttachments.isNotEmpty) {
         if (isSticker) return "${sender}1 Sticker";
-        return "$sender${_getAttachmentText(dbAttachments.toList())}";
+        return "$sender${_getAttachmentText(nonInlineAttachments)}";
       } else if (!stickerTapback && hasAttachments) {
         // Fallback: message is marked as having attachments but they haven't loaded yet
         // (can happen with outgoing messages before the attachment links are fully persisted)
@@ -416,8 +487,10 @@ extension MessageNotificationExtension on Message {
             bool attachment = false;
             if (associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
               final attrBod = associatedMessage.attributedBody.first;
+              // Only Genmoji keep their U+FFFC, so the placeholders line up with previewInlineAttachments
               final ranges = attrBod.runs
-                  .where((e) => e.attributes?.messagePart == associatedMessagePart)
+                  .where((e) =>
+                      e.attributes?.messagePart == associatedMessagePart && (!e.isAttachment || e.isEmojiImage))
                   .map((e) => e.range)
                   .sorted((a, b) => a.first.compareTo(b.first));
               final attachmentGuids = attrBod.runs
@@ -425,7 +498,10 @@ extension MessageNotificationExtension on Message {
                       (e) => e.attributes?.messagePart == associatedMessagePart && e.attributes?.attachmentGuid != null)
                   .map((e) => e.attributes?.attachmentGuid)
                   .toSet();
-              if (attachmentGuids.isNotEmpty) {
+              // A Genmoji shares its part with text, and the part reads as that text
+              final partHasText = attrBod.runs.any(
+                  (e) => e.attributes?.messagePart == associatedMessagePart && e.attributes?.attachmentGuid == null);
+              if (attachmentGuids.isNotEmpty && !partHasText) {
                 attachment = true;
                 messageText = _getAttachmentText(
                   associatedMessage.dbAttachments.where((e) => attachmentGuids.contains(e.guid)).toList(),
@@ -436,13 +512,17 @@ extension MessageNotificationExtension on Message {
                   final substring = attrBod.string.substring(range.first, range.first + range.last);
                   messageText = messageText! + substring;
                 }
+                if (attachmentGuids.isNotEmpty) {
+                  messageText = keepInlineAttachments ? messageText!.trim() : withoutInlineAttachments(messageText!);
+                }
               }
             }
             // fallback
+            messageText ??= associatedMessage.inlineAttachmentText(keepPlaceholders: keepInlineAttachments);
             if (messageText == null) {
               if (associatedMessage.hasAttachments) {
                 attachment = true;
-                messageText = _getAttachmentText(associatedMessage.dbAttachments.toList());
+                messageText = _getAttachmentText(associatedMessage.nonInlineAttachments);
               } else {
                 messageText = (associatedMessage.subject ?? "") +
                     (!isNullOrEmpty(associatedMessage.subject?.trim()) ? "\n" : "") +
