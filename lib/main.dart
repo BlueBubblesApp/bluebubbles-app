@@ -244,6 +244,7 @@ Future<Null> initApp(bool bubble, List<String> arguments) async {
       dark = pair.dark;
 
       runApp(MaterialApp(
+          onNavigationNotification: (_) => true,
           home: Main(
         lightTheme: light,
         darkTheme: dark,
