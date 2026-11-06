@@ -744,11 +744,14 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
+    final unsendable = r == null ? null : _unsendableTapbackReason(r, m);
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => r == null
+      httpCall: () => unsendable != null
+          ? Future.error(Exception(unsendable))
+          : r == null
           ? SendMessageInterface.sendTextMessage(
               chatGuid: c.guid,
               tempGuid: tempGuid,
@@ -766,7 +769,7 @@ class OutgoingMessageHandler {
               selectedMessageGuid: selected.guid!,
               reaction: ReactionTypes.wireReaction(r),
               partIndex: m.associatedMessagePart,
-              emoji: m.associatedMessageEmoji,
+              emoji: ReactionTypes.isEmojiTapback(r) ? m.associatedMessageEmoji : null,
             ),
       onSuccess: (data) => _finalizeOutgoingSuccess(
         c, tempGuid, data,
@@ -1194,5 +1197,15 @@ class OutgoingMessageHandler {
     }
 
     _isProcessing = false;
+  }
+
+  /// Why tapback [type] on [m] can't be sent, or null if it can.
+  static String? _unsendableTapbackReason(String type, Message m) {
+    if (ReactionTypes.isStickerTapback(type)) return "Sticker tapbacks can't be sent from here";
+    if (!ReactionTypes.isEmojiTapback(type)) return null;
+    if (isNullOrEmpty(m.associatedMessageEmoji)) return "This emoji tapback has no emoji";
+    final server = SettingsSvc.serverDetails;
+    if (!server.isV2Server || !server.isMinSequoia) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
+    return null;
   }
 }
