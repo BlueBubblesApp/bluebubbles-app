@@ -1062,7 +1062,10 @@ class OutgoingMessageHandler {
         if (stale != null) {
           Message.delete(stale.guid!);
           if (Get.isRegistered<MessagesService>(tag: chat.guid)) {
-            MessagesSvc(chat.guid).updateMessage(replacement, oldGuid: existingGuid);
+            // The socket's copy is already on screen under the real GUID, so the placeholder is removed rather than
+            // renamed into a second bubble
+            MessagesSvc(chat.guid).removeMessage(stale);
+            MessagesSvc(chat.guid).updateMessage(replacement);
           }
         }
       } else {}
