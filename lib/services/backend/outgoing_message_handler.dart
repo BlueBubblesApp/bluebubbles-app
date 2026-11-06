@@ -981,18 +981,25 @@ class OutgoingMessageHandler {
 
     if (kIsWeb) return;
 
-    final missing = attachments.where((a) => !File(a.path).existsSync());
-    if (missing.isNotEmpty) {
-      Logger.error('Attachment files not found: ${missing.map((a) => a.path).join(', ')}', tag: _tag);
-      return;
-    }
+    final missing = attachments.where((a) => !File(a.path).existsSync()).map((a) => a.path).toList();
+    // A retry can come after the server or the Private API setting changed
+    final supported = SettingsSvc.serverDetails.supportsMultiAttachmentSend &&
+        SettingsSvc.settings.enablePrivateAPI.value &&
+        SettingsSvc.settings.privateAPIAttachmentSend.value;
+    final unsendable = missing.isNotEmpty
+        ? 'Attachment files not found: ${missing.join(', ')}'
+        : !supported
+            ? 'Sending several attachments as one message needs a v2 server and Private API attachment sending'
+            : null;
 
     void clearProgress() => attachmentProgress.removeWhere((e) => attachments.any((a) => a.guid == e.guid));
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => SendMessageInterface.sendMultiAttachmentMessage(
+      httpCall: () => unsendable != null
+          ? Future.error(Exception(unsendable))
+          : SendMessageInterface.sendMultiAttachmentMessage(
         chatGuid: c.guid,
         tempGuid: tempGuid,
         files: attachments.map((a) => {'guid': a.guid, 'path': a.path, 'name': a.transferName}).toList(),
@@ -1024,6 +1031,12 @@ class OutgoingMessageHandler {
             }
           } catch (e, st) {
             Logger.warn('Failed to replace attachment $tempAttachmentGuid', error: e, trace: st, tag: _tag);
+          }
+        }
+        // The socket's copy can still match these; until then they'd show as sending forever
+        if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+          for (final a in unmatched) {
+            MessagesSvc(c.guid).notifyAttachmentTransferError(tempGuid, a.guid!);
           }
         }
         await _matchMessageWithExisting(c, tempGuid, newMessage);

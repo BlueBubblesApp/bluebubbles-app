@@ -625,8 +625,10 @@ class IncomingMessageHandler {
         final match = unmatched.firstWhereOrNull((a) => partGuid != null && a.guid == partGuid) ??
             unmatched.firstWhereOrNull((a) => a.transferName == newAttachment.transferName) ??
             unmatched.firstOrNull;
-        if (match != null) unmatched.remove(match);
-        attachmentExistingGuid = match?.guid ?? existingGuid;
+        // No attachment carries the message's temp GUID in a multi-attachment send, so there's nothing to replace
+        if (match == null) continue;
+        unmatched.remove(match);
+        attachmentExistingGuid = match.guid!;
       } else if (existing.dbAttachments.isNotEmpty && i < existing.dbAttachments.length) {
         attachmentExistingGuid = existing.dbAttachments[i].guid ?? existingGuid;
       } else {

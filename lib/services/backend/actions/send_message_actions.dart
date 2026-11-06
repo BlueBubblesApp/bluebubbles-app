@@ -90,7 +90,7 @@ class SendMessageActions {
     final files = (map['files'] as List).cast<Map<String, dynamic>>();
 
     final parts = <Map<String, dynamic>>[];
-    for (final file in files) {
+    for (final (index, file) in files.indexed) {
       final attachmentGuid = file['guid'] as String;
       final name = file['name'] as String;
       final upload = await HttpSvc.attachment.upload(
@@ -109,13 +109,14 @@ class SendMessageActions {
           );
         },
       );
-      parts.add({'attachment': upload.data['data']['path'], 'name': name});
+      parts.add({'partIndex': index, 'attachment': upload.data['data']['path'], 'name': name});
     }
 
     final response = await HttpSvc.message.sendMultipart(
       chatGuid,
       tempGuid,
       parts,
+      hasAttachments: true,
       effectId: map['effectId'] as String?,
       subject: map['subject'] as String?,
       selectedMessageGuid: map['selectedMessageGuid'] as String?,

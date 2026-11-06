@@ -1186,9 +1186,11 @@ class MessagesService extends GetxController {
     //       prepAttachments → sendAttachment → onSuccess/onError.
     // The attachment.guid == message.guid invariant is established in
     // send_animation.dart for initial sends; we must restore it on retry.
-    final isMultiAttachment = message.dbAttachments.length > 1;
-    for (int i = 0; i < message.dbAttachments.length; i++) {
-      final a = message.dbAttachments[i];
+    // In the order they were created, which is the order they were sent in
+    final attachments = message.dbAttachments.toList()..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+    final isMultiAttachment = attachments.length > 1;
+    for (int i = 0; i < attachments.length; i++) {
+      final a = attachments[i];
       final oldAttGuid = a.guid!;
       // A multi-attachment message gives each attachment its own temp GUID
       final newAttGuid = isMultiAttachment ? OutgoingMultiAttachment.tempGuidFor(message.guid!, i) : message.guid!;
@@ -1240,7 +1242,7 @@ class MessagesService extends GetxController {
         OutgoingMultiAttachment(
           chat: chat,
           message: message,
-          attachments: message.dbAttachments.toList(),
+          attachments: attachments,
           isRetry: true,
         ),
       );

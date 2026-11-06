@@ -227,6 +227,7 @@ class MessageApi {
     String? selectedMessageGuid,
     int? partIndex,
     bool? ddScan,
+    bool hasAttachments = false,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -249,6 +250,8 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
+        // As with sendAttachment, the server answers once iMessage has sent the media
+        options: hasAttachments ? Options(receiveTimeout: _svc.dio.options.receiveTimeout! * 12) : null,
       );
       return _svc.returnSuccessOrError(response);
     });
