@@ -41,7 +41,6 @@ class ServerDetails {
         apiVersions = const [],
         serverBuildVersion = null;
 
-  /// The Swift rewrite, which implements everything the 1.x Electron server did.
   bool get isV2Server => apiVersions.contains(2);
 
   // A v2 server reports a 1.x feature level today, but the formula below would score a 2.x as 200,

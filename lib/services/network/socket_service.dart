@@ -75,9 +75,8 @@ class SocketService {
   /// rediscovery is the only recovery from [_socketGaveUp].
   static const Duration _urlDiscoveryTimeout = Duration(seconds: 60);
 
-  /// The 1.x server's engine.io heartbeat takes up to three minutes to notice a dead connection,
-  /// so the client runs its own against those servers. v2 drops every client-sent socket event, so
-  /// nothing would ever ack it; there the engine.io ping is the only liveness check.
+  /// 1.x's engine.io heartbeat takes up to three minutes to notice a dead connection, so we run our own.
+  /// v2 drops client-sent socket events, so nothing would ack it there.
   static const Duration _heartbeatInterval = Duration(seconds: 30);
   static const Duration _heartbeatTimeout = Duration(seconds: 5);
   static const int _heartbeatMissLimit = 2;

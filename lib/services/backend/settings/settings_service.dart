@@ -231,8 +231,7 @@ class SettingsService {
     }
   }
 
-  /// Replaces the cached [ServerDetails] with ones fetched elsewhere and persists them, so screens that
-  /// fetch `/server/info` themselves don't leave the cache showing the previous server.
+  /// Caches and persists [details] fetched elsewhere, so the cache doesn't keep showing the previous server.
   Future<void> updateServerDetails(ServerDetails details) async {
     _serverDetails.value = details;
     await PrefsSvc.server.setServerDetails(
