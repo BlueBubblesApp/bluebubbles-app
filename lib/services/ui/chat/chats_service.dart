@@ -11,6 +11,7 @@ import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
+import 'package:bluebubbles/services/backend/interfaces/prefs_interface.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -1107,7 +1108,7 @@ class ChatsService {
       messageIds: messages.map((e) => e.id!).toList(),
       handleIds: handleIds,
     );
-    await PrefsSvc.messaging.clearChat(chat.guid);
+    await _clearChatPrefs(chat.guid);
 
     // Remove from service state
     removeChat(chat);
@@ -1121,6 +1122,11 @@ class ChatsService {
   /// Does NOT touch Settings, themes, FCM data, or scheduled messages. Does
   /// NOT show any confirmation UI — callers must confirm with the user
   /// before invoking this.
+  Future<void> _clearChatPrefs(String chatGuid) async {
+    await PrefsSvc.messaging.clearChat(chatGuid);
+    await PrefsInterface.saveReplyToMessageState(chatGuid, null, null);
+  }
+
   Future<void> deleteAllMessagingData() async {
     if (kIsWeb) return;
 
@@ -1140,6 +1146,7 @@ class ChatsService {
 
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
+      await _clearChatPrefs(guid);
     }
     HandleSvc.reset();
 
@@ -1167,8 +1174,11 @@ class ChatsService {
     // Perform the actual DB soft delete
     await ChatInterface.softDeleteChat(chatData: chat.toMap());
     chat.clearTranscript();
+    // The DB row's draft is cleared, but this object can be reused if the chat comes back
+    chat.textFieldText = null;
+    chat.textFieldAttachments = [];
     // Its transcript is gone, so what was kept for it goes too
-    await PrefsSvc.messaging.clearChat(chat.guid);
+    await _clearChatPrefs(chat.guid);
 
     // Propagate dateDeleted to ChatState before removing it so any live
     // listeners (e.g. ConversationTileController) can react reactively.

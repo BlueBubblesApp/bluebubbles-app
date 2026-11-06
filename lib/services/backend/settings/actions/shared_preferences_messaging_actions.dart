@@ -51,11 +51,10 @@ class SharedPreferencesMessagingActions {
   // Each count reads, changes and rewrites a list, so overlapping ones would lose a use
   static Future<void> _tapbackEmojiQueue = Future.value();
 
-  /// Forgets what's kept for deleted chat [chatGuid]: its tapback emoji, saved reply, and being the chat to reopen.
+  /// Forgets what's kept for deleted chat [chatGuid] here: its tapback emoji and being the chat to reopen. Its saved
+  /// reply lives in the GlobalIsolate's prefs, so it's cleared through PrefsInterface.
   Future<void> clearChat(String chatGuid) async {
     await service.i.remove(_chatTapbackEmojiKey(chatGuid));
-    await service.i.remove(_replyMessageKey(chatGuid));
-    await service.i.remove(_replyMessagePartKey(chatGuid));
     if (getLastOpenedChat() == chatGuid) await clearLastOpenedChat();
   }
 
