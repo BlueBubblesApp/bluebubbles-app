@@ -631,13 +631,16 @@ class IncomingMessageHandler {
         unmatched.remove(match);
         attachmentExistingGuid = match.guid!;
       } else if (existing.dbAttachments.isNotEmpty) {
-        // Real GUIDs: the server doesn't promise the attachments' order, so match by GUID, and by position only
-        // when no server attachment claims the row there
+        // Real GUIDs: the server doesn't promise the attachments' order, so match by GUID, then by the GUID Messages
+        // renamed it from, and by position only when no server attachment claims the row there
         final positional = i < existing.dbAttachments.length ? existing.dbAttachments[i] : null;
         final match = unmatched.firstWhereOrNull((a) => a.guid == newAttachment.guid) ??
+            unmatched.firstWhereOrNull(
+              (a) => newAttachment.originalGuid != null && a.guid == newAttachment.originalGuid,
+            ) ??
             (positional != null &&
                     unmatched.contains(positional) &&
-                    !replacementAttachments.any((r) => r?.guid == positional.guid)
+                    !replacementAttachments.any((r) => r?.guid == positional.guid || r?.originalGuid == positional.guid)
                 ? positional
                 : null);
         if (match != null) unmatched.remove(match);
@@ -654,8 +657,10 @@ class IncomingMessageHandler {
         if (alreadyPresent != null) {
           await Attachment.replaceAttachmentAsync(newAttachment.guid, newAttachment);
 
-          // Delete the stale temp record if it's distinct from the real one. A real GUID is another attachment.
-          if (attachmentExistingGuid != newAttachment.guid && attachmentExistingGuid.startsWith('temp-')) {
+          // Delete the stale temp record if it's distinct from the real one, or the row still under the GUID Messages
+          // renamed it from. Any other real GUID is another attachment.
+          if (attachmentExistingGuid != newAttachment.guid &&
+              (attachmentExistingGuid.startsWith('temp-') || attachmentExistingGuid == newAttachment.originalGuid)) {
             final staleTemp = await Attachment.findOneAsync(attachmentExistingGuid);
             if (staleTemp != null) await Attachment.deleteAsync(staleTemp.guid!);
           }
