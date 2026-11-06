@@ -204,13 +204,11 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       }
     }
 
-    // Several files go as one message, as in Messages, when the server takes attachment parts (needs the Private API)
+    // Several files go as one message, as in Messages, when the server can
     final sendTogether = attachments.length > 1 &&
         !data.isAudioMessage &&
         attachments.every((f) => f.balloonBundleId == null) &&
-        SettingsSvc.serverDetails.supportsMultiAttachmentSend &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.settings.privateAPIAttachmentSend.value;
+        SettingsSvc.canSendAttachmentsTogether;
     if (sendTogether) {
       final message = Message(
         text: "",

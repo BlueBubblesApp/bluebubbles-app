@@ -983,13 +983,10 @@ class OutgoingMessageHandler {
 
     final missing = attachments.where((a) => !File(a.path).existsSync()).map((a) => a.path).toList();
     // A retry can come after the server or the Private API setting changed
-    final supported = SettingsSvc.serverDetails.supportsMultiAttachmentSend &&
-        SettingsSvc.settings.enablePrivateAPI.value &&
-        SettingsSvc.settings.privateAPIAttachmentSend.value;
     final unsendable = missing.isNotEmpty
         ? 'Attachment files not found: ${missing.join(', ')}'
-        : !supported
-            ? 'Sending several attachments as one message needs a v2 server and Private API attachment sending'
+        : !SettingsSvc.canSendAttachmentsTogether
+            ? 'Sending several attachments as one message needs server v1.7.0 or newer and Private API attachment sending'
             : null;
 
     void clearProgress() => attachmentProgress.removeWhere((e) => attachments.any((a) => a.guid == e.guid));
