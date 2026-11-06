@@ -219,7 +219,7 @@ class NotificationsService {
     final contactName = message.handleRelation.target?.displayName ?? "Unknown";
     final title = isGroup ? (ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle()) : contactName;
     final text = hideContent ? "iMessage" : message.getNotificationText();
-    final isReaction = !isNullOrEmpty(message.associatedMessageGuid);
+    final isReaction = message.isReaction;
 
     if (kIsWeb && Notification.permission == "granted") {
       final chatIcon = await avatarAsBytes(chat: chat, quality: 256);
@@ -256,7 +256,7 @@ class NotificationsService {
         // Determine if reaction action should be shown (only if Private API is enabled & not a reaction message)
         final bool showReactionAction = SettingsSvc.settings.enablePrivateAPI.value &&
             SettingsSvc.settings.notificationReactionAction.value &&
-            message.associatedMessageGuid == null;
+            !message.isReaction;
         final String reactionType = SettingsSvc.settings.notificationReactionActionType.value;
 
         await GetIt.I.isReady<MethodChannelService>();

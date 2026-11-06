@@ -271,7 +271,7 @@ class MessageState extends StatefulController {
         hasError = (message.error > 0).obs,
         isSending = (message.guid?.startsWith('temp') == true && message.error == 0).obs,
         isSent = (!(message.guid?.startsWith('temp') ?? false)).obs,
-        isReaction = (message.associatedMessageGuid != null).obs,
+        isReaction = message.isReaction.obs,
         hasEffectPlayed = message.hasEffectPlayed.obs {
     // Create AttachmentState for every attachment already on the message.
     for (final attachment in message.dbAttachments) {
@@ -625,7 +625,6 @@ class MessageState extends StatefulController {
     if (associatedMessageGuid != null && this.associatedMessageGuid.value != associatedMessageGuid) {
       this.associatedMessageGuid.value = associatedMessageGuid;
       message.associatedMessageGuid = associatedMessageGuid;
-      isReaction.value = true;
     }
 
     if (associatedMessageType != null && this.associatedMessageType.value != associatedMessageType) {
@@ -637,6 +636,9 @@ class MessageState extends StatefulController {
       this.associatedMessagePart.value = associatedMessagePart;
       message.associatedMessagePart = associatedMessagePart;
     }
+
+    // Depends on the type as well as the guid, so it's settled once both are in
+    if (isReaction.value != message.isReaction) isReaction.value = message.isReaction;
   }
 
   /// Update state from database message object

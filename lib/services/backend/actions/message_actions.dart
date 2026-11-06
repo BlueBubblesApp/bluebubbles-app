@@ -195,7 +195,7 @@ class MessageActions {
 
       // Save associated messages or the original message (depending on whether
       // this message is a reaction or regular message
-      if (inputMessage.associatedMessageType != null && inputMessage.associatedMessageGuid != null) {
+      if (inputMessage.associatedMessageType != null && inputMessage.isReaction) {
         final associatedQuery = messageBox.query(Message_.guid.equals(inputMessage.associatedMessageGuid!)).build();
         associatedQuery.limit = 1;
         final associatedMessage = associatedQuery.findFirst();
@@ -245,7 +245,10 @@ class MessageActions {
         result = query.findFirst();
         query.close();
       } else if (associatedMessageGuid != null) {
-        final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
+        // Looks for a reaction to that message
+        final query = messageBox
+            .query(Message_.associatedMessageGuid.equals(associatedMessageGuid) & Message.reactionCondition)
+            .build();
         query.limit = 1;
         result = query.findFirst();
         query.close();

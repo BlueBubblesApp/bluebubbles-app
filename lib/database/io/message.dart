@@ -131,6 +131,22 @@ class Message {
   @Transient()
   bool get isSticker => associatedMessageType == "sticker" && associatedMessageGuid != null;
 
+  /// A tapback or sticker on another message. Messages can be associated with others for other reasons (each turn of
+  /// an iMessage app session points at the session's first message), so the type decides, not the link.
+  bool get isReaction => associatedMessageGuid != null && ReactionTypes.isReactionType(associatedMessageType);
+
+  /// Matches [isReaction] in a query.
+  static Condition<Message> get reactionCondition =>
+      Message_.associatedMessageGuid.notNull() & Message_.associatedMessageType.oneOf(ReactionTypes.associatedTypes);
+
+  /// Matches messages that aren't [isReaction] in a query. Strings have no `notOneOf`, hence the chain.
+  static Condition<Message> get notReactionCondition =>
+      Message_.associatedMessageGuid.isNull() |
+      Message_.associatedMessageType.isNull() |
+      ReactionTypes.associatedTypes
+          .map((type) => Message_.associatedMessageType.notEquals(type))
+          .reduce((a, b) => a & b);
+
   @Transient()
   bool get isNameChange => itemType == 2;
 
@@ -320,7 +336,7 @@ class Message {
       }
       // Save associated messages or the original message (depending on whether
       // this message is a reaction or regular message
-      if (associatedMessageType != null && associatedMessageGuid != null) {
+      if (associatedMessageType != null && isReaction) {
         Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
         if (associatedMessage != null) {
           associatedMessage.hasReactions = true;
@@ -438,7 +454,10 @@ class Message {
       query.close();
       return result;
     } else if (associatedMessageGuid != null) {
-      final query = Database.messages.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
+      // Looks for a reaction to that message
+      final query = Database.messages
+          .query(Message_.associatedMessageGuid.equals(associatedMessageGuid) & Message.reactionCondition)
+          .build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
