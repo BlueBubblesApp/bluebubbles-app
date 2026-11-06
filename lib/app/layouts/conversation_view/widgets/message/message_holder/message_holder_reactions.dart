@@ -3,7 +3,6 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -72,12 +71,6 @@ class StickerObserver extends StatelessWidget {
           .toList();
 
       if (stickersForPart.isEmpty) return const SizedBox.shrink();
-      for (final s in stickersForPart) {
-        Logger.debug(
-            "${s.guid} on part ${part.part}: "
-            "${s.dbAttachments.map((a) => '${a.guid} ${a.stickerPlacement}').join(', ')}",
-            tag: "StickerPlacement");
-      }
 
       final holder = StickerHolder(
         stickerMessages: stickersForPart,

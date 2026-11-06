@@ -1,6 +1,5 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
@@ -104,10 +103,6 @@ class _StickerHolderState extends State<StickerHolder> {
         children: _stickerPaths.values.map((attachment) {
           final p = attachment.stickerPlacement!;
           double v(String key) => (p[key] as num).toDouble();
-          Logger.debug(
-              "${attachment.guid}: $p in a ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}pt bubble -> centre "
-              "(${(v('xScalar') * width).toStringAsFixed(1)}, ${(v('yScalar') * height).toStringAsFixed(1)})",
-              tag: "StickerPlacement");
           return Positioned(
             left: v('xScalar') * width,
             top: v('yScalar') * height,
