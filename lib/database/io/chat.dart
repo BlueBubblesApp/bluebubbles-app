@@ -786,7 +786,9 @@ class Chat {
   bool get isIMessage => service == ChatServiceType.iMessage;
 
   // Check style first so handles isn't required to be evaluated, which will incur a DB lookup.
-  bool get isGroup => style == 43 || handles.length > 1;
+  /// chat.db's style (43 group, 45 one-to-one) is authoritative. Handle count isn't: macOS links a merged
+  /// iMessage/SMS conversation to both of the person's handles.
+  bool get isGroup => style != null ? style == 43 : handles.map((h) => h.address).toSet().length > 1;
 
   Chat merge(Chat other) {
     id ??= other.id;
