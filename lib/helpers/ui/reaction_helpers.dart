@@ -107,8 +107,9 @@ class ReactionTypes {
   }
 
   /// Every associated message type that's a reaction to another message: the tapbacks and their removals by name,
-  /// IMCore's raw ids for those (tapbacks 2000-2007, removals 3000-3007, including emoji and sticker tapbacks) and
-  /// the legacy sticker. Other types, like the iMessage app session links ([AppSessionTypes.UPDATE] and
+  /// IMCore's raw ids for those (tapbacks 2000-2007, removals 3000-3007, including emoji and sticker tapbacks), the
+  /// legacy sticker and a poll vote, which has no bubble of its own and was kept with the reactions before app turns
+  /// were told apart. Other types, like the iMessage app session links ([AppSessionTypes.UPDATE] and
   /// [AppSessionTypes.SUPERSEDED]), are messages in their own right.
   static final List<String> associatedTypes = [
     ...toList(),
@@ -116,6 +117,7 @@ class ReactionTypes {
     for (int i = 0; i <= 7; i++) ...["${2000 + i}", "${3000 + i}"],
     "sticker",
     "1000",
+    AppSessionTypes.POLL_VOTE,
   ];
 
   static bool isReactionType(String? type) => associatedTypes.contains(type);
