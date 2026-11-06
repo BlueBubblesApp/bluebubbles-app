@@ -27,6 +27,19 @@ import 'package:get_it/get_it.dart';
 // ignore: non_constant_identifier_names
 NotificationsService get NotificationsSvc => GetIt.I<NotificationsService>();
 
+/// A message Apple already reports as read (read on the iPhone or Mac before it
+/// reached this device) must not raise a notification: the chat-read event that
+/// would clear it can be applied before the notification is posted. The same
+/// holds for a message sent before the chat was last read on an Apple device
+/// ([chatReadAt]), whose push still says unread.
+bool skipNotificationForReadMessage(DateTime? dateRead, {DateTime? dateCreated, DateTime? chatReadAt}) =>
+    dateRead != null || isBeforeChatRead(dateCreated, chatReadAt);
+
+/// Whether a message created at [dateCreated] was already read on an Apple
+/// device, given the chat was last reported read at [chatReadAt].
+bool isBeforeChatRead(DateTime? dateCreated, DateTime? chatReadAt) =>
+    dateCreated != null && chatReadAt != null && !dateCreated.isAfter(chatReadAt);
+
 class PendingToastItem {
   final String? sender;
   final String text;
@@ -292,6 +305,11 @@ class NotificationsService {
       return;
     }
     if (message.isKeptAudio) return;
+    final chatReadAt =
+        GetIt.I.isRegistered<SharedPreferencesService>() ? await PrefsSvc.messaging.getChatReadAt(chat.guid) : null;
+    if (skipNotificationForReadMessage(message.dateRead, dateCreated: message.dateCreated, chatReadAt: chatReadAt)) {
+      return;
+    }
     if (chat.shouldMuteNotification(message)) return;
     if (!headless && LifecycleSvc.isAlive) {
       if (ChatsSvc.isChatActive(chat.guid)) return;

@@ -145,11 +145,18 @@ class ChatActions {
       if (updateFlags['updateLatestMessage'] == true) {
         final latestMessageId = chatData['dbLatestMessageId'] as int?;
         final latestMessageDateMs = chatData['dbOnlyLatestMessageDate'] as int?;
+        // A null/0 id means the caller CLEARED the pointer, which happens when
+        // the chat's only message was hidden. Treating it as "no change" left
+        // the old pointer in the database, so the tile kept previewing a
+        // hidden message and the repair pass re-ran against it forever.
         if (latestMessageId != null && latestMessageId > 0) {
           chat.dbLatestMessage.targetId = latestMessageId;
-        }
-        if (latestMessageDateMs != null) {
-          chat.dbOnlyLatestMessageDate = DateTime.fromMillisecondsSinceEpoch(latestMessageDateMs);
+          if (latestMessageDateMs != null) {
+            chat.dbOnlyLatestMessageDate = DateTime.fromMillisecondsSinceEpoch(latestMessageDateMs);
+          }
+        } else {
+          chat.dbLatestMessage.target = null;
+          chat.dbOnlyLatestMessageDate = null;
         }
       }
 

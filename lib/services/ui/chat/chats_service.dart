@@ -27,6 +27,21 @@ import 'package:get_it/get_it.dart';
 // ignore: non_constant_identifier_names
 ChatsService get ChatsSvc => GetIt.I<ChatsService>();
 
+/// Server read events must still run notification cleanup when local state is
+/// already read. Duplicate unread events have no equivalent side effect.
+bool shouldApplyServerUnreadUpdate({required bool localUnread, required bool serverUnread}) =>
+    localUnread != serverUnread || !serverUnread;
+
+/// When Apple marked the chat read, from a `chat-read-status-changed` event.
+/// Null for unread events and for servers that don't send `readAt`: the
+/// phone's own clock would run late and could silence a message sent just
+/// after the read.
+DateTime? chatReadAtFromEvent(Map<String, dynamic> data) {
+  final readAt = data['readAt'];
+  if (data['read'] != true || readAt is! num) return null;
+  return DateTime.fromMillisecondsSinceEpoch(readAt.toInt());
+}
+
 class ChatsService {
   static const batchSize = 100;
   int currentCount = 0;
@@ -1333,6 +1348,35 @@ class ChatsService {
     state?.updateHasUnreadInternal(value);
   }
 
+  /// Apply unread state received from the server without echoing it back to Apple.
+  ///
+  /// This deliberately bypasses [_toggleChatHasUnread], whose active-chat logic
+  /// forces `privateMark` back to true. Reconciliation must remain local-only
+  /// even when the conversation is open.
+  Future<void> setChatHasUnreadFromServer(Chat chat, bool value, {DateTime? readAt}) async {
+    // Remember when Apple marked it read before anything can short-circuit: a
+    // message sent before then can still arrive afterwards and must neither
+    // notify nor mark the chat unread again.
+    if (!value && readAt != null && GetIt.I.isRegistered<SharedPreferencesService>()) {
+      await PrefsSvc.messaging.setChatReadAt(chat.guid, readAt);
+    }
+    final state = getChatState(chat.guid);
+    if (state != null &&
+        !shouldApplyServerUnreadUpdate(localUnread: state.hasUnreadMessage.value, serverUnread: value)) {
+      return;
+    }
+
+    final chatToUpdate = state?.chat ?? chat;
+    await chatToUpdate.toggleHasUnreadAsync(
+      value,
+      force: true,
+      clearLocalNotifications: !value,
+      privateMark: false,
+    );
+    updateChat(chatToUpdate);
+    state?.updateHasUnreadInternal(value);
+  }
+
   /// Set chat muted status
   Future<void> setChatMuted(Chat chat, bool isMuted) async {
     final state = getChatState(chat.guid);
@@ -1580,6 +1624,18 @@ class ChatsService {
 
     // Update state if available
     state.updateLatestMessageInternal(value);
+  }
+
+  /// Drops a chat's latest-message preview once the device holds no messages
+  /// for it, so an empty conversation stops previewing a hidden message.
+  void clearChatLatestMessage(String chatGuid) {
+    final state = getChatState(chatGuid);
+    if (state == null) return;
+
+    state.updateLatestMessageInternal(null);
+    state.updateSubtitleInternal(null);
+    state.chat.clearLatestMessage();
+    _repositionChat(state.chat, immediate: true);
   }
 
   /// Update chat latest message and subtitle in response to a new or updated message.

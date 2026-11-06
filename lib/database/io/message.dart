@@ -486,6 +486,12 @@ class Message {
     await MessageInterface.softDeleteMessage(guid: guid);
   }
 
+  /// Un-hides a message Apple moved back out of Recently Deleted.
+  static Future<void> restore(String guid) async {
+    if (kIsWeb) return;
+    await MessageInterface.restoreMessage(guid: guid);
+  }
+
   /// Re-links messages whose `handleId` (the sender's server-side ROWID)
   /// matches [handleId] to [localHandleId]'s `handleRelation`. Used by the
   /// Developer Tools "Handle Auditing" remediation flow, after a handle's

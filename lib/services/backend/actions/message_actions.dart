@@ -105,6 +105,28 @@ class MessageActions {
     });
   }
 
+  /// Clears [Message.dateDeleted], putting a message Apple took back out of
+  /// Recently Deleted in front of the user again. The inverse of
+  /// [softDeleteMessage]; the conversation view filters on dateDeleted being
+  /// null, so clearing it is all that is needed to un-hide the message.
+  static Future<void> restoreMessage(dynamic data) async {
+    final guid = data['guid'] as String;
+
+    Database.runInTransaction(TxMode.write, () {
+      final messageBox = Database.messages;
+
+      final query = messageBox.query(Message_.guid.equals(guid)).build();
+      query.limit = 1;
+      final toRestore = query.findFirst();
+      query.close();
+
+      if (toRestore != null && toRestore.dateDeleted != null) {
+        toRestore.dateDeleted = null;
+        messageBox.put(toRestore);
+      }
+    });
+  }
+
   static Future<Map<String, dynamic>> fetchAssociatedMessagesAsync(dynamic data) async {
     final messageGuid = data['messageGuid'] as String;
     final threadOriginatorGuid = data['threadOriginatorGuid'] as String?;

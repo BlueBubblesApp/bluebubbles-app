@@ -10,6 +10,7 @@ import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/isolates/incremental_sync_isolate.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:bluebubbles/services/backend/sync/apple_state_catch_up.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
@@ -65,6 +66,10 @@ class SyncService {
         '(cooldown: ${_incrementalSyncCooldown.inSeconds}s)',
         tag: 'Incremental Chat Sync',
       );
+      // The cooldown protects the expensive message/contact sync, not the
+      // catch-up with Apple: a read or delete event can be missed while
+      // Android is backgrounded, and resume must still pick it up.
+      await AppleStateCatchUp.run();
       return;
     }
 
@@ -188,6 +193,11 @@ class SyncService {
     if (chatSyncFailed) {
       _lastIncrementalSyncTimestamp = null;
     }
+
+    // Runs after the messages are in, so a message synced and deleted in the
+    // same window still ends up hidden. Not counted toward `errors`: an older
+    // server without the endpoints must not make the user think sync failed.
+    await AppleStateCatchUp.run();
 
     final contactSyncResult = await performContactSyncToHandles();
     final contactUploadResult = await performContactSyncToServer();
