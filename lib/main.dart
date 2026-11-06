@@ -394,9 +394,8 @@ class Main extends StatelessWidget {
           LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyI): const OpenChatDetailsIntent(),
           LogicalKeySet(LogicalKeyboardKey.escape): const GoBackIntent(),
         },
-        // A route reports only its own pop state when a PopScope on it changes, so a pushed page could tell Android that
-        // nothing handles back, and the back gesture then left the app. Back always goes through Flutter instead, which
-        // still exits when nothing can pop.
+        // A route only reports its own pop state, so a pushed page could tell Android nothing handles back and the
+        // gesture left the app. Back always goes through Flutter instead, which still exits when nothing can pop.
         builder: (context, child) => NotificationListener<NavigationNotification>(
           onNotification: (notification) {
             if (notification.canHandlePop) return false;
