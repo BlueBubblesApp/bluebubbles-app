@@ -83,15 +83,16 @@ class ServerV2Migrations {
     return filled;
   }
 
-  /// App balloons saved before the client kept their session and icon, or before sync asked for `appPayload`, whose
-  /// session our archive decoding misses on some messages (a game's opening one). Re-fetched and re-parsed whole.
+  /// App balloons saved before the client kept their session, without their payload (as a push delivers them), or
+  /// before sync asked for `appPayload`, whose session our archive decoding misses on some messages (a game's opening
+  /// one). Re-fetched and re-parsed whole. A missing icon isn't checked: plenty of apps never send one.
   static Future<int?> _backfillAppPayloads(ServerV2MigrationProgress? onProgress) async {
     final query = Database.messages
-        .query(Message_.balloonBundleId.contains("MSMessageExtensionBalloonPlugin").and(Message_.guid.notNull()))
+        .query(Message_.balloonBundleId.contains(AppSessionTypes.extensionBalloonPlugin).and(Message_.guid.notNull()))
         .build();
     final stale = (await runAsync(() => query.find())).where(_isOnServer).where((message) {
       final app = message.payloadData?.appData?.firstOrNull;
-      return app != null && (app.sessionId == null || app.appIcon == null);
+      return app == null || app.sessionId == null;
     }).toList();
     query.close();
 
@@ -112,13 +113,35 @@ class ServerV2Migrations {
         Database.messages.put(current);
         filled++;
       } catch (e, s) {
-        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
-        Logger.warn("Failed to backfill the app payload of ${message.guid}",
-            error: e, trace: s, tag: "ServerV2Migrations");
-        return null;
+        if (_isUnreachable(e)) {
+          Logger.warn("Stopped backfilling app payloads at ${message.guid}",
+              error: e, trace: s, tag: "ServerV2Migrations");
+          return null;
+        }
+        // One message the server can't give us (gone, 404, or anything else) shouldn't hold up the rest
+        if (!_isNotFound(e)) {
+          Logger.warn("Skipped the app payload of ${message.guid}", error: e, trace: s, tag: "ServerV2Migrations");
+        }
       }
     }
     return filled;
+  }
+
+  /// The server answered that the message doesn't exist.
+  static bool _isNotFound(Object e) =>
+      e is Response && (e.statusCode == 404 || '${e.data}'.contains('Message does not exist!'));
+
+  /// A failure no other message would get past: no connection (no response, or the timeout ApiInterceptor turns
+  /// into one), the wrong password, or no server URL at all.
+  static bool _isUnreachable(Object e) {
+    final status = e is Response ? e.statusCode : (e is DioException ? e.response?.statusCode : null);
+    if (status == 401) return true;
+    if (e is DioException) return e.response == null;
+    if (e is Response) {
+      final data = e.data;
+      return data is Map && data['error'] is Map && data['error']['type'] == 'timeout';
+    }
+    return e is String;
   }
 
   /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.
