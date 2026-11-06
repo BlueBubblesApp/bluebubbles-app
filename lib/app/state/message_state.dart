@@ -861,19 +861,24 @@ class MessageState extends StatefulController {
     final mainString = body.string;
     final list = <MessagePart>[];
     body.runs.sort((a, b) => a.range.first.compareTo(b.range.first));
-    final textParts = body.runs.where((e) => !e.isAttachment).map((e) => e.attributes?.messagePart).toSet();
+    final inlineGuids = body.inlineRuns.map((e) => e.attributes!.attachmentGuid).toSet();
+    final chatGuid = cvController?.chat.guid ?? ChatsSvc.activeChat?.chat.guid;
+    Attachment? loadedAttachment(String guid) =>
+        message.dbAttachments.firstWhereOrNull((a) => a.guid == guid) ??
+        (chatGuid == null ? null : maybeFindMessagesSvc(chatGuid)?.struct.getAttachment(guid));
     body.runs.forEachIndexed((i, e) async {
       if (e.attributes?.messagePart == null) return;
-      final isInline = e.isAttachment && textParts.contains(e.attributes!.messagePart);
+      final isInline = inlineGuids.contains(e.attributes!.attachmentGuid);
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
-        final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
         final currentLength = existingPart.text?.length ?? 0;
-        existingPart.text = (existingPart.text ?? "") + newText;
-        if (isInline) {
-          final attachment = message.dbAttachments.firstWhereOrNull((a) => a.guid == e.attributes!.attachmentGuid);
-          if (attachment != null) existingPart.attachments.add(attachment);
+        // No await here: it would let later runs append first. A U+FFFC without its Genmoji would shift the rest.
+        final attachment = isInline ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
+        if (!e.isAttachment || attachment != null) {
+          final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
+          existingPart.text = (existingPart.text ?? "") + newText;
         }
+        if (attachment != null) existingPart.attachments.add(attachment);
         if (e.hasMention) {
           existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
@@ -883,20 +888,14 @@ class MessageState extends StatefulController {
         }
       } else {
         Attachment? foundAttachment;
-        if (e.isAttachment && (cvController?.chat != null || ChatsSvc.activeChat != null)) {
+        if (e.isAttachment && chatGuid != null) {
           final attachmentGuid = e.attributes!.attachmentGuid!;
-          foundAttachment = message.dbAttachments.firstWhereOrNull((a) => a.guid == attachmentGuid);
-          if (foundAttachment == null) {
-            foundAttachment = maybeFindMessagesSvc(cvController?.chat.guid ?? ChatsSvc.activeChat!.chat.guid)
-                ?.struct
-                .getAttachment(attachmentGuid);
-            foundAttachment ??= await Attachment.findOneAsync(attachmentGuid);
-          }
+          foundAttachment = loadedAttachment(attachmentGuid) ?? await Attachment.findOneAsync(attachmentGuid);
         }
 
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
-          text: e.isAttachment && !isInline
+          text: e.isAttachment && !(isInline && foundAttachment != null)
               ? null
               : mainString.substring(e.range.first, e.range.first + e.range.last),
           attachments: foundAttachment != null ? [foundAttachment] : [],

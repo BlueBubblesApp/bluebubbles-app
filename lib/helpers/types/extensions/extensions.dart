@@ -294,13 +294,13 @@ extension TitleCase on String {
   }
 }
 
-// Returns the attachments as a string representation for message preview/notification text.
 /// [text] without its Genmoji placeholders (U+FFFC), or "Genmoji" if nothing else is left.
 String withoutInlineAttachments(String text) {
   final words = text.replaceAll(String.fromCharCode(0xFFFC), ' ').replaceAll(RegExp(r' {2,}'), ' ').trim();
   return words.isEmpty ? "Genmoji" : words;
 }
 
+// Returns the attachments as a string representation for message preview/notification text.
 String _getAttachmentText(List<Attachment?> attachments) {
   Map<String, int> counts = {};
   for (Attachment? attachment in attachments) {
@@ -346,35 +346,43 @@ extension RandomListChoice<E> on List<E> {
 }
 
 extension MessageNotificationExtension on Message {
-  /// Attachments drawn inside the text (Genmoji), in the order their U+FFFC placeholders appear. Empty unless every
-  /// attachment is one.
-  List<Attachment> get inlineAttachments {
+  /// The Genmoji drawn inside [part]'s text (every part's when null), in the order their U+FFFC placeholders appear.
+  List<Attachment> inlineAttachmentsIn([int? part]) {
     final body = attributedBody.firstOrNull;
     if (body == null || dbAttachments.isEmpty) return const [];
-    final textParts = body.runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
-    final guids = <String>[];
-    for (final run in body.runs.sorted((a, b) => a.range.first.compareTo(b.range.first))) {
-      if (!run.isAttachment) continue;
-      if (!textParts.contains(run.attributes?.messagePart)) return const [];
-      guids.add(run.attributes!.attachmentGuid!);
-    }
     final byGuid = {for (final a in dbAttachments) a.guid: a};
-    final ordered = guids.map((g) => byGuid[g]).whereType<Attachment>().toList();
-    return ordered.length == dbAttachments.length ? ordered : const [];
+    return body.inlineRuns
+        .where((r) => part == null || r.attributes?.messagePart == part)
+        .sorted((a, b) => a.range.first.compareTo(b.range.first))
+        .map((r) => byGuid[r.attributes!.attachmentGuid])
+        .whereType<Attachment>()
+        .toList();
   }
 
-  /// The Genmoji a preview of this message draws: its own, or for a tapback, those of the message it reacts to.
+  /// [inlineAttachmentsIn] every part, or empty unless every attachment is one.
+  List<Attachment> get inlineAttachments {
+    final inline = inlineAttachmentsIn();
+    return inline.length == dbAttachments.length ? inline : const [];
+  }
+
+  /// The Genmoji a preview of this message draws, matching the placeholders [getNotificationText] keeps: its own, or
+  /// for a tapback, those of the part it reacts to. Looks up the reacted message, so don't call it from a build.
   List<Attachment> get previewInlineAttachments {
     final own = inlineAttachments;
     if (own.isNotEmpty || associatedMessageGuid == null) return own;
-    return Message.findOne(guid: associatedMessageGuid)?.inlineAttachments ?? const [];
+    final reacted = Message.findOne(guid: associatedMessageGuid);
+    if (reacted == null) return const [];
+    return associatedMessagePart != null && reacted.attributedBody.isNotEmpty
+        ? reacted.inlineAttachmentsIn(associatedMessagePart)
+        : reacted.inlineAttachments;
   }
 
   /// The text of a message whose only attachments are [inlineAttachments], with a U+FFFC where each one goes when
   /// [keepPlaceholders], else without them ("Genmoji" if nothing else is left). Null for any other message.
   String? inlineAttachmentText({bool keepPlaceholders = false}) {
     if (inlineAttachments.isEmpty) return null;
-    final text = attributedBody.first.string;
+    final body = attributedBody.first.string;
+    final text = isNullOrEmpty(subject) ? body : "$subject\n$body";
     return keepPlaceholders ? text.trim() : withoutInlineAttachments(text);
   }
 
@@ -464,8 +472,10 @@ extension MessageNotificationExtension on Message {
             bool attachment = false;
             if (associatedMessagePart != null && associatedMessage.attributedBody.firstOrNull != null) {
               final attrBod = associatedMessage.attributedBody.first;
+              // Only Genmoji keep their U+FFFC, so the placeholders line up with previewInlineAttachments
               final ranges = attrBod.runs
-                  .where((e) => e.attributes?.messagePart == associatedMessagePart)
+                  .where((e) =>
+                      e.attributes?.messagePart == associatedMessagePart && (!e.isAttachment || e.isEmojiImage))
                   .map((e) => e.range)
                   .sorted((a, b) => a.first.compareTo(b.first));
               final attachmentGuids = attrBod.runs

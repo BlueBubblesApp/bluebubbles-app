@@ -106,9 +106,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     return !isSending && !hasError;
   }
 
+  // A Genmoji part is a text bubble, so attachment actions don't apply to it
   bool get showDownload =>
       (isSent &&
           part.attachments.isNotEmpty &&
+          !part.hasInlineAttachments &&
           part.attachments.where((element) => AttachmentsSvc.hasLocalFile(element)).isNotEmpty) ||
       isEmbeddedMedia;
 
@@ -116,7 +118,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       message.isLegacyUrlPreview || message.payloadData?.type == PayloadType.url || message.isPhotoSlideshow;
 
   bool get canOpenInImageViewer =>
-      part.attachments.length == 1 && part.attachments.first.mimeStart == "image";
+      part.attachments.length == 1 && !part.hasInlineAttachments && part.attachments.first.mimeStart == "image";
 
   late bool isEmbeddedMedia = (message.balloonBundleId == "com.apple.Handwriting.HandwritingProvider" ||
           message.balloonBundleId == "com.apple.DigitalTouchBalloonProvider") &&

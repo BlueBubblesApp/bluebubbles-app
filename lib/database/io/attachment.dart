@@ -310,7 +310,7 @@ class Attachment {
     if (parent == null) return false;
     return parent.isSticker ||
         ReactionTypes.isStickerTapback(parent.associatedMessageType) ||
-        parent.inlineAttachments.any((a) => a.guid == guid);
+        parent.attributedBody.any((b) => b.runs.any((r) => r.isEmojiImage && r.attributes!.attachmentGuid == guid));
   }
 
   String get convertedPath => "$path.$convertedExtension";

@@ -83,7 +83,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     }
     if (!SettingsSvc.settings.autoDownload.value) return;
 
-    final attachments = AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+    final attachments = _previewAttachments(lastMessage);
     final preview = AttachmentPreview.firstPreviewableAttachment(attachments);
     if (preview == null) return;
     if (AttachmentsSvc.hasLocalFile(preview)) return;
@@ -146,7 +146,9 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     return Obx(() {
       final chatState = controller.chatState;
       final lastMessage = chatState.latestMessage.value;
-      final subtitle = chatState.subtitle.value ?? '';
+      // The subtitle keeps a U+FFFC per Genmoji for the chat list, which this plain text can't draw
+      final rawSubtitle = chatState.subtitle.value ?? '';
+      final subtitle = rawSubtitle.contains('￼') ? withoutInlineAttachments(rawSubtitle) : rawSubtitle;
 
       final unread = chatState.hasUnreadMessage.value;
       // Null-safe isFromMe: treat null as false (unknown sender → show the bubble)
@@ -155,9 +157,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         return const SizedBox.shrink();
       }
 
-      final attachments = lastMessage == null
-          ? const <Attachment>[]
-          : AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+      final attachments = lastMessage == null ? const <Attachment>[] : _previewAttachments(lastMessage);
       final previewAttachment = AttachmentPreview.firstPreviewableAttachment(attachments);
       final showPreview = previewAttachment != null &&
           AttachmentPreview.canShow(previewAttachment, generateVideoThumbnail: true);
@@ -243,6 +243,10 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
 
   /// In-memory "1 Photo" text from [attachments] when the cached subtitle is
   /// the empty-relation fallback ("Attachment").
+  // A Genmoji message reads as its text, so its Genmoji aren't previews
+  List<Attachment> _previewAttachments(Message message) =>
+      message.inlineAttachments.isNotEmpty ? const [] : AttachmentPreview.attachmentsFor(message, chatGuid: chat.guid);
+
   String? _attachmentLabel(List<Attachment> attachments, Message? lastMessage) {
     if (attachments.isEmpty) return null;
     final msg = Message(

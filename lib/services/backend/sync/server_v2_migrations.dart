@@ -8,10 +8,13 @@ import 'package:dio/dio.dart';
 /// Fills in data that servers older than v2 never sent, for messages already synced from them.
 /// Sync never refetches old messages, so this has to ask the server again.
 class ServerV2Migrations {
+  /// Bump when adding a backfill, so clients that finished the earlier ones run again.
+  static const int version = 2;
+
   /// Run on startup: once the server is known to be v2, and on each launch until a pass gets through.
   static Future<void> runOnce() async {
-    if (PrefsSvc.database.getServerV2MigrationsDone() || !SettingsSvc.serverDetails.isV2Server) return;
-    if (await run() != null) await PrefsSvc.database.setServerV2MigrationsDone();
+    if (PrefsSvc.database.getServerV2MigrationsVersion() >= version || !SettingsSvc.serverDetails.isV2Server) return;
+    if (await run() != null) await PrefsSvc.database.setServerV2MigrationsVersion(version);
   }
 
   static Future<int?>? _running;
@@ -23,7 +26,46 @@ class ServerV2Migrations {
 
   static Future<int?> _run() async {
     if (!SettingsSvc.serverDetails.isV2Server) return null;
-    return _backfillTapbackEmoji();
+    final emoji = await _backfillTapbackEmoji();
+    if (emoji == null) return null;
+    final genmoji = await _backfillGenmoji();
+    if (genmoji == null) return null;
+    return emoji + genmoji;
+  }
+
+  /// Attributed bodies saved before the client kept `__kIMEmojiImageAttributeName`, which marks a Genmoji. Any with an
+  /// attachment inside a text part could hold one, so those are re-fetched.
+  static Future<int?> _backfillGenmoji() async {
+    final query = Database.messages
+        .query(Message_.dbAttributedBody.contains("__kIMFileTransferGUIDAttributeName").and(Message_.guid.notNull()))
+        .build();
+    final candidates = (await runAsync(() => query.find())).where((message) {
+      final body = message.attributedBody.firstOrNull;
+      if (body == null || body.runs.any((r) => r.isEmojiImage)) return false;
+      final textParts = body.runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
+      return body.runs.any((r) => r.isAttachment && textParts.contains(r.attributes?.messagePart));
+    }).toList();
+    query.close();
+
+    int filled = 0;
+    for (final message in candidates) {
+      try {
+        final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "attributedBody");
+        final data = response.data['data'];
+        if (data is! Map) continue;
+        final fresh = Message.fromMap(Map<String, dynamic>.from(data)).attributedBody;
+        if (!fresh.any((b) => b.runs.any((r) => r.isEmojiImage))) continue;
+
+        message.attributedBody = fresh;
+        Database.messages.put(message);
+        filled++;
+      } catch (e, s) {
+        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        Logger.warn("Failed to backfill the Genmoji of ${message.guid}", error: e, trace: s, tag: "ServerV2Migrations");
+        return null;
+      }
+    }
+    return filled;
   }
 
   /// Whether [message] is on the server, rather than a local one still sending or that failed to.
