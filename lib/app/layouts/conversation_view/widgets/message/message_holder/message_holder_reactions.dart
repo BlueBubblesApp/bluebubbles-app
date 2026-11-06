@@ -202,12 +202,14 @@ class _RenderStickerOverhang extends RenderShiftedBox {
     size = constraints.constrain(space.inflateSize(child.size));
   }
 
-  // A press anywhere in the sticker space lands on the bubble's center, so it opens details like the bubble does
+  // A press in the room kept for placed stickers lands on the bubble's center, so it opens details like the bubble
+  // does. A miss on the bubble itself (its tail gutter, its rounded corners) stays a miss, as it would without this.
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     if (super.hitTestChildren(result, position: position)) return true;
     final child = this.child!;
     final offset = (child.parentData as BoxParentData).offset;
+    if (_stickers.isEmpty || (offset & child.size).contains(position)) return false;
     return super.hitTestChildren(result, position: offset + child.size.center(Offset.zero));
   }
 }
