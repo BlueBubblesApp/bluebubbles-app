@@ -1,15 +1,17 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 
 /// Fills in data that servers older than v2 never sent, for messages already synced from them.
 /// Sync never refetches old messages, so this has to ask the server again.
 class ServerV2Migrations {
   /// Bump when adding a backfill, so clients that finished the earlier ones run again.
-  static const int version = 2;
+  static const int version = 3;
 
   /// Run on startup: once the server is known to be v2, and on each launch until a pass gets through.
   static Future<void> runOnce() async {
@@ -30,7 +32,53 @@ class ServerV2Migrations {
     if (emoji == null) return null;
     final genmoji = await _backfillGenmoji();
     if (genmoji == null) return null;
-    return emoji + genmoji;
+    final stickers = await _backfillStickerPlacement();
+    if (stickers == null) return null;
+    return emoji + genmoji + stickers;
+  }
+
+  /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.
+  static Future<int?> _backfillStickerPlacement() async {
+    final query =
+        Database.messages.query(Message_.associatedMessageType.equals("sticker").and(Message_.guid.notNull())).build();
+    final missing = (await runAsync(() => query.find()))
+        .where(_isOnServer)
+        .where((m) => m.dbAttachments.any((a) => a.stickerPlacement == null))
+        .toList();
+    query.close();
+
+    int filled = 0;
+    for (final sticker in missing) {
+      try {
+        final response = await HttpSvc.message.fetchOne(sticker.guid!, withQuery: "attachment");
+        final remote = (((response.data['data'] as Map?)?['attachments'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((a) => Attachment.fromMap(a.cast<String, dynamic>()))
+            .toList();
+        AttachmentActions.adoptRekeyedGuids(remote);
+        final current = Database.messages.get(sticker.id!);
+        if (current == null) continue;
+        for (final a in current.dbAttachments) {
+          final placement = remote.firstWhereOrNull((r) => r.guid == a.guid)?.stickerPlacement;
+          if (a.stickerPlacement != null || placement == null) continue;
+          a.stickerPlacement = placement;
+          Database.attachments.put(a);
+        }
+        filled++;
+        final chatGuid = current.chat.target?.guid;
+        if (chatGuid != null && current.associatedMessageGuid != null) {
+          maybeFindMessagesSvc(chatGuid)
+              ?.getMessageStateIfExists(current.associatedMessageGuid!)
+              ?.addAssociatedMessageInternal(current);
+        }
+      } catch (e, s) {
+        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        Logger.warn("Failed to backfill the placement of sticker ${sticker.guid}",
+            error: e, trace: s, tag: "ServerV2Migrations");
+        return null;
+      }
+    }
+    return filled;
   }
 
   /// Re-fetches attributed bodies saved before the client kept the Genmoji marker, `__kIMEmojiImageAttributeName`.

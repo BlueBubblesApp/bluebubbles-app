@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -52,23 +53,39 @@ class StickerObserver extends StatelessWidget {
     super.key,
     required this.part,
     required this.cvController,
+    this.placed = false,
   });
 
   final MessagePart part;
   final ConversationViewController cvController;
 
+  /// Only stickers with a sender placement (filling the bubble's Stack), or only those without
+  final bool placed;
+
   @override
   Widget build(BuildContext context) {
     final state = MessageStateScope.of(context);
     return Obx(() {
-      final stickersForPart = state.stickersForBubble(part);
+      final stickersForPart = state
+          .stickersForBubble(part)
+          .where((e) => e.dbAttachments.any((a) => a.stickerPlacement != null) == placed)
+          .toList();
 
       if (stickersForPart.isEmpty) return const SizedBox.shrink();
+      for (final s in stickersForPart) {
+        Logger.debug(
+            "${s.guid} on part ${part.part}: "
+            "${s.dbAttachments.map((a) => '${a.guid} ${a.stickerPlacement}').join(', ')}",
+            tag: "StickerPlacement");
+      }
 
-      return StickerHolder(
+      final holder = StickerHolder(
         stickerMessages: stickersForPart,
         controller: cvController,
+        placed: placed,
+        hidden: state.showingPopup.value,
       );
+      return placed ? Positioned.fill(child: holder) : holder;
     });
   }
 }

@@ -69,6 +69,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     final capturedTheme = context.theme;
     final capturedIsM3 = ThemeSvc.isMaterialYouActive(context);
     final capturedBubbleExt = capturedTheme.extensions[BubbleColors] as BubbleColors?;
+    widget.controller.showingPopup.value = true;
     final result = await Navigator.push(
       iOS ? Get.context! : context,
       PageRouteBuilder(
@@ -112,6 +113,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
         barrierDismissible: true,
       ),
     );
+    widget.controller.showingPopup.value = false;
     if (result != false) {
       widget.cvController.selected.clear();
     }

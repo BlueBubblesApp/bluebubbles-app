@@ -1,13 +1,25 @@
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:universal_io/io.dart';
 
 class StickerHolder extends StatefulWidget {
-  const StickerHolder({super.key, required this.stickerMessages, required this.controller});
+  const StickerHolder({
+    super.key,
+    required this.stickerMessages,
+    required this.controller,
+    this.placed = false,
+    this.hidden = false,
+  });
   final Iterable<Message> stickerMessages;
   final ConversationViewController controller;
+
+  /// Draw each sticker where its sender put it, relative to the parent bubble this fills
+  final bool placed;
+
+  /// Shrink the stickers out of view, e.g. while the message's details menu is open
+  final bool hidden;
 
   @override
   State<StickerHolder> createState() => _StickerHolderState();
@@ -16,13 +28,17 @@ class StickerHolder extends StatefulWidget {
 class _StickerHolderState extends State<StickerHolder> {
   Iterable<Message> get messages => widget.stickerMessages;
 
-  bool _visible = true;
-  bool _dismissed = false;
   final Map<String, Attachment> _stickerPaths = {};
 
   @override
   void initState() {
     super.initState();
+    loadStickers();
+  }
+
+  @override
+  void didUpdateWidget(StickerHolder oldWidget) {
+    super.didUpdateWidget(oldWidget);
     loadStickers();
   }
 
@@ -43,48 +59,92 @@ class _StickerHolderState extends State<StickerHolder> {
     }
   }
 
+  // Stickers never take input, so they can't block interaction with the message under them
+  Widget _shrinkable(Widget child) => IgnorePointer(
+        child: AnimatedScale(
+          scale: widget.hidden ? 0 : 1,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: child,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    if (_stickerPaths.isEmpty || _dismissed) return const SizedBox.shrink();
+    if (_stickerPaths.isEmpty) return const SizedBox.shrink();
+    if (widget.placed) return _buildPlaced();
 
-    return GestureDetector(
-      onTap: () => setState(() => _visible = !_visible),
-      onLongPress: () {
-        HapticFeedback.mediumImpact();
-        setState(() => _dismissed = true);
-      },
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: _visible ? 1.0 : 0.25,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: NavigationSvc.width(context) * 0.6),
-          child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: _stickerPaths.values
-                .map(
-                  (attachment) => ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
-                    child: Image.file(
-                      File(attachment.path),
-                      gaplessPlayback: true,
-                      filterQuality: FilterQuality.none,
-                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                        if (wasSynchronouslyLoaded) return child;
-                        return AnimatedOpacity(
-                          opacity: frame == null ? 0.0 : 1.0,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                          child: child,
-                        );
-                      },
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
+    return _shrinkable(
+      ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: NavigationSvc.width(context) * 0.6),
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: _stickerPaths.values
+              .map(
+                (attachment) => ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 100, maxHeight: 100),
+                  child: _image(attachment),
+                ),
+              )
+              .toList(),
         ),
       ),
     );
   }
+
+  // The position is a fraction of the parent's size, so it's scaled by ours. `scale` applies to the sticker's own
+  // size. Not clamped: senders can hang a sticker off any edge.
+  Widget _buildPlaced() {
+    return LayoutBuilder(builder: (context, constraints) {
+      final width = constraints.maxWidth;
+      final height = constraints.maxHeight;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: _stickerPaths.values.map((attachment) {
+          final p = attachment.stickerPlacement!;
+          double v(String key) => (p[key] as num).toDouble();
+          Logger.debug(
+              "${attachment.guid}: $p in a ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}pt bubble -> centre "
+              "(${(v('xScalar') * width).toStringAsFixed(1)}, ${(v('yScalar') * height).toStringAsFixed(1)})",
+              tag: "StickerPlacement");
+          return Positioned(
+            left: v('xScalar') * width,
+            top: v('yScalar') * height,
+            child: FractionalTranslation(
+              translation: const Offset(-0.5, -0.5),
+              child: Transform.rotate(
+                angle: v('rotation'),
+                child: _shrinkable(
+                  Transform.scale(
+                    scale: v('scale'),
+                    child: _image(attachment, FilterQuality.medium, _stickerPixelRatio),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  /// Pixels per point of a sticker image at scale 1, as Messages draws it on an iPhone
+  static const double _stickerPixelRatio = 3;
+
+  Widget _image(Attachment attachment, [FilterQuality quality = FilterQuality.none, double scale = 1]) => Image.file(
+        File(attachment.path),
+        scale: scale,
+        gaplessPlayback: true,
+        filterQuality: quality,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded) return child;
+          return AnimatedOpacity(
+            opacity: frame == null ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: child,
+          );
+        },
+      );
 }

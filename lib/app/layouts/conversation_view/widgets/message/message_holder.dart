@@ -543,6 +543,11 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                                                     ),
                                                                   ),
                                                                 ),
+                                                                StickerObserver(
+                                                                  part: e,
+                                                                  cvController: widget.cvController,
+                                                                  placed: true,
+                                                                ),
                                                                 // Reactions are in the inner Stack so they are always
                                                                 // positioned relative to the bubble, not the sticker.
                                                                 // Collection parts show a reaction per attachment instead

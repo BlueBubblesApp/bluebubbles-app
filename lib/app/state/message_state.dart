@@ -85,6 +85,9 @@ class MessageState extends StatefulController {
   /// Manual replay via the replay button always works regardless of this flag.
   final RxBool hasEffectPlayed;
 
+  /// Whether this message's details menu is open, so its stickers can get out of the way.
+  final RxBool showingPopup = false.obs;
+
   /// Increment to trigger a re-download of all attachments in this message.
   /// [AttachmentHolder] registers `ever()` on this key to call _loadContent().
   final RxInt attachmentRefreshKey = 0.obs;
