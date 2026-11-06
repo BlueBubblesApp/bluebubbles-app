@@ -28,10 +28,12 @@ import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.platform.PlatformViewFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
@@ -93,7 +95,12 @@ object OpenPigeonHost {
                         val maxHeight = ((args["maxHeight"] as? Number)?.toDouble() ?: 0.0).times(density).toInt()
                         withExtension(app, { main.post { result.success(null) } }) {
                             val views = it.getLiveView(ignoredViewUpdates, message, inertHandle, userCount)
-                            main.post { result.success(views?.let { v -> render(app, v, width, maxHeight) }) }
+                            // Views are built on the main thread; the PNG is encoded off it
+                            val bitmap = views?.let { v ->
+                                withContext(Dispatchers.Main) { draw(app, v, width, maxHeight) }
+                            }
+                            val png = bitmap?.let { b -> withContext(Dispatchers.Default) { encode(b) } }
+                            main.post { result.success(png) }
                         }
                     }
                     else -> result.notImplemented()
@@ -120,9 +127,9 @@ object OpenPigeonHost {
         override fun unlock() {}
     }
 
-    /// Lays [views] out off screen [width] pixels wide and draws them into a PNG. The height is the layout's own, up to
-    /// [maxHeight], so the bubble keeps the shape OpenPigeon draws.
-    private fun render(context: Context, views: RemoteViews, width: Int, maxHeight: Int): ByteArray? {
+    /// Lays [views] out off screen [width] pixels wide and draws them. The height is the layout's own, up to
+    /// [maxHeight], so the bubble keeps the shape OpenPigeon draws. Main thread only.
+    private fun draw(context: Context, views: RemoteViews, width: Int, maxHeight: Int): Bitmap? {
         if (width <= 0 || maxHeight <= 0) return null
         return try {
             val view = views.apply(context, FrameLayout(context))
@@ -131,13 +138,24 @@ object OpenPigeonHost {
                 View.MeasureSpec.makeMeasureSpec(maxHeight, View.MeasureSpec.AT_MOST),
             )
             view.layout(0, 0, view.measuredWidth, view.measuredHeight)
-            val bitmap = Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888)
-            view.draw(Canvas(bitmap))
-            ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+            if (view.measuredWidth <= 0 || view.measuredHeight <= 0) return null
+            Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888).also {
+                view.draw(Canvas(it))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Rendering an OpenPigeon view failed", e)
             null
         }
+    }
+
+    /// [bitmap] as PNG bytes, which then frees it.
+    private fun encode(bitmap: Bitmap): ByteArray? = try {
+        ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+    } catch (e: Exception) {
+        Log.e(TAG, "Encoding an OpenPigeon view failed", e)
+        null
+    } finally {
+        bitmap.recycle()
     }
 
     private fun isInstalled(context: Context): Boolean = try {
