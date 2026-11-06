@@ -1114,6 +1114,12 @@ class ChatsService {
     removeChat(chat);
   }
 
+  /// Forgets the prefs kept for [chatGuid]: its tapback emoji, its saved reply and being the chat to reopen.
+  Future<void> _clearChatPrefs(String chatGuid) async {
+    await PrefsSvc.messaging.clearChat(chatGuid);
+    await PrefsInterface.saveReplyToMessageState(chatGuid, null, null);
+  }
+
   /// Performs a full messaging reset: wipes all Messages, Attachments, Chats,
   /// Handles, and Contacts (ContactV2) from the database, deletes all
   /// associated files from disk, and flushes every in-memory service cache
@@ -1122,11 +1128,6 @@ class ChatsService {
   /// Does NOT touch Settings, themes, FCM data, or scheduled messages. Does
   /// NOT show any confirmation UI — callers must confirm with the user
   /// before invoking this.
-  Future<void> _clearChatPrefs(String chatGuid) async {
-    await PrefsSvc.messaging.clearChat(chatGuid);
-    await PrefsInterface.saveReplyToMessageState(chatGuid, null, null);
-  }
-
   Future<void> deleteAllMessagingData() async {
     if (kIsWeb) return;
 
