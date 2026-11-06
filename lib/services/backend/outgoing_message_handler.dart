@@ -190,6 +190,14 @@ class OutgoingMessageHandler {
     // centralized rather than left to convention).
     _ensureTempGuid(item);
 
+    // Refused before prep writes a temp message, so it can't become a failed bubble whose retry fails the same way
+    final unsendable = item.reaction == null ? null : _unsendableTapbackReason(item.reaction!, item.message);
+    if (unsendable != null) {
+      Logger.warn("Not sending tapback: $unsendable", tag: _tag);
+      item.completer?.completeError(StateError(unsendable));
+      return;
+    }
+
     // Prep the item (writes temp messages / copies attachment files to disk),
     // retrying a transient failure and surfacing a terminal one as a failed
     // message so it is never silently dropped. See [_prepItemWithRetry].
@@ -1204,8 +1212,7 @@ class OutgoingMessageHandler {
     if (ReactionTypes.isStickerTapback(type)) return "Sticker tapbacks can't be sent from here";
     if (!ReactionTypes.isEmojiTapback(type)) return null;
     if (isNullOrEmpty(m.associatedMessageEmoji)) return "This emoji tapback has no emoji";
-    final server = SettingsSvc.serverDetails;
-    if (!server.isV2Server || !server.isMinSequoia) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
+    if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
     return null;
   }
 }
