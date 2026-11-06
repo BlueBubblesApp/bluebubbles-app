@@ -866,19 +866,22 @@ class MessageState extends StatefulController {
     Attachment? loadedAttachment(String guid) =>
         message.dbAttachments.firstWhereOrNull((a) => a.guid == guid) ??
         (chatGuid == null ? null : maybeFindMessagesSvc(chatGuid)?.struct.getAttachment(guid));
-    body.runs.forEachIndexed((i, e) async {
-      if (e.attributes?.messagePart == null) return;
+    // Synchronous on purpose: the caller assigns the parts as soon as this returns, so a part found after an await
+    // was lost, and later runs of its part were built without it
+    for (final (i, e) in body.runs.indexed) {
+      if (e.attributes?.messagePart == null) continue;
       final isInline = inlineGuids.contains(e.attributes!.attachmentGuid);
+      final attachment = e.isAttachment ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
         final currentLength = existingPart.text?.length ?? 0;
-        // No await here: it would let later runs append first. A U+FFFC without its Genmoji would shift the rest.
-        final attachment = isInline ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
-        if (!e.isAttachment || attachment != null) {
+        // A U+FFFC without its Genmoji would shift the rest, so it's only kept with one
+        final inlineAttachment = isInline ? attachment : null;
+        if (!e.isAttachment || inlineAttachment != null) {
           final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
           existingPart.text = (existingPart.text ?? "") + newText;
         }
-        if (attachment != null) existingPart.attachments.add(attachment);
+        if (inlineAttachment != null) existingPart.attachments.add(inlineAttachment);
         if (e.hasMention) {
           existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
@@ -887,18 +890,13 @@ class MessageState extends StatefulController {
           existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
         }
       } else {
-        Attachment? foundAttachment;
-        if (e.isAttachment && chatGuid != null) {
-          final attachmentGuid = e.attributes!.attachmentGuid!;
-          foundAttachment = loadedAttachment(attachmentGuid) ?? await Attachment.findOneAsync(attachmentGuid);
-        }
+        // Not loaded: skipped, as the lost async lookup effectively did, rather than drawn as an empty part
+        if (e.isAttachment && attachment == null) continue;
 
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
-          text: e.isAttachment && !(isInline && foundAttachment != null)
-              ? null
-              : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: foundAttachment != null ? [foundAttachment] : [],
+          text: e.isAttachment && !isInline ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
+          attachments: attachment != null ? [attachment] : [],
           mentions: !e.hasMention
               ? []
               : [
@@ -910,7 +908,7 @@ class MessageState extends StatefulController {
           part: e.attributes!.messagePart!,
         ));
       }
-    });
+    }
     return list;
   }
 
