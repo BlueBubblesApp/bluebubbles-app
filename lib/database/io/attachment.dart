@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/generated/objectbox.g.dart';
 import 'package:bluebubbles/database/io/message.dart';
+import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/backend/descriptors/attachment_query_descriptor.dart';
 import 'package:bluebubbles/services/backend/interfaces/attachment_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -52,7 +53,7 @@ class Attachment {
   String? originalGuid;
 
   /// Where the sender put a sticker placed on a message part, as the server's `stickerPlacement`
-  /// (`xScalar`, `yScalar`, `scale`, `rotation`, `parentPreviewWidth`)
+  /// (`xScalar`, `yScalar`, `scale`, `rotation`, `parentPreviewWidth`). Read it through [StickerPlacement.tryParse].
   Map<String, dynamic>? stickerPlacement;
 
   Attachment({
@@ -111,7 +112,8 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
-      stickerPlacement: (json["stickerPlacement"] as Map?)?.cast<String, dynamic>(),
+      // Kept only when complete, so a stored placement can always be laid out
+      stickerPlacement: StickerPlacement.tryParse(json["stickerPlacement"])?.toMap(),
       originalGuid: json["originalGuid"],
       exif: exif is String ? null : exif,
       hasLivePhoto: json["hasLivePhoto"] ?? false,

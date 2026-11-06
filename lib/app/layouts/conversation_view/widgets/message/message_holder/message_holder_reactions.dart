@@ -2,6 +2,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_holder.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -68,7 +69,7 @@ class StickerObserver extends StatelessWidget {
     return Obx(() {
       final stickersForPart = state
           .stickersForBubble(part)
-          .where((e) => e.dbAttachments.any((a) => a.stickerPlacement != null) == placed)
+          .where((e) => e.dbAttachments.any((a) => StickerPlacement.tryParse(a.stickerPlacement) != null) == placed)
           .toList();
 
       if (stickersForPart.isEmpty) return const SizedBox.shrink();
@@ -134,7 +135,7 @@ class StickerSpace extends StatelessWidget {
           stickers: state
               .stickersForBubble(part)
               .expand((e) => e.dbAttachments)
-              .where((a) => a.stickerPlacement != null)
+              .where((a) => StickerPlacement.tryParse(a.stickerPlacement) != null)
               .toList(),
           isFromMe: state.message.isFromMe ?? false,
           columnWidth: columnWidth,

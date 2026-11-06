@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
@@ -26,21 +27,24 @@ class StickerHolder extends StatefulWidget {
   /// Shrink the stickers out of view, e.g. while the message's details menu is open
   final bool hidden;
 
-  /// Where a placed sticker draws (its rotated bounding box) relative to a [bubble] of that size
-  static Rect placedRect(Attachment attachment, Size bubble, bool isFromMe) {
-    final p = attachment.stickerPlacement!;
-    double v(String key) => (p[key] as num).toDouble();
+  /// Where a sticker placed at [p] has its center, relative to a [bubble] of that size
+  static Offset placedCenter(StickerPlacement p, Size bubble, bool isFromMe) {
     // The bubble's body: not the gutter its tail draws in (see TailClipper), and inset a little on the other side
     final left = isFromMe ? _bodyInset : _tailGutter;
-    final center = Offset(
-      left + v('xScalar') * (bubble.width - _tailGutter - _bodyInset),
-      v('yScalar') * bubble.height,
-    );
-    final scale = v('scale') / _stickerPixelRatio;
+    return Offset(left + p.xScalar * (bubble.width - _tailGutter - _bodyInset), p.yScalar * bubble.height);
+  }
+
+  /// Where a placed sticker draws (its rotated bounding box) relative to a [bubble] of that size
+  static Rect placedRect(StickerPlacement p, Attachment attachment, Size bubble, bool isFromMe) {
+    final scale = p.scale / _stickerPixelRatio;
     final w = (attachment.width ?? _fallbackPixels) * scale;
     final h = (attachment.height ?? _fallbackPixels) * scale;
-    final cosA = cos(v('rotation')).abs(), sinA = sin(v('rotation')).abs();
-    return Rect.fromCenter(center: center, width: w * cosA + h * sinA, height: w * sinA + h * cosA);
+    final cosA = cos(p.rotation).abs(), sinA = sin(p.rotation).abs();
+    return Rect.fromCenter(
+      center: placedCenter(p, bubble, isFromMe),
+      width: w * cosA + h * sinA,
+      height: w * sinA + h * cosA,
+    );
   }
 
   /// Room [StickerSpace] adds around a [bubble] so it covers all of its placed [stickers]. On the column-edge side
@@ -48,7 +52,9 @@ class StickerHolder extends StatefulWidget {
   static EdgeInsets space(Iterable<Attachment> stickers, Size bubble, bool isFromMe, double columnWidth) {
     double left = 0, top = 0, right = 0, bottom = 0;
     for (final sticker in stickers) {
-      final rect = placedRect(sticker, bubble, isFromMe);
+      final placement = StickerPlacement.tryParse(sticker.stickerPlacement);
+      if (placement == null) continue;
+      final rect = placedRect(placement, sticker, bubble, isFromMe);
       left = max(left, -rect.left);
       top = max(top, -rect.top);
       right = max(right, rect.right - bubble.width);
@@ -155,28 +161,32 @@ class _StickerHolderState extends State<StickerHolder> {
       final bubble = constraints.biggest;
       return Stack(
         clipBehavior: Clip.none,
-        children: _stickerPaths.values.map((attachment) {
-          final p = attachment.stickerPlacement!;
-          final rect = StickerHolder.placedRect(attachment, bubble, widget.isFromMe);
-          return Positioned(
-            left: rect.center.dx,
-            top: rect.center.dy,
-            child: FractionalTranslation(
-              translation: const Offset(-0.5, -0.5),
-              child: Transform.rotate(
-                angle: (p['rotation'] as num).toDouble(),
-                child: _shrinkable(
-                  Transform.scale(
-                    scale: (p['scale'] as num).toDouble(),
-                    child: _image(attachment, FilterQuality.medium, StickerHolder._stickerPixelRatio),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+        children: [
+          for (final attachment in _stickerPaths.values)
+            if (StickerPlacement.tryParse(attachment.stickerPlacement) case final p?) _placed(attachment, p, bubble),
+        ],
       );
     });
+  }
+
+  Widget _placed(Attachment attachment, StickerPlacement p, Size bubble) {
+    final center = StickerHolder.placedCenter(p, bubble, widget.isFromMe);
+    return Positioned(
+      left: center.dx,
+      top: center.dy,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, -0.5),
+        child: Transform.rotate(
+          angle: p.rotation,
+          child: _shrinkable(
+            Transform.scale(
+              scale: p.scale,
+              child: _image(attachment, FilterQuality.medium, StickerHolder._stickerPixelRatio),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _image(Attachment attachment, [FilterQuality quality = FilterQuality.none, double scale = 1]) => Image.file(

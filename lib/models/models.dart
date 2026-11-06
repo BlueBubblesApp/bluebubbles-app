@@ -17,3 +17,4 @@ export 'fcm_data_info.dart';
 export 'location_attachment_data.dart';
 export 'theme_pair.dart';
 export 'storage_analysis.dart';
+export 'sticker_placement.dart';

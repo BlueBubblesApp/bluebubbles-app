@@ -27,6 +27,7 @@ Barrel export: `models/models.dart`
 | `parsed_log_entry.dart` | Parsed structure of a single log file line |
 | `server_details.dart` | Server version, OS, build info returned from `/server/info` |
 | `server_update_info.dart` | Server update availability info |
+| `sticker_placement.dart` | Typed `stickerPlacement` of a placed sticker's attachment (position, scale, rotation) |
 | `storage_analysis.dart` | Storage analyzer DTOs — segments, results, age filter, progress state |
 | `text_entity_match.dart` | A matched text entity (phone, email, URL) extracted by ML Kit |
 | `theme_pair.dart` | Light + dark `ThemeData` pair for a named theme |
