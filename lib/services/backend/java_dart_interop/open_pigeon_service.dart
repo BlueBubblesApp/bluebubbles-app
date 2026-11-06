@@ -51,13 +51,21 @@ class OpenPigeon {
   /// OpenPigeon can draw games: it's installed and the server hands out their payloads.
   static bool get canDraw => _onV2 && licensed.value && installed.value;
 
+  /// Snapshots by message guid, least recently used first (a Dart map keeps insertion order), capped at
+  /// [_maxSnapshots] so scrolling a long chat doesn't keep every PNG.
   static final Map<String, Future<Uint8List?>> _snapshots = {};
+  static const _maxSnapshots = 50;
 
   /// A still of [message]'s game as OpenPigeon draws it, [width] logical pixels wide and as tall as its layout (up to
-  /// [maxHeight]), for the turns GamePigeon sends without an image. Null when OpenPigeon can't draw it; a failure is retried the next time it's asked for.
+  /// [maxHeight]), for the turns GamePigeon sends without an image. Null when OpenPigeon can't draw it; a failure is
+  /// retried the next time it's asked for.
   static Future<Uint8List?> snapshot(Message message, Chat chat, double width, double maxHeight) {
     final guid = message.guid!;
-    return _snapshots[guid] ??= payloadFor(message).then((payload) async {
+    final cached = _snapshots.remove(guid);
+    if (cached != null) return _snapshots[guid] = cached;
+
+    late final Future<Uint8List?> drawing;
+    drawing = payloadFor(message).then((payload) async {
       if (payload == null) return null;
       try {
         return await _channel.invokeMethod<Uint8List>('snapshot', {
@@ -72,9 +80,15 @@ class OpenPigeon {
         return null;
       }
     }).then((png) {
-      if (png == null) _snapshots.remove(guid);
+      // Only this attempt's own entry: it may have been evicted and asked for again since
+      if (png == null && identical(_snapshots[guid], drawing)) _snapshots.remove(guid);
       return png;
     });
+    _snapshots[guid] = drawing;
+    while (_snapshots.length > _maxSnapshots) {
+      _snapshots.remove(_snapshots.keys.first);
+    }
+    return drawing;
   }
 
   /// Sessions opened in OpenPigeon this run. Bubbles are drawn from the sender's image, so OpenPigeon only hears
