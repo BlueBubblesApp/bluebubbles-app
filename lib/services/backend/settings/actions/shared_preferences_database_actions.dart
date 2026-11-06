@@ -34,4 +34,9 @@ class SharedPreferencesDatabaseActions {
     await service.i.remove(_useCustomPathKey);
     await service.i.remove(_customPathKey);
   }
+
+  static const String _serverV2MigrationsKey = 'serverV2MigrationsDone';
+  bool getServerV2MigrationsDone() => service.i.getBool(_serverV2MigrationsKey) ?? false;
+
+  Future<void> setServerV2MigrationsDone() => service.i.setBool(_serverV2MigrationsKey, true);
 }
