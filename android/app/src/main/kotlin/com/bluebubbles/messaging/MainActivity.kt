@@ -10,6 +10,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
 import androidx.activity.ComponentActivity
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
+import com.bluebubbles.messaging.services.extensions.OpenPigeonHost
 import com.bluebubbles.messaging.services.foreground.ForegroundServiceBroadcastReceiver
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.utils.PersistentLog
@@ -101,6 +102,7 @@ class MainActivity : FlutterFragmentActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
             call, result -> MethodCallHandler().methodCallHandler(call, result, this)
         }
+        OpenPigeonHost.register(flutterEngine, this)
 
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->

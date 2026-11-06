@@ -68,7 +68,8 @@ class IncrementalSyncManager extends SyncManager {
     "handle",
     "attributedBody",
     "messageSummaryInfo",
-    "payloadData"
+    "payloadData",
+    if (SettingsSvc.serverDetails.isV2Server) "appPayload",
   ];
 
   IncrementalSyncManager(

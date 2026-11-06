@@ -232,6 +232,7 @@ class OutgoingMessageHandler {
   void _ensureTempGuid(OutgoingQueueItem item) {
     if (item.message.guid == null) item.message.generateTempGuid();
     if (item is OutgoingAttachment) item.attachment.guid = item.message.guid;
+    if (item is OutgoingAppMessage) item.attachment?.guid = item.message.guid;
     if (item is OutgoingMultiAttachment) {
       item.attachments.forEachIndexed((i, a) => a.guid = OutgoingMultiAttachment.tempGuidFor(item.message.guid!, i));
     }
@@ -257,7 +258,8 @@ class OutgoingMessageHandler {
   /// `(ok: false, ...)` once a terminal failure has been finalized (the caller
   /// should stop).
   Future<({bool ok, dynamic result})> _prepItemWithRetry(OutgoingQueueItem item) async {
-    final isAttachment = item is OutgoingAttachment || item is OutgoingMultiAttachment;
+    // An app balloon is saved like an attachment, picture or not, so it's drawn at once
+    final isAttachment = item is OutgoingAttachment || item is OutgoingMultiAttachment || item is OutgoingAppMessage;
 
     List<Message>? built;
     if (!isAttachment) {
@@ -275,7 +277,11 @@ class OutgoingMessageHandler {
           await prepAttachments(
             item.chat,
             item.message,
-            item is OutgoingMultiAttachment ? item.attachments : [(item as OutgoingAttachment).attachment],
+            switch (item) {
+              OutgoingMultiAttachment() => item.attachments,
+              OutgoingAppMessage(:final attachment) => [?attachment],
+              _ => [(item as OutgoingAttachment).attachment],
+            },
           );
           return (ok: true, result: null);
         } else {
@@ -535,6 +541,9 @@ class OutgoingMessageHandler {
       case QueueType.sendMultiAttachment:
         final typed = item as OutgoingMultiAttachment;
         return sendMultiAttachment(typed.chat, typed.message, typed.attachments);
+      case QueueType.sendAppMessage:
+        final typed = item as OutgoingAppMessage;
+        return sendAppMessage(typed.chat, typed.message, typed.attachment);
     }
   }
 
@@ -966,6 +975,66 @@ class OutgoingMessageHandler {
           }
           attachmentProgress.removeWhere((e) => e.guid == tempGuid);
         },
+      ),
+    );
+  }
+
+  /// Sends [m] as an iMessage app balloon from its app payload, with [image] (already staged) as its picture.
+  Future<void> sendAppMessage(Chat c, Message m, Attachment? image) async {
+    final tempGuid = m.guid!;
+    if (kIsWeb) return;
+    final app = m.payloadData?.appData?.firstOrNull;
+    void clearProgress() => attachmentProgress.removeWhere((e) => e.guid == tempGuid);
+
+    return _sendWithRace(
+      tempGuid: tempGuid,
+      chat: c,
+      // A queued turn or retry may outlive the connection to the v2 server it was created on.
+      httpCall: () => !SettingsSvc.serverDetails.isV2Server
+          ? Future.error(Exception('Sending iMessage app messages needs a v2 server'))
+          : app?.url == null || m.balloonBundleId == null
+          ? Future.error(Exception('Message $tempGuid has no app payload to send'))
+          : SendMessageInterface.sendAppMessage(
+              chatGuid: c.guid,
+              tempGuid: tempGuid,
+              balloonBundleId: m.balloonBundleId!,
+              url: app!.url!,
+              sessionId: app.sessionId,
+              appName: app.appName,
+              appId: OpenPigeon.isGame(m) ? OpenPigeon.appId : null,
+              summary: app.ldText,
+              caption: app.userInfo?.caption,
+              imagePath: image != null && File(image.path).existsSync() ? image.path : null,
+              // Every message a current GamePigeon sends is live; without it the recipient sees the caption and icon
+              liveLayout: OpenPigeon.isGame(m),
+            ),
+      onSuccess: (Map<String, dynamic> data) async {
+        final newMessage = Message.fromMap(data['data']);
+        final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList();
+        for (final a in responseAttachments) {
+          try {
+            await _matchAttachmentWithExisting(c, tempGuid, a);
+            if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+              MessagesSvc(c.guid).notifyAttachmentSendComplete(tempGuid, newMessage.guid!, tempGuid, a);
+            }
+          } catch (e, st) {
+            Logger.warn('Failed to replace attachment ${a.guid}', error: e, trace: st, tag: _tag);
+          }
+        }
+        await _matchMessageWithExisting(c, tempGuid, newMessage);
+        clearProgress();
+      },
+      onError: (error, stack) => _finalizeOutgoingFailure(
+        c,
+        m,
+        tempGuid,
+        logMessage: 'Failed to send app message',
+        error: error,
+        stack: stack,
+        onExtra: (_) async => clearProgress(),
       ),
     );
   }

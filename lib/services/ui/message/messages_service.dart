@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
@@ -760,6 +761,17 @@ class MessagesService extends GetxController {
     await _handleNewMessage(message);
   }
 
+  /// The on-screen half of [MessageActions.retireEarlierTurns]: a turn that arrives while this chat is open, live, by
+  /// sync or as our own send, collapses the earlier turns of its session already showing.
+  void _retireEarlierTurns(Message turn) {
+    if (!AppSessionTypes.replacesEarlierTurns(turn)) return;
+    for (final state in messageStates.values) {
+      if (!AppSessionTypes.isReplacedBy(state.message, turn)) continue;
+      state.updateAssociatedMessageInfoInternal(
+          associatedMessageGuid: turn.associatedMessageGuid, associatedMessageType: AppSessionTypes.SUPERSEDED);
+    }
+  }
+
   Future<void> _handleNewMessage(Message message) async {
     // Add to struct first to ensure it's available for lookups
     struct.addMessages([message]);
@@ -778,6 +790,8 @@ class MessagesService extends GetxController {
         Logger.debug("Updated existing MessageState for message ${message.guid}", tag: "MessageState");
       }
     }
+
+    _retireEarlierTurns(message);
 
     // Handle reactions with improved reactivity
     if (message.isReaction) {
@@ -868,6 +882,8 @@ class MessagesService extends GetxController {
     struct.removeMessage(oldGuid ?? updated.guid!);
     struct.removeAttachments(toUpdate.dbAttachments.map((e) => e.guid!));
     struct.addMessages([updated]);
+    // Our own turn arrives here, as the swap from its temp GUID, rather than as a new message
+    _retireEarlierTurns(updated);
 
     // Update MessageState - try oldGuid first, then fallback to updated.guid
     MessageState? messageState;
@@ -1237,7 +1253,16 @@ class MessagesService extends GetxController {
     }
 
     // Queue for sending (message already in UI, just updated)
-    if (isMultiAttachment) {
+    if (OpenPigeon.isGame(message)) {
+      OutgoingMsgHandler.queue(
+        OutgoingAppMessage(
+          chat: chat,
+          message: message,
+          attachment: message.dbAttachments.firstOrNull,
+          isRetry: true,
+        ),
+      );
+    } else if (isMultiAttachment) {
       OutgoingMsgHandler.queue(
         OutgoingMultiAttachment(
           chat: chat,
@@ -1667,7 +1692,12 @@ class MessagesService extends GetxController {
       int offset = 0,
       int limit = 100}) async {
     Completer<List<dynamic>> completer = Completer();
-    final withQuery = <String>["attributedBody", "messageSummaryInfo", "payloadData"];
+    final withQuery = <String>[
+      "attributedBody",
+      "messageSummaryInfo",
+      "payloadData",
+      if (SettingsSvc.serverDetails.isV2Server) "appPayload",
+    ];
     if (withChats) withQuery.add("chat");
     if (withAttachments) withQuery.add("attachment");
     if (withHandles) withQuery.add("handle");

@@ -23,6 +23,18 @@ class ServerApi {
     });
   }
 
+  /// The server's subscription tier (`tier` is null without a license). v2 servers only.
+  Future<Response> subscription({CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.origin}/api/v2/server/subscription",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Lock Mac device
   Future<Response> lockMac({CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {

@@ -127,7 +127,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
                     height: bottomInset,
                     child: IgnorePointer(
                       child: ColoredBox(
-                        color: controller.showAttachmentPicker.value
+                        color: controller.showAttachmentPicker.value || controller.showGamePicker.value
                             ? context.theme.colorScheme.surface
                             : Colors.transparent,
                       ),
@@ -279,6 +279,10 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
               if (controller.showAttachmentPicker.value) {
                 controller.showAttachmentPicker.value = false;
                 controller.updateWidgets<ConversationTextField>(null);
+                return;
+              }
+              if (controller.showGamePicker.value) {
+                controller.showGamePicker.value = false;
                 return;
               }
               if (LifecycleSvc.isBubble) {

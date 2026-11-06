@@ -116,6 +116,40 @@ class SendMessageInterface {
         .send<Map<String, dynamic>>(IsolateRequestType.sendMultiAttachmentMessage, input: data);
   }
 
+  /// Sends an iMessage app balloon and returns the decoded server response body. The isolate reads the picture at
+  /// [imagePath], if there is one.
+  static Future<Map<String, dynamic>> sendAppMessage({
+    required String chatGuid,
+    required String tempGuid,
+    required String balloonBundleId,
+    required String url,
+    String? sessionId,
+    String? appName,
+    int? appId,
+    String? summary,
+    String? caption,
+    String? imagePath,
+    bool liveLayout = false,
+  }) async {
+    final data = {
+      'chatGuid': chatGuid,
+      'tempGuid': tempGuid,
+      'balloonBundleId': balloonBundleId,
+      'url': url,
+      'sessionId': sessionId,
+      'appName': appName,
+      'appId': appId,
+      'summary': summary,
+      'caption': caption,
+      'imagePath': imagePath,
+      'liveLayout': liveLayout,
+    };
+    if (isIsolate) {
+      return await SendMessageActions.sendAppMessage(data);
+    }
+    return await GetIt.I<GlobalIsolate>().send<Map<String, dynamic>>(IsolateRequestType.sendAppMessage, input: data);
+  }
+
   /// Sends an attachment and returns the decoded server response body.
   ///
   /// The isolate reads [filePath] from disk and constructs the multipart form

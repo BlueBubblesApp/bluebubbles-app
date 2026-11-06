@@ -1,6 +1,7 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
+import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -353,6 +354,7 @@ class ChatActions {
       try {
         messageId = messageBox.put(inputMessage);
         inputMessage.id = messageId;
+        MessageActions.retireEarlierTurns(inputMessage);
       } on UniqueViolationException catch (_) {
         // If unique violation, try to find the message again
         final retryQuery = messageBox.query(Message_.guid.equals(inputMessage.guid ?? '')).build();
@@ -439,9 +441,12 @@ class ChatActions {
     return Database.runInTransaction(TxMode.read, () {
       final messageBox = Database.messages;
 
-      // Query reactions and return just their IDs
-      final reactionsQuery =
-          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+      // Query reactions and return just their IDs. An iMessage app turn points at its session's first message too,
+      // and isn't one
+      final reactionsQuery = (messageBox
+              .query(Message_.associatedMessageGuid.oneOf(messageGuids) & Message.reactionCondition)
+            ..order(Message_.originalROWID))
+          .build();
       final reactions = reactionsQuery.find();
       reactionsQuery.close();
 

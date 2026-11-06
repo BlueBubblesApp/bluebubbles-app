@@ -7,11 +7,11 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 **Sub-services (accessed via `HttpSvc.<sub-service>.<method>()`):**
 | Property | Class | File | Key Methods |
 |---|---|---|---|
-| `server` | `ServerApi` | `api/server_api.dart` | `ping`, `lockMac`, `restartImessage`, `serverInfo`, `softRestart`, `hardRestart`, `checkUpdate`, `installUpdate`, `getTotalStats`, `getMediaStats`, `getLogs`, `landingPage` |
+| `server` | `ServerApi` | `api/server_api.dart` | `ping`, `subscription`, `lockMac`, `restartImessage`, `serverInfo`, `softRestart`, `hardRestart`, `checkUpdate`, `installUpdate`, `getTotalStats`, `getMediaStats`, `getLogs`, `landingPage` |
 | `fcm` | `FcmApi` | `api/fcm_api.dart` | `addDevice`, `getServiceAccount` |
 | `attachment` | `AttachmentApi` | `api/attachment_api.dart` | `fetch`, `download`, `downloadLivePhoto`, `downloadBlurhash`, `upload`, `getCount` |
 | `chat` | `ChatApi` | `api/chat_api.dart` | `query`, `getMessages`, `modifyParticipant`, `leave`, `setDisplayName`, `create`, `getCount`, `fetchOne`, `markRead`, `markUnread`, `shouldShareContact`, `shareContact`, `getIcon`, `setIcon`, `removeIcon`, `delete`, `deleteMessage` |
-| `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendMultipart`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
+| `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendMultipart`, `getAppMessage`, `sendAppMessage`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
 | `handle` | `HandleApi` | `api/handle_api.dart` | `handleCount`, `handles`, `handle`, `handleFocusState`, `handleiMessageState`, `handleFaceTimeState` |
 | `contact` | `ContactApi` | `api/contact_api.dart` | `fetchAll`, `query`, `create` |
 | `backup` | `BackupApi` | `api/backup_api.dart` | `getTheme`, `setTheme`, `deleteTheme`, `getSettings`, `setSettings`, `deleteSettings` |

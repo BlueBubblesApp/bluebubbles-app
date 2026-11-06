@@ -5,6 +5,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -250,6 +251,13 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                 color: const Color(0xFFAF52DE),
                 onTap: () => _handleHandwritten(context),
               ),
+              if (OpenPigeon.offered && controller.chat.isIMessage)
+                _QuickActionItem(
+                  icon: Icons.sports_esports_rounded,
+                  label: 'Games',
+                  color: const Color(0xFFD4A72C),
+                  onTap: () => showOpenPigeonPicker(context, controller),
+                ),
             ],
           ),
         ),

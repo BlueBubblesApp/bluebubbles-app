@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
@@ -203,6 +204,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         textController: txtController,
                         initialAttachments: initialAttachments,
                       ),
+                    if (widget.controller != null) OpenPigeonPendingGame(controller: widget.controller!),
                     if (!isChatCreator)
                       Obx(() {
                         if (controller!.pickedAttachments.isNotEmpty && iOS) {
@@ -442,7 +444,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         onSubmitted: (String value) {
                           controller?.focusNode.requestFocus();
-                          if (isNullOrEmpty(value) && (controller?.pickedAttachments.isEmpty ?? false)) return;
+                          if (isNullOrEmpty(value) &&
+                              (controller?.pickedAttachments.isEmpty ?? false) &&
+                              controller?.pendingGame.value == null) {
+                            return;
+                          }
                           sendMessage.call();
                         },
                         contentInsertionConfiguration:

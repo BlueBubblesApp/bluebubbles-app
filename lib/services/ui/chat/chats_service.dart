@@ -963,7 +963,12 @@ class ChatsService {
       int? after,
       int? before}) async {
     Completer<List<dynamic>> completer = Completer();
-    final withQuery = <String>["message.attributedBody", "message.messageSummaryInfo", "message.payloadData"];
+    final withQuery = <String>[
+      "message.attributedBody",
+      "message.messageSummaryInfo",
+      "message.payloadData",
+      if (SettingsSvc.serverDetails.isV2Server) "message.appPayload",
+    ];
     if (withAttachment) withQuery.add("attachment");
     if (withHandle) withQuery.add("handle");
 

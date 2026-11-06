@@ -527,7 +527,9 @@
         {
           "id": "28:8696985708980146227",
           "name": "associatedMessageGuid",
-          "type": 9
+          "indexId": "21:5185758702423746949",
+          "type": 9,
+          "flags": 8
         },
         {
           "id": "29:574575341112766208",
@@ -881,7 +883,7 @@
     }
   ],
   "lastEntityId": "19:6026421545462496199",
-  "lastIndexId": "20:7536809638379289421",
+  "lastIndexId": "21:5185758702423746949",
   "lastRelationId": "3:2372732884714308620",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

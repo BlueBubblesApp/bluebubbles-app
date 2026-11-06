@@ -559,8 +559,15 @@ class IncomingMessageHandler {
 
     if (alreadyPresent != null) {
       // The replacement record already exists (parallel delivery).
-      // Only overwrite if the incoming payload is newer.
-      if (replacement.isNewerThan(alreadyPresent)) {
+      // Only overwrite if the incoming payload is newer, or re-links the message: an iMessage app turn becomes type 3
+      // when a newer turn replaces it, which changes none of the dates isNewerThan compares. A stale copy that would
+      // take a replaced turn back to type 2 doesn't count.
+      final relinkedType = AppSessionTypes.mergedType(alreadyPresent.balloonBundleId,
+          alreadyPresent.associatedMessageType, replacement.associatedMessageType);
+      if (replacement.isNewerThan(alreadyPresent) ||
+          relinkedType != alreadyPresent.associatedMessageType ||
+          (relinkedType == replacement.associatedMessageType &&
+              replacement.associatedMessageGuid != alreadyPresent.associatedMessageGuid)) {
         await Message.replaceMessage(replacement.guid, replacement);
       }
 

@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:universal_io/io.dart';
 
 /// Isolate-dispatchable actions for sending messages via HTTP.
 ///
@@ -121,6 +124,26 @@ class SendMessageActions {
       subject: map['subject'] as String?,
       selectedMessageGuid: map['selectedMessageGuid'] as String?,
       partIndex: map['partIndex'] as int?,
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Sends an iMessage app balloon, with the picture at `imagePath` (if any) as its image.
+  static Future<Map<String, dynamic>> sendAppMessage(dynamic data) async {
+    final map = data as Map<String, dynamic>;
+    final imagePath = map['imagePath'] as String?;
+    final response = await HttpSvc.message.sendAppMessage(
+      map['chatGuid'] as String,
+      balloonBundleId: map['balloonBundleId'] as String,
+      url: map['url'] as String,
+      sessionId: map['sessionId'] as String?,
+      appName: map['appName'] as String?,
+      appId: map['appId'] as int?,
+      summary: map['summary'] as String?,
+      caption: map['caption'] as String?,
+      image: imagePath == null ? null : base64Encode(await File(imagePath).readAsBytes()),
+      tempGuid: map['tempGuid'] as String,
+      liveLayout: map['liveLayout'] as bool? ?? false,
     );
     return response.data as Map<String, dynamic>;
   }

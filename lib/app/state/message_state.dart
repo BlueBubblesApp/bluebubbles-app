@@ -645,9 +645,13 @@ class MessageState extends StatefulController {
       message.associatedMessageGuid = associatedMessageGuid;
     }
 
-    if (associatedMessageType != null && this.associatedMessageType.value != associatedMessageType) {
-      this.associatedMessageType.value = associatedMessageType;
-      message.associatedMessageType = associatedMessageType;
+    // A replaced app turn stays replaced when a stale copy still says type 2
+    final type = associatedMessageType == null
+        ? null
+        : AppSessionTypes.mergedType(message.balloonBundleId, this.associatedMessageType.value, associatedMessageType);
+    if (type != null && this.associatedMessageType.value != type) {
+      this.associatedMessageType.value = type;
+      message.associatedMessageType = type;
     }
 
     if (associatedMessagePart != null && this.associatedMessagePart.value != associatedMessagePart) {
@@ -861,6 +865,12 @@ class MessageState extends StatefulController {
           part: newParts.length,
         ));
       }
+    }
+    // An app balloon draws everything from its payload, on its first part. The rest (a game's fallback text, say)
+    // render nothing but still get a row each, tall enough for the sender's avatar
+    if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
+      final first = newParts.map((e) => e.part).minOrNull;
+      newParts.removeWhere((e) => e.part != first);
     }
     newParts.sort((a, b) => a.part.compareTo(b.part));
     // Stamp each freshly-built part with the current redaction state so widgets
