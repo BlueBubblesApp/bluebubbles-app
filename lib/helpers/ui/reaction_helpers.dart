@@ -26,6 +26,11 @@ class ReactionTypes {
     ];
   }
 
+  /// Whether [associatedMessageType] is a tapback, added or removed ("-love" counts). False for stickers
+  /// and other associated-message kinds.
+  static bool isTapback(String? associatedMessageType) =>
+      toList().contains(associatedMessageType?.replaceAll("-", ""));
+
   static final Map<String, String> reactionToVerb = {
     LOVE: "loved",
     LIKE: "liked",

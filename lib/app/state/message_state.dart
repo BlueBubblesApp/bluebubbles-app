@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -126,6 +127,38 @@ class MessageState extends StatefulController {
   /// Populated by [buildMessageParts] in [onInit] and on content changes.
   final RxList<MessagePart> parts = <MessagePart>[].obs;
 
+  List<MessagePart>? _displayParts;
+  List<Object?>? _displayPartsKey;
+
+  /// [parts] as the conversation view renders them: runs of consecutive media-only parts collapsed into one
+  /// collection bubble ([MessagePart.collapseMediaCollections]).
+  ///
+  /// Memoized: the same [MessagePart] instances come back until [parts] changes in a way that affects
+  /// collapsing (a different part, or a change to its attachments, text, redaction or unsent flag), so
+  /// widgets and `MediaCollectionScope` can compare parts by identity. Reactive when read inside an Obx
+  /// (reads [parts]).
+  List<MessagePart> get displayParts {
+    final raw = parts.toList();
+    // Everything collapseMediaCollections reads: the part, its attachments (list, count and mime types), whether it
+    // has text, and the flags copied onto collapsed / per-attachment parts.
+    final key = <Object?>[
+      for (final p in raw) ...[
+        p,
+        p.attachments,
+        p.attachments.length,
+        ...p.attachments.map((a) => a.mimeStart),
+        p.text == null,
+        p.shouldRedact,
+        p.isUnsent,
+      ],
+    ];
+    if (_displayParts == null || !listEquals(key, _displayPartsKey)) {
+      _displayParts = List.unmodifiable(MessagePart.collapseMediaCollections(raw));
+      _displayPartsKey = key;
+    }
+    return _displayParts!;
+  }
+
   /// Finds a part by its message-part id ([MessagePart.part]), not list index.
   MessagePart? partById(int partId) {
     final idx = parts.indexWhere((p) => p.part == partId);
@@ -147,6 +180,35 @@ class MessageState extends StatefulController {
     if (parts.isEmpty) return true;
     return p.coversPartId(parts.last.part);
   }
+
+  /// Whether the message's subject bubble renders directly above [p] (subject sits above the leading part).
+  /// Reactive when read inside an Obx (reads [subject]).
+  bool hasSubjectAbove(MessagePart p) {
+    final subjectText = subject.value;
+    return isLeadingMessagePart(p) && subjectText != null && subjectText.isNotEmpty;
+  }
+
+  /// Tapbacks drawn on [part]'s bubble, matched against every raw part id it covers.
+  ///
+  /// When the message renders as a single bubble ([displayParts] has one entry) every tapback shows on it,
+  /// whatever part it targets. Reactive when read inside an Obx (reads [associatedMessages] and [parts]).
+  List<Message> tapbacksForBubble(MessagePart part) =>
+      _associatedForBubble(part, (e) => ReactionTypes.isTapback(e.associatedMessageType));
+
+  /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
+  List<Message> stickersForBubble(MessagePart part) =>
+      _associatedForBubble(part, (e) => e.associatedMessageType == "sticker");
+
+  List<Message> _associatedForBubble(MessagePart part, bool Function(Message) test) {
+    final matches = associatedMessages.where(test);
+    if (displayParts.length == 1) return matches.toList();
+    return matches.where((e) => part.coversPartId(e.associatedMessagePart ?? 0)).toList();
+  }
+
+  /// Tapbacks targeting exactly the raw message-part id [partId] (one attachment inside a collection).
+  List<Message> tapbacksForPartId(int partId) => associatedMessages
+      .where((e) => ReactionTypes.isTapback(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
+      .toList();
 
   /// Reactive state for the handle that sent this message.
   /// Null for outgoing messages or when no handle is attached.

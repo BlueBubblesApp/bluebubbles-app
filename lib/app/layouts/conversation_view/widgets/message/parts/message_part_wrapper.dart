@@ -188,11 +188,8 @@ class _MessageContentBubble extends StatelessWidget {
       clipper: TailClipper(
         isFromMe: message.isFromMe!,
         showTail: !part.isPkPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part),
-        connectLower: SettingsSvc.settings.skin.value == Skins.iOS
-            ? false
-            : (!controller.isLeadingMessagePart(part) && !controller.isTrailingMessagePart(part)) ||
-                (controller.isLeadingMessagePart(part) && controller.parts.length > 1),
-        connectUpper: SettingsSvc.settings.skin.value == Skins.iOS ? false : !controller.isLeadingMessagePart(part),
+        connectLower: BubbleConnect.lower(controller, part),
+        connectUpper: BubbleConnect.upper(controller, part),
       ),
       child: Stack(
         alignment: Alignment.centerRight,

@@ -147,7 +147,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       currentlySelectedReaction = null;
       reactions = getUniqueReactionMessages(message.associatedMessages
           .where((e) =>
-              ReactionTypes.toList().contains(e.associatedMessageType?.replaceAll("-", "")) &&
+              ReactionTypes.isTapback(e.associatedMessageType) &&
               (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final self = reactions.firstWhereOrNull((e) => e.isFromMe!)?.associatedMessageType;
@@ -192,20 +192,25 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     Navigator.of(context).pop(returnVal);
   }
 
-  /// Estimated tapback picker width from the reaction-row layout in [build].
-  double _estimateTapbackPickerWidth({required bool narrowScreen}) {
-    // iOS: Padding(all: 5) + SizedBox(35) per icon; Material/Samsung: similar emoji cell.
-    const double iconSlot = 45;
-    final iconsPerRow = narrowScreen ? 3 : ReactionTypes.toList().length;
-    return iconsPerRow * iconSlot + 10;
-  }
+  /// Gap kept between the popup's overlays / preview and the screen edges.
+  static const double _edgeMargin = 15;
+
+  /// Width of one tapback picker item: icon/emoji plus its fixed padding (see the item build in [build]).
+  double get _reactionItemWidth => iOS ? 47.0 : 44.0;
+
+  /// Width of a tapback picker row holding [itemCount] items, including the row container's padding.
+  double _reactionRowWidth(int itemCount) => _reactionItemWidth * itemCount + 10;
+
+  /// Estimated tapback picker width: three items per row when it wraps, otherwise all of them.
+  double _estimateTapbackPickerWidth({required bool narrowScreen}) =>
+      _reactionRowWidth(narrowScreen ? 3 : ReactionTypes.toList().length);
 
   /// Incoming overlay X so tapback / details stay on-screen; may shift the iOS preview.
   ({double clampedOverlayLeft, double clampedChildLeft}) _clampedHorizontalLayout({
     required double screenWidth,
     required bool narrowScreen,
   }) {
-    const margin = 15.0;
+    const margin = _edgeMargin;
     final preferredOverlayLeft = widget.childPosition.dx + 10;
     final pickerWidth = _estimateTapbackPickerWidth(narrowScreen: narrowScreen);
     final detailsMenuWidth = iOS ? min(max(screenWidth * 3 / 5, 200), screenWidth * 4 / 5) : 0.0;
@@ -222,7 +227,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     required double screenWidth,
     required double preferredLeft,
   }) {
-    const margin = 15.0;
+    const margin = _edgeMargin;
     final previewWidth = _measuredChildWidth ?? max(widget.size.width, screenWidth * 0.5);
     final maxLeft = max(margin, screenWidth - previewWidth - margin);
     return preferredLeft.clamp(margin, maxLeft).toDouble();
@@ -236,20 +241,17 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     // overall screen width. widget.childPosition.dx already reflects any avatar space the bubble
     // was pushed past, so no avatar/group special-casing is needed here.
     final double screenWidth = NavigationSvc.width(widthContext);
-    const double reactionPickerEdgeMargin = 15;
     final double reactionPickerAvailableWidth = message.isFromMe!
-        ? screenWidth - reactionPickerEdgeMargin - reactionPickerEdgeMargin
-        : screenWidth - (widget.childPosition.dx + 10) - reactionPickerEdgeMargin;
-    final double reactionItemWidth = iOS ? 47.0 : 44.0; // icon/emoji + its fixed padding, see item build below
-    // + container padding
-    final double reactionRowContentWidth = reactionItemWidth * ReactionTypes.toList().length + 10;
+        ? screenWidth - _edgeMargin - _edgeMargin
+        : screenWidth - (widget.childPosition.dx + 10) - _edgeMargin;
+    final double reactionRowContentWidth = _reactionRowWidth(ReactionTypes.toList().length);
     bool narrowScreen = reactionRowContentWidth > reactionPickerAvailableWidth;
     final isFromMe = message.isFromMe!;
     final clampedLayout = isFromMe ? null : _clampedHorizontalLayout(screenWidth: screenWidth, narrowScreen: narrowScreen);
     final clampedOverlayLeft = clampedLayout?.clampedOverlayLeft;
     // From-me: pin the preview's right edge to the cell's right edge so growth stays on-screen.
     // Received: left-anchor, then clamp using measured/estimated preview width.
-    const margin = 15.0;
+    const margin = _edgeMargin;
     final double? previewRight =
         isFromMe ? max(margin, screenWidth - widget.childPosition.dx - widget.size.width) : null;
     final double? previewLeft = isFromMe

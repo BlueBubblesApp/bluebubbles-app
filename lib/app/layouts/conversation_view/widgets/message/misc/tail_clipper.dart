@@ -1,8 +1,25 @@
 import 'dart:math';
 
+import 'package:bluebubbles/app/state/message_state.dart';
+import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+
+/// Whether a part's bubble visually joins the bubbles above / below it: the Material and Samsung multi-part
+/// styling, where the author-edge corners between neighbouring parts tighten. The iOS skin never connects part
+/// bubbles.
+///
+/// One rule for every bubble shape: [TailClipper] callers (text, attachments, edits) and the media collection
+/// grid's silhouette. Position is decided by [MessageState.isLeadingMessagePart] /
+/// [MessageState.isTrailingMessagePart], so a collapsed collection counts as covering its whole span.
+abstract final class BubbleConnect {
+  /// [part] joins the bubble below it (it isn't the message's trailing part).
+  static bool lower(MessageState state, MessagePart part) => !CurrentSkin.iOS && !state.isTrailingMessagePart(part);
+
+  /// [part] joins the bubble above it (it isn't the message's leading part).
+  static bool upper(MessageState state, MessagePart part) => !CurrentSkin.iOS && !state.isLeadingMessagePart(part);
+}
 
 class TailClipper extends CustomClipper<Path> {
   final bool isFromMe;

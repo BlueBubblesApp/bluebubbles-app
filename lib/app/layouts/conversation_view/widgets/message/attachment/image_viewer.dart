@@ -19,7 +19,7 @@ class ImageViewer extends StatefulWidget {
   final bool isFromMe;
   final bool isInReply;
 
-  /// Cover-expand into a parent-fixed frame (gallery cards). Layout only.
+  /// Cover-expand into a parent-fixed frame (collection cards). Layout only.
   final bool fill;
 
   const ImageViewer({
@@ -107,7 +107,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     // genuinely smaller than the minimum dimension — otherwise just show the image
     // at its natural scaled size to avoid the blurred background appearing wider than
     // the actual image content.
-    // Skip when fill — gallery cards are never in-reply and must expand into the frame.
+    // Skip when fill — collection cards are never in-reply and must expand into the frame.
     if (!widget.fill && widget.isInReply) {
       final String? imagePath = (!kIsWeb && file.path != null) ? file.path : null;
       final imageBytes = file.bytes;

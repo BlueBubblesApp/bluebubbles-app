@@ -63,25 +63,30 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
     return bubbleColor;
   }
 
+  /// Material preview text for [part], redacted the same way as the composer's reply preview (ReplyHolder).
+  /// Reads redaction settings, so call it inside an Obx.
+  String _previewText(MessagePart? part) {
+    if (part == null) return "Failed to parse thread parts!";
+    final previewMessage = Message(
+      text: part.text,
+      subject: part.subject,
+      hasAttachments: part.attachments.isNotEmpty,
+    )
+      ..dbAttachments.addAll(part.attachments)
+      ..mergeWith(message);
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    return previewMessage.getNotificationText(
+      hideContactInfo: redacted && SettingsSvc.settings.hideContactInfo.value,
+      hideMessageContent: redacted && SettingsSvc.settings.hideMessageContent.value,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatGuid = widget.cvController.chat.guid;
     final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
     final resolvedPart = part;
     if (!iOS) {
-      String text;
-      if (resolvedPart == null) {
-        text = "Failed to parse thread parts!";
-      } else {
-        final previewMessage = Message(
-          text: resolvedPart.text,
-          subject: resolvedPart.subject,
-          hasAttachments: resolvedPart.attachments.isNotEmpty,
-        )
-          ..dbAttachments.addAll(resolvedPart.attachments)
-          ..mergeWith(message);
-        text = previewMessage.getNotificationText();
-      }
       return MouseRegion(
         cursor: MouseCursor.defer,
         child: ConstrainedBox(
@@ -99,23 +104,24 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                       borderRadius: BorderRadius.circular(12),
                     )
                   : null,
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                    text: controller.senderDisplayName,
-                    style: context.textTheme.bodyMedium!
-                        .copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
-                  ),
-                  const TextSpan(text: "\n"),
-                  TextSpan(
-                    text: text,
-                    style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
-                  ),
-                ]),
-                style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onSurface),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Obx: redacted-mode toggles and sender-name changes update the preview in place.
+              child: Obx(() => Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: controller.senderDisplayName,
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
+                      ),
+                      const TextSpan(text: "\n"),
+                      TextSpan(
+                        text: _previewText(resolvedPart),
+                        style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
+                      ),
+                    ]),
+                    style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onSurface),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )),
             ),
           ),
         ),

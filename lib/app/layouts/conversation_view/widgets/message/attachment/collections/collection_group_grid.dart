@@ -2,86 +2,86 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_attachment_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_download_button.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_grid_layout.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_style.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_title.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
-import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:flutter/services.dart';
-
-typedef _CellBuilder = Widget Function(int index, double width, double height, int? moreCount);
-
-enum _SegmentKind { banner, heroStack, squareRow }
-
-/// Pack units: HS(3)=4 items, HS(2)=3, SR(2)=2.
-enum _Chunk { hs3, hs2, sr2 }
-
-/// One composable shape. [param] is stackCount (hero) or cellCount (square row).
-class _LayoutSegment {
-  const _LayoutSegment(this.kind, this.startIndex, [this.param = 0]);
-
-  final _SegmentKind kind;
-  final int startIndex;
-  final int param;
-}
 
 /// Google Messages–style grid for multi-attachment media collections.
 ///
-/// Built from three composable shapes on a shared 3-column grid: a wide banner, a tall hero
-/// with a vertical stack of squares beside it, and a row of equal squares. Collections
-/// over 7 tiles show a `+N` overlay — tap opens the collection gallery, long-press expands
-/// the remaining items in place. Expanded layouts keep an alternating hero / row rhythm
-/// (hero facing flips each time) and avoid leaving a single orphan tile.
+/// Tile packing lives in [CollectionGridLayout]; this widget renders it. Collections over
+/// [CollectionGridLayout.maxCollapsedTiles] show a `+N` tile — tap opens the collection gallery,
+/// long-press expands the remaining items in place (or opens the gallery past [maxInPlaceTiles]).
 class CollectionGroupGrid extends StatefulWidget {
+  /// Largest collection the `+N` long-press expands in place. Expanding mounts every attachment at once (no
+  /// lazy building inside a message bubble), so bigger collections open the gallery page instead.
+  static const int maxInPlaceTiles = 24;
+
+  /// Identifies a collection in [ConversationViewController.expandedCollectionGrids]: its first attachment's GUID
+  /// (unique to the collection), or null when that isn't known yet (a temp attachment still sending).
+  static String? expansionKey(MessagePart part) {
+    final guid = part.attachments.firstOrNull?.guid;
+    if (guid == null || guid.startsWith('temp')) return null;
+    return guid;
+  }
+
   const CollectionGroupGrid({
     super.key,
     required this.messagePart,
     required this.cvController,
-    this.isEditing = false,
   });
 
   final MessagePart messagePart;
   final ConversationViewController cvController;
-  final bool isEditing;
 
   @override
   State<CollectionGroupGrid> createState() => _CollectionGroupGridState();
 }
 
-class _CollectionGroupGridState extends State<CollectionGroupGrid> {
-  static const double _gap = 2.0;
-  static const double _maxGridSizeFactor = 0.75; // temporary: match bubble width
-  static const double _maxGridWidth = 280.0;
-  static const double _bannerAspect = 4 / 3;
+class _CollectionGroupGridState extends State<CollectionGroupGrid> with ThemeHelpers {
   static const Duration _expandAnimDuration = Duration(milliseconds: 320);
+  static const Curve _expandCurve = Curves.easeOutCubic;
 
   bool _expanded = false;
 
-  MessagePart get messagePart => widget.messagePart;
-  ConversationViewController get cvController => widget.cvController;
-  bool get isEditing => widget.isEditing;
-  List<Attachment> get _attachments => messagePart.attachments;
+  /// True only while the expand animation runs. Layout changes otherwise (window resize, rotation) apply
+  /// immediately instead of trailing behind the new width.
+  bool _animatingExpand = false;
 
-  double get _cardRadius => CollectionAttachmentCard.mediaCardRadius;
+  Duration get _layoutAnimDuration => _animatingExpand ? _expandAnimDuration : Duration.zero;
 
-  double get _connectedCornerRadius =>
-      SettingsSvc.settings.skin.value == Skins.Samsung ? 12.0 : 5.0;
-
-  bool _hasSubjectAbove(MessageState messageState) =>
-      messageState.isLeadingMessagePart(messagePart) && !isNullOrEmpty(messageState.subject.value);
-
-  bool _hasBodyBelow(MessageState messageState) {
-    if (!isNullOrEmpty(messagePart.text)) return true;
-    return messageState.parts.any(
-      (p) => !messagePart.coversPartId(p.part) && p.part > messagePart.part && !isNullOrEmpty(p.text),
-    );
+  @override
+  void initState() {
+    super.initState();
+    final key = CollectionGroupGrid.expansionKey(messagePart);
+    _expanded = key != null && cvController.expandedCollectionGrids.contains(key);
   }
 
-  /// Tighten only the author-edge corner against subject (top) / body (bottom).
+  void _expand() {
+    final key = CollectionGroupGrid.expansionKey(messagePart);
+    if (key != null) cvController.expandedCollectionGrids.add(key);
+    setState(() {
+      _expanded = true;
+      _animatingExpand = true;
+    });
+    Future.delayed(_expandAnimDuration, () {
+      if (mounted) setState(() => _animatingExpand = false);
+    });
+  }
+
+  MessagePart get messagePart => widget.messagePart;
+  ConversationViewController get cvController => widget.cvController;
+  List<Attachment> get _attachments => messagePart.attachments;
+
+  /// Tighten only the author-edge corner against the bubble above (or the subject) / below.
   /// iOS always keeps a full-radius card (same policy as text bubbles skipping TailClipper connect).
   BorderRadius _silhouetteBorderRadius({
     required double cardRadius,
@@ -100,405 +100,158 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
     );
   }
 
-  double _columnWidth(double gridWidth) => (gridWidth - 2 * _gap) / 3;
-
-  double _heroStackHeight(double gridWidth, int stackCount) {
-    final col = _columnWidth(gridWidth);
-    return stackCount * col + (stackCount - 1) * _gap;
-  }
-
-  double _squareRowCellSize(double gridWidth, int cellCount) =>
-      (gridWidth - (cellCount - 1) * _gap) / cellCount;
-
-  double _bannerHeight(double gridWidth) => _heroStackHeight(gridWidth, 2) * _bannerAspect;
-
-  double _segmentHeight(_LayoutSegment segment, double gridWidth) => switch (segment.kind) {
-        _SegmentKind.banner => _bannerHeight(gridWidth),
-        _SegmentKind.heroStack => _heroStackHeight(gridWidth, segment.param),
-        _SegmentKind.squareRow => _squareRowCellSize(gridWidth, segment.param),
-      };
-
-  double _heightForSegments(List<_LayoutSegment> segments, double gridWidth) {
-    if (segments.isEmpty) return 0;
-    return segments.skip(1).fold(
-      _segmentHeight(segments.first, gridWidth),
-      (h, s) => h + _gap + _segmentHeight(s, gridWidth),
-    );
-  }
-
-  static int _chunkSize(_Chunk c) => switch (c) {
-        _Chunk.hs3 => 4,
-        _Chunk.hs2 => 3,
-        _Chunk.sr2 => 2,
-      };
-
-  static bool _isHero(_Chunk? c) => c == _Chunk.hs3 || c == _Chunk.hs2;
-
-  static List<_Chunk>? _packSearch(
-    int remaining,
-    _Chunk? previous,
-    _Chunk? lastHero, {
-    required bool allowAdjacentFlat,
-    required bool allowAdjacentHero,
-  }) {
-    if (remaining == 0) return const [];
-    if (remaining < 0 || remaining == 1) return null;
-
-    final candidates = _isHero(previous)
-        ? const [_Chunk.sr2]
-        : [
-            lastHero == _Chunk.hs3 ? _Chunk.hs2 : _Chunk.hs3,
-            lastHero == _Chunk.hs3 ? _Chunk.hs3 : _Chunk.hs2,
-            _Chunk.sr2,
-          ];
-
-    for (final chunk in candidates) {
-      final take = _chunkSize(chunk);
-      if (take > remaining) continue;
-      if (_isHero(chunk) && _isHero(previous) && !allowAdjacentHero) continue;
-      if (chunk == _Chunk.sr2 && previous == _Chunk.sr2 && !allowAdjacentFlat) continue;
-
-      final rest = _packSearch(
-        remaining - take,
-        chunk,
-        _isHero(chunk) ? chunk : lastHero,
-        allowAdjacentFlat: allowAdjacentFlat,
-        allowAdjacentHero: allowAdjacentHero,
-      );
-      if (rest != null) return [chunk, ...rest];
-    }
-    return null;
-  }
-
-  /// Pack [n] items after a kept SquareRow (so the search starts with a hero).
-  List<_LayoutSegment> _packOverflow(int n, int startIndex) {
-    if (n == 0) return const [];
-    const previous = _Chunk.sr2;
-    final chunks = _packSearch(n, previous, null, allowAdjacentFlat: false, allowAdjacentHero: false) ??
-        _packSearch(n, previous, null, allowAdjacentFlat: true, allowAdjacentHero: false) ??
-        _packSearch(n, previous, null, allowAdjacentFlat: true, allowAdjacentHero: true);
-    assert(chunks != null, 'overflow packer failed for n=$n');
-
-    final out = <_LayoutSegment>[];
-    var index = startIndex;
-    for (final chunk in chunks!) {
-      out.add(chunk == _Chunk.sr2
-          ? _LayoutSegment(_SegmentKind.squareRow, index, 2)
-          : _LayoutSegment(_SegmentKind.heroStack, index, chunk == _Chunk.hs3 ? 3 : 2));
-      index += _chunkSize(chunk);
-    }
-    return out;
-  }
-
-  List<_LayoutSegment> _segmentsFor(int count, {required bool expanded}) {
-    return switch (count) {
-      3 => const [
-          _LayoutSegment(_SegmentKind.banner, 0),
-          _LayoutSegment(_SegmentKind.squareRow, 1, 2),
-        ],
-      4 => const [
-          _LayoutSegment(_SegmentKind.banner, 0),
-          _LayoutSegment(_SegmentKind.heroStack, 1, 2),
-        ],
-      5 => const [
-          _LayoutSegment(_SegmentKind.banner, 0),
-          _LayoutSegment(_SegmentKind.heroStack, 1, 3),
-        ],
-      6 => const [
-          _LayoutSegment(_SegmentKind.banner, 0),
-          _LayoutSegment(_SegmentKind.heroStack, 1, 2),
-          _LayoutSegment(_SegmentKind.squareRow, 4, 2),
-        ],
-      _ when count == 7 || !expanded => const [
-          _LayoutSegment(_SegmentKind.banner, 0),
-          _LayoutSegment(_SegmentKind.heroStack, 1, 3),
-          _LayoutSegment(_SegmentKind.squareRow, 5, 2),
-        ],
-      _ => switch (count - 7) {
-          1 => const [
-              _LayoutSegment(_SegmentKind.banner, 0),
-              _LayoutSegment(_SegmentKind.heroStack, 1, 3),
-              _LayoutSegment(_SegmentKind.heroStack, 5, 2),
-            ],
-          2 => const [
-              _LayoutSegment(_SegmentKind.banner, 0),
-              _LayoutSegment(_SegmentKind.heroStack, 1, 2),
-              _LayoutSegment(_SegmentKind.squareRow, 4, 2),
-              _LayoutSegment(_SegmentKind.heroStack, 6, 2),
-            ],
-          final n => [
-              const _LayoutSegment(_SegmentKind.banner, 0),
-              const _LayoutSegment(_SegmentKind.heroStack, 1, 3),
-              const _LayoutSegment(_SegmentKind.squareRow, 5, 2),
-              ..._packOverflow(n, 7),
-            ],
-        },
-    };
-  }
-
-  double _gridHeight(int count, double gridWidth, {required bool expanded}) {
-    if (count == 2) return gridWidth / _bannerAspect;
-    return _heightForSegments(_segmentsFor(count, expanded: expanded), gridWidth);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final messageState = MessageStateScope.of(context);
-    final collectionController = CollectionMediaController(
-      chat: cvController.chat,
-      media: _attachments,
-      messageState: messageState,
-      collectionPart: messagePart,
-    );
+    final collection = MediaCollection.forPart(context, collectionPart: messagePart, cvController: cvController);
+    // Obx: the layout reads isFromMe, subject and parts (author-edge corners, title alignment).
+    return MediaCollectionScope(collection: collection, child: Obx(() => _buildGrid(context, collection)));
+  }
+
+  Widget _buildGrid(BuildContext context, MediaCollection collection) {
+    final messageState = collection.messageState;
     final isFromMe = messageState.isFromMe.value;
-    final isIos = SettingsSvc.settings.skin.value == Skins.iOS;
-    // Connected author-edge corners match text-bubble TailClipper: Material/Samsung only.
-    final connectCorners = !isIos;
+    // Connected author-edge corners follow the same BubbleConnect rule as TailClipper bubbles (Material/Samsung
+    // only). The subject bubble sits above the leading part, so it counts as a neighbour above too.
     final count = _attachments.length;
     final silhouette = _silhouetteBorderRadius(
-      cardRadius: _cardRadius,
-      connectedRadius: _connectedCornerRadius,
+      cardRadius: CollectionStyle.cardRadius,
+      connectedRadius: CollectionStyle.connectedCornerRadius,
       isFromMe: isFromMe,
-      tightenTop: connectCorners && _hasSubjectAbove(messageState),
-      tightenBottom: connectCorners && _hasBodyBelow(messageState),
+      tightenTop: BubbleConnect.upper(messageState, messagePart) || (!iOS && messageState.hasSubjectAbove(messagePart)),
+      tightenBottom: BubbleConnect.lower(messageState, messagePart),
     );
-    final gridWidth = min(NavigationSvc.width(context) * _maxGridSizeFactor, _maxGridWidth);
-    final gridHeight = _gridHeight(count, gridWidth, expanded: _expanded);
-    final moreCount = (!_expanded && count > 7) ? count - 7 : null;
+    final gridWidth = min(NavigationSvc.width(context) * CollectionStyle.gridWidthFactor, CollectionStyle.maxGridWidth);
+    final layout = CollectionGridLayout.compute(count: count, width: gridWidth, expanded: _expanded);
 
-    final imageLayer = _wrapGridCard(
-      context,
+    // One tree for collapsed and expanded: cells are keyed by attachment index and animate to their new rect,
+    // so expanding moves the visible media instead of rebuilding it, and only the newly shown cells mount.
+    // Media is clipped to the silhouette; tapbacks sit in a second, unclipped layer above it so they can
+    // overhang the cell edges. Both layers are positioned from the same layout.
+    final grid = SizedBox(
       width: gridWidth,
-      height: gridHeight,
-      borderRadius: silhouette,
-      child: _buildCellLayout(
-        count: count,
-        gridWidth: gridWidth,
-        moreCount: moreCount,
-        expanded: _expanded,
-        cellBuilder: (index, width, height, cellMoreCount) => CollectionAttachmentCard(
-          attachment: _attachments[index],
-          attachmentIndex: index,
-          messagePart: messagePart,
-          collectionController: collectionController,
-          cvController: cvController,
-          isEditing: isEditing,
-          enableGestures: true,
-          hideReactions: true,
-          showCardShadow: false,
-          mediaClipBorderRadius: BorderRadius.zero,
-        ),
-        moreOverlayBuilder: (index, width, height, cellMoreCount) {
-          if (cellMoreCount == null || cellMoreCount <= 0) return null;
-          return GestureDetector(
+      height: layout.height,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _wrapGridCard(
+            context,
+            width: gridWidth,
+            height: layout.height,
+            borderRadius: silhouette,
+            child: _positionCells(layout, (cell) => _buildMediaCell(context, collection, cell)),
+          ),
+          Positioned.fill(child: _positionCells(layout, _buildReactionCell)),
+        ],
+      ),
+    );
+
+    // AnimatedSize smooths the message list's growth when the grid expands.
+    final gridBody = AnimatedSize(
+      duration: _layoutAnimDuration,
+      curve: _expandCurve,
+      alignment: Alignment.topCenter,
+      child: CollectionDownloadButton.wrap(
+        isFromMe: isFromMe,
+        contentWidth: gridWidth,
+        contentHeight: layout.height,
+        attachments: _attachments,
+        child: grid,
+      ),
+    );
+
+    // iOS chrome: title above the card. Material/Samsung stay grid-only.
+    return CollectionTitledLayout(collection: collection, isFromMe: isFromMe, child: gridBody);
+  }
+
+  /// Places one widget per tile of [layout], keyed by attachment index so a tile keeps its element when the
+  /// layout changes. Each tile is a non-clipping [Stack] so [Positioned] children (tapbacks, overlays) work
+  /// inside it. Tiles past [CollectionGridLayout.maxCollapsedTiles] only exist once expanded, so they fade in.
+  Widget _positionCells(CollectionGridLayout layout, List<Widget> Function(CollectionGridCell cell) buildCell) {
+    return SizedBox(
+      width: layout.width,
+      height: layout.height,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (final cell in layout.cells)
+            AnimatedPositioned.fromRect(
+              key: ValueKey(cell.index),
+              duration: _layoutAnimDuration,
+              curve: _expandCurve,
+              rect: cell.rect,
+              child: _fadeInIfRevealed(
+                cell.index,
+                Stack(fit: StackFit.expand, clipBehavior: Clip.none, children: buildCell(cell)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fadeInIfRevealed(int index, Widget child) {
+    if (index < CollectionGridLayout.maxCollapsedTiles) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: _expandAnimDuration,
+      curve: Curves.easeOut,
+      builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+      child: child,
+    );
+  }
+
+  List<Widget> _buildMediaCell(BuildContext context, MediaCollection collection, CollectionGridCell cell) {
+    final moreCount = cell.moreCount;
+    return [
+      CollectionAttachmentCard.gridCell(
+        attachmentIndex: cell.index,
+        messagePart: messagePart,
+        cvController: cvController,
+        enableGestures: true,
+      ),
+      if (moreCount != null && moreCount > 0)
+        Positioned.fill(
+          child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => collectionController.openGallery(context),
+            onTap: () => collection.openGallery(context),
             onLongPress: () {
               HapticFeedback.lightImpact();
-              setState(() => _expanded = true);
+              if (_attachments.length > CollectionGroupGrid.maxInPlaceTiles) {
+                collection.openGallery(context);
+              } else {
+                _expand();
+              }
             },
             child: ColoredBox(
               color: Colors.black54,
               child: Center(
                 child: Text(
-                  '+$cellMoreCount',
+                  '+$moreCount',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
-                    fontWeight: SettingsSvc.settings.skin.value == Skins.Material
-                        ? FontWeight.w500
-                        : FontWeight.w300,
+                    fontWeight: material ? FontWeight.w500 : FontWeight.w300,
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-
-    final reactionLayer = SizedBox(
-      width: gridWidth,
-      height: gridHeight,
-      child: _buildCellLayout(
-        count: count,
-        gridWidth: gridWidth,
-        moreCount: moreCount,
-        expanded: _expanded,
-        cellBuilder: (index, width, height, cellMoreCount) {
-          if (cellMoreCount != null && cellMoreCount > 0) return const SizedBox.shrink();
-          return CollectionAttachmentReactions(
-            collectionPart: messagePart,
-            attachmentIndex: index,
-            tightOverhang: true,
-            tailType: SettingsSvc.settings.skin.value == Skins.iOS
-                ? ReactionTailType.inside
-                : ReactionTailType.standard,
-          );
-        },
-      ),
-    );
-
-    final gridBody = AnimatedSize(
-      duration: _expandAnimDuration,
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: AnimatedSwitcher(
-        duration: _expandAnimDuration,
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        // Size to incoming child so AnimatedSize can grow; outgoing floats above.
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.hardEdge,
-          children: [
-            for (final child in previousChildren)
-              Positioned(top: 0, left: 0, right: 0, child: IgnorePointer(child: child)),
-            if (currentChild != null) currentChild,
-          ],
-        ),
-        child: KeyedSubtree(
-          key: ValueKey(_expanded),
-          child: CollectionDownloadButton.wrap(
-            isFromMe: isFromMe,
-            contentWidth: gridWidth,
-            contentHeight: gridHeight,
-            attachments: _attachments,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                imageLayer,
-                Positioned.fill(child: reactionLayer),
-              ],
-            ),
           ),
         ),
-      ),
-    );
-
-    // iOS stack chrome: title above the card. Material/Samsung stay grid-only.
-    if (!isIos) return gridBody;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        CollectionTitle(
-          label: collectionController.title,
-          onTap: () => collectionController.openGallery(context),
-        ),
-        const SizedBox(height: 4),
-        gridBody,
-      ],
-    );
+    ];
   }
 
-  Widget _buildCellLayout({
-    required int count,
-    required double gridWidth,
-    required _CellBuilder cellBuilder,
-    required bool expanded,
-    Widget? Function(int index, double width, double height, int? moreCount)? moreOverlayBuilder,
-    int? moreCount,
-  }) {
-    Widget cell(int index, double width, double height, {int? cellMoreCount}) {
-      final overlay = moreOverlayBuilder?.call(index, width, height, cellMoreCount);
-      return SizedBox(
-        width: width,
-        height: height,
-        child: Stack(
-          fit: StackFit.expand,
-          clipBehavior: Clip.none,
-          children: [
-            cellBuilder(index, width, height, cellMoreCount),
-            if (overlay != null) Positioned.fill(child: overlay),
-          ],
-        ),
-      );
-    }
-
-    Widget hGap() => const SizedBox(width: _gap);
-    Widget vGap() => const SizedBox(height: _gap, width: double.infinity);
-
-    Widget banner(int index, {int? cellMoreCount}) =>
-        cell(index, gridWidth, _bannerHeight(gridWidth), cellMoreCount: cellMoreCount);
-
-    Widget heroStack(int startIndex, int stackCount, {int? moreOnLast, bool mirrored = false}) {
-      final col = _columnWidth(gridWidth);
-      final heroWidth = 2 * col + _gap;
-      final h = _heroStackHeight(gridWidth, stackCount);
-      final heroIndex = mirrored ? startIndex + stackCount : startIndex;
-      final stackBase = mirrored ? startIndex : startIndex + 1;
-      final lastIndex = startIndex + stackCount;
-
-      final hero = cell(heroIndex, heroWidth, h, cellMoreCount: heroIndex == lastIndex ? moreOnLast : null);
-      final stack = SizedBox(
-        width: col,
-        height: h,
-        child: Column(
-          children: [
-            for (int i = 0; i < stackCount; i++) ...[
-              if (i > 0) vGap(),
-              cell(
-                stackBase + i,
-                col,
-                col,
-                cellMoreCount: stackBase + i == lastIndex ? moreOnLast : null,
-              ),
-            ],
-          ],
-        ),
-      );
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: mirrored ? [stack, hGap(), hero] : [hero, hGap(), stack],
-      );
-    }
-
-    // Count 2 uses taller-than-square cells via [rowHeight].
-    Widget squareRow(int startIndex, int cellCount, {double? rowHeight, int? moreOnLast}) {
-      final cellWidth = _squareRowCellSize(gridWidth, cellCount);
-      final cellHeight = rowHeight ?? cellWidth;
-      final lastIndex = startIndex + cellCount - 1;
-      return Row(
-        children: [
-          for (int i = 0; i < cellCount; i++) ...[
-            if (i > 0) hGap(),
-            cell(
-              startIndex + i,
-              cellWidth,
-              cellHeight,
-              cellMoreCount: startIndex + i == lastIndex ? moreOnLast : null,
-            ),
-          ],
-        ],
-      );
-    }
-
-    if (count == 2) return squareRow(0, 2, rowHeight: gridWidth / _bannerAspect);
-
-    final segments = _segmentsFor(count, expanded: expanded);
-    var heroOrdinal = 0;
-    Widget buildSegment(_LayoutSegment segment, {int? moreOnLast}) => switch (segment.kind) {
-          _SegmentKind.banner => banner(segment.startIndex, cellMoreCount: moreOnLast),
-          _SegmentKind.heroStack => heroStack(
-              segment.startIndex,
-              segment.param,
-              moreOnLast: moreOnLast,
-              mirrored: (heroOrdinal++).isOdd,
-            ),
-          _SegmentKind.squareRow => squareRow(segment.startIndex, segment.param, moreOnLast: moreOnLast),
-        };
-
-    return Column(
-      children: [
-        for (var i = 0; i < segments.length; i++) ...[
-          if (i > 0) vGap(),
-          buildSegment(segments[i], moreOnLast: i == segments.length - 1 ? moreCount : null),
-        ],
-      ],
-    );
+  /// Tapbacks for one tile; none on the `+N` tile, which stands in for several attachments.
+  List<Widget> _buildReactionCell(CollectionGridCell cell) {
+    final moreCount = cell.moreCount;
+    if (moreCount != null && moreCount > 0) return const [];
+    return [
+      CollectionAttachmentReactions(
+        collectionPart: messagePart,
+        attachmentIndex: cell.index,
+        tightOverhang: true,
+        tailType: iOS ? ReactionTailType.inside : ReactionTailType.standard,
+      ),
+    ];
   }
 
   Widget _wrapGridCard(
@@ -508,25 +261,19 @@ class _CollectionGroupGridState extends State<CollectionGroupGrid> {
     required BorderRadius borderRadius,
     required Widget child,
   }) {
-    return SizedBox(
+    // Animated so the silhouette (and its clip) grows with the cells when the grid expands.
+    return AnimatedContainer(
+      duration: _layoutAnimDuration,
+      curve: _expandCurve,
       width: width,
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: borderRadius,
-          boxShadow: SettingsSvc.settings.skin.value == Skins.iOS
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: ClipRRect(borderRadius: borderRadius, child: child),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        borderRadius: borderRadius,
+        boxShadow: CollectionStyle.cardShadow(context),
       ),
+      child: child,
     );
   }
 }

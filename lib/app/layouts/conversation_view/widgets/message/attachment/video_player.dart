@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/parts/media_corner_badge.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
@@ -23,7 +23,7 @@ import 'package:universal_io/io.dart';
 
 /// Sizes [child] like [AspectRatio], but never shrinks width to satisfy a
 /// height constraint (mirrors how image_viewer.dart sizes images) — a fixed
-/// parent height (e.g. the gallery fan card) would otherwise force a
+/// parent height (e.g. a collection stack card) would otherwise force a
 /// narrower box for portrait-ish videos than for images in the same slot.
 Widget _boundedAspectRatio({required double ratio, required Widget child}) {
   return LayoutBuilder(
@@ -52,10 +52,8 @@ class VideoPlayer extends StatefulWidget {
   final PlatformFile file;
   final Attachment attachment;
   final bool isFromMe;
-  final List<Attachment>? galleryAttachments;
-  final CollectionMediaController? collectionController;
 
-  /// Cover-expand into a parent-fixed frame (gallery cards).
+  /// Cover-expand into a parent-fixed frame (collection cards).
   final bool fill;
 
   const VideoPlayer(
@@ -64,8 +62,6 @@ class VideoPlayer extends StatefulWidget {
       required this.attachment,
       required this.controller,
       required this.isFromMe,
-      this.galleryAttachments,
-      this.collectionController,
       this.fill = false});
 
   final ConversationViewController? controller;
@@ -470,6 +466,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
   Widget build(BuildContext context) {
     super.build(context);
     final currentChat = widget.controller?.chat ?? ChatStateScope.maybeChatOf(context);
+    // Inside a collection card, fullscreen pages through the collection and offers its gallery.
+    final collection = MediaCollectionScope.maybeOf(context);
     if (videoController != null) {
       return MouseRegion(
         onEnter: (event) => showPlayPauseOverlay.value = true,
@@ -492,8 +490,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                           showInteractions: true,
                           videoController: videoController,
                           mute: muted,
-                          galleryAttachments: widget.galleryAttachments,
-                          collectionController: widget.collectionController,
+                          galleryAttachments: collection?.media,
+                          onOpenCollectionGallery: collection?.openGallery,
                         ),
                       ),
                     );
@@ -511,8 +509,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                         showInteractions: true,
                         mute: muted,
                         videoController: videoController,
-                        galleryAttachments: widget.galleryAttachments,
-                        collectionController: widget.collectionController,
+                        galleryAttachments: collection?.media,
+                        onOpenCollectionGallery: collection?.openGallery,
                       ),
                     ),
                   );
@@ -558,8 +556,6 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   isFromMe: widget.isFromMe,
                   muted: muted,
                   videoController: videoController,
-                  galleryAttachments: widget.galleryAttachments,
-                  collectionController: widget.collectionController,
                 ),
               if (!kIsDesktop && !kIsWeb && thumbnailFailed)
                 Obx(() => firstFrameReady.value
@@ -585,8 +581,8 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                   showInteractions: true,
                   mute: muted,
                   videoController: videoController,
-                  galleryAttachments: widget.galleryAttachments,
-                  collectionController: widget.collectionController,
+                  galleryAttachments: collection?.media,
+                  onOpenCollectionGallery: collection?.openGallery,
                 ),
               ),
             );
@@ -688,20 +684,17 @@ class FullscreenButton extends StatelessWidget {
     required this.isFromMe,
     this.videoController,
     this.muted,
-    this.galleryAttachments,
-    this.collectionController,
   });
 
   final Attachment attachment;
   final bool isFromMe;
   final VideoController? videoController;
   final RxBool? muted;
-  final List<Attachment>? galleryAttachments;
-  final CollectionMediaController? collectionController;
 
   @override
   Widget build(BuildContext context) {
     final currentChat = ChatStateScope.maybeChatOf(context);
+    final collection = MediaCollectionScope.maybeOf(context);
     return Positioned(
       bottom: 8,
       left: (!isFromMe) ? 15 : 8,
@@ -720,8 +713,8 @@ class FullscreenButton extends StatelessWidget {
                     showInteractions: true,
                     videoController: videoController,
                     mute: muted,
-                    galleryAttachments: galleryAttachments,
-                    collectionController: collectionController,
+                    galleryAttachments: collection?.media,
+                    onOpenCollectionGallery: collection?.openGallery,
                   ),
                 ),
               );

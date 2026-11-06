@@ -22,7 +22,7 @@ void showReplyThread(BuildContext context, Message message, MessagePart part, Me
       ? service.struct.threads(originatorGuid, originatorPart)
       : service.struct.threadsForParts(
           originatorGuid,
-          part.attachmentPartIndices ?? [part.part],
+          part.coveredPartIds,
         );
   _messages.sort((a, b) => Message.sort(a, b, descending: false));
   _buildThreadView(_messages, originatorPart, cvController, context);

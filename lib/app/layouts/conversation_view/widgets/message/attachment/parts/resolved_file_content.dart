@@ -1,6 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/collection_media_controller.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
@@ -29,8 +29,6 @@ class ResolvedFileContent extends StatelessWidget {
     this.isInReply = false,
     this.forceAllCornersRounded = false,
     this.fill = false,
-    this.galleryAttachments,
-    this.collectionController,
   });
 
   final PlatformFile file;
@@ -41,12 +39,8 @@ class ResolvedFileContent extends StatelessWidget {
   final bool isInReply;
   final bool forceAllCornersRounded;
 
-  /// Cover-fill a parent-fixed frame (gallery cards).
+  /// Cover-fill a parent-fixed frame (collection cards).
   final bool fill;
-  final List<Attachment>? galleryAttachments;
-
-  /// When set, fullscreen shows a collection-grid button (omit when opened from a grid).
-  final CollectionMediaController? collectionController;
 
   /// Bubble-style media radius, or zero when [fill] (parent owns clip/shadow).
   BorderRadius _mediaBorderRadius(Message message) {
@@ -77,6 +71,16 @@ class ResolvedFileContent extends StatelessWidget {
       right: message.isFromMe! ? 10 : 0,
     );
     if (attachment.mimeStart == "image" && !SettingsSvc.settings.highPerfMode.value) {
+      // Inside a collection card, fullscreen pages through the collection and offers its gallery.
+      final collection = MediaCollectionScope.maybeOf(context);
+      final image = ImageViewer(
+        file: file,
+        attachment: attachment,
+        isFromMe: message.isFromMe!,
+        isInReply: isInReply,
+        controller: cvController,
+        fill: fill,
+      );
       return OpenContainer(
         tappable: false,
         openColor: Colors.black,
@@ -88,8 +92,8 @@ class ResolvedFileContent extends StatelessWidget {
           currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,
-          galleryAttachments: galleryAttachments,
-          collectionController: collectionController,
+          galleryAttachments: collection?.media,
+          onOpenCollectionGallery: collection?.openGallery,
         ),
         closedBuilder: (context, openContainer) => GestureDetector(
           onTap: () {
@@ -98,27 +102,8 @@ class ResolvedFileContent extends StatelessWidget {
             ctrl.subjectFocusNode.unfocus();
             openContainer();
           },
-          child: fill
-              ? SizedBox.expand(
-                  child: ImageViewer(
-                    file: file,
-                    attachment: attachment,
-                    isFromMe: message.isFromMe!,
-                    isInReply: isInReply,
-                    controller: cvController,
-                    fill: true,
-                  ),
-                )
-              : Container(
-                  color: Colors.transparent,
-                  child: ImageViewer(
-                    file: file,
-                    attachment: attachment,
-                    isFromMe: message.isFromMe!,
-                    isInReply: isInReply,
-                    controller: cvController,
-                  ),
-                ),
+          // ImageViewer expands itself in fill mode; the transparent box keeps the tap target opaque.
+          child: Container(color: Colors.transparent, child: image),
         ),
       );
     }
@@ -129,14 +114,10 @@ class ResolvedFileContent extends StatelessWidget {
         file: file,
         controller: cvController,
         isFromMe: message.isFromMe!,
-        galleryAttachments: galleryAttachments,
-        collectionController: collectionController,
         fill: fill,
       );
-      return ClipRRect(
-        borderRadius: mediaRadius,
-        child: fill ? SizedBox.expand(child: video) : video,
-      );
+      // VideoPlayer expands itself in fill mode.
+      return ClipRRect(borderRadius: mediaRadius, child: video);
     }
 
     if (attachment.mimeStart == "audio") {

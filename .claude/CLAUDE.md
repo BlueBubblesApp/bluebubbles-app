@@ -33,7 +33,9 @@ After editing `@Entity` classes in `lib/database/io/`:
 - Line length: 120 chars
 
 ## Testing
-No automated test suite. Verify changes by running the target platform.
+UI and platform behavior has no automated coverage: verify by running the target platform.
+Pure logic can have unit tests in `test/` (e.g. `test/collections/`): run `flutter test`. The build needs a `.env`
+file at the repo root (it's a declared asset and gitignored); an empty one is fine for tests.
 
 ## Branches
 Branch off `master`; PRs target `master`. No CI/CD.

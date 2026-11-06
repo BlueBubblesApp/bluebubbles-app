@@ -273,17 +273,16 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
 
 /// Resolves the effective multi-attachment layout for a media gallery.
 ///
-/// [MediaCollectionLayout.skinDefault] maps to the default skin-based choice
-/// (iOS: collage for 2–3 items / stack for 4+ items; Material/Samsung: grid for 2+ items).
+/// [MediaCollectionLayout.skinDefault] maps to the default skin-based choice (iOS: collage for small collections /
+/// stack for large ones, split at [MediaCollectionLayout.smallMaxCount]; Material/Samsung: grid). Never returns
+/// [MediaCollectionLayout.skinDefault].
 MediaCollectionLayout resolveMediaCollectionLayout(int attachmentCount) {
-  final setting = attachmentCount <= 3
+  final small = MediaCollectionLayout.isSmall(attachmentCount);
+  final setting = small
       ? SettingsSvc.settings.mediaCollectionLayoutSmall.value
       : SettingsSvc.settings.mediaCollectionLayoutLarge.value;
   if (setting != MediaCollectionLayout.skinDefault) return setting;
 
-  final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
-  if (attachmentCount <= 3) {
-    return iOS ? MediaCollectionLayout.collage : MediaCollectionLayout.grid;
-  }
-  return iOS ? MediaCollectionLayout.stack : MediaCollectionLayout.grid;
+  if (!CurrentSkin.iOS) return MediaCollectionLayout.grid;
+  return small ? MediaCollectionLayout.collage : MediaCollectionLayout.stack;
 }

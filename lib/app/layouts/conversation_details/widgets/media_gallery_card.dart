@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/components/image_blur_canvas.dart';
@@ -442,8 +441,6 @@ class _ImageDisplayState extends State<ImageDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    final double cardSize = NavigationSvc.width(context) / max(2, NavigationSvc.width(context) ~/ 200);
-
     return OpenContainer(
       transitionDuration: Durations.medium4,
       closedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(M3EShapes.lg))),
@@ -464,9 +461,7 @@ class _ImageDisplayState extends State<ImageDisplay> {
                 openContainer();
               },
               onHighlightChanged: widget.onPressChanged,
-              child: SizedBox(
-                width: cardSize,
-                height: cardSize,
+              child: SizedBox.expand(
                 child: Stack(
                   fit: StackFit.expand,
                   children: [

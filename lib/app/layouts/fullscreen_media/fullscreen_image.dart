@@ -256,8 +256,8 @@ class _FullscreenImageState extends State<FullscreenImage>
                                         child: CupertinoButton(
                                           padding: const EdgeInsets.symmetric(horizontal: 5),
                                           onPressed: widget.onOpenCollectionGallery,
-                                          child: const Icon(
-                                            Icons.grid_view_outlined,
+                                          child: Icon(
+                                            iOS ? CupertinoIcons.square_grid_2x2 : Icons.grid_view_outlined,
                                             color: Colors.white,
                                           ),
                                         ),
