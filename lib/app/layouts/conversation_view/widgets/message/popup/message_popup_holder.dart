@@ -54,7 +54,6 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
             (iOS ? 0 : NavigationSvc.widthChatListLeft(context)),
         childPos.dy);
     final serverDetails = SettingsSvc.serverDetails;
-    final version = serverDetails.serverVersionCode;
     final minSierra = serverDetails.isMinSierra;
     final minBigSur = serverDetails.isMinBigSur;
     if (!iOS) {
@@ -98,7 +97,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                     controller: widget.controller,
                     cvController: widget.cvController,
                     serverDetails: MessagePopupServerDetails(
-                        minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: version > 100),
+                        minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: serverDetails.supportsOriginalDownload),
                     sendTapback: sendTapback,
                     widthContext: () => mounted ? context : null,
                     child: widget.child,

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/backend/settings_helpers.dart';
-import 'package:bluebubbles/utils/crypto_utils.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -76,8 +75,8 @@ class SocketService {
   /// rediscovery is the only recovery from [_socketGaveUp].
   static const Duration _urlDiscoveryTimeout = Duration(seconds: 60);
 
-  /// The server's engine.io heartbeat takes up to three minutes to notice a dead connection
-  /// and can't change until the server rewrite, so the client runs its own.
+  /// 1.x's engine.io heartbeat takes up to three minutes to notice a dead connection, so the client runs its own.
+  /// v2 answers it too: `get-fcm-client` with an ack is the one client-sent event it handles.
   static const Duration _heartbeatInterval = Duration(seconds: 30);
   static const Duration _heartbeatTimeout = Duration(seconds: 5);
   static const int _heartbeatMissLimit = 2;
@@ -668,28 +667,6 @@ class SocketService {
       _heartbeatTimeoutTimer = null;
       _heartbeatMisses = 0;
     });
-  }
-
-  // ── Messaging ──────────────────────────────────────────────────────────────
-
-  Future<Map<String, dynamic>> sendMessage(String event, Map<String, dynamic> message) {
-    if (socket == null) return Future.error(StateError('Socket not connected'));
-    final completer = Completer<Map<String, dynamic>>();
-
-    socket!.emitWithAck(event, message, ack: (response) {
-      if (response['encrypted'] == true) {
-        response['data'] = jsonDecode(decryptAESCryptoJS(response['data'], password));
-      }
-
-      if (!completer.isCompleted) {
-        completer.complete(response);
-      }
-    });
-
-    return completer.future.timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => Future.error(TimeoutException('Socket message timed out', const Duration(seconds: 30))),
-    );
   }
 
   // ── State reporting ────────────────────────────────────────────────────────

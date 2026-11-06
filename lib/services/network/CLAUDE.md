@@ -63,11 +63,13 @@ socket_io_client connection to the BlueBubbles server. Don't create additional
   rebuild. On Android, with no network at all the socket is closed and reports "No network
   connection"; `startSocket()` refuses to run until a network event arrives. Desktop ignores
   `none`: Windows reports it whenever NCSI finds no internet, even with the server on the LAN.
-- The server's engine.io heartbeat takes up to ~3 min to notice a dead connection
-  (pingInterval 60s + pingTimeout 120s) and can't change until the server rewrite, so
-  the client runs its own over the socket: `get-fcm-client` with an ack, every 30s,
-  5s to answer, a miss retries immediately, rebuild after 2 misses. `checkConnection()`
-  sends one now — called on desktop resume and (debounced) on connectivity changes.
+- The 1.x server's engine.io heartbeat takes up to ~3 min to notice a dead connection
+  (pingInterval 60s + pingTimeout 120s); v2 uses engine.io's defaults (25s + 20s, ~45s).
+  Either way the client runs its own over the socket, on every server version:
+  `get-fcm-client` with an ack, every 30s, 5s to answer, a miss retries immediately,
+  rebuild after 2 misses. v2 acks it with a fixed pong (the only client-sent event it
+  answers). `checkConnection()` sends one now — called on desktop resume and (debounced)
+  on connectivity changes.
   There's no separate HTTP internet probe; it flagged working sockets on slow replies.
   Never use `get-server-config`: the server deletes the password from its live config.
 - The socket follows the origin it dials (`_dialedOrigin`): anything that changes the

@@ -54,6 +54,8 @@ class SettingsService {
       macOSMinorVersion: PrefsSvc.server.getMacOSMinorVersion() ?? 0,
       serverVersion: PrefsSvc.server.getServerVersion() ?? "0.0.0",
       serverVersionCode: PrefsSvc.server.getServerVersionCode() ?? 0,
+      apiVersions: PrefsSvc.server.getApiVersions(),
+      serverBuildVersion: PrefsSvc.server.getServerBuildVersion(),
     );
 
     if (!headless && !kIsWeb && !kIsDesktop) {
@@ -148,36 +150,18 @@ class SettingsService {
         toSave.add('serverPrivateAPI');
       }
 
-      final version = int.tryParse(response.data['data']['os_version'].split(".")[0]);
-      final minorVersion = int.tryParse(response.data['data']['os_version'].split(".")[1]);
-      final serverVersion = response.data['data']['server_version'];
-      final code = Version.parse(serverVersion ?? "0.0.0");
-      final versionCode = code.major * 100 + code.minor * 21 + code.patch;
-      await PrefsSvc.server.setServerDetails(
-        macOSVersion: version,
-        macOSMinorVersion: minorVersion,
-        serverVersion: serverVersion,
-        serverVersionCode: versionCode,
-      );
+      final details = ServerDetails.fromServerInfo(response.data['data']);
+      await _saveServerDetails(details);
 
       if (toSave.isNotEmpty) {
         await settings.saveManyAsync(toSave);
       }
 
-      return {
-        'macOSVersion': version ?? 11,
-        'macOSMinorVersion': minorVersion ?? 0,
-        'serverVersion': serverVersion ?? "0.0.0",
-        'serverVersionCode': versionCode,
-      };
+      return details.toMap();
     }
 
-    return {
-      'macOSVersion': 11,
-      'macOSMinorVersion': 0,
-      'serverVersion': "0.0.0",
-      'serverVersionCode': 0,
-    };
+    // Empty rather than defaults, which would overwrite what's known about the server
+    return {};
   }
 
   /// Fetches server details via HTTP (main isolate), updates [serverDetails],
@@ -186,12 +170,9 @@ class SettingsService {
   /// Used during the first-time setup flow.
   Future<ServerDetails> fetchServerDetails() async {
     final detailsDict = await getServerDetailsDict();
-    final details = ServerDetails(
-      macOSVersion: detailsDict['macOSVersion'] as int,
-      macOSMinorVersion: detailsDict['macOSMinorVersion'] as int,
-      serverVersion: detailsDict['serverVersion'] as String,
-      serverVersionCode: detailsDict['serverVersionCode'] as int,
-    );
+    final details = detailsDict.isEmpty
+        ? const ServerDetails(macOSVersion: 11, macOSMinorVersion: 0, serverVersion: "0.0.0", serverVersionCode: 0)
+        : ServerDetails.fromMap(detailsDict);
     _serverDetails.value = details;
     return details;
   }
@@ -216,18 +197,27 @@ class SettingsService {
   /// and persists the new values to [PrefsSvc]. Safe to call fire-and-forget.
   Future<void> refreshServerDetails() async {
     try {
-      final details = await ServerInterface.getServerDetails();
-      _serverDetails.value = details;
-
-      await PrefsSvc.server.setServerDetails(
-        macOSVersion: details.macOSVersion,
-        macOSMinorVersion: details.macOSMinorVersion,
-        serverVersion: details.serverVersion,
-        serverVersionCode: details.serverVersionCode,
-      );
+      await updateServerDetails(await ServerInterface.getServerDetails());
     } catch (e, s) {
       Logger.warn("Failed to refresh server details", error: e, trace: s, tag: 'SettingsService');
     }
+  }
+
+  /// Caches and persists [details] fetched elsewhere, so the cache doesn't keep showing the previous server.
+  Future<void> updateServerDetails(ServerDetails details) async {
+    _serverDetails.value = details;
+    await _saveServerDetails(details);
+  }
+
+  Future<void> _saveServerDetails(ServerDetails details) async {
+    await PrefsSvc.server.setServerDetails(
+      macOSVersion: details.macOSVersion,
+      macOSMinorVersion: details.macOSMinorVersion,
+      serverVersion: details.serverVersion,
+      serverVersionCode: details.serverVersionCode,
+      apiVersions: details.apiVersions,
+      serverBuildVersion: details.serverBuildVersion ?? "",
+    );
   }
 
   /// Returns the current cached [ServerDetails].
