@@ -58,12 +58,15 @@ class ServerV2Migrations {
         AttachmentActions.adoptRekeyedGuids(remote);
         final current = Database.messages.get(sticker.id!);
         if (current == null) continue;
+        var changed = false;
         for (final a in current.dbAttachments) {
           final placement = remote.firstWhereOrNull((r) => r.guid == a.guid)?.stickerPlacement;
           if (a.stickerPlacement != null || placement == null) continue;
           a.stickerPlacement = placement;
           Database.attachments.put(a);
+          changed = true;
         }
+        if (!changed) continue;
         filled++;
         final chatGuid = current.chat.target?.guid;
         if (chatGuid != null && current.associatedMessageGuid != null) {
