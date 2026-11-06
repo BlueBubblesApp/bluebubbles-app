@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Size;
 
 import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
@@ -84,6 +85,13 @@ class MessageState extends StatefulController {
   /// once. Prevents the animation from firing again on subsequent renders.
   /// Manual replay via the replay button always works regardless of this flag.
   final RxBool hasEffectPlayed;
+
+  /// Whether this message's details menu is open, so its stickers can get out of the way.
+  final RxBool showingPopup = false.obs;
+
+  /// Pixel size of each placed sticker's decoded image, by attachment guid, so the room kept for a sticker
+  /// matches what draws even when the server sent no dimensions
+  final RxMap<String, Size> stickerSizes = <String, Size>{}.obs;
 
   /// Increment to trigger a re-download of all attachments in this message.
   /// [AttachmentHolder] registers `ever()` on this key to call _loadContent().
@@ -422,6 +430,12 @@ class MessageState extends StatefulController {
       isSending.value = (value?.startsWith('temp') ?? false) && !hasError.value;
       isSent.value = !(value?.startsWith('temp') ?? false);
     }
+  }
+
+  /// Record the decoded pixel size of a placed sticker's image. Called by [StickerHolder] once the image resolves,
+  /// since only the image knows it when the server sent no dimensions.
+  void updateStickerSizeInternal(String attachmentGuid, Size value) {
+    if (stickerSizes[attachmentGuid] != value) stickerSizes[attachmentGuid] = value;
   }
 
   /// Update message text content

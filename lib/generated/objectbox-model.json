@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2065429213543838585",
-      "lastPropertyId": "23:7107471023966534193",
+      "lastPropertyId": "24:5276996574275850643",
       "name": "Attachment",
       "properties": [
         {
@@ -97,6 +97,11 @@
         {
           "id": "23:7107471023966534193",
           "name": "exif",
+          "type": 13
+        },
+        {
+          "id": "24:5276996574275850643",
+          "name": "stickerPlacement",
           "type": 13
         }
       ],

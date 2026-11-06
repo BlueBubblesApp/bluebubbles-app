@@ -31,7 +31,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2065429213543838585),
     name: 'Attachment',
-    lastPropertyId: const obx_int.IdUid(23, 7107471023966534193),
+    lastPropertyId: const obx_int.IdUid(24, 5276996574275850643),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -137,6 +137,12 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(23, 7107471023966534193),
         name: 'exif',
+        type: 13,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(24, 5276996574275850643),
+        name: 'stickerPlacement',
         type: 13,
         flags: 0,
       ),
@@ -1294,7 +1300,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final exifOffset = object.exif == null
             ? null
             : fbb.writeListInt8(obx_int.toFlexBuffer(object.exif!));
-        fbb.startTable(24);
+        final stickerPlacementOffset = object.stickerPlacement == null
+            ? null
+            : fbb.writeListInt8(obx_int.toFlexBuffer(object.stickerPlacement!));
+        fbb.startTable(25);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addInt64(1, object.originalROWID);
         fbb.addOffset(2, guidOffset);
@@ -1312,6 +1321,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addBool(19, object.isDownloaded);
         fbb.addOffset(20, metadataOffset);
         fbb.addOffset(22, exifOffset);
+        fbb.addOffset(23, stickerPlacementOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1361,6 +1371,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           30,
         );
         final metadataParam = obx_int.flexBufferToMap(buffer, rootOffset, 44);
+        final stickerPlacementParam = obx_int.flexBufferToMap(
+          buffer,
+          rootOffset,
+          50,
+        );
         final exifParam = obx_int.flexBufferToMap(buffer, rootOffset, 48);
         final webUrlParam = const fb.StringReader(
           asciiOptimization: true,
@@ -1390,6 +1405,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 height: heightParam,
                 width: widthParam,
                 metadata: metadataParam,
+                stickerPlacement: stickerPlacementParam,
                 exif: exifParam,
                 webUrl: webUrlParam,
                 hasLivePhoto: hasLivePhotoParam,

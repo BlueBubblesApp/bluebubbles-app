@@ -201,6 +201,7 @@ class AttachmentActions {
         conflicting.bytes = newAttachment.bytes;
         conflicting.webUrl = newAttachment.webUrl;
         conflicting.hasLivePhoto = newAttachment.hasLivePhoto;
+        conflicting.stickerPlacement = newAttachment.stickerPlacement ?? conflicting.stickerPlacement;
         Database.attachments.put(conflicting);
         Database.attachments.remove(existing.id!);
 
@@ -222,6 +223,7 @@ class AttachmentActions {
       existing.bytes = newAttachment.bytes;
       existing.webUrl = newAttachment.webUrl;
       existing.hasLivePhoto = newAttachment.hasLivePhoto;
+      existing.stickerPlacement = newAttachment.stickerPlacement ?? existing.stickerPlacement;
       // Use synchronous put within the transaction to preserve the message relationship.
       // saveAsync(null) would run outside this transaction and would fail to find the
       // attachment by the new guid (since DB still has the old guid), stripping the

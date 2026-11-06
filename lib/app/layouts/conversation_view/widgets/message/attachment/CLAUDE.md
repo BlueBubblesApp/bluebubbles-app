@@ -37,4 +37,7 @@ Multi-attachment **collections** live in `collections/` → [CLAUDE.md](collecti
 
 ## Stickers vs Attachments
 
-Stickers (`associatedMessageType == "sticker"`) are **not** routed through `AttachmentHolder`. They are rendered by `StickerObserver` (in `message_holder/`) as overlays positioned above the bubble.
+Stickers (`associatedMessageType == "sticker"`) are **not** routed through `AttachmentHolder`. They are rendered by `StickerObserver` (in `message_holder/`). A sticker whose attachment has a
+`stickerPlacement` is drawn where its sender put it, filling the bubble's own Stack; one without is drawn in a row
+above the bubble. Stickers ignore input and shrink away while the message's details menu is open
+(`MessageState.showingPopup`).

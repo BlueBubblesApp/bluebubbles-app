@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/generated/objectbox.g.dart';
 import 'package:bluebubbles/database/io/message.dart';
+import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/backend/descriptors/attachment_query_descriptor.dart';
 import 'package:bluebubbles/services/backend/interfaces/attachment_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -51,6 +52,10 @@ class Attachment {
   @Transient()
   String? originalGuid;
 
+  /// Where the sender put a sticker placed on a message part, as the server's `stickerPlacement`
+  /// (`xScalar`, `yScalar`, `scale`, `rotation`, `parentPreviewWidth`). Read it through [StickerPlacement.tryParse].
+  Map<String, dynamic>? stickerPlacement;
+
   Attachment({
     this.id,
     this.originalROWID,
@@ -63,6 +68,7 @@ class Attachment {
     this.height,
     this.width,
     this.metadata,
+    this.stickerPlacement,
     this.originalGuid,
     this.exif,
     this.bytes,
@@ -106,6 +112,8 @@ class Attachment {
       height: json["height"] ?? 0,
       width: json["width"] ?? 0,
       metadata: metadata is String ? null : metadata,
+      // Kept only when complete, so a stored placement can always be laid out
+      stickerPlacement: StickerPlacement.tryParse(json["stickerPlacement"])?.toMap(),
       originalGuid: json["originalGuid"],
       exif: exif is String ? null : exif,
       hasLivePhoto: json["hasLivePhoto"] ?? false,
@@ -386,6 +394,7 @@ class Attachment {
     attachment1.webUrl ??= attachment2.webUrl;
     attachment1.metadata = mergeTopLevelDicts(attachment1.metadata, attachment2.metadata);
     attachment1.exif = mergeTopLevelDicts(attachment1.exif, attachment2.exif);
+    attachment1.stickerPlacement ??= attachment2.stickerPlacement;
     if (attachment2.hasLivePhoto) {
       attachment1.hasLivePhoto = attachment2.hasLivePhoto;
     }
@@ -411,6 +420,7 @@ class Attachment {
     "height": height,
     "width": width,
     "metadata": jsonEncode(metadata),
+    if (stickerPlacement != null) "stickerPlacement": stickerPlacement,
     if (originalGuid != null) "originalGuid": originalGuid,
     "exif": jsonEncode(exif),
     "hasLivePhoto": hasLivePhoto,
