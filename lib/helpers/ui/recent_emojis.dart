@@ -29,5 +29,9 @@ class RecentEmojis {
     }).catchError((Object e) => Logger.warn("Couldn't update recent emojis: $e", tag: "RecentEmojis"));
   }
 
-  static Future<void> addFromText(String text) => add(emojiRegex.allMatches(text).map((m) => m[0]!));
+  static Future<void> addFromText(String text) => add(emojiRegex.allMatches(text).map((m) => m[0]!).where(_isEmoji));
+
+  // The regex also matches text symbols like ™ and © (no emoji selector), which aren't emoji to recommend
+  static bool _isEmoji(String match) =>
+      _byChar.containsKey(match) || match.runes.length > 1 || match.runes.first >= 0x1F000;
 }

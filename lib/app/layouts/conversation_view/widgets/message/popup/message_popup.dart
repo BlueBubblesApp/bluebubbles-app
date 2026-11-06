@@ -324,11 +324,13 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   /// Incoming overlay X so tapback / details stay on-screen; may shift the iOS preview.
   ({double clampedOverlayLeft, double clampedChildLeft}) _clampedHorizontalLayout({
     required double screenWidth,
+    required double paneWidth,
     required double pickerWidth,
   }) {
     const margin = _edgeMargin;
     final preferredOverlayLeft = widget.childPosition.dx + 10;
-    final detailsMenuWidth = iOS ? min(max(screenWidth * 3 / 5, 200), screenWidth * 4 / 5) : 0.0;
+    // Sized from the pane, as the details menu itself is
+    final detailsMenuWidth = iOS ? min(max(paneWidth * 3 / 5, 200), paneWidth * 4 / 5) : 0.0;
     final overlayWidth = max(pickerWidth, detailsMenuWidth);
     final maxLeft = max(margin, screenWidth - overlayWidth - margin);
     final clampedOverlayLeft = preferredOverlayLeft.clamp(margin, maxLeft).toDouble();
@@ -372,13 +374,18 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     final double reactionRowContentWidth = reactionItemWidth * tapbackItems.length + 10;
     // A scrolling row never needs to wrap
     bool narrowScreen = !emojiTapbacks && reactionRowContentWidth > reactionPickerAvailableWidth;
+    // At most about 7.5 items, so the half item shows the row scrolls
+    final double emojiRowMaxWidth =
+        max(min(reactionPickerAvailableWidth - 10 - _addEmojiCircleRoom, reactionItemWidth * 7.5), 0);
     final double pickerWidth = narrowScreen
         ? reactionItemWidth * 3 + 10
         : emojiTapbacks
-            ? min(reactionRowContentWidth, reactionItemWidth * 7.5 + 10) + _addEmojiCircleRoom
+            ? min(reactionRowContentWidth, emojiRowMaxWidth + 10) + _addEmojiCircleRoom
             : reactionRowContentWidth;
     final isFromMe = message.isFromMe!;
-    final clampedLayout = isFromMe ? null : _clampedHorizontalLayout(screenWidth: popupWidth, pickerWidth: pickerWidth);
+    final clampedLayout = isFromMe
+        ? null
+        : _clampedHorizontalLayout(screenWidth: popupWidth, paneWidth: screenWidth, pickerWidth: pickerWidth);
     final clampedOverlayLeft = clampedLayout?.clampedOverlayLeft;
     // From-me: pin the preview's right edge to the cell's right edge so growth stays on-screen.
     // Received: left-anchor, then clamp using measured/estimated preview width.
@@ -623,13 +630,8 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                               }).toList(),
                                             );
                                             if (!emojiTapbacks) return row;
-                                            // At most about 7.5 items, so the half item shows the row scrolls
                                             return ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                  maxWidth: max(
-                                                      min(reactionPickerAvailableWidth - 10 - _addEmojiCircleRoom,
-                                                          reactionItemWidth * 7.5),
-                                                      0)),
+                                              constraints: BoxConstraints(maxWidth: emojiRowMaxWidth),
                                               child: _fadeScrollEdges(SingleChildScrollView(
                                                   scrollDirection: Axis.horizontal, child: row)),
                                             );

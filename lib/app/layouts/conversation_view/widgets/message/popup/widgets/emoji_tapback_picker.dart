@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' hide Emoji;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,6 +9,8 @@ Future<String?> showEmojiTapbackPicker(BuildContext context) {
   final colors = context.theme.colorScheme;
   // Same surface as the app's dialogs (showBBDialog)
   final background = colors.surfaceContainerHighest;
+  // Fits short screens: the dialog's own insets take 48 of the height
+  final height = min(420.0, MediaQuery.sizeOf(context).height - MediaQuery.paddingOf(context).vertical - 48);
   return showDialog<String>(
     context: context,
     builder: (dialogContext) => Dialog(
@@ -15,11 +19,11 @@ Future<String?> showEmojiTapbackPicker(BuildContext context) {
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: 360,
-        height: 420,
+        height: height,
         child: EmojiPicker(
           onEmojiSelected: (_, emoji) => Navigator.of(dialogContext).pop(emoji.emoji),
           config: Config(
-            height: 420,
+            height: height,
             emojiSet: (_) => emojiSetEnglish,
             checkPlatformCompatibility: true,
             emojiViewConfig: EmojiViewConfig(

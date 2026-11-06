@@ -37,10 +37,14 @@ class SharedPreferencesMessagingActions {
       }.toList();
 
   /// Counts a use of [emoji] in [chatGuid] and overall. A full list drops its least used, longest unused emoji.
-  Future<void> addRecentTapbackEmoji(String emoji, {required String chatGuid}) async {
-    await _countTapbackEmoji(_tapbackEmojiUsageKey, emoji, _tapbackEmojiLimit);
-    await _countTapbackEmoji(_chatTapbackEmojiKey(chatGuid), emoji, _chatTapbackEmojiLimit);
-  }
+  Future<void> addRecentTapbackEmoji(String emoji, {required String chatGuid}) =>
+      _tapbackEmojiQueue = _tapbackEmojiQueue.then((_) async {
+        await _countTapbackEmoji(_tapbackEmojiUsageKey, emoji, _tapbackEmojiLimit);
+        await _countTapbackEmoji(_chatTapbackEmojiKey(chatGuid), emoji, _chatTapbackEmojiLimit);
+      });
+
+  // Each count reads, changes and rewrites a list, so overlapping ones would lose a use
+  static Future<void> _tapbackEmojiQueue = Future.value();
 
   String _chatTapbackEmojiKey(String chatGuid) => '$_tapbackEmojiUsageKey:$chatGuid';
 
