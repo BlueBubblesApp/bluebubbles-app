@@ -11,11 +11,10 @@ import 'package:dio/dio.dart';
 /// What a migration pass is doing, and how far through it is (0 to 1).
 typedef ServerV2MigrationProgress = void Function(String step, double progress);
 
-/// Fills in data that servers older than v2 never sent, for messages already synced from them.
-/// Sync never refetches old messages, so this has to ask the server again.
+/// Backfills server-only fields and message changes older clients could not recover.
 class ServerV2Migrations {
   /// Bump when adding a backfill, so clients that finished the earlier ones run again.
-  static const int version = 4;
+  static const int version = 5;
 
   /// Run on startup: once the server is known to be v2, and on each launch until a pass gets through.
   static Future<void> runOnce() async {
@@ -43,7 +42,30 @@ class ServerV2Migrations {
     if (payloads == null) return null;
     final turns = await _backfillAppTurns(onProgress);
     if (turns == null) return null;
-    return emoji + genmoji + stickers + payloads + turns;
+    final changes = await _backfillMessageChanges(onProgress);
+    return changes == null ? null : emoji + genmoji + stickers + payloads + turns + changes;
+  }
+
+  /// Repairs changes older clients missed even when their date is already behind
+  /// the regular sync marker. Creation history and normal markers are untouched.
+  static Future<int?> _backfillMessageChanges(ServerV2MigrationProgress? onProgress) async {
+    onProgress?.call("Updating missed message changes", 0);
+    final manager = IncrementalSyncManager(
+      startTimestamp: 0,
+      includeNewMessages: false,
+      batchSize: 100,
+    );
+    final subscription = manager.progress.listen((value) => onProgress?.call("Updating missed message changes", value));
+    try {
+      await manager.start();
+      return manager.messagesSynced;
+    } catch (e, s) {
+      Logger.warn('Stopped backfilling message changes; retrying on the next launch',
+          error: e, trace: s, tag: 'ServerV2Migrations');
+      return null;
+    } finally {
+      await subscription.cancel();
+    }
   }
 
   /// Game turns saved before the client mirrored Messages' rewrite of a replaced turn to type 3, so earlier turns of a

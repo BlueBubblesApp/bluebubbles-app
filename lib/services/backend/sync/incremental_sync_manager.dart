@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
+import 'package:bluebubbles/services/backend/sync/message_sync_deduplicator.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
@@ -11,6 +12,10 @@ import 'package:dio/dio.dart' as dio;
 
 class IncrementalSyncManager extends SyncManager {
   final tag = 'IncrementalSyncManager';
+  final _messageDeduplicator = MessageSyncDeduplicator();
+  bool _syncingV2 = false;
+  int? _v2EndTimestamp;
+  final _latestMessageDatePerChat = <String, DateTime>{};
 
   // When the sync started
   late int syncStartedAt;
@@ -56,6 +61,8 @@ class IncrementalSyncManager extends SyncManager {
 
   // A flag telling the "complete" function to save the timestamp/row ID markers.
   bool saveMarker;
+  /// False for the one-time v2 change backfill, which must not fetch creation history.
+  final bool includeNewMessages;
 
   // A callback to call when the sync is complete
   Function? onComplete;
@@ -72,16 +79,17 @@ class IncrementalSyncManager extends SyncManager {
     if (SettingsSvc.serverDetails.isV2Server) "appPayload",
   ];
 
-  IncrementalSyncManager(
-      {this.startRowId,
-      this.endRowId,
-      this.startTimestamp,
-      this.endTimestamp,
-      this.batchSize = 1000,
-      this.saveMarker = false,
-      this.onComplete,
-      bool saveLogs = false})
-      : super("Incremental", saveLogs: saveLogs) {
+  IncrementalSyncManager({
+    this.startRowId,
+    this.endRowId,
+    this.startTimestamp,
+    this.endTimestamp,
+    this.batchSize = 1000,
+    this.saveMarker = false,
+    this.includeNewMessages = true,
+    this.onComplete,
+    bool saveLogs = false,
+  }) : super("Incremental", saveLogs: saveLogs) {
     if (startRowId == null && startTimestamp == null) {
       throw Exception("Must provide either a startRowId or startTimestamp");
     }
@@ -96,9 +104,11 @@ class IncrementalSyncManager extends SyncManager {
     }
 
     syncStartedAt = DateTime.now().millisecondsSinceEpoch;
+    _messageDeduplicator.clear();
     super.start();
     addToOutput(
-        "Starting incremental sync (startTimestamp: $startTimestamp; endTimestamp: $endTimestamp; startRowId: $startRowId; endRowId: $endRowId)");
+      "Starting incremental sync (startTimestamp: $startTimestamp; endTimestamp: $endTimestamp; startRowId: $startRowId; endRowId: $endRowId)",
+    );
 
     // General flow of the sync:
     // 0: Hit API endpoint to check for updated messages
@@ -121,8 +131,11 @@ class IncrementalSyncManager extends SyncManager {
     }
 
     try {
+      _syncingV2 = serverDetails.isV2Server;
       // If we've don't have a startRowId (null or 0), then sync using timestamps
-      if (serverDetails.supportsRowIdSync && (startRowId ?? 0) > 0) {
+      if (_syncingV2) {
+        await startV2();
+      } else if (serverDetails.supportsRowIdSync && (startRowId ?? 0) > 0) {
         addToOutput("Syncing with server version >= 1.6.0");
         await startMin_1_6_0();
       } else if (serverDetails.supportsImprovedSync) {
@@ -136,9 +149,54 @@ class IncrementalSyncManager extends SyncManager {
       await complete();
     } catch (ex) {
       completeWithError(ex.toString());
+    } finally {
+      _messageDeduplicator.clear();
     }
 
     return completer!.future;
+  }
+
+  Future<void> startV2() async {
+    // A later receipt/edit pass may return ROWIDs older than the creation marker.
+    // Never let those move the creation marker backwards.
+    lastSyncedRowId = (startRowId ?? 0) > 0 ? startRowId : null;
+    _v2EndTimestamp = endTimestamp != null && endTimestamp! < syncStartedAt ? endTimestamp : syncStartedAt;
+    final after = startTimestamp ?? SettingsSvc.settings.lastIncrementalSync.value;
+
+    if (includeNewMessages) {
+      await syncV2MessagePages(after: (startRowId ?? 0) > 0 ? null : after, useRowId: (startRowId ?? 0) > 0);
+    }
+    // `updated` is the union of delivered/read dates. Edits and unsends have
+    // their own modes. The server does not accept a played-date mode.
+    for (final field in ['updated', 'edited', 'retracted']) {
+      await syncV2MessagePages(after: after, dateField: field);
+    }
+  }
+
+  Future<void> syncV2MessagePages({required int? after, String? dateField, bool useRowId = false}) async {
+    final limit = batchSize.clamp(1, 1000);
+    var offset = 0;
+    int? total;
+    final previouslySynced = messagesSynced;
+    do {
+      final response = await HttpSvc.message.query(
+        after: after,
+        before: useRowId ? null : _v2EndTimestamp,
+        dateField: dateField,
+        where: useRowId ? buildRowIdWhereArgs(startRowId!, endRowId) : const [],
+        sort: 'ASC',
+        offset: offset,
+        limit: limit,
+        withQuery: defaultWithQuery,
+      );
+      total ??= response.data['metadata']['total'] as int;
+      final messages = response.data['data'] as List;
+      addToOutput('Fetched ${messages.length} ${dateField ?? "created"} message(s) at offset $offset');
+      if (messages.isEmpty) break;
+      await syncMessages(messages, previouslySynced + total);
+      // Advance by the raw response size, even when every message was a duplicate.
+      offset += messages.length;
+    } while (offset < total);
   }
 
   Future<void> startMin_1_6_0() async {
@@ -232,17 +290,19 @@ class IncrementalSyncManager extends SyncManager {
       // Fetch the pages differently depending on the parameters.
       if (useRowId) {
         messagesResponse = await HttpSvc.message.query(
-            where: buildRowIdWhereArgs(startRowId!, endRowId),
-            offset: i * batchSize,
-            limit: batchSize,
-            withQuery: defaultWithQuery);
+          where: buildRowIdWhereArgs(startRowId!, endRowId),
+          offset: i * batchSize,
+          limit: batchSize,
+          withQuery: defaultWithQuery,
+        );
       } else {
         messagesResponse = await HttpSvc.message.query(
-            after: startTimestamp,
-            before: endTimestamp,
-            offset: i * batchSize,
-            limit: batchSize,
-            withQuery: defaultWithQuery);
+          after: startTimestamp,
+          before: endTimestamp,
+          offset: i * batchSize,
+          limit: batchSize,
+          withQuery: defaultWithQuery,
+        );
       }
 
       int messageCount = messagesResponse.data['data'].length;
@@ -268,6 +328,9 @@ class IncrementalSyncManager extends SyncManager {
 
     for (var msgData in messages) {
       for (var chat in msgData['chats']) {
+        if (_syncingV2 && !_messageDeduplicator.shouldSync(chat['guid'] as String, msgData as Map<String, dynamic>)) {
+          continue;
+        }
         if (!chatCache.containsKey(chat['guid'])) {
           chatCache[chat['guid']] = Chat.fromMap(chat);
         }
@@ -289,8 +352,8 @@ class IncrementalSyncManager extends SyncManager {
         }
 
         // Save the last synced timestamp
-        if (msg.dateCreated != null && lastSyncedTimestamp == null ||
-            msg.dateCreated!.millisecondsSinceEpoch > lastSyncedTimestamp!) {
+        if (msg.dateCreated != null &&
+            (lastSyncedTimestamp == null || msg.dateCreated!.millisecondsSinceEpoch > lastSyncedTimestamp!)) {
           lastSyncedTimestamp = msg.dateCreated!.millisecondsSinceEpoch;
         }
 
@@ -379,20 +442,33 @@ class IncrementalSyncManager extends SyncManager {
       Chat? theChat = chatCache[item.key];
       if (theChat == null || item.value.isEmpty) continue;
 
-      final syncResult = await SyncInterface.bulkSyncData(
-        chatData: theChat.toMap(),
-        messagesData: item.value,
-      );
+      final syncResult = await SyncInterface.bulkSyncData(chatData: theChat.toMap(), messagesData: item.value);
       messagesSynced += syncResult.messages.length;
       setProgress(messagesSynced, total);
+
+      // Backfills may run directly on the main isolate without SyncService's
+      // per-page listener. Refresh already visible messages there as well.
+      if (_syncingV2 && !isIsolate) {
+        final service = maybeFindMessagesSvc(item.key);
+        if (service != null) {
+          for (final message in syncResult.messages) {
+            if (message.guid != null && service.struct.getMessage(message.guid!) != null) {
+              service.updateMessage(message);
+            }
+          }
+        }
+      }
 
       // Track the latest message per chat (highest dateCreated with a valid DB id)
       // so the action layer can return message IDs instead of chat IDs.
       final latest = syncResult.messages
           .where((m) => m.id != null && m.dateCreated != null)
           .fold<Message?>(null, (prev, m) => prev == null || m.dateCreated!.isAfter(prev.dateCreated!) ? m : prev);
-      if (latest != null) {
+      if (latest != null &&
+          (_latestMessageDatePerChat[item.key] == null ||
+              !latest.dateCreated!.isBefore(_latestMessageDatePerChat[item.key]!))) {
         latestMessageIdPerChat[item.key] = latest.id!;
+        _latestMessageDatePerChat[item.key] = latest.dateCreated!;
       }
 
       // Grouped by chat so the main thread can skip hydrating messages for closed chats.
@@ -400,8 +476,8 @@ class IncrementalSyncManager extends SyncManager {
       if (ids.isNotEmpty) {
         pageMessageIdsByChat[item.key] = ids;
       }
-      if (latest != null) {
-        pageLatestMessageIdPerChat[item.key] = latest.id!;
+      if (latestMessageIdPerChat[item.key] != null) {
+        pageLatestMessageIdPerChat[item.key] = latestMessageIdPerChat[item.key]!;
       }
     }
 
@@ -419,14 +495,14 @@ class IncrementalSyncManager extends SyncManager {
     List<Map<String, dynamic>> whereArgs = [
       {
         'statement': 'message.ROWID > :startRowId',
-        'args': {'startRowId': startRowId}
-      }
+        'args': {'startRowId': startRowId},
+      },
     ];
 
     if (endRowId != null && endRowId > startRowId) {
       whereArgs.add({
         'statement': 'message.ROWID <= :endRowId',
-        'args': {'endRowId': endRowId}
+        'args': {'endRowId': endRowId},
       });
     }
 
@@ -442,7 +518,9 @@ class IncrementalSyncManager extends SyncManager {
       // If we have a start timestamp, use the time that our sync started.
       // Otherwise, use the last timestamp we got from the API
       final toSave = ['lastIncrementalSync'];
-      if (startTimestamp != null) {
+      if (_syncingV2) {
+        SettingsSvc.settings.lastIncrementalSync.value = _v2EndTimestamp!;
+      } else if (startTimestamp != null) {
         SettingsSvc.settings.lastIncrementalSync.value = syncStartedAt;
       } else if (lastSyncedTimestamp != null) {
         SettingsSvc.settings.lastIncrementalSync.value = lastSyncedTimestamp!;
