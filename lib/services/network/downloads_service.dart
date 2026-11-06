@@ -255,9 +255,8 @@ class AttachmentDownloadController extends GetxController {
     AttachmentDownloader._removeFromQueue(this);
   }
 
-  /// Swaps a stored GUID the server no longer knows for the current one, read from the attachment's message.
-  /// Messages renames some attachments (stickers) after the server has announced them, keeping the old GUID as
-  /// `originalGuid`; a client that stored the announced one 404s on it from then on.
+  /// Swaps a stored GUID the server no longer knows for the current one. Messages renames some attachments
+  /// (stickers) after announcing them, keeping the old GUID as `originalGuid`.
   Future<bool> _repairStaleGuid() async {
     final oldGuid = attachment.guid!;
     final messageGuid = attachment.message.target?.guid;
