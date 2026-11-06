@@ -44,6 +44,8 @@ class Message {
   String? groupTitle;
   int? groupActionType;
   String? balloonBundleId;
+  // Looked up for every message's reactions, and for each app session's turns
+  @Index(type: IndexType.value)
   String? associatedMessageGuid;
   int? associatedMessagePart;
   String? associatedMessageType;
