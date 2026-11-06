@@ -14,7 +14,7 @@ typedef ServerV2MigrationProgress = void Function(String step, double progress);
 /// Sync never refetches old messages, so this has to ask the server again.
 class ServerV2Migrations {
   /// Bump when adding a backfill, so clients that finished the earlier ones run again.
-  static const int version = 3;
+  static const int version = 4;
 
   /// Run on startup: once the server is known to be v2, and on each launch until a pass gets through.
   static Future<void> runOnce() async {
@@ -40,7 +40,47 @@ class ServerV2Migrations {
     if (stickers == null) return null;
     final payloads = await _backfillAppPayloads(onProgress);
     if (payloads == null) return null;
-    return emoji + genmoji + stickers + payloads;
+    final turns = await _backfillAppTurns(onProgress);
+    if (turns == null) return null;
+    return emoji + genmoji + stickers + payloads + turns;
+  }
+
+  /// iMessage app turns saved before the client kept a replaced turn's rewrite to type 3 (linked to itself, for a
+  /// session's first message), so earlier turns of a game showed in full. Turns already type 3 are settled.
+  static Future<int?> _backfillAppTurns(ServerV2MigrationProgress? onProgress) async {
+    final query = Database.messages
+        .query(Message_.balloonBundleId
+            .contains("MSMessageExtensionBalloonPlugin")
+            .and(Message_.associatedMessageType.notEquals("3").or(Message_.associatedMessageType.isNull())))
+        .build();
+    final stale = (await runAsync(() => query.find())).where(_isOnServer).toList();
+    query.close();
+
+    int filled = 0;
+    for (final (i, message) in stale.indexed) {
+      onProgress?.call("Updating iMessage app turns", i / stale.length);
+      try {
+        final response = await HttpSvc.message.fetchOne(message.guid!);
+        final data = response.data['data'];
+        if (data is! Map) continue;
+        final type = data['associatedMessageType'] as String?;
+        final guid = data['associatedMessageGuid'] as String?;
+        if (type == message.associatedMessageType && guid == message.associatedMessageGuid) continue;
+
+        // Re-read, so anything saved to it while the request was out isn't overwritten
+        final current = Database.messages.get(message.id!);
+        if (current == null) continue;
+        current.associatedMessageType = type;
+        current.associatedMessageGuid = guid;
+        Database.messages.put(current);
+        filled++;
+      } catch (e, s) {
+        if (e is Response && '${e.data}'.contains('Message does not exist!')) continue;
+        Logger.warn("Failed to backfill the app turn of ${message.guid}", error: e, trace: s, tag: "ServerV2Migrations");
+        return null;
+      }
+    }
+    return filled;
   }
 
   /// App balloons saved before the client kept their session and icon, or before sync asked for `appPayload`, whose

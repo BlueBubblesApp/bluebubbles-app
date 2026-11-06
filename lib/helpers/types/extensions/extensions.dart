@@ -401,6 +401,10 @@ extension MessageNotificationExtension on Message {
     return keepPlaceholders ? text.trim() : withoutInlineAttachments(text);
   }
 
+  /// A game by its title, like "Anagrams", rather than "GamePigeon"; any other app by its name
+  String get _interactivePreviewText =>
+      (OpenPigeon.isGame(this) ? payloadData?.appData?.firstOrNull?.ldText : null) ?? interactiveText;
+
   /// [keepInlineAttachments] keeps a U+FFFC where each Genmoji goes, for a preview that draws them.
   String getNotificationText({
     bool withSender = false,
@@ -421,7 +425,7 @@ extension MessageNotificationExtension on Message {
               : (hideContactInfo ? "Someone: " : "${handleRelation.target?.displayName ?? "Someone"}: ");
 
       if (isInteractive) {
-        return "$sender$interactiveText";
+        return "$sender$_interactivePreviewText";
       }
 
       if (isNullOrEmpty(fullText) && !hasAttachments && !isReaction) {
@@ -478,7 +482,7 @@ extension MessageNotificationExtension on Message {
           // we need to check balloonBundleId first because for some reason
           // game pigeon messages have the text "�"
           if (associatedMessage.isInteractive) {
-            return "$reactionSender $verb $interactiveText";
+            return "$reactionSender $verb ${associatedMessage._interactivePreviewText}";
             // now we check if theres a subject or text and construct out message based off that
           } else if (associatedMessage.expressiveSendStyleId == "com.apple.MobileSMS.expressivesend.invisibleink") {
             return "$reactionSender $verb a message with Invisible Ink";

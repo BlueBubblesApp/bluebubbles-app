@@ -4,6 +4,27 @@ import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 class MessageActions {
+  /// Marks the turns of [turn]'s iMessage app session that it replaced as type 3, linked to the session's first message
+  /// (which links to itself), as Messages does once a newer turn arrives. Messages rewrites those rows in place, so
+  /// sync, which only fetches new rows, would never see it. Runs inside a write transaction.
+  static void retireEarlierTurns(Message turn) {
+    final first = turn.associatedMessageGuid;
+    if (turn.balloonBundleId == null || turn.associatedMessageType != '2' || first == null) return;
+    if (turn.guid == null || turn.dateCreated == null) return;
+    final query = Database.messages
+        .query((Message_.guid.equals(first) | Message_.associatedMessageGuid.equals(first)) &
+            Message_.guid.notEquals(turn.guid!) &
+            Message_.dateCreated.lessThan(turn.dateCreated!.millisecondsSinceEpoch))
+        .build();
+    final earlier = query.find().where((m) => m.associatedMessageType != '3').toList();
+    query.close();
+    for (final message in earlier) {
+      message.associatedMessageType = '3';
+      message.associatedMessageGuid = first;
+    }
+    if (earlier.isNotEmpty) Database.messages.putMany(earlier);
+  }
+
   static Future<List<Message>?> getMessages() async {
     // Fetch a message with a limit of 1 using ObjectBox
     final oneDayAgo = DateTime.now().subtract(const Duration(days: 1));
@@ -65,6 +86,8 @@ class MessageActions {
 
       try {
         messageBox.put(existing, mode: PutMode.update);
+        // Our own turn is saved here, when its temp GUID is swapped for the real one
+        retireEarlierTurns(existing);
       } catch (ex) {
         Logger.warn(
             'Failed to replace message! This is likely due to a unique constraint being violated: ${ex.toString()}');

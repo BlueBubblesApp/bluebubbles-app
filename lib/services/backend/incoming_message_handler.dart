@@ -559,8 +559,11 @@ class IncomingMessageHandler {
 
     if (alreadyPresent != null) {
       // The replacement record already exists (parallel delivery).
-      // Only overwrite if the incoming payload is newer.
-      if (replacement.isNewerThan(alreadyPresent)) {
+      // Only overwrite if the incoming payload is newer, or re-links the message: an iMessage app turn becomes type 3
+      // when a newer turn replaces it, which changes none of the dates isNewerThan compares.
+      if (replacement.isNewerThan(alreadyPresent) ||
+          replacement.associatedMessageType != alreadyPresent.associatedMessageType ||
+          replacement.associatedMessageGuid != alreadyPresent.associatedMessageGuid) {
         await Message.replaceMessage(replacement.guid, replacement);
       }
 

@@ -63,9 +63,10 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            // A game's payload URL means nothing outside GamePigeon, so where OpenPigeon can't open it the tile is inert
             onTap: _opensWithOpenPigeon
                 ? () => openOpenPigeonGame(context, message, controller.cvController!.chat)
-                : (payloadData == null && !message.isLegacyUrlPreview)
+                : (payloadData == null && !message.isLegacyUrlPreview) || OpenPigeon.isGame(message)
                     ? null
                     : () async {
                     String? url;

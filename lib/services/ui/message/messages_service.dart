@@ -760,6 +760,21 @@ class MessagesService extends GetxController {
     await _handleNewMessage(message);
   }
 
+  /// The on-screen half of [MessageActions.retireEarlierTurns]: a turn that arrives while this chat is open, live, by
+  /// sync or as our own send, collapses the earlier turns of its session already showing.
+  void _retireEarlierTurns(Message turn) {
+    final first = turn.associatedMessageGuid;
+    final date = turn.dateCreated;
+    if (turn.balloonBundleId == null || turn.associatedMessageType != '2' || first == null || date == null) return;
+    for (final state in messageStates.values) {
+      final m = state.message;
+      if (m.guid == turn.guid || m.associatedMessageType == '3') continue;
+      if (m.guid != first && m.associatedMessageGuid != first) continue;
+      if (m.dateCreated == null || !m.dateCreated!.isBefore(date)) continue;
+      state.updateAssociatedMessageInfoInternal(associatedMessageGuid: first, associatedMessageType: '3');
+    }
+  }
+
   Future<void> _handleNewMessage(Message message) async {
     // Add to struct first to ensure it's available for lookups
     struct.addMessages([message]);
@@ -778,6 +793,8 @@ class MessagesService extends GetxController {
         Logger.debug("Updated existing MessageState for message ${message.guid}", tag: "MessageState");
       }
     }
+
+    _retireEarlierTurns(message);
 
     // Handle reactions with improved reactivity
     if (message.isReaction) {
@@ -868,6 +885,8 @@ class MessagesService extends GetxController {
     struct.removeMessage(oldGuid ?? updated.guid!);
     struct.removeAttachments(toUpdate.dbAttachments.map((e) => e.guid!));
     struct.addMessages([updated]);
+    // Our own turn arrives here, as the swap from its temp GUID, rather than as a new message
+    _retireEarlierTurns(updated);
 
     // Update MessageState - try oldGuid first, then fallback to updated.guid
     MessageState? messageState;

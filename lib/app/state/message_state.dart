@@ -862,6 +862,12 @@ class MessageState extends StatefulController {
         ));
       }
     }
+    // An app balloon draws everything from its payload, on its first part. The rest (a game's fallback text, say)
+    // render nothing but still get a row each, tall enough for the sender's avatar
+    if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
+      final first = newParts.map((e) => e.part).minOrNull;
+      newParts.removeWhere((e) => e.part != first);
+    }
     newParts.sort((a, b) => a.part.compareTo(b.part));
     // Stamp each freshly-built part with the current redaction state so widgets
     // read MessagePart.displayText / displaySubject without checking settings.

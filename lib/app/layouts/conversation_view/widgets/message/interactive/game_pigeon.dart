@@ -58,24 +58,33 @@ class _GamePigeonState extends State<GamePigeon> with AutomaticKeepAliveClientMi
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Every game card is a 3:2 landscape image, whatever size the game drew
         if (content is PlatformFile && content.bytes != null)
-          Image.memory(
-            content.bytes!,
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.none,
-            errorBuilder: (context, object, stacktrace) => Center(
-              heightFactor: 1,
-              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+          AspectRatio(
+            aspectRatio: 3 / 2,
+            child: Image.memory(
+              content.bytes!,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.none,
+              fit: BoxFit.cover,
+              errorBuilder: (context, object, stacktrace) => Center(
+                heightFactor: 1,
+                child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+              ),
             ),
           ),
         if (content is PlatformFile && content.bytes == null && content.path != null)
-          Image.file(
-            file,
-            gaplessPlayback: true,
-            filterQuality: FilterQuality.none,
-            errorBuilder: (context, object, stacktrace) => Center(
-              heightFactor: 1,
-              child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+          AspectRatio(
+            aspectRatio: 3 / 2,
+            child: Image.file(
+              file,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.none,
+              fit: BoxFit.cover,
+              errorBuilder: (context, object, stacktrace) => Center(
+                heightFactor: 1,
+                child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge),
+              ),
             ),
           ),
         if (data.userInfo?.caption != null)

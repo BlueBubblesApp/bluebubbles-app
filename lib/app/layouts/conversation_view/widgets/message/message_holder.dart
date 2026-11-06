@@ -211,7 +211,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
               Padding(
                 padding: EdgeInsets.only(left: showAvatar || alwaysShowAvatars ? 35.0 * avatarScale + 15 : 15),
                 child: OpenPigeonEarlierTurn(
-                  data: message.payloadData!.appData!.first,
+                  data: message.payloadData?.appData?.firstOrNull,
                   onTap: OpenPigeon.offered ? () => openOpenPigeonGame(context, message, widget.cvController.chat) : null,
                 ),
               ),

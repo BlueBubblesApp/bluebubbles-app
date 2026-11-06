@@ -36,11 +36,6 @@ class OpenPigeon {
   /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
   static final RxSet<int> failedViews = <int>{}.obs;
 
-  /// The newest message seen in each game session, by lowercase session id. Older turns collapse to the app's icon,
-  /// as in Messages.
-  static final RxMap<String, ({String guid, DateTime date})> latestInSession =
-      <String, ({String guid, DateTime date})>{}.obs;
-
   // Mirrors the server's app-message routes: reading a payload needs Pro, and sending one also needs the server's
   // Private API.
   static bool get _onV2 => !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server;
@@ -254,28 +249,10 @@ class OpenPigeon {
     }
   }
 
-  /// Records [message] as a turn of [session] (lowercase), so earlier turns collapse.
-  static void noteTurn(Message message, String? session) {
-    // A turn still sending isn't a turn yet: it's noted once it has its real GUID
-    if (session == null || message.guid!.startsWith('temp')) return;
-    final date = message.dateCreated ?? DateTime.fromMillisecondsSinceEpoch(0);
-    final latest = latestInSession[session];
-    if (latest == null || date.isAfter(latest.date)) latestInSession[session] = (guid: message.guid!, date: date);
-  }
-
   /// A game turn a newer turn of the same session has replaced. Messages hides these when sent and shrinks them to
-  /// the app's icon and the game when received.
-  ///
-  /// Messages links every turn to the session's first message and marks the live one type 2; once a newer turn
-  /// arrives, the earlier ones become type 3. A turn sent without that link, or one whose rewrite to 3 we never
-  /// heard about, falls back to the newest turn seen in its session.
-  static bool isEarlierTurn(Message message) {
-    if (!isGame(message) || message.guid!.startsWith('temp')) return false;
-    if (message.associatedMessageType == '3') return true;
-    final session = message.payloadData?.appData?.firstOrNull?.sessionId?.toLowerCase();
-    final latest = session == null ? null : latestInSession[session];
-    return latest != null && latest.guid != message.guid;
-  }
+  /// the app's icon and the game when received. Messages links every turn to the session's first message as type 2,
+  /// then rewrites the replaced ones to 3 (MessageActions.retireEarlierTurns does the same for turns sync brings in).
+  static bool isEarlierTurn(Message message) => isGame(message) && message.associatedMessageType == '3';
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
   /// server reports `NSUUID`'s uppercase.

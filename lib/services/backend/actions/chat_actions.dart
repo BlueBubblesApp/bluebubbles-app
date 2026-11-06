@@ -1,6 +1,7 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
+import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -353,6 +354,7 @@ class ChatActions {
       try {
         messageId = messageBox.put(inputMessage);
         inputMessage.id = messageId;
+        MessageActions.retireEarlierTurns(inputMessage);
       } on UniqueViolationException catch (_) {
         // If unique violation, try to find the message again
         final retryQuery = messageBox.query(Message_.guid.equals(inputMessage.guid ?? '')).build();
