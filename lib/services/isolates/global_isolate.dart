@@ -719,6 +719,7 @@ enum IsolateRequestType {
   // Prefs actions
   saveReplyToMessageState,
   loadReplyToMessageState,
+  clearAllReplyToMessageStates,
   syncAllSettings,
   syncSettings,
 

@@ -1147,8 +1147,10 @@ class ChatsService {
 
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);
-      await _clearChatPrefs(guid);
     }
+    // By key, so chats that were never loaded (or were deleted before their prefs were cleared) go too
+    await PrefsSvc.messaging.clearAllChats();
+    await PrefsInterface.clearAllReplyToMessageStates();
     HandleSvc.reset();
 
     // Use init() rather than reset() so the empty-database case is handled
