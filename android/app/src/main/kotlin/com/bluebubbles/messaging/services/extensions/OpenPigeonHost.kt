@@ -28,11 +28,13 @@ import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.platform.PlatformViewFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.Executors
 
 /// Host side of the Madrid extension interface, for OpenPigeon (com.openbubbles.openpigeon).
 /// OpenPigeon supplies RemoteViews for the game picker, and opens a game when its bubble is tapped; turns it
@@ -42,10 +44,15 @@ object OpenPigeonHost {
     private const val SERVICE = "$PACKAGE.MadridExtensionService"
     private const val TAG = "OpenPigeonHost"
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    /// One thread, so calls reach OpenPigeon in the order they were made: a picker closed and reopened must not have
+    /// its keyboardClosed land after the new keyboardOpened.
+    private val scope = CoroutineScope(
+        SupervisorJob() + Executors.newSingleThreadExecutor { Thread(it, TAG) }.asCoroutineDispatcher(),
+    )
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var channel: MethodChannel? = null
     private var extension: CompletableDeferred<IMadridExtension>? = null
+    private var connection: ServiceConnection? = null
 
     /// Picker views on screen, which are loaded again if OpenPigeon's process dies, since their sessions die with it.
     /// Main thread only.
@@ -140,7 +147,6 @@ object OpenPigeonHost {
     private fun connect(context: Context): CompletableDeferred<IMadridExtension> = synchronized(this) {
         extension?.let { return it }
         val deferred = CompletableDeferred<IMadridExtension>()
-        extension = deferred
         val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
                 deferred.complete(IMadridExtension.Stub.asInterface(binder))
@@ -151,13 +157,12 @@ object OpenPigeonHost {
             override fun onNullBinding(name: ComponentName?) = drop(reload = false)
 
             private fun drop(reload: Boolean) {
-                reset(deferred)
-                try {
-                    context.unbindService(this)
-                } catch (_: IllegalArgumentException) {}
+                reset(context, deferred)
                 if (reload) main.postDelayed({ views.toList().forEach { it.load() } }, 1_000)
             }
         }
+        extension = deferred
+        this.connection = connection
         // Tapping a game makes OpenPigeon open its own activity, which Android 14+ blocks from a background app unless
         // the visible app that bound it allows it
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -165,21 +170,47 @@ object OpenPigeonHost {
         } else {
             Context.BIND_AUTO_CREATE
         }
-        val bound = context.bindService(Intent().setClassName(PACKAGE, SERVICE), connection, flags)
-        if (!bound) reset(deferred)
+        val bound = try {
+            context.bindService(Intent().setClassName(PACKAGE, SERVICE), connection, flags)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Binding OpenPigeon was refused", e)
+            false
+        }
+        if (!bound) reset(context, deferred)
         deferred
     }
 
-    private fun reset(deferred: CompletableDeferred<IMadridExtension>) {
-        synchronized(this) { if (extension === deferred) extension = null }
+    /// Fails [deferred] and, if it is still the current binding, forgets and unbinds it so the next call binds afresh.
+    /// A binding that never connects is reset the same way, or every later call would wait on it.
+    private fun reset(context: Context, deferred: CompletableDeferred<IMadridExtension>) {
+        val stale = synchronized(this) {
+            if (extension !== deferred) {
+                null
+            } else {
+                extension = null
+                connection.also { connection = null }
+            }
+        }
         deferred.completeExceptionally(IllegalStateException("OpenPigeon disconnected"))
+        if (stale != null) {
+            try {
+                context.unbindService(stale)
+            } catch (_: IllegalArgumentException) {}
+        }
     }
 
     // OpenPigeon is a separate app that can change under us, so anything it does wrong is logged, never thrown
-    private fun withExtension(context: Context, onError: () -> Unit = {}, block: (IMadridExtension) -> Unit) =
+    private fun withExtension(context: Context, onError: () -> Unit = {}, block: suspend (IMadridExtension) -> Unit) =
         scope.launch {
             try {
-                block(withTimeout(10_000) { connect(context).await() })
+                val deferred = connect(context)
+                val ext = try {
+                    withTimeout(10_000) { deferred.await() }
+                } catch (e: TimeoutCancellationException) {
+                    reset(context, deferred)
+                    throw e
+                }
+                block(ext)
             } catch (e: Exception) {
                 Log.e(TAG, "OpenPigeon call failed", e)
                 onError()
