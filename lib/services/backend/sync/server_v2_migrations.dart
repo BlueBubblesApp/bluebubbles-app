@@ -93,7 +93,7 @@ class ServerV2Migrations {
         Database.messages.put(current);
         filled++;
       } catch (e, s) {
-        if (_isUnreachable(e)) {
+        if (_isConnectionFailure(e)) {
           Logger.warn("Stopped backfilling app payloads at ${message.guid}",
               error: e, trace: s, tag: "ServerV2Migrations");
           return null;
@@ -105,23 +105,6 @@ class ServerV2Migrations {
       }
     }
     return filled;
-  }
-
-  /// The server answered that the message doesn't exist.
-  static bool _isNotFound(Object e) =>
-      e is Response && (e.statusCode == 404 || '${e.data}'.contains('Message does not exist!'));
-
-  /// A failure no other message would get past: no connection (no response, or the timeout ApiInterceptor turns
-  /// into one), the wrong password, or no server URL at all.
-  static bool _isUnreachable(Object e) {
-    final status = e is Response ? e.statusCode : (e is DioException ? e.response?.statusCode : null);
-    if (status == 401) return true;
-    if (e is DioException) return e.response == null;
-    if (e is Response) {
-      final data = e.data;
-      return data is Map && data['error'] is Map && data['error']['type'] == 'timeout';
-    }
-    return e is String;
   }
 
   /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.

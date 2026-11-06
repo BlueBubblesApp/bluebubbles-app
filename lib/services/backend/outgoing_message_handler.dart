@@ -989,7 +989,10 @@ class OutgoingMessageHandler {
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => app?.url == null || m.balloonBundleId == null
+      // A queued turn or retry may outlive the connection to the v2 server it was created on.
+      httpCall: () => !SettingsSvc.serverDetails.isV2Server
+          ? Future.error(Exception('Sending iMessage app messages needs a v2 server'))
+          : app?.url == null || m.balloonBundleId == null
           ? Future.error(Exception('Message $tempGuid has no app payload to send'))
           : SendMessageInterface.sendAppMessage(
               chatGuid: c.guid,

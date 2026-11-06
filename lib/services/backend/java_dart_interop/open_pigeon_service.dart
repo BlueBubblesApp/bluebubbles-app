@@ -172,6 +172,8 @@ class OpenPigeon {
   /// The Madrid message fields for [message]: from its own payload when that carries the session, otherwise from
   /// the server's decoded copy.
   static Future<Map<String, dynamic>?> payloadFor(Message message) {
+    // A game opened on v2 may still send callbacks after the user switches servers.
+    if (!_onV2) return Future.value(null);
     final guid = message.guid!;
     final app = message.payloadData?.appData?.firstOrNull;
     if (app?.url != null && app?.sessionId != null) {
@@ -209,6 +211,7 @@ class OpenPigeon {
       return true;
     }
     if (call.method != 'send') return false;
+    if (!_onV2) return false;
     // OpenPigeon's messages are only checked for what sending needs; its payload is passed through untouched
     if (args['chatGuid'] is! String || args['url'] is! String || (args['url'] as String).isEmpty) {
       Logger.warn('Ignoring an OpenPigeon message without a payload', tag: 'OpenPigeon');
@@ -248,6 +251,10 @@ class OpenPigeon {
   /// [chat], drawn at once like any other send. False, after telling the user, when its picture is one the server
   /// would refuse, so it isn't queued only to fail on every retry.
   static Future<bool> sendGame(Chat chat, Map<String, dynamic> game) async {
+    if (!_onV2) {
+      showSnackbar("Error", "Sending games needs a v2 server", type: SnackbarType.error);
+      return false;
+    }
     var image = gameImage(game);
     if (image != null && image.length > _maxImageBytes) image = await _shrink(image);
     final type = image == null ? null : _imageType(image);
