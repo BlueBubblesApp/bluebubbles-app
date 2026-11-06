@@ -534,7 +534,9 @@ class Chat {
       // fetch attachments and reactions if requested
       if (getDetails) {
         final messageGuids = messages.map((e) => e.guid!).toList();
-        final associatedMessagesQuery = (Database.messages.query(Message_.associatedMessageGuid.oneOf(messageGuids))
+        // Reactions only: an iMessage app turn points at its session's first message too
+        final associatedMessagesQuery = (Database.messages
+                .query(Message_.associatedMessageGuid.oneOf(messageGuids) & Message.reactionCondition)
               ..order(Message_.originalROWID))
             .build();
         List<Message> associatedMessages = associatedMessagesQuery.find();

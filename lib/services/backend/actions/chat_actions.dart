@@ -441,9 +441,12 @@ class ChatActions {
     return Database.runInTransaction(TxMode.read, () {
       final messageBox = Database.messages;
 
-      // Query reactions and return just their IDs
-      final reactionsQuery =
-          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+      // Query reactions and return just their IDs. An iMessage app turn points at its session's first message too,
+      // and isn't one
+      final reactionsQuery = (messageBox
+              .query(Message_.associatedMessageGuid.oneOf(messageGuids) & Message.reactionCondition)
+            ..order(Message_.originalROWID))
+          .build();
       final reactions = reactionsQuery.find();
       reactionsQuery.close();
 
