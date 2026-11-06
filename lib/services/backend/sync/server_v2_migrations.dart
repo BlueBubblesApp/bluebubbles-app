@@ -64,11 +64,15 @@ class ServerV2Migrations {
       final emoji = (response.data['data'] as Map?)?['associatedMessageEmoji'] as String?;
       if (emoji == null) continue;
 
-      // Re-read, so anything saved to it while the request was out isn't overwritten
-      final updated = Database.messages.get(reaction.id!);
+      // Re-read inside the write, so anything saved to it while the request was out isn't overwritten
+      final updated = Database.runInTransaction(TxMode.write, () {
+        final current = Database.messages.get(reaction.id!);
+        if (current == null) return null;
+        current.associatedMessageEmoji = emoji;
+        Database.messages.put(current);
+        return current;
+      });
       if (updated == null) continue;
-      updated.associatedMessageEmoji = emoji;
-      Database.messages.put(updated);
       filled++;
 
       final chatGuid = updated.chat.target?.guid;
