@@ -620,8 +620,7 @@ class IncomingMessageHandler {
       if (existingGuid.startsWith('temp-') && existing.dbAttachments.length <= 1) {
         attachmentExistingGuid = existingGuid;
       } else if (existingGuid.startsWith('temp-')) {
-        // A multi-attachment send: each temp attachment has its own GUID, found by message part. The server doesn't
-        // promise the attachments' order, so name, then position, are fallbacks.
+        // Multi-attachment send: match each temp attachment by message part, then name, then position
         final partGuid = OutgoingMultiAttachment.sentTempGuid(existingGuid, replacement, newAttachment);
         final match = unmatched.firstWhereOrNull((a) => partGuid != null && a.guid == partGuid) ??
             unmatched.firstWhereOrNull((a) => a.transferName == newAttachment.transferName) ??

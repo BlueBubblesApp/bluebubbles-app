@@ -204,8 +204,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       }
     }
 
-    // Several files go as one message, as Messages sends them, when the server can take attachment parts (uploads
-    // need the Private API). Voice notes and app balloons keep their own messages.
+    // Several files go as one message, as in Messages, when the server takes attachment parts (needs the Private API)
     final sendTogether = attachments.length > 1 &&
         !data.isAudioMessage &&
         attachments.every((f) => f.balloonBundleId == null) &&

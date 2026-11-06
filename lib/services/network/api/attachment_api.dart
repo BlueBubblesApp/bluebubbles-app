@@ -114,8 +114,7 @@ class AttachmentApi {
     });
   }
 
-  /// Stages [filePath] on the server for a later `message/multipart` send. The response's `data.path` is what a
-  /// multipart part's `attachment` names.
+  /// Stages [filePath] for `message/multipart`, whose parts name it by the response's `data.path`.
   Future<Response> upload(
     String filePath,
     String fileName, {

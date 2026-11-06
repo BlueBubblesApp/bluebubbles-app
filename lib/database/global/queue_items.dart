@@ -118,8 +118,7 @@ class OutgoingMultiAttachment extends OutgoingQueueItem {
 
   static String tempGuidFor(String messageGuid, int index) => '$messageGuid-$index';
 
-  /// The temp GUID [sent] had before the server confirmed [message]. The message holds only the attachments, one
-  /// per part in the order sent, and its attributed body names the attachment in each part. Null when it doesn't.
+  /// [sent]'s temp GUID before the server confirmed [message], by the attachment each part names. Null if none.
   static String? sentTempGuid(String messageGuid, Message message, Attachment sent) {
     for (final run in message.attributedBody.expand((body) => body.runs)) {
       final part = run.attributes?.messagePart;

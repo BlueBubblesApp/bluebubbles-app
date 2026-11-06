@@ -82,8 +82,7 @@ class SendMessageActions {
     return response.data as Map<String, dynamic>;
   }
 
-  /// Sends several attachments as one message: uploads each file, then sends one multipart message naming them
-  /// in order. Upload progress is reported per attachment.
+  /// Uploads each file, then sends one multipart message naming them in order.
   static Future<Map<String, dynamic>> sendMultiAttachmentMessage(dynamic data) async {
     final map = data as Map<String, dynamic>;
     final chatGuid = map['chatGuid'] as String;

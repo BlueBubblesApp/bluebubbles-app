@@ -90,8 +90,7 @@ class SendMessageInterface {
         .send<Map<String, dynamic>>(IsolateRequestType.sendMultipartMessage, input: data);
   }
 
-  /// Sends several attachments as one message and returns the decoded server response body. Each of [files] is
-  /// `{guid, path, name}`, in the order they should appear.
+  /// Sends [files] (`{guid, path, name}`, in order) as one message and returns the server's response body.
   static Future<Map<String, dynamic>> sendMultiAttachmentMessage({
     required String chatGuid,
     required String tempGuid,
