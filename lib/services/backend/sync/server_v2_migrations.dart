@@ -14,20 +14,28 @@ class ServerV2Migrations {
     if (await run() != null) await PrefsSvc.database.setServerV2MigrationsDone();
   }
 
-  /// Returns how many messages were updated, or null if a request failed or the server isn't v2.
-  static Future<int?> run() async {
+  static Future<int?>? _running;
+
+  /// Returns how many messages were updated, or null if a request failed or the server isn't v2. Joins a pass that's
+  /// already running rather than starting a second.
+  static Future<int?> run() => _running ??= _run().whenComplete(() => _running = null);
+
+  static Future<int?> _run() async {
     if (!SettingsSvc.serverDetails.isV2Server) return null;
     return _backfillTapbackEmoji();
   }
 
+  /// Whether [message] is on the server, rather than a local one still sending or that failed to.
+  static bool _isOnServer(Message message) => !message.guid!.startsWith("temp") && !message.guid!.startsWith("error");
+
   static Future<int?> _backfillTapbackEmoji() async {
     final query = Database.messages
         .query(Message_.associatedMessageType
-            .equals(ReactionTypes.EMOJI)
+            .oneOf([ReactionTypes.EMOJI, ReactionTypes.REMOVED_EMOJI])
             .and(Message_.associatedMessageEmoji.isNull())
             .and(Message_.guid.notNull()))
         .build();
-    final missing = await runAsync(() => query.find());
+    final missing = (await runAsync(() => query.find())).where(_isOnServer).toList();
     query.close();
 
     int filled = 0;
@@ -38,14 +46,17 @@ class ServerV2Migrations {
         final emoji = (response.data['data'] as Map?)?['associatedMessageEmoji'] as String?;
         if (emoji == null) continue;
 
-        reaction.associatedMessageEmoji = emoji;
-        Database.messages.put(reaction);
+        // Re-read, so anything saved to it while the request was out isn't overwritten
+        final current = Database.messages.get(reaction.id!);
+        if (current == null) continue;
+        current.associatedMessageEmoji = emoji;
+        Database.messages.put(current);
         filled++;
-        final chatGuid = reaction.chat.target?.guid;
-        if (chatGuid != null && reaction.associatedMessageGuid != null) {
+        final chatGuid = current.chat.target?.guid;
+        if (chatGuid != null && current.associatedMessageGuid != null) {
           maybeFindMessagesSvc(chatGuid)
-              ?.getMessageStateIfExists(reaction.associatedMessageGuid!)
-              ?.addAssociatedMessageInternal(reaction);
+              ?.getMessageStateIfExists(current.associatedMessageGuid!)
+              ?.addAssociatedMessageInternal(current);
         }
       } catch (e, s) {
         // Tunnels and proxies can also return a 404, so only the server's own error means the message is gone.

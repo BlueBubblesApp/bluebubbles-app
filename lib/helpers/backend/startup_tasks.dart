@@ -312,10 +312,11 @@ class StartupTasks {
             Logger.warn("Failed to repair chatless messages!", error: e, trace: s);
           });
         }
+        await SyncSvc.startIncrementalSync();
+        // After sync, which would otherwise wait out a request per backfilled message
         await ServerV2Migrations.runOnce().catchError((e, s) {
           Logger.warn("Failed to run v2 server migrations!", error: e, trace: s);
         });
-        await SyncSvc.startIncrementalSync();
       }));
     }
   }
