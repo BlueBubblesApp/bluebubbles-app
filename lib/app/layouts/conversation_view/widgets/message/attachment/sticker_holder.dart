@@ -43,6 +43,7 @@ class StickerHolder extends StatefulWidget {
     this.placed = false,
     this.hidden = false,
     this.isFromMe = false,
+    this.tailGutter = true,
   });
   final Iterable<Message> stickerMessages;
   final ConversationViewController controller;
@@ -56,22 +57,27 @@ class StickerHolder extends StatefulWidget {
   /// Shrink the stickers out of view, e.g. while the message's details menu is open
   final bool hidden;
 
+  /// Whether the parent bubble keeps a gutter for its tail. Media collections aren't clipped by [TailClipper], so
+  /// they don't.
+  final bool tailGutter;
+
   /// Where a sticker placed at [p] has its center, relative to a [bubble] of that size
-  static Offset placedCenter(StickerPlacement p, Size bubble, bool isFromMe) {
+  static Offset placedCenter(StickerPlacement p, Size bubble, bool isFromMe, bool tailGutter) {
     // The bubble's body: not the gutter its tail draws in (see TailClipper), and inset a little on the other side
-    final left = isFromMe ? _bodyInset : _tailGutter;
-    return Offset(left + p.xScalar * (bubble.width - _tailGutter - _bodyInset), p.yScalar * bubble.height);
+    final gutter = tailGutter ? _tailGutter : 0.0;
+    final left = isFromMe ? _bodyInset : gutter;
+    return Offset(left + p.xScalar * (bubble.width - gutter - _bodyInset), p.yScalar * bubble.height);
   }
 
   /// Where a placed sticker draws (its rotated bounding box) relative to a [bubble] of that size
-  static Rect placedRect(PlacedSticker sticker, Size bubble, bool isFromMe) {
+  static Rect placedRect(PlacedSticker sticker, Size bubble, bool isFromMe, bool tailGutter) {
     final p = sticker.placement;
     final scale = p.scale / _stickerPixelRatio;
     final w = sticker.pixels.width * scale;
     final h = sticker.pixels.height * scale;
     final cosA = cos(p.rotation).abs(), sinA = sin(p.rotation).abs();
     return Rect.fromCenter(
-      center: placedCenter(p, bubble, isFromMe),
+      center: placedCenter(p, bubble, isFromMe, tailGutter),
       width: w * cosA + h * sinA,
       height: w * sinA + h * cosA,
     );
@@ -79,10 +85,11 @@ class StickerHolder extends StatefulWidget {
 
   /// Room [StickerSpace] adds around a [bubble] so it covers all of its placed [stickers]. On the column-edge side
   /// this moves the bubble inward (as Messages does), as far as the column allows.
-  static EdgeInsets space(Iterable<PlacedSticker> stickers, Size bubble, bool isFromMe, double columnWidth) {
+  static EdgeInsets space(
+      Iterable<PlacedSticker> stickers, Size bubble, bool isFromMe, bool tailGutter, double columnWidth) {
     double left = 0, top = 0, right = 0, bottom = 0;
     for (final sticker in stickers) {
-      final rect = placedRect(sticker, bubble, isFromMe);
+      final rect = placedRect(sticker, bubble, isFromMe, tailGutter);
       left = max(left, -rect.left);
       top = max(top, -rect.top);
       right = max(right, rect.right - bubble.width);
@@ -105,7 +112,8 @@ class StickerHolder extends StatefulWidget {
   /// Pixels per point of a sticker image at scale 1, as Messages draws it on an iPhone
   static const double _stickerPixelRatio = 3;
 
-  /// Width [TailClipper] keeps for the tail on that side of every bubble
+  /// Kept clear on the tail side of a bubble: [TailClipper] draws its tail in the outer 10, and 2 more matched by eye
+  /// against an iPhone's placement of the same stickers
   static const double _tailGutter = 12;
 
   /// Matched by eye against an iPhone's placement of the same stickers
@@ -265,7 +273,7 @@ class _StickerHolderState extends State<StickerHolder> {
   }
 
   Widget _placed(Attachment attachment, StickerPlacement p, Size bubble) {
-    final center = StickerHolder.placedCenter(p, bubble, widget.isFromMe);
+    final center = StickerHolder.placedCenter(p, bubble, widget.isFromMe, widget.tailGutter);
     return Positioned(
       key: ValueKey(attachment.guid),
       left: center.dx,

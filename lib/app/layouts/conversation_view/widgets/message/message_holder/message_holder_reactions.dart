@@ -81,6 +81,7 @@ class StickerObserver extends StatelessWidget {
         placed: placed,
         hidden: state.showingPopup.value,
         isFromMe: state.message.isFromMe ?? false,
+        tailGutter: !part.isMediaCollection,
       );
       return placed ? Positioned.fill(child: holder) : holder;
     });
@@ -140,6 +141,7 @@ class StickerSpace extends StatelessWidget {
               .nonNulls
               .toList(),
           isFromMe: state.message.isFromMe ?? false,
+          tailGutter: !part.isMediaCollection,
           columnWidth: columnWidth,
           child: child,
         ));
@@ -150,27 +152,31 @@ class _StickerOverhang extends SingleChildRenderObjectWidget {
   const _StickerOverhang({
     required this.stickers,
     required this.isFromMe,
+    required this.tailGutter,
     required this.columnWidth,
     required Widget super.child,
   });
 
   final List<PlacedSticker> stickers;
   final bool isFromMe;
+  final bool tailGutter;
   final double columnWidth;
 
   @override
-  RenderObject createRenderObject(BuildContext context) => _RenderStickerOverhang(stickers, isFromMe, columnWidth);
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderStickerOverhang(stickers, isFromMe, tailGutter, columnWidth);
 
   @override
   void updateRenderObject(BuildContext context, _RenderStickerOverhang renderObject) => renderObject
     ..stickers = stickers
     ..isFromMe = isFromMe
+    ..tailGutter = tailGutter
     ..columnWidth = columnWidth;
 }
 
 // The overhang depends on the bubble's laid-out size, which no Padding can know ahead of time
 class _RenderStickerOverhang extends RenderShiftedBox {
-  _RenderStickerOverhang(this._stickers, this._isFromMe, this._columnWidth) : super(null);
+  _RenderStickerOverhang(this._stickers, this._isFromMe, this._tailGutter, this._columnWidth) : super(null);
 
   List<PlacedSticker> _stickers;
   set stickers(List<PlacedSticker> value) {
@@ -186,6 +192,13 @@ class _RenderStickerOverhang extends RenderShiftedBox {
     markNeedsLayout();
   }
 
+  bool _tailGutter;
+  set tailGutter(bool value) {
+    if (_tailGutter == value) return;
+    _tailGutter = value;
+    markNeedsLayout();
+  }
+
   double _columnWidth;
   set columnWidth(double value) {
     if (_columnWidth == value) return;
@@ -197,7 +210,7 @@ class _RenderStickerOverhang extends RenderShiftedBox {
   void performLayout() {
     final child = this.child!;
     child.layout(constraints, parentUsesSize: true);
-    final space = StickerHolder.space(_stickers, child.size, _isFromMe, _columnWidth);
+    final space = StickerHolder.space(_stickers, child.size, _isFromMe, _tailGutter, _columnWidth);
     (child.parentData as BoxParentData).offset = space.topLeft;
     size = constraints.constrain(space.inflateSize(child.size));
   }
