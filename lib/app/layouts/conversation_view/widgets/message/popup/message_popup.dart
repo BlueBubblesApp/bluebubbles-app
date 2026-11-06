@@ -93,8 +93,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   String? currentlySelectedReaction = "init";
   final GlobalKey _childKey = GlobalKey();
   final GlobalKey _detailsKey = GlobalKey();
+  final GlobalKey _menuKey = GlobalKey();
   double? _measuredChildHeight;
   double? _measuredChildWidth;
+  double? _measuredMenuHeight;
 
   ConversationViewController get cvController => widget.cvController;
 
@@ -170,15 +172,17 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
             _measuredChildHeight = measuredSize.height;
             _measuredChildWidth = measuredSize.width;
           }
+          _measuredMenuHeight = _menuKey.currentContext?.size?.height;
           _fitMenu();
           messageOffset = _messageOffset();
         }
       });
-      // The reaction details only lay out once the reactions above are set, so fit again with their height
-      if (iOS && reactions.isNotEmpty) {
+      // The reaction details and refitted menu only lay out after the setState above, so fit again with their heights
+      if (iOS) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           setState(() {
+            _measuredMenuHeight = _menuKey.currentContext?.size?.height;
             _fitMenu();
             messageOffset = _messageOffset();
           });
@@ -200,8 +204,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   double _messageOffset() {
     final previewHeight = _measuredChildHeight ?? widget.size.height;
     final maxBottom = Get.height - Get.statusBarHeight - 8 - previewHeight;
-    return min(itemHeight * numberToShow + 40, max(40.0, maxBottom));
+    return min(_menuHeight + 40, max(40.0, maxBottom));
   }
+
+  /// The details menu as laid out: its rows aren't always [itemHeight] tall
+  double get _menuHeight => _measuredMenuHeight ?? itemHeight * numberToShow;
 
   void _remeasureChild() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -219,7 +226,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   /// Where the tapback picker's box sits, from the bottom of the screen.
   double _pickerBottom(BuildContext context, bool narrowScreen) => (iOS
-          ? itemHeight * numberToShow + 35 + (_measuredChildHeight ?? widget.size.height)
+          ? _menuHeight + 35 + (_measuredChildHeight ?? widget.size.height)
           : context.height - materialOffset)
       .clamp(0, context.height - (narrowScreen ? 200 : 125));
 
@@ -661,7 +668,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 5),
-                              buildDetailsMenu(context),
+                              KeyedSubtree(key: _menuKey, child: buildDetailsMenu(context)),
                             ],
                           ),
                         ),
