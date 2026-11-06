@@ -270,6 +270,9 @@ class MessageApi {
   }
 
   /// Send an iMessage app balloon with the app's own payload [url], passed through untouched. v2 servers only.
+  /// [image] is the balloon's picture (e.g. the game board) as base64 JPEG, PNG or HEIC, at most 4 MB. [tempGuid]
+  /// lets the server drop a retried duplicate. [liveLayout] marks the balloon live, so a recipient with the app draws
+  /// it rather than the template.
   Future<Response> sendAppMessage(
     String chatGuid, {
     required String balloonBundleId,
@@ -279,6 +282,9 @@ class MessageApi {
     int? appId,
     String? summary,
     String? caption,
+    String? image,
+    String? tempGuid,
+    bool liveLayout = false,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -294,6 +300,9 @@ class MessageApi {
           "appId": appId,
           "summary": summary,
           "caption": caption,
+          "image": image,
+          "tempGuid": tempGuid,
+          "liveLayout": liveLayout,
         },
         cancelToken: cancelToken,
       );

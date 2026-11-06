@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -29,10 +32,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import java.io.ByteArrayOutputStream
 
 /// Host side of the Madrid extension interface, for OpenPigeon (com.openbubbles.openpigeon).
-/// OpenPigeon supplies RemoteViews for the game picker and game bubbles; turns it produces
-/// are handed to Dart, which sends them through the server's app-message route.
+/// OpenPigeon supplies RemoteViews for the game picker, and opens a game when its bubble is tapped; turns it
+/// produces are handed to Dart, which sends them through the server's app-message route.
 object OpenPigeonHost {
     const val PACKAGE = "com.openbubbles.openpigeon"
     private const val SERVICE = "$PACKAGE.MadridExtensionService"
@@ -43,8 +47,8 @@ object OpenPigeonHost {
     @Volatile private var channel: MethodChannel? = null
     private var extension: CompletableDeferred<IMadridExtension>? = null
 
-    /// Views on screen, which are loaded again if OpenPigeon's process dies: its sessions die with it, and a view's
-    /// tap would open a game it no longer knows. Main thread only.
+    /// Picker views on screen, which are loaded again if OpenPigeon's process dies, since their sessions die with it.
+    /// Main thread only.
     private val views = mutableSetOf<ExtensionView>()
 
     fun register(engine: FlutterEngine, context: Context) {
@@ -66,13 +70,51 @@ object OpenPigeonHost {
                         withExtension(app) { it.didTapTemplate(message, handle, userCount) }
                         result.success(null)
                     }
+                    // A still of a game's live view, for turns that carry no image of their own. Width and maxHeight
+                    // are logical pixels; the reply is PNG bytes, or null.
+                    "snapshot" -> {
+                        val args = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
+                        val message = madridMessage(args)
+                        val handle = messageHandle(args["chatGuid"] as? String ?: "")
+                        val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
+                        val density = app.resources.displayMetrics.density
+                        val width = ((args["width"] as? Number)?.toDouble() ?: 0.0).times(density).toInt()
+                        val maxHeight = ((args["maxHeight"] as? Number)?.toDouble() ?: 0.0).times(density).toInt()
+                        withExtension(app, { main.post { result.success(null) } }) {
+                            val views = it.getLiveView(ignoredViewUpdates, message, handle, userCount)
+                            main.post { result.success(views?.let { v -> render(app, v, width, maxHeight) }) }
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
         }
-        val registry = engine.platformViewsController.registry
-        registry.registerViewFactory("openpigeon/live", ViewFactory(keyboard = false))
-        registry.registerViewFactory("openpigeon/keyboard", ViewFactory(keyboard = true))
+        engine.platformViewsController.registry.registerViewFactory("openpigeon/keyboard", ViewFactory())
+    }
+
+    /// A snapshot is taken once, so later updates to its view are dropped.
+    private val ignoredViewUpdates = object : IViewUpdateCallback.Stub() {
+        override fun updateView(views: RemoteViews?) {}
+    }
+
+    /// Lays [views] out off screen [width] pixels wide and draws them into a PNG. The height is the layout's own, up to
+    /// [maxHeight], so the bubble keeps the shape OpenPigeon draws.
+    private fun render(context: Context, views: RemoteViews, width: Int, maxHeight: Int): ByteArray? {
+        if (width <= 0 || maxHeight <= 0) return null
+        return try {
+            val view = views.apply(context, FrameLayout(context))
+            view.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(maxHeight, View.MeasureSpec.AT_MOST),
+            )
+            view.layout(0, 0, view.measuredWidth, view.measuredHeight)
+            val bitmap = Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888)
+            view.draw(Canvas(bitmap))
+            ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        } catch (e: Exception) {
+            Log.e(TAG, "Rendering an OpenPigeon view failed", e)
+            null
+        }
     }
 
     private fun isInstalled(context: Context): Boolean = try {
@@ -105,7 +147,14 @@ object OpenPigeonHost {
                 if (reload) main.postDelayed({ views.toList().forEach { it.load() } }, 1_000)
             }
         }
-        val bound = context.bindService(Intent().setClassName(PACKAGE, SERVICE), connection, Context.BIND_AUTO_CREATE)
+        // Tapping a game makes OpenPigeon open its own activity, which Android 14+ blocks from a background app unless
+        // the visible app that bound it allows it
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Context.BIND_AUTO_CREATE or Context.BIND_ALLOW_ACTIVITY_STARTS
+        } else {
+            Context.BIND_AUTO_CREATE
+        }
+        val bound = context.bindService(Intent().setClassName(PACKAGE, SERVICE), connection, flags)
         if (!bound) reset(deferred)
         deferred
     }
@@ -181,14 +230,13 @@ object OpenPigeonHost {
         isLive = true
     }
 
-    private class ViewFactory(private val keyboard: Boolean) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
+    private class ViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
         override fun create(context: Context, viewId: Int, args: Any?): PlatformView =
-            ExtensionView(context, keyboard, viewId, args as? Map<*, *> ?: emptyMap<Any, Any>())
+            ExtensionView(context, viewId, args as? Map<*, *> ?: emptyMap<Any, Any>())
     }
 
     private class ExtensionView(
         private val context: Context,
-        private val keyboard: Boolean,
         private val viewId: Int,
         args: Map<*, *>,
     ) : PlatformView {
@@ -206,10 +254,7 @@ object OpenPigeonHost {
                 if (message != null) send(chatGuid, message, fromKeyboard = true)
             }
         }
-        private val messageHandle = messageHandle(chatGuid)
-
         private val userCount = (args["userCount"] as? Number)?.toInt() ?: 2
-        private val message = if (keyboard) null else madridMessage(args)
 
         init {
             views.add(this)
@@ -222,10 +267,7 @@ object OpenPigeonHost {
         fun load() {
             if (disposed || failed) return
             withExtension(context.applicationContext, ::fail) {
-                show(
-                    if (keyboard) it.keyboardOpened(viewCallback, keyboardHandle, userCount)
-                    else it.getLiveView(viewCallback, message, messageHandle, userCount)
-                )
+                show(it.keyboardOpened(viewCallback, keyboardHandle, userCount))
             }
         }
 
@@ -257,7 +299,7 @@ object OpenPigeonHost {
         override fun dispose() {
             disposed = true
             views.remove(this)
-            if (keyboard) withExtension(context.applicationContext) { it.keyboardClosed() }
+            withExtension(context.applicationContext) { it.keyboardClosed() }
         }
     }
 }

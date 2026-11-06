@@ -10,49 +10,61 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// A game bubble drawn by OpenPigeon, falling back to [fallback] until (or unless) the server's payload loads.
-class OpenPigeonLiveView extends StatefulWidget {
-  const OpenPigeonLiveView({super.key, required this.message, required this.chat, required this.fallback});
+/// A game bubble: [card], drawn from the image the sender attached, or the compact form once a later turn of the same
+/// game has arrived, as Messages shows earlier turns. GamePigeon only attaches an image to a game's opening message,
+/// so the latest turn without one shows OpenPigeon's drawing of the game where it can, and is compact otherwise.
+class OpenPigeonGameBubble extends StatefulWidget {
+  const OpenPigeonGameBubble({super.key, required this.message, required this.data, required this.card});
 
   final Message message;
-  final Chat chat;
-  final Widget fallback;
+  final iMessageAppData data;
+  final Widget card;
 
   @override
-  State<OpenPigeonLiveView> createState() => _OpenPigeonLiveViewState();
+  State<OpenPigeonGameBubble> createState() => _OpenPigeonGameBubbleState();
 }
 
-class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
-  late final Future<Map<String, dynamic>?> _payload = OpenPigeon.payloadFor(widget.message);
+class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
+  // Lowercase to match OpenPigeon's session ids; see OpenPigeon._madrid
+  late final String? _session = widget.data.sessionId?.toLowerCase();
+  Future<Uint8List?>? _snapshot;
+
+  @override
+  void initState() {
+    super.initState();
+    // After the frame: every bubble of the session observes this map
+    WidgetsBinding.instance.addPostFrameCallback((_) => OpenPigeon.noteTurn(widget.message, _session));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _payload,
+    final compact = OpenPigeonCollapsedGame(
+      icon: decodeBase64(widget.data.appIcon),
+      title: widget.data.ldText,
+      caption: widget.data.userInfo?.caption,
+    );
+    final hasImage = widget.message.dbAttachments.isNotEmpty;
+    if (_session == null) return hasImage ? widget.card : compact;
+    return Obx(() {
+      final latest = OpenPigeon.latestInSession[_session];
+      if (latest != null && latest.guid != widget.message.guid) return compact;
+      if (hasImage) return widget.card;
+      final chat = widget.message.chat.target;
+      if (!OpenPigeon.canDraw || chat == null) return compact;
+      return _drawnCard(context, chat, compact);
+    });
+  }
+
+  Widget _drawnCard(BuildContext context, Chat chat, Widget compact) {
+    // A bubble's width; OpenPigeon's layout decides the height
+    final width = (MediaQuery.sizeOf(context).width * 0.6).roundToDouble() - 10;
+    _snapshot ??= OpenPigeon.snapshot(widget.message, chat, width, width * 1.5);
+    // A live view is the whole bubble, caption included
+    return FutureBuilder<Uint8List?>(
+      future: _snapshot,
       builder: (context, snapshot) {
-        final payload = snapshot.data;
-        if (payload == null) return widget.fallback;
-        // The size OpenPigeon composes its live views at
-        final width = (MediaQuery.sizeOf(context).width * 0.6).roundToDouble() - 10;
-        final session = payload['session'] as String? ?? '';
-        return Obx(() {
-          final latest = OpenPigeon.latestInSession[session];
-          if (latest != null && latest.guid != widget.message.guid) {
-            return OpenPigeonCollapsedGame(
-              icon: _decode(widget.message.payloadData?.appData?.firstOrNull?.appIcon),
-              title: payload['ldText'] as String?,
-              caption: payload['caption'] as String?,
-              onTap: () => openOpenPigeonGame(context, widget.message, widget.chat),
-            );
-          }
-          return _OpenPigeonView(
-            viewType: 'openpigeon/live',
-            creationParams: {...payload, 'chatGuid': widget.chat.guid, 'userCount': OpenPigeon.userCount(widget.chat)},
-            gestureRecognizers: {Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
-            fallback: widget.fallback,
-            child: (view) => SizedBox(width: width, height: 250, child: view),
-          );
-        });
+        final png = snapshot.data;
+        return png == null ? compact : Image.memory(png, width: width, gaplessPlayback: true);
       },
     );
   }
@@ -61,12 +73,11 @@ class _OpenPigeonLiveViewState extends State<OpenPigeonLiveView> {
 /// A game message in compact form, as Messages shows earlier turns: the app's icon, the game and its caption.
 /// Also stands in for a game whose payload hasn't arrived yet.
 class OpenPigeonCollapsedGame extends StatelessWidget {
-  const OpenPigeonCollapsedGame({super.key, this.icon, this.title, this.caption, this.onTap});
+  const OpenPigeonCollapsedGame({super.key, this.icon, this.title, this.caption});
 
   final Uint8List? icon;
   final String? title;
   final String? caption;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -75,46 +86,93 @@ class OpenPigeonCollapsedGame extends StatelessWidget {
       size: 28,
       color: context.theme.colorScheme.onSurfaceVariant,
     );
-    return InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // iMessage app icons are 4:3 JPEGs of a pill (radius half the height) on white, the shape Messages draws.
+          // Scaled up slightly so the edge where the JPEG fades into white falls outside the clip
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: icon == null
+                ? SizedBox(width: 40, height: 30, child: fallbackIcon)
+                : Transform.scale(
+                    scale: 1.08,
+                    child: Image.memory(
+                      icon!,
+                      width: 40,
+                      height: 30,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => SizedBox(width: 40, height: 30, child: fallbackIcon),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title ?? "GamePigeon",
+                  style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (caption != null)
+                  Text(
+                    caption!,
+                    style: context.theme.textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// An earlier turn the other player sent, as Messages shows it: the app's icon and the game on one quiet line.
+class OpenPigeonEarlierTurn extends StatelessWidget {
+  const OpenPigeonEarlierTurn({super.key, required this.data, this.onTap});
+
+  final iMessageAppData data;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = decodeBase64(data.appIcon);
+    const fallback = SizedBox(width: 24, height: 18);
+    return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(9),
               child: icon == null
-                  ? SizedBox(width: 32, height: 32, child: fallbackIcon)
-                  : Image.memory(
-                      icon!,
-                      width: 32,
-                      height: 32,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => SizedBox(width: 32, height: 32, child: fallbackIcon),
+                  ? fallback
+                  : Transform.scale(
+                      scale: 1.08,
+                      child: Image.memory(
+                        icon,
+                        width: 24,
+                        height: 18,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => fallback,
+                      ),
                     ),
             ),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title ?? "GamePigeon",
-                    style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (caption != null)
-                    Text(
-                      caption!,
-                      style: context.theme.textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
+            const SizedBox(width: 6),
+            Text(
+              data.ldText ?? "GamePigeon",
+              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -186,6 +244,8 @@ Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewControll
     controller.showAttachmentPicker.value = false;
     Navigator.of(context).maybePop();
   });
+  // Covers the composer, so coming back to the app mustn't bring the keyboard up under it
+  controller.showingOverlays = true;
   await showModalBottomSheet(
     context: context,
     builder: (context) => SizedBox(
@@ -200,10 +260,11 @@ Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewControll
       ),
     ),
   );
+  controller.showingOverlays = false;
   OpenPigeon.onKeyboardMessage(null);
 }
 
-Uint8List? _decode(Object? base64) {
+Uint8List? decodeBase64(Object? base64) {
   if (base64 is! String) return null;
   try {
     return base64Decode(base64);
@@ -223,7 +284,7 @@ class OpenPigeonPendingGame extends StatelessWidget {
     return Obx(() {
       final game = controller.pendingGame.value;
       if (game == null) return const SizedBox.shrink();
-      final image = _decode(game['imageBase64']);
+      final image = decodeBase64(game['imageBase64']);
       final title = game['ldText'] is String ? game['ldText'] as String : "Game";
       final caption = game['caption'] is String ? game['caption'] as String : null;
       return Padding(

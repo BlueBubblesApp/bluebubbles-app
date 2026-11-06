@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/chat_event/chat_event.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_indicators.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_reactions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/message_holder/message_holder_timestamps.dart';
@@ -198,6 +199,25 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
 
         // Use MessageState observables for proper reactivity
         final isFromMe = controller.message.isFromMe!;
+        // Read so a game turn collapses when an update marks it replaced
+        controller.associatedMessageType.value;
+        if (!widget.isReplyThread && OpenPigeon.isEarlierTurn(message)) {
+          if (isFromMe) return const SizedBox.shrink();
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TimestampSeparator(olderMessage: olderMessage),
+              Padding(
+                padding: EdgeInsets.only(left: showAvatar || alwaysShowAvatars ? 35.0 * avatarScale + 15 : 15),
+                child: OpenPigeonEarlierTurn(
+                  data: message.payloadData!.appData!.first,
+                  onTap: OpenPigeon.offered ? () => openOpenPigeonGame(context, message, widget.cvController.chat) : null,
+                ),
+              ),
+            ],
+          );
+        }
 
         return AnimatedPadding(
           duration: const Duration(milliseconds: 100),

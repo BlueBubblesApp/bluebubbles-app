@@ -9,7 +9,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/intera
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/unsupported_interactive.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/url_preview.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_clone_scope.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/services/services.dart';
@@ -46,10 +45,7 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
   @override
   bool get wantKeepAlive => true;
 
-  /// OpenPigeon draws the bubble and handles its taps.
-  bool get _usesOpenPigeon => OpenPigeon.available && OpenPigeon.isGame(message) && !message.isSending;
-
-  /// A game OpenPigeon could open (or explain the subscription for) but isn't drawing.
+  /// A game OpenPigeon could open, or explain the subscription for.
   bool get _opensWithOpenPigeon =>
       OpenPigeon.offered && OpenPigeon.isGame(message) && !message.isSending && controller.cvController != null;
 
@@ -67,13 +63,11 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _usesOpenPigeon
-                ? null
-                : _opensWithOpenPigeon
-                    ? () => openOpenPigeonGame(context, message, controller.cvController!.chat)
-                    : (payloadData == null && !message.isLegacyUrlPreview)
-                        ? null
-                        : () async {
+            onTap: _opensWithOpenPigeon
+                ? () => openOpenPigeonGame(context, message, controller.cvController!.chat)
+                : (payloadData == null && !message.isLegacyUrlPreview)
+                    ? null
+                    : () async {
                     String? url;
                     if (payloadData == null) {
                       url = message.url;
@@ -164,13 +158,11 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                                             data: data,
                                           );
                                         case "GamePigeon":
-                                          final chat = controller.cvController?.chat;
-                                          final fallback = GamePigeon(data: data);
-                                          // The popup's clone of this bubble keeps the plain card
-                                          if (!_usesOpenPigeon || chat == null || MessageCloneScope.of(context)) {
-                                            return fallback;
-                                          }
-                                          return OpenPigeonLiveView(message: message, chat: chat, fallback: fallback);
+                                          return OpenPigeonGameBubble(
+                                            message: message,
+                                            data: data,
+                                            card: GamePigeon(data: data),
+                                          );
                                         case "Apple Pay":
                                           return ApplePay(
                                             data: data,

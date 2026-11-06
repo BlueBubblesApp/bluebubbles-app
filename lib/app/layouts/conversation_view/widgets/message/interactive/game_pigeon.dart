@@ -47,7 +47,7 @@ class _GamePigeonState extends State<GamePigeon> with AutomaticKeepAliveClientMi
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (content is PlatformFile && content.bytes != null)
           Image.memory(

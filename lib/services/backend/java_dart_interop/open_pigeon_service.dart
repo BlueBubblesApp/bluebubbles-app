@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
@@ -31,19 +32,53 @@ class OpenPigeon {
   /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
   static final RxSet<int> failedViews = <int>{}.obs;
 
-  /// The newest message seen in each game session, by session id. Only that one is live; older turns collapse to
-  /// the app's icon, as in Messages.
+  /// The newest message seen in each game session, by lowercase session id. Older turns collapse to the app's icon,
+  /// as in Messages.
   static final RxMap<String, ({String guid, DateTime date})> latestInSession =
       <String, ({String guid, DateTime date})>{}.obs;
 
-  /// The server could carry games with a subscription, so they're shown, locked if it has none.
-  static bool get offered =>
-      !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server && SettingsSvc.settings.enablePrivateAPI.value;
+  // Mirrors the server's app-message routes: reading a payload needs Pro, and sending one also needs the server's
+  // Private API.
+  static bool get _onV2 => !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server;
 
-  /// The server can carry the payloads; OpenPigeon may still need installing.
+  /// The server could send games with a subscription, so they're shown, locked if it has none.
+  static bool get offered => _onV2 && SettingsSvc.settings.serverPrivateAPI.value == true;
+
+  /// The server can send games; OpenPigeon may still need installing.
   static bool get supported => offered && licensed.value;
 
-  static bool get available => supported && installed.value;
+  /// OpenPigeon can draw games: it's installed and the server hands out their payloads.
+  static bool get canDraw => _onV2 && licensed.value && installed.value;
+
+  static final Map<String, Future<Uint8List?>> _snapshots = {};
+
+  /// A still of [message]'s game as OpenPigeon draws it, [width] logical pixels wide and as tall as its layout (up to
+  /// [maxHeight]), for the turns GamePigeon sends without an image. Null when OpenPigeon can't draw it; a failure is retried the next time it's asked for.
+  static Future<Uint8List?> snapshot(Message message, Chat chat, double width, double maxHeight) {
+    final guid = message.guid!;
+    return _snapshots[guid] ??= payloadFor(message).then((payload) async {
+      if (payload == null) return null;
+      try {
+        return await _channel.invokeMethod<Uint8List>('snapshot', {
+          ...payload,
+          'chatGuid': chat.guid,
+          'userCount': userCount(chat),
+          'width': width,
+          'maxHeight': maxHeight,
+        });
+      } on PlatformException catch (e) {
+        Logger.warn('OpenPigeon could not draw $guid', error: e, tag: 'OpenPigeon');
+        return null;
+      }
+    }).then((png) {
+      if (png == null) _snapshots.remove(guid);
+      return png;
+    });
+  }
+
+  /// Sessions opened in OpenPigeon this run. Bubbles are drawn from the sender's image, so OpenPigeon only hears
+  /// about a game once it's been tapped.
+  static final Set<String> _openedSessions = {};
 
   /// Matched on the suffix: the team id in the middle belongs to the developer and can change.
   static bool isGame(Message message) =>
@@ -53,11 +88,11 @@ class OpenPigeon {
     _channel.setMethodCallHandler(_handle);
     await refresh();
     EventDispatcherSvc.stream.listen((e) async {
-      if (e.type != 'new-message' || !available) return;
+      if (e.type != 'new-message' || _openedSessions.isEmpty) return;
       final message = e.data['message'] as Message;
       if (!isGame(message) || message.guid == null) return;
       final payload = await payloadFor(message);
-      if (payload == null) return;
+      if (payload == null || !_openedSessions.contains(payload['session'])) return;
       try {
         await _channel.invokeMethod('message-updated', payload);
       } on PlatformException catch (e) {
@@ -83,8 +118,14 @@ class OpenPigeon {
     }
     try {
       final data = (await HttpSvc.server.subscription()).data['data'] as Map<String, dynamic>;
-      purchaseUrl = (data['available_tiers'] as List?)?.whereType<Map>().firstOrNull?['purchase_url'] as String?;
-      licensed.value = data['tier'] != null;
+      final tiers = (data['available_tiers'] as List? ?? const []).whereType<Map>().toList();
+      final pro = tiers.firstWhereOrNull((t) => t['id'] == 'pro');
+      final held = tiers.firstWhereOrNull((t) => t['id'] == data['tier']);
+      purchaseUrl = pro?['purchase_url'] as String?;
+      // The app-message routes need Pro or above, compared by rank. A tier the server doesn't list is newer than its
+      // build, and the server still ranks it from the license, so only a listed tier below Pro is refused.
+      licensed.value = data['tier'] != null &&
+          (held == null || pro == null || (held['rank'] as int) >= (pro['rank'] as int));
     } catch (e) {
       Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
       licensed.value = false;
@@ -102,11 +143,11 @@ class OpenPigeon {
     final guid = message.guid!;
     final app = message.payloadData?.appData?.firstOrNull;
     if (app?.url != null && app?.sessionId != null) {
-      return Future.value(_noted(message, _madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption)));
+      return Future.value(_madrid(guid, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
     }
     return _payloads[guid] ??= HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
       final data = response.data['data'] as Map<String, dynamic>;
-      return _noted(message, _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']));
+      return _madrid(guid, data['url'], data['session_id'], data['summary'], data['caption']);
     }).catchError((Object e) {
       Logger.warn('Could not load OpenPigeon payload for $guid', error: e, tag: 'OpenPigeon');
       _payloads.remove(guid);
@@ -115,7 +156,7 @@ class OpenPigeon {
   }
 
   /// Number of people in [chat], counting the user, which OpenPigeon uses to hide games.
-  static int userCount(Chat chat) => chat.participants.length + 1;
+  static int userCount(Chat chat) => chat.isGroup ? chat.handles.length + 1 : 2;
 
   /// Set by the game picker sheet: a picked game goes to the composer rather than straight out.
   static void onKeyboardMessage(ValueChanged<Map<String, dynamic>>? callback) => _onKeyboardMessage = callback;
@@ -144,6 +185,7 @@ class OpenPigeon {
   static Future<bool> open(Map<String, dynamic> payload, Chat chat) async {
     try {
       await _channel.invokeMethod('open', {...payload, 'chatGuid': chat.guid, 'userCount': userCount(chat)});
+      if (payload['session'] is String) _openedSessions.add(payload['session'] as String);
       return true;
     } on PlatformException catch (e) {
       Logger.warn('Could not open the game', error: e, tag: 'OpenPigeon');
@@ -151,7 +193,8 @@ class OpenPigeon {
     }
   }
 
-  /// Sends an OpenPigeon message ([game] holds its `url`, `session`, `ldText` and `caption`) to [chatGuid].
+  /// Sends an OpenPigeon message ([game] holds its `url`, `session`, `ldText`, `caption` and `imageBase64`) to
+  /// [chatGuid].
   static Future<void> sendGame(String chatGuid, Map<String, dynamic> game) async {
     await HttpSvc.message.sendAppMessage(
       chatGuid,
@@ -162,16 +205,33 @@ class OpenPigeon {
       appId: 1124197642,
       summary: _string(game['ldText']),
       caption: _string(game['caption']),
+      image: _string(game['imageBase64']),
+      tempGuid: "temp-${randomString(8)}",
+      // Every message a current GamePigeon sends is live; without it the recipient sees the caption and icon
+      liveLayout: true,
     );
   }
 
-  static Map<String, dynamic>? _noted(Message message, Map<String, dynamic>? payload) {
-    final session = payload?['session'] as String?;
-    if (session == null) return payload;
+  /// Records [message] as a turn of [session] (lowercase), so earlier turns collapse.
+  static void noteTurn(Message message, String? session) {
+    if (session == null) return;
     final date = message.dateCreated ?? DateTime.fromMillisecondsSinceEpoch(0);
     final latest = latestInSession[session];
     if (latest == null || date.isAfter(latest.date)) latestInSession[session] = (guid: message.guid!, date: date);
-    return payload;
+  }
+
+  /// A game turn a newer turn of the same session has replaced. Messages hides these when sent and shrinks them to
+  /// the app's icon and the game when received.
+  ///
+  /// Messages links every turn to the session's first message and marks the live one type 2; once a newer turn
+  /// arrives, the earlier ones become type 3. A turn sent without that link, or one whose rewrite to 3 we never
+  /// heard about, falls back to the newest turn seen in its session.
+  static bool isEarlierTurn(Message message) {
+    if (!isGame(message)) return false;
+    if (message.associatedMessageType == '3') return true;
+    final session = message.payloadData?.appData?.firstOrNull?.sessionId?.toLowerCase();
+    final latest = session == null ? null : latestInSession[session];
+    return latest != null && latest.guid != message.guid;
   }
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
