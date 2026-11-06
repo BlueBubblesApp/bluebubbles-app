@@ -287,7 +287,6 @@ class SyncActions {
     }
 
     messageBox.putMany(messagesToSave);
-    messagesToSave.forEach(MessageActions.retireEarlierTurns);
 
     final messagesByGuid = <String, Message>{
       for (final m in messagesToSave)
@@ -298,7 +297,8 @@ class SyncActions {
     final reactionsUpdate = <String, Message>{};
     for (final msg in messagesToSave) {
       final associatedGuid = msg.associatedMessageGuid;
-      if ((associatedGuid ?? '').isEmpty) continue;
+      // An iMessage app turn points at its session's first message without being a reaction to it
+      if ((associatedGuid ?? '').isEmpty || !msg.isReaction) continue;
 
       Message? associated = messagesByGuid[associatedGuid];
       if (associated == null) {
@@ -317,6 +317,16 @@ class SyncActions {
         messageBox.putMany(reactionsUpdate.values.toList());
       } catch (ex) {
         Logger.warn('Failed to update hasReactions: $ex', tag: 'SyncActions');
+      }
+    }
+
+    // Last, so no later put in this batch writes back a turn it replaced. The batch's own copies of those turns are
+    // updated to match, as the attachment pass may save them again.
+    for (final turn in messagesToSave) {
+      for (final retired in MessageActions.retireEarlierTurns(turn)) {
+        messagesByGuid[retired.guid]
+          ?..associatedMessageType = retired.associatedMessageType
+          ..associatedMessageGuid = retired.associatedMessageGuid;
       }
     }
 

@@ -9,8 +9,9 @@ class MessageActions {
   /// session's first message (which links to itself), as Messages does once a newer turn arrives. Messages rewrites
   /// those rows in place, so sync, which only fetches new rows, would never see it. Which rows count is
   /// [AppSessionTypes.isReplacedBy], shared with the on-screen copy in MessagesService. Runs inside a write transaction.
-  static void retireEarlierTurns(Message turn) {
-    if (!AppSessionTypes.replacesEarlierTurns(turn)) return;
+  /// Returns the rows it rewrote, so a caller holding its own copies of them can match.
+  static List<Message> retireEarlierTurns(Message turn) {
+    if (!AppSessionTypes.replacesEarlierTurns(turn)) return const [];
     final first = turn.associatedMessageGuid!;
     final query = Database.messages
         .query((Message_.guid.equals(first) | Message_.associatedMessageGuid.equals(first)) &
@@ -24,6 +25,7 @@ class MessageActions {
       message.associatedMessageGuid = first;
     }
     if (earlier.isNotEmpty) Database.messages.putMany(earlier);
+    return earlier;
   }
 
   static Future<List<Message>?> getMessages() async {
