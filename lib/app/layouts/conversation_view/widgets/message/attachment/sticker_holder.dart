@@ -134,7 +134,7 @@ class _StickerHolderState extends State<StickerHolder> {
   static const double _stickerPixelRatio = 3;
 
   /// Width [TailClipper] keeps for the tail on that side of every bubble
-  static const double _tailGutter = 10;
+  static const double _tailGutter = 12;
 
   /// Matched by eye against an iPhone's placement of the same stickers
   static const double _bodyInset = 4;
