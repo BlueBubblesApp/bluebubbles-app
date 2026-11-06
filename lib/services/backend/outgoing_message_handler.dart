@@ -785,7 +785,7 @@ class OutgoingMessageHandler {
               effectId: m.expressiveSendStyleId,
               subject: m.subject,
               partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-              ddScan: !SettingsSvc.serverDetails.isMinSonoma && m.text!.hasUrl,
+              ddScan: _canScanLinks && m.text!.hasUrl,
             )
           : SendMessageInterface.sendTapback(
               chatGuid: c.guid,
@@ -867,7 +867,7 @@ class OutgoingMessageHandler {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-        ddScan: !SettingsSvc.serverDetails.isMinSonoma && parts.any((e) => e['text'].toString().hasUrl),
+        ddScan: _canScanLinks && parts.any((e) => e['text'].toString().hasUrl),
       ),
       onSuccess: (data) => _finalizeOutgoingSuccess(c, tempGuid, data),
       onError: (error, stack) => _finalizeOutgoingFailure(
@@ -1320,4 +1320,7 @@ class OutgoingMessageHandler {
     if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
     return null;
   }
+
+  // 1.x's helper crashes Messages scanning on Sonoma and later (Apple Silicon); v2's sends unscanned if it can't scan
+  static bool get _canScanLinks => SettingsSvc.serverDetails.isV2Server || !SettingsSvc.serverDetails.isMinSonoma;
 }
