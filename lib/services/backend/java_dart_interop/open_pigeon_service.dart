@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -17,6 +18,9 @@ class OpenPigeon {
   static const packageName = 'com.openbubbles.openpigeon';
   static const balloonBundleId =
       'com.apple.messages.MSMessageExtensionBalloonPlugin:EWFNLB79LQ:com.gamerdelights.gamepigeon.ext';
+
+  /// GamePigeon's App Store id.
+  static const appId = 1124197642;
 
   static const _channel = MethodChannel('com.bluebubbles.messaging/openpigeon');
   static final RxBool installed = false.obs;
@@ -177,7 +181,12 @@ class OpenPigeon {
       _onKeyboardMessage?.call(args);
       return true;
     }
-    await sendGame(args['chatGuid'] as String, args);
+    final chat = Chat.findOne(guid: args['chatGuid'] as String);
+    if (chat == null) {
+      Logger.warn("Ignoring an OpenPigeon turn for a chat that isn't saved", tag: 'OpenPigeon');
+      return false;
+    }
+    await sendGame(chat, args);
     return true;
   }
 
@@ -193,28 +202,62 @@ class OpenPigeon {
     }
   }
 
-  /// Sends an OpenPigeon message ([game] holds its `url`, `session`, `ldText`, `caption` and `imageBase64`) to
-  /// [chatGuid].
-  static Future<void> sendGame(String chatGuid, Map<String, dynamic> game) async {
-    await HttpSvc.message.sendAppMessage(
-      chatGuid,
-      balloonBundleId: balloonBundleId,
-      url: game['url'] as String,
-      sessionId: _string(game['session']),
-      appName: 'GamePigeon',
-      appId: 1124197642,
-      summary: _string(game['ldText']),
-      caption: _string(game['caption']),
-      image: _string(game['imageBase64']),
-      tempGuid: "temp-${randomString(8)}",
-      // Every message a current GamePigeon sends is live; without it the recipient sees the caption and icon
-      liveLayout: true,
-    );
+  /// Queues an OpenPigeon message ([game] holds its `url`, `session`, `ldText`, `caption` and `imageBase64`) in
+  /// [chat], drawn at once like any other send.
+  static Future<void> sendGame(Chat chat, Map<String, dynamic> game) async {
+    final message = gameMessage(game)..generateTempGuid();
+    final image = gameImage(game);
+    await OutgoingMsgHandler.queue(OutgoingAppMessage(
+      chat: chat,
+      message: message,
+      attachment: image == null
+          ? null
+          : Attachment(
+              guid: message.guid,
+              isOutgoing: true,
+              mimeType: 'image/jpeg',
+              uti: 'public.jpeg',
+              transferName: 'game.jpg',
+              totalBytes: image.length,
+              bytes: image,
+            ),
+    ));
+  }
+
+  /// The message [game] becomes once sent, so it can be drawn the same way before then.
+  static Message gameMessage(Map<String, dynamic> game) => Message(
+        text: "",
+        dateCreated: DateTime.now(),
+        isFromMe: true,
+        handleId: 0,
+        balloonBundleId: balloonBundleId,
+        hasAttachments: gameImage(game) != null,
+        payloadData: PayloadData(type: PayloadType.app, appData: [
+          iMessageAppData(
+            appName: 'GamePigeon',
+            ldText: _string(game['ldText']),
+            url: game['url'] as String?,
+            sessionId: _string(game['session']),
+            userInfo: UserInfo(caption: _string(game['caption'])),
+          ),
+        ]),
+      );
+
+  /// The picture OpenPigeon drew for [game], if it sent one.
+  static Uint8List? gameImage(Map<String, dynamic> game) {
+    final image = _string(game['imageBase64']);
+    if (image == null) return null;
+    try {
+      return base64Decode(image);
+    } on FormatException {
+      return null;
+    }
   }
 
   /// Records [message] as a turn of [session] (lowercase), so earlier turns collapse.
   static void noteTurn(Message message, String? session) {
-    if (session == null) return;
+    // A turn still sending isn't a turn yet: it's noted once it has its real GUID
+    if (session == null || message.guid!.startsWith('temp')) return;
     final date = message.dateCreated ?? DateTime.fromMillisecondsSinceEpoch(0);
     final latest = latestInSession[session];
     if (latest == null || date.isAfter(latest.date)) latestInSession[session] = (guid: message.guid!, date: date);
@@ -227,7 +270,7 @@ class OpenPigeon {
   /// arrives, the earlier ones become type 3. A turn sent without that link, or one whose rewrite to 3 we never
   /// heard about, falls back to the newest turn seen in its session.
   static bool isEarlierTurn(Message message) {
-    if (!isGame(message)) return false;
+    if (!isGame(message) || message.guid!.startsWith('temp')) return false;
     if (message.associatedMessageType == '3') return true;
     final session = message.payloadData?.appData?.firstOrNull?.sessionId?.toLowerCase();
     final latest = session == null ? null : latestInSession[session];

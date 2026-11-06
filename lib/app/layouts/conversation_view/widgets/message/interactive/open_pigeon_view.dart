@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/game_pigeon.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/misc/tail_clipper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -37,6 +39,15 @@ class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
   }
 
   @override
+  void didUpdateWidget(OpenPigeonGameBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A sent turn becomes the newest once it has its real GUID
+    if (oldWidget.message.guid != widget.message.guid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => OpenPigeon.noteTurn(widget.message, _session));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final compact = OpenPigeonCollapsedGame(
       icon: decodeBase64(widget.data.appIcon),
@@ -45,9 +56,10 @@ class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
     );
     final hasImage = widget.message.dbAttachments.isNotEmpty;
     if (_session == null) return hasImage ? widget.card : compact;
+    final sending = widget.message.guid!.startsWith('temp');
     return Obx(() {
       final latest = OpenPigeon.latestInSession[_session];
-      if (latest != null && latest.guid != widget.message.guid) return compact;
+      if (!sending && latest != null && latest.guid != widget.message.guid) return compact;
       if (hasImage) return widget.card;
       final chat = widget.message.chat.target;
       if (!OpenPigeon.canDraw || chat == null) return compact;
@@ -87,7 +99,7 @@ class OpenPigeonCollapsedGame extends StatelessWidget {
       color: context.theme.colorScheme.onSurfaceVariant,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.only(left: 10, top: 8, bottom: 8, right: 15),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -116,7 +128,7 @@ class OpenPigeonCollapsedGame extends StatelessWidget {
               children: [
                 Text(
                   title ?? "GamePigeon",
-                  style: context.theme.textTheme.bodyMedium!.apply(fontWeightDelta: 2),
+                  style: context.theme.textTheme.titleSmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -172,7 +184,7 @@ class OpenPigeonEarlierTurn extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               data.ldText ?? "GamePigeon",
-              style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+              style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.outline),
             ),
           ],
         ),
@@ -234,23 +246,46 @@ class _OpenPigeonViewState extends State<_OpenPigeonView> {
   }
 }
 
-/// OpenPigeon's game picker. A picked game waits in the composer until the user sends it.
+/// Opens OpenPigeon's game picker in the keyboard's place. A picked game waits in the composer until the user sends it.
 Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewController controller) async {
   if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
   if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
-  final chat = controller.chat;
-  OpenPigeon.onKeyboardMessage((game) {
-    controller.pendingGame.value = game;
-    controller.showAttachmentPicker.value = false;
-    Navigator.of(context).maybePop();
-  });
-  // Covers the composer, so coming back to the app mustn't bring the keyboard up under it
-  controller.showingOverlays = true;
-  await showModalBottomSheet(
-    context: context,
-    builder: (context) => SizedBox(
-      // OpenPigeon's keyboard height for BlueBubbles hosts
-      height: 380,
+  controller.focusNode.unfocus();
+  controller.subjectFocusNode.unfocus();
+  controller.showAttachmentPicker.value = false;
+  controller.showGamePicker.value = true;
+}
+
+/// OpenPigeon's game picker, below the text field. It stays open after a pick: a game with variants stages its
+/// default and shows its options, and each option picked stages the game again.
+class OpenPigeonKeyboard extends StatefulWidget {
+  const OpenPigeonKeyboard({super.key, required this.controller});
+
+  final ConversationViewController controller;
+
+  @override
+  State<OpenPigeonKeyboard> createState() => _OpenPigeonKeyboardState();
+}
+
+class _OpenPigeonKeyboardState extends State<OpenPigeonKeyboard> {
+  @override
+  void initState() {
+    super.initState();
+    OpenPigeon.onKeyboardMessage((game) => widget.controller.pendingGame.value = game);
+  }
+
+  @override
+  void dispose() {
+    OpenPigeon.onKeyboardMessage(null);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chat = widget.controller.chat;
+    return SizedBox(
+      // The attachment picker's height, so switching between them doesn't move the field
+      height: 340,
       child: _OpenPigeonView(
         viewType: 'openpigeon/keyboard',
         creationParams: {'chatGuid': chat.guid, 'userCount': OpenPigeon.userCount(chat)},
@@ -258,10 +293,8 @@ Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewControll
         fallback: const Center(child: Text("Couldn't load games")),
         child: (view) => view,
       ),
-    ),
-  );
-  controller.showingOverlays = false;
-  OpenPigeon.onKeyboardMessage(null);
+    );
+  }
 }
 
 Uint8List? decodeBase64(Object? base64) {
@@ -284,38 +317,46 @@ class OpenPigeonPendingGame extends StatelessWidget {
     return Obx(() {
       final game = controller.pendingGame.value;
       if (game == null) return const SizedBox.shrink();
-      final image = decodeBase64(game['imageBase64']);
-      final title = game['ldText'] is String ? game['ldText'] as String : "Game";
-      final caption = game['caption'] is String ? game['caption'] as String : null;
+      // Drawn as the message it becomes, by the widgets that draw that message. A GUID of its own per pick, so
+      // OpenPigeon's still of the game isn't reused for the next one.
+      final message = OpenPigeon.gameMessage(game)
+        ..guid = 'temp-preview-${identityHashCode(game)}'
+        ..chat.target = controller.chat;
+      final image = OpenPigeon.gameImage(game);
+      if (image != null) message.dbAttachments.add(Attachment(guid: message.guid));
+      final data = message.payloadData!.appData!.first;
+      final bubbleColor = (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor ??
+          context.theme.colorScheme.surfaceContainerHighest;
       return Padding(
-        padding: const EdgeInsets.all(8),
-        child: Material(
-          color: context.theme.colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: Row(
-            children: [
-              if (image != null)
-                Image.memory(
-                  image,
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const SizedBox(width: 72, height: 72),
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: context.theme.textTheme.titleSmall),
-                    if (caption != null) Text(caption, style: context.theme.textTheme.bodySmall),
-                  ],
+        padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => controller.pendingGame.value = null),
+            ClipPath(
+              clipper: TailClipper(isFromMe: true, showTail: true, connectUpper: false, connectLower: false),
+              child: ColoredBox(
+                color: bubbleColor,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: NavigationSvc.width(context) * (NavigationSvc.isTabletMode(context) ? 0.5 : 0.6),
+                    maxHeight: context.height * 0.3,
+                    minHeight: 40,
+                    minWidth: 40,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: OpenPigeonGameBubble(
+                      message: message,
+                      data: data,
+                      card: GamePigeon(data: data, image: image),
+                    ),
+                  ),
                 ),
               ),
-              IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => controller.pendingGame.value = null),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     });

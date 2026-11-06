@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_animation.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field_local_controller.dart';
@@ -166,6 +167,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     if (_focusNode.hasFocus && controller.showAttachmentPicker.value) {
       controller.showAttachmentPicker.value = false;
     }
+    if (_focusNode.hasFocus && controller.showGamePicker.value) controller.showGamePicker.value = false;
   }
 
   void textListener(bool subject) {
@@ -353,10 +355,8 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     }
     if (game != null) {
       controller.pendingGame.value = null;
-      unawaited(OpenPigeon.sendGame(chat.guid, game).catchError((Object e) {
-        Logger.warn('Could not send the game', error: e, tag: 'OpenPigeon');
-        showSnackbar("Error", "Couldn't send the game", type: SnackbarType.error);
-      }));
+      // Queued like any send, so it's drawn sending at once and a failure can be retried
+      unawaited(OpenPigeon.sendGame(chat, game));
       if (text.isEmpty && controller.subjectTextController.text.isEmpty && controller.pickedAttachments.isEmpty) {
         return;
       }
@@ -547,17 +547,19 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeIn,
                       alignment: Alignment.bottomCenter,
-                      child: !showAttachmentPicker
-                          ? SizedBox(width: pickerWidth)
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const SizedBox(height: 8),
-                                AttachmentPicker(
-                                  controller: controller,
+                      child: controller.showGamePicker.value
+                          ? OpenPigeonKeyboard(controller: controller)
+                          : !showAttachmentPicker
+                              ? SizedBox(width: pickerWidth)
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    AttachmentPicker(
+                                      controller: controller,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
                     ));
               }),
               TextFieldEmojiPickerSection(

@@ -81,6 +81,9 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   // text field items
   final RxBool showAttachmentPicker = false.obs;
+
+  /// OpenPigeon's game picker, shown below the text field in the keyboard's place.
+  final RxBool showGamePicker = false.obs;
   RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;

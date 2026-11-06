@@ -1237,7 +1237,16 @@ class MessagesService extends GetxController {
     }
 
     // Queue for sending (message already in UI, just updated)
-    if (isMultiAttachment) {
+    if (OpenPigeon.isGame(message)) {
+      OutgoingMsgHandler.queue(
+        OutgoingAppMessage(
+          chat: chat,
+          message: message,
+          attachment: message.dbAttachments.firstOrNull,
+          isRetry: true,
+        ),
+      );
+    } else if (isMultiAttachment) {
       OutgoingMsgHandler.queue(
         OutgoingMultiAttachment(
           chat: chat,

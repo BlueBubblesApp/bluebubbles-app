@@ -59,6 +59,9 @@ class MessageActions {
           inputNewMessage.didNotifyRecipient ? inputNewMessage.didNotifyRecipient : existing.didNotifyRecipient;
       existing.error = inputNewMessage.error;
       existing.errorMessage = inputNewMessage.errorMessage;
+      // An iMessage app turn is re-linked when a newer turn replaces it (type 2 to 3, or a first turn to itself)
+      existing.associatedMessageGuid = inputNewMessage.associatedMessageGuid ?? existing.associatedMessageGuid;
+      existing.associatedMessageType = inputNewMessage.associatedMessageType ?? existing.associatedMessageType;
 
       try {
         messageBox.put(existing, mode: PutMode.update);

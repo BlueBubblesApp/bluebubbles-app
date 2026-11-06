@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -9,9 +11,13 @@ import 'package:universal_io/io.dart';
 class GamePigeon extends StatefulWidget {
   final iMessageAppData data;
 
+  /// The picture to show instead of the message's attachment, for a game that isn't a message yet
+  final Uint8List? image;
+
   const GamePigeon({
     super.key,
     required this.data,
+    this.image,
   });
 
   @override
@@ -29,6 +35,9 @@ class _GamePigeonState extends State<GamePigeon> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (widget.image != null) content = PlatformFile(name: "game.jpg", size: widget.image!.length, bytes: widget.image);
+    // A turn still uploading comes back with its progress
+    if (content is AttachmentWithProgress) content = (content as AttachmentWithProgress).file;
     if (content == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

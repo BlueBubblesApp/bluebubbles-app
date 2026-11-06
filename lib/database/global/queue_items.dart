@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/database/models.dart';
 
-enum QueueType { sendMessage, sendReaction, sendAttachment, sendMultipart, sendMultiAttachment }
+enum QueueType { sendMessage, sendReaction, sendAttachment, sendMultipart, sendMultiAttachment, sendAppMessage }
 
 abstract class QueueItem {
   QueueType type;
@@ -126,4 +126,20 @@ class OutgoingMultiAttachment extends OutgoingQueueItem {
     }
     return null;
   }
+}
+
+/// An iMessage app balloon (an OpenPigeon game turn), sent from its message's `payloadData`. [attachment] is the
+/// balloon's picture, if it has one, and shares the message's temp GUID.
+class OutgoingAppMessage extends OutgoingQueueItem {
+  Attachment? attachment;
+  @override
+  bool isRetry;
+
+  OutgoingAppMessage({
+    super.completer,
+    required super.chat,
+    required super.message,
+    this.attachment,
+    this.isRetry = false,
+  }) : super(type: QueueType.sendAppMessage);
 }
