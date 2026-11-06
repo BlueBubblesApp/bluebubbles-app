@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reacti
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 
 /// Isolated widget for reaction display
@@ -112,5 +113,97 @@ class ReactionSpacing extends StatelessWidget {
 
       return const SizedBox.shrink();
     });
+  }
+}
+
+/// Grows [child], the bubble's Stack, by [StickerHolder.space] so its placed stickers always have room in the message
+/// list instead of drawing over neighboring messages or off-screen. Presses in that room go to the bubble.
+class StickerSpace extends StatelessWidget {
+  const StickerSpace({super.key, required this.part, required this.columnWidth, required this.child});
+
+  final MessagePart part;
+
+  /// Width of the message column the bubble sits against; the room around it never grows past this
+  final double columnWidth;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = MessageStateScope.of(context);
+    return Obx(() => _StickerOverhang(
+          stickers: state
+              .stickersForBubble(part)
+              .expand((e) => e.dbAttachments)
+              .where((a) => a.stickerPlacement != null)
+              .toList(),
+          isFromMe: state.message.isFromMe ?? false,
+          columnWidth: columnWidth,
+          child: child,
+        ));
+  }
+}
+
+class _StickerOverhang extends SingleChildRenderObjectWidget {
+  const _StickerOverhang({
+    required this.stickers,
+    required this.isFromMe,
+    required this.columnWidth,
+    required Widget super.child,
+  });
+
+  final List<Attachment> stickers;
+  final bool isFromMe;
+  final double columnWidth;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderStickerOverhang(stickers, isFromMe, columnWidth);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderStickerOverhang renderObject) => renderObject
+    ..stickers = stickers
+    ..isFromMe = isFromMe
+    ..columnWidth = columnWidth;
+}
+
+// The overhang depends on the bubble's laid-out size, which no Padding can know ahead of time
+class _RenderStickerOverhang extends RenderShiftedBox {
+  _RenderStickerOverhang(this._stickers, this._isFromMe, this._columnWidth) : super(null);
+
+  List<Attachment> _stickers;
+  set stickers(List<Attachment> value) {
+    _stickers = value;
+    markNeedsLayout();
+  }
+
+  bool _isFromMe;
+  set isFromMe(bool value) {
+    if (_isFromMe == value) return;
+    _isFromMe = value;
+    markNeedsLayout();
+  }
+
+  double _columnWidth;
+  set columnWidth(double value) {
+    if (_columnWidth == value) return;
+    _columnWidth = value;
+    markNeedsLayout();
+  }
+
+  @override
+  void performLayout() {
+    final child = this.child!;
+    child.layout(constraints, parentUsesSize: true);
+    final space = StickerHolder.space(_stickers, child.size, _isFromMe, _columnWidth);
+    (child.parentData as BoxParentData).offset = space.topLeft;
+    size = constraints.constrain(space.inflateSize(child.size));
+  }
+
+  // A press anywhere in the sticker space lands on the bubble's center, so it opens details like the bubble does
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    if (super.hitTestChildren(result, position: position)) return true;
+    final child = this.child!;
+    final offset = (child.parentData as BoxParentData).offset;
+    return super.hitTestChildren(result, position: offset + child.size.center(Offset.zero));
   }
 }
