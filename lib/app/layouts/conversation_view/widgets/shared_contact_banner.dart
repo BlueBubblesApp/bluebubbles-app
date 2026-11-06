@@ -38,10 +38,19 @@ class _SharedCard {
   String get label => contact?.displayName ?? name ?? handle.displayName;
 }
 
+typedef _Card = ({String? name, Uint8List? avatar});
+
 class _SharedContactBannerState extends State<SharedContactBanner> {
   /// Chats whose add or share offers were dismissed this session
   static final Set<String> _dismissedAdds = {};
   static final Set<String> _dismissedShares = {};
+
+  /// Cards read recently, by address (empty for your own), so reopening a chat doesn't ask the server again
+  static final Map<String, ({DateTime readAt, _Card? card})> _cards = {};
+  static const Duration _cardTtl = Duration(minutes: 30);
+
+  /// Each participant's card is a Private API call, so larger groups aren't looked up
+  static const int _maxLookedUpParticipants = 10;
 
   Chat get chat => widget.chat;
   final List<_SharedCard> _adds = [];
@@ -79,14 +88,21 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   }
 
   /// The card [address] shared with you, or your own without one
-  Future<({String? name, Uint8List? avatar})?> _readCard({String? address}) async {
+  Future<_Card?> _readCard({String? address}) async {
+    final key = address ?? '';
+    final cached = _cards[key];
+    if (cached != null && DateTime.now().difference(cached.readAt) < _cardTtl) return cached.card;
     try {
       final data = (await HttpSvc.icloud.getAccountContact(address: address)).data['data'];
-      if (data is! Map) return null;
-      final name = data['name'] as String?;
-      final avatar = data['avatar'] as String?;
-      if (isNullOrEmpty(name) && isNullOrEmpty(avatar)) return null;
-      return (name: isNullOrEmpty(name) ? null : name, avatar: isNullOrEmpty(avatar) ? null : base64Decode(avatar!));
+      final name = data is Map ? data['name'] as String? : null;
+      final avatar = data is Map ? data['avatar'] as String? : null;
+      final _Card? card = isNullOrEmpty(name) && isNullOrEmpty(avatar)
+          ? null
+          : (name: isNullOrEmpty(name) ? null : name, avatar: isNullOrEmpty(avatar) ? null : base64Decode(avatar!));
+      final now = DateTime.now();
+      _cards.removeWhere((_, entry) => now.difference(entry.readAt) >= _cardTtl);
+      _cards[key] = (readAt: now, card: card);
+      return card;
     } catch (e) {
       Logger.warn('Could not read the contact card ${address ?? 'of this account'}', error: e, tag: 'SharedContact');
       return null;
@@ -95,12 +111,14 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
 
   Future<void> _loadSharedCards() async {
     final participants = chat.participants.isNotEmpty ? chat.participants : chat.handles.toList();
+    if (participants.length > _maxLookedUpParticipants) return;
     for (final handle in participants) {
       // Photo updates need a native contact to write to
       if (handle.contactsV2.isNotEmpty && !handle.contactsV2.any((c) => c.isNative)) continue;
       if (handle.contactsV2.isEmpty && _dismissedAdds.contains(chat.guid)) continue;
       final card = await _fetchCard(handle);
-      if (card == null || !mounted) continue;
+      if (!mounted) return;
+      if (card == null) continue;
       if (handle.contactsV2.isEmpty) {
         setState(() => _adds.add(card));
       } else if (card.photoHash != null &&
