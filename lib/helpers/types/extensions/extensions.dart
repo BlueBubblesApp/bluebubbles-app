@@ -365,8 +365,7 @@ extension MessageNotificationExtension on Message {
     return inline.length == dbAttachments.length ? inline : const [];
   }
 
-  /// The Genmoji a preview of this message draws, matching the placeholders [getNotificationText] keeps: its own, or
-  /// for a tapback, those of the part it reacts to. Looks up the reacted message, so don't call it from a build.
+  /// The Genmoji a preview of this message draws: its own, or a tapback's reacted part's. Hits the DB for tapbacks.
   List<Attachment> get previewInlineAttachments {
     final own = inlineAttachments;
     if (own.isNotEmpty || associatedMessageGuid == null) return own;
@@ -377,8 +376,7 @@ extension MessageNotificationExtension on Message {
         : reacted.inlineAttachments;
   }
 
-  /// The text of a message whose only attachments are [inlineAttachments], with a U+FFFC where each one goes when
-  /// [keepPlaceholders], else without them ("Genmoji" if nothing else is left). Null for any other message.
+  /// The text of a message whose only attachments are Genmoji, keeping their U+FFFC when [keepPlaceholders].
   String? inlineAttachmentText({bool keepPlaceholders = false}) {
     if (inlineAttachments.isEmpty) return null;
     final body = attributedBody.first.string;

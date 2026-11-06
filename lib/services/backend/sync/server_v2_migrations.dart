@@ -33,8 +33,7 @@ class ServerV2Migrations {
     return emoji + genmoji;
   }
 
-  /// Attributed bodies saved before the client kept `__kIMEmojiImageAttributeName`, which marks a Genmoji. Any with an
-  /// attachment inside a text part could hold one, so those are re-fetched.
+  /// Re-fetches attributed bodies saved before the client kept the Genmoji marker, `__kIMEmojiImageAttributeName`.
   static Future<int?> _backfillGenmoji() async {
     final query = Database.messages
         .query(Message_.dbAttributedBody.contains("__kIMFileTransferGUIDAttributeName").and(Message_.guid.notNull()))
