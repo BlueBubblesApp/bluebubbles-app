@@ -13,6 +13,15 @@ class FindMyFriendsTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final iosSubtitle = context.theme.textTheme.labelLarge!.copyWith(
+        color: context.theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        fontWeight: FontWeight.w300,
+      );
+      final materialSubtitle = context.theme.textTheme.labelLarge!.copyWith(
+        color: context.theme.colorScheme.primary,
+        fontWeight: FontWeight.bold,
+      );
+
       return SliverList(
         delegate: SliverChildListDelegate([
           if (controller.fetching2.value == null ||
@@ -20,17 +29,7 @@ class FindMyFriendsTabView extends StatelessWidget {
               (controller.fetching2.value == false && controller.friends.isEmpty))
             _buildEmptyState(context),
           if (controller.friendsWithLocation.isNotEmpty)
-            SettingsHeader(
-              iosSubtitle: context.theme.textTheme.labelLarge!.copyWith(
-                color: context.theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w300,
-              ),
-              materialSubtitle: context.theme.textTheme.labelLarge!.copyWith(
-                color: context.theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-              text: "Friends",
-            ),
+            SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Friends"),
           if (controller.friendsWithLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: context.tileColor,
@@ -52,22 +51,27 @@ class FindMyFriendsTabView extends StatelessWidget {
               ],
             ),
           if (controller.friendsWithoutLocation.isNotEmpty)
+            SettingsHeader(
+              iosSubtitle: iosSubtitle,
+              materialSubtitle: materialSubtitle,
+              text: "Friends without locations",
+            ),
+          if (controller.friendsWithoutLocation.isNotEmpty)
             SettingsSection(
               backgroundColor: context.tileColor,
               children: [
                 Material(
                   color: Colors.transparent,
-                  child: ExpansionTile(
-                    shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
-                    title: const Text("Friends without locations"),
-                    initiallyExpanded: true,
-                    children: controller.friendsWithoutLocation
-                        .map((item) => FindMyFriendListTile(
-                              item: item,
-                              controller: controller,
-                              withLocation: false,
-                            ))
-                        .toList(),
+                  child: ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemBuilder: (context, i) => FindMyFriendListTile(
+                      item: controller.friendsWithoutLocation[i],
+                      controller: controller,
+                      withLocation: false,
+                    ),
+                    itemCount: controller.friendsWithoutLocation.length,
                   ),
                 ),
               ],
@@ -89,8 +93,8 @@ class FindMyFriendsTabView extends StatelessWidget {
                 controller.fetching2.value == null
                     ? "Something went wrong!"
                     : controller.fetching2.value == false
-                        ? "You have no friends."
-                        : "Getting FindMy data...",
+                    ? "You have no friends."
+                    : "Getting FindMy data...",
                 style: context.theme.textTheme.labelLarge,
               ),
             ),
