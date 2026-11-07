@@ -158,7 +158,7 @@ class _CupertinoConnectionPanelState
                         return CupertinoButton(
                           padding: const EdgeInsets.only(right: 16.0),
                           minSize: 28,
-                          onPressed: isLoading ? null : () => controller.getServerStats(),
+                          onPressed: isLoading ? null : () => controller.refreshServerConnectionInfo(),
                           child: isLoading
                               ? const CupertinoActivityIndicator()
                               : const Icon(CupertinoIcons.refresh, size: 18),

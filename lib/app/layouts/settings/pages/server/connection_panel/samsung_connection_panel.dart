@@ -186,7 +186,7 @@ class _SamsungConnectionPanelState extends CustomState<SamsungConnectionPanel, v
                                   ),
                                 )
                               : Icon(Icons.refresh, color: context.theme.colorScheme.onSurface),
-                          onPressed: isLoading ? null : () => controller.getServerStats(),
+                          onPressed: isLoading ? null : () => controller.refreshServerConnectionInfo(),
                         ),
                       );
                     }),
