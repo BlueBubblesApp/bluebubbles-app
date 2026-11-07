@@ -525,6 +525,9 @@ class IncomingMessageHandler {
       // If we have a local copy and the local copy has participants, use it — no need to fetch.
       final local = Chat.findOne(guid: partial.guid);
       if (local != null && local.handles.isNotEmpty) {
+        // The event's chat carries Messages' current Spam verdict; the stored
+        // copy may predate it.
+        if (local.mergeSpamFlag(partial)) await local.saveAsync(updateIsFilteredAsSpam: true);
         return (chat: local, affectedHandleIds: <int>[]);
         // Cases to fetch from the server:
         // * Local chat exists but has no participants (incomplete data).

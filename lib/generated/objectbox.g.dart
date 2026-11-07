@@ -153,7 +153,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 9017250848141753702),
     name: 'Chat',
-    lastPropertyId: const obx_int.IdUid(39, 738307263391205523),
+    lastPropertyId: const obx_int.IdUid(40, 4145108034201044011),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -326,6 +326,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(39, 738307263391205523),
         name: 'dynamicWallpaperConfig',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(40, 4145108034201044011),
+        name: 'isFilteredAsSpam',
+        type: 1,
         flags: 0,
       ),
     ],
@@ -1489,7 +1495,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
             object.dynamicWallpaperConfig == null
             ? null
             : fbb.writeString(object.dynamicWallpaperConfig!);
-        fbb.startTable(40);
+        fbb.startTable(41);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(2, guidOffset);
         fbb.addOffset(4, chatIdentifierOffset);
@@ -1521,6 +1527,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(36, wallpaperTypeOffset);
         fbb.addOffset(37, dynamicWallpaperIdOffset);
         fbb.addOffset(38, dynamicWallpaperConfigOffset);
+        fbb.addBool(39, object.isFilteredAsSpam);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1569,6 +1576,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final displayNameParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 34);
+        final isFilteredAsSpamParam = const fb.BoolReader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          82,
+        );
         final autoSendReadReceiptsParam = const fb.BoolReader()
             .vTableGetNullable(buffer, rootOffset, 42);
         final autoSendTypingIndicatorsParam = const fb.BoolReader()
@@ -1629,6 +1641,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 muteArgs: muteArgsParam,
                 hasUnreadMessage: hasUnreadMessageParam,
                 displayName: displayNameParam,
+                isFilteredAsSpam: isFilteredAsSpamParam,
                 autoSendReadReceipts: autoSendReadReceiptsParam,
                 autoSendTypingIndicators: autoSendTypingIndicatorsParam,
                 textFieldText: textFieldTextParam,
@@ -2904,6 +2917,11 @@ class Chat_ {
   /// See [Chat.dynamicWallpaperConfig].
   static final dynamicWallpaperConfig = obx.QueryStringProperty<Chat>(
     _entities[1].properties[27],
+  );
+
+  /// See [Chat.isFilteredAsSpam].
+  static final isFilteredAsSpam = obx.QueryBooleanProperty<Chat>(
+    _entities[1].properties[28],
   );
 
   /// see [Chat.handles]
