@@ -1,4 +1,5 @@
 import 'package:bluebubbles/database/models.dart' hide Entity;
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/sticker_tapback_image.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -79,7 +80,7 @@ List<InlineSpan> buildMessageSpans(BuildContext context, MessagePart part, Messa
     ));
   }
 
-  return textSpans;
+  return _withInlineAttachments(textSpans, part, textStyle);
 }
 
 Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, MessagePart part, Message message,
@@ -268,5 +269,47 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(BuildContext context, Message
     ));
   }
 
-  return textSpans;
+  return _withInlineAttachments(textSpans, part, textStyle);
+}
+
+List<InlineSpan> _withInlineAttachments(List<InlineSpan> spans, MessagePart part, TextStyle style) =>
+    part.hasInlineAttachments ? withInlineAttachments(spans, part.attachments, style) : spans;
+
+/// Swaps each U+FFFC in [spans] for the next of [inline] (Genmoji), drawn at text height.
+List<InlineSpan> withInlineAttachments(List<InlineSpan> spans, Iterable<Attachment?> inline, TextStyle style) {
+  final attachments = inline.iterator;
+  final size = (style.fontSize ?? 14) * 1.25;
+  return spans.expand<InlineSpan>((span) {
+    if (span is! TextSpan || !(span.text?.contains(objectReplacementChar) ?? false)) return [span];
+    final pieces = span.text!.split(objectReplacementChar);
+    return [
+      for (int i = 0; i < pieces.length; i++) ...[
+        if (i > 0)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: SizedBox.square(
+              dimension: size,
+              child: attachments.moveNext() ? StickerTapbackImage(attachment: attachments.current) : null,
+            ),
+          ),
+        if (pieces[i].isNotEmpty) TextSpan(text: pieces[i], style: span.style, recognizer: span.recognizer),
+      ],
+    ];
+  }).toList();
+}
+
+/// Resolves the effective multi-attachment layout for a media gallery.
+///
+/// [MediaCollectionLayout.skinDefault] maps to the default skin-based choice (iOS: collage for small collections /
+/// stack for large ones, split at [MediaCollectionLayout.smallMaxCount]; Material/Samsung: grid). Never returns
+/// [MediaCollectionLayout.skinDefault].
+MediaCollectionLayout resolveMediaCollectionLayout(int attachmentCount) {
+  final small = MediaCollectionLayout.isSmall(attachmentCount);
+  final setting = small
+      ? SettingsSvc.settings.mediaCollectionLayoutSmall.value
+      : SettingsSvc.settings.mediaCollectionLayoutLarge.value;
+  if (setting != MediaCollectionLayout.skinDefault) return setting;
+
+  if (!CurrentSkin.iOS) return MediaCollectionLayout.grid;
+  return small ? MediaCollectionLayout.collage : MediaCollectionLayout.stack;
 }

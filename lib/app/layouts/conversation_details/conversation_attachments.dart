@@ -231,13 +231,7 @@ class _ConversationAttachmentsState extends State<ConversationAttachments> with 
                 icon: Icon(iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                     color: context.theme.colorScheme.onSurface),
                 onPressed: () {
-                  final attachments = media.where((e) => selected.contains(e.guid!));
-                  for (final a in attachments) {
-                    final file = AttachmentsSvc.getContent(a, autoDownload: false);
-                    if (file is PlatformFile) {
-                      AttachmentsSvc.saveToDisk(file);
-                    }
-                  }
+                  AttachmentsSvc.saveAllToDisk(media.where((e) => selected.contains(e.guid!)));
                 },
               );
             }

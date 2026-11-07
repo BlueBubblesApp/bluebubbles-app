@@ -114,6 +114,26 @@ class AttachmentApi {
     });
   }
 
+  /// Stages [filePath] for `message/multipart`, whose parts name it by the response's `data.path`.
+  Future<Response> upload(
+    String filePath,
+    String fileName, {
+    void Function(int, int)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.apiRoot}/attachment/upload",
+        queryParameters: _svc.buildQueryParams(),
+        data: FormData.fromMap({"attachment": await MultipartFile.fromFile(filePath, filename: fileName)}),
+        onSendProgress: onSendProgress,
+        cancelToken: cancelToken,
+        options: Options(sendTimeout: _svc.dio.options.sendTimeout! * 12),
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// Get the number of attachments in the server iMessage DB
   Future<Response> getCount({CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {

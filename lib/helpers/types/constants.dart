@@ -124,6 +124,33 @@ enum Skins {
   Samsung,
 }
 
+/// Layout used for multi-attachment media collections.
+/// [skinDefault] follows iOS: collage for small collections / stack for large ones (split at [smallMaxCount]);
+/// Material/Samsung: grid.
+/// Persisted by index — append new values, never reorder.
+enum MediaCollectionLayout {
+  skinDefault("Default"),
+  collage("Collage"),
+  stack("Stack"),
+  grid("Grid");
+
+  const MediaCollectionLayout(this.label);
+
+  /// Settings label.
+  final String label;
+
+  /// Collections up to this size use the "small" layout setting (`mediaCollectionLayoutSmall`); bigger ones use
+  /// `mediaCollectionLayoutLarge`. The settings labels are derived from it.
+  static const int smallMaxCount = 3;
+
+  /// Whether a collection of [count] attachments uses the "small" layout setting.
+  static bool isSmall(int count) => count <= smallMaxCount;
+
+  /// Settings title for the small / large layout picker, e.g. "2–3 Items" / "4+ Items".
+  static const String smallRangeLabel = "2–$smallMaxCount Items";
+  static const String largeRangeLabel = "${smallMaxCount + 1}+ Items";
+}
+
 enum SwipeDirection {
   LEFT,
   RIGHT,

@@ -10,7 +10,7 @@
 
 ## Usage
 
-**`ConversationFullscreenHolder`** — use when viewing an attachment that belongs to a chat/message (in-bubble tap, gallery card), where paging through the chat's other attachments and replying to a specific attachment matter:
+**`ConversationFullscreenHolder`** — use when viewing an attachment that belongs to a chat/message (in-bubble tap, collection card, conversation-details media grid), where paging through the chat's other attachments and replying to a specific attachment matter:
 ```dart
 Navigator.push(context, MaterialPageRoute(
   builder: (_) => ConversationFullscreenHolder(attachment: attachment, showInteractions: true),
@@ -30,9 +30,13 @@ Both dispatch on the attachment's mime type and render `FullscreenImage` or `Ful
 - `showInteractions` gates which action buttons are relevant (download/reply/share/etc.), not whether the overlay can be shown/hidden
 - Video player is disposed when the route is popped
 - Shares/saves to gallery are triggered from within the action bar
+- `galleryAttachments` limits paging to a list; `onOpenCollectionGallery` shows a grid button. Openers inside a media
+  collection fill both from `MediaCollectionScope` (see `.../attachment/collections/CLAUDE.md`); the collection gallery
+  page is outside the scope, so its fullscreen has no grid button (no nesting)
 
 ## Related
 - Attachment models: `lib/database/io/attachment.dart`
 - Attachment download state: `lib/services/ui/attachments_service.dart`
 - Thumbnails in the chat: `lib/app/layouts/conversation_view/widgets/message/attachment/`
+- Collection overview: `lib/app/layouts/conversation_view/widgets/message/attachment/collections/`
 - Composer preview: `lib/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart`

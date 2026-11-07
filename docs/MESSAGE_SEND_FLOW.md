@@ -18,7 +18,7 @@ UI (send button tap)
           text/multipart → _buildOutgoingMessages() (may split into 2 msgs on
               old macOS) → _persistOutgoingMessages() → chat.addMessage()
               (saved to DB with tempGuid — appears in UI as "sending")
-          attachment     → prepAttachment() (copy file, save to DB)
+          attachment     → prepAttachments() (copy file, save to DB)
           retried up to 3x on transient failure; a terminal failure is
               surfaced as a failed message, never silently dropped
       → item enters the serial `_queue`; OutgoingMessageHandler._processNext()
@@ -64,6 +64,8 @@ attachment.guid = message.guid;
 await OutgoingMsgHandler.queue(OutgoingAttachment(chat: ..., message: message, attachment: attachment, ...));
 ```
 
+**Several files at once** go as one message instead, when the server supports it (`supportsMultiAttachmentSend`, v2) and Private API attachment sends are on: one `Message` and an `OutgoingMultiAttachment` holding every attachment. Each attachment gets its own temp GUID, `<message temp GUID>-<index>`, so each has its own directory and upload state. `sendMultiAttachment()` uploads each file to `attachment/upload`, then sends one `message/multipart` naming the uploaded paths in order; the response's attachments are matched to the temp ones by message part (the attributed body names the attachment in each part, and part i is the i-th file sent), falling back to file name, then position; the socket echo's are matched the same way in `_replaceAttachments`. Voice notes and app balloons always go one per message.
+
 **Text/multipart messages do *not* call `generateTempGuid()` here** — the `Message` is built without a GUID and handed to `queue()` as-is:
 ```dart
 OutgoingMsgHandler.queue(
@@ -76,7 +78,7 @@ OutgoingMsgHandler.queue(
 
 The tempGuid format is always `temp-` followed by 8 random alphanumeric characters. This prefix is how the app detects "sending" state at construction time: `MessageState.isSending` is seeded as `guid.startsWith("temp") && error == 0`.
 
-Queue item types are explicit and compile-time safe: `OutgoingMessage` (plain text), `OutgoingReaction` (tapbacks, with required `selectedMessage` + `reaction`), `OutgoingAttachment` (file/audio, with required `attachment` + `isAudioMessage`), `OutgoingMultipartMessage` (attributed/mention text).
+Queue item types are explicit and compile-time safe: `OutgoingMessage` (plain text), `OutgoingReaction` (tapbacks, with required `selectedMessage` + `reaction`), `OutgoingAttachment` (file/audio, with required `attachment` + `isAudioMessage`), `OutgoingMultipartMessage` (attributed/mention text), `OutgoingMultiAttachment` (several attachments in one message).
 
 Immediately before the text/multipart item is queued, `send()` also closes `ConversationViewController.messageListGate` and holds it until the animated bubble is torn down (~650ms later). This keeps incoming messages, and the typing indicator, from mutating the message list while the bubble is flying toward a target derived from the current layout. The gate never delays the send — the outgoing message queued on the very next line bypasses it. See **Step 8b** of `docs/MESSAGE_RECEIVE_FLOW.md` for the full semantics.
 
@@ -89,14 +91,14 @@ Immediately before the text/multipart item is queued, `send()` also closes `Conv
 **`OutgoingMessageHandler.queue(item)`** runs entirely synchronously with respect to the caller before the item is placed on the serial send queue:
 
 1. **`_ensureTempGuid(item)`** — assigns `item.message.generateTempGuid()` if the message has no GUID yet (a no-op for attachments, which already have one from Step 2, and for retries, which reuse the original failed message's GUID).
-2. **`_prepItemWithRetry(item)`** — for text/multipart/reaction items, builds the message(s) once via `_buildOutgoingMessages()` (pure/synchronous — never re-run across retries, since re-running would desync the GUID from what a prior attempt already persisted), then calls `_persistOutgoingMessages()`; for attachments, calls `prepAttachment()`. Both are retried up to 3 attempts (250ms × attempt backoff) if a transient failure leaves the record unsaved. If retries are exhausted, the item is **finalized as a failed message** (visible + retryable) rather than silently dropped — this matters because a fire-and-forget `queue()` call would otherwise lose the message entirely if the isolate was mid-restart.
+2. **`_prepItemWithRetry(item)`** — for text/multipart/reaction items, builds the message(s) once via `_buildOutgoingMessages()` (pure/synchronous — never re-run across retries, since re-running would desync the GUID from what a prior attempt already persisted), then calls `_persistOutgoingMessages()`; for attachments, calls `prepAttachments()`. Both are retried up to 3 attempts (250ms × attempt backoff) if a transient failure leaves the record unsaved. If retries are exhausted, the item is **finalized as a failed message** (visible + retryable) rather than silently dropped — this matters because a fire-and-forget `queue()` call would otherwise lose the message entirely if the isolate was mid-restart.
 3. Once prep succeeds, the resulting message(s) are wrapped back into queue entries and pushed onto the internal `Queue<_OutgoingEntry>`. `pendingChatGuids` (an `RxSet<String>`, used by UI to show/hide a "Cancel Outgoing Messages" control) gets the chat GUID added, then `_processNext()` is kicked off.
 
 **`_buildOutgoingMessages()`** — on macOS versions older than Big Sur, a long text message containing a URL is split into two separate `Message`s (each with its own tempGuid) to prevent server-side matching glitches. This is the only case that produces more than one message per send.
 
 **`_persistOutgoingMessages()`** saves each message to ObjectBox **with its tempGuid** via `chat.addMessage(message, clearNotificationsIfFromMe: ...)` — skipping the DB write if a retry finds the GUID already saved. This is intentional — the message appears in the UI immediately in a "sending" state before the server has confirmed anything. It also pushes the message into `MessagesSvc.addNewMessage()` (or, for a reaction, directly into the parent's `associatedMessages` via `addAssociatedMessageInternal`) and calls `ChatsSvc.updateChatLatestMessage()` so the chat tile subtitle updates immediately.
 
-`prepAttachment()` copies the file from its source path (or writes staged bytes) to the app's attachment directory, optimizes GIFs, loads image metadata, stages interactive-message media if applicable, then saves the message to the DB and pushes it into `MessagesSvc` the same way.
+`prepAttachments()` copies the file from its source path (or writes staged bytes) to the app's attachment directory, optimizes GIFs, loads image metadata, stages interactive-message media if applicable, then saves the message to the DB and pushes it into `MessagesSvc` the same way.
 
 **Key file:** `lib/services/backend/outgoing_message_handler.dart`
 
@@ -246,7 +248,7 @@ If the HTTP call fails, `_sendWithRace()`'s `onError` branch fires, which every 
 | tempGuid generation | `lib/database/io/message.dart` | `generateTempGuid()` → `"temp-XXXXXXXX"` |
 | Queue + prep + send | `lib/services/backend/outgoing_message_handler.dart` | `queue()`, `_ensureTempGuid()`, `_prepItemWithRetry()`, `_processNext()`, `_dispatchItem()` |
 | Build/split messages | `lib/services/backend/outgoing_message_handler.dart` | `_buildOutgoingMessages()` |
-| Save to DB (temp) | `lib/services/backend/outgoing_message_handler.dart` | `_persistOutgoingMessages()` / `prepAttachment()` → `chat.addMessage()` |
+| Save to DB (temp) | `lib/services/backend/outgoing_message_handler.dart` | `_persistOutgoingMessages()` / `prepAttachments()` → `chat.addMessage()` |
 | HTTP dispatch | `lib/services/backend/outgoing_message_handler.dart` | `sendMessage()`, `sendMultipart()`, `sendAttachment()` |
 | HTTP interface (isolate routing) | `lib/services/backend/interfaces/send_message_interface.dart` | `sendTextMessage()`, `sendTapback()`, `sendMultipartMessage()`, `sendAttachmentMessage()` |
 | HTTP isolate actions | `lib/services/backend/actions/send_message_actions.dart` | same names, run inside isolate |

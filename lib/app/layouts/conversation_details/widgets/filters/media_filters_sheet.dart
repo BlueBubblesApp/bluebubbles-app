@@ -134,7 +134,7 @@ void showAttachmentFiltersSheet(
                               },
                             ),
                           if (showParticipants)
-                            for (final handle in chat.handles)
+                            for (final handle in chat.people)
                               if (currentFilters.senderFilter.kind != MediaSenderFilterKind.participant ||
                                   currentFilters.senderFilter.participant?.address == handle.address)
                                 _ParticipantSenderChip(

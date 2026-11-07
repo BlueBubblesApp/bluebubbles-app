@@ -227,6 +227,7 @@ class MessageApi {
     String? selectedMessageGuid,
     int? partIndex,
     bool? ddScan,
+    bool hasAttachments = false,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -249,6 +250,63 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
+        // As with sendAttachment, the server answers once iMessage has sent the media
+        options: hasAttachments ? Options(receiveTimeout: _svc.dio.options.receiveTimeout! * 12) : null,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
+  /// Get the decoded iMessage app payload (url, session id, captions) of message [guid]. v2 servers only.
+  Future<Response> getAppMessage(String guid, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.get(
+        "${_svc.origin}/api/v2/message/app/$guid",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
+  /// Send an iMessage app balloon with the app's own payload [url], passed through untouched. v2 servers only.
+  /// [image] is the balloon's picture (e.g. the game board) as base64 JPEG, PNG or HEIC, at most 4 MB. [tempGuid] is
+  /// echoed on the reply and on the matching `new-message`, so the temp message can be swapped for the real one; the
+  /// server refuses a second request with the same [tempGuid] only while the first is still in flight, so it does
+  /// not catch a retry of a send that already went out. [liveLayout] marks the balloon live, so a recipient with the
+  /// app draws it rather than the template.
+  Future<Response> sendAppMessage(
+    String chatGuid, {
+    required String balloonBundleId,
+    required String url,
+    String? sessionId,
+    String? appName,
+    int? appId,
+    String? summary,
+    String? caption,
+    String? image,
+    String? tempGuid,
+    bool liveLayout = false,
+    CancelToken? cancelToken,
+  }) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.post(
+        "${_svc.origin}/api/v2/message/app",
+        queryParameters: _svc.buildQueryParams(),
+        data: {
+          "chatGuid": chatGuid,
+          "balloonBundleId": balloonBundleId,
+          "url": url,
+          "sessionId": sessionId,
+          "appName": appName,
+          "appId": appId,
+          "summary": summary,
+          "caption": caption,
+          "image": image,
+          "tempGuid": tempGuid,
+          "liveLayout": liveLayout,
+        },
+        cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
     });
@@ -263,6 +321,7 @@ class MessageApi {
     String selectedMessageGuid,
     String reaction, {
     int? partIndex,
+    String? emoji,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -275,6 +334,8 @@ class MessageApi {
           "selectedMessageGuid": selectedMessageGuid,
           "reaction": reaction,
           "partIndex": partIndex,
+          // Required with reaction "emoji" / "-emoji"
+          "emoji": ?emoji,
         },
         cancelToken: cancelToken,
       );

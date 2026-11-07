@@ -156,6 +156,19 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     super.dispose();
   }
 
+  Attachment _outgoingAttachment(PlatformFile file) => Attachment(
+        isOutgoing: true,
+        mimeType: mime(file.path) ?? mime(file.name),
+        uti: "public.jpg",
+        transferName: file.name,
+        totalBytes: file.size,
+        // Store the original source path in metadata so prepAttachments can copy it.
+        // For bytes-only files (clipboard/GIF keyboard), store bytes in the transient field
+        // so prepAttachments can write them to disk.
+        metadata: file.path != null ? {'source_path': file.path} : null,
+        bytes: file.path == null ? file.bytes : null,
+      );
+
   Future<void> send(SendData data) async {
     // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(data.attachments);
@@ -191,20 +204,35 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       }
     }
 
-    for (int i = 0; i < attachments.length; i++) {
-      final file = attachments[i];
-      final attachment = Attachment(
-        isOutgoing: true,
-        mimeType: mime(file.path) ?? mime(file.name),
-        uti: "public.jpg",
-        transferName: file.name,
-        totalBytes: file.size,
-        // Store the original source path in metadata so prepAttachment can copy it.
-        // For bytes-only files (clipboard/GIF keyboard), store bytes in the transient field
-        // so prepAttachment can write them to disk.
-        metadata: file.path != null ? {'source_path': file.path} : null,
-        bytes: file.path == null ? file.bytes : null,
+    // Several files go as one message, as in Messages, when the server can
+    final sendTogether = attachments.length > 1 &&
+        !data.isAudioMessage &&
+        attachments.every((f) => f.balloonBundleId == null) &&
+        SettingsSvc.canSendAttachmentsTogether;
+    if (sendTogether) {
+      final message = Message(
+        text: "",
+        dateCreated: DateTime.now(),
+        hasAttachments: true,
+        isFromMe: true,
+        handleId: 0,
+        threadOriginatorGuid: data.replyGuid,
+        threadOriginatorPart: "${data.replyPart ?? 0}:0:0",
+        expressiveSendStyleId: data.effectId,
       );
+      message.generateTempGuid();
+      await OutgoingMsgHandler.queue(
+        OutgoingMultiAttachment(
+          chat: controller.chat,
+          message: message,
+          attachments: attachments.map(_outgoingAttachment).toList(),
+        ),
+      );
+    }
+
+    for (int i = 0; !sendTogether && i < attachments.length; i++) {
+      final file = attachments[i];
+      final attachment = _outgoingAttachment(file);
 
       final message = Message(
         text: "",

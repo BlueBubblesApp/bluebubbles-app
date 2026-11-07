@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2065429213543838585",
-      "lastPropertyId": "23:7107471023966534193",
+      "lastPropertyId": "24:5276996574275850643",
       "name": "Attachment",
       "properties": [
         {
@@ -97,6 +97,11 @@
         {
           "id": "23:7107471023966534193",
           "name": "exif",
+          "type": 13
+        },
+        {
+          "id": "24:5276996574275850643",
+          "name": "stickerPlacement",
           "type": 13
         }
       ],
@@ -421,7 +426,7 @@
     },
     {
       "id": "13:4148278195232901830",
-      "lastPropertyId": "54:3645372489156688543",
+      "lastPropertyId": "55:4673117792989945365",
       "name": "Message",
       "properties": [
         {
@@ -522,7 +527,9 @@
         {
           "id": "28:8696985708980146227",
           "name": "associatedMessageGuid",
-          "type": 9
+          "indexId": "21:5185758702423746949",
+          "type": 9,
+          "flags": 8
         },
         {
           "id": "29:574575341112766208",
@@ -654,6 +661,11 @@
           "id": "54:3645372489156688543",
           "name": "metadata",
           "type": 13
+        },
+        {
+          "id": "55:4673117792989945365",
+          "name": "associatedMessageEmoji",
+          "type": 9
         }
       ],
       "relations": []
@@ -871,7 +883,7 @@
     }
   ],
   "lastEntityId": "19:6026421545462496199",
-  "lastIndexId": "20:7536809638379289421",
+  "lastIndexId": "21:5185758702423746949",
   "lastRelationId": "3:2372732884714308620",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

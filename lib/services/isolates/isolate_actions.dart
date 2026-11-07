@@ -48,6 +48,7 @@ class IsolateActons {
     // Prefs
     IsolateRequestType.saveReplyToMessageState: PrefsActions.saveReplyToMessageState,
     IsolateRequestType.loadReplyToMessageState: PrefsActions.loadReplyToMessageState,
+    IsolateRequestType.clearAllReplyToMessageStates: PrefsActions.clearAllReplyToMessageStates,
     IsolateRequestType.syncAllSettings: PrefsActions.syncAllSettings,
     IsolateRequestType.syncSettings: PrefsActions.syncSettings,
 
@@ -124,6 +125,8 @@ class IsolateActons {
     IsolateRequestType.sendTapback: SendMessageActions.sendTapback,
     IsolateRequestType.sendMultipartMessage: SendMessageActions.sendMultipartMessage,
     IsolateRequestType.sendAttachmentMessage: SendMessageActions.sendAttachmentMessage,
+    IsolateRequestType.sendMultiAttachmentMessage: SendMessageActions.sendMultiAttachmentMessage,
+    IsolateRequestType.sendAppMessage: SendMessageActions.sendAppMessage,
 
     // CustomGroup
     IsolateRequestType.getAllCustomGroups: CustomGroupActions.getAllIds,

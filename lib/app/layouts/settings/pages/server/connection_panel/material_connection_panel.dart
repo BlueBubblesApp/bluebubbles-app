@@ -154,7 +154,7 @@ class _MaterialConnectionPanelState extends CustomState<MaterialConnectionPanel,
                                   ),
                                 )
                               : Icon(Icons.refresh, color: context.theme.colorScheme.onSurface),
-                          onPressed: isLoading ? null : () => controller.getServerStats(),
+                          onPressed: isLoading ? null : () => controller.refreshServerConnectionInfo(),
                         ),
                       );
                     }),

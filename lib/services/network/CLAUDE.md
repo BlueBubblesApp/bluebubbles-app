@@ -7,11 +7,11 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 **Sub-services (accessed via `HttpSvc.<sub-service>.<method>()`):**
 | Property | Class | File | Key Methods |
 |---|---|---|---|
-| `server` | `ServerApi` | `api/server_api.dart` | `ping`, `lockMac`, `restartImessage`, `serverInfo`, `softRestart`, `hardRestart`, `checkUpdate`, `installUpdate`, `getTotalStats`, `getMediaStats`, `getLogs`, `landingPage` |
+| `server` | `ServerApi` | `api/server_api.dart` | `ping`, `subscription`, `lockMac`, `restartImessage`, `serverInfo`, `softRestart`, `hardRestart`, `checkUpdate`, `installUpdate`, `getTotalStats`, `getMediaStats`, `getLogs`, `landingPage` |
 | `fcm` | `FcmApi` | `api/fcm_api.dart` | `addDevice`, `getServiceAccount` |
-| `attachment` | `AttachmentApi` | `api/attachment_api.dart` | `fetch`, `download`, `downloadLivePhoto`, `downloadBlurhash`, `getCount` |
-| `chat` | `ChatApi` | `api/chat_api.dart` | `query`, `getMessages`, `modifyParticipant`, `leave`, `setDisplayName`, `create`, `getCount`, `fetchOne`, `markRead`, `markUnread`, `getIcon`, `setIcon`, `removeIcon`, `delete`, `deleteMessage` |
-| `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendMultipart`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
+| `attachment` | `AttachmentApi` | `api/attachment_api.dart` | `fetch`, `download`, `downloadLivePhoto`, `downloadBlurhash`, `upload`, `getCount` |
+| `chat` | `ChatApi` | `api/chat_api.dart` | `query`, `getMessages`, `modifyParticipant`, `leave`, `setDisplayName`, `create`, `getCount`, `fetchOne`, `markRead`, `markUnread`, `shouldShareContact`, `shareContact`, `getIcon`, `setIcon`, `removeIcon`, `delete`, `deleteMessage` |
+| `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendMultipart`, `getAppMessage`, `sendAppMessage`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
 | `handle` | `HandleApi` | `api/handle_api.dart` | `handleCount`, `handles`, `handle`, `handleFocusState`, `handleiMessageState`, `handleFaceTimeState` |
 | `contact` | `ContactApi` | `api/contact_api.dart` | `fetchAll`, `query`, `create` |
 | `backup` | `BackupApi` | `api/backup_api.dart` | `getTheme`, `setTheme`, `deleteTheme`, `getSettings`, `setSettings`, `deleteSettings` |
@@ -63,11 +63,13 @@ socket_io_client connection to the BlueBubbles server. Don't create additional
   rebuild. On Android, with no network at all the socket is closed and reports "No network
   connection"; `startSocket()` refuses to run until a network event arrives. Desktop ignores
   `none`: Windows reports it whenever NCSI finds no internet, even with the server on the LAN.
-- The server's engine.io heartbeat takes up to ~3 min to notice a dead connection
-  (pingInterval 60s + pingTimeout 120s) and can't change until the server rewrite, so
-  the client runs its own over the socket: `get-fcm-client` with an ack, every 30s,
-  5s to answer, a miss retries immediately, rebuild after 2 misses. `checkConnection()`
-  sends one now — called on desktop resume and (debounced) on connectivity changes.
+- The 1.x server's engine.io heartbeat takes up to ~3 min to notice a dead connection
+  (pingInterval 60s + pingTimeout 120s); v2 uses engine.io's defaults (25s + 20s, ~45s).
+  Either way the client runs its own over the socket, on every server version:
+  `get-fcm-client` with an ack, every 30s, 5s to answer, a miss retries immediately,
+  rebuild after 2 misses. v2 acks it with a fixed pong (the only client-sent event it
+  answers). `checkConnection()` sends one now — called on desktop resume and (debounced)
+  on connectivity changes.
   There's no separate HTTP internet probe; it flagged working sockets on slow replies.
   Never use `get-server-config`: the server deletes the password from its live config.
 - The socket follows the origin it dials (`_dialedOrigin`): anything that changes the

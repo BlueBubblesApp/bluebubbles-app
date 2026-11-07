@@ -1,9 +1,33 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 
 class MessageActions {
+  /// Marks the turns of [turn]'s iMessage app session that it replaced as [AppSessionTypes.SUPERSEDED], linked to the
+  /// session's first message (which links to itself), as Messages does once a newer turn arrives. Messages rewrites
+  /// those rows in place, so sync, which only fetches new rows, would never see it. Which rows count is
+  /// [AppSessionTypes.isReplacedBy], shared with the on-screen copy in MessagesService. Runs inside a write transaction.
+  /// Returns the rows it rewrote, so a caller holding its own copies of them can match.
+  static List<Message> retireEarlierTurns(Message turn) {
+    if (!AppSessionTypes.replacesEarlierTurns(turn)) return const [];
+    final first = turn.associatedMessageGuid!;
+    final query = Database.messages
+        .query((Message_.guid.equals(first) | Message_.associatedMessageGuid.equals(first)) &
+            Message_.guid.notEquals(turn.guid!) &
+            Message_.dateCreated.lessThan(turn.dateCreated!.millisecondsSinceEpoch))
+        .build();
+    final earlier = query.find().where((m) => AppSessionTypes.isReplacedBy(m, turn)).toList();
+    query.close();
+    for (final message in earlier) {
+      message.associatedMessageType = AppSessionTypes.SUPERSEDED;
+      message.associatedMessageGuid = first;
+    }
+    if (earlier.isNotEmpty) Database.messages.putMany(earlier);
+    return earlier;
+  }
+
   static Future<List<Message>?> getMessages() async {
     // Fetch a message with a limit of 1 using ObjectBox
     final oneDayAgo = DateTime.now().subtract(const Duration(days: 1));
@@ -59,9 +83,19 @@ class MessageActions {
           inputNewMessage.didNotifyRecipient ? inputNewMessage.didNotifyRecipient : existing.didNotifyRecipient;
       existing.error = inputNewMessage.error;
       existing.errorMessage = inputNewMessage.errorMessage;
+      // An iMessage app turn is re-linked when a newer turn replaces it (type 2 to 3, or a first turn to itself), and
+      // never back: a stale copy that still says type 2 leaves a replaced turn as it is
+      final type = AppSessionTypes.mergedType(existing.balloonBundleId ?? inputNewMessage.balloonBundleId,
+          existing.associatedMessageType, inputNewMessage.associatedMessageType);
+      if (type == inputNewMessage.associatedMessageType) {
+        existing.associatedMessageGuid = inputNewMessage.associatedMessageGuid ?? existing.associatedMessageGuid;
+      }
+      existing.associatedMessageType = type;
 
       try {
         messageBox.put(existing, mode: PutMode.update);
+        // Our own turn is saved here, when its temp GUID is swapped for the real one
+        retireEarlierTurns(existing);
       } catch (ex) {
         Logger.warn(
             'Failed to replace message! This is likely due to a unique constraint being violated: ${ex.toString()}');

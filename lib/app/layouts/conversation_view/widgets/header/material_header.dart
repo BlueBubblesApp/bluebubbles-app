@@ -267,7 +267,7 @@ class _ChatIconAndTitleState extends CustomState<_ChatIconAndTitle, void, Conver
                       (!controller.chat.getTitle().isPhoneNumber && !controller.chat.getTitle().isEmail)))
                 Text(
                   controller.chat.isGroup
-                      ? "${controller.chat.handles.length} recipients"
+                      ? "${controller.chat.people.length} recipients"
                       : controller.chat.handles[0].address,
                   style: context.theme.textTheme.labelLarge!.apply(color: context.theme.colorScheme.outline),
                   maxLines: 1,

@@ -12,7 +12,7 @@ Shared utilities that don't belong to a single message type. The most important 
 | `bubble_effects.dart` | Send-effect animation overlays (balloon, confetti, fireworks, etc.) |
 | `tail_clipper.dart` | `ClipPath` painter for rounded bubble tail shape (Material only) |
 | `slide_to_reply.dart` | Small swipe-left indicator chevron |
-| `swipe_to_reply_wrapper.dart` | `GestureDetector` wrapper that triggers reply on swipe-right |
+| `swipe_to_reply_wrapper.dart` | `SwipeToReplyWrapper` (gesture → reply on swipe) and `SwipeToReplyRow` (self-contained per-attachment swipe row with its own chevron, used by the collage) |
 | `select_checkbox.dart` | Selection-mode checkbox (left side for received, right for sent) |
 | `message_edit_field.dart` | Inline edit `TextField` with confirm / cancel actions |
 
@@ -24,10 +24,13 @@ if (message.hasApplePayloadData || message.isInteractive)
 else if (messagePart.text != null)
   → TextBubble                 // plain / attributed text
 else if (messagePart.attachments.isNotEmpty)
-  → AttachmentHolder           // image, video, audio, sticker, file
+  → CollectionGroup*           // isMediaCollection → collage/stack/grid via resolveMediaCollectionLayout
+  → AttachmentHolder           // otherwise: image, video, audio, file
 else
   → SizedBox.shrink()          // empty part (renders nothing)
 ```
+
+Media collections: `../attachment/collections/CLAUDE.md`.
 
 Called once per `MessagePart` inside the `messageParts.mapIndexed` loop in `MessageHolder`.
 

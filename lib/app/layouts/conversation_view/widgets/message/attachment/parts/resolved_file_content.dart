@@ -1,5 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/audio_player.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/collections/media_collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/contact_card.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/image_viewer.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/other_file.dart';
@@ -27,7 +28,7 @@ class ResolvedFileContent extends StatelessWidget {
     required this.cvController,
     this.isInReply = false,
     this.forceAllCornersRounded = false,
-    this.galleryAttachments,
+    this.fill = false,
   });
 
   final PlatformFile file;
@@ -37,43 +38,62 @@ class ResolvedFileContent extends StatelessWidget {
   final ConversationViewController? cvController;
   final bool isInReply;
   final bool forceAllCornersRounded;
-  final List<Attachment>? galleryAttachments;
+
+  /// Cover-fill a parent-fixed frame (collection cards).
+  final bool fill;
+
+  /// Bubble-style media radius, or zero when [fill] (parent owns clip/shadow).
+  BorderRadius _mediaBorderRadius(Message message) {
+    if (fill) return BorderRadius.zero;
+    if (isiOS) {
+      return BorderRadius.only(
+        topLeft: const Radius.circular(20.0),
+        topRight: const Radius.circular(20.0),
+        bottomLeft: forceAllCornersRounded
+            ? const Radius.circular(20.0)
+            : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+        bottomRight: forceAllCornersRounded
+            ? const Radius.circular(20.0)
+            : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
+      );
+    }
+    return const BorderRadius.all(Radius.circular(5.0));
+  }
 
   @override
   Widget build(BuildContext context) {
     final message = MessageStateScope.messageOf(context);
     final attachment = AttachmentStateScope.attachmentOf(context);
     final currentChat = ChatStateScope.maybeChatOf(context);
+    final mediaRadius = _mediaBorderRadius(message);
     final tailPadding = EdgeInsets.only(
       left: message.isFromMe! ? 0 : 10,
       right: message.isFromMe! ? 10 : 0,
     );
     if (attachment.mimeStart == "image" && !SettingsSvc.settings.highPerfMode.value) {
+      // Inside a collection card, fullscreen pages through the collection and offers its gallery.
+      final collection = MediaCollectionScope.maybeOf(context);
+      final image = ImageViewer(
+        file: file,
+        attachment: attachment,
+        isFromMe: message.isFromMe!,
+        isInReply: isInReply,
+        controller: cvController,
+        fill: fill,
+      );
       return OpenContainer(
         tappable: false,
         openColor: Colors.black,
         closedColor: Colors.transparent,
         closedElevation: 0,
-        closedShape: isiOS
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20.0),
-                  topRight: const Radius.circular(20.0),
-                  bottomLeft: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                  bottomRight: forceAllCornersRounded
-                      ? const Radius.circular(20.0)
-                      : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                ),
-              )
-            : const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(5.0))),
+        closedShape: RoundedRectangleBorder(borderRadius: mediaRadius),
         useRootNavigator: false,
         openBuilder: (context, _) => ConversationFullscreenHolder(
           currentChat: currentChat,
           attachment: attachment,
           showInteractions: true,
-          galleryAttachments: galleryAttachments,
+          galleryAttachments: collection?.media,
+          onOpenCollectionGallery: collection?.openGallery,
         ),
         closedBuilder: (context, openContainer) => GestureDetector(
           onTap: () {
@@ -82,49 +102,30 @@ class ResolvedFileContent extends StatelessWidget {
             ctrl.subjectFocusNode.unfocus();
             openContainer();
           },
-          child: Container(
-            color: Colors.transparent,
-            child: ImageViewer(
-              file: file,
-              attachment: attachment,
-              isFromMe: message.isFromMe!,
-              isInReply: isInReply,
-              controller: cvController,
-            ),
-          ),
+          // ImageViewer expands itself in fill mode; the transparent box keeps the tap target opaque.
+          child: Container(color: Colors.transparent, child: image),
         ),
       );
     }
 
     if (attachment.mimeStart == "video" && !SettingsSvc.settings.highPerfMode.value) {
-      return ClipRRect(
-        borderRadius: isiOS
-            ? BorderRadius.only(
-                topLeft: const Radius.circular(20.0),
-                topRight: const Radius.circular(20.0),
-                bottomLeft: forceAllCornersRounded
-                    ? const Radius.circular(20.0)
-                    : (message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-                bottomRight: forceAllCornersRounded
-                    ? const Radius.circular(20.0)
-                    : (!message.isFromMe! ? const Radius.circular(20.0) : Radius.zero),
-              )
-            : const BorderRadius.all(Radius.circular(5.0)),
-        child: VideoPlayer(
-          attachment: attachment,
-          file: file,
-          controller: cvController,
-          isFromMe: message.isFromMe!,
-          galleryAttachments: galleryAttachments,
-        ),
+      final video = VideoPlayer(
+        attachment: attachment,
+        file: file,
+        controller: cvController,
+        isFromMe: message.isFromMe!,
+        fill: fill,
       );
+      // VideoPlayer expands itself in fill mode.
+      return ClipRRect(borderRadius: mediaRadius, child: video);
     }
 
     if (attachment.mimeStart == "audio") {
       return Padding(
         padding: showTail ? tailPadding : EdgeInsets.zero,
         child: AudioPlayer(
-          transcript: audioTranscript,
+          // The quoted copy in a reply bubble is height-capped; the transcript would overflow it
+          transcript: isInReply ? null : audioTranscript,
           attachment: attachment,
           file: file,
           controller: cvController,

@@ -9,7 +9,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:version/version.dart';
 
 enum IMessageStatsSource { server, local }
 
@@ -50,8 +49,7 @@ class ServerManagementPanelController extends StatefulController {
   @override
   void onReady() {
     super.onReady();
-    refreshServerStats();
-    refreshLocalStats();
+    refreshServerConnectionInfo();
   }
 
   Future<void> setStatsSource(IMessageStatsSource source) async {
@@ -90,8 +88,9 @@ class ServerManagementPanelController extends StatefulController {
     }
   }
 
-  Future<void> getServerStats() async {
-    await refreshServerStats();
+  /// Stats load only when opened: the server's totals scan its whole database, holding up its other requests.
+  Future<void> loadSelectedStatsIfEmpty() async {
+    if (getActiveStatsMap().isEmpty && !isActiveStatsLoading()) await refreshSelectedStats();
   }
 
   Future<void> refreshServerConnectionInfo() async {
@@ -109,19 +108,8 @@ class ServerManagementPanelController extends StatefulController {
     }
 
     await HttpSvc.server.info().then((response) {
-      final String macOSVersionStr = response.data['data']['os_version'] ?? '0.0';
-      final String serverVersionStr = response.data['data']['server_version'] ?? '0.0.0';
-      Version version = Version.parse(serverVersionStr);
-      final osParts = macOSVersionStr.split('.');
-      serverDetails.value = ServerDetails(
-        macOSVersion: int.tryParse(osParts.isNotEmpty ? osParts[0] : '0') ?? 0,
-        macOSMinorVersion: int.tryParse(osParts.length > 1 ? osParts[1] : '0') ?? 0,
-        serverVersion: serverVersionStr,
-        serverVersionCode: version.major * 100 + version.minor * 21 + version.patch,
-        privateApiEnabled: response.data['data']['private_api'] ?? false,
-        iCloudAccount: response.data['data']['detected_icloud'],
-        proxyService: response.data['data']['proxy_service'],
-      );
+      serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
+      unawaited(SettingsSvc.updateServerDetails(serverDetails.value));
       helperBundleStatus.value = response.data['data']['helper_connected'] ?? false;
       timeSync.value = response.data['data']['macos_time_sync'];
       hasCheckedStats.value = true;
@@ -150,11 +138,9 @@ class ServerManagementPanelController extends StatefulController {
       serverStats
         ..clear()
         ..addAll(merged);
-      await refreshServerConnectionInfo();
       return true;
     } catch (_) {
       serverStatsErrorMessage.value = "Could not retrieve statistics from your server";
-      await refreshServerConnectionInfo();
       return false;
     } finally {
       isLoadingServerStats.value = false;

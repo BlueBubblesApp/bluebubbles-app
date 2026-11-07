@@ -32,13 +32,20 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   late MessageState _ms;
   MessageState get controller => _ms;
 
-  MessagePart get part => controller.parts[widget.part];
+  /// Resolves [widget.part] as a message-part id. Null when the part is missing —
+  /// never substitutes another part.
+  MessagePart? get part => controller.partById(widget.part);
   Message get message => controller.message;
 
   @override
   void initState() {
     super.initState();
     _ms = MessageStateScope.readStateOnce(context);
+  }
+
+  void _openReplyThread(BuildContext context, String chatGuid, MessagePart? part) {
+    if (part == null) return;
+    showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
   }
 
   Color getBubbleColor() {
@@ -56,13 +63,32 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
     return bubbleColor;
   }
 
+  /// Material preview text for [part], redacted the same way as the composer's reply preview (ReplyHolder).
+  /// Reads redaction settings, so call it inside an Obx.
+  String _previewText(MessagePart? part) {
+    if (part == null) return "Failed to parse thread parts!";
+    // A Genmoji sits inside the text, so the part reads as that text
+    final inline = part.hasInlineAttachments;
+    final previewMessage = Message(
+      text: inline ? withoutInlineAttachments(part.text!) : part.text,
+      subject: part.subject,
+      hasAttachments: !inline && part.attachments.isNotEmpty,
+    )
+      ..dbAttachments.addAll(inline ? const <Attachment>[] : part.attachments)
+      ..mergeWith(message);
+    final redacted = SettingsSvc.settings.redactedMode.value;
+    return previewMessage.getNotificationText(
+      hideContactInfo: redacted && SettingsSvc.settings.hideContactInfo.value,
+      hideMessageContent: redacted && SettingsSvc.settings.hideMessageContent.value,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final chatGuid = widget.cvController.chat.guid;
     final hasBackground = ChatStateScope.maybeOf(context)?.hasCustomWallpaper ?? false;
+    final resolvedPart = part;
     if (!iOS) {
-      final messageText = controller.text.value;
-      String text = Message(text: messageText, subject: controller.subject.value).getNotificationText();
       return MouseRegion(
         cursor: MouseCursor.defer,
         child: ConstrainedBox(
@@ -71,9 +97,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
             minHeight: 30,
           ),
           child: GestureDetector(
-            onTap: () {
-              showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
-            },
+            onTap: () => _openReplyThread(context, chatGuid, resolvedPart),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
               decoration: hasBackground
@@ -82,23 +106,24 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                       borderRadius: BorderRadius.circular(12),
                     )
                   : null,
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                    text: controller.senderDisplayName,
-                    style: context.textTheme.bodyMedium!
-                        .copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
-                  ),
-                  const TextSpan(text: "\n"),
-                  TextSpan(
-                    text: text,
-                    style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
-                  ),
-                ]),
-                style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onSurface),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Obx: redacted-mode toggles and sender-name changes update the preview in place.
+              child: Obx(() => Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: controller.senderDisplayName,
+                        style: context.textTheme.bodyMedium!
+                            .copyWith(fontWeight: FontWeight.w400, color: context.theme.colorScheme.outline),
+                      ),
+                      const TextSpan(text: "\n"),
+                      TextSpan(
+                        text: _previewText(resolvedPart),
+                        style: context.textTheme.bodyMedium!.apply(fontSizeFactor: 1.15),
+                      ),
+                    ]),
+                    style: context.textTheme.labelLarge!.copyWith(color: context.theme.colorScheme.onSurface),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )),
             ),
           ),
         ),
@@ -118,9 +143,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
             child: MouseRegion(
               cursor: MouseCursor.defer,
               child: GestureDetector(
-                onTap: () {
-                  showReplyThread(context, message, part, MessagesSvc(chatGuid), widget.cvController);
-                },
+                onTap: () => _openReplyThread(context, chatGuid, resolvedPart),
                 behavior: HitTestBehavior.opaque,
                 child: IgnorePointer(
                   child: Row(
@@ -141,7 +164,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                           connectUpper: false,
                           connectLower: false,
                         ),
-                        child: controller.parts.length <= widget.part
+                        child: resolvedPart == null
                             ? Container(
                                 color: hasBackground
                                     ? context.theme.colorScheme.errorContainer.withValues(alpha: 0.4)
@@ -174,11 +197,11 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                     constraints: const BoxConstraints(maxHeight: 100),
                                     child: ReplyScope(
                                       child: InteractiveHolder(
-                                        message: part,
+                                        message: resolvedPart,
                                       ),
                                     ),
                                   )
-                                : part.attachments.isEmpty
+                                : resolvedPart.attachments.isEmpty || resolvedPart.hasInlineAttachments
                                     ? Container(
                                         color: hasBackground
                                             ? (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor())
@@ -205,7 +228,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                             child: FutureBuilder<List<InlineSpan>>(
                                                 future: buildEnrichedMessageSpans(
                                                   context,
-                                                  part,
+                                                  resolvedPart,
                                                   message,
                                                   colorOverride: (message.isFromMe!
                                                           ? context.theme.colorScheme.primary
@@ -214,7 +237,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                                 ),
                                                 initialData: buildMessageSpans(
                                                   context,
-                                                  part,
+                                                  resolvedPart,
                                                   message,
                                                   colorOverride: (message.isFromMe!
                                                           ? context.theme.colorScheme.primary
@@ -238,7 +261,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                         constraints: const BoxConstraints(maxHeight: 100),
                                         child: ReplyScope(
                                           child: AttachmentHolder(
-                                            message: part,
+                                            message: resolvedPart,
                                           ),
                                         ),
                                       ),

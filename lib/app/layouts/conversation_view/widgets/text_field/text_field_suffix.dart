@@ -109,7 +109,8 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
 
         return Obx(() {
           // Only reactive values in Obx scope - controller is guaranteed non-null here
-          final hasAttachments = widget.controller!.pickedAttachments.isNotEmpty;
+          final hasAttachments =
+              widget.controller!.pickedAttachments.isNotEmpty || widget.controller!.pendingGame.value != null;
           final showRecording = widget.controller!.showRecording.value && widget.recorderController != null;
           final canSend = alwaysShowSend || hasText || hasSubject || hasAttachments;
 

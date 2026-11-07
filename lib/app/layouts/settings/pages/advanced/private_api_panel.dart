@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:version/version.dart';
 
 class PrivateAPIPanelController extends StatefulController {
   final Rx<ServerDetails> serverDetails = Rx(const ServerDetails.empty());
@@ -19,14 +18,7 @@ class PrivateAPIPanelController extends StatefulController {
   void onReady() {
     super.onReady();
     HttpSvc.server.info().then((response) {
-      final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
-      Version version = Version.parse(serverVersionStr);
-      serverDetails.value = ServerDetails(
-        macOSVersion: SettingsSvc.serverDetails.macOSVersion,
-        macOSMinorVersion: SettingsSvc.serverDetails.macOSMinorVersion,
-        serverVersion: serverVersionStr,
-        serverVersionCode: version.major * 100 + version.minor * 21 + version.patch,
-      );
+      serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
     });
   }
 }
@@ -54,14 +46,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
         SettingsSvc.settings.privateAPISend.value = true;
         await SettingsSvc.settings.saveManyAsync(['enablePrivateAPI', 'privateAPISend']);
         HttpSvc.server.info().then((response) {
-          final String serverVersionStr = response.data['data']['server_version'] ?? "0.0.1";
-          Version version = Version.parse(serverVersionStr);
-          controller.serverDetails.value = ServerDetails(
-            macOSVersion: SettingsSvc.serverDetails.macOSVersion,
-            macOSMinorVersion: SettingsSvc.serverDetails.macOSMinorVersion,
-            serverVersion: serverVersionStr,
-            serverVersionCode: version.major * 100 + version.minor * 21 + version.patch,
-          );
+          controller.serverDetails.value = ServerDetails.fromServerInfo(response.data['data']);
         });
       }
     });

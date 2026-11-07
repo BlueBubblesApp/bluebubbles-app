@@ -32,11 +32,12 @@ class ChatCreatorUtils {
   }
 
   static bool chatMatchesSelectedContacts(Chat chat, List<String> selectedAddresses) {
-    if (chat.handles.length != selectedAddresses.length) return false;
+    final people = chat.people;
+    if (people.length != selectedAddresses.length) return false;
 
     int matches = 0;
     for (final address in selectedAddresses) {
-      for (final participant in chat.handles) {
+      for (final participant in people) {
         if (addressesMatch(address, participant.address)) {
           matches += 1;
           break;

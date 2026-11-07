@@ -1,5 +1,6 @@
-/// Sentinel participant id for the local user. Real participants use `Handle.id`,
-/// which ObjectBox always assigns > 0.
+/// Sentinel participant id for the local user. Real participants use one of
+/// their `Handle.id`s, which ObjectBox always assigns > 0: a person can have an
+/// iMessage and an SMS handle, and `ChatStatsQueries` keys both under one id.
 const int kMeParticipantId = -1;
 
 /// Sentinel for an incoming message with no resolvable sender handle (see
@@ -462,7 +463,7 @@ class ContentStats {
 
 /// A group-membership/name/photo event — `itemType != 0`, deliberately
 /// excluded from every other metric. `senderId` is `kMeParticipantId`,
-/// `kUnattributedParticipantId`, or a `Handle.id`.
+/// `kUnattributedParticipantId`, or a participant id.
 class GroupEventRecord {
   final int itemType; // 1 = participant add/remove, 2 = name change, 3 = photo change
   final int groupActionType;

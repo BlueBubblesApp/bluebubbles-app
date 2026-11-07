@@ -21,12 +21,14 @@ Barrel export: `models/models.dart`
 | `handle_sync_page.dart` | Pagination cursor for handle sync requests |
 | `location_attachment_data.dart` | Parsed location payload from a location message |
 | `message_receipt_info.dart` | Delivered/read receipt metadata for a message |
-| `message_reply_context.dart` | Context for a reply thread entry (parent GUID, part index) |
+| `message_reply_context.dart` | Context for a reply thread entry (parent message, part index, optional attachment GUID) |
 | `message_save_result.dart` | Result returned by message save action (id, status) |
 | `message_update_event.dart` | Carries field diffs for a message update notification |
 | `parsed_log_entry.dart` | Parsed structure of a single log file line |
 | `server_details.dart` | Server version, OS, build info returned from `/server/info` |
 | `server_update_info.dart` | Server update availability info |
+| `shared_name_and_photo.dart` | A name and photo a participant shared through Messages' name and photo sharing |
+| `sticker_placement.dart` | Typed `stickerPlacement` of a placed sticker's attachment (position, scale, rotation) |
 | `storage_analysis.dart` | Storage analyzer DTOs — segments, results, age filter, progress state |
 | `text_entity_match.dart` | A matched text entity (phone, email, URL) extracted by ML Kit |
 | `theme_pair.dart` | Light + dark `ThemeData` pair for a named theme |

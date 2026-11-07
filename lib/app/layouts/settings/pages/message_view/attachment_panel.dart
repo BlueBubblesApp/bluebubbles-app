@@ -14,6 +14,30 @@ class AttachmentPanel extends StatefulWidget {
 }
 
 class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
+  /// One multi-attachment layout picker row (iOS shows the title as its own tile, like the other pickers here).
+  List<Widget> _collectionLayoutOption({
+    required String title,
+    required Rx<MediaCollectionLayout> setting,
+    required String settingKey,
+  }) {
+    return [
+      if (iOS) SettingsTile(title: title),
+      Obx(() => SettingsOptions<MediaCollectionLayout>(
+            initial: setting.value,
+            onChanged: (val) async {
+              if (val == null) return;
+              setting.value = val;
+              await SettingsSvc.settings.saveOneAsync(settingKey);
+            },
+            options: MediaCollectionLayout.values,
+            textProcessing: (val) => val.label,
+            capitalize: false,
+            title: title,
+            secondaryColor: headerColor,
+          )),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return SettingsScaffold(
@@ -199,6 +223,30 @@ class _AttachmentPanelState extends State<AttachmentPanel> with ThemeHelpers {
                             backgroundColor: tileColor,
                             isThreeLine: true,
                           )),
+                  ],
+                ),
+                SettingsHeader(
+                    iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Multi-Attachment Layout"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: SettingsSubtitle(
+                        subtitle: "Choose how multiple images and videos are arranged in conversations",
+                      ),
+                    ),
+                    ..._collectionLayoutOption(
+                      title: MediaCollectionLayout.smallRangeLabel,
+                      setting: SettingsSvc.settings.mediaCollectionLayoutSmall,
+                      settingKey: 'mediaCollectionLayoutSmall',
+                    ),
+                    const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                    ..._collectionLayoutOption(
+                      title: MediaCollectionLayout.largeRangeLabel,
+                      setting: SettingsSvc.settings.mediaCollectionLayoutLarge,
+                      settingKey: 'mediaCollectionLayoutLarge',
+                    ),
                   ],
                 ),
                 SettingsHeader(

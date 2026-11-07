@@ -76,7 +76,7 @@ class MessagePartWrapper extends StatelessWidget {
           messageState: controller,
           part: part.part,
           globalKey: globalKey,
-          showTail: !part.isPkPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1,
+          showTail: !part.isPkPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part),
           child: MessagePopupHolder(
             key: globalKey,
             controller: controller,
@@ -187,12 +187,9 @@ class _MessageContentBubble extends StatelessWidget {
     return ClipPath(
       clipper: TailClipper(
         isFromMe: message.isFromMe!,
-        showTail: !part.isPkPass && message.showTail(newerMessage) && part.part == controller.parts.length - 1,
-        connectLower: SettingsSvc.settings.skin.value == Skins.iOS
-            ? false
-            : (part.part != 0 && part.part != controller.parts.length - 1) ||
-                (part.part == 0 && controller.parts.length > 1),
-        connectUpper: SettingsSvc.settings.skin.value == Skins.iOS ? false : part.part != 0,
+        showTail: !part.isPkPass && message.showTail(newerMessage) && controller.isTrailingMessagePart(part),
+        connectLower: BubbleConnect.lower(controller, part),
+        connectUpper: BubbleConnect.upper(controller, part),
       ),
       child: Stack(
         alignment: Alignment.centerRight,
@@ -201,7 +198,7 @@ class _MessageContentBubble extends StatelessWidget {
               ? InteractiveHolder(
                   message: part,
                 )
-              : part.attachments.isEmpty && (part.text != null || part.subject != null)
+              : (part.attachments.isEmpty || part.hasInlineAttachments) && (part.text != null || part.subject != null)
                   ? TextBubble(
                       message: part,
                     )

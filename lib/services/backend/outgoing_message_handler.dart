@@ -46,7 +46,7 @@ class _OutgoingEntry {
 ///    so messages always arrive in the order the user sent them.
 ///
 /// 2. **Pre-send preparation** — `_buildOutgoingMessages` / `_persistOutgoingMessages`
-///    / `prepAttachment` write the temp message/attachment to the DB and the
+///    / `prepAttachments` write the temp message/attachment to the DB and the
 ///    MessagesService *before* the HTTP call is made, so the UI shows the
 ///    outgoing bubble immediately.
 ///
@@ -91,23 +91,25 @@ class OutgoingMessageHandler {
 
     final chatGuid = data['chatGuid'] as String?;
     final messageGuid = data['messageGuid'] as String?;
+    // A single-attachment send shares the message's GUID; a multi-attachment one names each attachment
+    final attachmentGuid = data['attachmentGuid'] as String? ?? messageGuid;
     final rawProgress = data['progress'];
     final progress = rawProgress is num ? rawProgress.toDouble().clamp(0.0, 1.0) : null;
 
-    if (chatGuid == null || messageGuid == null || progress == null) {
+    if (chatGuid == null || messageGuid == null || attachmentGuid == null || progress == null) {
       Logger.warn('Ignoring malformed attachment upload progress event: $data', tag: _tag);
       return;
     }
 
-    final inFlight = attachmentProgress.firstWhereOrNull((entry) => entry.guid == messageGuid);
+    final inFlight = attachmentProgress.firstWhereOrNull((entry) => entry.guid == attachmentGuid);
     if (inFlight != null) {
       inFlight.progress.value = progress;
     } else {
-      attachmentProgress.add(AttachmentUploadProgress(messageGuid, progress.obs));
+      attachmentProgress.add(AttachmentUploadProgress(attachmentGuid, progress.obs));
     }
 
     if (Get.isRegistered<MessagesService>(tag: chatGuid)) {
-      MessagesSvc(chatGuid).notifyAttachmentUploadProgress(messageGuid, messageGuid, progress);
+      MessagesSvc(chatGuid).notifyAttachmentUploadProgress(messageGuid, attachmentGuid, progress);
     }
   }
 
@@ -190,6 +192,14 @@ class OutgoingMessageHandler {
     // centralized rather than left to convention).
     _ensureTempGuid(item);
 
+    // Refused before prep writes a temp message, so it can't become a failed bubble whose retry fails the same way
+    final unsendable = item.reaction == null ? null : _unsendableTapbackReason(item.reaction!, item.message);
+    if (unsendable != null) {
+      Logger.warn("Not sending tapback: $unsendable", tag: _tag);
+      item.completer?.completeError(StateError(unsendable));
+      return;
+    }
+
     // Prep the item (writes temp messages / copies attachment files to disk),
     // retrying a transient failure and surfacing a terminal one as a failed
     // message so it is never silently dropped. See [_prepItemWithRetry].
@@ -204,7 +214,7 @@ class OutgoingMessageHandler {
         _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
       }
     } else {
-      // Attachment: prepAttachment already saved it; keep the original item.
+      // Attachment: prepAttachments already saved it; keep the original item.
       _queue.add(_OutgoingEntry(item));
     }
 
@@ -222,6 +232,10 @@ class OutgoingMessageHandler {
   void _ensureTempGuid(OutgoingQueueItem item) {
     if (item.message.guid == null) item.message.generateTempGuid();
     if (item is OutgoingAttachment) item.attachment.guid = item.message.guid;
+    if (item is OutgoingAppMessage) item.attachment?.guid = item.message.guid;
+    if (item is OutgoingMultiAttachment) {
+      item.attachments.forEachIndexed((i, a) => a.guid = OutgoingMultiAttachment.tempGuidFor(item.message.guid!, i));
+    }
   }
 
   /// Prep [item] with a bounded retry on transient failure.
@@ -244,7 +258,8 @@ class OutgoingMessageHandler {
   /// `(ok: false, ...)` once a terminal failure has been finalized (the caller
   /// should stop).
   Future<({bool ok, dynamic result})> _prepItemWithRetry(OutgoingQueueItem item) async {
-    final isAttachment = item is OutgoingAttachment;
+    // An app balloon is saved like an attachment, picture or not, so it's drawn at once
+    final isAttachment = item is OutgoingAttachment || item is OutgoingMultiAttachment || item is OutgoingAppMessage;
 
     List<Message>? built;
     if (!isAttachment) {
@@ -259,7 +274,15 @@ class OutgoingMessageHandler {
       attempts = attempt;
       try {
         if (isAttachment) {
-          await prepAttachment(item.chat, item.message, item.attachment);
+          await prepAttachments(
+            item.chat,
+            item.message,
+            switch (item) {
+              OutgoingMultiAttachment() => item.attachments,
+              OutgoingAppMessage(:final attachment) => [?attachment],
+              _ => [(item as OutgoingAttachment).attachment],
+            },
+          );
           return (ok: true, result: null);
         } else {
           return (
@@ -515,6 +538,12 @@ class OutgoingMessageHandler {
           typed.isAudioMessage,
           typed.attachment,
         );
+      case QueueType.sendMultiAttachment:
+        final typed = item as OutgoingMultiAttachment;
+        return sendMultiAttachment(typed.chat, typed.message, typed.attachments);
+      case QueueType.sendAppMessage:
+        final typed = item as OutgoingAppMessage;
+        return sendAppMessage(typed.chat, typed.message, typed.attachment);
     }
   }
 
@@ -617,17 +646,41 @@ class OutgoingMessageHandler {
     return saved;
   }
 
-  /// Copies the attachment file to the local storage directory and saves the
-  /// message to the DB.
+  /// Copies each attachment file to the local storage directory and saves the
+  /// message, with all of [attachments], to the DB.
   ///
   /// Attachment metadata carries the original source path so the file can be
   /// copied without loading it into memory (except GIFs, which need
   /// optimization).
-  Future<void> prepAttachment(Chat c, Message m, Attachment? attachment) async {
-    if (attachment == null) {
-      throw StateError('Missing attachment for sendAttachment prep on message ${m.guid}');
+  Future<void> prepAttachments(Chat c, Message m, List<Attachment> attachments) async {
+    for (final attachment in attachments) {
+      await _stageAttachment(m, attachment);
     }
 
+    // ChatInterface.addMessageToChat returns a DB-hydrated Message loaded from
+    // the main isolate's Store (Database.messages.get(id)) after the
+    // GlobalIsolate transaction commits.  This object has its id set and its
+    // dbAttachments ToMany linked to the main Store, so _handleNewMessage can
+    // reload attachments from DB without racing against cross-isolate write timing.
+    final savedMessage = (await c.addMessage(m, attachments: attachments)).message;
+
+    // The DB write goes through the GlobalIsolate, so the main-isolate OB watch
+    // subscription won't fire for it.  Explicitly push the message into the view
+    // using the Store-hydrated object so _handleNewMessage can load dbAttachments.
+    if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+      await MessagesSvc(c.guid).addNewMessage(savedMessage);
+      // Register upload-in-progress state.  Must come after addNewMessage so the
+      // MessageState already exists.
+      for (final attachment in attachments) {
+        MessagesSvc(c.guid).notifyAttachmentUploadStarted(savedMessage, attachment);
+      }
+    }
+    // Update ChatState immediately so the tile reflects the outgoing attachment
+    // before the queue dispatches the HTTP call.
+    ChatsSvc.updateChatLatestMessage(c.guid, savedMessage);
+  }
+
+  Future<void> _stageAttachment(Message m, Attachment attachment) async {
     final progress = AttachmentUploadProgress(attachment.guid!, 0.0.obs);
     attachmentProgress.add(progress);
 
@@ -689,26 +742,6 @@ class OutgoingMessageHandler {
 
       attachment.isDownloaded = true;
     }
-
-    // ChatInterface.addMessageToChat returns a DB-hydrated Message loaded from
-    // the main isolate's Store (Database.messages.get(id)) after the
-    // GlobalIsolate transaction commits.  This object has its id set and its
-    // dbAttachments ToMany linked to the main Store, so _handleNewMessage can
-    // reload attachments from DB without racing against cross-isolate write timing.
-    final savedMessage = (await c.addMessage(m, attachments: [attachment])).message;
-
-    // The DB write goes through the GlobalIsolate, so the main-isolate OB watch
-    // subscription won't fire for it.  Explicitly push the message into the view
-    // using the Store-hydrated object so _handleNewMessage can load dbAttachments.
-    if (Get.isRegistered<MessagesService>(tag: c.guid)) {
-      await MessagesSvc(c.guid).addNewMessage(savedMessage);
-      // Register upload-in-progress state.  Must come after addNewMessage so the
-      // MessageState already exists.
-      MessagesSvc(c.guid).notifyAttachmentUploadStarted(savedMessage, attachment);
-    }
-    // Update ChatState immediately so the tile reflects the outgoing attachment
-    // before the queue dispatches the HTTP call.
-    ChatsSvc.updateChatLatestMessage(c.guid, savedMessage);
   }
 
   // ── Send methods ─────────────────────────────────────────────────────────
@@ -744,11 +777,14 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
+    final unsendable = r == null ? null : _unsendableTapbackReason(r, m);
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => r == null
+      httpCall: () => unsendable != null
+          ? Future.error(Exception(unsendable))
+          : r == null
           ? SendMessageInterface.sendTextMessage(
               chatGuid: c.guid,
               tempGuid: tempGuid,
@@ -758,14 +794,15 @@ class OutgoingMessageHandler {
               effectId: m.expressiveSendStyleId,
               subject: m.subject,
               partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-              ddScan: !SettingsSvc.serverDetails.isMinSonoma && m.text!.hasUrl,
+              ddScan: SettingsSvc.serverDetails.supportsLinkScan && m.text!.hasUrl,
             )
           : SendMessageInterface.sendTapback(
               chatGuid: c.guid,
               selectedMessageText: selected!.text ?? '',
               selectedMessageGuid: selected.guid!,
-              reaction: r,
+              reaction: ReactionTypes.wireReaction(r),
               partIndex: m.associatedMessagePart,
+              emoji: ReactionTypes.isEmojiTapback(r) ? m.associatedMessageEmoji : null,
             ),
       onSuccess: (data) => _finalizeOutgoingSuccess(
         c, tempGuid, data,
@@ -839,7 +876,7 @@ class OutgoingMessageHandler {
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
-        ddScan: !SettingsSvc.serverDetails.isMinSonoma && parts.any((e) => e['text'].toString().hasUrl),
+        ddScan: SettingsSvc.serverDetails.supportsLinkScan && parts.any((e) => e['text'].toString().hasUrl),
       ),
       onSuccess: (data) => _finalizeOutgoingSuccess(c, tempGuid, data),
       onError: (error, stack) => _finalizeOutgoingFailure(
@@ -862,7 +899,7 @@ class OutgoingMessageHandler {
     // Save both GUIDs before any mutation — attachment.guid == m.guid by design
     // (set in send_animation.dart: attachment.guid = message.guid).
     final tempGuid = m.guid!;
-    // The temp message was already saved to DB in prepAttachment; update ChatState
+    // The temp message was already saved to DB in prepAttachments; update ChatState
     // subtitle immediately so the tile reflects the outgoing attachment.
 
     // Only update latest message if the attachment message is the current latest message.
@@ -874,7 +911,7 @@ class OutgoingMessageHandler {
     // On web the isolate path is not supported (web is deprecated).
     if (kIsWeb) return;
 
-    // Fail fast if the file was not staged correctly during prepAttachment.
+    // Fail fast if the file was not staged correctly during prepAttachments.
     if (!File(attachment.path).existsSync()) {
       Logger.error('Attachment file not found at ${attachment.path}', tag: _tag);
       return;
@@ -937,6 +974,155 @@ class OutgoingMessageHandler {
             MessagesSvc(c.guid).notifyAttachmentTransferError(errorMsg.guid!, attachment.guid!);
           }
           attachmentProgress.removeWhere((e) => e.guid == tempGuid);
+        },
+      ),
+    );
+  }
+
+  /// Sends [m] as an iMessage app balloon from its app payload, with [image] (already staged) as its picture.
+  Future<void> sendAppMessage(Chat c, Message m, Attachment? image) async {
+    final tempGuid = m.guid!;
+    if (kIsWeb) return;
+    final app = m.payloadData?.appData?.firstOrNull;
+    void clearProgress() => attachmentProgress.removeWhere((e) => e.guid == tempGuid);
+
+    return _sendWithRace(
+      tempGuid: tempGuid,
+      chat: c,
+      // A queued turn or retry may outlive the connection to the v2 server it was created on.
+      httpCall: () => !SettingsSvc.serverDetails.isV2Server
+          ? Future.error(Exception('Sending iMessage app messages needs a v2 server'))
+          : app?.url == null || m.balloonBundleId == null
+          ? Future.error(Exception('Message $tempGuid has no app payload to send'))
+          : SendMessageInterface.sendAppMessage(
+              chatGuid: c.guid,
+              tempGuid: tempGuid,
+              balloonBundleId: m.balloonBundleId!,
+              url: app!.url!,
+              sessionId: app.sessionId,
+              appName: app.appName,
+              appId: AppSessionTypes.isGame(m) ? AppSessionTypes.gamePigeonAppId : null,
+              summary: app.ldText,
+              caption: app.userInfo?.caption,
+              imagePath: image != null && File(image.path).existsSync() ? image.path : null,
+              // Every message a current GamePigeon sends is live; without it the recipient sees the caption and icon
+              liveLayout: AppSessionTypes.isGame(m),
+            ),
+      onSuccess: (Map<String, dynamic> data) async {
+        final newMessage = Message.fromMap(data['data']);
+        final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList();
+        for (final a in responseAttachments) {
+          try {
+            await _matchAttachmentWithExisting(c, tempGuid, a);
+            if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+              MessagesSvc(c.guid).notifyAttachmentSendComplete(tempGuid, newMessage.guid!, tempGuid, a);
+            }
+          } catch (e, st) {
+            Logger.warn('Failed to replace attachment ${a.guid}', error: e, trace: st, tag: _tag);
+          }
+        }
+        await _matchMessageWithExisting(c, tempGuid, newMessage);
+        clearProgress();
+      },
+      onError: (error, stack) => _finalizeOutgoingFailure(
+        c,
+        m,
+        tempGuid,
+        logMessage: 'Failed to send app message',
+        error: error,
+        stack: stack,
+        onExtra: (_) async => clearProgress(),
+      ),
+    );
+  }
+
+  /// Sends [attachments] as one message: each file is uploaded, then a single multipart message names them all.
+  Future<void> sendMultiAttachment(Chat c, Message m, List<Attachment> attachments) async {
+    final tempGuid = m.guid!;
+
+    // Only update latest message if the attachment message is the current latest message.
+    if (ChatsSvc.getChatState(c.guid)?.latestMessage.value?.guid == m.guid) {
+      ChatsSvc.updateChatLatestMessage(c.guid, m);
+    }
+
+    if (kIsWeb) return;
+
+    final missing = attachments.where((a) => !File(a.path).existsSync()).map((a) => a.path).toList();
+    // A retry can come after the server or the Private API setting changed
+    final unsendable = missing.isNotEmpty
+        ? 'Attachment files not found: ${missing.join(', ')}'
+        : !SettingsSvc.canSendAttachmentsTogether
+            ? 'Sending several attachments as one message needs server v1.7.0 or newer and Private API attachment sending'
+            : null;
+
+    void clearProgress() => attachmentProgress.removeWhere((e) => attachments.any((a) => a.guid == e.guid));
+
+    return _sendWithRace(
+      tempGuid: tempGuid,
+      chat: c,
+      httpCall: () => unsendable != null
+          ? Future.error(Exception(unsendable))
+          : SendMessageInterface.sendMultiAttachmentMessage(
+        chatGuid: c.guid,
+        tempGuid: tempGuid,
+        files: attachments.map((a) => {'guid': a.guid, 'path': a.path, 'name': a.transferName}).toList(),
+        subject: m.subject,
+        selectedMessageGuid: m.threadOriginatorGuid,
+        effectId: m.expressiveSendStyleId,
+        partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
+      ),
+      onSuccess: (Map<String, dynamic> data) async {
+        final newMessage = Message.fromMap(data['data']);
+        final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList();
+        // By message part; the server doesn't promise the attachments' order, so name, then position, are fallbacks
+        final unmatched = [...attachments];
+        for (final a in responseAttachments) {
+          final partGuid = OutgoingMultiAttachment.sentTempGuid(tempGuid, newMessage, a);
+          final temp = unmatched.firstWhereOrNull((t) => partGuid != null && t.guid == partGuid) ??
+              unmatched.firstWhereOrNull((t) => t.transferName == a.transferName) ??
+              unmatched.firstOrNull;
+          if (temp == null) break;
+          unmatched.remove(temp);
+          final tempAttachmentGuid = temp.guid!;
+          try {
+            await _matchAttachmentWithExisting(c, tempAttachmentGuid, a);
+            if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+              MessagesSvc(c.guid).notifyAttachmentSendComplete(tempGuid, newMessage.guid!, tempAttachmentGuid, a);
+            }
+          } catch (e, st) {
+            Logger.warn('Failed to replace attachment $tempAttachmentGuid', error: e, trace: st, tag: _tag);
+          }
+        }
+        // The socket's copy can still match these; until then they'd show as sending forever. A reply without
+        // attachments (the server stopped waiting for the row) says nothing about them, so the update matches them
+        if (responseAttachments.isNotEmpty && Get.isRegistered<MessagesService>(tag: c.guid)) {
+          for (final a in unmatched) {
+            MessagesSvc(c.guid).notifyAttachmentTransferError(tempGuid, a.guid!);
+          }
+        }
+        await _matchMessageWithExisting(c, tempGuid, newMessage);
+        clearProgress();
+      },
+      onError: (error, stack) => _finalizeOutgoingFailure(
+        c,
+        m,
+        tempGuid,
+        logMessage: 'Failed to send attachments',
+        error: error,
+        stack: stack,
+        onExtra: (errorMsg) async {
+          if (Get.isRegistered<MessagesService>(tag: c.guid)) {
+            for (final a in attachments) {
+              MessagesSvc(c.guid).notifyAttachmentTransferError(errorMsg.guid!, a.guid!);
+            }
+          }
+          clearProgress();
         },
       ),
     );
@@ -1193,5 +1379,14 @@ class OutgoingMessageHandler {
     }
 
     _isProcessing = false;
+  }
+
+  /// Why tapback [type] on [m] can't be sent, or null if it can.
+  static String? _unsendableTapbackReason(String type, Message m) {
+    if (ReactionTypes.isStickerTapback(type)) return "Sticker tapbacks can't be sent from here";
+    if (!ReactionTypes.isEmojiTapback(type)) return null;
+    if (isNullOrEmpty(m.associatedMessageEmoji)) return "This emoji tapback has no emoji";
+    if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return "Emoji tapbacks need a v2 server on macOS 15 or newer";
+    return null;
   }
 }

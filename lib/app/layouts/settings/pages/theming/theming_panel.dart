@@ -552,6 +552,7 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                               }
                             }
 
+                            bool dialogOpen = true;
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
@@ -610,9 +611,13 @@ class _ThemingPanelState extends CustomState<ThemingPanel, void, ThemingPanelCon
                                   ),
                                 ],
                               ),
-                            );
+                            ).then((_) => dialogOpen = false);
 
-                            HttpSvc.downloadAppleEmojiFont();
+                            await HttpSvc.downloadAppleEmojiFont();
+                            // Close it once the font is in; a failure leaves it open with its Close button
+                            if (dialogOpen && FilesystemSvc.fontExistsOnDisk.value && context.mounted) {
+                              Navigator.of(context, rootNavigator: true).pop();
+                            }
                           },
                           title: kIsWeb
                               ? "Upload Font File"

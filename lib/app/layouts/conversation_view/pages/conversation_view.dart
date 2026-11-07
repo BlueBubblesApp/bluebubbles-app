@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/components/wallpaper/wallpaper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/material_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/shared_contact_banner.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/messages_view_components.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
@@ -65,6 +66,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   @override
   void initState() {
     super.initState();
+    controller.viewOwner = this;
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
     ChatsSvc.setActiveChatSync(chat);
@@ -125,7 +127,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
                     height: bottomInset,
                     child: IgnorePointer(
                       child: ColoredBox(
-                        color: controller.showAttachmentPicker.value
+                        color: controller.showAttachmentPicker.value || controller.showGamePicker.value
                             ? context.theme.colorScheme.surface
                             : Colors.transparent,
                       ),
@@ -164,6 +166,15 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
                 ),
               );
             },
+          ),
+          // The body extends behind the header, whose height is in the top padding
+          Builder(
+            builder: (context) => Positioned(
+              top: MediaQuery.paddingOf(context).top,
+              left: 0,
+              right: 0,
+              child: SharedContactBanner(chat: chat),
+            ),
           ),
         ],
       ),
@@ -213,7 +224,12 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void dispose() {
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
-    controller.deleteIfCurrent();
+    // A replacement view may already have taken this controller over; deleting it would dispose the focus nodes
+    // and text controllers its composer is using
+    if (identical(controller.viewOwner, this)) {
+      controller.deleteIfCurrent();
+      if (controller.isClosed) controller.disposeComposer();
+    }
     super.dispose();
   }
 
@@ -263,6 +279,10 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
               if (controller.showAttachmentPicker.value) {
                 controller.showAttachmentPicker.value = false;
                 controller.updateWidgets<ConversationTextField>(null);
+                return;
+              }
+              if (controller.showGamePicker.value) {
+                controller.showGamePicker.value = false;
                 return;
               }
               if (LifecycleSvc.isBubble) {

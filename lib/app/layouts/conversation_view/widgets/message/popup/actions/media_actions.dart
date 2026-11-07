@@ -282,10 +282,10 @@ void refreshPreview(MessagePopupActionContext ctx) {
 }
 
 void sharePart(MessagePopupActionContext ctx) {
-  if (ctx.part.attachments.isNotEmpty && !ctx.message.isLegacyUrlPreview) {
+  if (ctx.part.attachments.isNotEmpty && !ctx.part.hasInlineAttachments && !ctx.message.isLegacyUrlPreview) {
     Share.files(ctx.part.attachments.map((a) => a.path).nonNulls.toList());
   } else if (!isNullOrEmpty(ctx.part.text)) {
-    Share.text(ctx.part.text!);
+    Share.text(ctx.part.hasInlineAttachments ? withoutInlineAttachments(ctx.part.text!) : ctx.part.text!);
   }
   ctx.popDetails();
 }

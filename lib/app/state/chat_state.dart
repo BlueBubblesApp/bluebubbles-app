@@ -67,7 +67,7 @@ class ChatState {
   // Updated by ChatsService when hideAttachments or redactedMode settings change.
   final RxBool shouldHideAttachments;
 
-  /// Reactive state wrappers for the chat's participants (handles).
+  /// Reactive state wrappers for the chat's members, one per person ([Chat.people], not [Chat.handles]).
   /// Updated when contact data changes — drives subtitle and avatar recomputes.
   final RxList<HandleState> participants = <HandleState>[].obs;
   final List<Worker> _participantWorkers = [];
@@ -93,7 +93,7 @@ class ChatState {
         chatCreatorSubtitle = RxnString(chat.isGroup
             ? chat.getChatCreatorSubtitle()
             : (chat.handles.isNotEmpty ? (chat.handles.first.formattedAddress ?? chat.handles.first.address) : null)),
-        subtitle = RxnString(chat.dbLatestMessage.target?.getNotificationText()),
+        subtitle = RxnString(chat.dbLatestMessage.target?.getNotificationText(keepInlineAttachments: true)),
         latestMessage = Rxn<Message>(chat.dbLatestMessage.target),
         latestMessageStatus = Rx<MessageStatusIndicator>(
           chat.dbLatestMessage.target?.isFromMe != true
@@ -123,7 +123,7 @@ class ChatState {
             (SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideAttachments.value).obs {
     // Populate participants from handles and wire up ever() listeners so the
     // chatCreatorSubtitle stays live when contacts sync.
-    participants.addAll(chat.handles.map((h) => HandleSvc.getOrCreateHandleState(h)));
+    participants.addAll(chat.people.map((h) => HandleSvc.getOrCreateHandleState(h)));
     for (final hs in participants) {
       _participantWorkers.add(
         ever(hs.displayName, (_) {
@@ -353,14 +353,15 @@ class ChatState {
     return message.getNotificationText(
       hideContactInfo: hideContactInfo,
       hideMessageContent: hideMessageContent,
+      keepInlineAttachments: true,
     );
   }
 
-  /// Rebuild [participants] from [handles] (or this chat's own handles if omitted),
+  /// Rebuild [participants] from [handles] (or this chat's own handles if omitted), one per person,
   /// then recompute subtitle. Pass [handles] when calling from [updateFromChat] so
   /// the fresh DB handles are used instead of the potentially stale cached [ToMany].
   void _updateParticipantsInternal([List<Handle>? handles]) {
-    final newHandles = (handles ?? chat.handles).toList();
+    final newHandles = Chat.peopleIn(handles ?? chat.handles);
 
     // Skip the RxList rebuild when the participant set is unchanged — clearing
     // and re-adding notifies every watching Obx (avatars, titles) even though

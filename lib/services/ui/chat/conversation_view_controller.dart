@@ -32,6 +32,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   late final String tag;
   bool fromChatCreator = false;
   bool fromSearchResult = false;
+
+  /// The ConversationView that may delete this controller. Moving across the tablet breakpoint builds the new view
+  /// before disposing the old one, and both share this controller.
+  Object? viewOwner;
   bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
@@ -59,10 +63,16 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxDouble smartReplyRowHeight = 0.0.obs;
   bool showingOverlays = false;
 
-  /// True while a pointer is actively dragging a [MessageImageGallery] fan of
+  /// True while a pointer is actively dragging a [CollectionGroupStack] fan of
   /// cards, so the list-wide timestamp-reveal swipe in [MessagesView] can
-  /// ignore that drag instead of fighting the gallery for the same gesture.
-  bool isGalleryDragging = false;
+  /// ignore that drag instead of fighting the collection stack for the same gesture.
+  bool isCollectionDragging = false;
+
+  /// Media collection grids the user expanded with a `+N` long-press, keyed by
+  /// `CollectionGroupGrid.expansionKey`. Lives here rather than in the grid's
+  /// State so a grid stays expanded after scrolling off screen and back, for as
+  /// long as the conversation is open.
+  final Set<String> expandedCollectionGrids = {};
 
   /// True while any route is pushed on top of the conversation view route (e.g.
   /// ConversationDetails). Used by onAppResume to skip keyboard auto-focus on mobile.
@@ -75,9 +85,15 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   // text field items
   final RxBool showAttachmentPicker = false.obs;
+
+  /// OpenPigeon's game picker, shown below the text field in the keyboard's place.
+  final RxBool showGamePicker = false.obs;
   RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
+
+  /// An OpenPigeon game picked from the game picker, sent with the next send.
+  final Rxn<Map<String, dynamic>> pendingGame = Rxn<Map<String, dynamic>>();
   final focusNode = FocusNode();
   final subjectFocusNode = FocusNode();
   late final textController = MentionTextEditingController(focusNode: focusNode);
@@ -98,7 +114,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     }
   }
 
-  late final mentionables = chat.handles
+  late final mentionables = chat.people
       .map((e) => Mentionable(
             handle: e,
           ))
@@ -211,16 +227,17 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
-    // Chat switches close this before the old route unmounts, and disposing a FocusNode that a mounted field still
-    // holds corrupts the focus tree, leaving the next composer unable to take input. Wait for the unmount.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      scrollController.dispose();
-      focusNode.dispose();
-      subjectFocusNode.dispose();
-      textController.dispose();
-      subjectTextController.dispose();
-    });
     super.onClose();
+  }
+
+  /// Back and chat switches close this before the old route finishes animating out, and disposing a FocusNode that a
+  /// mounted field still holds corrupts the focus tree. So the view calls this once it has unmounted.
+  void disposeComposer() {
+    scrollController.dispose();
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
   }
 
   /// Disposes and evicts the cached [VideoController] for [attachmentGuid] -- call before a

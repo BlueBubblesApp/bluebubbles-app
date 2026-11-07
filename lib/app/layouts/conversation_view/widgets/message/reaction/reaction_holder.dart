@@ -1,5 +1,6 @@
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:defer_pointer/defer_pointer.dart';
@@ -67,9 +68,17 @@ class ReactionHolder extends StatefulWidget {
   const ReactionHolder({
     super.key,
     required this.reactions,
+    this.tailType = ReactionTailType.standard,
+    this.tailDirection,
   });
 
   final Iterable<Message> reactions;
+  final ReactionTailType tailType;
+  final ReactionTailDirection? tailDirection;
+
+  /// How far a holder pinned to a bubble's top corner hangs past the bubble's top / side edge.
+  static const double bubbleOverhangTop = -14;
+  static const double bubbleOverhangSide = -20;
 
   @override
   State<ReactionHolder> createState() => _ReactionHolderState();
@@ -120,9 +129,14 @@ class _ReactionHolderState extends State<ReactionHolder> {
     }
 
     final isFromMe = MessageStateScope.of(context).isFromMe.value;
+    // Explicit tailDirection stacks along that edge (e.g. collection trailing).
+    final stackFromEnd = widget.tailDirection != null
+        ? widget.tailDirection == ReactionTailDirection.left
+        : isFromMe;
     return SizedBox(
-      height: 35,
-      width: 35,
+      height:
+          widget.tailType == ReactionTailType.inside ? ReactionWidgetState.iosClipHeight : ReactionWidgetState.iosSize,
+      width: ReactionWidgetState.iosSize,
       child: Stack(
         clipBehavior: Clip.none,
         children: _cachedReactions
@@ -146,8 +160,8 @@ class _ReactionHolderState extends State<ReactionHolder> {
               return Positioned(
                 key: ValueKey(stableKey),
                 top: 0,
-                left: !isFromMe ? null : -i * 2.0,
-                right: isFromMe ? null : -i * 2.0,
+                left: stackFromEnd ? -i * 2.0 : null,
+                right: stackFromEnd ? null : -i * 2.0,
                 child: DeferPointer(
                   child: _ReactionAnimator(
                     key: ValueKey(stableKey),
@@ -156,6 +170,8 @@ class _ReactionHolderState extends State<ReactionHolder> {
                     child: ReactionWidget(
                       reaction: e,
                       reactions: _cachedReactions,
+                      tailType: widget.tailType,
+                      tailDirection: widget.tailDirection,
                     ),
                   ),
                 ),

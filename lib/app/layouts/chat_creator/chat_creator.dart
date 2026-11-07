@@ -114,7 +114,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
         filteredContacts.value = tuple.contacts;
         filteredChats.value = List<Chat>.from(tuple.chats);
         if (addressController.text.isNotEmpty) {
-          filteredChats.sort((a, b) => a.handles.length.compareTo(b.handles.length));
+          filteredChats.sort((a, b) => a.people.length.compareTo(b.people.length));
         }
       });
     });

@@ -7,7 +7,8 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/sticker_tapback_image.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/tapback_icon.dart';
 import 'package:get/get.dart';
 
 class ReactionDetails extends StatelessWidget {
@@ -43,6 +44,8 @@ class ReactionDetails extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final message = reactions[index];
                   final handle = message.handleRelation.target;
+                  final svg = SettingsSvc.settings.skin.value == Skins.iOS &&
+                      ReactionTypes.toList().contains(message.associatedMessageType);
                   String? reactionName;
                   if (!SettingsSvc.settings.hideNamesForReactions.value) {
                     if (message.isFromMe!) {
@@ -91,26 +94,19 @@ class ReactionDetails extends StatelessWidget {
                           ],
                         ),
                         child: Padding(
-                          padding: SettingsSvc.settings.skin.value == Skins.iOS
+                          padding: svg
                               ? const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0)
                                   .add(EdgeInsets.only(right: message.associatedMessageType == "emphasize" ? 1 : 0))
                               : EdgeInsets.zero,
-                          child: SettingsSvc.settings.skin.value == Skins.iOS
-                              ? SvgPicture.asset(
-                                  'assets/reactions/${message.associatedMessageType}-black.svg',
-                                  colorFilter: ColorFilter.mode(
-                                    message.associatedMessageType == "love"
-                                        ? Colors.pink
-                                        : message.isFromMe!
-                                            ? context.theme.colorScheme.onPrimary
-                                            : context.theme.colorScheme.onSurfaceVariant,
-                                    BlendMode.srcIn,
-                                  ),
-                                )
+                          child: svg
+                              ? TapbackIcon(message.associatedMessageType!)
                               : Center(
                                   child: Builder(builder: (context) {
+                                    if (ReactionTypes.isStickerTapback(message.associatedMessageType)) {
+                                      return StickerTapbackImage(attachment: message.dbAttachments.firstOrNull);
+                                    }
                                     final text = Text(
-                                      ReactionTypes.reactionToEmoji[message.associatedMessageType] ?? "X",
+                                      ReactionTypes.emojiFor(message),
                                       style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                       textAlign: TextAlign.center,
                                     );

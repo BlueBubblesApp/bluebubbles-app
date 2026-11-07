@@ -31,7 +31,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2065429213543838585),
     name: 'Attachment',
-    lastPropertyId: const obx_int.IdUid(23, 7107471023966534193),
+    lastPropertyId: const obx_int.IdUid(24, 5276996574275850643),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -137,6 +137,12 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(23, 7107471023966534193),
         name: 'exif',
+        type: 13,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(24, 5276996574275850643),
+        name: 'stickerPlacement',
         type: 13,
         flags: 0,
       ),
@@ -536,7 +542,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(13, 4148278195232901830),
     name: 'Message',
-    lastPropertyId: const obx_int.IdUid(54, 3645372489156688543),
+    lastPropertyId: const obx_int.IdUid(55, 4673117792989945365),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -653,7 +659,8 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(28, 8696985708980146227),
         name: 'associatedMessageGuid',
         type: 9,
-        flags: 0,
+        flags: 8,
+        indexId: const obx_int.IdUid(21, 5185758702423746949),
       ),
       obx_int.ModelProperty(
         id: const obx_int.IdUid(29, 574575341112766208),
@@ -809,6 +816,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(54, 3645372489156688543),
         name: 'metadata',
         type: 13,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(55, 4673117792989945365),
+        name: 'associatedMessageEmoji',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -1115,7 +1128,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
     lastEntityId: const obx_int.IdUid(19, 6026421545462496199),
-    lastIndexId: const obx_int.IdUid(20, 7536809638379289421),
+    lastIndexId: const obx_int.IdUid(21, 5185758702423746949),
     lastRelationId: const obx_int.IdUid(3, 2372732884714308620),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -1288,7 +1301,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final exifOffset = object.exif == null
             ? null
             : fbb.writeListInt8(obx_int.toFlexBuffer(object.exif!));
-        fbb.startTable(24);
+        final stickerPlacementOffset = object.stickerPlacement == null
+            ? null
+            : fbb.writeListInt8(obx_int.toFlexBuffer(object.stickerPlacement!));
+        fbb.startTable(25);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addInt64(1, object.originalROWID);
         fbb.addOffset(2, guidOffset);
@@ -1306,6 +1322,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addBool(19, object.isDownloaded);
         fbb.addOffset(20, metadataOffset);
         fbb.addOffset(22, exifOffset);
+        fbb.addOffset(23, stickerPlacementOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1355,6 +1372,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           30,
         );
         final metadataParam = obx_int.flexBufferToMap(buffer, rootOffset, 44);
+        final stickerPlacementParam = obx_int.flexBufferToMap(
+          buffer,
+          rootOffset,
+          50,
+        );
         final exifParam = obx_int.flexBufferToMap(buffer, rootOffset, 48);
         final webUrlParam = const fb.StringReader(
           asciiOptimization: true,
@@ -1384,6 +1406,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 height: heightParam,
                 width: widthParam,
                 metadata: metadataParam,
+                stickerPlacement: stickerPlacementParam,
                 exif: exifParam,
                 webUrl: webUrlParam,
                 hasLivePhoto: hasLivePhotoParam,
@@ -1992,7 +2015,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final metadataOffset = object.metadata == null
             ? null
             : fbb.writeListInt8(obx_int.toFlexBuffer(object.metadata!));
-        fbb.startTable(55);
+        final associatedMessageEmojiOffset =
+            object.associatedMessageEmoji == null
+            ? null
+            : fbb.writeString(object.associatedMessageEmoji!);
+        fbb.startTable(56);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addInt64(1, object.originalROWID);
         fbb.addOffset(2, guidOffset);
@@ -2037,6 +2064,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(51, errorMessageOffset);
         fbb.addBool(52, object.hasEffectPlayed);
         fbb.addOffset(53, metadataOffset);
+        fbb.addOffset(54, associatedMessageEmojiOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -2166,6 +2194,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final associatedMessageTypeParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 60);
+        final associatedMessageEmojiParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 112);
         final expressiveSendStyleIdParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 62);
@@ -2244,6 +2275,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 associatedMessageGuid: associatedMessageGuidParam,
                 associatedMessagePart: associatedMessagePartParam,
                 associatedMessageType: associatedMessageTypeParam,
+                associatedMessageEmoji: associatedMessageEmojiParam,
                 expressiveSendStyleId: expressiveSendStyleIdParam,
                 hasAttachments: hasAttachmentsParam,
                 hasReactions: hasReactionsParam,
@@ -3232,6 +3264,11 @@ class Message_ {
   /// See [Message.hasEffectPlayed].
   static final hasEffectPlayed = obx.QueryBooleanProperty<Message>(
     _entities[5].properties[42],
+  );
+
+  /// See [Message.associatedMessageEmoji].
+  static final associatedMessageEmoji = obx.QueryStringProperty<Message>(
+    _entities[5].properties[44],
   );
 
   /// see [Message.dbAttachments]

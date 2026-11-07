@@ -28,7 +28,8 @@ class ConversationFullscreenHolder extends StatefulWidget {
       this.initialAttachmentGuid,
       this.replyMessage,
       this.replyPartIndex,
-      this.galleryAttachments});
+      this.galleryAttachments,
+      this.onOpenCollectionGallery});
 
   final Chat? currentChat;
   final Attachment attachment;
@@ -40,8 +41,12 @@ class ConversationFullscreenHolder extends StatefulWidget {
   final int? replyPartIndex;
 
   /// When non-null, the fullscreen carousel is limited to these attachments
-  /// instead of all images in the chat. Used when opening from a gallery card.
+  /// instead of all images in the chat (a media collection, or a filtered gallery).
   final List<Attachment>? galleryAttachments;
+
+  /// When set, shows a grid button that opens the enclosing media collection's gallery
+  /// (see `MediaCollection.openGallery`). Called with this screen's context.
+  final void Function(BuildContext context)? onOpenCollectionGallery;
 
   @override
   ConversationFullscreenHolderState createState() => ConversationFullscreenHolderState();
@@ -51,8 +56,12 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   final focusNode = FocusNode();
   late final PageController controller;
   late final messageService = widget.currentChat == null ? null : maybeFindMessagesSvc(widget.currentChat!.guid);
-  late List<Attachment> attachments = widget.galleryAttachments != null
-      ? List<Attachment>.from(widget.galleryAttachments!)
+
+  /// Explicit list, else chat-wide images.
+  List<Attachment>? get _scopedGallery => widget.galleryAttachments;
+
+  late List<Attachment> attachments = _scopedGallery != null
+      ? List<Attachment>.from(_scopedGallery!)
       : (widget.currentChat == null
           ? [attachment]
           : (messageService?.struct.attachments.where((e) => e.mimeStart == "image").toList() ?? [attachment]));
@@ -79,6 +88,11 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
   bool get _isVideoAttachment => attachment.mimeStart == "video";
   late bool showAppBar = kIsDesktop || kIsWeb || !_isVideoAttachment;
   bool get _canReply => widget.replyMessage != null && widget.replyPartIndex != null && widget.currentChat != null;
+  bool get _hasCollectionGallery => widget.onOpenCollectionGallery != null;
+
+  void _openCollectionGallery() {
+    widget.onOpenCollectionGallery!(context);
+  }
 
   @override
   void initState() {
@@ -86,7 +100,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
     if (kIsWeb || !widget.showInteractions) {
       controller = PageController(initialPage: 0);
     } else {
-      if (widget.currentChat != null || widget.galleryAttachments != null) {
+      if (widget.currentChat != null || _scopedGallery != null) {
         final targetGuid = widget.initialAttachmentGuid ?? attachment.guid;
         currentIndex = attachments.indexWhere((e) => e.guid == targetGuid);
         if (currentIndex == -1 && widget.currentChat != null) {
@@ -155,6 +169,11 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                       context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
                   iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                   actions: [
+                    if (_hasCollectionGallery)
+                      IconButton(
+                        onPressed: _openCollectionGallery,
+                        icon: Icon(iOS ? CupertinoIcons.square_grid_2x2 : Icons.grid_view_outlined),
+                      ),
                     if (_canReply)
                       IconButton(
                         onPressed: triggerReply,
@@ -264,6 +283,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                         attachment: attachment,
                         file: content,
                         showInteractions: widget.showInteractions,
+                        onOpenCollectionGallery: _hasCollectionGallery ? _openCollectionGallery : null,
                         updatePhysics: (ScrollPhysics p) {
                           if (physics != p) {
                             setState(() {
@@ -287,6 +307,7 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
                         showInteractions: widget.showInteractions,
                         videoController: widget.videoController,
                         mute: widget.mute,
+                        onOpenCollectionGallery: _hasCollectionGallery ? _openCollectionGallery : null,
                         onOverlayToggle: (show) {
                           if (showAppBar != show) {
                             setState(() {

@@ -31,11 +31,7 @@ class ServerInterface {
       response = await GetIt.I<GlobalIsolate>().send<Map<String, dynamic>>(IsolateRequestType.getServerDetails);
     }
 
-    return ServerDetails(
-      macOSVersion: response['macOSVersion'] as int,
-      macOSMinorVersion: response['macOSMinorVersion'] as int,
-      serverVersion: response['serverVersion'] as String,
-      serverVersionCode: response['serverVersionCode'] as int,
-    );
+    if (response.isEmpty) throw Exception("Server info request failed");
+    return ServerDetails.fromMap(response);
   }
 }
