@@ -20,7 +20,18 @@ Flutter side: `lib/services/backend/java_dart_interop/`
 - `intents_service.dart` — Android intent handling
 - `background_isolate.dart` — background Dart execution
 
+## SharedPreferences and multiple Flutter engines
+
+`services/backend_ui_interop/SharedPreferencesEnginePlugin.kt` shares one upstream
+SharedPreferences plugin across activity, bubble, and worker engines, unregistering only
+when the final engine detaches. Version 2.5.x otherwise clears its process-wide JNI
+registrars whenever any engine detaches. DartWorker registers the wrapper directly.
+`app/build.gradle` compiles a transformed copy of Flutter's generated registrant so all
+automatically registered engines use the wrapper too; it does not modify generated or
+plugin source files. Revisit this workaround when the upstream registration lifecycle changes.
+
 ## Build Config
+
 - Compile/Target SDK: 36 | Min SDK: 26 | NDK: 28.2 | Java/Kotlin compat: version 21
 - Gradle 9.8.0 | AGP 9.4.1 | KGP 2.4.20 | Gradle with Kotlin plugin
 
