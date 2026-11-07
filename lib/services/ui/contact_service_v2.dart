@@ -16,6 +16,18 @@ import 'package:universal_io/io.dart';
 // ignore: non_constant_identifier_names
 ContactServiceV2 get ContactsSvcV2 => GetIt.I<ContactServiceV2>();
 
+/// How [ContactServiceV2.setNativeContactPhoto] went
+enum ContactPhotoUpdate {
+  updated,
+
+  /// The user didn't let BlueBubbles edit contacts
+  noPermission,
+
+  /// The contact is no longer on the device
+  missing,
+  failed,
+}
+
 /// ContactServiceV2 - UI-side service for the new contact architecture
 /// This service manages the state and triggers isolate operations
 /// Follows the architecture outlined in FR-1.md Section III
@@ -386,6 +398,27 @@ class ContactServiceV2 {
     } catch (e, stack) {
       Logger.error('[ContactServiceV2] Error getting contact avatar', error: e, trace: stack);
       return null;
+    }
+  }
+
+  /// Sets [photo] as the photo of the device contact [nativeContactId], then links contacts to handles again so the
+  /// new avatar shows. Android only: desktop has no address book to write to.
+  Future<ContactPhotoUpdate> setNativeContactPhoto(String nativeContactId, Uint8List photo) async {
+    if (kIsWeb || kIsDesktop) throw UnsupportedError('Device contacts are only writable on Android');
+    try {
+      if (await fc.FlutterContacts.permissions.request(fc.PermissionType.readWrite) != fc.PermissionStatus.granted) {
+        return ContactPhotoUpdate.noPermission;
+      }
+      _hasContactAccess = true;
+      // Fetched with every property, since an update writes the whole contact back
+      final contact = await fc.FlutterContacts.get(nativeContactId, properties: fc.ContactProperties.all);
+      if (contact == null) return ContactPhotoUpdate.missing;
+      await fc.FlutterContacts.update(contact.copyWith(photo: fc.Photo(fullSize: photo)));
+      await syncContactsToHandles();
+      return ContactPhotoUpdate.updated;
+    } catch (e, stack) {
+      Logger.warn('Could not update the photo of contact $nativeContactId', error: e, trace: stack, tag: tag);
+      return ContactPhotoUpdate.failed;
     }
   }
 
