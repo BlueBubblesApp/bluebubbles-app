@@ -98,7 +98,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     }
   }
 
-  late final mentionables = chat.handles
+  late final mentionables = chat.people
       .map((e) => Mentionable(
             handle: e,
           ))

@@ -506,7 +506,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         ),
       ),
       _OptionRow(
-        enabled: chat.handles.length > 2 &&
+        enabled: chat.people.length > 2 &&
             SettingsSvc.settings.enablePrivateAPI.value &&
             SettingsSvc.serverDetails.supportsGroupChatManagement,
         build: (context) => M3EListTile(

@@ -22,7 +22,7 @@ import 'package:universal_io/io.dart';
 ///
 /// **Static path** (fallback): when no [ChatStateScope] is found, the optional
 /// [chat] parameter is used instead. The participant list is read once from
-/// [Chat.handles] and is non-reactive — no listeners are created.
+/// [Chat.people] and is non-reactive — no listeners are created.
 class ContactAvatarGroupWidget extends StatelessWidget {
   const ContactAvatarGroupWidget({
     super.key,
@@ -62,9 +62,6 @@ class ContactAvatarGroupWidget extends StatelessWidget {
   };
 
   List<Handle> _sortedHandles(List<Handle> handles) {
-    // One avatar per person: a chat can hold the same address's iMessage and SMS handles
-    final seen = <String>{};
-    handles = handles.where((h) => seen.add(h.address)).toList();
     final sorted = List<Handle>.from(handles);
     // Sort by the reactive HandleState avatar path — reading contactsV2 here
     // would run a lazy ToMany DB query per handle on every rebuild, and the
@@ -96,7 +93,7 @@ class ContactAvatarGroupWidget extends StatelessWidget {
         customAvatarPath = chatState.customAvatarPath.value;
       } else {
         // Static path: read once from the handles override or chat param — no subscription created.
-        participants = _sortedHandles(handles ?? chat?.handles.toList() ?? []);
+        participants = _sortedHandles(handles ?? chat?.people ?? []);
         customAvatarPath = handles != null ? null : chat?.customAvatarPath;
       }
 
