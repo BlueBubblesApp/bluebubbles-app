@@ -67,12 +67,14 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
   /// Reads redaction settings, so call it inside an Obx.
   String _previewText(MessagePart? part) {
     if (part == null) return "Failed to parse thread parts!";
+    // A Genmoji sits inside the text, so the part reads as that text
+    final inline = part.hasInlineAttachments;
     final previewMessage = Message(
-      text: part.text,
+      text: inline ? withoutInlineAttachments(part.text!) : part.text,
       subject: part.subject,
-      hasAttachments: part.attachments.isNotEmpty,
+      hasAttachments: !inline && part.attachments.isNotEmpty,
     )
-      ..dbAttachments.addAll(part.attachments)
+      ..dbAttachments.addAll(inline ? const <Attachment>[] : part.attachments)
       ..mergeWith(message);
     final redacted = SettingsSvc.settings.redactedMode.value;
     return previewMessage.getNotificationText(
@@ -199,7 +201,7 @@ class _ReplyBubbleState extends State<ReplyBubble> with ThemeHelpers {
                                       ),
                                     ),
                                   )
-                                : resolvedPart.attachments.isEmpty
+                                : resolvedPart.attachments.isEmpty || resolvedPart.hasInlineAttachments
                                     ? Container(
                                         color: hasBackground
                                             ? (message.isFromMe! ? context.theme.colorScheme.primary : getBubbleColor())

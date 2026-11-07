@@ -7,8 +7,11 @@ const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 String randomString(int length) =>
     String.fromCharCodes(Iterable.generate(length, (_) => _chars.codeUnitAt(Random().nextInt(_chars.length))));
 
+/// U+FFFC OBJECT REPLACEMENT CHARACTER: where an attachment (a Genmoji, say) sits in a message's text.
+const String objectReplacementChar = '\uFFFC';
+
 String sanitizeString(String? input) {
-  return input?.replaceAll(String.fromCharCode(65532), '') ?? "";
+  return input?.replaceAll(objectReplacementChar, '') ?? "";
 }
 
 /// Cap on the number of code points handed to on-device ML models (ML Kit smart

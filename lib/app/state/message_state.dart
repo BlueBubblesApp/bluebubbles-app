@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Size;
 
 import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/handle_state.dart';
@@ -84,6 +85,13 @@ class MessageState extends StatefulController {
   /// once. Prevents the animation from firing again on subsequent renders.
   /// Manual replay via the replay button always works regardless of this flag.
   final RxBool hasEffectPlayed;
+
+  /// Whether this message's details menu is open, so its stickers can get out of the way.
+  final RxBool showingPopup = false.obs;
+
+  /// Pixel size of each placed sticker's decoded image, by attachment guid, so the room kept for a sticker
+  /// matches what draws even when the server sent no dimensions
+  final RxMap<String, Size> stickerSizes = <String, Size>{}.obs;
 
   /// Increment to trigger a re-download of all attachments in this message.
   /// [AttachmentHolder] registers `ever()` on this key to call _loadContent().
@@ -193,7 +201,11 @@ class MessageState extends StatefulController {
   /// When the message renders as a single bubble ([displayParts] has one entry) every tapback shows on it,
   /// whatever part it targets. Reactive when read inside an Obx (reads [associatedMessages] and [parts]).
   List<Message> tapbacksForBubble(MessagePart part) =>
-      _associatedForBubble(part, (e) => ReactionTypes.isTapback(e.associatedMessageType));
+      _associatedForBubble(part, (e) => ReactionTypes.isTapbackType(e.associatedMessageType));
+
+  /// Whether [part]'s bubble draws any tapback: each sender's latest, minus removals and emoji tapbacks still waiting
+  /// on their emoji. Layout that makes room for the tapback row should read this, not [tapbacksForBubble].
+  bool hasVisibleTapbacks(MessagePart part) => getUniqueReactionMessages(tapbacksForBubble(part)).isNotEmpty;
 
   /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
   List<Message> stickersForBubble(MessagePart part) =>
@@ -207,7 +219,7 @@ class MessageState extends StatefulController {
 
   /// Tapbacks targeting exactly the raw message-part id [partId] (one attachment inside a collection).
   List<Message> tapbacksForPartId(int partId) => associatedMessages
-      .where((e) => ReactionTypes.isTapback(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
+      .where((e) => ReactionTypes.isTapbackType(e.associatedMessageType) && (e.associatedMessagePart ?? 0) == partId)
       .toList();
 
   /// Reactive state for the handle that sent this message.
@@ -271,7 +283,7 @@ class MessageState extends StatefulController {
         hasError = (message.error > 0).obs,
         isSending = (message.guid?.startsWith('temp') == true && message.error == 0).obs,
         isSent = (!(message.guid?.startsWith('temp') ?? false)).obs,
-        isReaction = (message.associatedMessageGuid != null).obs,
+        isReaction = message.isReaction.obs,
         hasEffectPlayed = message.hasEffectPlayed.obs {
     // Create AttachmentState for every attachment already on the message.
     for (final attachment in message.dbAttachments) {
@@ -418,6 +430,12 @@ class MessageState extends StatefulController {
       isSending.value = (value?.startsWith('temp') ?? false) && !hasError.value;
       isSent.value = !(value?.startsWith('temp') ?? false);
     }
+  }
+
+  /// Record the decoded pixel size of a placed sticker's image. Called by [StickerHolder] once the image resolves,
+  /// since only the image knows it when the server sent no dimensions.
+  void updateStickerSizeInternal(String attachmentGuid, Size value) {
+    if (stickerSizes[attachmentGuid] != value) stickerSizes[attachmentGuid] = value;
   }
 
   /// Update message text content
@@ -625,18 +643,24 @@ class MessageState extends StatefulController {
     if (associatedMessageGuid != null && this.associatedMessageGuid.value != associatedMessageGuid) {
       this.associatedMessageGuid.value = associatedMessageGuid;
       message.associatedMessageGuid = associatedMessageGuid;
-      isReaction.value = true;
     }
 
-    if (associatedMessageType != null && this.associatedMessageType.value != associatedMessageType) {
-      this.associatedMessageType.value = associatedMessageType;
-      message.associatedMessageType = associatedMessageType;
+    // A replaced app turn stays replaced when a stale copy still says type 2
+    final type = associatedMessageType == null
+        ? null
+        : AppSessionTypes.mergedType(message.balloonBundleId, this.associatedMessageType.value, associatedMessageType);
+    if (type != null && this.associatedMessageType.value != type) {
+      this.associatedMessageType.value = type;
+      message.associatedMessageType = type;
     }
 
     if (associatedMessagePart != null && this.associatedMessagePart.value != associatedMessagePart) {
       this.associatedMessagePart.value = associatedMessagePart;
       message.associatedMessagePart = associatedMessagePart;
     }
+
+    // Depends on the type as well as the guid, so it's settled once both are in
+    if (isReaction.value != message.isReaction) isReaction.value = message.isReaction;
   }
 
   /// Update state from database message object
@@ -688,6 +712,8 @@ class MessageState extends StatefulController {
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
     message.balloonBundleId = updatedMessage.balloonBundleId;
+    // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
+    message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
     message.dateDeleted = updatedMessage.dateDeleted;
     message.metadata = updatedMessage.metadata;
@@ -840,6 +866,12 @@ class MessageState extends StatefulController {
         ));
       }
     }
+    // An app balloon draws everything from its payload, on its first part. The rest (a game's fallback text, say)
+    // render nothing but still get a row each, tall enough for the sender's avatar
+    if (message.hasApplePayloadData || message.isLegacyUrlPreview || message.isInteractive) {
+      final first = newParts.map((e) => e.part).minOrNull;
+      newParts.removeWhere((e) => e.part != first);
+    }
     newParts.sort((a, b) => a.part.compareTo(b.part));
     // Stamp each freshly-built part with the current redaction state so widgets
     // read MessagePart.displayText / displaySubject without checking settings.
@@ -855,13 +887,27 @@ class MessageState extends StatefulController {
     final mainString = body.string;
     final list = <MessagePart>[];
     body.runs.sort((a, b) => a.range.first.compareTo(b.range.first));
-    body.runs.forEachIndexed((i, e) async {
-      if (e.attributes?.messagePart == null) return;
+    final inlineGuids = body.inlineRuns.map((e) => e.attributes!.attachmentGuid).toSet();
+    final chatGuid = cvController?.chat.guid ?? ChatsSvc.activeChat?.chat.guid;
+    Attachment? loadedAttachment(String guid) =>
+        message.dbAttachments.firstWhereOrNull((a) => a.guid == guid) ??
+        (chatGuid == null ? null : maybeFindMessagesSvc(chatGuid)?.struct.getAttachment(guid));
+    // Synchronous on purpose: the caller assigns the parts as soon as this returns, so a part found after an await
+    // was lost, and later runs of its part were built without it
+    for (final (i, e) in body.runs.indexed) {
+      if (e.attributes?.messagePart == null) continue;
+      final isInline = inlineGuids.contains(e.attributes!.attachmentGuid);
+      final attachment = e.isAttachment ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
       final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
-        final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
         final currentLength = existingPart.text?.length ?? 0;
-        existingPart.text = (existingPart.text ?? "") + newText;
+        // A U+FFFC without its Genmoji would shift the rest, so it's only kept with one
+        final inlineAttachment = isInline ? attachment : null;
+        if (!e.isAttachment || inlineAttachment != null) {
+          final newText = mainString.substring(e.range.first, e.range.first + e.range.last);
+          existingPart.text = (existingPart.text ?? "") + newText;
+        }
+        if (inlineAttachment != null) existingPart.attachments.add(inlineAttachment);
         if (e.hasMention) {
           existingPart.mentions.add(Mention(
             mentionedAddress: e.attributes?.mention,
@@ -870,22 +916,13 @@ class MessageState extends StatefulController {
           existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
         }
       } else {
-        Attachment? foundAttachment;
-        if (e.isAttachment && (cvController?.chat != null || ChatsSvc.activeChat != null)) {
-          final attachmentGuid = e.attributes!.attachmentGuid!;
-          foundAttachment = message.dbAttachments.firstWhereOrNull((a) => a.guid == attachmentGuid);
-          if (foundAttachment == null) {
-            foundAttachment = maybeFindMessagesSvc(cvController?.chat.guid ?? ChatsSvc.activeChat!.chat.guid)
-                ?.struct
-                .getAttachment(attachmentGuid);
-            foundAttachment ??= await Attachment.findOneAsync(attachmentGuid);
-          }
-        }
+        // Not loaded: skipped, as the lost async lookup effectively did, rather than drawn as an empty part
+        if (e.isAttachment && attachment == null) continue;
 
         list.add(MessagePart(
           subject: i == 0 ? message.subject : null,
-          text: e.isAttachment ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
-          attachments: foundAttachment != null ? [foundAttachment] : [],
+          text: e.isAttachment && !isInline ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
+          attachments: attachment != null ? [attachment] : [],
           mentions: !e.hasMention
               ? []
               : [
@@ -897,7 +934,7 @@ class MessageState extends StatefulController {
           part: e.attributes!.messagePart!,
         ));
       }
-    });
+    }
     return list;
   }
 

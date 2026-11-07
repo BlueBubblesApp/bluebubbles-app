@@ -341,7 +341,7 @@ class IncomingMessageHandler {
     // 4. Persist to DB.
     //    Only suppress the "from me" notification clear for reactions so that a
     //    notification-triggered reaction doesn't lose its source notification.
-    final clearNotificationFromMe = (m.isFromMe ?? false) && m.associatedMessageGuid == null;
+    final clearNotificationFromMe = (m.isFromMe ?? false) && !m.isReaction;
     final result = await c.addMessage(
       m,
       clearNotificationsIfFromMe: clearNotificationFromMe,
@@ -559,8 +559,15 @@ class IncomingMessageHandler {
 
     if (alreadyPresent != null) {
       // The replacement record already exists (parallel delivery).
-      // Only overwrite if the incoming payload is newer.
-      if (replacement.isNewerThan(alreadyPresent)) {
+      // Only overwrite if the incoming payload is newer, or re-links the message: an iMessage app turn becomes type 3
+      // when a newer turn replaces it, which changes none of the dates isNewerThan compares. A stale copy that would
+      // take a replaced turn back to type 2 doesn't count.
+      final relinkedType = AppSessionTypes.mergedType(alreadyPresent.balloonBundleId,
+          alreadyPresent.associatedMessageType, replacement.associatedMessageType);
+      if (replacement.isNewerThan(alreadyPresent) ||
+          relinkedType != alreadyPresent.associatedMessageType ||
+          (relinkedType == replacement.associatedMessageType &&
+              replacement.associatedMessageGuid != alreadyPresent.associatedMessageGuid)) {
         await Message.replaceMessage(replacement.guid, replacement);
       }
 
@@ -592,10 +599,12 @@ class IncomingMessageHandler {
   /// then assigns a real GUID.  This method resolves which local GUID to
   /// replace by index, using the following priority:
   ///
-  /// * If [existingGuid] starts with `temp-`, it was the attachment GUID
-  ///   (they are set equal at send time in `send_animation.dart`).
-  /// * Otherwise look up the DB GUID via [existing.dbAttachments] by index —
-  ///   this handles socket events that omit `tempGuid` (e.g. keyboard GIFs).
+  /// * If [existingGuid] starts with `temp-` and the message has one
+  ///   attachment, it was the attachment GUID (they are set equal at send time
+  ///   in `send_animation.dart`).
+  /// * Otherwise match [existing.dbAttachments] by GUID, then by index when no
+  ///   server attachment claims the row there — this handles socket events
+  ///   that omit `tempGuid` (e.g. keyboard GIFs).
   ///
   /// ### Parallel-delivery
   ///
@@ -609,16 +618,40 @@ class IncomingMessageHandler {
     Message replacement,
     List<Attachment?> replacementAttachments,
   ) async {
+    final unmatched = existing.dbAttachments.toList();
     for (int i = 0; i < replacementAttachments.length; i++) {
       final newAttachment = replacementAttachments[i];
       if (newAttachment == null) continue;
 
       // Resolve which local GUID currently owns this attachment slot.
       final String attachmentExistingGuid;
-      if (existingGuid.startsWith('temp-')) {
+      if (existingGuid.startsWith('temp-') && existing.dbAttachments.length <= 1) {
         attachmentExistingGuid = existingGuid;
-      } else if (existing.dbAttachments.isNotEmpty && i < existing.dbAttachments.length) {
-        attachmentExistingGuid = existing.dbAttachments[i].guid ?? existingGuid;
+      } else if (existingGuid.startsWith('temp-')) {
+        // Multi-attachment send: match each temp attachment by message part, then name, then position
+        final partGuid = OutgoingMultiAttachment.sentTempGuid(existingGuid, replacement, newAttachment);
+        final match = unmatched.firstWhereOrNull((a) => partGuid != null && a.guid == partGuid) ??
+            unmatched.firstWhereOrNull((a) => a.transferName == newAttachment.transferName) ??
+            unmatched.firstOrNull;
+        // No attachment carries the message's temp GUID in a multi-attachment send, so there's nothing to replace
+        if (match == null) continue;
+        unmatched.remove(match);
+        attachmentExistingGuid = match.guid!;
+      } else if (existing.dbAttachments.isNotEmpty) {
+        // Real GUIDs: the server doesn't promise the attachments' order, so match by GUID, then by the GUID Messages
+        // renamed it from, and by position only when no server attachment claims the row there
+        final positional = i < existing.dbAttachments.length ? existing.dbAttachments[i] : null;
+        final match = unmatched.firstWhereOrNull((a) => a.guid == newAttachment.guid) ??
+            unmatched.firstWhereOrNull(
+              (a) => newAttachment.originalGuid != null && a.guid == newAttachment.originalGuid,
+            ) ??
+            (positional != null &&
+                    unmatched.contains(positional) &&
+                    !replacementAttachments.any((r) => r?.guid == positional.guid || r?.originalGuid == positional.guid)
+                ? positional
+                : null);
+        if (match != null) unmatched.remove(match);
+        attachmentExistingGuid = match?.guid ?? existingGuid;
       } else {
         attachmentExistingGuid = existingGuid;
       }
@@ -631,8 +664,10 @@ class IncomingMessageHandler {
         if (alreadyPresent != null) {
           await Attachment.replaceAttachmentAsync(newAttachment.guid, newAttachment);
 
-          // Delete the stale temp record if it's distinct from the real one.
-          if (attachmentExistingGuid != newAttachment.guid) {
+          // Delete the stale temp record if it's distinct from the real one, or the row still under the GUID Messages
+          // renamed it from. Any other real GUID is another attachment.
+          if (attachmentExistingGuid != newAttachment.guid &&
+              (attachmentExistingGuid.startsWith('temp-') || attachmentExistingGuid == newAttachment.originalGuid)) {
             final staleTemp = await Attachment.findOneAsync(attachmentExistingGuid);
             if (staleTemp != null) await Attachment.deleteAsync(staleTemp.guid!);
           }

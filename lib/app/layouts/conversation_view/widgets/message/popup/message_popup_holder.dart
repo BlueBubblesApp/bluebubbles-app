@@ -54,7 +54,6 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
             (iOS ? 0 : NavigationSvc.widthChatListLeft(context)),
         childPos.dy);
     final serverDetails = SettingsSvc.serverDetails;
-    final version = serverDetails.serverVersionCode;
     final minSierra = serverDetails.isMinSierra;
     final minBigSur = serverDetails.isMinBigSur;
     if (!iOS) {
@@ -70,6 +69,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     final capturedTheme = context.theme;
     final capturedIsM3 = ThemeSvc.isMaterialYouActive(context);
     final capturedBubbleExt = capturedTheme.extensions[BubbleColors] as BubbleColors?;
+    widget.controller.showingPopup.value = true;
     final result = await Navigator.push(
       iOS ? Get.context! : context,
       PageRouteBuilder(
@@ -98,7 +98,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                     controller: widget.controller,
                     cvController: widget.cvController,
                     serverDetails: MessagePopupServerDetails(
-                        minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: version > 100),
+                        minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: serverDetails.supportsOriginalDownload),
                     sendTapback: sendTapback,
                     widthContext: () => mounted ? context : null,
                     child: widget.child,
@@ -113,6 +113,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
         barrierDismissible: true,
       ),
     );
+    widget.controller.showingPopup.value = false;
     if (result != false) {
       widget.cvController.selected.clear();
     }
@@ -129,7 +130,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     }
   }
 
-  void sendTapback([String? type, int? part]) {
+  void sendTapback([String? type, int? part, String? emoji]) {
     HapticFeedback.lightImpact();
     final reaction = type ?? SettingsSvc.settings.quickTapbackType.value;
     Logger.info("Sending reaction type: $reaction");
@@ -137,6 +138,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
     final tempMessage = Message(
       associatedMessageGuid: message.guid,
       associatedMessageType: reaction,
+      associatedMessageEmoji: emoji,
       associatedMessagePart: part,
       dateCreated: DateTime.now(),
       hasAttachments: false,

@@ -74,7 +74,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     final chatState = controller.chatState;
     if (!chatState.hasUnreadMessage.value) return;
     final lastMessage = chatState.latestMessage.value;
-    if (lastMessage == null || lastMessage.isFromMe == true || lastMessage.associatedMessageGuid != null) {
+    if (lastMessage == null || lastMessage.isFromMe == true || lastMessage.isReaction) {
       return;
     }
     if (SettingsSvc.settings.highPerfMode.value) return;
@@ -83,7 +83,7 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     }
     if (!SettingsSvc.settings.autoDownload.value) return;
 
-    final attachments = AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+    final attachments = _previewAttachments(lastMessage);
     final preview = AttachmentPreview.firstPreviewableAttachment(attachments);
     if (preview == null) return;
     if (AttachmentsSvc.hasLocalFile(preview)) return;
@@ -146,18 +146,18 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
     return Obx(() {
       final chatState = controller.chatState;
       final lastMessage = chatState.latestMessage.value;
-      final subtitle = chatState.subtitle.value ?? '';
+      // The subtitle keeps a U+FFFC per Genmoji for the chat list, which this plain text can't draw
+      final rawSubtitle = chatState.subtitle.value ?? '';
+      final subtitle = rawSubtitle.contains(objectReplacementChar) ? withoutInlineAttachments(rawSubtitle) : rawSubtitle;
 
       final unread = chatState.hasUnreadMessage.value;
       // Null-safe isFromMe: treat null as false (unknown sender → show the bubble)
       final isFromMe = lastMessage?.isFromMe == true;
-      if (!unread || lastMessage?.associatedMessageGuid != null || isFromMe || isNullOrEmpty(subtitle)) {
+      if (!unread || (lastMessage?.isReaction ?? false) || isFromMe || isNullOrEmpty(subtitle)) {
         return const SizedBox.shrink();
       }
 
-      final attachments = lastMessage == null
-          ? const <Attachment>[]
-          : AttachmentPreview.attachmentsFor(lastMessage, chatGuid: chat.guid);
+      final attachments = lastMessage == null ? const <Attachment>[] : _previewAttachments(lastMessage);
       final previewAttachment = AttachmentPreview.firstPreviewableAttachment(attachments);
       final showPreview = previewAttachment != null &&
           AttachmentPreview.canShow(previewAttachment, generateVideoThumbnail: true);
@@ -239,6 +239,14 @@ class PinnedTileTextBubbleState extends CustomState<PinnedTileTextBubble, void, 
         ),
       );
     });
+  }
+
+  /// [message]'s attachments to preview. Genmoji drawn inside the text read as that text, so they aren't any.
+  List<Attachment> _previewAttachments(Message message) {
+    final inline = message.inlineAttachmentGuids;
+    return AttachmentPreview.attachmentsFor(message, chatGuid: chat.guid)
+        .where((a) => !inline.contains(a.guid))
+        .toList();
   }
 
   /// In-memory "1 Photo" text from [attachments] when the cached subtitle is

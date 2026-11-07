@@ -25,7 +25,7 @@ class SamsungTimestampObserver extends StatelessWidget {
     return Obx(() {
       final isFromMe = ms.isFromMe.value;
       return Padding(
-        padding: ms.tapbacksForBubble(part).isNotEmpty
+        padding: ms.hasVisibleTapbacks(part)
             ? EdgeInsets.only(left: isFromMe ? 0 : 10, right: isFromMe ? 20 : 0)
             : const EdgeInsets.only(right: 10),
         child: MessageTimestamp(controller: ms, cvController: cvController),

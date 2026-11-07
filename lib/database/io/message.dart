@@ -6,7 +6,7 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
-import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/services/backend/interfaces/message_interface.dart';
 import 'package:collection/collection.dart';
@@ -44,9 +44,14 @@ class Message {
   String? groupTitle;
   int? groupActionType;
   String? balloonBundleId;
+  // Looked up for every message's reactions, and for each app session's turns
+  @Index(type: IndexType.value)
   String? associatedMessageGuid;
   int? associatedMessagePart;
   String? associatedMessageType;
+  // The emoji of an emoji tapback (type 2006/3006), sent by servers that read chat.db's associated_message_emoji
+  @Property(uid: 4673117792989945365)
+  String? associatedMessageEmoji;
   String? expressiveSendStyleId;
   Handle? handle;
   bool hasAttachments;
@@ -131,6 +136,22 @@ class Message {
   @Transient()
   bool get isSticker => associatedMessageType == "sticker" && associatedMessageGuid != null;
 
+  /// A tapback or sticker on another message. Messages can be associated with others for other reasons (each turn of
+  /// an iMessage app session points at the session's first message), so the type decides, not the link.
+  bool get isReaction => associatedMessageGuid != null && ReactionTypes.isReactionType(associatedMessageType);
+
+  /// Matches [isReaction] in a query.
+  static Condition<Message> get reactionCondition =>
+      Message_.associatedMessageGuid.notNull() & Message_.associatedMessageType.oneOf(ReactionTypes.associatedTypes);
+
+  /// Matches messages that aren't [isReaction] in a query. Strings have no `notOneOf`, hence the chain.
+  static Condition<Message> get notReactionCondition =>
+      Message_.associatedMessageGuid.isNull() |
+      Message_.associatedMessageType.isNull() |
+      ReactionTypes.associatedTypes
+          .map((type) => Message_.associatedMessageType.notEquals(type))
+          .reduce((a, b) => a & b);
+
   @Transient()
   bool get isNameChange => itemType == 2;
 
@@ -172,6 +193,7 @@ class Message {
     this.associatedMessageGuid,
     this.associatedMessagePart,
     this.associatedMessageType,
+    this.associatedMessageEmoji,
     this.expressiveSendStyleId,
     this.handle,
     this.hasAttachments = false,
@@ -240,6 +262,26 @@ class Message {
     } catch (e, s) {
       Logger.error('Failed to parse payload data!', error: e, trace: s);
     }
+    // v2 servers decode the app balloon's archive themselves (`with=appPayload`), and read fields ours misses. Where
+    // ours found no app at all, theirs is the app
+    final appPayload = json['appPayload'];
+    final app = payloadData?.appData?.firstOrNull;
+    if (appPayload is Map && app != null) {
+      app.sessionId = appPayload['session_id'] as String? ?? app.sessionId;
+      app.ldText = appPayload['summary'] as String? ?? app.ldText;
+      app.url = appPayload['url'] as String? ?? app.url;
+    } else if (appPayload is Map) {
+      final caption = appPayload['caption'] as String?;
+      payloadData = PayloadData(type: PayloadType.app, appData: [
+        iMessageAppData(
+          appName: appPayload['app_name'] as String?,
+          ldText: appPayload['summary'] as String?,
+          url: appPayload['url'] as String?,
+          sessionId: appPayload['session_id'] as String?,
+          userInfo: caption == null ? null : UserInfo(caption: caption),
+        ),
+      ]);
+    }
 
     return Message(
       id: json["ROWID"] ?? json['id'],
@@ -267,6 +309,7 @@ class Message {
       associatedMessagePart: json["associatedMessagePart"] ??
           int.tryParse(json["associatedMessageGuid"].toString().replaceAll("p:", "").split("/").first),
       associatedMessageType: json["associatedMessageType"],
+      associatedMessageEmoji: json["associatedMessageEmoji"],
       expressiveSendStyleId: json["expressiveSendStyleId"],
       handle: json['handle'] != null ? Handle.fromMap(json['handle']!.cast<String, dynamic>()) : null,
       hasAttachments: (json['attachments'] as List? ?? []).isNotEmpty || json['hasAttachments'] == true,
@@ -320,7 +363,7 @@ class Message {
       }
       // Save associated messages or the original message (depending on whether
       // this message is a reaction or regular message
-      if (associatedMessageType != null && associatedMessageGuid != null) {
+      if (associatedMessageType != null && isReaction) {
         Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
         if (associatedMessage != null) {
           associatedMessage.hasReactions = true;
@@ -438,7 +481,10 @@ class Message {
       query.close();
       return result;
     } else if (associatedMessageGuid != null) {
-      final query = Database.messages.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
+      // Looks for a reaction to that message
+      final query = Database.messages
+          .query(Message_.associatedMessageGuid.equals(associatedMessageGuid) & Message.reactionCondition)
+          .build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
@@ -622,7 +668,7 @@ class Message {
   List<Attachment> get previewAttachments => dbAttachments.where((e) => e.mimeType == null).toList();
 
   List<Message> get reactions => associatedMessages
-      .where((item) => ReactionTypes.isTapback(item.associatedMessageType))
+      .where(ReactionTypes.isTapback)
       .toList();
 
   MessageStatusIndicator get indicatorToShow {
@@ -917,6 +963,8 @@ class Message {
       existing.payloadData = newMessage.payloadData;
     }
 
+    existing.associatedMessageEmoji ??= newMessage.associatedMessageEmoji;
+
     if (!existing.wasDeliveredQuietly && newMessage.wasDeliveredQuietly) {
       existing.wasDeliveredQuietly = newMessage.wasDeliveredQuietly;
     }
@@ -1012,6 +1060,7 @@ class Message {
       "associatedMessageGuid": associatedMessageGuid,
       "associatedMessagePart": associatedMessagePart,
       "associatedMessageType": associatedMessageType,
+      "associatedMessageEmoji": associatedMessageEmoji,
       "expressiveSendStyleId": expressiveSendStyleId,
       "handle": getHandle()?.toMap(),
       "hasAttachments": hasAttachments,

@@ -332,7 +332,7 @@ class Chat {
 
     /// If reaction and notify reactions off, then don't notify, otherwise notify
     return !SettingsSvc.settings.notifyReactions.value &&
-        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+        message != null && ReactionTypes.isTapbackType(message.associatedMessageType);
   }
 
   /// Toggle unread status - pure DB operation
@@ -534,7 +534,9 @@ class Chat {
       // fetch attachments and reactions if requested
       if (getDetails) {
         final messageGuids = messages.map((e) => e.guid!).toList();
-        final associatedMessagesQuery = (Database.messages.query(Message_.associatedMessageGuid.oneOf(messageGuids))
+        // Reactions only: an iMessage app turn points at its session's first message too
+        final associatedMessagesQuery = (Database.messages
+                .query(Message_.associatedMessageGuid.oneOf(messageGuids) & Message.reactionCondition)
               ..order(Message_.originalROWID))
             .build();
         List<Message> associatedMessages = associatedMessagesQuery.find();

@@ -260,7 +260,8 @@ class FullSyncManager extends SyncManager {
           before: endTimestamp,
           offset: i * countPerBatch,
           limit: countPerBatch,
-          withQuery: "attachments,handle,message.attributedBody,message.messageSummaryInfo,message.payloadData");
+          withQuery: "attachments,handle,message.attributedBody,message.messageSummaryInfo,message.payloadData"
+              "${SettingsSvc.serverDetails.isV2Server ? ",message.appPayload" : ""}");
       dynamic data = messagePage.data;
       if (messagePage.statusCode != 200) {
         throw MessageRequestException(

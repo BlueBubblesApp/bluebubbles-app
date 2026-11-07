@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/sticker_tapback_image.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_error_helper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -12,7 +13,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/tapback_icon.dart';
 import 'package:get/get.dart';
 
 class ReactionWidget extends StatefulWidget {
@@ -64,11 +65,14 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
         chatGuid != null ? maybeFindMessagesSvc(chatGuid)?.getMessageStateIfExists(_parentMessage?.guid ?? '') : null;
     if (parentController != null) {
       // Find our reaction in the observable associatedMessages list
-      final found = parentController.associatedMessages.firstWhereOrNull((m) =>
-          m.guid == widget.reaction.guid ||
-          (m.associatedMessageType == widget.reaction.associatedMessageType &&
+      // GUID first: every emoji tapback shares type 2006, so the tuple can match an older, replaced one
+      final associated = parentController.associatedMessages;
+      final found = associated.firstWhereOrNull((m) => m.guid == widget.reaction.guid) ??
+          associated.firstWhereOrNull((m) =>
+              m.associatedMessageType == widget.reaction.associatedMessageType &&
+              m.associatedMessageEmoji == widget.reaction.associatedMessageEmoji &&
               m.associatedMessagePart == widget.reaction.associatedMessagePart &&
-              m.isFromMe == widget.reaction.isFromMe));
+              m.isFromMe == widget.reaction.isFromMe);
       if (found != null) return found;
     }
     // Fallback to widget.reaction if not found in MessageState
@@ -105,6 +109,20 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
   static const double iosClipHeight = 40;
 
   double get _clipHeight => widget.tailType == ReactionTailType.inside ? iosClipHeight : iosSize;
+
+  /// Emoji and sticker tapbacks have no SVG, so they're drawn from the reaction itself.
+  Widget? _customGlyph(Message reaction) {
+    final type = reaction.associatedMessageType;
+    if (ReactionTypes.isStickerTapback(type)) {
+      return StickerTapbackImage(attachment: reaction.dbAttachments.firstOrNull);
+    }
+    if (!ReactionTypes.isEmojiTapback(type)) return null;
+    return FittedBox(
+      child: Text(ReactionTypes.emojiFor(reaction),
+          style: const TextStyle(
+              height: 1, leadingDistribution: TextLeadingDistribution.even, fontFamily: 'Apple Color Emoji')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,8 +209,9 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
               },
               child: Center(
                 child: Builder(builder: (context) {
+                  if (ReactionTypes.isStickerTapback(reactionType)) return _customGlyph(reaction)!;
                   final text = Text(
-                    ReactionTypes.reactionToEmoji[reactionType] ?? "X",
+                    ReactionTypes.emojiFor(reaction),
                     style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
                     textAlign: TextAlign.center,
                   );
@@ -253,18 +272,11 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                       height: iosSize * 0.8,
                       child: Center(
                           child: Padding(
-                        padding:
-                            const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0)),
-                        child: SvgPicture.asset(
-                          'assets/reactions/$reactionType-black.svg',
-                          colorFilter: ColorFilter.mode(
-                              reactionType == "love"
-                                  ? Colors.pink
-                                  : (reactionIsFromMe
-                                      ? context.theme.colorScheme.onPrimary
-                                      : context.theme.colorScheme.onSurfaceVariant),
-                              BlendMode.srcIn),
-                        ),
+                        // The SVGs are drawn inset; emoji and stickers would look shrunken with the same padding
+                        padding: ReactionTypes.toList().contains(reactionType)
+                            ? const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0))
+                            : const EdgeInsets.all(3),
+                        child: _customGlyph(reaction) ?? TapbackIcon(reactionType),
                       )),
                     ));
               })),
@@ -357,8 +369,9 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
         ),
         child: Center(
           child: Builder(builder: (ctx) {
+            if (ReactionTypes.isStickerTapback(rType)) return _customGlyph(reaction)!;
             final text = Text(
-              ReactionTypes.reactionToEmoji[rType] ?? "X",
+              ReactionTypes.emojiFor(reaction),
               style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
               textAlign: TextAlign.center,
             );
@@ -429,18 +442,10 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                 height: iosSize * 0.8,
                 child: Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(6.5).add(EdgeInsets.only(right: rType == "emphasize" ? 1 : 0)),
-                    child: SvgPicture.asset(
-                      'assets/reactions/$rType-black.svg',
-                      colorFilter: ColorFilter.mode(
-                        rType == "love"
-                            ? Colors.pink
-                            : (isFromMe
-                                ? context.theme.colorScheme.onPrimary
-                                : context.theme.colorScheme.onSurfaceVariant),
-                        BlendMode.srcIn,
-                      ),
-                    ),
+                    padding: ReactionTypes.toList().contains(rType)
+                        ? const EdgeInsets.all(6.5).add(EdgeInsets.only(right: rType == "emphasize" ? 1 : 0))
+                        : const EdgeInsets.all(3),
+                    child: _customGlyph(reaction) ?? TapbackIcon(rType),
                   ),
                 ),
               ),

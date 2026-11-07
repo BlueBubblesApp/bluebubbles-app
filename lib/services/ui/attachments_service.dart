@@ -804,11 +804,12 @@ class AttachmentsService extends GetxService {
         //
         // JPEG, not PNG: camera photos have no alpha to preserve, and PNG
         // costs a full-resolution decode on every draw (see
-        // Attachment.convertedExtension).
+        // Attachment.convertedExtension). Stickers and Genmoji are the
+        // exception: they're see-through, and small.
         final file = await FlutterImageCompress.compressAndGetFile(
           filePath,
           convertedPath,
-          format: CompressFormat.jpeg,
+          format: attachment.convertedExtension == "png" ? CompressFormat.png : CompressFormat.jpeg,
           keepExif: false,
           quality: 90,
         );

@@ -198,7 +198,7 @@ class _MessageContentBubble extends StatelessWidget {
               ? InteractiveHolder(
                   message: part,
                 )
-              : part.attachments.isEmpty && (part.text != null || part.subject != null)
+              : (part.attachments.isEmpty || part.hasInlineAttachments) && (part.text != null || part.subject != null)
                   ? TextBubble(
                       message: part,
                     )

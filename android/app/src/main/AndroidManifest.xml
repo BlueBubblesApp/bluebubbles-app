@@ -291,6 +291,7 @@
 
     <queries>
         <package android:name="com.google.android.apps.tachyon" />
+        <package android:name="com.openbubbles.openpigeon" />
     </queries>
 
 </manifest>

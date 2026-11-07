@@ -1,5 +1,7 @@
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/services/backend/actions/attachment_actions.dart';
+import 'package:bluebubbles/services/backend/actions/message_actions.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -196,6 +198,9 @@ class ChatActions {
       if (dbChat != null) {
         dbChat.dateDeleted = DateTime.now().toUtc();
         dbChat.hasUnreadMessage = false;
+        // The row stays, so its draft would come back with the chat
+        dbChat.textFieldText = null;
+        dbChat.textFieldAttachments = [];
         chatBox.put(dbChat);
       }
     });
@@ -231,7 +236,8 @@ class ChatActions {
     final latestMessageData = data['latestMessageData'] as Map<String, dynamic>;
     final checkForMessageText = data['checkForMessageText'] as bool;
 
-    return Database.runInTransaction(TxMode.write, () {
+    final moves = <RekeyedFileMove>[];
+    final result = Database.runInTransaction(TxMode.write, () {
       final messageBox = Database.messages;
       final attachmentBox = Database.attachments;
       final handleBox = Database.handles;
@@ -312,7 +318,7 @@ class ChatActions {
       }
 
       // Handle associated messages (reactions)
-      if (inputMessage.associatedMessageType != null && inputMessage.associatedMessageGuid != null) {
+      if (inputMessage.associatedMessageType != null && inputMessage.isReaction) {
         final assocQuery = messageBox.query(Message_.guid.equals(inputMessage.associatedMessageGuid!)).build();
         assocQuery.limit = 1;
         final associatedMessage = assocQuery.findFirst();
@@ -348,6 +354,7 @@ class ChatActions {
       try {
         messageId = messageBox.put(inputMessage);
         inputMessage.id = messageId;
+        MessageActions.retireEarlierTurns(inputMessage);
       } on UniqueViolationException catch (_) {
         // If unique violation, try to find the message again
         final retryQuery = messageBox.query(Message_.guid.equals(inputMessage.guid ?? '')).build();
@@ -374,6 +381,7 @@ class ChatActions {
 
           // Process and link attachments if present
           if (inputAttachments.isNotEmpty) {
+            moves.addAll(AttachmentActions.adoptRekeyedGuids(inputAttachments));
             for (final attachment in inputAttachments) {
               // Find existing attachment
               final attachQuery = attachmentBox.query(Attachment_.guid.equals(attachment.guid ?? '')).build();
@@ -423,6 +431,8 @@ class ChatActions {
         'isNewer': isNewerInIsolate,
       };
     });
+    AttachmentActions.moveRekeyedFiles(moves);
+    return result;
   }
 
   static Future<List<int>> loadSupplementalData(dynamic data) async {
@@ -431,9 +441,12 @@ class ChatActions {
     return Database.runInTransaction(TxMode.read, () {
       final messageBox = Database.messages;
 
-      // Query reactions and return just their IDs
-      final reactionsQuery =
-          (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+      // Query reactions and return just their IDs. An iMessage app turn points at its session's first message too,
+      // and isn't one
+      final reactionsQuery = (messageBox
+              .query(Message_.associatedMessageGuid.oneOf(messageGuids) & Message.reactionCondition)
+            ..order(Message_.originalROWID))
+          .build();
       final reactions = reactionsQuery.find();
       reactionsQuery.close();
 
