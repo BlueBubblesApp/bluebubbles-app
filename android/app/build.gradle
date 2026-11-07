@@ -212,6 +212,42 @@ flutter {
     source '../..'
 }
 
+// Keep Flutter's generated plugin list, but register our multi-engine preferences owner
+// instead of the stock plugin. Compile a transformed COPY; never edit Flutter's generated
+// file or dependency sources. This also covers engines created by other plugins.
+def flutterRegistrant = file('src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java')
+abstract class GenerateEngineSafeRegistrant extends DefaultTask {
+    @InputFile
+    abstract RegularFileProperty getRegistrant()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
+
+    @TaskAction
+    void generate() {
+        def preferencesConstructor = 'new io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin()'
+        def source = registrant.get().asFile.getText('UTF-8')
+        if (source.count(preferencesConstructor) != 1) {
+            throw new GradleException('Flutter plugin registrant changed: review the SharedPreferences engine wrapper.')
+        }
+        def output = outputDirectory.file('io/flutter/plugins/GeneratedPluginRegistrant.java').get().asFile
+        output.parentFile.mkdirs()
+        def replacement = 'new com.bluebubbles.messaging.services.backend_ui_interop.SharedPreferencesEnginePlugin()'
+        output.setText(source.replace(preferencesConstructor, replacement), 'UTF-8')
+    }
+}
+def generateEngineSafeRegistrant = tasks.register('generateEngineSafeRegistrant', GenerateEngineSafeRegistrant) {
+    registrant.set(flutterRegistrant)
+    outputDirectory.set(layout.buildDirectory.dir('generated/source/engineSafeRegistrant'))
+}
+android.sourceSets.main.java {
+    // Exclude only the original absolute file, not the generated copy with the same name.
+    exclude { element -> element.file == flutterRegistrant }
+}
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
+    variant.sources.java.addGeneratedSourceDirectory(generateEngineSafeRegistrant, { it.outputDirectory })
+}
+
 dependencies {
     // Android native functions
     implementation "androidx.core:core-ktx:1.13.1"
