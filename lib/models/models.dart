@@ -11,6 +11,7 @@ export 'message_update_event.dart';
 export 'chat_sync_page.dart';
 export 'handle_sync_page.dart';
 export 'server_details.dart';
+export 'shared_name_and_photo.dart';
 export 'app_update_info.dart';
 export 'server_update_info.dart';
 export 'fcm_data_info.dart';
