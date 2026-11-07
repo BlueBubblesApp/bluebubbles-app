@@ -32,6 +32,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   late final String tag;
   bool fromChatCreator = false;
   bool fromSearchResult = false;
+
+  /// The ConversationView that may delete this controller. Moving across the tablet breakpoint builds the new view
+  /// before disposing the old one, and both share this controller.
+  Object? viewOwner;
   bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
@@ -223,16 +227,17 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
-    // Chat switches close this before the old route unmounts, and disposing a FocusNode that a mounted field still
-    // holds corrupts the focus tree, leaving the next composer unable to take input. Wait for the unmount.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      scrollController.dispose();
-      focusNode.dispose();
-      subjectFocusNode.dispose();
-      textController.dispose();
-      subjectTextController.dispose();
-    });
     super.onClose();
+  }
+
+  /// Back and chat switches close this before the old route finishes animating out, and disposing a FocusNode that a
+  /// mounted field still holds corrupts the focus tree. So the view calls this once it has unmounted.
+  void disposeComposer() {
+    scrollController.dispose();
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
   }
 
   /// Disposes and evicts the cached [VideoController] for [attachmentGuid] -- call before a

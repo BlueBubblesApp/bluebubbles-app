@@ -66,6 +66,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   @override
   void initState() {
     super.initState();
+    controller.viewOwner = this;
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
     ChatsSvc.setActiveChatSync(chat);
@@ -223,7 +224,12 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void dispose() {
     routeObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
-    controller.deleteIfCurrent();
+    // A replacement view may already have taken this controller over; deleting it would dispose the focus nodes
+    // and text controllers its composer is using
+    if (identical(controller.viewOwner, this)) {
+      controller.deleteIfCurrent();
+      if (controller.isClosed) controller.disposeComposer();
+    }
     super.dispose();
   }
 
