@@ -24,8 +24,8 @@ class ContactAvatarWidget extends StatefulWidget {
 
   /// Canonical decode size for avatar images. Every avatar usage shares one
   /// ImageCache entry per file regardless of on-screen size — one decode per
-  /// contact and a much higher cache-hit rate. The conversation list warm-up
-  /// must use identical ResizeImage params for its precached entry to be hit.
+  /// contact and a much higher cache-hit rate. Use it through [avatarImage],
+  /// never directly, so the conversation list warm-up's precached entry is hit.
   static const int avatarDecodeSize = 256;
 
   /// The one image provider every avatar file is drawn and precached with. `fit` keeps the
@@ -258,11 +258,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
               final contactV2Avatar = cachedAvatarPath;
 
               if (!hideContactInfo && widget.handle == null && userAvatarPath != null) {
-                dynamic file = File(userAvatarPath);
                 return CircleAvatar(
                   key: ValueKey(userAvatarPath),
                   radius: size / 2,
-                  backgroundImage: Image.file(file).image,
+                  backgroundImage: ContactAvatarWidget.avatarImage(userAvatarPath),
                   backgroundColor: Colors.transparent,
                 );
               } else if (!hideContactInfo && !genAvatars && contactV2Avatar != null) {
@@ -271,7 +270,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
                 return SizedBox.expand(
                   child: Image(
                     image: ContactAvatarWidget.avatarImage(contactV2Avatar),
-                    // Bilinear so the canonical 256px decode downscales cleanly
+                    // Bilinear so the decode (at most 256px a side) downscales cleanly
                     // to the small on-screen sizes (nearest-neighbor aliases).
                     filterQuality: FilterQuality.low,
                     fit: BoxFit.cover,
