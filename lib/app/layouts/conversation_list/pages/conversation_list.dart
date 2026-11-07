@@ -30,7 +30,6 @@ import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 class ConversationListController extends StatefulController {
   final bool showArchivedChats;
@@ -189,20 +188,19 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
   /// Decodes the avatars for the top chats into Flutter's ImageCache so tiles
   /// render them synchronously instead of falling back to initials while the
-  /// file decodes. The ResizeImage params must exactly match what
-  /// ContactAvatarWidget passes to Image.file, or the warmed entries are never hit.
+  /// file decodes. Uses [ContactAvatarWidget.avatarImage], the same provider the
+  /// avatar widgets draw with, so the warmed entries are hit.
   void _precacheAvatars() {
     if (!mounted) return;
-    const decodeSize = ContactAvatarWidget.avatarDecodeSize;
     for (final chat in ChatsSvc.allChats.take(30)) {
       final state = ChatsSvc.getChatState(chat.guid);
       if (state == null) continue;
       final customPath = state.customAvatarPath.value;
       if (customPath != null) {
-        // Same ResizeImage params as ContactAvatarGroupWidget, or the warmed
-        // entry is never hit and the photo decodes a second time at full size.
+        // Same provider as ContactAvatarGroupWidget, or the warmed entry is
+        // never hit and the photo decodes a second time.
         unawaited(precacheImage(
-          ResizeImage(FileImage(File(customPath)), width: decodeSize, height: decodeSize),
+          ContactAvatarWidget.avatarImage(customPath),
           context,
         ));
         continue;
@@ -211,7 +209,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         final path = hs.avatarPath.value;
         if (path == null) continue;
         unawaited(precacheImage(
-          ResizeImage(FileImage(File(path)), width: decodeSize, height: decodeSize),
+          ContactAvatarWidget.avatarImage(path),
           context,
         ));
       }

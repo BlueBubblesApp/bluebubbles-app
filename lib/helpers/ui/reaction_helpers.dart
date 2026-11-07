@@ -146,6 +146,18 @@ class AppSessionTypes {
 
   static bool isGamePigeon(String? balloonBundleId) => balloonBundleId?.endsWith(_gamePigeonSuffix) ?? false;
 
+  /// GamePigeon's App Store id, sent as a game balloon's app id
+  static const int gamePigeonAppId = 1124197642;
+
+  /// A GamePigeon game balloon: an invite or one of its turns
+  static bool isGame(Message message) => isGamePigeon(message.balloonBundleId);
+
+  /// A game turn a newer turn of the same session has replaced. Messages hides these when sent and shrinks them to
+  /// the app's icon and the game when received. Messages links every turn to the session's first message as
+  /// [UPDATE], then rewrites the replaced ones to [SUPERSEDED] (MessageActions.retireEarlierTurns does the same for
+  /// turns sync brings in).
+  static bool isEarlierTurn(Message message) => isGame(message) && message.associatedMessageType == SUPERSEDED;
+
   /// Whether [turn] replaces the earlier turns of its session, which are then [isReplacedBy] it. GamePigeon only: a
   /// poll keeps every state it was re-sent in as an [UPDATE] (its votes name the latest), and other apps are unmeasured.
   static bool replacesEarlierTurns(Message turn) =>

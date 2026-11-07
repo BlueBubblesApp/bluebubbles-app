@@ -10,7 +10,8 @@ All are GetX singletons. Shorthand getters live in `lib/services/services.dart`.
 - `message/messages_service.dart` (`MessagesSvc`) — per-chat service tagged by GUID; owns `MessageState` map for granular widget reactivity. Per-message controller state now lives directly on `MessageState` (`lib/app/state/message_state.dart`) — the old `MessageWidgetController` was merged into it.
 
 ## Contacts
-- `contact_service_v2.dart` (`ContactsSvcV2`) — desktop sync (requires server v42+)
+- `contact_service_v2.dart` (`ContactsSvcV2`) — desktop sync (requires server v42+); the only place that writes to the device address book (`setNativeContactPhoto`)
+- `name_and_photo_sharing_service.dart` (`NameAndPhotoSharingSvc`) — Messages' "Share Name and Photo": whether to offer sharing yours, what participants shared with you, and what the user dismissed. Not a contacts service: it reads the server and hands any address book write to `ContactsSvcV2`
 
 ## Handles & Typing
 - `handle_service.dart` — owns the `HandleState` map, mirrors `handle_state.dart` reactive fields

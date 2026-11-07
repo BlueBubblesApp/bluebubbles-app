@@ -49,7 +49,7 @@ class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
       title: widget.data.ldText,
       caption: widget.data.userInfo?.caption,
     );
-    if (OpenPigeon.isEarlierTurn(widget.message)) return compact;
+    if (AppSessionTypes.isEarlierTurn(widget.message)) return compact;
     if (widget.message.dbAttachments.isNotEmpty) return widget.card;
     final chat = widget.message.chat.target;
     if (chat == null) return compact;

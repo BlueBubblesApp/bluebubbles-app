@@ -274,6 +274,7 @@ class StartupTasks {
     await _step("Loading chats...");
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
+    GetIt.I.registerSingleton<NameAndPhotoSharingService>(NameAndPhotoSharingService());
     GetIt.I.registerSingleton<SocketService>(SocketService());
     Logger.info("Waiting on NotificationsService...");
     await _waitForInterop(notifications: true);
