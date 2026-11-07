@@ -56,7 +56,7 @@ class ChatListSection extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    onChatTap(chat.handles
+                    onChatTap(chat.people
                         .where((e) => selectedContacts.firstWhereOrNull((c) => c.address == e.address) == null)
                         .map((e) => SelectedContact(
                               displayName: e.displayName,

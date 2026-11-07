@@ -144,9 +144,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Install system dependencies
-        # Azure's apt mirror occasionally crawls at ~100 KB/s; fail fast so the job can be re-run.
+        # x64 runners prefer Azure's apt mirror, which stalls often enough to time this step out. Swap in
+        # Ubuntu's own archive (arm runners use ports.ubuntu.com and are unaffected).
         timeout-minutes: 10
         run: |
+          sudo sed -i 's|http://azure\.archive\.ubuntu\.com|http://archive.ubuntu.com|' \
+            $(ls /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null)
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             clang \

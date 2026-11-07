@@ -260,7 +260,7 @@ class _ChatTitleAndAvatarState extends State<ChatTitleAndAvatar> with ChatTitleM
                   chatState != null &&
                   (chatState.chatCreatorSubtitle.value?.isNotEmpty ?? false))
                 Text(
-                  widget.chat.isGroup ? "${widget.chat.handles.length} recipients" : widget.chat.handles[0].address,
+                  widget.chat.isGroup ? "${widget.chat.people.length} recipients" : widget.chat.handles[0].address,
                   style: context.theme.textTheme.labelLarge!.apply(
                     color: context.theme.colorScheme.outline,
                   ),

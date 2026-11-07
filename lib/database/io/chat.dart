@@ -89,7 +89,24 @@ class Chat {
   @Transient()
   RxDouble sendProgress = 0.0.obs;
 
+  /// Every handle linked to this chat. A person can appear here twice: macOS links a merged iMessage/SMS
+  /// conversation to both of their handles, one per service, with the same address.
+  ///
+  /// Wherever the number or the list of members matters (titles, member counts, avatars, pickers, matching a
+  /// chat to a set of addresses), read [people]. Read [handles] for the handle rows themselves: ids, ROWIDs,
+  /// sync, and finding the handle a message came from. `handles.first` is always `people.first`.
   final handles = ToMany<Handle>();
+
+  /// The members of this chat, one handle per address, in [handles] order.
+  List<Handle> get people => peopleIn(handles);
+
+  /// [handles] collapsed to one handle per address, keeping the first. Which of a person's handles survives
+  /// does not matter to a caller: contacts, names and avatars all resolve by address. The service cannot pick
+  /// one either, because [service] is read from the GUID prefix, which macOS 26 rewrote to `any`.
+  static List<Handle> peopleIn(Iterable<Handle> handles) {
+    final seen = <String>{};
+    return handles.where((h) => seen.add(h.address)).toList();
+  }
 
   // Do not use this field directly, use the handles ToMany relation instead.
   // This should only really be used for serialization/deserialization purposes.
@@ -257,28 +274,29 @@ class Chat {
 
   /// Get a chat's title
   String getChatCreatorSubtitle() {
-    final count = handles.length;
+    final people = this.people;
+    final count = people.length;
     if (count == 0) {
       if (chatIdentifier!.startsWith("urn:biz")) {
         return "Business Chat";
       }
       return chatIdentifier!;
     } else if (count == 1) {
-      return handles.first.displayName;
+      return people.first.displayName;
     }
 
     if (count <= 4) {
       final buffer = StringBuffer();
       for (int i = 0; i < count; i++) {
         if (i > 0) buffer.write(i == count - 1 ? ' & ' : ', ');
-        buffer.write(handles[i].shortName);
+        buffer.write(people[i].shortName);
       }
       return buffer.toString();
     } else {
       final buffer = StringBuffer();
       for (int i = 0; i < 3; i++) {
         if (i > 0) buffer.write(', ');
-        buffer.write(handles[i].shortName);
+        buffer.write(people[i].shortName);
       }
       buffer.write(' & ${count - 3} others');
       return buffer.toString();
@@ -787,8 +805,10 @@ class Chat {
 
   bool get isIMessage => service == ChatServiceType.iMessage;
 
-  // Check style first so handles isn't required to be evaluated, which will incur a DB lookup.
-  bool get isGroup => style == 43 || handles.length > 1;
+  /// chat.db's style (43 group, 45 one-to-one) is authoritative, and checking it first avoids the DB lookup
+  /// [handles] incurs. Without it, fall back to counting [people]: a merged iMessage/SMS chat links two handles
+  /// for one person, so the raw handle count would call it a group.
+  bool get isGroup => style != null ? style == 43 : people.length > 1;
 
   Chat merge(Chat other) {
     id ??= other.id;
