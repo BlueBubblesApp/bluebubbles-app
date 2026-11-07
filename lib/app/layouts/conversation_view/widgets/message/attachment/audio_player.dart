@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart' hide PlayerState;
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 
 class AudioPlayer extends StatefulWidget {
@@ -87,61 +88,59 @@ class _AudioPlayerState extends State<AudioPlayer> with AutomaticKeepAliveClient
     super.build(context);
     return Padding(
         padding: const EdgeInsets.all(5),
-        child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Row(
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () async {
-                  if (controller == null) return;
-                  if (playerState.value == PlayerState.playing) {
-                    animController.reverse();
-                    await controller!.pausePlayer();
-                  } else {
-                    animController.forward();
-                    controller!.setFinishMode(finishMode: FinishMode.pause);
-                    await controller!.startPlayer();
-                  }
-                },
-                icon: AnimatedIcon(
-                  icon: AnimatedIcons.play_pause,
-                  progress: animController,
-                ),
-                color: context.theme.colorScheme.onSurfaceVariant,
-                visualDensity: VisualDensity.compact,
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () async {
+                      if (controller == null) return;
+                      if (playerState.value == PlayerState.playing) {
+                        animController.reverse();
+                        await controller!.pausePlayer();
+                      } else {
+                        animController.forward();
+                        controller!.setFinishMode(finishMode: FinishMode.pause);
+                        await controller!.startPlayer();
+                      }
+                    },
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.play_pause,
+                      progress: animController,
+                    ),
+                    color: context.theme.colorScheme.onSurfaceVariant,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  Obx(() => maxDuration.value == 0
+                      ? SizedBox(width: NavigationSvc.width(context) * 0.25)
+                      : AudioFileWaveforms(
+                          size: Size(NavigationSvc.width(context) * 0.20, 40),
+                          playerController: controller!,
+                          padding: EdgeInsets.zero,
+                          playerWaveStyle: PlayerWaveStyle(
+                              fixedWaveColor:
+                                  context.theme.colorScheme.surfaceContainerHighest.oppositeLightenOrDarken(20),
+                              liveWaveColor: context.theme.colorScheme.onSurfaceVariant,
+                              waveCap: StrokeCap.square,
+                              waveThickness: 2,
+                              seekLineThickness: 2,
+                              showSeekLine: false),
+                        )),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Center(
+                      heightFactor: 1,
+                      child: Obx(() => Text(prettyDuration(Duration(milliseconds: maxDuration.value)),
+                          style: context.theme.textTheme.labelLarge!)),
+                    ),
+                  ),
+                ],
               ),
-              Obx(() => maxDuration.value == 0
-                  ? SizedBox(width: NavigationSvc.width(context) * 0.25)
-                  : AudioFileWaveforms(
-                      size: Size(NavigationSvc.width(context) * 0.20, 40),
-                      playerController: controller!,
-                      padding: EdgeInsets.zero,
-                      playerWaveStyle: PlayerWaveStyle(
-                          fixedWaveColor: context.theme.colorScheme.surfaceContainerHighest.oppositeLightenOrDarken(20),
-                          liveWaveColor: context.theme.colorScheme.onSurfaceVariant,
-                          waveCap: StrokeCap.square,
-                          waveThickness: 2,
-                          seekLineThickness: 2,
-                          showSeekLine: false),
-                    )),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Center(
-                  heightFactor: 1,
-                  child: Obx(() => Text(prettyDuration(Duration(milliseconds: maxDuration.value)),
-                      style: context.theme.textTheme.labelLarge!)),
-                ),
-              ),
-            ],
-          ),
-          if (widget.transcript != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 5),
-              child: Text(
-                "${widget.transcript}",
-                style: context.theme.textTheme.bodySmall,
-              ),
-            ),
-        ]));
+              if (widget.transcript != null) _Transcript(widget.transcript!),
+            ]));
   }
 
   @override
@@ -209,47 +208,114 @@ class _DesktopAudioPlayerState extends State<AudioPlayer>
     super.build(context);
     return Padding(
         padding: const EdgeInsets.all(5),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () async {
-                if (controller == null) return;
-                if (isPlaying.value) {
-                  animController.reverse();
-                  await controller!.pause();
-                } else {
-                  animController.forward();
-                  await controller!.play();
-                }
-              },
-              icon: AnimatedIcon(
-                icon: AnimatedIcons.play_pause,
-                progress: animController,
-              ),
-              color: context.theme.colorScheme.onSurfaceVariant,
-              visualDensity: VisualDensity.compact,
-            ),
-            if (controller != null)
-              Obx(() => SizedBox(
-                    height: 30,
-                    child: Slider(
-                      value: position.value.inSeconds.toDouble(),
-                      onChanged: (double value) {
-                        controller!.seek(Duration(seconds: value.toInt()));
-                      },
-                      min: 0,
-                      max: duration.value.inSeconds.toDouble(),
+        child: IntrinsicWidth(
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () async {
+                      if (controller == null) return;
+                      if (isPlaying.value) {
+                        animController.reverse();
+                        await controller!.pause();
+                      } else {
+                        animController.forward();
+                        await controller!.play();
+                      }
+                    },
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.play_pause,
+                      progress: animController,
                     ),
-                  )),
-            Obx(() => Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 16),
-                  child: Text("${prettyDuration(position.value)} / ${prettyDuration(duration.value)}"),
-                ))
-          ],
-        ));
+                    color: context.theme.colorScheme.onSurfaceVariant,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  if (controller != null)
+                    Obx(() => SizedBox(
+                          height: 30,
+                          child: Slider(
+                            value: position.value.inSeconds.toDouble(),
+                            onChanged: (double value) {
+                              controller!.seek(Duration(seconds: value.toInt()));
+                            },
+                            min: 0,
+                            max: duration.value.inSeconds.toDouble(),
+                          ),
+                        )),
+                  Obx(() => Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 16),
+                        child: Text("${prettyDuration(position.value)} / ${prettyDuration(duration.value)}"),
+                      ))
+                ],
+              ),
+              if (widget.transcript != null) _NoIntrinsicWidth(child: _Transcript(widget.transcript!)),
+            ])));
   }
 
   @override
   bool get wantKeepAlive => true;
+}
+
+/// Reports no intrinsic width, so an [IntrinsicWidth] parent sizes to its other children and this one wraps
+/// to fit them. Also keeps the transcript's scroll view out of intrinsic queries, which it doesn't support.
+class _NoIntrinsicWidth extends SingleChildRenderObjectWidget {
+  const _NoIntrinsicWidth({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderNoIntrinsicWidth();
+}
+
+class _RenderNoIntrinsicWidth extends RenderProxyBox {
+  @override
+  double computeMinIntrinsicWidth(double height) => 0;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) => 0;
+}
+
+/// A voice note's transcript. Long ones scroll inside a capped height instead of stretching the bubble.
+class _Transcript extends StatefulWidget {
+  const _Transcript(this.text);
+  final String text;
+
+  static const double maxHeight = 150;
+
+  @override
+  State<_Transcript> createState() => _TranscriptState();
+}
+
+class _TranscriptState extends State<_Transcript> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 5),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: _Transcript.maxHeight),
+        // Scrollbar insets its track by MediaQuery padding, which here is the conversation view's, not this box's
+        child: MediaQuery.removePadding(
+          context: context,
+          removeLeft: true,
+          removeTop: true,
+          removeRight: true,
+          removeBottom: true,
+          child: Scrollbar(
+            controller: _scrollController,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: Text(widget.text, style: context.theme.textTheme.bodySmall),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
