@@ -47,7 +47,7 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
 
   /// A game OpenPigeon could open, or explain the subscription for.
   bool get _opensWithOpenPigeon =>
-      OpenPigeon.offered && OpenPigeon.isGame(message) && !message.isSending && controller.cvController != null;
+      OpenPigeon.offered && AppSessionTypes.isGame(message) && !message.isSending && controller.cvController != null;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
             // A game's payload URL means nothing outside GamePigeon, so where OpenPigeon can't open it the tile is inert
             onTap: _opensWithOpenPigeon
                 ? () => openOpenPigeonGame(context, message, controller.cvController!.chat)
-                : (payloadData == null && !message.isLegacyUrlPreview) || OpenPigeon.isGame(message)
+                : (payloadData == null && !message.isLegacyUrlPreview) || AppSessionTypes.isGame(message)
                     ? null
                     : () async {
                     String? url;
@@ -117,7 +117,7 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
                                   opacity: isTempMessage ? 0.5 : 1,
                                   child: Builder(builder: (context) {
                                     // A game can always be drawn, even before its payload arrives
-                                    if (OpenPigeon.isGame(message) && (payloadData?.appData?.isEmpty ?? true)) {
+                                    if (AppSessionTypes.isGame(message) && (payloadData?.appData?.isEmpty ?? true)) {
                                       return const OpenPigeonCollapsedGame();
                                     }
                                     if (payloadData == null && !(message.isLegacyUrlPreview)) {

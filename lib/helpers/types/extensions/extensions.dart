@@ -403,7 +403,7 @@ extension MessageNotificationExtension on Message {
 
   /// A game by its title, like "Anagrams", rather than "GamePigeon"; any other app by its name
   String get _interactivePreviewText =>
-      (OpenPigeon.isGame(this) ? payloadData?.appData?.firstOrNull?.ldText : null) ?? interactiveText;
+      (AppSessionTypes.isGame(this) ? payloadData?.appData?.firstOrNull?.ldText : null) ?? interactiveText;
 
   /// [keepInlineAttachments] keeps a U+FFFC where each Genmoji goes, for a preview that draws them.
   String getNotificationText({

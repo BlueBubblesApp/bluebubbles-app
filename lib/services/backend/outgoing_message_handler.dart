@@ -1001,12 +1001,12 @@ class OutgoingMessageHandler {
               url: app!.url!,
               sessionId: app.sessionId,
               appName: app.appName,
-              appId: OpenPigeon.isGame(m) ? OpenPigeon.appId : null,
+              appId: AppSessionTypes.isGame(m) ? AppSessionTypes.gamePigeonAppId : null,
               summary: app.ldText,
               caption: app.userInfo?.caption,
               imagePath: image != null && File(image.path).existsSync() ? image.path : null,
               // Every message a current GamePigeon sends is live; without it the recipient sees the caption and icon
-              liveLayout: OpenPigeon.isGame(m),
+              liveLayout: AppSessionTypes.isGame(m),
             ),
       onSuccess: (Map<String, dynamic> data) async {
         final newMessage = Message.fromMap(data['data']);

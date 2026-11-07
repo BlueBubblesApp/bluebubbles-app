@@ -21,9 +21,6 @@ class OpenPigeon {
   static const balloonBundleId =
       'com.apple.messages.MSMessageExtensionBalloonPlugin:EWFNLB79LQ:com.gamerdelights.gamepigeon.ext';
 
-  /// GamePigeon's App Store id.
-  static const appId = 1124197642;
-
   static const _channel = MethodChannel('com.bluebubbles.messaging/openpigeon');
   static final RxBool installed = false.obs;
 
@@ -95,15 +92,13 @@ class OpenPigeon {
   /// about a game once it's been tapped.
   static final Set<String> _openedSessions = {};
 
-  static bool isGame(Message message) => AppSessionTypes.isGamePigeon(message.balloonBundleId);
-
   static Future<void> init() async {
     _channel.setMethodCallHandler(_handle);
     await refresh();
     EventDispatcherSvc.stream.listen((e) async {
       if (e.type != 'new-message' || _openedSessions.isEmpty) return;
       final message = e.data['message'] as Message;
-      if (!isGame(message) || message.guid == null) return;
+      if (!AppSessionTypes.isGame(message) || message.guid == null) return;
       final payload = await payloadFor(message);
       if (payload == null || !_openedSessions.contains(payload['session'])) return;
       try {
@@ -349,12 +344,6 @@ class OpenPigeon {
       return null;
     }
   }
-
-  /// A game turn a newer turn of the same session has replaced. Messages hides these when sent and shrinks them to
-  /// the app's icon and the game when received. Messages links every turn to the session's first message as type 2,
-  /// then rewrites the replaced ones to 3 (MessageActions.retireEarlierTurns does the same for turns sync brings in).
-  static bool isEarlierTurn(Message message) =>
-      isGame(message) && message.associatedMessageType == AppSessionTypes.SUPERSEDED;
 
   /// Session ids are lowercased because OpenPigeon matches them exactly and makes its own lowercase, while the
   /// server reports `NSUUID`'s uppercase.

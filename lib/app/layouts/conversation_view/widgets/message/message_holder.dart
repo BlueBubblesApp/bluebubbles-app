@@ -201,7 +201,7 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
         final isFromMe = controller.message.isFromMe!;
         // Read so a game turn collapses when an update marks it replaced
         controller.associatedMessageType.value;
-        if (!widget.isReplyThread && OpenPigeon.isEarlierTurn(message)) {
+        if (!widget.isReplyThread && AppSessionTypes.isEarlierTurn(message)) {
           // Hidden, but the next message's time is measured against this one, so it keeps any separator it starts
           if (isFromMe) return Center(child: TimestampSeparator(olderMessage: olderMessage));
           return Column(

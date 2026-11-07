@@ -1253,7 +1253,7 @@ class MessagesService extends GetxController {
     }
 
     // Queue for sending (message already in UI, just updated)
-    if (OpenPigeon.isGame(message)) {
+    if (AppSessionTypes.isGame(message)) {
       OutgoingMsgHandler.queue(
         OutgoingAppMessage(
           chat: chat,
