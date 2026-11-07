@@ -28,21 +28,77 @@ class ChatStatsQueries {
   static QueryBuilder<Message> _forChat(Chat chat, Condition<Message> cond) =>
       Database.messages.query(cond)..link(Message_.chat, Chat_.id.equals(chat.id!));
 
+  // A participant is a person, not a handle. macOS links a merged iMessage/SMS
+  // conversation to both of a person's handles and their messages arrive under
+  // either one, so keying by `Handle.id` would show one person as two rows.
+  // Every participant-keyed result here is keyed by a participant id from
+  // [_participantIdsByHandle], and every per-participant filter goes through
+  // [_linkParticipant], which matches all of that person's handles.
+
+  /// Maps local sender `Handle.id`s to participant ids. A person's participant
+  /// id is the lowest id among their handles linked to [chat], so a current
+  /// member's id is always in `chat.handles` (the tabs' departed-member check
+  /// relies on it); for someone who has left, the lowest among every handle
+  /// with their address. It depends only on the chat and the address, never on
+  /// which messages a query read, so every query agrees on it.
+  static Map<int, int> _participantIdsByHandle(Chat chat, Iterable<int> handleIds) {
+    final ids = handleIds.where((id) => id > 0).toSet();
+    if (ids.isEmpty) return const {};
+    final senders = Database.handles.getMany(ids.toList()).nonNulls.toList();
+    if (senders.isEmpty) return const {};
+    final q = Database.handles.query(Handle_.address.oneOf(senders.map((h) => h.address).toSet().toList())).build();
+    final List<Handle> sameAddress;
+    try {
+      sameAddress = q.find();
+    } finally {
+      q.close();
+    }
+    final memberIds = chat.handles.map((h) => h.id).whereType<int>().toSet();
+    // A handle linked to this chat beats one that is not; between equals, the lower id wins.
+    bool preferred(int a, int b) {
+      final aIsMember = memberIds.contains(a);
+      final bIsMember = memberIds.contains(b);
+      return aIsMember != bIsMember ? aIsMember : a < b;
+    }
+    final chosen = <String, int>{};
+    for (final h in sameAddress) {
+      final current = chosen[h.address];
+      if (current == null || preferred(h.id!, current)) chosen[h.address] = h.id!;
+    }
+    return {for (final h in senders) h.id!: chosen[h.address] ?? h.id!};
+  }
+
+  /// Narrows the incoming messages in [qb] to one participant, across every
+  /// handle with their address.
+  static void _linkParticipant(QueryBuilder<Message> qb, int participantId) {
+    final address = Database.handles.get(participantId)?.address;
+    qb.link(
+      Message_.handleRelation,
+      address == null ? Handle_.id.equals(participantId) : Handle_.address.equals(address),
+    );
+  }
+
   /// The participant id for an incoming message's sender — [kMeParticipantId]
   /// is handled by the caller for outgoing ones. `Message.handleId` is the
   /// *server-side* `originalROWID`, not this app's local `Handle.id` — using
   /// it directly here would silently key every incoming message under an id
-  /// nothing else recognizes. `handleRelation.targetId` is the local id and
-  /// what every other participant-keyed map in this file uses; `targetId ==
-  /// 0` means the relation was never resolved.
-  static int _senderId(Message m) {
+  /// nothing else recognizes. `handleRelation.targetId` is the local id, which
+  /// [participantByHandle] (from [_participantIdsByHandle]) turns into the
+  /// participant id; `targetId == 0` means the relation was never resolved.
+  static int _senderId(Message m, Map<int, int> participantByHandle) {
     final targetId = m.handleRelation.targetId;
-    return targetId == 0 ? kUnattributedParticipantId : targetId;
+    return targetId == 0 ? kUnattributedParticipantId : (participantByHandle[targetId] ?? targetId);
   }
+
+  static Map<int, int> _participantsOf(Chat chat, Iterable<Message> messages) => _participantIdsByHandle(
+        chat,
+        messages.where((m) => m.isFromMe != true).map((m) => m.handleRelation.targetId),
+      );
 
   /// Ascending epoch-millis for every participant in the chat.
   ///
-  /// Key is `Handle.id`, except the local user, who is [kMeParticipantId].
+  /// Key is a participant id (see [_participantIdsByHandle]), except the local
+  /// user, who is [kMeParticipantId].
   /// A 1:1 chat yields 2 entries; a group yields N+1. Downstream code never
   /// branches on group-ness — it just iterates the map.
   ///
@@ -58,30 +114,28 @@ class ChatStatsQueries {
     );
 
     // Include *historical* participants, not just current members — someone
-    // who left the group still sent the messages they sent. Sourcing handle
-    // ids from the messages themselves rather than from `chat.handles`
-    // guarantees departed members are covered. Scoped to the same window —
-    // a departed member with no activity inside it simply doesn't appear,
-    // which is correct for that window.
-    for (final handleId in participantHandleIds(chat, sinceMillis: sinceMillis)) {
-      result[handleId] = _timestamps(
-        _forChat(chat, realMessages(sinceMillis: sinceMillis).and(Message_.isFromMe.equals(false)))
-          ..link(Message_.handleRelation, Handle_.id.equals(handleId)),
-      );
+    // who left the group still sent the messages they sent. Sourcing
+    // participants from the messages themselves rather than from
+    // `chat.handles` guarantees departed members are covered. Scoped to the
+    // same window — a departed member with no activity inside it simply
+    // doesn't appear, which is correct for that window.
+    for (final participantId in participantIds(chat, sinceMillis: sinceMillis)) {
+      final qb = _forChat(chat, realMessages(sinceMillis: sinceMillis).and(Message_.isFromMe.equals(false)));
+      _linkParticipant(qb, participantId);
+      result[participantId] = _timestamps(qb);
     }
 
     return result;
   }
 
-  /// Distinct sender handle ids (local `Handle.id`, via `handleRelation`) —
-  /// see [_senderId] — appearing in this chat's incoming messages. Hydrates
-  /// rather than using `PropertyQuery`: the relation's local target id isn't
-  /// exposed as a plain queryable column, only `Message.handleId` (the
-  /// wrong, server-side id) is.
-  static List<int> participantHandleIds(Chat chat, {int? sinceMillis}) {
+  /// Distinct participant ids (see [_participantIdsByHandle]) of the senders
+  /// of this chat's incoming messages. Hydrates rather than using
+  /// `PropertyQuery`: the relation's local target id isn't exposed as a plain
+  /// queryable column, only `Message.handleId` (the wrong, server-side id) is.
+  static List<int> participantIds(Chat chat, {int? sinceMillis}) {
     final q = _forChat(chat, realMessages(sinceMillis: sinceMillis).and(Message_.isFromMe.equals(false))).build();
     try {
-      return q.find().map((m) => m.handleRelation.targetId).where((id) => id > 0).toSet().toList();
+      return _participantsOf(chat, q.find()).values.toSet().toList();
     } finally {
       q.close();
     }
@@ -140,12 +194,12 @@ class ChatStatsQueries {
   static int sentCount(Chat chat) => count(chat, realMessages().and(Message_.isFromMe.equals(true)));
 
   /// [participantId], when given, narrows incoming messages down to just
-  /// that one handle — mirrors [recentTexts]' comparison-target scoping so
+  /// that one participant — mirrors [recentTexts]' comparison-target scoping so
   /// the Correction Rate denominator matches whichever "theirs" numbers are
   /// on screen.
   static int receivedCount(Chat chat, {int? participantId}) {
     final qb = _forChat(chat, realMessages().and(Message_.isFromMe.equals(false)));
-    if (participantId != null) qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+    if (participantId != null) _linkParticipant(qb, participantId);
     final q = qb.build();
     try {
       return q.count();
@@ -165,7 +219,7 @@ class ChatStatsQueries {
     if (fromMe != null) cond = cond.and(Message_.isFromMe.equals(fromMe));
     final qb = _forChat(chat, cond);
     if (fromMe == false && participantId != null) {
-      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+      _linkParticipant(qb, participantId);
     }
     final q = qb.build();
     try {
@@ -180,7 +234,7 @@ class ChatStatsQueries {
   /// Normalization is the computer's job.
   ///
   /// [participantId] carries the reactor's id — [kMeParticipantId] for
-  /// outgoing rows, [_senderId] (local `Handle.id`) for incoming ones — so
+  /// outgoing rows, [_senderId] (a participant id) for incoming ones — so
   /// callers can filter received reactions down to a single comparison
   /// target instead of always treating "received" as "from anyone but me".
   /// Hydrates entities (rather than the cheaper `PropertyQuery` the old
@@ -192,11 +246,12 @@ class ChatStatsQueries {
       Message_.dateDeleted.isNull().and(Message_.associatedMessageType.notNull()),
     ).build();
     try {
-      return q
-          .find()
+      final rows = q.find();
+      final participants = _participantsOf(chat, rows);
+      return rows
           .map((m) => (
                 type: m.associatedMessageType!,
-                participantId: m.isFromMe == true ? kMeParticipantId : _senderId(m),
+                participantId: m.isFromMe == true ? kMeParticipantId : _senderId(m, participants),
               ))
           .toList();
     } finally {
@@ -249,14 +304,14 @@ class ChatStatsQueries {
   /// guarantee actually holds.
   ///
   /// [participantId], when given alongside `fromMe: false`, narrows the
-  /// incoming side to just that one handle — this is how the Content tab's
+  /// incoming side to just that one participant — this is how the Content tab's
   /// comparison-target selector scopes "theirs" down to a single group
   /// member instead of everyone but me.
   static List<String> recentTexts(Chat chat, {required bool fromMe, int? limit, int? participantId}) {
     final cond = realMessages().and(Message_.isFromMe.equals(fromMe)).and(Message_.text.notNull());
     final qb = _forChat(chat, cond)..order(Message_.dateCreated, flags: Order.descending);
     if (!fromMe && participantId != null) {
-      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+      _linkParticipant(qb, participantId);
     }
     final q = qb.build();
     try {
@@ -285,14 +340,13 @@ class ChatStatsQueries {
       limitPerParticipant,
     );
 
-    for (final handleId in participantHandleIds(chat, sinceMillis: sinceMillis)) {
-      result[handleId] = _textLengths(
-        _forChat(
-          chat,
-          realMessages(sinceMillis: sinceMillis).and(Message_.isFromMe.equals(false)).and(Message_.text.notNull()),
-        )..link(Message_.handleRelation, Handle_.id.equals(handleId)),
-        limitPerParticipant,
+    for (final participantId in participantIds(chat, sinceMillis: sinceMillis)) {
+      final qb = _forChat(
+        chat,
+        realMessages(sinceMillis: sinceMillis).and(Message_.isFromMe.equals(false)).and(Message_.text.notNull()),
       );
+      _linkParticipant(qb, participantId);
+      result[participantId] = _textLengths(qb, limitPerParticipant);
     }
 
     return result;
@@ -333,7 +387,7 @@ class ChatStatsQueries {
     if (fromMe != null) cond = cond.and(Message_.isFromMe.equals(fromMe));
     final qb = _forChat(chat, cond);
     if (fromMe == false && participantId != null) {
-      qb.link(Message_.handleRelation, Handle_.id.equals(participantId));
+      _linkParticipant(qb, participantId);
     }
     final q = qb.build();
     try {
@@ -376,15 +430,15 @@ class ChatStatsQueries {
           ..order(Message_.dateCreated))
         .build();
     try {
-      return q
-          .find()
-          .where((m) => m.dateCreated != null)
+      final events = q.find().where((m) => m.dateCreated != null).toList();
+      final participants = _participantsOf(chat, events);
+      return events
           .map((m) => GroupEventRecord(
                 itemType: m.itemType ?? 0,
                 groupActionType: m.groupActionType ?? 0,
                 groupTitle: m.groupTitle,
                 dateMillis: m.dateCreated!.millisecondsSinceEpoch,
-                senderId: m.isFromMe == true ? kMeParticipantId : _senderId(m),
+                senderId: m.isFromMe == true ? kMeParticipantId : _senderId(m, participants),
               ))
           .toList();
     } finally {
@@ -401,19 +455,15 @@ class ChatStatsQueries {
     Chat chat, {
     required int sinceMillis,
   }) {
-    final guidToSender = <String, int>{};
+    final List<Message> messages;
     final msgQuery = _forChat(chat, realMessages().and(Message_.dateCreated.greaterThan(sinceMillis))).build();
     try {
-      for (final m in msgQuery.find()) {
-        final guid = m.guid;
-        if (guid == null) continue;
-        guidToSender[guid] = m.isFromMe == true ? kMeParticipantId : _senderId(m);
-      }
+      messages = msgQuery.find();
     } finally {
       msgQuery.close();
     }
 
-    final reactionRows = <ReactionMatrixRow>[];
+    final List<Message> reactions;
     final reactionQuery = _forChat(
       chat,
       Message_.dateDeleted
@@ -422,18 +472,29 @@ class ChatStatsQueries {
           .and(Message_.dateCreated.greaterThan(sinceMillis)),
     ).build();
     try {
-      for (final m in reactionQuery.find()) {
-        final targetGuid = m.associatedMessageGuid;
-        final type = m.associatedMessageType;
-        if (targetGuid == null || type == null) continue;
-        reactionRows.add(ReactionMatrixRow(
-          targetGuid: targetGuid,
-          reactorId: m.isFromMe == true ? kMeParticipantId : _senderId(m),
-          type: type,
-        ));
-      }
+      reactions = reactionQuery.find();
     } finally {
       reactionQuery.close();
+    }
+
+    final participants = _participantsOf(chat, [...messages, ...reactions]);
+    final guidToSender = <String, int>{};
+    for (final m in messages) {
+      final guid = m.guid;
+      if (guid == null) continue;
+      guidToSender[guid] = m.isFromMe == true ? kMeParticipantId : _senderId(m, participants);
+    }
+
+    final reactionRows = <ReactionMatrixRow>[];
+    for (final m in reactions) {
+      final targetGuid = m.associatedMessageGuid;
+      final type = m.associatedMessageType;
+      if (targetGuid == null || type == null) continue;
+      reactionRows.add(ReactionMatrixRow(
+        targetGuid: targetGuid,
+        reactorId: m.isFromMe == true ? kMeParticipantId : _senderId(m, participants),
+        type: type,
+      ));
     }
 
     return (reactionRows: reactionRows, guidToSender: guidToSender);

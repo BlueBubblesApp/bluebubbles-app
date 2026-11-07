@@ -374,7 +374,7 @@ class ChatStatsController extends GetxController {
     try {
       final since = DateTime.now().subtract(Duration(days: months * 30)).millisecondsSinceEpoch;
       final raw = await runAsync(() => ChatStatsQueries.reactionMatrixData(chat, sinceMillis: since));
-      final ids = [kMeParticipantId, ...await runAsync(() => ChatStatsQueries.participantHandleIds(chat))];
+      final ids = [kMeParticipantId, ...await runAsync(() => ChatStatsQueries.participantIds(chat))];
       reactionMatrix.value = await _isolateReactionMatrix(
         reactionRows: raw.reactionRows,
         guidToSender: raw.guidToSender,
@@ -400,7 +400,7 @@ class ChatStatsController extends GetxController {
   /// Resolves display names/avatars once per participant id. The computer
   /// never sees names — only ids — which is what keeps it isolate-portable.
   Future<void> _resolveParticipants() async {
-    final ids = await runAsync(() => ChatStatsQueries.participantHandleIds(chat));
+    final ids = await runAsync(() => ChatStatsQueries.participantIds(chat));
     final resolved = <int, ParticipantInfo>{
       kMeParticipantId: const ParticipantInfo(id: kMeParticipantId, displayName: 'You'),
     };
