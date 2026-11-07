@@ -16,6 +16,7 @@
 | `ui/handle_service.dart` | Handle state (`HandleState` map) |
 | `ui/typing_indicator_service.dart` | Typing indicator state |
 | `ui/contact_service_v2.dart` | Contacts (v2) |
+| `ui/name_and_photo_sharing_service.dart` | Messages' "Share Name and Photo" offers (reads what was shared; not a contacts service) |
 | `ui/theme/themes_service.dart` | Theme management |
 | `ui/navigator/navigator_service.dart` | GetX navigation/routing |
 | `ui/attachments_service.dart` | Attachment handling |
