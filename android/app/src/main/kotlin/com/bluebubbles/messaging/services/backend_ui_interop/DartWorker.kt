@@ -43,7 +43,6 @@ import com.johnstef.flutter_user_certificates_android.FlutterUserCertificatesAnd
 import dev.fluttercommunity.plus.device_info.DeviceInfoPlusPlugin
 import dev.fluttercommunity.plus.packageinfo.PackageInfoPlugin
 import io.flutter.plugins.flutter_plugin_android_lifecycle.FlutterAndroidLifecyclePlugin
-import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin
 import io.objectbox.objectbox_flutter_libs.ObjectboxFlutterLibsPlugin
 import net.wolverinebeach.flutter_timezone.FlutterTimezonePlugin
 
@@ -305,7 +304,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         val plugins = engine.plugins
         // Core Flutter platform channels
         plugins.add(FlutterAndroidLifecyclePlugin())
-        plugins.add(SharedPreferencesPlugin())
+        plugins.add(SharedPreferencesEnginePlugin())
         // App information (used by FilesystemService and SettingsService init)
         plugins.add(PackageInfoPlugin())
         plugins.add(DeviceInfoPlusPlugin())
