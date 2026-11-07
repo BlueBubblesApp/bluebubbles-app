@@ -520,6 +520,7 @@ mixin ConnectionPanelHelpersMixin {
               onTap: () async {
                 await fdb.fetchFirebaseConfig();
                 String? newUrl = await fdb.fetchNewUrl(restartSocket: false);
+                if (newUrl != null) NetworkTasks.setOriginOverride(null);
                 showSnackbar("Notice", "Fetched URL: $newUrl");
                 SocketSvc.restartSocket();
               },

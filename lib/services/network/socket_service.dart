@@ -487,8 +487,8 @@ class SocketService {
   }
 
   /// Called on every connection error, and on a disconnect socket.io won't retry.
-  /// socket.io is normally already retrying on its own schedule, so all this does
-  /// is start the clock on "maybe the server moved".
+  /// A failed LAN connection falls back to the remote URL immediately. Remote
+  /// failures leave socket.io retrying and start the URL discovery timer.
   ///
   /// Errors arrive several times per failed attempt, so this is deliberately
   /// idempotent: the first one arms the timer and the rest are ignored until that
@@ -499,6 +499,11 @@ class SocketService {
     // to discover — and arming anyway would log a failure per cycle throughout
     // first-run setup, when having no server address yet is the expected state.
     if (!SettingsSvc.settings.finishedSetup.value) return;
+    if (HttpSvc.originOverride != null) {
+      NetworkTasks.setOriginOverride(null);
+      restartSocket();
+      return;
+    }
     if (_urlDiscoveryTimer != null || _urlDiscoveryInProgress) return;
     _scheduleUrlDiscovery();
   }
@@ -656,6 +661,7 @@ class SocketService {
       // One late ack on a slow link isn't enough to throw away a working socket; retry straight away.
       if (++_heartbeatMisses < _heartbeatMissLimit) return _sendHeartbeat();
       Logger.warn(tag: _tag, "Server missed $_heartbeatMisses heartbeats in a row — rebuilding socket");
+      NetworkTasks.setOriginOverride(null);
       restartSocket();
     });
 
