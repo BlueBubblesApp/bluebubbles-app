@@ -247,7 +247,7 @@ class NotificationsService {
             : await avatarAsBytes(
                 participantsOverride: !chat.isGroup
                     ? null
-                    : chat.handles.where((e) => e.address == message.handleRelation.target?.address).toList(),
+                    : chat.people.where((e) => e.address == message.handleRelation.target?.address).toList(),
                 chat: chat,
                 quality: 256);
         if (chatIcon.isEmpty) chatIcon = personIcon;
@@ -539,7 +539,7 @@ class NotificationsService {
   /// and custom avatars get a generated composite written to a temp file, or to
   /// [persistPath] when the file must outlive this run (appTemp is wiped on startup).
   Future<(String, bool)> _chatAvatarPath(Chat chat, {String? persistPath}) async {
-    if (chat.handles.length == 1 && chat.customAvatarPath == null) {
+    if (chat.people.length == 1 && chat.customAvatarPath == null) {
       final avatarPath = chat.handles.first.contactsV2.map((c) => c.avatarPath).nonNulls.firstOrNull;
       // A reserved character in the file name means a row written before avatar
       // names were sanitized (macOS contact IDs end in `:ABPerson`). Windows can

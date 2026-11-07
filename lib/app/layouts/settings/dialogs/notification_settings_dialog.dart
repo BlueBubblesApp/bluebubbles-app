@@ -38,7 +38,8 @@ class NotificationSettingsDialog extends StatelessWidget {
             ),
             onTap: () async {
               Navigator.of(context, rootNavigator: true).pop();
-              List<String?> names = chat.handles.map((e) => e.displayName).toList();
+              final people = chat.people;
+              List<String?> names = people.map((e) => e.displayName).toList();
               List<String> existing = chat.muteArgs?.split(",") ?? [];
               showDialog(
                   context: context,
@@ -62,25 +63,25 @@ class NotificationSettingsDialog extends StatelessWidget {
                                     ),
                                     child: ListView.builder(
                                       shrinkWrap: true,
-                                      itemCount: chat.handles.length,
+                                      itemCount: people.length,
                                       findChildIndexCallback: (key) =>
-                                          findChildIndexByKey(chat.handles, key, (item) => item.address),
+                                          findChildIndexByKey(people, key, (item) => item.address),
                                       itemBuilder: (context, index) {
                                         return CheckboxListTile(
-                                          key: ValueKey(chat.handles[index].address),
-                                          value: existing.contains(chat.handles[index].address),
+                                          key: ValueKey(people[index].address),
+                                          value: existing.contains(people[index].address),
                                           onChanged: (val) {
                                             setState(() {
                                               if (val!) {
-                                                existing.add(chat.handles[index].address);
+                                                existing.add(people[index].address);
                                               } else {
                                                 existing
-                                                    .removeWhere((element) => element == chat.handles[index].address);
+                                                    .removeWhere((element) => element == people[index].address);
                                               }
                                             });
                                           },
                                           activeColor: context.theme.colorScheme.primary,
-                                          title: Text(names[index] ?? chat.handles[index].address,
+                                          title: Text(names[index] ?? people[index].address,
                                               style: context.theme.textTheme.bodyLarge),
                                         );
                                       },
