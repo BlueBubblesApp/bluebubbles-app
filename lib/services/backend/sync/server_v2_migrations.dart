@@ -7,15 +7,23 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
+import 'package:get/get.dart' show Rxn;
 
 /// What a migration pass is doing, and how far through it is (0 to 1).
-typedef ServerV2MigrationProgress = void Function(String step, double progress);
+typedef ServerV2MigrationProgress = void Function(String step, double progress, {int? completed, int? total});
+typedef ServerV2MigrationStatus = ({
+  String step,
+  double? progress,
+  int stepNumber,
+  List<double?> steps,
+  int? completed,
+  int? total,
+});
 
-/// Fills in data that servers older than v2 never sent, for messages already synced from them.
-/// Sync never refetches old messages, so this has to ask the server again.
+/// Backfills server-only fields and message changes older clients could not recover.
 class ServerV2Migrations {
   /// Bump when adding a backfill, so clients that finished the earlier ones run again.
-  static const int version = 4;
+  static const int version = 5;
 
   /// Run on startup: once the server is known to be v2, and on each launch until a pass gets through.
   static Future<void> runOnce() async {
@@ -24,26 +32,128 @@ class ServerV2Migrations {
   }
 
   static Future<int?>? _running;
+  static final progress = Rxn<ServerV2MigrationStatus>();
 
   /// Returns how many messages were updated, or null if the server couldn't be reached or isn't v2. A message whose
   /// own request fails is skipped and left for a manual run. Joins a pass that's already running rather than starting
   /// a second.
-  static Future<int?> run({ServerV2MigrationProgress? onProgress}) =>
-      _running ??= _run(onProgress).whenComplete(() => _running = null);
+  static Future<int?> run({ServerV2MigrationProgress? onProgress}) {
+    final future = _running ??= _runWithProgress();
+    if (onProgress == null) return future;
+    final subscription = progress.listen((status) {
+      if (status != null && status.progress != null) {
+        onProgress(status.step, status.progress!, completed: status.completed, total: status.total);
+      }
+    });
+    final status = progress.value;
+    if (status != null && status.progress != null) {
+      onProgress(status.step, status.progress!, completed: status.completed, total: status.total);
+    }
+    return future.whenComplete(subscription.cancel);
+  }
 
-  static Future<int?> _run(ServerV2MigrationProgress? onProgress) async {
-    if (!SettingsSvc.serverDetails.isV2Server) return null;
-    final emoji = await _backfillTapbackEmoji(onProgress);
-    if (emoji == null) return null;
-    final genmoji = await _backfillGenmoji(onProgress);
-    if (genmoji == null) return null;
-    final stickers = await _backfillStickerPlacement(onProgress);
-    if (stickers == null) return null;
-    final payloads = await _backfillAppPayloads(onProgress);
-    if (payloads == null) return null;
-    final turns = await _backfillAppTurns(onProgress);
-    if (turns == null) return null;
-    return emoji + genmoji + stickers + payloads + turns;
+  static const stepNames = ['Emoji tapbacks', 'Genmoji', 'Stickers', 'iMessage apps', 'Message changes'];
+
+  /// A reconnect can arrive before the failed request has finished unwinding.
+  static Future<void> retryAfterReconnect() async {
+    final pending = _running;
+    if (pending != null) {
+      try {
+        if (await pending != null) return;
+      } catch (e, s) {
+        Logger.warn('Previous v2 migration failed', error: e, trace: s, tag: 'ServerV2Migrations');
+      }
+    }
+    await runOnce();
+  }
+
+  static Future<int?> _runWithProgress() async {
+    final steps = List<double?>.filled(5, 0);
+    Future<int?> runStep(int index, Future<int?> Function(ServerV2MigrationProgress) work) async {
+      void report(String step, double? value, {int? completed, int? total}) {
+        steps[index] = value;
+        progress.value = (
+          step: step,
+          progress: value,
+          stepNumber: index + 1,
+          steps: List<double?>.unmodifiable(steps),
+          completed: completed,
+          total: total,
+        );
+      }
+
+      report(stepNames[index], null);
+      final result = await work(
+        (step, value, {completed, total}) => report(step, value, completed: completed, total: total),
+      );
+      if (result != null) {
+        final status = progress.value!;
+        report(status.step, 1, completed: status.total, total: status.total);
+      }
+      return result;
+    }
+
+    try {
+      if (!SettingsSvc.serverDetails.isV2Server) return null;
+      final emoji = await runStep(0, _backfillTapbackEmoji);
+      if (emoji == null) return null;
+      final genmoji = await runStep(1, _backfillGenmoji);
+      if (genmoji == null) return null;
+      final stickers = await runStep(2, _backfillStickerPlacement);
+      if (stickers == null) return null;
+      final apps = await runStep(3, (report) async {
+        final payloads = await _backfillAppPayloads(
+          (step, value, {completed, total}) => report(step, value * 0.9, completed: completed, total: total),
+        );
+        if (payloads == null) return null;
+        final turns = await _backfillAppTurns(
+          (step, value, {completed, total}) => report(step, 0.9 + value * 0.1, completed: completed, total: total),
+        );
+        return turns == null ? null : payloads + turns;
+      });
+      if (apps == null) return null;
+      final changes = await runStep(4, _backfillMessageChanges);
+      return changes == null ? null : emoji + genmoji + stickers + apps + changes;
+    } finally {
+      progress.value = null;
+      _running = null;
+    }
+  }
+
+  /// Repairs changes older clients missed even when their date is already behind
+  /// the regular sync marker. Creation history and normal markers are untouched.
+  static Future<int?> _backfillMessageChanges(ServerV2MigrationProgress? onProgress) async {
+    onProgress?.call("Updating missed message changes", 0);
+    final guids = await runAsync(() => Database.runInTransaction(TxMode.read, () {
+      final query = Database.messages.query(Message_.guid.notNull()).build();
+      try {
+        return query.property(Message_.guid).find()
+            .where((guid) => guid.isNotEmpty && !guid.startsWith('temp') && !guid.startsWith('error'))
+            .toSet().toList();
+      } finally {
+        query.close();
+      }
+    }));
+    if (guids.isEmpty) return 0;
+    Logger.info('Backfilling message changes for ${guids.length} local GUIDs', tag: 'ServerV2Migrations');
+    final manager = IncrementalSyncManager(
+      startTimestamp: 0,
+      includeNewMessages: false,
+      changeMessageGuids: guids,
+      onProgress: onProgress,
+    );
+    try {
+      await manager.start();
+      return manager.messagesSynced;
+    } catch (e, s) {
+      Logger.warn(
+        'Stopped backfilling message changes; retrying after reconnect or on the next launch',
+        error: e,
+        trace: s,
+        tag: 'ServerV2Migrations',
+      );
+      return null;
+    }
   }
 
   /// Game turns saved before the client mirrored Messages' rewrite of a replaced turn to type 3, so earlier turns of a
@@ -51,16 +161,20 @@ class ServerV2Migrations {
   /// its session it replaced. Returns how many were rewritten.
   static Future<int?> _backfillAppTurns(ServerV2MigrationProgress? onProgress) async {
     onProgress?.call("Updating iMessage app turns", 0);
-    return runAsync(() => Database.runInTransaction(TxMode.write, () {
-          final query = Database.messages
-              .query(Message_.balloonBundleId
+    return runAsync(
+      () => Database.runInTransaction(TxMode.write, () {
+        final query = Database.messages
+            .query(
+              Message_.balloonBundleId
                   .contains(AppSessionTypes.extensionBalloonPlugin)
-                  .and(Message_.associatedMessageType.equals(AppSessionTypes.UPDATE)))
-              .build();
-          final turns = query.find();
-          query.close();
-          return turns.fold<int>(0, (retired, turn) => retired + MessageActions.retireEarlierTurns(turn).length);
-        }));
+                  .and(Message_.associatedMessageType.equals(AppSessionTypes.UPDATE)),
+            )
+            .build();
+        final turns = query.find();
+        query.close();
+        return turns.fold<int>(0, (retired, turn) => retired + MessageActions.retireEarlierTurns(turn).length);
+      }),
+    );
   }
 
   /// App balloons saved before the client kept their session, without their payload (as a push delivers them), or
@@ -78,7 +192,7 @@ class ServerV2Migrations {
 
     int filled = 0;
     for (final (i, message) in stale.indexed) {
-      onProgress?.call("Updating iMessage apps", i / stale.length);
+      onProgress?.call("Updating iMessage apps", i / stale.length, completed: i, total: stale.length);
       try {
         final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "payloadData,appPayload");
         final data = response.data['data'];
@@ -94,8 +208,12 @@ class ServerV2Migrations {
         filled++;
       } catch (e, s) {
         if (_isConnectionFailure(e)) {
-          Logger.warn("Stopped backfilling app payloads at ${message.guid}",
-              error: e, trace: s, tag: "ServerV2Migrations");
+          Logger.warn(
+            "Stopped backfilling app payloads at ${message.guid}",
+            error: e,
+            trace: s,
+            tag: "ServerV2Migrations",
+          );
           return null;
         }
         // One message the server can't give us (gone, 404, or anything else) shouldn't hold up the rest
@@ -109,17 +227,17 @@ class ServerV2Migrations {
 
   /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.
   static Future<int?> _backfillStickerPlacement(ServerV2MigrationProgress? onProgress) async {
-    final query =
-        Database.messages.query(Message_.associatedMessageType.equals("sticker").and(Message_.guid.notNull())).build();
-    final missing = (await runAsync(() => query.find()))
-        .where(_isOnServer)
-        .where((m) => m.dbAttachments.any((a) => a.stickerPlacement == null))
-        .toList();
+    final query = Database.messages
+        .query(Message_.associatedMessageType.equals("sticker").and(Message_.guid.notNull()))
+        .build();
+    final missing = (await runAsync(
+      () => query.find(),
+    )).where(_isOnServer).where((m) => m.dbAttachments.any((a) => a.stickerPlacement == null)).toList();
     query.close();
 
     int filled = 0;
     for (final (i, sticker) in missing.indexed) {
-      onProgress?.call("Updating stickers", i / missing.length);
+      onProgress?.call("Updating stickers", i / missing.length, completed: i, total: missing.length);
       try {
         final response = await HttpSvc.message.fetchOne(sticker.guid!, withQuery: "attachment");
         final remote = (((response.data['data'] as Map?)?['attachments'] as List?) ?? const [])
@@ -146,21 +264,29 @@ class ServerV2Migrations {
         filled++;
         final chatGuid = current.chat.target?.guid;
         if (chatGuid != null && current.associatedMessageGuid != null) {
-          maybeFindMessagesSvc(chatGuid)
-              ?.getMessageStateIfExists(current.associatedMessageGuid!)
-              ?.addAssociatedMessageInternal(current);
+          maybeFindMessagesSvc(
+            chatGuid,
+          )?.getMessageStateIfExists(current.associatedMessageGuid!)?.addAssociatedMessageInternal(current);
         }
       } catch (e, s) {
         if (_isNotFound(e)) continue;
         if (_isConnectionFailure(e)) {
           // Every later request would fail the same way; the next launch retries the rest
-          Logger.warn("Stopped backfilling sticker placements: couldn't reach the server",
-              error: e, trace: s, tag: "ServerV2Migrations");
+          Logger.warn(
+            "Stopped backfilling sticker placements: couldn't reach the server",
+            error: e,
+            trace: s,
+            tag: "ServerV2Migrations",
+          );
           return null;
         }
         // Only this message: skip it rather than let it block the rest on every launch
-        Logger.warn("Failed to backfill the placement of sticker ${sticker.guid}",
-            error: e, trace: s, tag: "ServerV2Migrations");
+        Logger.warn(
+          "Failed to backfill the placement of sticker ${sticker.guid}",
+          error: e,
+          trace: s,
+          tag: "ServerV2Migrations",
+        );
       }
     }
     return filled;
@@ -181,7 +307,7 @@ class ServerV2Migrations {
 
     int filled = 0;
     for (final (i, message) in candidates.indexed) {
-      onProgress?.call("Updating Genmoji", i / candidates.length);
+      onProgress?.call("Updating Genmoji", i / candidates.length, completed: i, total: candidates.length);
       try {
         final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "attributedBody");
         final data = response.data['data'];
@@ -198,8 +324,12 @@ class ServerV2Migrations {
         if (_isNotFound(e)) continue;
         if (_isConnectionFailure(e)) {
           // Every later request would fail the same way; the next launch retries the rest
-          Logger.warn("Stopped backfilling Genmoji: couldn't reach the server",
-              error: e, trace: s, tag: "ServerV2Migrations");
+          Logger.warn(
+            "Stopped backfilling Genmoji: couldn't reach the server",
+            error: e,
+            trace: s,
+            tag: "ServerV2Migrations",
+          );
           return null;
         }
         // Only this message: skip it rather than let it block the rest on every launch
@@ -214,10 +344,12 @@ class ServerV2Migrations {
 
   static Future<int?> _backfillTapbackEmoji(ServerV2MigrationProgress? onProgress) async {
     final query = Database.messages
-        .query(Message_.associatedMessageType
-            .oneOf([ReactionTypes.EMOJI, ReactionTypes.REMOVED_EMOJI])
-            .and(Message_.associatedMessageEmoji.isNull())
-            .and(Message_.guid.notNull()))
+        .query(
+          Message_.associatedMessageType
+              .oneOf([ReactionTypes.EMOJI, ReactionTypes.REMOVED_EMOJI])
+              .and(Message_.associatedMessageEmoji.isNull())
+              .and(Message_.guid.notNull()),
+        )
         .build();
     final missing = (await runAsync(() => query.find())).where(_isOnServer).toList();
     query.close();
@@ -225,7 +357,7 @@ class ServerV2Migrations {
     int filled = 0;
     int failed = 0;
     for (final (i, reaction) in missing.indexed) {
-      onProgress?.call("Updating emoji tapbacks", i / missing.length);
+      onProgress?.call("Updating emoji tapbacks", i / missing.length, completed: i, total: missing.length);
       final Response response;
       try {
         response = await HttpSvc.message.fetchOne(reaction.guid!);
@@ -233,14 +365,22 @@ class ServerV2Migrations {
         if (_isNotFound(e)) continue;
         if (_isConnectionFailure(e)) {
           // Every later request would fail the same way; the next launch retries the rest
-          Logger.warn("Stopped backfilling tapback emoji: couldn't reach the server",
-              error: e, trace: s, tag: "ServerV2Migrations");
+          Logger.warn(
+            "Stopped backfilling tapback emoji: couldn't reach the server",
+            error: e,
+            trace: s,
+            tag: "ServerV2Migrations",
+          );
           return null;
         }
         // Only this message: skip it rather than let it block the rest on every launch
         failed++;
-        Logger.warn("Failed to backfill emoji for tapback ${reaction.guid}",
-            error: e, trace: s, tag: "ServerV2Migrations");
+        Logger.warn(
+          "Failed to backfill emoji for tapback ${reaction.guid}",
+          error: e,
+          trace: s,
+          tag: "ServerV2Migrations",
+        );
         continue;
       }
 
@@ -261,9 +401,9 @@ class ServerV2Migrations {
 
       final chatGuid = updated.chat.target?.guid;
       if (chatGuid != null && updated.associatedMessageGuid != null) {
-        maybeFindMessagesSvc(chatGuid)
-            ?.getMessageStateIfExists(updated.associatedMessageGuid!)
-            ?.addAssociatedMessageInternal(updated);
+        maybeFindMessagesSvc(
+          chatGuid,
+        )?.getMessageStateIfExists(updated.associatedMessageGuid!)?.addAssociatedMessageInternal(updated);
       }
     }
     if (failed > 0) {

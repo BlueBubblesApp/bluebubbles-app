@@ -7,9 +7,31 @@
 | `sync_service.dart` | Entry point — decides full vs incremental; tracks `lastIncrementalSync` timestamp |
 | `full_sync_manager.dart` | Bulk fetch all chats + messages (initial setup or full resync); batches 25–100 msgs/chat |
 | `incremental_sync_manager.dart` | Delta sync since last run; paginated by timestamp/rowId; saves resume markers |
+| `message_sync_deduplicator.dart` | Tracks message snapshots per chat during v2 incremental sync; skips identical overlapping results while allowing changed snapshots |
 | `chat_sync_manager.dart` | Syncs chat list only (no messages); tracks per-chat progress |
 | `handle_sync_manager.dart` | Syncs phone/email handles; requires server v1.5.2+; supports rollback |
 | `sync_manager_impl.dart` | Abstract base: `SyncStatus` enum, progress `double`, log output `RxList` |
+
+V2 incremental sync fetches new messages by ROWID (or creation date without a ROWID marker), then
+queries `dateField: updated`, `edited`, and `retracted` over the previous timestamp marker through
+the sync start. `updated` covers delivered/read dates; the server does not accept `played`.
+All passes must succeed before saving markers. Overlapping pages/queries are deduplicated per chat
+and message snapshot, and older changed messages cannot move the ROWID or latest-message markers backwards.
+
+`server_v2_migrations.dart` runs versioned v2 backfills automatically and from Troubleshoot.
+Version 5 adds a changes-only replay from timestamp zero to recover missed historical receipts,
+edits, and unsends. It uses the normal incremental-sync default of 1,000 messages per page, leaves
+the normal sync markers alone, and only advances the migration version after all passes succeed.
+
+The historical changes-only replay updates existing local message GUIDs only; it never imports unsynced history.
+Each date pass queries batches of up to 1,000 locally stored GUIDs using `message.guid IN (:guids)`.
+Missing server messages naturally return no rows; missing local ROWIDs do not require a separate repair pass.
+Counts report local GUIDs checked in the current date pass, including GUIDs with no matching changes.
+`ServerV2Migrations.progress` exposes five numbered steps, per-step progress, and processed/total counts to the chat-list banner.
+Incomplete migrations retry after reconnect; concurrent calls join the active pass.
+It is cleared on success or failure. Normal V2 query progress counts raw paginated rows; the GUID backfill
+counts local GUIDs checked. Overlapping results do not prevent a step reaching completion, and read/delivery,
+edit, and unsend passes have distinct labels.
 
 ## Status Lifecycle
 ```
