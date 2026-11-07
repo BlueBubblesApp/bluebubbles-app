@@ -29,11 +29,11 @@ class _ParticipantsListState extends State<ParticipantsList> with ThemeHelpers {
   /// Returns the reactive ChatState for this chat, if available.
   ChatState? get _chatState => ChatsSvc.chatStates[widget.chat.guid];
 
-  /// Current participants read from ChatState, falling back to widget.chat.handles.
+  /// Current participants read from ChatState, falling back to widget.chat.people.
   List<Handle> get _currentParticipants {
     final state = _chatState;
     if (state != null) return state.participants.map((hs) => hs.handle).toList();
-    return widget.chat.handles.toList();
+    return widget.chat.people;
   }
 
   bool get shouldShowMore => _currentParticipants.length > 5;
