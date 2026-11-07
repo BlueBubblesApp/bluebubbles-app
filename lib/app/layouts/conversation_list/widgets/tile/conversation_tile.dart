@@ -41,6 +41,36 @@ class ConversationTileController extends StatefulController {
     this.subtitle,
   });
 
+  /// Returns the cached tile controller for [tag] only if it is still bound to
+  /// the live [ChatState] for [chat]. ChatsService.init()/reset() replaces every
+  /// ChatState (this happens twice at desktop startup, and after any chat/handle
+  /// sync); a permanent controller from before that would otherwise keep the
+  /// tile's subtitle and timestamp bound to an orphaned state that never updates.
+  static ConversationTileController resolve(
+    Chat chat, {
+    required String tag,
+    required ConversationListController listController,
+    Function(bool)? onSelect,
+    Widget? subtitle,
+  }) {
+    final live = ChatsSvc.getOrCreateChatState(chat);
+    if (Get.isRegistered<ConversationTileController>(tag: tag)) {
+      final existing = Get.find<ConversationTileController>(tag: tag);
+      if (identical(existing.chatState, live)) return existing;
+      Get.delete<ConversationTileController>(tag: tag, force: true);
+    }
+    return Get.put(
+      ConversationTileController(
+        chatState: live,
+        listController: listController,
+        onSelect: onSelect,
+        subtitle: subtitle,
+      ),
+      tag: tag,
+      permanent: kIsDesktop || kIsWeb,
+    );
+  }
+
   void onTap(BuildContext context) {
     if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
       onLongPress();
@@ -101,9 +131,8 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
     bool inSelectMode = false,
     Widget? subtitle,
   }) : super(
-            parentController: !inSelectMode && Get.isRegistered<ConversationTileController>(tag: chat.guid)
-                ? Get.find<ConversationTileController>(tag: chat.guid)
-                : Get.put(
+            parentController: inSelectMode
+                ? Get.put(
                     ConversationTileController(
                       chatState: ChatsSvc.getOrCreateChatState(chat),
                       listController: controller,
@@ -111,8 +140,14 @@ class ConversationTile extends CustomStateful<ConversationTileController> {
                       inSelectMode: inSelectMode,
                       subtitle: subtitle,
                     ),
-                    tag: inSelectMode ? randomString(8) : chat.guid,
-                    permanent: kIsDesktop || kIsWeb));
+                    tag: randomString(8))
+                : ConversationTileController.resolve(
+                    chat,
+                    tag: chat.guid,
+                    listController: controller,
+                    onSelect: onSelect,
+                    subtitle: subtitle,
+                  ));
 
   @override
   State<ConversationTile> createState() => _ConversationTileState();
