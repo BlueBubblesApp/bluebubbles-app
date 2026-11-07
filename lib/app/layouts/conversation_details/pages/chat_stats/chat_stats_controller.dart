@@ -42,8 +42,12 @@ class ChatStatsCache {
 ///
 /// See `docs/feature-planning/chat-stats/tasks/06-controller-and-caching.md`.
 class ChatStatsController extends GetxController {
-  ChatStatsController(this.chat);
+  ChatStatsController(this.chat) : _resolver = ParticipantResolver(chat);
   final Chat chat;
+
+  /// Maps senders to participants for every query this page runs, resolving
+  /// each address once. See [ParticipantResolver].
+  final ParticipantResolver _resolver;
 
   final Rxn<ChatStats> stats = Rxn<ChatStats>();
   final Rx<ChatStatsProgress> progress = ChatStatsProgress.idle.obs;
@@ -174,7 +178,7 @@ class ChatStatsController extends GetxController {
       if (_byParticipant == null || _byParticipantTimeframe != currentTimeframe) {
         final fetchWatch = Stopwatch()..start();
         _byParticipant = await runAsync(
-          () => ChatStatsQueries.timestampsByParticipant(chat, sinceMillis: currentTimeframe.cutoffMillis()),
+          () => ChatStatsQueries.timestampsByParticipant(chat, _resolver, sinceMillis: currentTimeframe.cutoffMillis()),
         );
         _byParticipantTimeframe = currentTimeframe;
         Logger.debug(
@@ -305,9 +309,9 @@ class ChatStatsController extends GetxController {
     final comparisonId = comparisonParticipantId.value;
     final coverage = await runAsync(() => ChatStatsQueries.textCoverage(chat));
     final cap = tier == StatsDetailTier.large ? kContentMessageCapLarge : kContentMessageCap;
-    final myTexts = await runAsync(() => ChatStatsQueries.recentTexts(chat, fromMe: true, limit: cap));
+    final myTexts = await runAsync(() => ChatStatsQueries.recentTexts(chat, _resolver, fromMe: true, limit: cap));
     final theirTexts = await runAsync(
-      () => ChatStatsQueries.recentTexts(chat, fromMe: false, limit: cap, participantId: comparisonId),
+      () => ChatStatsQueries.recentTexts(chat, _resolver, fromMe: false, limit: cap, participantId: comparisonId),
     );
     final windowed = myTexts.length >= cap || theirTexts.length >= cap;
     // Scoped to the page-level timeframe (unlike the rest of Content, which
@@ -316,23 +320,24 @@ class ChatStatsController extends GetxController {
     final lengthsByParticipant = await runAsync(
       () => ChatStatsQueries.textLengthsByParticipant(
         chat,
+        _resolver,
         sinceMillis: timeframe.value.cutoffMillis(),
         limitPerParticipant: cap,
       ),
     );
-    final reactions = await runAsync(() => ChatStatsQueries.reactions(chat));
+    final reactions = await runAsync(() => ChatStatsQueries.reactions(chat, _resolver));
     final mimeTypes = await runAsync(() => ChatStatsQueries.attachmentMimeTypes(chat));
     final effectIds = await runAsync(() => ChatStatsQueries.expressiveSendStyleIds(chat));
-    final edited = await runAsync(() => ChatStatsQueries.editedCount(chat));
-    final unsent = await runAsync(() => ChatStatsQueries.unsentCount(chat));
-    final editedMine = await runAsync(() => ChatStatsQueries.editedCount(chat, fromMe: true));
+    final edited = await runAsync(() => ChatStatsQueries.editedCount(chat, _resolver));
+    final unsent = await runAsync(() => ChatStatsQueries.unsentCount(chat, _resolver));
+    final editedMine = await runAsync(() => ChatStatsQueries.editedCount(chat, _resolver, fromMe: true));
     final editedTheirs =
-        await runAsync(() => ChatStatsQueries.editedCount(chat, fromMe: false, participantId: comparisonId));
-    final unsentMine = await runAsync(() => ChatStatsQueries.unsentCount(chat, fromMe: true));
+        await runAsync(() => ChatStatsQueries.editedCount(chat, _resolver, fromMe: false, participantId: comparisonId));
+    final unsentMine = await runAsync(() => ChatStatsQueries.unsentCount(chat, _resolver, fromMe: true));
     final unsentTheirs =
-        await runAsync(() => ChatStatsQueries.unsentCount(chat, fromMe: false, participantId: comparisonId));
+        await runAsync(() => ChatStatsQueries.unsentCount(chat, _resolver, fromMe: false, participantId: comparisonId));
     final sentMine = await runAsync(() => ChatStatsQueries.sentCount(chat));
-    final receivedTheirs = await runAsync(() => ChatStatsQueries.receivedCount(chat, participantId: comparisonId));
+    final receivedTheirs = await runAsync(() => ChatStatsQueries.receivedCount(chat, _resolver, participantId: comparisonId));
     final audio = await runAsync(() => ChatStatsQueries.audioStats(chat));
 
     return _isolateContent(
@@ -360,7 +365,7 @@ class ChatStatsController extends GetxController {
   }
 
   /// Group event timeline — cheap, single query, no isolate hop needed.
-  Future<List<GroupEventRecord>> loadGroupEvents() => runAsync(() => ChatStatsQueries.groupEvents(chat));
+  Future<List<GroupEventRecord>> loadGroupEvents() => runAsync(() => ChatStatsQueries.groupEvents(chat, _resolver));
 
   /// Opt-in who-reacts-to-whom matrix (Members tab). Not part of [stats] / the
   /// cache — it's windowed and explicitly user-triggered, so it's held only
@@ -373,8 +378,8 @@ class ChatStatsController extends GetxController {
     reactionMatrixLoading.value = true;
     try {
       final since = DateTime.now().subtract(Duration(days: months * 30)).millisecondsSinceEpoch;
-      final raw = await runAsync(() => ChatStatsQueries.reactionMatrixData(chat, sinceMillis: since));
-      final ids = [kMeParticipantId, ...await runAsync(() => ChatStatsQueries.participantIds(chat))];
+      final raw = await runAsync(() => ChatStatsQueries.reactionMatrixData(chat, _resolver, sinceMillis: since));
+      final ids = [kMeParticipantId, ...await runAsync(() => ChatStatsQueries.participantIds(chat, _resolver))];
       reactionMatrix.value = await _isolateReactionMatrix(
         reactionRows: raw.reactionRows,
         guidToSender: raw.guidToSender,
@@ -392,7 +397,7 @@ class ChatStatsController extends GetxController {
   /// backs the per-participant deep dive. Reuses the already-fetched
   /// `_byParticipant` map rather than issuing a new DB query.
   Future<ActivityStats> activityForParticipant(int participantId) async {
-    _byParticipant ??= await runAsync(() => ChatStatsQueries.timestampsByParticipant(chat));
+    _byParticipant ??= await runAsync(() => ChatStatsQueries.timestampsByParticipant(chat, _resolver));
     final timestamps = _byParticipant![participantId] ?? const <int>[];
     return _isolateActivity(byParticipant: {participantId: timestamps});
   }
@@ -400,7 +405,7 @@ class ChatStatsController extends GetxController {
   /// Resolves display names/avatars once per participant id. The computer
   /// never sees names — only ids — which is what keeps it isolate-portable.
   Future<void> _resolveParticipants() async {
-    final ids = await runAsync(() => ChatStatsQueries.participantIds(chat));
+    final ids = await runAsync(() => ChatStatsQueries.participantIds(chat, _resolver));
     final resolved = <int, ParticipantInfo>{
       kMeParticipantId: const ParticipantInfo(id: kMeParticipantId, displayName: 'You'),
     };
