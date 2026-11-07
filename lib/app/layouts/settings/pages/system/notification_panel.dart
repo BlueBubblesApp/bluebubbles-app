@@ -379,7 +379,7 @@ class ChatListState extends State<ChatList> with ThemeHelpers {
       String muteArgsStr = "";
       if (chat.muteArgs != null) {
         if (chat.muteType == "mute_individuals") {
-          final participants = chat.handles.where((element) => chat.muteArgs!.split(",").contains(element.address));
+          final participants = chat.people.where((element) => chat.muteArgs!.split(",").contains(element.address));
           muteArgsStr = " - ${participants.length > 1 ? "${participants.length} people" : "1 person"}";
         } else if (chat.muteType == "temporary_mute") {
           final DateTime time = DateTime.parse(chat.muteArgs!).toLocal();
