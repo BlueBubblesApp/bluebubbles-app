@@ -259,6 +259,17 @@ class ImageActions {
   /// Whether any pixel is less than opaque. About 3 ms on an opaque 1080x1920, against 100 ms for the JPEG encode.
   static bool _isSeeThrough(img.Image image) {
     if (!image.hasAlpha) return false;
+    // A palette image reports the palette's 4 channels but stores one index per pixel, so the byte scan below would
+    // read indices as alpha. Only a pixel using a see-through palette entry counts, and most palettes have none
+    final palette = image.palette;
+    if (palette != null) {
+      final opaque = palette.maxChannelValue;
+      var anySeeThroughEntry = false;
+      for (var i = 0; i < palette.numColors && !anySeeThroughEntry; i++) {
+        anySeeThroughEntry = palette.getAlpha(i) < opaque;
+      }
+      return anySeeThroughEntry && image.any((p) => p.a < opaque);
+    }
     if (image.format == img.Format.uint8 && image.numChannels == 4) {
       final bytes = image.toUint8List();
       for (var i = 3; i < bytes.length; i += 4) {
