@@ -256,6 +256,7 @@ class SyncActions {
       final inputMsg = inputMessages[i];
       final msgData = messagesData[i];
       final existing = existingMap[inputMsg.guid];
+      inputMsg.isBookmarked = existing?.isBookmarked ?? inputMsg.isBookmarked;
       final msgToSave = existing != null ? Message.merge(existing, inputMsg) : inputMsg;
 
       // Wire to chat.
