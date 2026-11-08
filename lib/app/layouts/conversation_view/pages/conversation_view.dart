@@ -276,6 +276,11 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
                 controller.selected.clear();
                 return;
               }
+              // Back from the picker's Genmoji library goes to its photos first.
+              if (controller.showAttachmentPicker.value && controller.showGenmojiLibrary.value) {
+                controller.showGenmojiLibrary.value = false;
+                return;
+              }
               if (controller.showAttachmentPicker.value) {
                 controller.showAttachmentPicker.value = false;
                 controller.updateWidgets<ConversationTextField>(null);

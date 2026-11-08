@@ -10,6 +10,7 @@ import 'package:bluebubbles/services/network/api/facetime_api.dart';
 import 'package:bluebubbles/services/network/api/fcm_api.dart';
 import 'package:bluebubbles/services/network/api/icloud_api.dart';
 import 'package:bluebubbles/services/network/api/firebase_api.dart';
+import 'package:bluebubbles/services/network/api/genmoji_api.dart';
 import 'package:bluebubbles/services/network/api/handle_api.dart';
 import 'package:bluebubbles/services/network/api/message_api.dart';
 import 'package:bluebubbles/services/network/api/server_api.dart';
@@ -47,6 +48,7 @@ class HttpService implements BaseApi {
   late FaceTimeApi faceTime;
   late iCloudApi icloud;
   late FirebaseApi firebase;
+  late GenmojiApi genmoji;
 
   /// Get the URL origin from the current server address
   @override
@@ -57,6 +59,8 @@ class HttpService implements BaseApi {
           : '');
   @override
   String get apiRoot => "$origin/api/v1";
+  @override
+  String get apiRootV2 => "$origin/api/v2";
 
   /// iOS font download status
   RxBool downloadingFont = false.obs;
@@ -165,6 +169,7 @@ class HttpService implements BaseApi {
     faceTime = FaceTimeApi(this);
     icloud = iCloudApi(this);
     firebase = FirebaseApi(this);
+    genmoji = GenmojiApi(this);
   }
 
   void updateHeaders() {
