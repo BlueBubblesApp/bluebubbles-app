@@ -75,8 +75,9 @@ socket_io_client connection to the BlueBubbles server. Don't create additional
 - The socket follows the origin it dials (`_dialedOrigin`): anything that changes the
   LAN override calls `followOrigin()` once the value settles (`detectLocalhost()` does
   this itself), which rebuilds only if the origin actually moved.
-- A stale LAN override is re-probed by `_runUrlDiscovery()` via
-  `NetworkTasks.detectLocalhost()`, not cleared by `saveNewServerUrl()`.
+- Connection errors and two missed heartbeats clear a LAN override before rebuilding onto the remote URL.
+  Resume preserves the override until a failure; explicit "Fetch Latest URL" clears it immediately.
+  `saveNewServerUrl()` only clears it when the configured remote address changes.
 - Error logs are throttled per signature (`_errorLog`); a single-slot throttle would
   alternate between the differing payloads socket.io emits per failed attempt.
 - On resume, `StartupTasks.onAppResume()` rebuilds the socket **before**
