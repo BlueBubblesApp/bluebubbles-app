@@ -15,14 +15,12 @@ class LinuxLauncherBadge {
   static const String _interface = 'com.canonical.Unity.LauncherEntry';
 
   static DBusClient? _client;
-  static int? _lastCount;
   static bool _warned = false;
 
   /// Desktop file ID for the current packaging: the Snap ships `<snap>_bluebubbles.desktop`;
   /// Flatpak and everything else use the application ID (`linux/CMakeLists.txt`).
   static String get desktopId {
     if (isSnap) return '${snapInstanceName ?? 'bluebubbles'}_bluebubbles.desktop';
-    if (isFlatpak) return '${flatpakId!}.desktop';
     return 'app.bluebubbles.BlueBubbles.desktop';
   }
 
@@ -39,7 +37,6 @@ class LinuxLauncherBadge {
 
   /// Shows [count] on the launcher icon, or hides the badge when [count] is 0.
   static Future<void> update(int count) async {
-    if (count == _lastCount) return;
     final appUri = 'application://$desktopId';
     try {
       _client ??= DBusClient.session();
@@ -52,7 +49,6 @@ class LinuxLauncherBadge {
           DBusDict.stringVariant({'count': DBusInt64(count), 'count-visible': DBusBoolean(count > 0)}),
         ],
       );
-      _lastCount = count;
       _warned = false;
     } catch (e) {
       // A failed connect leaves the client unusable, so start fresh on the next update.
