@@ -180,7 +180,12 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     // reply suggestions), shrinking _animationBottomOffset while
     // AnimatedPositioned is still animating toward the old, taller target —
     // which is what caused the bubble to land too high and snap back down.
-    if (controller.showSmartReplyRow.value) {
+    //
+    // Only the ML suggestions are cleared on send, though. If the row also
+    // holds one of the app's own pills ("Attach recent photo", "Jump to oldest
+    // unread"), it stays at the same height after the send, so its height has
+    // to stay in the target or the bubble lands one row too low and hops up.
+    if (controller.showSmartReplyRow.value && !controller.smartReplyRowPersistsOnSend) {
       controller.updateSmartReplyLayout(visible: false, height: 0);
     }
     if (SettingsSvc.settings.scrollToBottomOnSend.value) {
@@ -345,7 +350,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
         // Freeze the landing target for the whole flight. Computed here rather
         // than in build() so it reflects the layout at the moment of the send —
         // notably after updateSmartReplyLayout() above has already zeroed the
-        // smart reply row.
+        // smart reply row (when it won't survive the send).
         _frozenBottomOffset = _liveBottomOffset;
         tween = Tween<double>(
           begin: 0.9,

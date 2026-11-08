@@ -147,7 +147,11 @@ class SmartRepliesRow extends StatelessWidget {
       final double topPadding = iOS ? 8.0 : 0.0;
       final double totalHeight = visible ? rowHeight + topPadding : 0.0;
 
-      controller.updateSmartReplyLayout(visible: visible, height: totalHeight);
+      controller.updateSmartReplyLayout(
+        visible: visible,
+        height: totalHeight,
+        persistsOnSend: internalSmartReplies.isNotEmpty,
+      );
 
       return AnimatedSize(
         duration: const Duration(milliseconds: 400),

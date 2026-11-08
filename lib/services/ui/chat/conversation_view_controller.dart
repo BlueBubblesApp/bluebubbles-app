@@ -61,6 +61,12 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final RxBool recipientNotifsSilenced = false.obs;
   final RxBool showSmartReplyRow = false.obs;
   final RxDouble smartReplyRowHeight = 0.0.obs;
+
+  /// Whether the smart reply row will still be showing after the user sends a message. ML suggestions are cleared
+  /// when an outgoing message lands, but the app's own pills ("Attach recent photo", "Jump to oldest unread") are
+  /// not, so a row holding any of them keeps its height through a send. [SendAnimation] reads this to decide whether
+  /// to leave the row's height in its landing target.
+  bool smartReplyRowPersistsOnSend = false;
   bool showingOverlays = false;
 
   /// True while a pointer is actively dragging a [CollectionGroupStack] fan of
@@ -295,7 +301,8 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     return editing.firstWhereOrNull((e) => e.message.guid == guid && e.part.part == part) != null;
   }
 
-  void updateSmartReplyLayout({required bool visible, required double height}) {
+  void updateSmartReplyLayout({required bool visible, required double height, bool persistsOnSend = false}) {
+    smartReplyRowPersistsOnSend = visible && persistsOnSend;
     if (showSmartReplyRow.value != visible) {
       showSmartReplyRow.value = visible;
     }
