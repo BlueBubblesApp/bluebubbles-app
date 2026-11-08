@@ -7,7 +7,7 @@ Plain Dart classes — no ObjectBox annotations. Safe to use on web. All have `f
 |------|---------|
 | `settings.dart` | 50+ `Rx*` preference fields — the single source of truth for all app settings |
 | `message_part.dart` | One content chunk of a multi-part message; keeps part-relative attributed runs as the source of formatting and mentions |
-| `attributed_body.dart` | Attributed text runs; retains all server formatting/effect attributes in `Attributes.rawAttributes` through JSON storage, with typed mention/attachment/transcript accessors. Bold/italic/underline/strikethrough have typed getters; animated effects are retained for future rendering. |
+| `attributed_body.dart` | Attributed text runs; retains all server formatting/effect attributes in `Attributes.rawAttributes` through JSON storage, with typed mention/attachment/transcript accessors. Bold/italic/underline/strikethrough have typed getters; effect IDs are exposed by `textEffect`; Big, Small, Shake, and Nod animate in the text renderer, with other IDs retained for future rendering. |
 | `message_summary_info.dart` | Reply/thread preview metadata |
 | `chat_messages.dart` | In-memory chat ↔ message list mapping (used by `MessagesService`) |
 

@@ -70,6 +70,7 @@ class Attributes {
   bool get isItalic => rawAttributes['__kIMTextItalicAttributeName'] == 1;
   bool get isUnderlined => rawAttributes['__kIMTextUnderlineAttributeName'] == 1;
   bool get isStrikethrough => rawAttributes['__kIMTextStrikethroughAttributeName'] == 1;
+  int? get textEffect => rawAttributes['__kIMTextEffectAttributeName'] as int?;
 
   /// The attachment is a Genmoji
   bool get emojiImage => rawAttributes['__kIMEmojiImageAttributeName'] != null;
