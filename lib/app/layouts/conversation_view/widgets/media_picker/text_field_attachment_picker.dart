@@ -99,7 +99,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
           if (file != null) {
             // Don't load bytes here - let the attachment service handle it when needed
             EventDispatcherSvc.emit(
-                'add-custom-smartreply',
+                'offer-recent-photo',
                 PlatformFile(
                   path: file.path,
                   name: file.path.split('/').last,
