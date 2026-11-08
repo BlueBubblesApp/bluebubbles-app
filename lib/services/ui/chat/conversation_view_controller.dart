@@ -88,6 +88,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   /// OpenPigeon's game picker, shown below the text field in the keyboard's place.
   final RxBool showGamePicker = false.obs;
+  /// The mobile attachment picker's grid is showing the Genmoji library rather than photos.
+  /// Lives here so the conversation view's back handler can step back to photos before it
+  /// closes the picker. The picker resets it to false each time it opens.
+  final RxBool showGenmojiLibrary = false.obs;
   RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;

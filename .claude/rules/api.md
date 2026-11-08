@@ -20,6 +20,7 @@ call through `HttpSvc.<domain>.<method>()`.
 | `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` |
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` |
 | `firebase` | `FirebaseApi` | `api/firebase_api.dart` |
+| `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` (v2) |
 
 Full method-level reference: `lib/services/network/CLAUDE.md` and `lib/services/network/api/CLAUDE.md`.
 

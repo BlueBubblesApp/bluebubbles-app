@@ -1,22 +1,18 @@
 import 'dart:async';
 
-import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:bluebubbles/utils/share.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
-import 'package:file_picker/file_picker.dart' as pf;
-import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hand_signature/signature.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -41,12 +37,28 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   bool _isLoadingImages = false;
   bool _permissionDenied = false;
 
+  /// The grid shows the Mac's Genmoji library instead of the photo library (see
+  /// `ConversationViewController.showGenmojiLibrary`, which the back button also clears).
+  bool get _showGenmoji => controller.showGenmojiLibrary.value;
+  late final Worker _genmojiWorker;
+
   ConversationViewController get controller => widget.controller;
 
   @override
   void initState() {
     super.initState();
+    // Every opening starts on photos.
+    controller.showGenmojiLibrary.value = false;
+    _genmojiWorker = ever<bool>(controller.showGenmojiLibrary, (_) {
+      if (mounted) setState(() {});
+    });
     getAttachments();
+  }
+
+  @override
+  void dispose() {
+    _genmojiWorker.dispose();
+    super.dispose();
   }
 
   Future<void> getAttachments() async {
@@ -150,7 +162,11 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
         height: 340,
         child: RefreshIndicator(
           onRefresh: () async {
-            await getAttachments();
+            if (_showGenmoji) {
+              await GenmojiLibrarySvc.sync(force: true);
+            } else {
+              await getAttachments();
+            }
           },
           child: NotificationListener<OverscrollIndicatorNotification>(
             onNotification: (OverscrollIndicatorNotification overscroll) {
@@ -231,25 +247,25 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                 icon: Icons.folder_rounded,
                 label: 'Files',
                 color: const Color(0xFF007AFF),
-                onTap: _handleFilePicker,
+                onTap: () => AttachmentActions.pickFiles(controller),
               ),
               _QuickActionItem(
                 icon: Icons.location_on_rounded,
                 label: 'Location',
                 color: const Color(0xFF32ADE6),
-                onTap: _handleLocation,
+                onTap: () => AttachmentActions.shareLocation(controller),
               ),
               _QuickActionItem(
                 icon: Icons.schedule_rounded,
                 label: 'Schedule',
                 color: const Color(0xFFFF9500),
-                onTap: () => _handleSchedule(context),
+                onTap: () => AttachmentActions.schedule(context, controller),
               ),
               _QuickActionItem(
                 icon: Icons.draw_rounded,
                 label: 'Handwritten',
                 color: const Color(0xFFAF52DE),
-                onTap: () => _handleHandwritten(context),
+                onTap: () => AttachmentActions.handwritten(context, controller),
               ),
               if (OpenPigeon.offered && controller.chat.isIMessage)
                 _QuickActionItem(
@@ -257,6 +273,16 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                   label: 'Games',
                   color: const Color(0xFFD4A72C),
                   onTap: () => showOpenPigeonPicker(context, controller),
+                ),
+              // v2 (Swift) server only. Switches the grid to the Mac's Genmoji library (and back);
+              // whether the Mac can draw new ones is asked when the creator opens.
+              if (SettingsSvc.getServerDetails().supportsGenmoji)
+                _QuickActionItem(
+                  icon: Icons.add_reaction_rounded,
+                  label: 'Genmoji',
+                  color: const Color(0xFFFF2D55),
+                  selected: _showGenmoji,
+                  onTap: _toggleGenmoji,
                 ),
             ],
           ),
@@ -283,139 +309,9 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     }
   }
 
-  Future<void> _handleFilePicker() async {
-    final res = await FilePicker.pickFiles();
-    for (pf.PlatformFile file in res) {
-      final size = await file.length() ?? 0;
-      if (size / 1024000 > 1000) {
-        showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.", type: SnackbarType.error);
-        continue;
-      }
-      controller.pickedAttachments.add(PlatformFile(
-        path: file.path,
-        name: file.name,
-        bytes: null,
-        size: size,
-      ));
-    }
-  }
-
-  Future<void> _handleLocation() async {
-    await Share.location(controller.chat);
-  }
-
-  Future<void> _handleSchedule(BuildContext context) async {
-    if (controller.pickedAttachments.isNotEmpty) {
-      return showSnackbar("Error", "Remove all attachments before scheduling!", type: SnackbarType.error);
-    } else if (controller.replyToMessage != null || controller.subjectTextController.text.isNotEmpty) {
-      return showSnackbar("Error", "Private API features are not supported when scheduling!", type: SnackbarType.error);
-    }
-
-    final date = await showTimeframePicker("Pick date and time", context, presetsAhead: true);
-    if (date != null && date.isAfter(DateTime.now())) {
-      controller.scheduledDate.value = date;
-    }
-  }
-
-  Future<void> _handleHandwritten(BuildContext context) async {
-    Color selectedColor = context.theme.colorScheme.bubble(context, controller.chat.isIMessage);
-
-    final result = await ColorPicker(
-      color: selectedColor,
-      onColorChanged: (Color newColor) {
-        selectedColor = newColor;
-      },
-      title: Text(
-        "Select Color",
-        style: context.theme.textTheme.titleLarge,
-      ),
-      width: 40,
-      height: 40,
-      spacing: 0,
-      runSpacing: 0,
-      borderRadius: 0,
-      wheelDiameter: 165,
-      enableOpacity: false,
-      showColorCode: true,
-      colorCodeHasColor: true,
-      pickersEnabled: <ColorPickerType, bool>{
-        ColorPickerType.wheel: true,
-      },
-      copyPasteBehavior: const ColorPickerCopyPasteBehavior(
-        parseShortHexCode: true,
-      ),
-      actionButtons: const ColorPickerActionButtons(
-        dialogActionButtons: true,
-      ),
-    ).showPickerDialog(
-      context,
-      barrierDismissible: false,
-      constraints: BoxConstraints(
-        minHeight: 480,
-        minWidth: NavigationSvc.width(context) - 70,
-        maxWidth: NavigationSvc.width(context) - 70,
-      ),
-    );
-
-    if (result && context.mounted) {
-      final control = HandSignatureControl();
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text(
-              "Draw Handwriten Message",
-              style: context.theme.textTheme.titleLarge,
-            ),
-            content: AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                constraints: const BoxConstraints.expand(),
-                child: HandSignature(
-                  control: control,
-                  color: selectedColor,
-                  width: 1.0,
-                  maxWidth: 10.0,
-                  type: SignatureDrawType.shape,
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                child: Text(
-                  "Cancel",
-                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                child: Text(
-                  "OK",
-                  style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  final bytes = await control.toImage(height: 512, fit: false);
-                  if (bytes != null) {
-                    final uint8 = bytes.buffer.asUint8List();
-                    controller.pickedAttachments.add(PlatformFile(
-                      path: null,
-                      name: "handwriten-${controller.pickedAttachments.length + 1}.png",
-                      bytes: uint8,
-                      size: uint8.lengthInBytes,
-                      balloonBundleId: 'com.apple.Handwriting.HandwritingProvider',
-                    ));
-                  }
-                },
-              ),
-            ],
-            backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-          );
-        },
-      );
-    }
+  void _toggleGenmoji() {
+    controller.showGenmojiLibrary.value = !_showGenmoji;
+    if (_showGenmoji) unawaited(GenmojiLibrarySvc.sync());
   }
 
   Widget _buildStatusSliver({
@@ -423,10 +319,12 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     required String message,
     required String buttonLabel,
     required VoidCallback onPressed,
+    String? title,
+    double width = 280,
   }) {
     return SliverToBoxAdapter(
       child: SizedBox(
-        width: 280,
+        width: width,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -435,6 +333,14 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
               children: [
                 Icon(icon, size: 36, color: context.theme.colorScheme.outline),
                 const SizedBox(height: 8),
+                if (title != null) ...[
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: context.theme.textTheme.titleSmall!.copyWith(color: context.theme.colorScheme.onSurface),
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 Text(
                   message,
                   textAlign: TextAlign.center,
@@ -461,6 +367,8 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   }
 
   Widget _buildImageGrid() {
+    if (_showGenmoji) return _buildGenmojiGrid();
+
     if (_isLoadingImages) {
       return const SliverToBoxAdapter(
         // Explicit width so the item occupies space in the horizontal CustomScrollView.
@@ -556,6 +464,145 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
       ),
     );
   }
+
+  static const int _genmojiRows = 3;
+  static const double _genmojiSpacing = 8;
+
+  /// "Photos" (back to the photo grid) and "New", in that order: the first column of the
+  /// Genmoji grid, sized like its tiles.
+  List<Widget> get _genmojiLeadingTiles => [
+        _BackToPhotosTile(onTap: () => controller.showGenmojiLibrary.value = false),
+        GenmojiCreateTile(onTap: () => AttachmentActions.createGenmoji(context, controller)),
+      ];
+
+  /// The Mac's Genmoji library in the photo grid's place, newest first. The first column
+  /// starts with "Photos" and "New", so both are always a tap away. Tap attaches (or
+  /// un-attaches), long press offers to delete.
+  Widget _buildGenmojiGrid() => Obx(() => _buildGenmojiContent());
+
+  Widget _buildGenmojiContent() {
+    final svc = GenmojiLibrarySvc;
+    final entries = svc.entries.toList();
+    final leading = _genmojiLeadingTiles;
+
+    if (entries.isEmpty) {
+      return SliverMainAxisGroup(
+        slivers: [
+          // The same column the grid starts with, at the size the grid would give it.
+          SliverToBoxAdapter(
+            child: LayoutBuilder(builder: (context, constraints) {
+              final extent = (constraints.maxHeight - _genmojiSpacing * (_genmojiRows - 1)) / _genmojiRows;
+              return SizedBox(
+                width: extent,
+                child: Column(
+                  children: [
+                    for (final (i, tile) in leading.indexed) ...[
+                      if (i > 0) const SizedBox(height: _genmojiSpacing),
+                      SizedBox.square(dimension: extent, child: tile),
+                    ],
+                  ],
+                ),
+              );
+            }),
+          ),
+          _buildGenmojiStatus(svc),
+        ],
+      );
+    }
+
+    return SliverGrid(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: _genmojiRows,
+        crossAxisSpacing: _genmojiSpacing,
+        mainAxisSpacing: _genmojiSpacing,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index < leading.length) return leading[index];
+          final entry = entries[index - leading.length];
+          return GenmojiLibraryTile(
+            key: ValueKey("genmoji-${entry.identifier}"),
+            entry: entry,
+            controller: controller,
+            onTap: () => AttachmentActions.toggleLibraryGenmoji(controller, entry),
+            onLongPress: () => AttachmentActions.deleteGenmoji(context, controller, entry),
+          );
+        },
+        childCount: leading.length + entries.length,
+      ),
+    );
+  }
+
+  /// Loading, error and empty states, beside the Photos / New column (so narrower than the
+  /// photo grid's messages).
+  Widget _buildGenmojiStatus(GenmojiLibraryService svc) {
+    if (!svc.loaded.value || svc.syncing.value) {
+      return const SliverToBoxAdapter(
+        child: SizedBox(width: 220, child: Center(child: CupertinoActivityIndicator())),
+      );
+    }
+    final error = svc.syncError.value;
+    if (error != null) {
+      return _buildStatusSliver(
+        icon: Icons.cloud_off_rounded,
+        title: "Couldn't Load Genmoji",
+        message: error,
+        buttonLabel: "Retry",
+        onPressed: () => svc.sync(force: true),
+        width: 220,
+      );
+    }
+    final unreadable = svc.unavailableReason.value != null;
+    return _buildStatusSliver(
+      icon: unreadable ? Icons.lock_outline_rounded : Icons.auto_awesome_rounded,
+      title: unreadable ? "Library Unavailable" : "No Genmoji Yet",
+      message: unreadable
+          ? "Your Mac's Genmoji library couldn't be read, but you can still create new ones."
+          : "Describe any emoji you can imagine and your Mac will create it. Your Genmoji will show up here.",
+      buttonLabel: "Create Genmoji",
+      onPressed: () => AttachmentActions.createGenmoji(context, controller),
+      width: 220,
+    );
+  }
+}
+
+/// Leaves the Genmoji library for the photo grid the picker opens with.
+class _BackToPhotosTile extends StatelessWidget {
+  const _BackToPhotosTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Semantics(
+      button: true,
+      label: "Back to photos",
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.arrow_back_rounded, size: 16, color: scheme.onSurface),
+                  const SizedBox(width: 2),
+                  Icon(Icons.photo_library_rounded, size: 22, color: scheme.onSurface),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text("Photos", style: context.theme.textTheme.labelMedium),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _QuickActionItem extends StatelessWidget {
@@ -564,6 +611,7 @@ class _QuickActionItem extends StatelessWidget {
     required this.label,
     required this.color,
     required this.onTap,
+    this.selected = false,
   });
 
   final IconData icon;
@@ -571,9 +619,12 @@ class _QuickActionItem extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
+  /// Drawn as the active mode (the Genmoji grid is showing).
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = color.withValues(alpha: 0.12);
+    final bgColor = color.withValues(alpha: selected ? 0.24 : 0.12);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: InkWell(
@@ -583,6 +634,7 @@ class _QuickActionItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(12),
+            border: selected ? Border.all(color: color, width: 1.5) : null,
           ),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
           child: Row(
@@ -596,6 +648,8 @@ class _QuickActionItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              // The active mode reads as dismissible: tapping it again goes back to photos.
+              if (selected) Icon(Icons.close_rounded, size: 18, color: color),
             ],
           ),
         ),

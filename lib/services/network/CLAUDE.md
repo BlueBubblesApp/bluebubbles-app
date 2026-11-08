@@ -18,12 +18,14 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 | `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` | `answer`, `leave` |
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` | `getDevices`, `refreshDevices`, `getFriends`, `refreshFriends`, `getAccountInfo`, `getAccountContact`, `setAccountAlias` |
 | `firebase` | `FirebaseApi` | `api/firebase_api.dart` | `getFirebaseProjects`, `getGoogleInfo`, `getServerUrlRTDB`, `getServerUrlCF`, `setRestartDateCF` |
+| `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` | `status`, `create`, `library` (ETag → null on 304), `libraryImages` (≤50, ≤320px), `libraryImage`, `deleteFromLibrary` — **v2 only**, gate on `ServerDetails.supportsGenmoji`; UI goes through `GenmojiLibrarySvc` for the library |
 
 **Core utilities (on `HttpService` directly):**
 - `runApiGuarded()` — wraps every call; handles retries on 502, propagates errors
 - `buildQueryParams(map)` — injects auth GUID; call this on every request
 - `returnSuccessOrError(response)` — validates status code
-- `dio`, `origin`, `apiRoot`, `headers`, `originOverride` — request infrastructure
+- `dio`, `origin`, `apiRoot`, `apiRootV2`, `headers`, `originOverride` — request infrastructure
+- `apiRootV2` (`/api/v2`) is served only by the Swift server; gate on `ServerDetails.isV2Server` (from `server/info`'s `api_versions`)
 - `downloadFromUrl()`, `downloadAppleEmojiFont()` — utility downloads
 - Timeouts configured globally from settings (`apiTimeout`); don't override per-request
 

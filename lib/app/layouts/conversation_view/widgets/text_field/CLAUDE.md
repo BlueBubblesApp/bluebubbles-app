@@ -5,7 +5,7 @@
 - `conversation_text_field_local_controller.dart` — local (non-service) text field controller state
 - `text_field_component.dart` — main composable text input widget
 - `send_button.dart` — send / schedule button
-- `text_field_icon_bar.dart` — attachment/emoji/etc. icon row
+- `text_field_icon_bar.dart` — attachment/emoji/etc. icon row; on desktop the `+` is wrapped in `DesktopAttachmentMenu` (`../media_picker/`), as is the chat creator's `+` in `text_field_component.dart`
 - `text_field_suffix.dart` — trailing icon(s) inside the field
 - `text_field_emoji_picker_section.dart` — inline emoji picker section
 - `text_field_recording_overlay.dart` — voice message recording overlay UI
