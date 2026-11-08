@@ -15,8 +15,8 @@ typedef GatedWork = FutureOr<void> Function();
 /// [SendAnimation] flies a bubble from the text field down to the bottom of the
 /// message list, and its landing target is derived from the live layout of
 /// everything sitting below the list — the text field, the typing indicator row
-/// and the smart reply row. A message arriving mid-flight inserts into the
-/// [SliverAnimatedList], can toggle the smart reply row, and can shift the
+/// and the pill row. A message arriving mid-flight inserts into the
+/// [SliverAnimatedList], can toggle the pill row, and can shift the
 /// typing indicator, all of which move that target while `AnimatedPositioned`
 /// is still animating toward the old one. The bubble then lands in the wrong
 /// place and snaps into position.

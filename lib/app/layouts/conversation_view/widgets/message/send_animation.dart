@@ -71,8 +71,8 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     return _typingIndicatorFallbackHeight;
   }
 
-  // Offset for smart reply row when it is visible.
-  double get _smartReplyOffset => controller.showSmartReplyRow.value ? controller.smartReplyRowHeight.value : 0;
+  // Offset for the pill row (smart replies and quick actions) when it is visible.
+  double get _pillRowOffset => controller.showPillRow.value ? controller.pillRowHeight.value : 0;
 
   // Snapshot of _liveBottomOffset taken when a send animation starts, and cleared
   // when the bubble is torn down. Null whenever no send is in flight.
@@ -97,7 +97,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       focusInfoSize +
       _textFieldVerticalPadding +
       _typingIndicatorOffset +
-      _smartReplyOffset +
+      _pillRowOffset +
       _platformVerticalOffset;
 
   @override
@@ -174,19 +174,21 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     final attachments = List<PlatformFile>.from(data.attachments);
     // text is mutable — reassigned during mention processing below
     String text = data.text;
-    // Hide the smart reply row immediately, before the send animation's target
-    // is computed below. Otherwise the row disappears mid-flight (once the
-    // outgoing message is inserted and messages_view.dart clears the smart
-    // reply suggestions), shrinking _animationBottomOffset while
-    // AnimatedPositioned is still animating toward the old, taller target —
-    // which is what caused the bubble to land too high and snap back down.
+    // The pill row holds two kinds of pill. Smart replies are ML suggestions and
+    // are cleared once the outgoing message is inserted; quick actions ("Attach
+    // recent photo", "Jump to oldest unread") are the app's own and survive a
+    // send.
     //
-    // Only the ML suggestions are cleared on send, though. If the row also
-    // holds one of the app's own pills ("Attach recent photo", "Jump to oldest
-    // unread"), it stays at the same height after the send, so its height has
-    // to stay in the target or the bubble lands one row too low and hops up.
-    if (controller.showSmartReplyRow.value && !controller.smartReplyRowPersistsOnSend) {
-      controller.updateSmartReplyLayout(visible: false, height: 0);
+    // A row of only smart replies is about to disappear, so hide it now, before
+    // the landing target is computed below. Otherwise it vanishes mid-flight,
+    // shrinking _animationBottomOffset while AnimatedPositioned is still heading
+    // for the old, taller target, and the bubble lands too high and snaps down.
+    //
+    // A row with any quick action keeps its height through the send, so that
+    // height has to stay in the target or the bubble lands a row too low and
+    // hops up.
+    if (controller.showPillRow.value && !controller.pillRowHasQuickActions) {
+      controller.updatePillRowLayout(visible: false, height: 0);
     }
     if (SettingsSvc.settings.scrollToBottomOnSend.value) {
       await controller.scrollToBottom();
@@ -349,8 +351,8 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
       setState(() {
         // Freeze the landing target for the whole flight. Computed here rather
         // than in build() so it reflects the layout at the moment of the send —
-        // notably after updateSmartReplyLayout() above has already zeroed the
-        // smart reply row (when it won't survive the send).
+        // notably after updatePillRowLayout() above has already zeroed a pill
+        // row that won't survive the send.
         _frozenBottomOffset = _liveBottomOffset;
         tween = Tween<double>(
           begin: 0.9,

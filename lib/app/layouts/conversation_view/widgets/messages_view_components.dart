@@ -126,31 +126,35 @@ class _NotifyAnywayButton extends StatelessWidget {
   }
 }
 
-/// Extracted widget for smart replies row
-class SmartRepliesRow extends StatelessWidget {
-  const SmartRepliesRow({
+/// The row of pills above the text field. It shows two independent kinds:
+/// [smartReplies], ML suggestions that only exist when smart replies are enabled
+/// and are cleared on send, and [quickActions], the app's own shortcuts ("Attach
+/// recent photo", "Jump to oldest unread"), which show regardless of that setting
+/// and survive a send.
+class ConversationPillsRow extends StatelessWidget {
+  const ConversationPillsRow({
     super.key,
     required this.controller,
     required this.smartReplies,
-    required this.internalSmartReplies,
+    required this.quickActions,
   });
 
   final ConversationViewController controller;
   final RxList<String> smartReplies;
-  final RxMap<String, Widget> internalSmartReplies;
+  final RxMap<String, Widget> quickActions;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final bool visible = smartReplies.isNotEmpty || internalSmartReplies.isNotEmpty;
+      final bool visible = smartReplies.isNotEmpty || quickActions.isNotEmpty;
       final double rowHeight = context.theme.extension<BubbleText>()!.bubbleText.fontSize! + 35;
       final double topPadding = iOS ? 8.0 : 0.0;
       final double totalHeight = visible ? rowHeight + topPadding : 0.0;
 
-      controller.updateSmartReplyLayout(
+      controller.updatePillRowLayout(
         visible: visible,
         height: totalHeight,
-        persistsOnSend: internalSmartReplies.isNotEmpty,
+        hasQuickActions: quickActions.isNotEmpty,
       );
 
       return AnimatedSize(
@@ -163,8 +167,8 @@ class SmartRepliesRow extends StatelessWidget {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     reverse: true,
-                    children: smartReplies.map((suggestion) => _buildReplyWidget(context, suggestion)).toList()
-                      ..addAll(internalSmartReplies.values),
+                    children: smartReplies.map((suggestion) => _buildSmartReply(context, suggestion)).toList()
+                      ..addAll(quickActions.values),
                   ),
                 ),
               )
@@ -173,7 +177,7 @@ class SmartRepliesRow extends StatelessWidget {
     });
   }
 
-  Widget _buildReplyWidget(BuildContext context, String suggestion) {
+  Widget _buildSmartReply(BuildContext context, String suggestion) {
     final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
     return Container(
       margin: const EdgeInsets.all(5),

@@ -59,14 +59,14 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final GlobalKey focusInfoKey = GlobalKey();
   final GlobalKey typingInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
-  final RxBool showSmartReplyRow = false.obs;
-  final RxDouble smartReplyRowHeight = 0.0.obs;
+  final RxBool showPillRow = false.obs;
+  final RxDouble pillRowHeight = 0.0.obs;
 
-  /// Whether the smart reply row will still be showing after the user sends a message. ML suggestions are cleared
-  /// when an outgoing message lands, but the app's own pills ("Attach recent photo", "Jump to oldest unread") are
-  /// not, so a row holding any of them keeps its height through a send. [SendAnimation] reads this to decide whether
-  /// to leave the row's height in its landing target.
-  bool smartReplyRowPersistsOnSend = false;
+  /// Whether the pill row holds any quick action. The row shows two kinds of pill: smart replies (ML suggestions,
+  /// cleared when an outgoing message lands) and quick actions (the app's own "Attach recent photo" and "Jump to
+  /// oldest unread", which are not). A row with a quick action therefore keeps its height through a send, and
+  /// [SendAnimation] reads this to decide whether to leave that height in its landing target.
+  bool pillRowHasQuickActions = false;
   bool showingOverlays = false;
 
   /// True while a pointer is actively dragging a [CollectionGroupStack] fan of
@@ -225,7 +225,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   @override
   void onClose() {
     messageListGate.dispose();
-    updateSmartReplyLayout(visible: false, height: 0);
+    updatePillRowLayout(visible: false, height: 0);
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();
@@ -301,20 +301,20 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     return editing.firstWhereOrNull((e) => e.message.guid == guid && e.part.part == part) != null;
   }
 
-  void updateSmartReplyLayout({required bool visible, required double height, bool persistsOnSend = false}) {
-    smartReplyRowPersistsOnSend = visible && persistsOnSend;
-    if (showSmartReplyRow.value != visible) {
-      showSmartReplyRow.value = visible;
+  void updatePillRowLayout({required bool visible, required double height, bool hasQuickActions = false}) {
+    pillRowHasQuickActions = visible && hasQuickActions;
+    if (showPillRow.value != visible) {
+      showPillRow.value = visible;
     }
 
     final nextHeight = visible ? height : 0.0;
-    if (smartReplyRowHeight.value != nextHeight) {
-      smartReplyRowHeight.value = nextHeight;
+    if (pillRowHeight.value != nextHeight) {
+      pillRowHeight.value = nextHeight;
     }
   }
 
   void close() {
-    updateSmartReplyLayout(visible: false, height: 0);
+    updatePillRowLayout(visible: false, height: 0);
     ChatsSvc.setAllInactiveSync();
     deleteIfCurrent();
   }

@@ -67,7 +67,7 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
   late final DropZoneManager dropZoneManager;
   late final MessageAnimationOrchestrator animationOrchestrator;
 
-  RxMap<String, Widget> internalSmartReplies = <String, Widget>{}.obs;
+  RxMap<String, Widget> quickActions = <String, Widget>{}.obs;
   final RxBool latestMessageDeliveredState = false.obs;
   final RxBool jumpingToOldestUnread = false.obs;
 
@@ -116,12 +116,12 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
         );
         if (!mounted) return;
         setState(() {});
-      } else if (e.type == "add-custom-smartreply") {
+      } else if (e.type == "offer-recent-photo") {
         if (!mounted) return;
-        if (e.data != null && internalSmartReplies['attach-recent'] == null) {
-          internalSmartReplies['attach-recent'] = _buildReply("Attach recent photo", onTap: () async {
+        if (e.data != null && quickActions['attach-recent'] == null) {
+          quickActions['attach-recent'] = _buildQuickAction("Attach recent photo", onTap: () async {
             controller.pickedAttachments.add(e.data);
-            internalSmartReplies.clear();
+            quickActions.clear();
           });
         }
       }
@@ -201,11 +201,11 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
         Future.delayed(const Duration(milliseconds: 100), () {
           if (!mounted) return;
           if (messageService.getMessageStateIfExists(chat.lastReadMessageGuid!)?.built ?? false) return;
-          internalSmartReplies['scroll-last-read'] = _buildReply("Jump to oldest unread", onTap: () async {
+          quickActions['scroll-last-read'] = _buildQuickAction("Jump to oldest unread", onTap: () async {
             if (jumpingToOldestUnread.value) return;
             jumpingToOldestUnread.value = true;
             await jumpToMessage(chat.lastReadMessageGuid!);
-            internalSmartReplies.remove('scroll-last-read');
+            quickActions.remove('scroll-last-read');
             jumpingToOldestUnread.value = false;
           });
         });
@@ -566,9 +566,9 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
   }
 
-  Widget _buildReply(String text, {Function()? onTap}) => Builder(
-        builder: (replyContext) {
-          final theme = Theme.of(replyContext);
+  Widget _buildQuickAction(String text, {Function()? onTap}) => Builder(
+        builder: (actionContext) {
+          final theme = Theme.of(actionContext);
           final hasBackground =
               ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
           return Container(
@@ -673,10 +673,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
                         scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                         slivers: <Widget>[
                           SliverToBoxAdapter(
-                            child: SmartRepliesRow(
+                            child: ConversationPillsRow(
                               controller: controller,
                               smartReplies: smartRepliesManager.smartReplies,
-                              internalSmartReplies: internalSmartReplies,
+                              quickActions: quickActions,
                             ),
                           ),
                           if (!chat.isGroup && chat.isIMessage)
