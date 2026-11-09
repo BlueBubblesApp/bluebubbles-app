@@ -906,12 +906,23 @@ class Message {
       existing.dateDeleted = newMessage.dateDeleted;
     }
 
+    // Sync queries can bring back an edit or unsend of a message already stored.
+    // Its text may be null and its body empty, so copy the whole edited snapshot.
+    if (newMessage.dateEdited != null &&
+        (existing.dateEdited == null || !newMessage.dateEdited!.isBefore(existing.dateEdited!))) {
+      existing.dateEdited = newMessage.dateEdited;
+      existing.text = newMessage.text;
+      existing.subject = newMessage.subject;
+      existing.attributedBody = newMessage.attributedBody;
+      existing.messageSummaryInfo = newMessage.messageSummaryInfo;
+    }
+
     // Also update attributedBody / messageSummaryInfo when the existing record
     // has no data but the incoming message does (independent of edit date).
-    if (!isNullOrEmpty(newMessage.attributedBody)) {
+    if (existing.dateEdited == null && !isNullOrEmpty(newMessage.attributedBody)) {
       existing.attributedBody = newMessage.attributedBody;
     }
-    if (!isNullOrEmpty(newMessage.messageSummaryInfo)) {
+    if (existing.dateEdited == null && !isNullOrEmpty(newMessage.messageSummaryInfo)) {
       existing.messageSummaryInfo = newMessage.messageSummaryInfo;
     }
 
