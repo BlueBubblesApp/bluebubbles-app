@@ -494,13 +494,18 @@ class ChatCreatorController extends StatefulController {
     // ------------------------------------------------------------------
     if (resolvedChat == null) {
       // ----------------------------------------------------------------
-      // Step 2: No local chat. A message is required to create a new one
-      // (the server rejects POST /chat/new without one when the Private
-      // API is enabled). Validate before making any network call so the
-      // user gets immediate feedback.
+      // Step 2: No local chat. Most backends create one by sending its first
+      // message, so a message is required: 1.x either way, v2 without the
+      // Private API. A v2 server with the Private API creates an empty chat,
+      // and the first message (if any) then goes out through pendingSend with
+      // its formatting, effects, and mentions, which chat/new's plain text
+      // can't carry. Validate before any network call for immediate feedback.
       // ----------------------------------------------------------------
+      final createEmpty = SettingsSvc.serverDetails.isV2Server &&
+          SettingsSvc.settings.enablePrivateAPI.value &&
+          (SettingsSvc.settings.serverPrivateAPI.value ?? false);
       final messageText = textController.text.trim();
-      if (messageText.isEmpty) {
+      if (messageText.isEmpty && !createEmpty) {
         showSnackbar('Error', 'A message is required to start a new conversation', type: SnackbarType.error);
         return;
       }
@@ -534,7 +539,7 @@ class ChatCreatorController extends StatefulController {
       try {
         // For single-contact chats, try to find an existing chat on the server via a
         // GET request before creating one. Using createChat with no message as a lookup
-        // is incorrect — the server rejects it when the Private API is enabled.
+        // is incorrect: most backends refuse it, and v2's would create the chat.
         Chat? serverChat;
         if (selectedContacts.length == 1) {
           final address = selectedContacts.first.address;
@@ -542,12 +547,11 @@ class ChatCreatorController extends StatefulController {
         }
 
         if (serverChat == null) {
-          // No existing chat found on the server — create one.
-          // Message has already been validated above; it is delivered as part of
-          // creation, so pendingSend must be skipped for this path.
-          final response = await HttpSvc.chat.create(participants, messageText, method);
+          // No existing chat found on the server — create one (see Step 2). A message delivered as part of
+          // creation must skip pendingSend.
+          final response = await HttpSvc.chat.create(participants, createEmpty ? null : messageText, method);
           serverChat = Chat.fromMap(response.data['data'] as Map<String, dynamic>);
-          messageSentWithChat = true;
+          messageSentWithChat = !createEmpty;
         }
 
         // Sync the chat + its participants into the local DB.
