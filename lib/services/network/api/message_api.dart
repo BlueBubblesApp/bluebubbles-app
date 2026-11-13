@@ -10,6 +10,9 @@ class MessageApi {
 
   MessageApi(this._svc);
 
+  // Routes that answer only once iMessage has acted: v2 cuts them off at 300s, 1.x worst case is ~3 min
+  Options get _awaitsIMessage => Options(receiveTimeout: const Duration(minutes: 5, seconds: 15));
+
   /// Get the number of messages in the server iMessage DB
   Future<Response> getCount({
     bool updated = false,
@@ -153,6 +156,7 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
+        options: _awaitsIMessage,
       );
       return _svc.returnSuccessOrError(response);
     });
@@ -207,7 +211,7 @@ class MessageApi {
         onSendProgress: onSendProgress,
         options: Options(
           sendTimeout: _svc.dio.options.sendTimeout! * 12,
-          receiveTimeout: _svc.dio.options.receiveTimeout! * 12,
+          receiveTimeout: _awaitsIMessage.receiveTimeout,
           headers: _svc.headers,
         ),
       );
@@ -227,7 +231,6 @@ class MessageApi {
     String? selectedMessageGuid,
     int? partIndex,
     bool? ddScan,
-    bool hasAttachments = false,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -250,8 +253,7 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
-        // As with sendAttachment, the server answers once iMessage has sent the media
-        options: hasAttachments ? Options(receiveTimeout: _svc.dio.options.receiveTimeout! * 12) : null,
+        options: _awaitsIMessage,
       );
       return _svc.returnSuccessOrError(response);
     });
@@ -306,6 +308,7 @@ class MessageApi {
           "tempGuid": tempGuid,
           "liveLayout": liveLayout,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -337,6 +340,7 @@ class MessageApi {
           // Required with reaction "emoji" / "-emoji"
           "emoji": ?emoji,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -350,6 +354,7 @@ class MessageApi {
         "${_svc.apiRoot}/message/$selectedMessageGuid/unsend",
         queryParameters: _svc.buildQueryParams(),
         data: {"partIndex": partIndex ?? 0},
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -373,6 +378,7 @@ class MessageApi {
           "backwardsCompatibilityMessage": backwardsCompatText,
           "partIndex": partIndex ?? 0,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -385,6 +391,7 @@ class MessageApi {
       final response = await _svc.dio.post(
         "${_svc.apiRoot}/message/$selectedMessageGuid/notify",
         queryParameters: _svc.buildQueryParams(),
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
