@@ -125,10 +125,18 @@ class FullSyncManager extends SyncManager {
 
               addToOutput('Saving chunk of ${newMessages.length} message(s) for chat: $displayName');
 
+              // Group photos resent: a 3/3 row repeating a photo already shown is not a change. See
+              // `group_photo_helpers.dart`.
+              final photos = dropKnownGroupPhotoResends(newMessages, chat.knownGroupPhotoGuid);
+              if (photos.known != chat.knownGroupPhotoGuid) {
+                chat.knownGroupPhotoGuid = photos.known;
+                await chat.saveAsync(updateKnownGroupPhotoGuid: true);
+              }
+
               // Asyncronously save the messages
               List<Message> insertedMessages = await SyncInterface.bulkSyncData(
                 chatData: chat.toMap(),
-                messagesData: newMessages,
+                messagesData: photos.kept,
               ).then((r) => r.messages);
               messagesSynced += insertedMessages.length;
 

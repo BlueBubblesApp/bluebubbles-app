@@ -75,7 +75,9 @@ Routing by `MessageEventType`:
 
 1. **Deduplication** — checks `_processedGuids` (a 100-entry ring buffer). If the real GUID was already processed (e.g. delivered by both socket and Firebase), returns early.
 
-2. **Existing record check** — looks up the message by `tempGuid` and by real GUID. If either already exists in the DB (HTTP response saved it before the socket event, or duplicate delivery), redirects to `_processUpdatedMessage()` for a clean GUID swap or field refresh.
+2. **Existing record check** — looks up the message by `tempGuid` and by real GUID. If either already exists in the DB (HTTP response saved it before the socket event, or duplicate delivery), redirects to `_processUpdatedMessage()` for a clean GUID swap or field refresh. There, a group photo state row (`itemType` 3, `groupActionType` 3) arriving again under its stored GUID is ignored, so a resent photo does not move the stored event to now.
+
+   **Group photo resends** — for a 3/3 row that is new to the DB, the photo it carries (its attachment, else the chat's `properties`, else a `GET /chat/:guid` for a push payload that has neither) is compared with `Chat.knownGroupPhotoGuid`. The same photo means Messages resent it rather than anyone changing it, and the row is not added. Otherwise it is kept and its photo becomes the known one; a person changing the photo (3/1) is always kept and updates it too. The incremental and full syncs apply the same rule to each chat's batch. See `lib/helpers/types/helpers/group_photo_helpers.dart`.
 
 3. **Chat hydration** — calls `_hydrateChat()` to ensure the chat has valid participants and a DB ID before insertion. If not running in an isolate and hydration resolved new contact links, fires `ContactsSvcV2.notifyHandlesUpdated()`.
 

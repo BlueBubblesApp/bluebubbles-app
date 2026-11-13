@@ -164,6 +164,13 @@ class Message {
   @Transient()
   bool get isGroupPhotoRemoved => itemType == 3 && groupActionType == 2;
 
+  /// The group's current photo as state (`item_type` 3, `group_action_type` 3): the image is attached and no
+  /// sender is recorded. Messages writes it again, under the GUID it already has and dated now, when it resends a
+  /// group's photo, which can happen on any send into the group. It is not a person changing the photo; that is
+  /// [isGroupPhotoChanged].
+  @Transient()
+  bool get isGroupPhotoState => itemType == 3 && groupActionType == 3;
+
   @Transient()
   bool get isReply => threadOriginatorGuid != null;
 
@@ -618,6 +625,9 @@ class Message {
   /// Call this from the UI with a reactive name (e.g. from [HandleState.displayName])
   /// so that contact-sync updates are reflected without rebuilding the whole tree.
   String buildGroupEventText(String senderName) {
+    // Before the sender is used: this row names nobody, and the fallback for a missing handle is "You".
+    if (isGroupPhotoState) return "The group photo was updated.";
+
     String text = "Unknown group event";
     final name = senderName;
 

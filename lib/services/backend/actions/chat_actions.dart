@@ -144,6 +144,9 @@ class ChatActions {
         chat.dynamicWallpaperId = inputChat.dynamicWallpaperId;
         chat.dynamicWallpaperConfig = inputChat.dynamicWallpaperConfig;
       }
+      if (updateFlags['updateKnownGroupPhotoGuid'] == true) {
+        chat.knownGroupPhotoGuid = inputChat.knownGroupPhotoGuid;
+      }
       if (updateFlags['updateLatestMessage'] == true) {
         final latestMessageId = chatData['dbLatestMessageId'] as int?;
         final latestMessageDateMs = chatData['dbOnlyLatestMessageDate'] as int?;
