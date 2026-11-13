@@ -39,7 +39,7 @@ class ServerV2MigrationBanner extends StatelessWidget {
                   children: [
                     Text('Updating messages for new v2 features', style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 4),
-                    Text('Step ${status.stepNumber} of 5 · $count', style: theme.textTheme.bodySmall),
+                    Text('Step ${status.stepNumber} of ${ServerV2Migrations.stepNames.length} · $count', style: theme.textTheme.bodySmall),
                     const SizedBox(height: 6),
                     LinearProgressIndicator(value: overall, minHeight: 3),
                     const SizedBox(height: 6),

@@ -52,7 +52,7 @@ class ServerV2Migrations {
     return future.whenComplete(subscription.cancel);
   }
 
-  static const stepNames = ['Emoji tapbacks', 'Genmoji', 'Stickers', 'iMessage apps', 'Message changes'];
+  static const stepNames = ['Emoji tapbacks', 'Stickers', 'iMessage apps', 'Message changes'];
 
   /// A reconnect can arrive before the failed request has finished unwinding.
   static Future<void> retryAfterReconnect() async {
@@ -68,7 +68,7 @@ class ServerV2Migrations {
   }
 
   static Future<int?> _runWithProgress() async {
-    final steps = List<double?>.filled(5, 0);
+    final steps = List<double?>.filled(stepNames.length, 0);
     Future<int?> runStep(int index, Future<int?> Function(ServerV2MigrationProgress) work) async {
       void report(String step, double? value, {int? completed, int? total}) {
         steps[index] = value;
@@ -97,11 +97,9 @@ class ServerV2Migrations {
       if (!SettingsSvc.serverDetails.isV2Server) return null;
       final emoji = await runStep(0, _backfillTapbackEmoji);
       if (emoji == null) return null;
-      final genmoji = await runStep(1, _backfillGenmoji);
-      if (genmoji == null) return null;
-      final stickers = await runStep(2, _backfillStickerPlacement);
+      final stickers = await runStep(1, _backfillStickerPlacement);
       if (stickers == null) return null;
-      final apps = await runStep(3, (report) async {
+      final apps = await runStep(2, (report) async {
         final payloads = await _backfillAppPayloads(
           (step, value, {completed, total}) => report(step, value * 0.9, completed: completed, total: total),
         );
@@ -112,8 +110,8 @@ class ServerV2Migrations {
         return turns == null ? null : payloads + turns;
       });
       if (apps == null) return null;
-      final changes = await runStep(4, _backfillMessageChanges);
-      return changes == null ? null : emoji + genmoji + stickers + apps + changes;
+      final changes = await runStep(3, _backfillMessageChanges);
+      return changes == null ? null : emoji + stickers + apps + changes;
     } finally {
       progress.value = null;
       _running = null;
@@ -287,53 +285,6 @@ class ServerV2Migrations {
           trace: s,
           tag: "ServerV2Migrations",
         );
-      }
-    }
-    return filled;
-  }
-
-  /// Re-fetches attributed bodies saved before the client kept the Genmoji marker, `__kIMEmojiImageAttributeName`.
-  static Future<int?> _backfillGenmoji(ServerV2MigrationProgress? onProgress) async {
-    final query = Database.messages
-        .query(Message_.dbAttributedBody.contains("__kIMFileTransferGUIDAttributeName").and(Message_.guid.notNull()))
-        .build();
-    final candidates = (await runAsync(() => query.find())).where(_isOnServer).where((message) {
-      final body = message.attributedBody.firstOrNull;
-      if (body == null || body.runs.any((r) => r.isEmojiImage)) return false;
-      final textParts = body.runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
-      return body.runs.any((r) => r.isAttachment && textParts.contains(r.attributes?.messagePart));
-    }).toList();
-    query.close();
-
-    int filled = 0;
-    for (final (i, message) in candidates.indexed) {
-      onProgress?.call("Updating Genmoji", i / candidates.length, completed: i, total: candidates.length);
-      try {
-        final response = await HttpSvc.message.fetchOne(message.guid!, withQuery: "attributedBody");
-        final data = response.data['data'];
-        if (data is! Map) continue;
-        final fresh = Message.fromMap(Map<String, dynamic>.from(data)).attributedBody;
-        if (!fresh.any((b) => b.runs.any((r) => r.isEmojiImage))) continue;
-
-        final current = Database.messages.get(message.id!);
-        if (current == null) continue;
-        current.attributedBody = fresh;
-        Database.messages.put(current);
-        filled++;
-      } catch (e, s) {
-        if (_isNotFound(e)) continue;
-        if (_isConnectionFailure(e)) {
-          // Every later request would fail the same way; the next launch retries the rest
-          Logger.warn(
-            "Stopped backfilling Genmoji: couldn't reach the server",
-            error: e,
-            trace: s,
-            tag: "ServerV2Migrations",
-          );
-          return null;
-        }
-        // Only this message: skip it rather than let it block the rest on every launch
-        Logger.warn("Failed to backfill the Genmoji of ${message.guid}", error: e, trace: s, tag: "ServerV2Migrations");
       }
     }
     return filled;
