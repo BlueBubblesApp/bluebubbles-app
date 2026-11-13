@@ -231,7 +231,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
               SettingsSection(
                 backgroundColor: tileColor,
                 children: [
-                  if (Platform.isWindows)
+                  if (Platform.isWindows || Platform.isLinux)
                     Obx(() => SettingsSwitch(
                       onChanged: (bool val) async {
                         SettingsSvc.settings.windowsTaskbarBadge.value = val;
@@ -239,8 +239,10 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers {
                         ChatsSvc.unreadCount.refresh();  // Trigger listener
                       },
                       initialVal: SettingsSvc.settings.windowsTaskbarBadge.value,
-                      title: "Taskbar Badge",
-                      subtitle: "Enable badge on taskbar icon for new messages",
+                      title: Platform.isLinux ? "Launcher Badge" : "Taskbar Badge",
+                      subtitle: Platform.isLinux
+                          ? "Show the unread count on the app's dock or launcher icon"
+                          : "Enable badge on taskbar icon for new messages",
                       backgroundColor: tileColor,
                       leading: const SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.app_badge,
