@@ -34,7 +34,6 @@ class ChatState {
   final Rxn<Message> latestMessage;
   final RxnString textFieldText;
 
-  /// [Chat.textFieldRuns]: the draft's runs as JSON.
   final RxnString textFieldRuns;
   final RxList<String> textFieldAttachments;
   final RxnBool autoSendReadReceipts;
