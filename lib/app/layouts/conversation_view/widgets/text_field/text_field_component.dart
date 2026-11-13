@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:collection/collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
@@ -128,7 +128,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     }
 
     emojiHandler = EmojiAutocompleteHandler(controller: ctrl, textField: textController);
-    mentionHandler = MentionAutocompleteHandler(controller: ctrl, textField: textController, buildContext: context);
+    mentionHandler = MentionAutocompleteHandler(controller: ctrl, textField: textController);
     keyboardHandler = KeyboardShortcutHandler(
       controller: ctrl,
       sendMessage: sendMessage,
@@ -333,73 +333,44 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                 ),
                         ),
                         contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                          final start = editableTextState.textEditingValue.selection.start;
-                          final end = editableTextState.textEditingValue.selection.end;
-                          final text = editableTextState.textEditingValue.text;
-                          final selected = editableTextState.textEditingValue.text.substring(
-                              (start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
+                          final selection = editableTextState.textEditingValue.selection;
+                          final touching = txtController.mentionRuns
+                              .where((r) => r.range[0] <= selection.end && r.range[0] + r.range[1] >= selection.start)
+                              .toList();
+                          final mention = touching.length == 1 ? touching.single : null;
 
                           final toolbar = AdaptiveTextSelectionToolbar.editableText(
                             editableTextState: editableTextState,
                           )..buttonItems?.addAllIf(
-                              MentionTextEditingController.escapingRegex.allMatches(selected).length == 1,
+                              mention != null,
                               [
                                 ContextMenuButtonItem(
                                   onPressed: () {
-                                    final TextSelection selection = editableTextState.textEditingValue.selection;
-                                    if (selection.isCollapsed) {
-                                      return;
-                                    }
-                                    String text = editableTextState.textEditingValue.text;
-                                    final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                                    final mentionMatch =
-                                        MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                                    if (mentionMatch == null) return; // Shouldn't happen
-                                    final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                                    int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                                    if (mentionIndex == null) return; // Shouldn't happen
-                                    final mention = controller?.mentionables[mentionIndex];
-                                    final replacement = mention != null ? "@${mention.displayName}" : "";
-                                    text = editableTextState.textEditingValue.text.replaceRange(
-                                        (start - 1).clamp(0, text.length),
-                                        (end + 1).clamp(min(1, text.length), text.length),
-                                        replacement);
-                                    final checkSpace = end + replacement.length - 1;
-                                    final spaceAfter = checkSpace < text.length &&
-                                        text.substring(end + replacement.length - 1, end + replacement.length) == " ";
-                                    (controller?.textController ?? textController).value = TextEditingValue(
-                                        text: text,
-                                        selection: TextSelection.fromPosition(TextPosition(
-                                            offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
+                                    txtController.removeMention(mention!);
                                     editableTextState.hideToolbar();
                                   },
                                   label: "Remove Mention",
                                 ),
                                 ContextMenuButtonItem(
                                   onPressed: () async {
-                                    final text = editableTextState.textEditingValue.text;
-                                    final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                                    final mentionMatch =
-                                        MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                                    if (mentionMatch == null) return; // Shouldn't happen
-                                    final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                                    int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                                    if (mentionIndex == null) return; // Shouldn't happen
-                                    final mention = controller?.mentionables[mentionIndex];
+                                    // The toolbar's own context dies with the toolbar once the dialog takes focus
+                                    editableTextState.hideToolbar();
                                     if (kIsDesktop || kIsWeb) {
                                       controller?.showingOverlays = true;
                                     }
-                                    final changed = await showCustomMentionDialog(context, mention);
+                                    final current = txtController.text
+                                        .substring(mention!.range[0], mention.range[0] + mention.range[1]);
+                                    final changed = await showCustomMentionDialog(
+                                        this.context, txtController.mentionableFor(mention),
+                                        initial: current);
                                     if (kIsDesktop || kIsWeb) {
                                       controller?.showingOverlays = false;
                                     }
-                                    if (!isNullOrEmpty(changed) && mention != null) {
-                                      mention.customDisplayName = changed!;
-                                    }
-                                    final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
-                                    txtController.selection =
-                                        TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
-                                    editableTextState.hideToolbar();
+                                    // The run may have shifted while the dialog was open
+                                    final live = txtController.mentionRuns.firstWhereOrNull((r) =>
+                                        r.attributes?.mention == mention.attributes?.mention &&
+                                        txtController.text.substring(r.range[0], r.range[0] + r.range[1]) == current);
+                                    if (!isNullOrEmpty(changed) && live != null) txtController.renameMention(live, changed!);
                                   },
                                   label: "Custom Mention",
                                 ),

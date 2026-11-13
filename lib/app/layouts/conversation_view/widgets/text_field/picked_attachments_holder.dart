@@ -38,20 +38,14 @@ class _PickedAttachmentsHolderState extends State<PickedAttachmentsHolder> with 
   void selectMention(int index, bool custom) async {
     if (widget.textController is! MentionTextEditingController) return;
     final mention = widget.controller!.mentionMatches[index];
+    String? name;
     if (custom) {
-      final changed = await showCustomMentionDialog(context, mention);
-      if (isNullOrEmpty(changed)) return;
-      mention.customDisplayName = changed!;
+      name = await showCustomMentionDialog(context, mention);
+      if (isNullOrEmpty(name)) return;
     }
     final _controller = widget.textController as MentionTextEditingController;
     widget.controller!.mentionSelectedIndex.value = 0;
-    final text = _controller.text;
-    final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
-    final matches = regExp.allMatches(text);
-    if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
-      final match = matches.lastWhere((m) => m.start < _controller.selection.start);
-      _controller.addMention(text.substring(match.start, match.end), mention);
-    }
+    _controller.addMention(mention, name: name);
     widget.controller!.mentionMatches.clear();
     widget.controller!.focusNode.requestFocus();
   }

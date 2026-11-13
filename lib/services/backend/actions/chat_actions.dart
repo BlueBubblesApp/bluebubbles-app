@@ -116,6 +116,7 @@ class ChatActions {
       }
       if (updateFlags['updateTextFieldText']!) {
         chat.textFieldText = inputChat.textFieldText;
+        chat.textFieldRuns = inputChat.textFieldRuns;
       }
       if (updateFlags['updateTextFieldAttachments']!) {
         chat.textFieldAttachments = inputChat.textFieldAttachments;
@@ -203,6 +204,7 @@ class ChatActions {
         dbChat.hasUnreadMessage = false;
         // The row stays, so its draft would come back with the chat
         dbChat.textFieldText = null;
+        dbChat.textFieldRuns = null;
         dbChat.textFieldAttachments = [];
         chatBox.put(dbChat);
       }

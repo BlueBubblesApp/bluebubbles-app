@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/components/wallpaper/chat_wallpaper_type.dart';
@@ -1184,6 +1185,7 @@ class ChatsService {
     chat.clearTranscript();
     // The DB row's draft is cleared, but this object can be reused if the chat comes back
     chat.textFieldText = null;
+    chat.textFieldRuns = null;
     chat.textFieldAttachments = [];
     // Its transcript is gone, so what was kept for it goes too
     await _clearChatPrefs(chat.guid);
@@ -1646,17 +1648,19 @@ class ChatsService {
   /// Set chat text field text
   /// ChatState is updated synchronously and is the source of truth for the UI.
   /// The DB write is fire-and-forget so callers never need to await this.
-  Future<void> setChatTextFieldText(Chat chat, String? value) async {
+  Future<void> setChatTextFieldText(Chat chat, String? value, {List<Run> runs = const []}) async {
     final state = getChatState(chat.guid);
+    final encodedRuns = runs.isEmpty ? null : jsonEncode(runs.map((r) => r.toMap()).toList());
 
-    if (state != null && state.textFieldText.value == value) return;
+    if (state != null && state.textFieldText.value == value && state.textFieldRuns == encodedRuns) return;
 
     // Update ChatState first — this is the source of truth for the text field UI.
-    state?.updateTextFieldTextInternal(value);
+    state?.updateTextFieldTextInternal(value, encodedRuns);
 
     // Persist to the chat model and DB asynchronously (fire-and-forget).
     final chatToUpdate = state?.chat ?? chat;
     chatToUpdate.textFieldText = value;
+    chatToUpdate.textFieldRuns = encodedRuns;
     unawaited(chatToUpdate.saveAsync(updateTextFieldText: true));
   }
 

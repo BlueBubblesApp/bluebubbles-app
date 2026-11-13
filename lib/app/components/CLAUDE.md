@@ -27,7 +27,7 @@ Color gradient from address: `toColorGradient(handle?.address)`. Custom color: `
 - `bb_slider.dart` — `BBSlider`, skin-aware slider (`CupertinoSlider` on iOS skin, Material 3 Expressive-styled `Slider` via `m3e/m3e_slider.dart` on Material/Samsung). Supports `divisions` (steps). Used internally by `SettingsSlider`; prefer it over raw `Slider`/`CupertinoSlider` for any new slider/number-picker.
 - `circle_progress_bar.dart` — circular progress indicator
 - `copy_address_button.dart` — `CopyAddressButton`, skin-aware copy icon for a handle address (check mark + "Copied" feedback). Used on participant tiles and the 1:1 details header
-- `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for mention detection and rich formatting in the message composer
+- `custom_text_editing_controllers.dart` — `TextEditingController` subclasses for spellcheck and mentions in the message composer. `MentionTextEditingController` keeps the real text (a mention is the bare name, no `@`) plus `runs`: `Run`s in UTF-16 offsets that shift with each edit. Editing inside a mention turns it back into plain text. `attributedRuns` turns `runs` into a sendable attributed body; drafts store them in `Chat.textFieldRuns`, and drafts from the old `U+FFFC index U+FFFC` format are converted on load
 - `sliver_decoration.dart` — decorative header for `CustomScrollView` / `SliverAppBar`
 
 ## Material 3 Expressive (`m3e/`)

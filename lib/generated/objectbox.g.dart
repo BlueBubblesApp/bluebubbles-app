@@ -153,7 +153,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 9017250848141753702),
     name: 'Chat',
-    lastPropertyId: const obx_int.IdUid(40, 2602396250608668078),
+    lastPropertyId: const obx_int.IdUid(41, 4875992845906556952),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -331,6 +331,12 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(40, 2602396250608668078),
         name: 'knownGroupPhotoGuid',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(41, 4875992845906556952),
+        name: 'textFieldRuns',
         type: 9,
         flags: 0,
       ),
@@ -1498,7 +1504,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final knownGroupPhotoGuidOffset = object.knownGroupPhotoGuid == null
             ? null
             : fbb.writeString(object.knownGroupPhotoGuid!);
-        fbb.startTable(41);
+        final textFieldRunsOffset = object.textFieldRuns == null
+            ? null
+            : fbb.writeString(object.textFieldRuns!);
+        fbb.startTable(42);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(2, guidOffset);
         fbb.addOffset(4, chatIdentifierOffset);
@@ -1531,6 +1540,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(37, dynamicWallpaperIdOffset);
         fbb.addOffset(38, dynamicWallpaperConfigOffset);
         fbb.addOffset(39, knownGroupPhotoGuidOffset);
+        fbb.addOffset(40, textFieldRunsOffset);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1586,6 +1596,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final textFieldTextParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 46);
+        final textFieldRunsParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 84);
         final textFieldAttachmentsParam = const fb.ListReader<String>(
           fb.StringReader(asciiOptimization: true),
           lazy: false,
@@ -1645,6 +1658,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 autoSendReadReceipts: autoSendReadReceiptsParam,
                 autoSendTypingIndicators: autoSendTypingIndicatorsParam,
                 textFieldText: textFieldTextParam,
+                textFieldRuns: textFieldRunsParam,
                 textFieldAttachments: textFieldAttachmentsParam,
                 dateDeleted: dateDeletedParam,
                 style: styleParam,
@@ -2923,6 +2937,11 @@ class Chat_ {
   /// See [Chat.knownGroupPhotoGuid].
   static final knownGroupPhotoGuid = obx.QueryStringProperty<Chat>(
     _entities[1].properties[28],
+  );
+
+  /// See [Chat.textFieldRuns].
+  static final textFieldRuns = obx.QueryStringProperty<Chat>(
+    _entities[1].properties[29],
   );
 
   /// see [Chat.handles]

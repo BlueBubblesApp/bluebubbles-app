@@ -1,10 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart' as mention_dialog;
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -20,12 +17,10 @@ import 'package:get/get.dart';
 class MentionAutocompleteHandler {
   final ConversationViewController controller;
   final TextEditingController textField;
-  final BuildContext buildContext;
 
   MentionAutocompleteHandler({
     required this.controller,
     required this.textField,
-    required this.buildContext,
   });
 
   /// Handle mention-related key events. Returns true if the event was handled.
@@ -79,19 +74,13 @@ class MentionAutocompleteHandler {
           controller.mentionMatches.length <= controller.mentionSelectedIndex.value) {
         return false;
       }
+      // A name typed without "@" only suggests: Enter still sends, Tab or a click takes the mention
+      final tc = controller.textController;
+      final typedAt = tc.selection.baseOffset >= 0 &&
+          RegExp(r"@[^\s@]*$").hasMatch(tc.text.substring(0, tc.selection.baseOffset));
+      if (logicalKey == LogicalKeyboardKey.enter && !typedAt) return false;
 
-      int index = controller.mentionSelectedIndex.value;
-      String text = textField.text;
-      RegExp regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
-      Iterable<RegExpMatch> matches = regExp.allMatches(text);
-
-      if (matches.isNotEmpty && matches.any((m) => m.start < textField.selection.start)) {
-        RegExpMatch match = matches.lastWhere((m) => m.start < textField.selection.start);
-        controller.textController.addMention(
-          text.substring(match.start, match.end),
-          controller.mentionMatches[index],
-        );
-      } else {
+      if (!controller.textController.addMention(controller.mentionMatches[controller.mentionSelectedIndex.value])) {
         // If user moved cursor before inserting, reset picker
         controller.emojiScrollController.jumpTo(0);
       }
@@ -103,25 +92,5 @@ class MentionAutocompleteHandler {
     }
 
     return false;
-  }
-
-  /// Show custom mention dialog to edit the display name for a mention.
-  /// Called from the context menu (see text_field_component.dart).
-  Future<void> showCustomMentionDialog(Mentionable? mention) async {
-    if (mention == null) return;
-
-    if (kIsDesktop || kIsWeb) {
-      controller.showingOverlays = true;
-    }
-
-    final changed = await mention_dialog.showCustomMentionDialog(buildContext, mention);
-
-    if (kIsDesktop || kIsWeb) {
-      controller.showingOverlays = false;
-    }
-
-    if (!isNullOrEmpty(changed)) {
-      mention.customDisplayName = changed!;
-    }
   }
 }

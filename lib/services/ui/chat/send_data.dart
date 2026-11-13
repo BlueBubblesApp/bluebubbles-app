@@ -8,6 +8,7 @@ class SendData {
   const SendData({
     required this.attachments,
     required this.text,
+    this.runs = const [],
     required this.subject,
     this.replyGuid,
     this.replyPart,
@@ -17,6 +18,7 @@ class SendData {
 
   final List<PlatformFile> attachments;
   final String text;
+  final List<Run> runs;
   final String subject;
   final String? replyGuid;
   final int? replyPart;
