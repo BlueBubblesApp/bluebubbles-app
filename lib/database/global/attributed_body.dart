@@ -72,6 +72,14 @@ class Attributes {
   bool get isStrikethrough => rawAttributes['__kIMTextStrikethroughAttributeName'] == 1;
   int? get textEffect => rawAttributes['__kIMTextEffectAttributeName'] as int?;
 
+  /// The server's `textFormatting` style names for this run.
+  List<String> get styleNames => [
+        if (isBold) 'bold',
+        if (isItalic) 'italic',
+        if (isUnderlined) 'underline',
+        if (isStrikethrough) 'strikethrough',
+      ];
+
   /// The attachment is a Genmoji
   bool get emojiImage => rawAttributes['__kIMEmojiImageAttributeName'] != null;
 

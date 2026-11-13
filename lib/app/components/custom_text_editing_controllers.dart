@@ -523,15 +523,29 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   @override
   set value(TextEditingValue newValue) {
-    if (runs.isEmpty || newValue.text == text) {
+    final pending = _pendingTyping;
+    if (newValue.text == text) {
+      if (!newValue.selection.isCollapsed || newValue.selection.baseOffset != _pendingAt) _pendingTyping = null;
       super.value = newValue;
       return;
     }
+    _pendingTyping = null;
     final anchor = selection.start >= 0 && newValue.selection.start >= 0
         ? min(selection.start, newValue.selection.start)
         : null;
-    runs = shiftRuns(text, newValue.text, runs, anchor: anchor);
-    final before = newValue.text;
+    final oldText = text;
+    final newText = newValue.text;
+    if (runs.isNotEmpty) runs = shiftRuns(oldText, newText, runs, anchor: anchor);
+    final inserted = newText.length - oldText.length;
+    if (pending != null &&
+        inserted > 0 &&
+        newText.startsWith(oldText.substring(0, _pendingAt)) &&
+        newText.endsWith(oldText.substring(_pendingAt))) {
+      for (final attribute in styleAttributes.values) {
+        runs = restyle(runs, newText.length, _pendingAt, _pendingAt + inserted, attribute, pending[attribute]);
+      }
+    }
+    final before = newText;
     super.value = newValue;
     // Emoticon and shortcode replacement can rewrite the text on the way in.
     if (text != before) runs = shiftRuns(before, text, runs);
@@ -560,17 +574,145 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     for (final run in runs) {
       final start = run.range[0];
       final end = start + run.range[1];
-      if (end <= prefix) {
+      final typingAtEnd = end == prefix && oldEnd == prefix && run.attributes?.mention == null;
+      if (end <= prefix && !typingAtEnd) {
         kept.add(run);
+      } else if (typingAtEnd) {
+        kept.add(Run(range: [start, run.range[1] + delta], attributes: run.attributes));
       } else if (start >= oldEnd) {
         kept.add(Run(range: [start + delta, run.range[1]], attributes: run.attributes));
-      } else if (run.attributes?.mention == null) {
+      } else {
+        // Editing inside a mention unmentions it; any formatting on it stays
+        final attrs = Map<String, dynamic>.of(run.attributes?.rawAttributes ?? const {})
+          ..remove('__kIMMentionConfirmedMention');
         final newStart = start < prefix ? start : newEnd;
         final newRunEnd = end > oldEnd ? end + delta : newEnd;
-        if (newRunEnd > newStart) kept.add(Run(range: [newStart, newRunEnd - newStart], attributes: run.attributes));
+        if (attrs.isNotEmpty && newRunEnd > newStart) {
+          kept.add(Run(range: [newStart, newRunEnd - newStart], attributes: Attributes(rawAttributes: attrs)));
+        }
       }
     }
     return kept;
+  }
+
+  static const styleAttributes = {
+    'bold': '__kIMTextBoldAttributeName',
+    'italic': '__kIMTextItalicAttributeName',
+    'underline': '__kIMTextUnderlineAttributeName',
+    'strikethrough': '__kIMTextStrikethroughAttributeName',
+  };
+
+  /// Adds the style [attribute] over the selection, or removes it when all of the selection already has it.
+  void toggleStyle(String attribute) => _restyleSelection(attribute, 1, toggle: true);
+
+  /// Formatting chosen for the next typed text at [_pendingAt] (with a collapsed cursor), overriding what it would
+  /// otherwise pick up from the run it extends.
+  Map<String, dynamic>? _pendingTyping;
+  int _pendingAt = -1;
+
+  /// The attributes the next typed text gets: a pending choice, else those of the run that typing extends.
+  Map<String, dynamic> get typingAttributes {
+    final caret = selection.baseOffset;
+    if (!selection.isCollapsed || caret < 0) return const {};
+    if (_pendingTyping != null && _pendingAt == caret) return _pendingTyping!;
+    return runs
+            .firstWhereOrNull(
+                (r) => r.attributes?.mention == null && r.range[0] < caret && caret <= r.range[0] + r.range[1])
+            ?.attributes
+            ?.rawAttributes ??
+        const {};
+  }
+
+  /// Whether typing would carry formatting forward from the cursor, or a choice for it is pending.
+  bool get hasActiveFormatting =>
+      (_pendingTyping != null && _pendingAt == selection.baseOffset) ||
+      typingAttributes.keys.any(styleAttributes.containsValue);
+
+  /// Whether all of the selection (or, with a collapsed cursor, the next typed text) has [attribute] set to [value].
+  bool selectionHas(String attribute, Object value) {
+    if (selection.isCollapsed) return typingAttributes[attribute] == value;
+    final (start, end) = _selectionRange();
+    return start < end && segments(runs, start, end).every((s) => s.$3[attribute] == value);
+  }
+
+  /// The selection, widened to whole mentions: they are styled as a unit.
+  (int, int) _selectionRange() {
+    var start = selection.start;
+    var end = selection.end;
+    if (start < 0) return (0, 0);
+    for (final mention in mentionRuns) {
+      if (mention.range[0] < end && mention.range[0] + mention.range[1] > start) {
+        start = min(start, mention.range[0]);
+        end = max(end, mention.range[0] + mention.range[1]);
+      }
+    }
+    return (start, end);
+  }
+
+  /// With [toggle], removes [attribute] instead when all of the selection already has [value].
+  void _restyleSelection(String attribute, Object? value, {required bool toggle}) {
+    if (selection.isCollapsed) {
+      if (selection.baseOffset < 0) return;
+      // Nothing to restyle yet: this sets what the next typed text gets
+      final pending = Map<String, dynamic>.of(typingAttributes);
+      value == null || (toggle && pending[attribute] == value) ? pending.remove(attribute) : pending[attribute] = value;
+      _pendingTyping = pending;
+      _pendingAt = selection.baseOffset;
+      notifyListeners();
+      return;
+    }
+    final (start, end) = _selectionRange();
+    if (start >= end) return;
+    runs = restyle(runs, text.length, start, end, attribute,
+        value == null || (toggle && selectionHas(attribute, value)) ? null : value);
+    notifyListeners();
+  }
+
+  /// [runs] with [attribute] set to [value] over [start, end) of a [length]-long text, or removed there when
+  /// [value] is null. Adjacent runs that end up identical are merged; mentions never are.
+  @visibleForTesting
+  static List<Run> restyle(List<Run> runs, int length, int start, int end, String attribute, Object? value) {
+    final out = <Run>[];
+    for (final (from, to, attrs) in segments(runs, 0, length, [start, end])) {
+      final changed = Map<String, dynamic>.of(attrs);
+      if (from >= start && to <= end) value == null ? changed.remove(attribute) : changed[attribute] = value;
+      if (changed.isEmpty) continue;
+      final last = out.lastOrNull;
+      if (last != null &&
+          last.range[0] + last.range[1] == from &&
+          changed['__kIMMentionConfirmedMention'] == null &&
+          mapEquals(last.attributes!.rawAttributes, changed)) {
+        out[out.length - 1] = Run(range: [last.range[0], to - last.range[0]], attributes: last.attributes);
+      } else {
+        out.add(Run(range: [from, to - from], attributes: Attributes(rawAttributes: changed)));
+      }
+    }
+    return out;
+  }
+
+  /// [start, end) cut at every run edge and at [alsoCutAt], each piece with its covering run's attributes.
+  static List<(int, int, Map<String, dynamic>)> segments(
+    List<Run> runs,
+    int start,
+    int end, [
+    Iterable<int> alsoCutAt = const [],
+  ]) {
+    final cuts = {start, end, ...alsoCutAt, for (final r in runs) ...[r.range[0], r.range[0] + r.range[1]]}
+        .where((c) => c >= start && c <= end)
+        .toList()
+      ..sort();
+    return [
+      for (var i = 0; i + 1 < cuts.length; i++)
+        (
+          cuts[i],
+          cuts[i + 1],
+          runs
+                  .firstWhereOrNull((r) => r.range[0] <= cuts[i] && cuts[i] < r.range[0] + r.range[1])
+                  ?.attributes
+                  ?.rawAttributes ??
+              const <String, dynamic>{},
+        ),
+    ];
   }
 
   /// Converts a draft saved in the old format, where a mention was `U+FFFC index U+FFFC` into [mentionables].
@@ -617,31 +759,43 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   @override
   TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
-    final mentions = mentionRuns.where((r) => r.range[0] + r.range[1] <= text.length).toList();
-    if (mentions.isEmpty) return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
-    final bold = (style ?? const TextStyle()).copyWith(fontWeight: FontWeight.bold);
-    final mentionStyle = bold.copyWith(color: context.theme.colorScheme.primary);
-    // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible
-    final selectedStyle = bold.copyWith(color: context.theme.colorScheme.onPrimary);
+    final styled = runs.where((r) => r.range[0] + r.range[1] <= text.length).toList();
+    if (styled.isEmpty) return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+    final base = style ?? const TextStyle();
     final selStart = selection.isCollapsed ? -1 : selection.start;
     final selEnd = selection.isCollapsed ? -1 : selection.end;
     final children = <InlineSpan>[];
     var pos = 0;
-    for (final mention in mentions) {
-      final start = mention.range[0];
-      final end = start + mention.range[1];
+    for (final run in styled) {
+      final start = run.range[0];
+      final end = start + run.range[1];
+      final a = run.attributes!;
       if (start > pos) {
         children.add(
           buildMistakeTextSpans(context: context, chunk: text.substring(pos, start), offset: pos, style: style),
         );
       }
-      final cuts = {start, selStart.clamp(start, end), selEnd.clamp(start, end), end}.toList()..sort();
+      final decorations = [
+        if (a.isUnderlined) TextDecoration.underline,
+        if (a.isStrikethrough) TextDecoration.lineThrough,
+      ];
+      final runStyle = base.copyWith(
+        fontWeight: a.isBold || a.mention != null ? FontWeight.bold : null,
+        fontStyle: a.isItalic ? FontStyle.italic : null,
+        decoration: decorations.isEmpty ? null : TextDecoration.combine(decorations),
+        color: a.mention != null ? context.theme.colorScheme.primary : null,
+      );
+      // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible
+      final selectedStyle = runStyle.copyWith(color: context.theme.colorScheme.onPrimary);
+      final cuts = a.mention == null
+          ? [start, end]
+          : ({start, selStart.clamp(start, end), selEnd.clamp(start, end), end}.toList()..sort());
       for (var i = 0; i + 1 < cuts.length; i++) {
-        final selected = cuts[i] >= selStart && cuts[i + 1] <= selEnd;
+        final selected = a.mention != null && cuts[i] >= selStart && cuts[i + 1] <= selEnd;
         children.add(TextSpan(
           children: buildAppleEmojiTextSpans(
             text: text.substring(cuts[i], cuts[i + 1]),
-            style: selected ? selectedStyle : mentionStyle,
+            style: selected ? selectedStyle : runStyle,
           ),
         ));
       }

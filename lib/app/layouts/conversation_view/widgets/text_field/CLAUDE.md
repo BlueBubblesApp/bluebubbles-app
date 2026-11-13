@@ -7,6 +7,7 @@
 - `send_button.dart` — send / schedule button
 - `text_field_icon_bar.dart` — attachment/emoji/etc. icon row; on desktop the `+` is wrapped in `DesktopAttachmentMenu` (`../media_picker/`), as is the chat creator's `+` in `text_field_component.dart`
 - `text_field_suffix.dart` — trailing icon(s) inside the field
+- `formatting_bar.dart` — B/I/U/S toggles, shown above the input while text is selected or typing would carry formatting forward
 - `text_field_emoji_picker_section.dart` — inline emoji picker section
 - `text_field_recording_overlay.dart` — voice message recording overlay UI
 - `voice_message_recorder.dart` — voice message recording logic

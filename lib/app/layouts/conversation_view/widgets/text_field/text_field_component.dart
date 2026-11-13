@@ -8,6 +8,7 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/desktop_attachment_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/formatting_bar.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
@@ -205,6 +206,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         initialAttachments: initialAttachments,
                       ),
                     if (widget.controller != null) OpenPigeonPendingGame(controller: widget.controller!),
+                    FormattingBar(controller: txtController, focusNode: (controller?.focusNode ?? focusNode)!),
                     if (!isChatCreator)
                       Obx(() {
                         if (controller!.pickedAttachments.isNotEmpty && iOS) {
@@ -339,14 +341,12 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                               .toList();
                           final mention = touching.length == 1 ? touching.single : null;
 
-                          final toolbar = AdaptiveTextSelectionToolbar.editableText(
-                            editableTextState: editableTextState,
-                          )..buttonItems?.addAllIf(
-                              mention != null,
-                              [
+                          final items = [
+                            ...editableTextState.contextMenuButtonItems,
+                            if (mention != null) ...[
                                 ContextMenuButtonItem(
                                   onPressed: () {
-                                    txtController.removeMention(mention!);
+                                    txtController.removeMention(mention);
                                     editableTextState.hideToolbar();
                                   },
                                   label: "Remove Mention",
@@ -359,7 +359,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                       controller?.showingOverlays = true;
                                     }
                                     final current = txtController.text
-                                        .substring(mention!.range[0], mention.range[0] + mention.range[1]);
+                                        .substring(mention.range[0], mention.range[0] + mention.range[1]);
                                     final changed = await showCustomMentionDialog(
                                         this.context, txtController.mentionableFor(mention),
                                         initial: current);
@@ -375,7 +375,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                   label: "Custom Mention",
                                 ),
                               ],
-                            );
+                          ];
 
                           // The stock paste item only exists when the clipboard has text, and only pastes text.
                           // Replace it (or add one) with our handler, which handles media and falls back to text.
@@ -387,7 +387,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                 editableTextState.hideToolbar();
                               },
                             );
-                            final items = toolbar.buttonItems!;
                             final pasteIndex =
                                 items.indexWhere((item) => item.type == ContextMenuButtonType.paste);
                             if (pasteIndex == -1) {
@@ -396,6 +395,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                               items[pasteIndex] = pasteItem;
                             }
                           }
+
+                          final toolbar = AdaptiveTextSelectionToolbar.buttonItems(
+                            anchors: editableTextState.contextMenuAnchors,
+                            buttonItems: items,
+                          );
 
                           // Use outerTheme (captured from the real build context) because the
                           // contextMenuBuilder's own `context` parameter shadows the build context
@@ -534,6 +538,22 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
+    }
+
+    if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+      final shift = HardwareKeyboard.instance.isShiftPressed;
+      final style = switch (ev.logicalKey) {
+        LogicalKeyboardKey.keyB when !shift => 'bold',
+        LogicalKeyboardKey.keyI when !shift => 'italic',
+        LogicalKeyboardKey.keyU when !shift => 'underline',
+        LogicalKeyboardKey.keyX when shift => 'strikethrough',
+        _ => null,
+      };
+      if (style != null) {
+        (controller?.textController ?? textController)
+            .toggleStyle(MentionTextEditingController.styleAttributes[style]!);
+        return KeyEventResult.handled;
+      }
     }
 
     if (HardwareKeyboard.instance.isMetaPressed ||
