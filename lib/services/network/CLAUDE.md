@@ -15,7 +15,7 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 | `handle` | `HandleApi` | `api/handle_api.dart` | `handleCount`, `handles`, `handle`, `handleFocusState`, `handleiMessageState`, `handleFaceTimeState` |
 | `contact` | `ContactApi` | `api/contact_api.dart` | `fetchAll`, `query`, `create` |
 | `backup` | `BackupApi` | `api/backup_api.dart` | `getTheme`, `setTheme`, `deleteTheme`, `getSettings`, `setSettings`, `deleteSettings` |
-| `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` | `answer`, `leave` |
+| `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` | `answer`, `leave`, `call` (outgoing, **v2 only** — gate on `ServerDetails.supportsFaceTimeCalls`; throws `FaceTimeException`) |
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` | `getDevices`, `refreshDevices`, `getFriends`, `refreshFriends`, `getAccountInfo`, `getAccountContact`, `setAccountAlias` |
 | `firebase` | `FirebaseApi` | `api/firebase_api.dart` | `getFirebaseProjects`, `getGoogleInfo`, `getServerUrlRTDB`, `getServerUrlCF`, `setRestartDateCF` |
 | `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` | `status`, `create`, `library` (ETag → null on 304), `libraryImages` (≤50, ≤320px), `libraryImage`, `deleteFromLibrary` — **v2 only**, gate on `ServerDetails.supportsGenmoji`; UI goes through `GenmojiLibrarySvc` for the library |

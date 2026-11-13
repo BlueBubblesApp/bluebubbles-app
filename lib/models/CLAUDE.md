@@ -16,6 +16,7 @@ Barrel export: `models/models.dart`
 | `contact_search_result.dart` | A single result from a contact search query |
 | `dispatched_event.dart` | Event envelope used by `EventDispatcherSvc` |
 | `fcm_data_info.dart` | Firebase Cloud Messaging token + device info DTO |
+| `facetime.dart` | FaceTime DTOs from `/api/v2/facetime/call` — `FaceTimeCall`, `PlacedFaceTimeCall` (link + call), `FaceTimeException` (carries the call when it rang without a link) |
 | `genmoji.dart` | Genmoji DTOs from `/api/v2/genmoji` — `GenmojiSupport` (status), `GenmojiImage` (decoded PNG), `GenmojiException` |
 | `handle_audit_result.dart` | Developer Tools "Handle Auditing" scan result for a single handle missing `originalROWID`, plus remediation status |
 | `handle_lookup_key.dart` | Composite key (address + service) for handle deduplication |
