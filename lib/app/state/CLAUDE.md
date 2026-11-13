@@ -102,3 +102,5 @@ final state = controller.messageState?.getAttachmentState(attachmentGuid);
 // or via service:
 final state = msvc.getAttachmentState(messageGuid, attachmentGuid);
 ```
+
+`attributedBodyToMessagePart` preserves runs with offsets relative to each part's text, including edit-history parts. Mentions remain run attributes rather than a separate range list. Skipped standalone attachment placeholders do not shift later text runs.

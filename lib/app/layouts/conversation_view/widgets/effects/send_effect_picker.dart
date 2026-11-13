@@ -441,17 +441,7 @@ void sendEffectAction(
                                                               MessagePart(
                                                                   part: 0,
                                                                   text: message.text,
-                                                                  mentions: message.attributedBody.isEmpty
-                                                                      ? []
-                                                                      : message.attributedBody.first.runs
-                                                                          .where((element) => element.hasMention)
-                                                                          .map((e) => Mention(
-                                                                                  mentionedAddress: "",
-                                                                                  range: [
-                                                                                    e.range.first,
-                                                                                    e.range.first + e.range.last
-                                                                                  ]))
-                                                                          .toList()),
+                                                                  runs: message.attributedBody.firstOrNull?.runs ?? []),
                                                               message,
                                                             ),
                                                           ),
