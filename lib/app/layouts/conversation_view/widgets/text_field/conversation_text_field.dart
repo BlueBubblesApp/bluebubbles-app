@@ -248,7 +248,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       controller.emojiSelectedIndex.value = 0;
     }
 
-    // Debounce mention search to avoid running regex on every keystroke. No "@" check: names offer mentions too
+    // Debounce mention search to avoid running regex on every keystroke
     if (SettingsSvc.settings.enablePrivateAPI.value && !subject) {
       localController.debounceMentionSearch?.cancel();
       localController.debounceMentionSearch = Timer(const Duration(milliseconds: 150), () {

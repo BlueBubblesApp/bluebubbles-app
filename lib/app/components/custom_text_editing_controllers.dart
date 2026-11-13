@@ -790,9 +790,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   /// Adds the style [attribute] over the selection, or removes it when all of the selection already has it.
   void toggleStyle(String attribute) => _restyleSelection(attribute, 1, toggle: true);
 
-  /// Puts text effect [id] on the selection, or clears its effect when null.
   void setEffect(int? id) {
-    // An effect is only ever put on selected text
     if (!selection.isCollapsed) _restyleSelection(effectAttribute, id, toggle: false);
   }
 

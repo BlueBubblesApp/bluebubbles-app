@@ -17,7 +17,6 @@ class TextEffectOverlay extends StatefulWidget {
   /// Wraps the field whose [RenderEditable] is drawn over.
   final GlobalKey fieldKey;
 
-  /// The field's text style.
   final TextStyle style;
 
   @override
