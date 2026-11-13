@@ -218,18 +218,13 @@ class _TextFieldArea extends StatelessWidget {
 
       return Padding(
         padding: const EdgeInsets.all(10.0),
+        // Surface stays the app's, as in a conversation: the attachment picker draws on it
         child: Theme(
           data: context.theme.copyWith(
             primaryColor: context.theme.colorScheme.bubble(context, isIMsg),
             colorScheme: context.theme.colorScheme.copyWith(
               primary: context.theme.colorScheme.bubble(context, isIMsg),
               onPrimary: context.theme.colorScheme.onBubble(context, isIMsg),
-              surface: ThemeSvc.isMaterialYouActive(context)
-                  ? null
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-              onSurface: ThemeSvc.isMaterialYouActive(context)
-                  ? null
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
           ),
           child: Focus(
