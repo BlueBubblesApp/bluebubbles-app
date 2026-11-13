@@ -19,18 +19,19 @@ All passes must succeed before saving markers. Overlapping pages/queries are ded
 and message snapshot, and older changed messages cannot move the ROWID or latest-message markers backwards.
 
 `server_v2_migrations.dart` runs versioned v2 backfills automatically and from Troubleshoot.
-Version 5 adds a changes-only replay from timestamp zero to recover missed historical receipts,
-edits, and unsends. It uses the normal incremental-sync default of 1,000 messages per page, leaves
+Version 5 adds a replay of every local message to recover missed historical receipts, edits, unsends,
+and the formatting/effect attributes older clients discarded. It uses the normal incremental-sync default of 1,000 messages per page, leaves
 the normal sync markers alone, and only advances the migration version after all passes succeed.
 
 The historical changes-only replay updates existing local message GUIDs only; it never imports unsynced history.
-Each date pass queries batches of up to 1,000 locally stored GUIDs using `message.guid IN (:guids)`.
+It queries batches of up to 1,000 locally stored GUIDs using `message.guid IN (:guids)` with no `dateField`: date
+modes skip rows whose date is zero (never delivered, read, edited, or unsent). `Message.merge` applies each change.
 Missing server messages naturally return no rows; missing local ROWIDs do not require a separate repair pass.
-Counts report local GUIDs checked in the current date pass, including GUIDs with no matching changes.
+Counts report local GUIDs checked, including GUIDs with no changes.
 `ServerV2Migrations.progress` exposes five numbered steps, per-step progress, and processed/total counts to the chat-list banner.
 Incomplete migrations retry after reconnect; concurrent calls join the active pass.
 It is cleared on success or failure. Normal V2 query progress counts raw paginated rows; the GUID backfill
-counts local GUIDs checked. Overlapping results do not prevent a step reaching completion, and read/delivery,
+counts local GUIDs checked. Overlapping results do not prevent a step reaching completion, and the regular sync's read/delivery,
 edit, and unsend passes have distinct labels.
 
 ## Status Lifecycle

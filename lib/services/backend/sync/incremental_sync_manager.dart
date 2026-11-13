@@ -171,27 +171,28 @@ class IncrementalSyncManager extends SyncManager {
     if (includeNewMessages) {
       await syncV2MessagePages(after: (startRowId ?? 0) > 0 ? null : after, useRowId: (startRowId ?? 0) > 0);
     }
-    // `updated` is the union of delivered/read dates. Edits and unsends have
-    // their own modes. The server does not accept a played-date mode.
-    for (final (index, field) in ['updated', 'edited', 'retracted'].indexed) {
-      final guids = changeMessageGuids;
-      if (guids == null) {
-        await syncV2MessagePages(after: after, dateField: field, progressStart: index / 3, progressSpan: 1 / 3);
-        continue;
-      }
+    final guids = changeMessageGuids;
+    if (guids != null) {
+      // No date mode: those skip rows whose date is zero (never delivered, read, edited, or unsent), and older clients
+      // also dropped attributes on those. Message.merge applies every kind of change from the same rows.
       final size = batchSize.clamp(1, 1000);
       for (var offset = 0; offset < guids.length; offset += size) {
         final end = (offset + size).clamp(0, guids.length);
         await syncV2MessagePages(
-          after: after,
-          dateField: field,
+          after: null,
           guids: guids.sublist(offset, end),
           guidOffset: offset,
           guidTotal: guids.length,
-          progressStart: (index + offset / guids.length) / 3,
-          progressSpan: (end - offset) / guids.length / 3,
+          progressStart: offset / guids.length,
+          progressSpan: (end - offset) / guids.length,
         );
       }
+      return;
+    }
+    // `updated` is the union of delivered/read dates. Edits and unsends have
+    // their own modes. The server does not accept a played-date mode.
+    for (final (index, field) in ['updated', 'edited', 'retracted'].indexed) {
+      await syncV2MessagePages(after: after, dateField: field, progressStart: index / 3, progressSpan: 1 / 3);
     }
   }
 
