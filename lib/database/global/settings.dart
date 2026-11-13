@@ -239,7 +239,7 @@ class Settings {
   ]);
 
   // Text field buttons — enabled buttons, in display order. Absent = hidden.
-  final RxList<TextFieldButton> textFieldButtons = RxList.from(TextFieldButton.values);
+  final RxList<TextFieldButton> textFieldButtons = RxList.from(defaultTextFieldButtons);
 
   // Message options order
   final RxList<DetailsMenuAction> _detailsMenuActions = RxList.from(DetailsMenuAction.values);
@@ -977,7 +977,7 @@ class Settings {
   }
 
   void resetTextFieldButtons() {
-    SettingsSvc.settings.textFieldButtons.value = TextFieldButton.values;
+    SettingsSvc.settings.textFieldButtons.value = defaultTextFieldButtons;
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
   }
 
@@ -1045,7 +1045,7 @@ List<TextFieldButton> _processTextFieldButtons(dynamic rawJson) {
         .toList();
   } catch (e) {
     debugPrint("Using default textFieldButtons");
-    return TextFieldButton.values;
+    return defaultTextFieldButtons;
   }
 }
 

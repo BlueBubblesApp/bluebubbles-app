@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_dialog.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
+import 'package:bluebubbles/database/io/klipy.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/genmoji.dart';
@@ -14,7 +17,9 @@ import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:klipy_flutter/klipy_flutter.dart';
 import 'package:hand_signature/signature.dart';
 import 'package:universal_io/io.dart';
 
@@ -35,8 +40,8 @@ class AttachmentActions {
   /// Prompts for files and adds them to the draft. Desktop reads the bytes now (its picked
   /// paths can be sandbox-scoped and gone by send time); mobile keeps the path and reads at
   /// send, so a large video isn't held in memory while the user types.
-  static Future<void> pickFiles(ConversationViewController controller, {FileType type = FileType.any}) async {
-    final res = await FilePicker.pickFiles(type: type);
+  static Future<void> pickFiles(ConversationViewController controller) async {
+    final res = await FilePicker.pickFiles();
     for (pf.PlatformFile file in res) {
       final size = await file.length() ?? 0;
       if (size > _maxFileBytes) {
@@ -51,6 +56,113 @@ class AttachmentActions {
           bytes: kIsDesktop ? await file.readAsBytes() : null,
         ),
       );
+    }
+  }
+
+  /// Runs [button]'s action, for both the composer row and the desktop `+` menu. [context]
+  /// anchors anything that pops up (the Genmoji popover opens above it).
+  static Future<void> run(TextFieldButton button, BuildContext context, ConversationViewController controller) async =>
+      switch (button) {
+        TextFieldButton.Files => pickFiles(controller),
+        TextFieldButton.Genmoji => showGenmojiLibraryPopover(context, controller),
+        TextFieldButton.Handwritten => handwritten(context, controller),
+        TextFieldButton.Schedule => schedule(context, controller),
+        TextFieldButton.Location => shareLocation(controller),
+        TextFieldButton.Gif => pickGif(context, controller),
+        TextFieldButton.Emoji => toggleEmojiPicker(controller),
+      };
+
+  static Future<void> toggleEmojiPicker(ConversationViewController controller) async {
+    controller.showEmojiPicker.value = !controller.showEmojiPicker.value;
+    (controller.editing.lastOrNull?.controller.focusNode ?? controller.lastFocusedNode).requestFocus();
+  }
+
+  static Future<void> pickGif(BuildContext context, ConversationViewController controller) async {
+    if (kIsDesktop || kIsWeb) {
+      controller.showingOverlays = true;
+    }
+    KlipyClient klipy = KlipyClient(apiKey: kIsWeb ? KLIPY_API_KEY : dotenv.get('KLIPY_API_KEY'));
+    TextEditingController klipyController = TextEditingController();
+    FocusNode focus = FocusNode();
+    Future<KlipyResultObject?> resultFuture = klipy.showAsBottomSheet(
+      maxExtent: 0.8,
+      minExtent: 0.5,
+      debounce: const Duration(seconds: 1),
+      context: context,
+      searchFieldController: klipyController,
+      // Copied and slightly modified from source, just so I can autofocus
+      searchFieldWidget: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            TextField(
+              focusNode: focus,
+              controller: klipyController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    width: 0,
+                    style: BorderStyle.none,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(28, 5, 32, 7),
+                filled: true,
+                hintStyle: const KlipySearchFieldStyle().hintStyle,
+                hintText: "Search KLIPY",
+                isCollapsed: true,
+                isDense: true,
+              ),
+              style: context.theme.textTheme.bodyMedium!,
+            ),
+            const Positioned(
+              left: 4,
+              child: Icon(
+                Icons.search,
+                color: Color(0xFF8A8A86),
+                size: 22,
+              ),
+            ),
+          ],
+        ),
+      ),
+      style: KlipyStyle(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        attributionStyle: KlipyAttributionStyle(brightnes: context.theme.brightness),
+        tabBarStyle: KlipyTabBarStyle(
+          decoration: BoxDecoration(
+              color: context.theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(8)),
+          indicator: BoxDecoration(
+            color: context.theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          labelColor: context.theme.colorScheme.onSurface,
+          unselectedLabelColor: context.theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+    focus.requestFocus();
+    KlipyResultObject? result = await resultFuture;
+    if (kIsDesktop || kIsWeb) {
+      controller.showingOverlays = false;
+    }
+    final selectedGif = result?.media.tinyGif ?? result?.media.tinyGifTransparent;
+    if (result != null && selectedGif != null) {
+      final response = await HttpSvc.downloadFromUrl(selectedGif.url);
+      if (response.statusCode == 200) {
+        try {
+          final Uint8List data = response.data;
+          controller.pickedAttachments.add(PlatformFile(
+            path: null,
+            name: "${result.id}.gif",
+            size: data.length,
+            bytes: data,
+          ));
+        } catch (e, s) {
+          Logger.warn("Failed to attach GIF from picker", error: e, trace: s, tag: 'AttachmentActions');
+        }
+      }
     }
   }
 

@@ -6,34 +6,54 @@ import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Buttons shown to the left of the conversation text field.
+/// Composer actions that can sit to the left of the conversation text field.
 ///
 /// Order and visibility are user-configurable via
 /// `SettingsSvc.settings.textFieldButtons` (see `settings.dart`), rendered by
-/// [TextFieldIconBar]. When adding a button, add an entry to
-/// [_buttonPlatformSupport] and [_buttonToText], plus the builder in the icon bar.
-/// The attachment (+) button is deliberately not here — it is always shown, always
+/// [TextFieldIconBar]. On desktop, every supported action that isn't in that list goes in the
+/// `+` menu (`DesktopAttachmentMenu`) instead. When adding a button, add an entry to each map
+/// below, the menu's entry, and its handler in `AttachmentActions.run`.
+/// The attachment (+) button is deliberately not here: it is always shown, always
 /// first, and is not configurable.
-enum TextFieldButton { Gif, Emoji, Location }
+enum TextFieldButton { Files, Genmoji, Handwritten, Schedule, Location, Gif, Emoji }
+
+/// What a fresh install shows in the row; the rest start in the `+` menu.
+const List<TextFieldButton> defaultTextFieldButtons = [
+  TextFieldButton.Gif,
+  TextFieldButton.Emoji,
+  TextFieldButton.Location,
+];
 
 /// (android, windows, linux, web)
 const Map<TextFieldButton, (bool, bool, bool, bool)> _buttonPlatformSupport = {
+  TextFieldButton.Files: (false, true, true, false),
+  TextFieldButton.Genmoji: (false, true, true, false),
+  TextFieldButton.Handwritten: (false, true, true, false),
+  TextFieldButton.Schedule: (false, true, true, false),
+  TextFieldButton.Location: (false, true, false, false),
   TextFieldButton.Gif: (false, true, true, false),
   TextFieldButton.Emoji: (false, true, true, true),
-  TextFieldButton.Location: (false, true, false, false),
 };
 
 const Map<TextFieldButton, String> _buttonToText = {
-  TextFieldButton.Gif: "GIF Picker",
-  TextFieldButton.Emoji: "Emoji Picker",
-  TextFieldButton.Location: "Send Location",
+  TextFieldButton.Files: "Files",
+  TextFieldButton.Genmoji: "Genmoji",
+  TextFieldButton.Handwritten: "Handwritten",
+  TextFieldButton.Schedule: "Schedule",
+  TextFieldButton.Location: "Location",
+  TextFieldButton.Gif: "GIF",
+  TextFieldButton.Emoji: "Emoji",
 };
 
-/// (iOS skin, other skins) — must match the icons the real buttons use
+/// (iOS skin, other skins)
 const Map<TextFieldButton, (IconData, IconData)> _buttonToIcon = {
+  TextFieldButton.Files: (CupertinoIcons.folder_fill, Icons.folder_outlined),
+  TextFieldButton.Genmoji: (Icons.add_reaction_rounded, Icons.add_reaction_outlined),
+  TextFieldButton.Handwritten: (CupertinoIcons.scribble, Icons.draw_outlined),
+  TextFieldButton.Schedule: (CupertinoIcons.clock_fill, Icons.schedule),
+  TextFieldButton.Location: (CupertinoIcons.location_solid, Icons.location_on_outlined),
   TextFieldButton.Gif: (Icons.gif, Icons.gif),
   TextFieldButton.Emoji: (CupertinoIcons.smiley_fill, Icons.emoji_emotions),
-  TextFieldButton.Location: (CupertinoIcons.location_solid, Icons.location_on_outlined),
 };
 
 extension TextFieldButtonExtension on TextFieldButton {
@@ -44,6 +64,8 @@ extension TextFieldButtonExtension on TextFieldButton {
       SettingsSvc.settings.skin.value == Skins.iOS ? _buttonToIcon[this]!.$1 : _buttonToIcon[this]!.$2;
 
   bool get isPlatformSupported {
+    // Genmoji routes are v2-server only
+    if (this == TextFieldButton.Genmoji && !SettingsSvc.getServerDetails().supportsGenmoji) return false;
     final (android, windows, linux, web) = _buttonPlatformSupport[this]!;
     if (kIsWeb) return web;
     if (Platform.isAndroid) return android;
@@ -54,4 +76,7 @@ extension TextFieldButtonExtension on TextFieldButton {
 
 extension TextFieldButtonListExtension on List<TextFieldButton> {
   List<TextFieldButton> get platformSupportedButtons => where((b) => b.isPlatformSupported).toList();
+
+  /// Whether this row holds every supported button, leaving the desktop `+` menu nothing to show
+  bool get leavesMenuEmpty => TextFieldButton.values.platformSupportedButtons.every(contains);
 }

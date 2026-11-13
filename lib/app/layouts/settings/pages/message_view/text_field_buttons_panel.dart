@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/desktop_attachment_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
@@ -9,10 +10,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Reorder + enable/disable the buttons to the left of the message text field.
-///
-/// The list is every platform-supported button, in the user's order; the checkbox
-/// controls whether it is included in the saved (enabled) list.
+/// Desktop only: reorder the buttons to the left of the message text field, and pick which
+/// ones go in the `+` menu instead.
 class TextFieldButtonsPanel extends StatefulWidget {
   const TextFieldButtonsPanel({super.key});
 
@@ -21,10 +20,6 @@ class TextFieldButtonsPanel extends StatefulWidget {
 }
 
 class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with ThemeHelpers {
-  /// All platform-supported buttons in display order — enabled ones first, in the
-  /// order the user set, then the disabled ones.
-  final RxList<TextFieldButton> buttonList = RxList();
-
   /// Enabled buttons, in order — the local source of truth for both the preview and
   /// the chips. The ReorderableWrap must never rebuild from the settings list while a
   /// drag is in flight, or it tears down its DragTargets and trips an assert in
@@ -36,7 +31,6 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
     super.initState();
     final saved = SettingsSvc.settings.textFieldButtons.platformSupportedButtons;
     enabled.value = saved;
-    buttonList.value = [...saved, ...TextFieldButton.values.platformSupportedButtons.whereNot(saved.contains)];
   }
 
   /// Button the pointer is currently over, for hover feedback
@@ -85,8 +79,8 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
     setState(() => _dragging = false);
   }
 
-  /// A draggable button icon. Dragging it out of the row and into the tray disables it.
-  Widget _icon(BuildContext context, TextFieldButton b) {
+  /// A draggable button: an icon in the row preview, or an item in the menu preview ([menuItem]).
+  Widget _icon(BuildContext context, TextFieldButton b, {bool menuItem = false}) {
     return StatefulBuilder(builder: (context, setLocalState) {
       bool hovered = _hovered == b && !_dragging;
       final icon = MouseRegion(
@@ -95,14 +89,16 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
         onExit: (_) => setLocalState(() => _hovered = null),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.all(4),
+          margin: menuItem ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 4),
+          padding: menuItem ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8) : const EdgeInsets.all(4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: hovered ? context.theme.colorScheme.primary.withValues(alpha: 0.15) : Colors.transparent,
           ),
-          child: Icon(b.icon,
-              color: hovered ? context.theme.colorScheme.primary : context.theme.colorScheme.outline, size: 28),
+          child: menuItem
+              ? _menuItem(context, b)
+              : Icon(b.icon,
+                  color: hovered ? context.theme.colorScheme.primary : context.theme.colorScheme.outline, size: 28),
         ),
       );
       return Draggable<TextFieldButton>(
@@ -122,6 +118,26 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
         child: icon,
       );
     });
+  }
+
+  /// Mirrors DesktopAttachmentMenu._item
+  Widget _menuItem(BuildContext context, TextFieldButton b) {
+    final (icon, color) = desktopMenuIcons[b]!;
+    return SizedBox(
+      width: 196,
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), shape: BoxShape.circle),
+            child: Icon(icon, size: 17, color: color),
+          ),
+          const SizedBox(width: 16),
+          Text(b.label, style: context.theme.textTheme.bodyLarge),
+        ],
+      ),
+    );
   }
 
   /// Drop slot that moves/inserts the dragged button at [index] of the enabled list.
@@ -159,8 +175,11 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Attachment button is always shown and always first
-          Padding(
+          // The + goes away once every button is in the row and its menu would be empty
+          if (enabled.leavesMenuEmpty)
+            const SizedBox(width: 6)
+          else
+            Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Container(
               height: 36,
@@ -244,8 +263,7 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
               style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
           onPressed: () {
             SettingsSvc.settings.resetTextFieldButtons();
-            enabled.value = TextFieldButton.values.platformSupportedButtons;
-            buttonList.value = TextFieldButton.values.platformSupportedButtons;
+            enabled.value = defaultTextFieldButtons.platformSupportedButtons;
           },
         ),
       ],
@@ -259,15 +277,15 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
               children: [
                 _tiled(const SettingsSubtitle(
                   subtitle:
-                      "Drag buttons within the preview to reorder them, out of it to hide them, and back in to show them again.",
+                      "Drag buttons between the composer and the + menu above it to choose where they go, and within the composer to reorder them.",
                 )),
                 _tiled(Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  // Hidden buttons tray — drag out of the preview to disable, drag back to enable
+                  // Live + menu: everything not in the row, drawn like DesktopAttachmentMenu
                   child: Obx(() {
                     // Read the observables here — inside DragTarget's builder they run in a
                     // deferred callback that Obx can't see, which trips its "improper use" error
-                    final hidden = buttonList.whereNot(enabled.contains).toList();
+                    final hidden = TextFieldButton.values.platformSupportedButtons.whereNot(enabled.contains).toList();
                     return DragTarget<TextFieldButton>(
                       onAcceptWithDetails: (details) {
                         enabled.remove(details.data);
@@ -275,29 +293,31 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
                         _endDrag();
                       },
                       builder: (context, candidate, _) {
+                        final scheme = context.theme.colorScheme;
+                        // Full width so the whole band is a drop target, not just the menu
                         return Container(
                           width: double.infinity,
-                          constraints: const BoxConstraints(minHeight: 80),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: candidate.isEmpty
-                                  ? context.theme.colorScheme.outline.withValues(alpha: 0.5)
-                                  : context.theme.colorScheme.primary,
-                              width: candidate.isEmpty ? 1 : 2,
+                          alignment: Alignment.bottomLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: candidate.isEmpty ? scheme.outline.withValues(alpha: 0.15) : scheme.primary,
+                                width: candidate.isEmpty ? 1 : 2,
+                              ),
                             ),
-                          ),
-                          child: hidden.isEmpty
-                              ? Center(
-                              child: Text("Drag a button here to hide it",
-                                  style: context.theme.textTheme.bodyMedium!
-                                      .copyWith(color: context.theme.colorScheme.outline)))
-                              : Wrap(
-                            spacing: 16,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            children: hidden.map((b) => _icon(context, b)).toList(),
+                            child: hidden.isEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Text("Drag a button here to move it to the + menu",
+                                        style: context.theme.textTheme.bodyMedium!.copyWith(color: scheme.outline)),
+                                  )
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: hidden.map((b) => _icon(context, b, menuItem: true)).toList(),
+                                  ),
                           ),
                         );
                       },
