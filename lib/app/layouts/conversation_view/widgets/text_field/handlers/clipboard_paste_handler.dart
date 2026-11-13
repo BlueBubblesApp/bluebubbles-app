@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/html_runs.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -21,9 +22,9 @@ class ClipboardPasteHandler {
     required this.textController,
   });
 
-  /// Handle Ctrl+V (or Cmd+V) paste key event.
+  /// Handle Ctrl+V (or Cmd+V) paste key event; [plain] (Ctrl+Shift+V) drops the text's formatting.
   /// Returns true if the event was handled.
-  Future<bool> handlePasteEvent() async {
+  Future<bool> handlePasteEvent({bool plain = false}) async {
     try {
       if (await _pasteAttachments(controller)) return true;
 
@@ -33,7 +34,8 @@ class ClipboardPasteHandler {
       if (data?.text != null) {
         final tc = textController;
         if (tc is MentionTextEditingController) {
-          tc.pasteText(data!.text!);
+          final html = plain ? null : await clipboardHtml();
+          tc.pasteText(data!.text!, plain: plain, htmlRuns: html == null ? const [] : htmlRuns(html, data.text!));
           return true;
         }
         final sel = tc.selection;

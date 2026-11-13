@@ -572,23 +572,30 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   }
 
   String? _pasting;
+  List<Run> _pastingRuns = const [];
+  bool _pastingPlain = false;
 
   /// Replaces the selection with pasted [pasted]: with its copied formatting when it came from [richClipboard], else
-  /// as plain text rather than picking up the formatting it lands next to.
-  void pasteText(String pasted) {
+  /// with [htmlRuns] (the styles of the rich copy another app made, from htmlRuns()), else as plain text rather than
+  /// picking up the formatting it lands next to. [plain] (Ctrl+Shift+V) always pastes plain text.
+  void pasteText(String pasted, {List<Run> htmlRuns = const [], bool plain = false}) {
     final start = selection.start;
     if (start < 0) return;
     _pasting = pasted;
+    _pastingRuns = htmlRuns;
+    _pastingPlain = plain;
     value = TextEditingValue(
       text: text.replaceRange(start, selection.end, pasted),
       selection: TextSelection.collapsed(offset: start + pasted.length),
     );
     _pasting = null;
+    _pastingRuns = const [];
+    _pastingPlain = false;
   }
 
   /// [runs] of a [length]-long text with a paste's formatting on [start, start + pasted.length), replacing whatever
   /// the edit carried over: [richClipboard]'s runs when it holds [pasted] and was copied [fromHere], keeping only
-  /// mentions of [addresses].
+  /// mentions of [addresses]; otherwise [otherRuns], styles another app copied, relative to [pasted].
   @visibleForTesting
   static List<Run> pastedRuns(
     List<Run> runs,
@@ -597,13 +604,22 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     String pasted,
     Set<String> addresses, {
     bool fromHere = true,
+    List<Run> otherRuns = const [],
   }) {
     final end = start + pasted.length;
     for (final attribute in [...styleAttributes.values, effectAttribute]) {
       runs = restyle(runs, length, start, end, attribute, null);
     }
     final clip = richClipboard;
-    if (!fromHere || clip == null || clip.text != pasted) return runs;
+    if (!fromHere || clip == null || clip.text != pasted) {
+      for (final run in otherRuns) {
+        final from = start + run.range[0];
+        for (final MapEntry(:key, :value) in run.attributes!.rawAttributes.entries) {
+          if (styleAttributes.containsValue(key)) runs = restyle(runs, length, from, from + run.range[1], key, value);
+        }
+      }
+      return runs;
+    }
     for (final run in clip.runs) {
       final address = run.attributes!.mention;
       if (address != null && addresses.contains(address)) {
@@ -672,7 +688,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     }
     if (pasted != null) {
       final addresses = mentionables.map((m) => m.address).toSet();
-      runs = pastedRuns(runs, newText.length, pasteAt, pasted, addresses, fromHere: !_clipboardFromElsewhere());
+      runs = !_pastingPlain
+          ? pastedRuns(runs, newText.length, pasteAt, pasted, addresses,
+              fromHere: !_clipboardFromElsewhere(), otherRuns: _pastingRuns)
+          : pastedRuns(runs, newText.length, pasteAt, pasted, addresses, fromHere: false);
     }
     final before = newText;
     super.value = newValue;
