@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/server_v2_migration_banner.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
@@ -232,6 +233,22 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
     if (controller.showArchivedChats || controller.showUnknownSenders) return child;
 
+    final chatList = Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        const Positioned(
+          top: 16,
+          left: 16,
+          right: 16,
+          child: SafeArea(
+            bottom: false,
+            child: Align(alignment: Alignment.topRight, child: ServerV2MigrationBanner()),
+          ),
+        ),
+      ],
+    );
+
     return BBScaffold(
       safeAreaLeft: false,
       safeAreaRight: false,
@@ -242,7 +259,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
         maxRatio: 0.5,
         allowResize: true,
         left: !showAltLayout
-            ? child
+            ? chatList
             : LayoutBuilder(builder: (context, constraints) {
                 NavigationSvc.maxWidthLeft = constraints.maxWidth;
                 return PopScope(
@@ -282,7 +299,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
                     pages: [
                       MaterialPage(
                         name: "initial",
-                        child: child,
+                        child: chatList,
                       )
                     ],
                   ),

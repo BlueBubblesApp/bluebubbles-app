@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
+import 'package:bluebubbles/services/backend/sync/server_v2_migrations.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -45,7 +46,9 @@ class NetworkTasks {
     // When we re-connect, try an incremental sync.
     // The sync function has a guard based on time to ensure that it doesn't
     // get invoked multiple times in quick succession.
-    unawaited(SyncSvc.startIncrementalSync());
+    unawaited(SyncSvc.startIncrementalSync().whenComplete(ServerV2Migrations.retryAfterReconnect).catchError(
+      (Object e, StackTrace s) => Logger.warn('Reconnect sync failed', error: e, trace: s, tag: 'NetworkTasks'),
+    ));
   }
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) {
