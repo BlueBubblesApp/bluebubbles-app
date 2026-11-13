@@ -706,8 +706,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         // Editing inside a mention unmentions it; any formatting on it stays
         final attrs = Map<String, dynamic>.of(run.attributes?.rawAttributes ?? const {})
           ..remove('__kIMMentionConfirmedMention');
-        // A deletion leaves the run whole; text typed into it splits it
-        if (attrs.containsKey(effectAttribute) && newEnd > prefix) {
+        // Text typed into it at the cursor splits it. A deletion, or a word replaced around the cursor (autocorrect,
+        // which can look like an insertion in the middle), leaves it whole.
+        final typedAtCursor = anchor == prefix && oldEnd == prefix && newEnd > prefix;
+        if (attrs.containsKey(effectAttribute) && typedAtCursor) {
           // An effect only covers the text it was put on: the new text splits it and keeps just the styles
           final styles = Map<String, dynamic>.of(attrs)..remove(effectAttribute);
           final effect = Attributes(rawAttributes: attrs);
