@@ -74,6 +74,17 @@ class Chat {
   @Property(uid: 738307263391205523)
   String? dynamicWallpaperConfig;
 
+  /// The group photo this app last showed an event for, as chat.db names it (`groupPhotoGuid`). Written only when a
+  /// group-photo message is kept, never from a chat the server sends, so a sync that also carries the photo's row
+  /// cannot overwrite it before the row is compared. See `group_photo_helpers.dart`.
+  @Property(uid: 2602396250608668078)
+  String? knownGroupPhotoGuid;
+
+  /// The group photo the server says this chat has now, read from its `properties`. Not stored: it is only compared
+  /// with [knownGroupPhotoGuid] while the message that came with it is handled.
+  @Transient()
+  String? serverGroupPhotoGuid;
+
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
@@ -160,6 +171,8 @@ class Chat {
     this.wallpaperType,
     this.dynamicWallpaperId,
     this.dynamicWallpaperConfig,
+    this.knownGroupPhotoGuid,
+    this.serverGroupPhotoGuid,
   }) {
     customAvatarPath = customAvatar;
     customBackgroundPath = customBackground;
@@ -198,6 +211,9 @@ class Chat {
       wallpaperType: json["wallpaperType"],
       dynamicWallpaperId: json["dynamicWallpaperId"],
       dynamicWallpaperConfig: json["dynamicWallpaperConfig"],
+      knownGroupPhotoGuid: json["knownGroupPhotoGuid"],
+      // `serverGroupPhotoGuid` when the map is our own `toMap`, `properties` when it came from the server.
+      serverGroupPhotoGuid: json["serverGroupPhotoGuid"] ?? groupPhotoGuidInProperties(json["properties"]),
       textFieldText: json["textFieldText"],
       textFieldAttachments: (json["textFieldAttachments"] as List?)?.cast<String>() ?? const [],
     );
@@ -225,6 +241,7 @@ class Chat {
     bool updateLatestMessage = false,
     bool updateCustomThemes = false,
     bool updateWallpaperSettings = false,
+    bool updateKnownGroupPhotoGuid = false,
   }) async {
     if (kIsWeb) return this;
 
@@ -252,6 +269,7 @@ class Chat {
         'updateLatestMessage': updateLatestMessage,
         'updateCustomThemes': updateCustomThemes,
         'updateWallpaperSettings': updateWallpaperSettings,
+        'updateKnownGroupPhotoGuid': updateKnownGroupPhotoGuid,
       },
     );
 
@@ -838,6 +856,7 @@ class Chat {
     wallpaperType ??= other.wallpaperType;
     dynamicWallpaperId ??= other.dynamicWallpaperId;
     dynamicWallpaperConfig ??= other.dynamicWallpaperConfig;
+    knownGroupPhotoGuid ??= other.knownGroupPhotoGuid;
     return this;
   }
 
@@ -920,6 +939,8 @@ class Chat {
       "wallpaperType": wallpaperType,
       "dynamicWallpaperId": dynamicWallpaperId,
       "dynamicWallpaperConfig": dynamicWallpaperConfig,
+      "knownGroupPhotoGuid": knownGroupPhotoGuid,
+      "serverGroupPhotoGuid": serverGroupPhotoGuid,
       "textFieldText": textFieldText,
       "textFieldAttachments": textFieldAttachments,
       "dbOnlyLatestMessageDate": dbOnlyLatestMessageDate?.millisecondsSinceEpoch,

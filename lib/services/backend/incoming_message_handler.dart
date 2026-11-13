@@ -37,6 +37,16 @@ enum MessageEventType {
   updatedMessage,
 }
 
+/// Whether [incoming] is Messages resending a group's photo state (`item_type` 3, `group_action_type` 3) that is
+/// already stored as [stored] under the same GUID. Such a row is not a change, so the stored one is kept as it is.
+///
+/// Reads the columns rather than `Message.isGroupPhotoState`, which only the native model declares.
+@visibleForTesting
+bool isGroupPhotoResend({required Message incoming, required Message stored}) {
+  bool isPhotoState(Message m) => m.itemType == 3 && m.groupActionType == 3;
+  return isPhotoState(incoming) && isPhotoState(stored) && incoming.guid != null && incoming.guid == stored.guid;
+}
+
 // ─── Payload ─────────────────────────────────────────────────────────────────
 
 /// A fully-parsed incoming message event, regardless of transport.
@@ -331,11 +341,30 @@ class IncomingMessageHandler {
       return;
     }
 
+    // 2b. A group photo resent under a new message GUID, or one this app never had. Decided before the chat is
+    //     hydrated, which saves the server's copy of the chat over the stored one.
+    String? groupPhoto;
+    if (m.isGroupPhotoState || m.isGroupPhotoChanged) {
+      groupPhoto = await _groupPhotoOf(payload);
+      final known = Chat.findOne(guid: payload.chat.guid)?.knownGroupPhotoGuid;
+      if (m.isGroupPhotoState && isKnownGroupPhoto(groupPhoto, known)) {
+        Logger.debug('[new-message] ${m.guid} repeats a group photo already shown — not adding it', tag: _tag);
+        if (m.guid != null) _markProcessed(m.guid!);
+        return;
+      }
+    }
+
     // 3. Chat hydration — ensures participants and DB ID are populated.
     final hydrated = await _hydrateChat(payload.chat, m);
     Chat c = hydrated.chat;
     if (!isIsolate && hydrated.affectedHandleIds.isNotEmpty) {
       ContactsSvcV2.notifyHandlesUpdated(hydrated.affectedHandleIds);
+    }
+
+    // The photo this event showed is now the known one, so a later resend of it is recognised.
+    if (groupPhoto != null && groupPhoto != c.knownGroupPhotoGuid) {
+      c.knownGroupPhotoGuid = groupPhoto;
+      await c.saveAsync(updateKnownGroupPhotoGuid: true);
     }
 
     // 4. Persist to DB.
@@ -439,6 +468,25 @@ class IncomingMessageHandler {
     if (saved.guid != null) _flushPendingUpdate(saved.guid!, c);
   }
 
+  /// The photo a group-photo event carries: the payload's own attachment, else the photo its chat's `properties` name.
+  /// A push payload carries neither, so then the chat is fetched once to read the photo the server has now. Null when
+  /// that fails too, and the event is kept, since a photo that cannot be identified cannot be called a repeat.
+  Future<String?> _groupPhotoOf(IncomingPayload payload) async {
+    final fromPayload = groupPhotoGuidFor(
+      attachmentGuids: payload.attachments.map((a) => a.guid),
+      chatGroupPhotoGuid: payload.chat.serverGroupPhotoGuid,
+    );
+    if (fromPayload != null) return fromPayload;
+    try {
+      final response = await HttpSvc.chat.fetchOne(payload.chat.guid);
+      final data = response.data is Map ? response.data['data'] : null;
+      if (data is Map) return groupPhotoGuidInProperties(data['properties']);
+    } catch (e, s) {
+      Logger.warn('Could not read the group photo for a chat', error: e, trace: s, tag: _tag);
+    }
+    return null;
+  }
+
   // ── Updated-message pipeline ────────────────────────────────────────────
 
   Future<void> _processUpdatedMessage(IncomingPayload payload) async {
@@ -474,6 +522,14 @@ class IncomingMessageHandler {
         tag: _tag,
       );
       await _parkPendingUpdate(payload);
+      return;
+    }
+
+    // 3b. A group photo resent. Messages writes the group's photo state again under the GUID it already has and
+    //     dated now, and the server announces it as a new row. Applying it would move the stored event to now and
+    //     draw it a second time after whatever the user just sent, for a photo that did not change.
+    if (isGroupPhotoResend(incoming: m, stored: existing)) {
+      Logger.debug('[updated-message] ${m.guid} is a group photo resent — keeping the stored row', tag: _tag);
       return;
     }
 
