@@ -1,3 +1,4 @@
+import "dart:ffi";
 import "dart:math";
 
 import "package:bluebubbles/app/layouts/conversation_view/widgets/message/text/run_text_effects.dart";
@@ -7,10 +8,13 @@ import "package:bluebubbles/services/services.dart";
 import 'package:bluebubbles/utils/emoji.dart';
 import "package:bluebubbles/utils/emoticons.dart";
 import "package:collection/collection.dart";
+import "package:ffi/ffi.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:get/get.dart";
 import 'package:languagetool_textfield/languagetool_textfield.dart';
+import 'package:universal_io/io.dart';
+import 'package:win32/win32.dart' show GetClipboardOwner, GetCurrentProcessId, GetWindowThreadProcessId;
 import "package:languagetool_textfield/src/utils/closed_range.dart";
 import "package:languagetool_textfield/src/utils/keep_latest_response_service.dart";
 
@@ -583,15 +587,23 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   }
 
   /// [runs] of a [length]-long text with a paste's formatting on [start, start + pasted.length), replacing whatever
-  /// the edit carried over: [richClipboard]'s runs when it holds [pasted], keeping only mentions of [addresses].
+  /// the edit carried over: [richClipboard]'s runs when it holds [pasted] and was copied [fromHere], keeping only
+  /// mentions of [addresses].
   @visibleForTesting
-  static List<Run> pastedRuns(List<Run> runs, int length, int start, String pasted, Set<String> addresses) {
+  static List<Run> pastedRuns(
+    List<Run> runs,
+    int length,
+    int start,
+    String pasted,
+    Set<String> addresses, {
+    bool fromHere = true,
+  }) {
     final end = start + pasted.length;
     for (final attribute in [...styleAttributes.values, effectAttribute]) {
       runs = restyle(runs, length, start, end, attribute, null);
     }
     final clip = richClipboard;
-    if (clip == null || clip.text != pasted) return runs;
+    if (!fromHere || clip == null || clip.text != pasted) return runs;
     for (final run in clip.runs) {
       final address = run.attributes!.mention;
       if (address != null && addresses.contains(address)) {
@@ -609,6 +621,19 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
       }
     }
     return runs;
+  }
+
+  /// Whether another app put what's on the clipboard there, so the same text copied elsewhere doesn't get our
+  /// formatting. Only Windows says who copied last; elsewhere, and when it can't tell, the text alone decides.
+  static bool _clipboardFromElsewhere() {
+    if (!Platform.isWindows) return false;
+    final owner = GetClipboardOwner().value;
+    if (owner.address == 0) return false;
+    return using((arena) {
+      final pid = arena<Uint32>();
+      GetWindowThreadProcessId(owner, pid);
+      return pid.value != GetCurrentProcessId();
+    });
   }
 
   @override
@@ -646,7 +671,8 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
       }
     }
     if (pasted != null) {
-      runs = pastedRuns(runs, newText.length, pasteAt, pasted, mentionables.map((m) => m.address).toSet());
+      final addresses = mentionables.map((m) => m.address).toSet();
+      runs = pastedRuns(runs, newText.length, pasteAt, pasted, addresses, fromHere: !_clipboardFromElsewhere());
     }
     final before = newText;
     super.value = newValue;
