@@ -224,12 +224,6 @@ class _TextFieldArea extends StatelessWidget {
             colorScheme: context.theme.colorScheme.copyWith(
               primary: context.theme.colorScheme.bubble(context, isIMsg),
               onPrimary: context.theme.colorScheme.onBubble(context, isIMsg),
-              surface: ThemeSvc.isMaterialYouActive(context)
-                  ? null
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.receivedBubbleColor,
-              onSurface: ThemeSvc.isMaterialYouActive(context)
-                  ? null
-                  : (context.theme.extensions[BubbleColors] as BubbleColors?)?.onReceivedBubbleColor,
             ),
           ),
           child: Focus(
