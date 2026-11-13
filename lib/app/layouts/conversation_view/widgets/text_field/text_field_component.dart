@@ -97,6 +97,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     });
 
     _configureHandlers();
+    _fieldFocusNode = controller?.focusNode ?? focusNode;
+    _fieldFocusNode?.addListener(_onFieldFocusChange);
 
     assert(!(subjectTextController == null &&
         !isChatCreator &&
@@ -105,8 +107,16 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         chat!.isIMessage));
   }
 
+  FocusNode? _fieldFocusNode;
+
+  /// The formatting panel stands in for the keyboard, so it goes with focus
+  void _onFieldFocusChange() {
+    if (!_fieldFocusNode!.hasFocus) controller?.showTextFormattingPanel.value = false;
+  }
+
   @override
   void dispose() {
+    _fieldFocusNode?.removeListener(_onFieldFocusChange);
     // dispose of the ValueNotifier when the state is disposed
     isRecordingNotifier.dispose();
     super.dispose();
