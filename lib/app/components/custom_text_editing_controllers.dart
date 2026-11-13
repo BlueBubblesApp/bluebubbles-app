@@ -491,14 +491,14 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     return true;
   }
 
+  /// Leaves the name as plain text, keeping any formatting on it.
   void removeMention(Run mention) {
-    final start = mention.range[0];
-    final end = start + mention.range[1];
-    runs = runs.where((r) => r != mention).toList();
-    _replace(start, end, "@${text.substring(start, end)}");
-    // Past the following space, or the cursor sits on an "@name" and reopens the mention picker
-    final cursor = selection.baseOffset;
-    if (text.startsWith(" ", cursor)) selection = TextSelection.collapsed(offset: cursor + 1);
+    final rest = Map<String, dynamic>.of(mention.attributes?.rawAttributes ?? const {})..remove(_mentionAttribute);
+    runs = [
+      for (final r in runs)
+        if (r != mention) r else if (rest.isNotEmpty) Run(range: r.range, attributes: Attributes(rawAttributes: rest)),
+    ];
+    notifyListeners();
   }
 
   void renameMention(Run mention, String name) {
@@ -514,7 +514,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   void _replace(int start, int end, String insert, {Run? run}) {
     final newText = text.replaceRange(start, end, insert);
-    runs = [...shiftRuns(text, newText, runs, anchor: start), ?run]..sort((a, b) => a.range[0].compareTo(b.range[0]));
+    var shifted = shiftRuns(text, newText, runs, anchor: start);
+    // Formatting carried over the inserted text would overlap [run], and overlapping runs draw their text twice
+    if (run != null) shifted = cutOut(shifted, run.range[0], run.range[0] + run.range[1]);
+    runs = [...shifted, ?run]..sort((a, b) => a.range[0].compareTo(b.range[0]));
     // super's setter, so these runs aren't shifted a second time
     super.value = TextEditingValue(
       text: newText,
@@ -522,9 +525,105 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     );
   }
 
+  /// The text and formatting last copied from a composer or message. The system clipboard only holds plain text, so
+  /// pasting that same text back puts these runs on it.
+  static ({String text, List<Run> runs})? richClipboard;
+
+  static const _mentionAttribute = '__kIMMentionConfirmedMention';
+  static final _pastableAttributes = {...styleAttributes.values, effectAttribute, _mentionAttribute};
+
+  /// Remembers [runs] (relative to [text]) for [richClipboard], keeping only what the composer can paste.
+  static void rememberCopy(String text, List<Run> runs) {
+    final kept = <Run>[];
+    for (final run in runs) {
+      final attrs = Map<String, dynamic>.of(run.attributes?.rawAttributes ?? const {})
+        ..removeWhere((k, _) => !_pastableAttributes.contains(k));
+      if (attrs.isNotEmpty) kept.add(Run(range: run.range, attributes: Attributes(rawAttributes: attrs)));
+    }
+    richClipboard = (text: text, runs: kept);
+  }
+
+  /// [rememberCopy] for the selection, before it's copied or cut.
+  void rememberSelection() {
+    final start = selection.start;
+    final end = selection.end;
+    if (start < 0 || start == end) return;
+    rememberCopy(text.substring(start, end), copiedRuns(runs, start, end));
+  }
+
+  /// [runs] over [start, end), relative to [start]. A partly covered mention copies as plain text.
+  @visibleForTesting
+  static List<Run> copiedRuns(List<Run> runs, int start, int end) {
+    final pieces = <Run>[];
+    for (final (from, to, attrs) in segments(runs, start, end)) {
+      if (attrs.isEmpty) continue;
+      final mention = runs.firstWhereOrNull(
+          (r) => r.attributes?.mention != null && r.range[0] <= from && to <= r.range[0] + r.range[1]);
+      final whole = mention == null || (mention.range[0] >= start && mention.range[0] + mention.range[1] <= end);
+      final kept = whole ? attrs : (Map<String, dynamic>.of(attrs)..remove(_mentionAttribute));
+      if (kept.isEmpty) continue;
+      pieces.add(Run(range: [from - start, to - from], attributes: Attributes(rawAttributes: kept)));
+    }
+    return pieces;
+  }
+
+  String? _pasting;
+
+  /// Replaces the selection with pasted [pasted]: with its copied formatting when it came from [richClipboard], else
+  /// as plain text rather than picking up the formatting it lands next to.
+  void pasteText(String pasted) {
+    final start = selection.start;
+    if (start < 0) return;
+    _pasting = pasted;
+    value = TextEditingValue(
+      text: text.replaceRange(start, selection.end, pasted),
+      selection: TextSelection.collapsed(offset: start + pasted.length),
+    );
+    _pasting = null;
+  }
+
+  /// [runs] of a [length]-long text with a paste's formatting on [start, start + pasted.length), replacing whatever
+  /// the edit carried over: [richClipboard]'s runs when it holds [pasted], keeping only mentions of [addresses].
+  @visibleForTesting
+  static List<Run> pastedRuns(List<Run> runs, int length, int start, String pasted, Set<String> addresses) {
+    final end = start + pasted.length;
+    for (final attribute in [...styleAttributes.values, effectAttribute]) {
+      runs = restyle(runs, length, start, end, attribute, null);
+    }
+    final clip = richClipboard;
+    if (clip == null || clip.text != pasted) return runs;
+    for (final run in clip.runs) {
+      final address = run.attributes!.mention;
+      if (address != null && addresses.contains(address)) {
+        runs = [
+          ...runs,
+          Run(range: [start + run.range[0], run.range[1]], attributes: Attributes(mention: address)),
+        ]..sort((a, b) => a.range[0].compareTo(b.range[0]));
+      }
+    }
+    for (final run in clip.runs) {
+      final from = start + run.range[0];
+      final to = from + run.range[1];
+      for (final MapEntry(:key, :value) in run.attributes!.rawAttributes.entries) {
+        if (key != _mentionAttribute) runs = restyle(runs, length, from, to, key, value);
+      }
+    }
+    return runs;
+  }
+
   @override
   set value(TextEditingValue newValue) {
     final pending = _pendingTyping;
+    // A paste from anywhere (keyboard clipboard chip, context menu, Ctrl+V) that matches what was copied here
+    final clipText = richClipboard?.text;
+    final pasted = _pasting ??
+        (clipText != null &&
+                clipText.length > 1 &&
+                selection.start >= 0 &&
+                newValue.text == text.replaceRange(selection.start, selection.end, clipText)
+            ? clipText
+            : null);
+    final pasteAt = selection.start;
     if (newValue.text == text) {
       if (!newValue.selection.isCollapsed || newValue.selection.baseOffset != _pendingAt) _pendingTyping = null;
       super.value = newValue;
@@ -546,10 +645,26 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         runs = restyle(runs, newText.length, _pendingAt, _pendingAt + inserted, attribute, pending[attribute]);
       }
     }
+    if (pasted != null) {
+      runs = pastedRuns(runs, newText.length, pasteAt, pasted, mentionables.map((m) => m.address).toSet());
+    }
     final before = newText;
     super.value = newValue;
     // Emoticon and shortcode replacement can rewrite the text on the way in.
     if (text != before) runs = shiftRuns(before, text, runs);
+  }
+
+  /// [runs] with [start, end) taken out of them, splitting any run that spans it.
+  @visibleForTesting
+  static List<Run> cutOut(List<Run> runs, int start, int end) {
+    final out = <Run>[];
+    for (final run in runs) {
+      final from = run.range[0];
+      final to = from + run.range[1];
+      if (from < start) out.add(Run(range: [from, min(to, start) - from], attributes: run.attributes));
+      if (to > end) out.add(Run(range: [max(from, end), to - max(from, end)], attributes: run.attributes));
+    }
+    return out;
   }
 
   /// [anchor] caps where the edit can start (the cursor): typing "S" before "Sam" otherwise reads as an edit
@@ -578,6 +693,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
       final typingAtEnd = end == prefix && oldEnd == prefix && run.attributes?.mention == null;
       if (end <= prefix && !typingAtEnd) {
         kept.add(run);
+      } else if (typingAtEnd && run.attributes!.textEffect != null) {
+        // Typing on from an effect carries its styles but not the effect itself
+        kept.add(run);
+        final rest = Map<String, dynamic>.of(run.attributes!.rawAttributes)..remove(effectAttribute);
+        if (rest.isNotEmpty) kept.add(Run(range: [end, delta], attributes: Attributes(rawAttributes: rest)));
       } else if (typingAtEnd) {
         kept.add(Run(range: [start, run.range[1] + delta], attributes: run.attributes));
       } else if (start >= oldEnd) {
@@ -586,6 +706,18 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         // Editing inside a mention unmentions it; any formatting on it stays
         final attrs = Map<String, dynamic>.of(run.attributes?.rawAttributes ?? const {})
           ..remove('__kIMMentionConfirmedMention');
+        // A deletion leaves the run whole; text typed into it splits it
+        if (attrs.containsKey(effectAttribute) && newEnd > prefix) {
+          // An effect only covers the text it was put on: the new text splits it and keeps just the styles
+          final styles = Map<String, dynamic>.of(attrs)..remove(effectAttribute);
+          final effect = Attributes(rawAttributes: attrs);
+          if (start < prefix) kept.add(Run(range: [start, prefix - start], attributes: effect));
+          if (styles.isNotEmpty && start < prefix && end > oldEnd) {
+            kept.add(Run(range: [prefix, newEnd - prefix], attributes: Attributes(rawAttributes: styles)));
+          }
+          if (end > oldEnd) kept.add(Run(range: [newEnd, end + delta - newEnd], attributes: effect));
+          continue;
+        }
         final newStart = start < prefix ? start : newEnd;
         final newRunEnd = end > oldEnd ? end + delta : newEnd;
         if (attrs.isNotEmpty && newRunEnd > newStart) {
@@ -609,7 +741,10 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   void toggleStyle(String attribute) => _restyleSelection(attribute, 1, toggle: true);
 
   /// Puts text effect [id] on the selection, or clears its effect when null.
-  void setEffect(int? id) => _restyleSelection(effectAttribute, id, toggle: false);
+  void setEffect(int? id) {
+    // An effect is only ever put on selected text
+    if (!selection.isCollapsed) _restyleSelection(effectAttribute, id, toggle: false);
+  }
 
   /// Formatting chosen for the next typed text at [_pendingAt] (with a collapsed cursor), overriding what it would
   /// otherwise pick up from the run it extends.
@@ -621,12 +756,14 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     final caret = selection.baseOffset;
     if (!selection.isCollapsed || caret < 0) return const {};
     if (_pendingTyping != null && _pendingAt == caret) return _pendingTyping!;
-    return runs
+    final attrs = runs
             .firstWhereOrNull(
                 (r) => r.attributes?.mention == null && r.range[0] < caret && caret <= r.range[0] + r.range[1])
             ?.attributes
             ?.rawAttributes ??
-        const {};
+        const <String, dynamic>{};
+    // Typed text never takes an effect (see shiftRuns)
+    return attrs.containsKey(effectAttribute) ? (Map.of(attrs)..remove(effectAttribute)) : attrs;
   }
 
   /// Whether typing would carry formatting or an effect forward from the cursor, or a choice for it is pending.
@@ -805,8 +942,11 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
                 ? context.theme.colorScheme.primary
                 : null,
       );
-      // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible
-      final selectedStyle = runStyle.copyWith(color: context.theme.colorScheme.onPrimary);
+      // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible.
+      // Effect text stays transparent: TextEffectOverlay draws it, inverted the same way.
+      final selectedStyle = RunTextEffects.supports(a.textEffect)
+          ? runStyle
+          : runStyle.copyWith(color: context.theme.colorScheme.onPrimary);
       final cuts = a.mention == null
           ? [start, end]
           : ({start, selStart.clamp(start, end), selEnd.clamp(start, end), end}.toList()..sort());

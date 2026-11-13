@@ -7,7 +7,8 @@
 - `send_button.dart` — send / schedule button
 - `text_field_icon_bar.dart` — attachment/emoji/etc. icon row; on desktop the `+` is wrapped in `DesktopAttachmentMenu` (`../media_picker/`), as is the chat creator's `+` in `text_field_component.dart`
 - `text_field_suffix.dart` — trailing icon(s) inside the field
-- `formatting_bar.dart` — B/I/U/S and text effect toggles, shown above the input while text is selected
+- `formatting_bar.dart` — B/I/U/S toggles plus one Effects button, shown above the input while text is selected or formatting is active. On mobile the button (and the selection menu's "Text Effects") swaps the keyboard for `TextFormattingPanel`; on desktop and in the chat creator it opens a popover of `TextEffectGrid`
+- `text_effect_picker.dart` — `TextEffectGrid` (a tile per effect, its name looping in that effect via `RunTextEffects`) and `TextFormattingPanel` (B/I/U/S over the grid, in the keyboard's place). `openTextFormattingPanel` hides the keyboard with `TextInput.hide` so the field keeps focus and its selection; `ConversationViewController.showTextFormattingPanel` closes on a tap in the field, focus loss, or back
 - `text_effect_overlay.dart` — animates text effect runs over the input (which draws them transparent), drawing each glyph at the box the field's `RenderEditable` reports so wrapping and scrolling match; motion comes from `RunTextEffects`' pose functions
 - `text_field_emoji_picker_section.dart` — inline emoji picker section
 - `text_field_recording_overlay.dart` — voice message recording overlay UI
