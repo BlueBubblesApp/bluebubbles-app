@@ -59,8 +59,7 @@ class AttachmentActions {
     }
   }
 
-  /// Runs [button]'s action, for both the composer row and the desktop `+` menu. [context]
-  /// anchors anything that pops up (the Genmoji popover opens above it).
+  /// [context] anchors anything that pops up, like the Genmoji popover.
   static Future<void> run(TextFieldButton button, BuildContext context, ConversationViewController controller) async =>
       switch (button) {
         TextFieldButton.Files => pickFiles(controller),

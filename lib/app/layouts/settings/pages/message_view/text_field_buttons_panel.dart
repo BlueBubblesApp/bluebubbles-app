@@ -175,7 +175,6 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // The + goes away once every button is in the row and its menu would be empty
           if (enabled.leavesMenuEmpty)
             const SizedBox(width: 6)
           else

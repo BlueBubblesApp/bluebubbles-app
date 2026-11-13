@@ -512,7 +512,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
               if (kIsDesktop) {
                 return DesktopAttachmentMenu(
                   controller: controller!,
-                  // The chat creator has no icon row; GIF and emoji stay out of its menu as before
+                  // The chat creator has no button row; this keeps GIF and emoji out of its menu
                   inRow: const [TextFieldButton.Gif, TextFieldButton.Emoji],
                   builder: (_, toggle) => button(toggle),
                 );

@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 /// first, and is not configurable.
 enum TextFieldButton { Files, Genmoji, Handwritten, Schedule, Location, Gif, Emoji }
 
-/// What a fresh install shows in the row; the rest start in the `+` menu.
 const List<TextFieldButton> defaultTextFieldButtons = [
   TextFieldButton.Gif,
   TextFieldButton.Emoji,
@@ -64,7 +63,6 @@ extension TextFieldButtonExtension on TextFieldButton {
       SettingsSvc.settings.skin.value == Skins.iOS ? _buttonToIcon[this]!.$1 : _buttonToIcon[this]!.$2;
 
   bool get isPlatformSupported {
-    // Genmoji routes are v2-server only
     if (this == TextFieldButton.Genmoji && !SettingsSvc.getServerDetails().supportsGenmoji) return false;
     final (android, windows, linux, web) = _buttonPlatformSupport[this]!;
     if (kIsWeb) return web;
@@ -77,6 +75,5 @@ extension TextFieldButtonExtension on TextFieldButton {
 extension TextFieldButtonListExtension on List<TextFieldButton> {
   List<TextFieldButton> get platformSupportedButtons => where((b) => b.isPlatformSupported).toList();
 
-  /// Whether this row holds every supported button, leaving the desktop `+` menu nothing to show
   bool get leavesMenuEmpty => TextFieldButton.values.platformSupportedButtons.every(contains);
 }

@@ -24,7 +24,6 @@ class DesktopAttachmentMenu extends StatefulWidget {
   State<DesktopAttachmentMenu> createState() => _DesktopAttachmentMenuState();
 }
 
-/// Also drawn by the Text Field Buttons settings preview of this menu
 const Map<TextFieldButton, (IconData, Color)> desktopMenuIcons = {
   TextFieldButton.Files: (Icons.folder_rounded, Color(0xFF007AFF)),
   TextFieldButton.Genmoji: (Icons.add_reaction_rounded, Color(0xFFFF2D55)),
