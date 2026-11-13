@@ -16,6 +16,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/tex
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_picker.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/html_runs.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -428,7 +429,12 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                 onPressed: () async {
                                   editableTextState.hideToolbar();
                                   final data = await Clipboard.getData(Clipboard.kTextPlain);
-                                  if (data?.text != null) txtController.pasteText(data!.text!);
+                                  if (data?.text == null) return;
+                                  final html = await clipboardHtml();
+                                  txtController.pasteText(
+                                    data!.text!,
+                                    htmlRuns: html == null ? const [] : htmlRuns(html, data.text!),
+                                  );
                                 },
                               );
                             }
@@ -495,12 +501,14 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       textInput = Shortcuts(
         shortcuts: {
           const SingleActivator(LogicalKeyboardKey.keyV, control: true, includeRepeats: false): const _PasteIntent(),
+          const SingleActivator(LogicalKeyboardKey.keyV, control: true, shift: true, includeRepeats: false):
+              const _PasteIntent(plain: true),
         },
         child: Actions(
           actions: {
-            _PasteIntent: CallbackAction<_PasteIntent>(onInvoke: (_) {
+            _PasteIntent: CallbackAction<_PasteIntent>(onInvoke: (intent) {
               _pasteHandledOnKeyDown = true;
-              clipboardHandler?.handlePasteEvent();
+              clipboardHandler?.handlePasteEvent(plain: intent.plain);
               return null;
             }),
           },
@@ -586,10 +594,21 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         HardwareKeyboard.instance.isControlPressed) {
       final handler = clipboardHandler;
       if (handler != null) {
-        unawaited(handler.handlePasteEvent());
+        unawaited(handler.handlePasteEvent(plain: HardwareKeyboard.instance.isShiftPressed));
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
+    }
+
+    // Ctrl+Shift+V on a hardware keyboard (Ctrl+V is the field's own paste, which keeps formatting)
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        ev.logicalKey == LogicalKeyboardKey.keyV &&
+        HardwareKeyboard.instance.isControlPressed &&
+        HardwareKeyboard.instance.isShiftPressed &&
+        clipboardHandler != null) {
+      unawaited(clipboardHandler!.handlePasteEvent(plain: true));
+      return KeyEventResult.handled;
     }
 
     if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
@@ -685,5 +704,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 }
 
 class _PasteIntent extends Intent {
-  const _PasteIntent();
+  const _PasteIntent({this.plain = false});
+
+  /// Ctrl+Shift+V: without the text's formatting
+  final bool plain;
 }

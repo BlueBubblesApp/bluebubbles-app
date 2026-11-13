@@ -18,6 +18,7 @@ import com.bluebubbles.messaging.services.notifications.NotificationListenerPerm
 import com.bluebubbles.messaging.services.notifications.StartNotificationListenerHandler
 import com.bluebubbles.messaging.services.notifications.UnifiedPushHandler
 import com.bluebubbles.messaging.services.system.BrowserLaunchRequestHandler
+import com.bluebubbles.messaging.services.system.ClipboardHtmlHandler
 import com.bluebubbles.messaging.services.system.CheckChromeOsHandler
 import com.bluebubbles.messaging.services.system.NewContactFormRequestHandler
 import com.bluebubbles.messaging.services.system.OpenCalendarRequestHandler
@@ -116,6 +117,7 @@ class MethodCallHandler {
             ServerUrlRequestHandler.tag -> ServerUrlRequestHandler().handleMethodCall(call, result, context)
             UpdateNextRestartHandler.tag -> UpdateNextRestartHandler().handleMethodCall(call, result, context)
             BrowserLaunchRequestHandler.tag -> BrowserLaunchRequestHandler().handleMethodCall(call, result, context)
+            ClipboardHtmlHandler.tag -> ClipboardHtmlHandler().handleMethodCall(call, result, context)
             PushShareTargetsHandler.tag -> PushShareTargetsHandler().handleMethodCall(call, result, context)
             NewContactFormRequestHandler.tag -> NewContactFormRequestHandler().handleMethodCall(call, result, context)
             OpenExistingContactRequestHandler.tag -> OpenExistingContactRequestHandler().handleMethodCall(call, result, context)
