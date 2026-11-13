@@ -66,12 +66,12 @@ class NotificationChannelHandler: MethodCallHandlerImpl() {
             // setup channel with parameters
             val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
             channel.description = channelDescription
-            // set the 'New Messages' channel to allow bubbling, bypassing DND, and showing badges
+            // 'New Messages' channel — allow bubbling and badges, but no global DND bypass.
+            // Per-contact DND exceptions are granted via Person lookup URIs (ContactNotificationHelper).
             if (channelId == "com.bluebubbles.new_messages") {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     channel.setAllowBubbles(true)
                 }
-                channel.setBypassDnd(true)
                 channel.setShowBadge(true)
                 channel.enableVibration(true)
             // set 'Foreground Service' channel to low importance (avoid heads-up notification)

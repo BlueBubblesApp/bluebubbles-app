@@ -17,6 +17,7 @@ import com.bluebubbles.messaging.R
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import com.bluebubbles.messaging.services.intents.InternalIntentReceiver
 import com.bluebubbles.messaging.services.system.PushShareTargetsHandler
+import com.bluebubbles.messaging.utils.ContactNotificationHelper
 import com.bluebubbles.messaging.utils.Utils
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -49,6 +50,8 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         val contactName: String = call.argument("contact_name")!!
         val contactIcon: ByteArray? = call.argument("contact_avatar")
         val contactBitmap = if ((contactIcon?.size ?: 0) == 0) null else Utils.getAdaptiveIconFromByteArray(contactIcon!!)
+        val nativeContactId: String? = call.argument("native_contact_id")
+        val dndFavoritesOverride: Boolean = call.argument<Boolean>("dnd_favorites_override") ?: false
         // reaction settings
         val showReactionAction: Boolean = call.argument("show_reaction_action") ?: false
         val reactionType: String = call.argument("reaction_type") ?: "like"
@@ -69,13 +72,16 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         // this is used to copy the style, since the notification already exists
         val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("channelId") == channelId }
 
-        // build the sender object and push the share target again
-        val sender = Person.Builder()
-            .setName(contactName)
-            .setIcon(contactBitmap)
-            .setImportant(true)
-            .build()
-        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatGuid, chatIcon)
+        // Build the sender Person and push the share target. When "Override DND for Favorites"
+        // is on, resolve the contact once and grant starred contacts a per-contact DND exception
+        // via the Person lookup URI; otherwise no contact link and no DND bypass.
+        val contactInfo = if (dndFavoritesOverride) {
+            ContactNotificationHelper.resolveContactInfo(context, nativeContactId)
+        } else {
+            ContactNotificationHelper.ContactInfo(lookupUri = null, isFavorite = false)
+        }
+        val sender = ContactNotificationHelper.buildPerson(contactName, contactBitmap, contactInfo)
+        PushShareTargetsHandler().pushShareTarget(context, chatTitle, chatGuid, chatIcon, contactInfo)
 
         // get or create a messaging style
         val style = if (chatNotification != null) {
