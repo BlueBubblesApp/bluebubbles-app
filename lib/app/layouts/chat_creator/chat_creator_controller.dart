@@ -62,7 +62,8 @@ class ChatCreatorController extends StatefulController {
   void onInit() {
     super.onInit();
 
-    textController = MentionTextEditingController(text: initialText, focusNode: messageNode);
+    // A brand-new chat has no formatting for now (chat/new sends plain text)
+    textController = MentionTextEditingController(text: initialText, focusNode: messageNode)..allowFormatting = false;
 
     selectedContacts.addAll(initialSelected);
 

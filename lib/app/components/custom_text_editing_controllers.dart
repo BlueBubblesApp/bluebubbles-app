@@ -571,6 +571,9 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     return pieces;
   }
 
+  /// False where formatting isn't offered (a brand-new chat): every paste lands plain.
+  bool allowFormatting = true;
+
   String? _pasting;
   List<Run> _pastingRuns = const [];
   bool _pastingPlain = false;
@@ -688,7 +691,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     }
     if (pasted != null) {
       final addresses = mentionables.map((m) => m.address).toSet();
-      runs = !_pastingPlain
+      runs = allowFormatting && !_pastingPlain
           ? pastedRuns(runs, newText.length, pasteAt, pasted, addresses,
               fromHere: !_clipboardFromElsewhere(), otherRuns: _pastingRuns)
           : pastedRuns(runs, newText.length, pasteAt, pasted, addresses, fromHere: false);
