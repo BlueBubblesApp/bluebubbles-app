@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/components/m3e/m3e.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/add_participant.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/change_name.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/facetime_call.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/material/chat_photo_actions.dart' as photo_actions;
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
@@ -251,6 +252,12 @@ class ExpressiveChatHeader extends StatelessWidget {
           icon: Icons.video_call_outlined,
           label: "Video",
           onPressed: () => showAddressPicker(contact, chat.handles.first, context, video: true),
+        ),
+      if (canFaceTime(chat))
+        M3EButtonGroupItem(
+          icon: Icons.videocam_outlined,
+          label: "FaceTime",
+          onPressed: () => startFaceTimeCall(context, chat),
         ),
       if (chat.handles.isNotEmpty &&
           ((contact?.emailAddresses.isNotEmpty ?? false) || chat.handles.first.address.contains("@")))

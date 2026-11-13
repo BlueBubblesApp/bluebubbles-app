@@ -8,6 +8,7 @@ Dialogs shown from within the conversation details / info panel.
 |------|---------|
 | `add_participant.dart` | Dialog for adding a new participant to a group chat |
 | `address_picker.dart` | Picker for choosing which address/handle to use when sending to a contact with multiple numbers |
+| `facetime_call.dart` | `canFaceTime` / `startFaceTimeCall`: outgoing FaceTime through the server's Mac (v2, 1:1 iMessage chats) — video/audio choice, progress dialog, opens the join link; offers to hang up if the call rang with no link |
 | `change_name.dart` | Dialog for renaming a group conversation |
 | `chat_sync_dialog.dart` | Progress dialog shown during a manual chat-level resync |
 | `sync_time_range_dialog.dart` | Picker for choosing the date range to resync when starting a manual chat sync |

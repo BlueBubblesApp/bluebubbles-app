@@ -9,6 +9,7 @@ Displayed as a right-side panel on tablet or pushed screen on mobile.
 ## Dialogs (`dialogs/`)
 - `address_picker.dart` — pick which phone/email address to use for a contact
 - `change_name.dart` — rename a group chat
+- `facetime_call.dart` — outgoing FaceTime via the server (v2), used by both skins' DM quick actions
 - `timeframe_picker.dart` — date range selector (for media/docs filtering)
 - `add_participant.dart` — add a member to a group chat
 - `chat_sync_dialog.dart` — progress dialog for re-syncing chat history

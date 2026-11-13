@@ -174,6 +174,10 @@ class ServerDetails {
   /// (macOS release, Apple Intelligence, subscription) is answered by `genmoji/status`.
   bool get supportsGenmoji => isV2Server;
 
+  /// Place outgoing FaceTime calls (`/api/v2/facetime/call`): a v2 server. Whether its FaceTime Private API and
+  /// outgoing calls are switched on isn't in `server/info`; the route's refusal says which to turn on.
+  bool get supportsFaceTimeCalls => isV2Server;
+
   /// macOS version as a display string, e.g. "14.2".
   String get macOSVersionString => '$macOSVersion.$macOSMinorVersion';
 
