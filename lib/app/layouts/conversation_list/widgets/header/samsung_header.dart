@@ -121,6 +121,7 @@ class _SamsungHeaderState extends CustomState<SamsungHeader, void, ConversationL
                                         color: context.theme.colorScheme.onSurfaceVariant,
                                       ),
                                     )),
+                              if (!showArchived && !showUnknown) const PreviewToggleButton(),
                               if (!showArchived && !showUnknown)
                                 IconButton(
                                     onPressed: () async {
