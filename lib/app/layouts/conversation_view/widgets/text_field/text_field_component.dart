@@ -624,9 +624,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         LogicalKeyboardKey.keyX when shift => 'strikethrough',
         _ => null,
       };
-      if (style != null) {
-        (controller?.textController ?? textController)
-            .toggleStyle(MentionTextEditingController.styleAttributes[style]!);
+      // Not in a brand-new chat (no controller yet), which has no formatting for now
+      if (style != null && controller != null) {
+        controller!.textController.toggleStyle(MentionTextEditingController.styleAttributes[style]!);
         return KeyEventResult.handled;
       }
     }

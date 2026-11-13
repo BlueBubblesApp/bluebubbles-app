@@ -22,6 +22,8 @@ class FormattingBar extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
+        // No formatting in a brand-new chat for now: chat/new sends its first message as plain text
+        if (conversation == null) return const SizedBox.shrink();
         // Also up while typing would carry formatting forward, or new text picks it up unseen
         if (controller.selection.isCollapsed && !controller.hasActiveFormatting) return const SizedBox.shrink();
         final usePanel = !kIsDesktop && conversation != null;
