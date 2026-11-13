@@ -278,6 +278,12 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
                 controller.showGamePicker.value = false;
                 return;
               }
+              if (controller.showTextFormattingPanel.value) {
+                // Unfocused first, or the field taking input again brings the keyboard up in the panel's place
+                controller.focusNode.unfocus();
+                controller.showTextFormattingPanel.value = false;
+                return;
+              }
               if (LifecycleSvc.isBubble) {
                 SystemNavigator.pop();
               }

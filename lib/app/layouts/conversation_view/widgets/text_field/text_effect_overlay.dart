@@ -72,6 +72,7 @@ class _TextEffectOverlayState extends State<TextEffectOverlay> with SingleTicker
         fieldKey: widget.fieldKey,
         style: widget.style,
         mentionColor: Theme.of(context).colorScheme.primary,
+        selectedMentionColor: Theme.of(context).colorScheme.onPrimary,
         animation: _animation,
       ),
     );
@@ -84,6 +85,7 @@ class _EffectGlyphs extends LeafRenderObjectWidget {
     required this.fieldKey,
     required this.style,
     required this.mentionColor,
+    required this.selectedMentionColor,
     required this.animation,
   });
 
@@ -91,25 +93,36 @@ class _EffectGlyphs extends LeafRenderObjectWidget {
   final GlobalKey fieldKey;
   final TextStyle style;
   final Color mentionColor;
+
+  /// On the selection highlight, which is solid primary (main.dart), as the field draws selected mentions.
+  final Color selectedMentionColor;
   final Animation<double> animation;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderEffectGlyphs(controller, fieldKey, style, mentionColor, animation);
+      _RenderEffectGlyphs(controller, fieldKey, style, mentionColor, selectedMentionColor, animation);
 
   @override
   void updateRenderObject(BuildContext context, _RenderEffectGlyphs renderObject) {
-    renderObject.update(controller, fieldKey, style, mentionColor, animation);
+    renderObject.update(controller, fieldKey, style, mentionColor, selectedMentionColor, animation);
   }
 }
 
 class _RenderEffectGlyphs extends RenderBox {
-  _RenderEffectGlyphs(this._controller, this._fieldKey, this._style, this._mentionColor, this._animation);
+  _RenderEffectGlyphs(
+    this._controller,
+    this._fieldKey,
+    this._style,
+    this._mentionColor,
+    this._selectedMentionColor,
+    this._animation,
+  );
 
   MentionTextEditingController _controller;
   GlobalKey _fieldKey;
   TextStyle _style;
   Color _mentionColor;
+  Color _selectedMentionColor;
   Animation<double> _animation;
   final Map<String, (TextPainter, Offset)> _painters = {};
 
@@ -118,6 +131,7 @@ class _RenderEffectGlyphs extends RenderBox {
     GlobalKey fieldKey,
     TextStyle style,
     Color mentionColor,
+    Color selectedMentionColor,
     Animation<double> animation,
   ) {
     if (animation != _animation) {
@@ -125,11 +139,14 @@ class _RenderEffectGlyphs extends RenderBox {
       _animation = animation;
       if (attached) _animation.addListener(markNeedsPaint);
     }
-    if (style != _style || mentionColor != _mentionColor) _clearPainters();
+    if (style != _style || mentionColor != _mentionColor || selectedMentionColor != _selectedMentionColor) {
+      _clearPainters();
+    }
     _controller = controller;
     _fieldKey = fieldKey;
     _style = style;
     _mentionColor = mentionColor;
+    _selectedMentionColor = selectedMentionColor;
     markNeedsPaint();
   }
 
@@ -172,18 +189,19 @@ class _RenderEffectGlyphs extends RenderBox {
   }
 
   /// A painter for [glyph], and where its tight glyph box sits relative to the painter's origin.
-  (TextPainter, Offset) _painterFor(String glyph, Attributes attributes, TextScaler textScaler) {
+  (TextPainter, Offset) _painterFor(String glyph, Attributes attributes, TextScaler textScaler, bool selected) {
     final decorations = [
       if (attributes.isUnderlined) TextDecoration.underline,
       if (attributes.isStrikethrough) TextDecoration.lineThrough,
     ];
-    final key = '$glyph|${attributes.isBold}|${attributes.isItalic}|$decorations|${attributes.mention != null}';
+    final mention = attributes.mention != null;
+    final key = '$glyph|${attributes.isBold}|${attributes.isItalic}|$decorations|$mention|${mention && selected}';
     return _painters.putIfAbsent(key, () {
       final style = _style.copyWith(
         fontWeight: attributes.isBold || attributes.mention != null ? FontWeight.bold : null,
         fontStyle: attributes.isItalic ? FontStyle.italic : null,
         decoration: decorations.isEmpty ? null : TextDecoration.combine(decorations),
-        color: attributes.mention != null ? _mentionColor : null,
+        color: !mention ? null : (selected ? _selectedMentionColor : _mentionColor),
       );
       final painter = TextPainter(
         text: TextSpan(children: _controller.buildAppleEmojiTextSpans(text: glyph, style: style)),
@@ -217,16 +235,16 @@ class _RenderEffectGlyphs extends RenderBox {
           .toList();
       if (lines.isEmpty) continue;
       final runCenterX = lines.fold(0.0, (sum, r) => sum + r.center.dx) / lines.length;
-      final glyphs = <(String, Rect)>[];
+      final glyphs = <(String, Rect, int)>[];
       var i = start;
       for (final g in text.substring(start, end).characters) {
         if (g.trim().isNotEmpty) {
           final boxes = editable.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + g.length));
-          if (boxes.isNotEmpty) glyphs.add((g, boxes.first.toRect()));
+          if (boxes.isNotEmpty) glyphs.add((g, boxes.first.toRect(), i));
         }
         i += g.length;
       }
-      for (final (n, (glyph, rect)) in glyphs.indexed) {
+      for (final (n, (glyph, rect, at)) in glyphs.indexed) {
         final TextEffectPose pose;
         if (phase <= 0 || phase >= 1) {
           pose = (transform: Matrix4.identity(), alpha: 1, bold: 0);
@@ -238,7 +256,9 @@ class _RenderEffectGlyphs extends RenderBox {
           pose = RenderRunTextEffects.runPose(effect, phase, line);
         }
         if (pose.alpha <= 0) continue;
-        final (painter, ownBoxTopLeft) = _painterFor(glyph, run.attributes!, editable.textScaler);
+        final selection = _controller.selection;
+        final selected = !selection.isCollapsed && selection.start <= at && at < selection.end;
+        final (painter, ownBoxTopLeft) = _painterFor(glyph, run.attributes!, editable.textScaler, selected);
         // The field reports tight glyph boxes; lining up the painter's own tight box keeps baselines equal
         final origin = rect.topLeft - ownBoxTopLeft;
         for (final dx in [0.0, if (pose.bold >= 0.05) ...[pose.bold / 2, pose.bold]]) {

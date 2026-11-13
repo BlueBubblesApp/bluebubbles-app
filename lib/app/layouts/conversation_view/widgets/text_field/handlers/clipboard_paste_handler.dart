@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -31,6 +32,10 @@ class ClipboardPasteHandler {
       final data = await Clipboard.getData('text/plain');
       if (data?.text != null) {
         final tc = textController;
+        if (tc is MentionTextEditingController) {
+          tc.pasteText(data!.text!);
+          return true;
+        }
         final sel = tc.selection;
         final newText = tc.text.replaceRange(sel.start, sel.end, data!.text!);
         tc.value = TextEditingValue(

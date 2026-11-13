@@ -11,6 +11,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/send_a
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field_local_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/helpers/text_field_match_helper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_component.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_emoji_picker_section.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_icon_bar.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_recording_overlay.dart';
@@ -173,6 +174,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       controller.showAttachmentPicker.value = false;
     }
     if (_focusNode.hasFocus && controller.showGamePicker.value) controller.showGamePicker.value = false;
+    if (!subject && !_focusNode.hasFocus) controller.showTextFormattingPanel.value = false;
   }
 
   void textListener(bool subject) {
@@ -490,6 +492,11 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
                       alignment: Alignment.bottomCenter,
                       child: controller.showGamePicker.value
                           ? OpenPigeonKeyboard(controller: controller)
+                          : controller.showTextFormattingPanel.value
+                          ? TextFormattingPanel(
+                              controller: controller.textController,
+                              height: controller.textFormattingPanelHeight,
+                            )
                           : !showAttachmentPicker
                               ? SizedBox(width: pickerWidth)
                               : Column(

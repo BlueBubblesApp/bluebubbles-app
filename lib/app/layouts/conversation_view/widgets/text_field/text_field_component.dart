@@ -13,6 +13,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/pic
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_overlay.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_picker.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -208,7 +209,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         initialAttachments: initialAttachments,
                       ),
                     if (widget.controller != null) OpenPigeonPendingGame(controller: widget.controller!),
-                    FormattingBar(controller: txtController, focusNode: (controller?.focusNode ?? focusNode)!),
+                    FormattingBar(
+                      controller: txtController,
+                      focusNode: (controller?.focusNode ?? focusNode)!,
+                      conversation: controller,
+                    ),
                     if (!isChatCreator)
                       Obx(() {
                         if (controller!.pickedAttachments.isNotEmpty && iOS) {
@@ -284,6 +289,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         scrollPhysics: const CustomBouncingScrollPhysics(),
                         style: context.theme.extension<BubbleText>()!.bubbleText,
                         keyboardType: TextInputType.multiline,
+                        // With the formatting panel up, selection changes would otherwise bring the keyboard back.
+                        // Turning it off again (a tap closes the panel) reopens the input, and the keyboard with it.
+                        readOnly: controller?.showTextFormattingPanel.value ?? false,
                         maxLines: 14,
                         minLines: 1,
                         autofocus: (kIsWeb || kIsDesktop) && !isChatCreator,
@@ -344,7 +352,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                           final mention = touching.length == 1 ? touching.single : null;
 
                           final items = [
-                            ...editableTextState.contextMenuButtonItems,
+                            // Mention actions first: what doesn't fit goes to the overflow menu at the end
                             if (mention != null) ...[
                                 ContextMenuButtonItem(
                                   onPressed: () {
@@ -377,6 +385,21 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                   label: "Custom Mention",
                                 ),
                               ],
+                            for (final item in editableTextState.contextMenuButtonItems)
+                              item.type == ContextMenuButtonType.copy || item.type == ContextMenuButtonType.cut
+                                  ? item.copyWith(onPressed: () {
+                                      txtController.rememberSelection();
+                                      item.onPressed?.call();
+                                    })
+                                  : item,
+                            if (!kIsDesktop && controller != null)
+                              ContextMenuButtonItem(
+                                onPressed: () {
+                                  editableTextState.hideToolbar();
+                                  openTextFormattingPanel(controller!);
+                                },
+                                label: "Text Effects",
+                              ),
                           ];
 
                           // The stock paste item only exists when the clipboard has text, and only pastes text.
@@ -395,6 +418,19 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                               items.add(pasteItem);
                             } else {
                               items[pasteIndex] = pasteItem;
+                            }
+                          } else {
+                            final pasteIndex =
+                                items.indexWhere((item) => item.type == ContextMenuButtonType.paste);
+                            if (pasteIndex != -1) {
+                              items[pasteIndex] = ContextMenuButtonItem(
+                                type: ContextMenuButtonType.paste,
+                                onPressed: () async {
+                                  editableTextState.hideToolbar();
+                                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                                  if (data?.text != null) txtController.pasteText(data!.text!);
+                                },
+                              );
                             }
                           }
 
@@ -418,6 +454,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         onTap: () {
                           HapticFeedback.selectionClick();
+                          // The field brings the keyboard back on a tap, in the panel's place
+                          controller?.showTextFormattingPanel.value = false;
                         },
                         onSubmitted: (String value) {
                           controller?.focusNode.requestFocus();
@@ -556,6 +594,10 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
     if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
       final shift = HardwareKeyboard.instance.isShiftPressed;
+      // Let the field copy or cut as usual, with the formatting remembered for a paste
+      if (!shift && (ev.logicalKey == LogicalKeyboardKey.keyC || ev.logicalKey == LogicalKeyboardKey.keyX)) {
+        (controller?.textController ?? textController).rememberSelection();
+      }
       final style = switch (ev.logicalKey) {
         LogicalKeyboardKey.keyB when !shift => 'bold',
         LogicalKeyboardKey.keyI when !shift => 'italic',
