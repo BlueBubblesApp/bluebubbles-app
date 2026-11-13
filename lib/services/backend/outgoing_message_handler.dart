@@ -857,13 +857,19 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
-    final parts = m.attributedBody.first.runs
-        .map((e) => {
-              'text': m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
-              'mention': e.attributes!.mention,
-              'partIndex': e.attributes!.messagePart,
-            })
-        .toList();
+    final parts = m.attributedBody.first.runs.map((e) {
+      final text = m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last);
+      final styles = e.attributes!.styleNames;
+      return {
+        'text': text,
+        'mention': e.attributes!.mention,
+        'partIndex': e.attributes!.messagePart,
+        if (styles.isNotEmpty)
+          'textFormatting': [
+            {'start': 0, 'length': text.length, 'styles': styles},
+          ],
+      };
+    }).toList();
 
     return _sendWithRace(
       tempGuid: tempGuid,
