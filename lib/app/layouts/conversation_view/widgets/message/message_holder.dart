@@ -320,19 +320,26 @@ class _MessageHolderState extends State<MessageHolder> with AutomaticKeepAliveCl
                                           message.threadOriginatorGuid != null &&
                                           replyTo != null &&
                                           replyTo!.isFromMe!
-                                      ? SizedBox(
-                                          width: double.infinity,
-                                          child: CustomPaint(
-                                            painter: _ReplyLinePainter(
-                                              color: context.theme.colorScheme.surfaceContainerHighest,
-                                              isFromMe: message.isFromMe!,
+                                      ? Padding(
+                                          // Same inset as the bubble below, so this segment meets its reply line
+                                          padding: (showAvatar || alwaysShowAvatars) &&
+                                                  !(message.isGroupEvent || e.isUnsent)
+                                              ? EdgeInsets.only(left: 35.0 * avatarScale)
+                                              : EdgeInsets.zero,
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: CustomPaint(
+                                              painter: _ReplyLinePainter(
+                                                color: context.theme.colorScheme.surfaceContainerHighest,
+                                                isFromMe: message.isFromMe!,
+                                              ),
+                                              child: e.isMediaCollection
+                                                  ? SizedBox(height: message.isFromMe! ? 8 : 0)
+                                                  : ReactionSpacing(
+                                                      part: e,
+                                                      minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
+                                                    ),
                                             ),
-                                            child: e.isMediaCollection
-                                                ? SizedBox(height: message.isFromMe! ? 8 : 0)
-                                                : ReactionSpacing(
-                                                    part: e,
-                                                    minHeightWhenNoReactions: message.isFromMe! ? 8 : 0,
-                                                  ),
                                           ),
                                         )
                                       : iOS && e.isMediaCollection

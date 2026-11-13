@@ -489,7 +489,19 @@ class IncrementalSyncManager extends SyncManager {
       Chat? theChat = chatCache[item.key];
       if (theChat == null || item.value.isEmpty) continue;
 
-      final syncResult = await SyncInterface.bulkSyncData(chatData: theChat.toMap(), messagesData: item.value);
+      // Group photos resent: a 3/3 row repeating the photo this app already showed is not a change. `theChat` is
+      // built on the stored record, so its known photo is the one from before this sync.
+      final photos = dropKnownGroupPhotoResends(item.value, theChat.knownGroupPhotoGuid);
+      if (photos.known != theChat.knownGroupPhotoGuid) {
+        theChat.knownGroupPhotoGuid = photos.known;
+        await theChat.saveAsync(updateKnownGroupPhotoGuid: true);
+      }
+      if (photos.kept.isEmpty) continue;
+
+      final syncResult = await SyncInterface.bulkSyncData(
+        chatData: theChat.toMap(),
+        messagesData: photos.kept,
+      );
       messagesSynced += syncResult.messages.length;
       setProgress(messagesSynced, total);
 

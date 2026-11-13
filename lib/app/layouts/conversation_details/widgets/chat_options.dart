@@ -741,7 +741,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
       ),
       _OptionRow(
         enabled:
-            chat.handles.length > 2 &&
+            chat.people.length > 2 &&
             SettingsSvc.settings.enablePrivateAPI.value &&
             SettingsSvc.serverDetails.supportsGroupChatManagement,
         build: (context) => SettingsTile(

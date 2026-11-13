@@ -19,3 +19,5 @@ export 'location_attachment_data.dart';
 export 'theme_pair.dart';
 export 'storage_analysis.dart';
 export 'sticker_placement.dart';
+export 'genmoji.dart';
+export 'facetime.dart';

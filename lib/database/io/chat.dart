@@ -74,6 +74,17 @@ class Chat {
   @Property(uid: 738307263391205523)
   String? dynamicWallpaperConfig;
 
+  /// The group photo this app last showed an event for, as chat.db names it (`groupPhotoGuid`). Written only when a
+  /// group-photo message is kept, never from a chat the server sends, so a sync that also carries the photo's row
+  /// cannot overwrite it before the row is compared. See `group_photo_helpers.dart`.
+  @Property(uid: 2602396250608668078)
+  String? knownGroupPhotoGuid;
+
+  /// The group photo the server says this chat has now, read from its `properties`. Not stored: it is only compared
+  /// with [knownGroupPhotoGuid] while the message that came with it is handled.
+  @Transient()
+  String? serverGroupPhotoGuid;
+
   final RxnString _customAvatarPath = RxnString();
   String? get customAvatarPath => _customAvatarPath.value;
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
@@ -89,7 +100,24 @@ class Chat {
   @Transient()
   RxDouble sendProgress = 0.0.obs;
 
+  /// Every handle linked to this chat. A person can appear here twice: macOS links a merged iMessage/SMS
+  /// conversation to both of their handles, one per service, with the same address.
+  ///
+  /// Wherever the number or the list of members matters (titles, member counts, avatars, pickers, matching a
+  /// chat to a set of addresses), read [people]. Read [handles] for the handle rows themselves: ids, ROWIDs,
+  /// sync, and finding the handle a message came from. `handles.first` is always `people.first`.
   final handles = ToMany<Handle>();
+
+  /// The members of this chat, one handle per address, in [handles] order.
+  List<Handle> get people => peopleIn(handles);
+
+  /// [handles] collapsed to one handle per address, keeping the first. Which of a person's handles survives
+  /// does not matter to a caller: contacts, names and avatars all resolve by address. The service cannot pick
+  /// one either, because [service] is read from the GUID prefix, which macOS 26 rewrote to `any`.
+  static List<Handle> peopleIn(Iterable<Handle> handles) {
+    final seen = <String>{};
+    return handles.where((h) => seen.add(h.address)).toList();
+  }
 
   // Do not use this field directly, use the handles ToMany relation instead.
   // This should only really be used for serialization/deserialization purposes.
@@ -143,6 +171,8 @@ class Chat {
     this.wallpaperType,
     this.dynamicWallpaperId,
     this.dynamicWallpaperConfig,
+    this.knownGroupPhotoGuid,
+    this.serverGroupPhotoGuid,
   }) {
     customAvatarPath = customAvatar;
     customBackgroundPath = customBackground;
@@ -181,6 +211,9 @@ class Chat {
       wallpaperType: json["wallpaperType"],
       dynamicWallpaperId: json["dynamicWallpaperId"],
       dynamicWallpaperConfig: json["dynamicWallpaperConfig"],
+      knownGroupPhotoGuid: json["knownGroupPhotoGuid"],
+      // `serverGroupPhotoGuid` when the map is our own `toMap`, `properties` when it came from the server.
+      serverGroupPhotoGuid: json["serverGroupPhotoGuid"] ?? groupPhotoGuidInProperties(json["properties"]),
       textFieldText: json["textFieldText"],
       textFieldAttachments: (json["textFieldAttachments"] as List?)?.cast<String>() ?? const [],
     );
@@ -208,6 +241,7 @@ class Chat {
     bool updateLatestMessage = false,
     bool updateCustomThemes = false,
     bool updateWallpaperSettings = false,
+    bool updateKnownGroupPhotoGuid = false,
   }) async {
     if (kIsWeb) return this;
 
@@ -235,6 +269,7 @@ class Chat {
         'updateLatestMessage': updateLatestMessage,
         'updateCustomThemes': updateCustomThemes,
         'updateWallpaperSettings': updateWallpaperSettings,
+        'updateKnownGroupPhotoGuid': updateKnownGroupPhotoGuid,
       },
     );
 
@@ -257,28 +292,29 @@ class Chat {
 
   /// Get a chat's title
   String getChatCreatorSubtitle() {
-    final count = handles.length;
+    final people = this.people;
+    final count = people.length;
     if (count == 0) {
       if (chatIdentifier!.startsWith("urn:biz")) {
         return "Business Chat";
       }
       return chatIdentifier!;
     } else if (count == 1) {
-      return handles.first.displayName;
+      return people.first.displayName;
     }
 
     if (count <= 4) {
       final buffer = StringBuffer();
       for (int i = 0; i < count; i++) {
         if (i > 0) buffer.write(i == count - 1 ? ' & ' : ', ');
-        buffer.write(handles[i].shortName);
+        buffer.write(people[i].shortName);
       }
       return buffer.toString();
     } else {
       final buffer = StringBuffer();
       for (int i = 0; i < 3; i++) {
         if (i > 0) buffer.write(', ');
-        buffer.write(handles[i].shortName);
+        buffer.write(people[i].shortName);
       }
       buffer.write(' & ${count - 3} others');
       return buffer.toString();
@@ -787,8 +823,10 @@ class Chat {
 
   bool get isIMessage => service == ChatServiceType.iMessage;
 
-  // Check style first so handles isn't required to be evaluated, which will incur a DB lookup.
-  bool get isGroup => style == 43 || handles.length > 1;
+  /// chat.db's style (43 group, 45 one-to-one) is authoritative, and checking it first avoids the DB lookup
+  /// [handles] incurs. Without it, fall back to counting [people]: a merged iMessage/SMS chat links two handles
+  /// for one person, so the raw handle count would call it a group.
+  bool get isGroup => style != null ? style == 43 : people.length > 1;
 
   Chat merge(Chat other) {
     id ??= other.id;
@@ -818,6 +856,7 @@ class Chat {
     wallpaperType ??= other.wallpaperType;
     dynamicWallpaperId ??= other.dynamicWallpaperId;
     dynamicWallpaperConfig ??= other.dynamicWallpaperConfig;
+    knownGroupPhotoGuid ??= other.knownGroupPhotoGuid;
     return this;
   }
 
@@ -900,6 +939,8 @@ class Chat {
       "wallpaperType": wallpaperType,
       "dynamicWallpaperId": dynamicWallpaperId,
       "dynamicWallpaperConfig": dynamicWallpaperConfig,
+      "knownGroupPhotoGuid": knownGroupPhotoGuid,
+      "serverGroupPhotoGuid": serverGroupPhotoGuid,
       "textFieldText": textFieldText,
       "textFieldAttachments": textFieldAttachments,
       "dbOnlyLatestMessageDate": dbOnlyLatestMessageDate?.millisecondsSinceEpoch,

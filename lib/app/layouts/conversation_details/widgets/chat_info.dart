@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/components/copy_address_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/address_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/change_name.dart';
+import 'package:bluebubbles/app/layouts/conversation_details/dialogs/facetime_call.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/material/chat_photo_actions.dart' as photo_actions;
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -168,6 +169,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
               children: intersperse(const SizedBox(width: 5), [
                 if (canCall) CallButton(tileColor: tileColor, chat: chat, iOS: iOS),
                 VideoCallButton(tileColor: tileColor, chat: chat, iOS: iOS),
+                if (canFaceTime(chat)) FaceTimeButton(tileColor: tileColor, chat: chat, iOS: iOS),
                 if (chat.handles.isNotEmpty &&
                     ((chat.handles.first.contactsV2.firstOrNull?.emailAddresses.isNotEmpty ?? false) ||
                         chat.handles.first.address.contains("@")))
@@ -179,7 +181,7 @@ class _ChatInfoState extends State<ChatInfo> with ThemeHelpers {
         if (chat.isGroup)
           Padding(
             padding: const EdgeInsets.only(left: 20.0, top: 20.0, bottom: 5.0),
-            child: Text("${chat.handles.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
+            child: Text("${chat.people.length} ${iOS ? "OTHER MEMBERS" : "OTHER PEOPLE"}",
                 style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
           ),
       ]),
@@ -340,6 +342,47 @@ class VideoCallButton extends StatelessWidget {
                     color: context.theme.colorScheme.onSurface, size: 25),
                 const SizedBox(height: 2.5),
                 Text("Video Call",
+                    style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FaceTimeButton extends StatelessWidget {
+  const FaceTimeButton({
+    super.key,
+    required this.tileColor,
+    required this.chat,
+    required this.iOS,
+  });
+
+  final Color tileColor;
+  final Chat chat;
+  final bool iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        borderRadius: BorderRadius.circular(15),
+        color: tileColor,
+        child: InkWell(
+          onTap: () => startFaceTimeCall(context, chat),
+          borderRadius: BorderRadius.circular(15),
+          child: SizedBox(
+            height: 60,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(iOS ? CupertinoIcons.videocam_fill : Icons.videocam,
+                    color: context.theme.colorScheme.onSurface, size: 25),
+                const SizedBox(height: 2.5),
+                Text("FaceTime",
                     style: context.theme.textTheme.bodySmall!.copyWith(color: context.theme.colorScheme.onSurface)),
               ],
             ),

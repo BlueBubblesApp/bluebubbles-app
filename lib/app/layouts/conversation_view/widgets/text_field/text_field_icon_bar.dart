@@ -1,3 +1,4 @@
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/desktop_attachment_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field_local_controller.dart';
 import 'package:bluebubbles/database/io/klipy.dart';
@@ -59,42 +60,32 @@ class TextFieldIconBar extends StatelessWidget {
 
   Widget _attachmentButton(BuildContext context) {
     final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
+    Widget button(VoidCallback onPressed) => IconButton(
+          style: IconButton.styleFrom(
+            backgroundColor: hasBackground
+                ? context.theme.colorScheme.surfaceContainerHighest
+                : context.theme.colorScheme.outline.withValues(alpha: 0.2),
+            shape: const CircleBorder(),
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(36, 36),
+            fixedSize: const Size(36, 36),
+          ),
+          icon: Icon(
+            Icons.add,
+            color: context.theme.colorScheme.outline,
+            size: 22,
+          ),
+          visualDensity: Platform.isAndroid ? VisualDensity.compact : null,
+          onPressed: onPressed,
+        );
+
     return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: IconButton(
-            style: IconButton.styleFrom(
-              backgroundColor: hasBackground
-                  ? context.theme.colorScheme.surfaceContainerHighest
-                  : context.theme.colorScheme.outline.withValues(alpha: 0.2),
-              shape: const CircleBorder(),
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(36, 36),
-              fixedSize: const Size(36, 36),
-            ),
-            icon: Icon(
-              Icons.add,
-              color: context.theme.colorScheme.outline,
-              size: 22,
-            ),
-            visualDensity: Platform.isAndroid ? VisualDensity.compact : null,
-            onPressed: () async {
-              if (kIsDesktop) {
-                final res = await FilePicker.pickFiles();
-                for (pf.PlatformFile e in res) {
-                  final size = await e.length() ?? 0;
-                  if (size / 1024000 > 1000) {
-                    showSnackbar("Error", "This file is over 1 GB! Please compress it before sending.",
-                        type: SnackbarType.error);
-                    continue;
-                  }
-                  controller.pickedAttachments.add(PlatformFile(
-                    path: e.path,
-                    name: e.name,
-                    size: size,
-                    bytes: await e.readAsBytes(),
-                  ));
-                }
-              } else if (kIsWeb) {
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: kIsDesktop
+          // Desktop has no attachment sheet: `+` opens a menu of the same actions instead.
+          ? DesktopAttachmentMenu(controller: controller, builder: (_, toggle) => button(toggle))
+          : button(() {
+              if (kIsWeb) {
                 showBBDialog(
                   context: context,
                   title: "What would you like to do?",
@@ -140,9 +131,8 @@ class TextFieldIconBar extends StatelessWidget {
                 }
                 controller.showAttachmentPicker.value = !_showAttachmentPicker;
               }
-            },
-          ),
-        );
+            }),
+    );
   }
 
   Widget _gifButton(BuildContext context) => IconButton(

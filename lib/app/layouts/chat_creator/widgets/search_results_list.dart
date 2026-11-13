@@ -156,7 +156,7 @@ class SearchResultsList extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        final participants = chat.handles
+                        final participants = chat.people
                             .where((h) =>
                                 controller.selectedContacts.firstWhereOrNull((c) => c.address == h.address) == null)
                             .map(

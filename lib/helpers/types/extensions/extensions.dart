@@ -540,7 +540,10 @@ extension MessageNotificationExtension on Message {
         // (or none of the above conditions about it are true)
         // then we should fallback to unparsed reaction messages
         Logger.info("Couldn't fetch associated message for message: $guid");
-        return "$reactionSender $text";
+        // Apple's text starts a sentence ("Loved “…”"); here it follows the sender's name
+        final appleText = text ?? "";
+        if (appleText.isEmpty) return reactionSender;
+        return "$reactionSender ${appleText[0].toLowerCase()}${appleText.substring(1)}";
       } else {
         // It's all other message types
         return sender + fullText;

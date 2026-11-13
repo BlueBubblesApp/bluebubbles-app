@@ -645,7 +645,7 @@ Future<Uint8List> avatarAsBytes({
   List<Handle>? participantsOverride,
   double quality = 256,
 }) async {
-  final participants = participantsOverride ?? chat.handles;
+  final participants = participantsOverride ?? chat.people;
   ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   Canvas canvas = Canvas(pictureRecorder);
 

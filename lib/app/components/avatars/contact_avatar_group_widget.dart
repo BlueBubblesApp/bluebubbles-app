@@ -10,7 +10,6 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:universal_io/io.dart';
 
 /// Displays a group of contact avatars for a chat.
 ///
@@ -22,7 +21,7 @@ import 'package:universal_io/io.dart';
 ///
 /// **Static path** (fallback): when no [ChatStateScope] is found, the optional
 /// [chat] parameter is used instead. The participant list is read once from
-/// [Chat.handles] and is non-reactive — no listeners are created.
+/// [Chat.people] and is non-reactive — no listeners are created.
 class ContactAvatarGroupWidget extends StatelessWidget {
   const ContactAvatarGroupWidget({
     super.key,
@@ -93,7 +92,7 @@ class ContactAvatarGroupWidget extends StatelessWidget {
         customAvatarPath = chatState.customAvatarPath.value;
       } else {
         // Static path: read once from the handles override or chat param — no subscription created.
-        participants = _sortedHandles(handles ?? chat?.handles.toList() ?? []);
+        participants = _sortedHandles(handles ?? chat?.people ?? []);
         customAvatarPath = handles != null ? null : chat?.customAvatarPath;
       }
 
@@ -114,16 +113,12 @@ class ContactAvatarGroupWidget extends StatelessWidget {
       if (customAvatarPath != null && !hide) {
         // Group photos arrive from the server at their original size, often 1000 px
         // or more, and are drawn at tens of pixels. Decode at the shared avatar size
-        // so each costs a few hundred KB instead of several MB. Must match the
-        // ResizeImage the conversation list warm-up precaches with.
+        // so each costs a few hundred KB instead of several MB. The provider is shared
+        // with the conversation list warm-up so its precached entry is hit.
         return CircleAvatar(
           key: ValueKey(customAvatarPath),
           radius: avatarSize / 2,
-          backgroundImage: ResizeImage(
-            FileImage(File(customAvatarPath)),
-            width: ContactAvatarWidget.avatarDecodeSize,
-            height: ContactAvatarWidget.avatarDecodeSize,
-          ),
+          backgroundImage: ContactAvatarWidget.avatarImage(customAvatarPath),
           backgroundColor: Colors.transparent,
         );
       }

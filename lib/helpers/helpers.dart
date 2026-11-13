@@ -7,6 +7,7 @@ export 'types/classes/chat_service_type.dart';
 export 'types/extensions/extensions.dart';
 export 'types/helpers/contact_helpers.dart';
 export 'types/helpers/date_helpers.dart';
+export 'types/helpers/group_photo_helpers.dart';
 export 'types/helpers/message_helper.dart';
 export 'types/helpers/misc_helpers.dart';
 export 'types/helpers/string_helpers.dart';

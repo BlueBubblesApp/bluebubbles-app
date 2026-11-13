@@ -38,7 +38,7 @@ class _ExpressiveParticipantsSectionState extends State<ExpressiveParticipantsSe
     return SliverToBoxAdapter(
       child: Obx(() {
         final state = _chatState;
-        final participants = state != null ? state.participants.map((hs) => hs.handle).toList() : chat.handles.toList();
+        final participants = state != null ? state.participants.map((hs) => hs.handle).toList() : chat.people;
         final shouldShowMore = participants.length > 5;
         final clipped = showMoreParticipants ? participants : participants.take(5).toList();
         final canBeRemoved = chat.isGroup && SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage;

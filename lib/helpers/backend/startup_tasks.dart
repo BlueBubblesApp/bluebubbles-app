@@ -275,6 +275,8 @@ class StartupTasks {
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
     GetIt.I.registerSingleton<NameAndPhotoSharingService>(NameAndPhotoSharingService());
+    // Lazy: reads nothing from disk until a picker first opens the Genmoji library.
+    GetIt.I.registerLazySingleton<GenmojiLibraryService>(GenmojiLibraryService.new);
     GetIt.I.registerSingleton<SocketService>(SocketService());
     Logger.info("Waiting on NotificationsService...");
     await _waitForInterop(notifications: true);

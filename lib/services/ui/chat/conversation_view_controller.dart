@@ -32,6 +32,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   late final String tag;
   bool fromChatCreator = false;
   bool fromSearchResult = false;
+
+  /// The ConversationView that may delete this controller. Moving across the tablet breakpoint builds the new view
+  /// before disposing the old one, and both share this controller.
+  Object? viewOwner;
   bool addedRecentPhotoReply = false;
   final AutoScrollController scrollController = AutoScrollController();
 
@@ -55,8 +59,14 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   final GlobalKey focusInfoKey = GlobalKey();
   final GlobalKey typingInfoKey = GlobalKey();
   final RxBool recipientNotifsSilenced = false.obs;
-  final RxBool showSmartReplyRow = false.obs;
-  final RxDouble smartReplyRowHeight = 0.0.obs;
+  final RxBool showPillRow = false.obs;
+  final RxDouble pillRowHeight = 0.0.obs;
+
+  /// Whether the pill row holds any quick action. The row shows two kinds of pill: smart replies (ML suggestions,
+  /// cleared when an outgoing message lands) and quick actions (the app's own "Attach recent photo" and "Jump to
+  /// oldest unread", which are not). A row with a quick action therefore keeps its height through a send, and
+  /// [SendAnimation] reads this to decide whether to leave that height in its landing target.
+  bool pillRowHasQuickActions = false;
   bool showingOverlays = false;
 
   /// True while a pointer is actively dragging a [CollectionGroupStack] fan of
@@ -84,6 +94,10 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   /// OpenPigeon's game picker, shown below the text field in the keyboard's place.
   final RxBool showGamePicker = false.obs;
+  /// The mobile attachment picker's grid is showing the Genmoji library rather than photos.
+  /// Lives here so the conversation view's back handler can step back to photos before it
+  /// closes the picker. The picker resets it to false each time it opens.
+  final RxBool showGenmojiLibrary = false.obs;
   RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
@@ -110,7 +124,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     }
   }
 
-  late final mentionables = chat.handles
+  late final mentionables = chat.people
       .map((e) => Mentionable(
             handle: e,
           ))
@@ -211,7 +225,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   @override
   void onClose() {
     messageListGate.dispose();
-    updateSmartReplyLayout(visible: false, height: 0);
+    updatePillRowLayout(visible: false, height: 0);
     for (PlayerController a in audioPlayers.values) {
       a.pausePlayer();
       a.dispose();
@@ -223,16 +237,17 @@ class ConversationViewController extends StatefulController with GetSingleTicker
       a.player.pause();
       a.player.dispose();
     }
-    // Chat switches close this before the old route unmounts, and disposing a FocusNode that a mounted field still
-    // holds corrupts the focus tree, leaving the next composer unable to take input. Wait for the unmount.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      scrollController.dispose();
-      focusNode.dispose();
-      subjectFocusNode.dispose();
-      textController.dispose();
-      subjectTextController.dispose();
-    });
     super.onClose();
+  }
+
+  /// Back and chat switches close this before the old route finishes animating out, and disposing a FocusNode that a
+  /// mounted field still holds corrupts the focus tree. So the view calls this once it has unmounted.
+  void disposeComposer() {
+    scrollController.dispose();
+    focusNode.dispose();
+    subjectFocusNode.dispose();
+    textController.dispose();
+    subjectTextController.dispose();
   }
 
   /// Disposes and evicts the cached [VideoController] for [attachmentGuid] -- call before a
@@ -286,19 +301,20 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     return editing.firstWhereOrNull((e) => e.message.guid == guid && e.part.part == part) != null;
   }
 
-  void updateSmartReplyLayout({required bool visible, required double height}) {
-    if (showSmartReplyRow.value != visible) {
-      showSmartReplyRow.value = visible;
+  void updatePillRowLayout({required bool visible, required double height, bool hasQuickActions = false}) {
+    pillRowHasQuickActions = visible && hasQuickActions;
+    if (showPillRow.value != visible) {
+      showPillRow.value = visible;
     }
 
     final nextHeight = visible ? height : 0.0;
-    if (smartReplyRowHeight.value != nextHeight) {
-      smartReplyRowHeight.value = nextHeight;
+    if (pillRowHeight.value != nextHeight) {
+      pillRowHeight.value = nextHeight;
     }
   }
 
   void close() {
-    updateSmartReplyLayout(visible: false, height: 0);
+    updatePillRowLayout(visible: false, height: 0);
     ChatsSvc.setAllInactiveSync();
     deleteIfCurrent();
   }

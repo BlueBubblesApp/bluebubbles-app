@@ -16,6 +16,8 @@ Barrel export: `models/models.dart`
 | `contact_search_result.dart` | A single result from a contact search query |
 | `dispatched_event.dart` | Event envelope used by `EventDispatcherSvc` |
 | `fcm_data_info.dart` | Firebase Cloud Messaging token + device info DTO |
+| `facetime.dart` | FaceTime DTOs from `/api/v2/facetime/call` — `FaceTimeCall`, `PlacedFaceTimeCall` (link + call), `FaceTimeException` (carries the call when it rang without a link) |
+| `genmoji.dart` | Genmoji DTOs from `/api/v2/genmoji` — `GenmojiSupport` (status), `GenmojiImage` (decoded PNG), `GenmojiException` |
 | `handle_audit_result.dart` | Developer Tools "Handle Auditing" scan result for a single handle missing `originalROWID`, plus remediation status |
 | `handle_lookup_key.dart` | Composite key (address + service) for handle deduplication |
 | `handle_sync_page.dart` | Pagination cursor for handle sync requests |
@@ -25,7 +27,7 @@ Barrel export: `models/models.dart`
 | `message_save_result.dart` | Result returned by message save action (id, status) |
 | `message_update_event.dart` | Carries field diffs for a message update notification |
 | `parsed_log_entry.dart` | Parsed structure of a single log file line |
-| `server_details.dart` | Server version, OS, build info returned from `/server/info` |
+| `server_details.dart` | Server version, OS, build info and `api_versions` returned from `/server/info`; feature gates (`supportsGenmoji`, …) |
 | `server_update_info.dart` | Server update availability info |
 | `shared_name_and_photo.dart` | A name and photo a participant shared through Messages' name and photo sharing |
 | `sticker_placement.dart` | Typed `stickerPlacement` of a placed sticker's attachment (position, scale, rotation) |
