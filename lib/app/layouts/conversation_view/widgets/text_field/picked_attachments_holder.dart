@@ -282,6 +282,8 @@ class _MentionSuggestions extends StatelessWidget {
                             size: 25,
                             fontSize: 15,
                             borderThickness: 0,
+                            // A tap anywhere on the row picks the mention
+                            editable: false,
                           ),
                           const SizedBox(width: 12),
                           Text(
