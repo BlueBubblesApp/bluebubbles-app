@@ -40,6 +40,12 @@ class RunTextEffects extends SingleChildRenderObjectWidget {
 
   static Duration durationFor(List<Run> runs) => effectDuration + stagger * math.max(0, orderedRuns(runs).length - 1);
 
+  /// Where the [index]th of [count] staggered runs is in its own cycle at [progress] through the shared one.
+  static double phaseFor(double progress, int index, int count) {
+    final elapsed = progress * (effectDuration + stagger * math.max(0, count - 1)).inMilliseconds;
+    return ((elapsed - index * stagger.inMilliseconds) / effectDuration.inMilliseconds).clamp(0.0, 1.0);
+  }
+
   @override
   RenderObject createRenderObject(BuildContext context) => RenderRunTextEffects(runs, animation, textOffset);
 
@@ -104,7 +110,7 @@ class RenderRunTextEffects extends RenderProxyBox {
     }
     final cut = <Rect>[];
     final pieces = <(Rect, Matrix4, double)>[];
-    void add(Rect rect, _Pose pose) {
+    void add(Rect rect, TextEffectPose pose) {
       // Resting fragments stay in the single untransformed paint.
       if (pose.alpha >= 1 && pose.bold < 0.05 && pose.transform.isIdentity()) return;
       cut.add(rect);
@@ -117,23 +123,18 @@ class RenderRunTextEffects extends RenderProxyBox {
     }
 
     final geometry = _geometry ??= _measure(paragraph);
-    final elapsed =
-        progress *
-        (RunTextEffects.effectDuration + RunTextEffects.stagger * math.max(0, geometry.length - 1)).inMilliseconds;
     for (final (index, run) in geometry.indexed) {
-      final phase =
-          ((elapsed - index * RunTextEffects.stagger.inMilliseconds) / RunTextEffects.effectDuration.inMilliseconds)
-              .clamp(0.0, 1.0);
+      final phase = RunTextEffects.phaseFor(progress, index, geometry.length);
       if (phase <= 0 || phase >= 1) continue;
       if (run.glyphs == null) {
         for (final rect in run.lines) {
-          add(rect, _runPose(run.effect, phase, rect));
+          add(rect, runPose(run.effect, phase, rect));
         }
         continue;
       }
       final last = run.glyphCount - 1;
       for (final (n, rect) in run.glyphs!) {
-        add(rect, _glyphPose(run.effect, phase, n, last > 0 ? n / last : 0.5, rect, run.centerX));
+        add(rect, glyphPose(run.effect, phase, n, last > 0 ? n / last : 0.5, rect, run.centerX));
       }
     }
     if (cut.isEmpty) {
@@ -209,7 +210,7 @@ class RenderRunTextEffects extends RenderProxyBox {
       .where((rect) => !rect.isEmpty)
       .toList();
 
-  static _Pose _pose(Matrix4 transform, {double alpha = 1, double bold = 0}) =>
+  static TextEffectPose _pose(Matrix4 transform, {double alpha = 1, double bold = 0}) =>
       (transform: transform, alpha: alpha, bold: bold);
 
   static Matrix4 _about(Offset center, Offset translation, double scale, {double rotation = 0, double stretch = 1}) =>
@@ -219,7 +220,7 @@ class RenderRunTextEffects extends RenderProxyBox {
         ..scaleByDouble(scale * stretch, scale, 1, 1)
         ..translateByDouble(-center.dx, -center.dy, 0, 1);
 
-  static _Pose _runPose(int effect, double phase, Rect rect) {
+  static TextEffectPose runPose(int effect, double phase, Rect rect) {
     if (effect == 10) {
       // Jitter: the whole fragment hops and tilts every 40 ms for ~0.8 s, then rests.
       if (phase >= 0.4) return _pose(Matrix4.identity());
@@ -262,7 +263,7 @@ class RenderRunTextEffects extends RenderProxyBox {
   }
 
   /// [frac] is the glyph's position in its run, 0 (first) to 1 (last).
-  static _Pose _glyphPose(int effect, double phase, int index, double frac, Rect rect, double runCenterX) {
+  static TextEffectPose glyphPose(int effect, double phase, int index, double frac, Rect rect, double runCenterX) {
     if (effect == 12) return _explode(phase, index, frac, rect, runCenterX);
     // Ripple and Bloom: one crest sweeps left to right, then the run rests.
     final (sweep, width) = effect == 4 ? (0.3, 0.5) : (0.45, 0.6);
@@ -284,7 +285,7 @@ class RenderRunTextEffects extends RenderProxyBox {
   // Traced from picker footage: glyphs shake loose for 0.1 s, then launch ballistically from below the run. Middle
   // glyphs shoot up and toward the viewer, falling back through the bubble several times larger; end glyphs fly out
   // sideways, turning to follow their path. The run then stays blank and fades back in.
-  static _Pose _explode(double phase, int index, double frac, Rect rect, double runCenterX) {
+  static TextEffectPose _explode(double phase, int index, double frac, Rect rect, double runCenterX) {
     final h = rect.height;
     final seconds = phase * RunTextEffects.effectDuration.inMilliseconds / 1000;
     const shake = 0.45;
@@ -333,6 +334,6 @@ class RenderRunTextEffects extends RenderProxyBox {
   }
 }
 
-typedef _Pose = ({Matrix4 transform, double alpha, double bold});
+typedef TextEffectPose = ({Matrix4 transform, double alpha, double bold});
 // [glyphs] is null for effects that transform whole line fragments; each entry is (glyph index, box).
 typedef _RunGeometry = ({int effect, List<Rect> lines, List<(int, Rect)>? glyphs, int glyphCount, double centerX});

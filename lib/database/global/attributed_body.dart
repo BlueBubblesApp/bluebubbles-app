@@ -72,6 +72,20 @@ class Attributes {
   bool get isStrikethrough => rawAttributes['__kIMTextStrikethroughAttributeName'] == 1;
   int? get textEffect => rawAttributes['__kIMTextEffectAttributeName'] as int?;
 
+  /// `__kIMTextEffectAttributeName` values (issue #3447) to the server's `textFormatting` effect names, in menu order.
+  static const textEffectNames = {
+    5: 'big',
+    11: 'small',
+    9: 'shake',
+    8: 'nod',
+    12: 'explode',
+    4: 'ripple',
+    6: 'bloom',
+    10: 'jitter',
+  };
+
+  String? get textEffectName => textEffectNames[textEffect];
+
   /// The server's `textFormatting` style names for this run.
   List<String> get styleNames => [
         if (isBold) 'bold',

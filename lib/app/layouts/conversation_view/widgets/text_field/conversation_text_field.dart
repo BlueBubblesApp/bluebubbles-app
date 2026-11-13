@@ -123,7 +123,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final state = ChatsSvc.getChatState(chatGuid);
     final incomingText = text ?? state?.textFieldText.value ?? chat.textFieldText;
     if (incomingText != null && incomingText.isNotEmpty && incomingText != controller.textController.text) {
-      final storedRuns = text != null ? null : (state != null ? state.textFieldRuns : chat.textFieldRuns);
+      final storedRuns = text != null ? null : (state != null ? state.textFieldRuns.value : chat.textFieldRuns);
       // Drafts saved before runs existed hold mentions as escape sequences in the text itself
       final (draft, runs) = storedRuns == null
           ? MentionTextEditingController.parseLegacyDraft(incomingText, controller.textController.mentionables)

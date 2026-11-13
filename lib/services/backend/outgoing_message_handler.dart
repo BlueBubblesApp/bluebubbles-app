@@ -860,13 +860,14 @@ class OutgoingMessageHandler {
     final parts = m.attributedBody.first.runs.map((e) {
       final text = m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last);
       final styles = e.attributes!.styleNames;
+      final effect = e.attributes!.textEffectName;
       return {
         'text': text,
         'mention': e.attributes!.mention,
         'partIndex': e.attributes!.messagePart,
-        if (styles.isNotEmpty)
+        if (styles.isNotEmpty || effect != null)
           'textFormatting': [
-            {'start': 0, 'length': text.length, 'styles': styles},
+            {'start': 0, 'length': text.length, 'styles': styles, 'effect': ?effect},
           ],
       };
     }).toList();

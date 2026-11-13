@@ -7,7 +7,8 @@
 - `send_button.dart` — send / schedule button
 - `text_field_icon_bar.dart` — attachment/emoji/etc. icon row; on desktop the `+` is wrapped in `DesktopAttachmentMenu` (`../media_picker/`), as is the chat creator's `+` in `text_field_component.dart`
 - `text_field_suffix.dart` — trailing icon(s) inside the field
-- `formatting_bar.dart` — B/I/U/S toggles, shown above the input while text is selected or typing would carry formatting forward
+- `formatting_bar.dart` — B/I/U/S and text effect toggles, shown above the input while text is selected
+- `text_effect_overlay.dart` — animates text effect runs over the input (which draws them transparent), drawing each glyph at the box the field's `RenderEditable` reports so wrapping and scrolling match; motion comes from `RunTextEffects`' pose functions
 - `text_field_emoji_picker_section.dart` — inline emoji picker section
 - `text_field_recording_overlay.dart` — voice message recording overlay UI
 - `voice_message_recorder.dart` — voice message recording logic
