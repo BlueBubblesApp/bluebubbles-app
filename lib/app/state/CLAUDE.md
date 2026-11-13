@@ -29,7 +29,7 @@ ObjectBox entities are heavy (lazy-loaded relations, DB context required). Re-qu
 | `muteType` / `muteArgs` | `RxnString` | mute settings |
 | `title` / `displayName` / `subtitle` | `RxnString` | contact name changes |
 | `latestMessage` | `Rxn<Message>` | new message received |
-| `textFieldText` / `textFieldAttachments` | reactive | draft persistence |
+| `textFieldText` / `textFieldAttachments` | reactive | draft persistence; `textFieldRuns` (plain, JSON) holds the draft's mention runs |
 | `isActive` / `isAlive` | `RxBool` | lifecycle (conversation open) |
 
 ## MessageState Observable Fields
@@ -102,3 +102,5 @@ final state = controller.messageState?.getAttachmentState(attachmentGuid);
 // or via service:
 final state = msvc.getAttachmentState(messageGuid, attachmentGuid);
 ```
+
+`attributedBodyToMessagePart` preserves runs with offsets relative to each part's text, including edit-history parts. Mentions remain run attributes rather than a separate range list. Skipped standalone attachment placeholders do not shift later text runs. A run with no `__kIMMessagePartAttributeName` continues the previous run's part (part 0 when first), as Messages does.

@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing/typing_indicator.dart';
 import 'package:bluebubbles/app/state/chat_state.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/message_run_spans.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/cupertino_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
@@ -280,6 +282,10 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       final TextSpan subtitleSpan;
       if (hasDraft) {
         final draftBody = hasDraftText ? draftText : 'Attachment';
+        final draftRunsJson = chatState.textFieldRuns.value;
+        final draftRuns = hasDraftText && draftRunsJson != null
+            ? (jsonDecode(draftRunsJson) as List).map((r) => Run.fromMap((r as Map).cast())).toList()
+            : const <Run>[];
         subtitleSpan = TextSpan(children: [
           TextSpan(
             text: 'Draft: ',
@@ -288,11 +294,26 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
               fontStyle: FontStyle.normal,
             ),
           ),
-          ...MessageHelper.buildEmojiText(draftBody, widget.style),
+          ...buildMessageRunSpans(
+            text: draftBody,
+            runs: draftRuns,
+            style: widget.style,
+            buildText: (text, style, _) => MessageHelper.buildEmojiText(text, style),
+          ),
         ]);
       } else {
         final style = widget.style.copyWith(fontStyle: !iOS && !material && !isDelivered ? FontStyle.italic : null);
-        final spans = MessageHelper.buildEmojiText("${!iOS && isFromMe ? "You: " : ""}$_subtitle", style);
+        // Runs only line up when the preview is the message text itself (not redacted, a subject, an attachment...)
+        final body = latestMessage?.attributedBody.firstOrNull;
+        final spans = [
+          if (!iOS && isFromMe) ...MessageHelper.buildEmojiText("You: ", style),
+          ...buildMessageRunSpans(
+            text: _subtitle,
+            runs: body != null && body.string == _subtitle ? body.runs : const [],
+            style: style,
+            buildText: (text, style, _) => MessageHelper.buildEmojiText(text, style),
+          ),
+        ];
         final inline = _subtitle.contains(objectReplacementChar)
             ? _inlineAttachments(latestMessage, _subtitle)
             : const <Attachment?>[];

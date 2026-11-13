@@ -9,6 +9,9 @@ class MethodChannelActions {
     await service.invokeMethod('ready');
   }
 
+  /// The clipboard's formatting as HTML (styled text or an HTML clip), or null when it's plain.
+  Future<String?> clipboardHtml() async => await service.invokeMethod('clipboard-html') as String?;
+
   Future<void> openBrowser({required String? link}) async {
     if (link == null || link.isEmpty) return;
     await service.invokeMethod('open-browser', {'link': link});

@@ -1,18 +1,22 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'package:collection/collection.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/desktop_attachment_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/text_field_attachment_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/formatting_bar.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_overlay.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_picker.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/helpers/ui/html_runs.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -93,6 +97,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     });
 
     _configureHandlers();
+    _fieldFocusNode = controller?.focusNode ?? focusNode;
+    _fieldFocusNode?.addListener(_onFieldFocusChange);
 
     assert(!(subjectTextController == null &&
         !isChatCreator &&
@@ -101,8 +107,16 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         chat!.isIMessage));
   }
 
+  FocusNode? _fieldFocusNode;
+
+  /// The formatting panel stands in for the keyboard, so it goes with focus
+  void _onFieldFocusChange() {
+    if (!_fieldFocusNode!.hasFocus) controller?.showTextFormattingPanel.value = false;
+  }
+
   @override
   void dispose() {
+    _fieldFocusNode?.removeListener(_onFieldFocusChange);
     // dispose of the ValueNotifier when the state is disposed
     isRecordingNotifier.dispose();
     super.dispose();
@@ -128,7 +142,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     }
 
     emojiHandler = EmojiAutocompleteHandler(controller: ctrl, textField: textController);
-    mentionHandler = MentionAutocompleteHandler(controller: ctrl, textField: textController, buildContext: context);
+    mentionHandler = MentionAutocompleteHandler(controller: ctrl, textField: textController);
     keyboardHandler = KeyboardShortcutHandler(
       controller: ctrl,
       sendMessage: sendMessage,
@@ -150,6 +164,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   bool _showAttachmentPickerLocal = false;
   bool _pasteHandledOnKeyDown = false;
+  final _fieldKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +220,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         initialAttachments: initialAttachments,
                       ),
                     if (widget.controller != null) OpenPigeonPendingGame(controller: widget.controller!),
+                    FormattingBar(
+                      controller: txtController,
+                      focusNode: (controller?.focusNode ?? focusNode)!,
+                      conversation: controller,
+                    ),
                     if (!isChatCreator)
                       Obx(() {
                         if (controller!.pickedAttachments.isNotEmpty && iOS) {
@@ -272,7 +292,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     Obx(() {
                       final chatTitle =
                           chat == null ? null : (ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle());
-                      return TextField(
+                      final field = TextField(
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller?.focusNode ?? focusNode,
                         autocorrect: true,
@@ -280,6 +300,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         scrollPhysics: const CustomBouncingScrollPhysics(),
                         style: context.theme.extension<BubbleText>()!.bubbleText,
                         keyboardType: TextInputType.multiline,
+                        // With the formatting panel up, selection changes would otherwise bring the keyboard back.
+                        // Turning it off again (a tap closes the panel) reopens the input, and the keyboard with it.
+                        readOnly: controller?.showTextFormattingPanel.value ?? false,
                         maxLines: 14,
                         minLines: 1,
                         autofocus: (kIsWeb || kIsDesktop) && !isChatCreator,
@@ -333,78 +356,62 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                 ),
                         ),
                         contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                          final start = editableTextState.textEditingValue.selection.start;
-                          final end = editableTextState.textEditingValue.selection.end;
-                          final text = editableTextState.textEditingValue.text;
-                          final selected = editableTextState.textEditingValue.text.substring(
-                              (start - 1).clamp(0, text.length), (end + 1).clamp(min(1, text.length), text.length));
+                          final selection = editableTextState.textEditingValue.selection;
+                          final touching = txtController.mentionRuns
+                              .where((r) => r.range[0] <= selection.end && r.range[0] + r.range[1] >= selection.start)
+                              .toList();
+                          final mention = touching.length == 1 ? touching.single : null;
 
-                          final toolbar = AdaptiveTextSelectionToolbar.editableText(
-                            editableTextState: editableTextState,
-                          )..buttonItems?.addAllIf(
-                              MentionTextEditingController.escapingRegex.allMatches(selected).length == 1,
-                              [
+                          final items = [
+                            // Mention actions first: what doesn't fit goes to the overflow menu at the end
+                            if (mention != null) ...[
                                 ContextMenuButtonItem(
                                   onPressed: () {
-                                    final TextSelection selection = editableTextState.textEditingValue.selection;
-                                    if (selection.isCollapsed) {
-                                      return;
-                                    }
-                                    String text = editableTextState.textEditingValue.text;
-                                    final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                                    final mentionMatch =
-                                        MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                                    if (mentionMatch == null) return; // Shouldn't happen
-                                    final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                                    int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                                    if (mentionIndex == null) return; // Shouldn't happen
-                                    final mention = controller?.mentionables[mentionIndex];
-                                    final replacement = mention != null ? "@${mention.displayName}" : "";
-                                    text = editableTextState.textEditingValue.text.replaceRange(
-                                        (start - 1).clamp(0, text.length),
-                                        (end + 1).clamp(min(1, text.length), text.length),
-                                        replacement);
-                                    final checkSpace = end + replacement.length - 1;
-                                    final spaceAfter = checkSpace < text.length &&
-                                        text.substring(end + replacement.length - 1, end + replacement.length) == " ";
-                                    (controller?.textController ?? textController).value = TextEditingValue(
-                                        text: text,
-                                        selection: TextSelection.fromPosition(TextPosition(
-                                            offset: selection.baseOffset + replacement.length + (spaceAfter ? 1 : 0))));
+                                    txtController.removeMention(mention);
                                     editableTextState.hideToolbar();
                                   },
                                   label: "Remove Mention",
                                 ),
                                 ContextMenuButtonItem(
                                   onPressed: () async {
-                                    final text = editableTextState.textEditingValue.text;
-                                    final textPart = text.substring(0, (end + 1).clamp(1, text.length));
-                                    final mentionMatch =
-                                        MentionTextEditingController.escapingRegex.allMatches(textPart).lastOrNull;
-                                    if (mentionMatch == null) return; // Shouldn't happen
-                                    final mentionText = textPart.substring(mentionMatch.start, mentionMatch.end);
-                                    int? mentionIndex = int.tryParse(mentionText.substring(1, mentionText.length - 1));
-                                    if (mentionIndex == null) return; // Shouldn't happen
-                                    final mention = controller?.mentionables[mentionIndex];
+                                    // The toolbar's own context dies with the toolbar once the dialog takes focus
+                                    editableTextState.hideToolbar();
                                     if (kIsDesktop || kIsWeb) {
                                       controller?.showingOverlays = true;
                                     }
-                                    final changed = await showCustomMentionDialog(context, mention);
+                                    final current = txtController.text
+                                        .substring(mention.range[0], mention.range[0] + mention.range[1]);
+                                    final changed = await showCustomMentionDialog(
+                                        this.context, txtController.mentionableFor(mention),
+                                        initial: current);
                                     if (kIsDesktop || kIsWeb) {
                                       controller?.showingOverlays = false;
                                     }
-                                    if (!isNullOrEmpty(changed) && mention != null) {
-                                      mention.customDisplayName = changed!;
-                                    }
-                                    final spaceAfter = end < text.length && text.substring(end, end + 1) == " ";
-                                    txtController.selection =
-                                        TextSelection.fromPosition(TextPosition(offset: end + (spaceAfter ? 1 : 0)));
-                                    editableTextState.hideToolbar();
+                                    // The run may have shifted while the dialog was open
+                                    final live = txtController.mentionRuns.firstWhereOrNull((r) =>
+                                        r.attributes?.mention == mention.attributes?.mention &&
+                                        txtController.text.substring(r.range[0], r.range[0] + r.range[1]) == current);
+                                    if (!isNullOrEmpty(changed) && live != null) txtController.renameMention(live, changed!);
                                   },
                                   label: "Custom Mention",
                                 ),
                               ],
-                            );
+                            for (final item in editableTextState.contextMenuButtonItems)
+                              item.type == ContextMenuButtonType.copy || item.type == ContextMenuButtonType.cut
+                                  ? item.copyWith(onPressed: () {
+                                      txtController.rememberSelection();
+                                      item.onPressed?.call();
+                                    })
+                                  : item,
+                            if (!kIsDesktop && controller != null)
+                              ContextMenuButtonItem(
+                                onPressed: () {
+                                  editableTextState.hideToolbar();
+                                  openTextFormattingPanel(controller!);
+                                },
+                                label: "Text Effects",
+                              ),
+                          ];
 
                           // The stock paste item only exists when the clipboard has text, and only pastes text.
                           // Replace it (or add one) with our handler, which handles media and falls back to text.
@@ -416,7 +423,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                 editableTextState.hideToolbar();
                               },
                             );
-                            final items = toolbar.buttonItems!;
                             final pasteIndex =
                                 items.indexWhere((item) => item.type == ContextMenuButtonType.paste);
                             if (pasteIndex == -1) {
@@ -424,7 +430,30 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                             } else {
                               items[pasteIndex] = pasteItem;
                             }
+                          } else {
+                            final pasteIndex =
+                                items.indexWhere((item) => item.type == ContextMenuButtonType.paste);
+                            if (pasteIndex != -1) {
+                              items[pasteIndex] = ContextMenuButtonItem(
+                                type: ContextMenuButtonType.paste,
+                                onPressed: () async {
+                                  editableTextState.hideToolbar();
+                                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                                  if (data?.text == null) return;
+                                  final html = await clipboardHtml();
+                                  txtController.pasteText(
+                                    data!.text!,
+                                    htmlRuns: html == null ? const [] : htmlRuns(html, data.text!),
+                                  );
+                                },
+                              );
+                            }
                           }
+
+                          final toolbar = AdaptiveTextSelectionToolbar.buttonItems(
+                            anchors: editableTextState.contextMenuAnchors,
+                            buttonItems: items,
+                          );
 
                           // Use outerTheme (captured from the real build context) because the
                           // contextMenuBuilder's own `context` parameter shadows the build context
@@ -441,6 +470,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         onTap: () {
                           HapticFeedback.selectionClick();
+                          // The field brings the keyboard back on a tap, in the panel's place
+                          controller?.showTextFormattingPanel.value = false;
                         },
                         onSubmitted: (String value) {
                           controller?.focusNode.requestFocus();
@@ -453,6 +484,18 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         contentInsertionConfiguration:
                             ContentInsertionConfiguration(onContentInserted: onContentCommit),
+                      );
+                      return Stack(
+                        children: [
+                          KeyedSubtree(key: _fieldKey, child: field),
+                          Positioned.fill(
+                            child: TextEffectOverlay(
+                              controller: txtController,
+                              fieldKey: _fieldKey,
+                              style: context.theme.extension<BubbleText>()!.bubbleText,
+                            ),
+                          ),
+                        ],
                       );
                     }),
                   ],
@@ -468,12 +511,14 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       textInput = Shortcuts(
         shortcuts: {
           const SingleActivator(LogicalKeyboardKey.keyV, control: true, includeRepeats: false): const _PasteIntent(),
+          const SingleActivator(LogicalKeyboardKey.keyV, control: true, shift: true, includeRepeats: false):
+              const _PasteIntent(plain: true),
         },
         child: Actions(
           actions: {
-            _PasteIntent: CallbackAction<_PasteIntent>(onInvoke: (_) {
+            _PasteIntent: CallbackAction<_PasteIntent>(onInvoke: (intent) {
               _pasteHandledOnKeyDown = true;
-              clipboardHandler?.handlePasteEvent();
+              clipboardHandler?.handlePasteEvent(plain: intent.plain);
               return null;
             }),
           },
@@ -559,10 +604,41 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         HardwareKeyboard.instance.isControlPressed) {
       final handler = clipboardHandler;
       if (handler != null) {
-        unawaited(handler.handlePasteEvent());
+        unawaited(handler.handlePasteEvent(plain: HardwareKeyboard.instance.isShiftPressed));
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
+    }
+
+    // Ctrl+Shift+V on a hardware keyboard (Ctrl+V is the field's own paste, which keeps formatting)
+    if (!kIsWeb &&
+        Platform.isAndroid &&
+        ev.logicalKey == LogicalKeyboardKey.keyV &&
+        HardwareKeyboard.instance.isControlPressed &&
+        HardwareKeyboard.instance.isShiftPressed &&
+        clipboardHandler != null) {
+      unawaited(clipboardHandler!.handlePasteEvent(plain: true));
+      return KeyEventResult.handled;
+    }
+
+    if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+      final shift = HardwareKeyboard.instance.isShiftPressed;
+      // Let the field copy or cut as usual, with the formatting remembered for a paste
+      if (!shift && (ev.logicalKey == LogicalKeyboardKey.keyC || ev.logicalKey == LogicalKeyboardKey.keyX)) {
+        (controller?.textController ?? textController).rememberSelection();
+      }
+      final style = switch (ev.logicalKey) {
+        LogicalKeyboardKey.keyB when !shift => 'bold',
+        LogicalKeyboardKey.keyI when !shift => 'italic',
+        LogicalKeyboardKey.keyU when !shift => 'underline',
+        LogicalKeyboardKey.keyX when shift => 'strikethrough',
+        _ => null,
+      };
+      // Not in a brand-new chat (no controller yet), which has no formatting for now
+      if (style != null && controller != null) {
+        controller!.textController.toggleStyle(MentionTextEditingController.styleAttributes[style]!);
+        return KeyEventResult.handled;
+      }
     }
 
     if (HardwareKeyboard.instance.isMetaPressed ||
@@ -638,5 +714,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 }
 
 class _PasteIntent extends Intent {
-  const _PasteIntent();
+  const _PasteIntent({this.plain = false});
+
+  /// Ctrl+Shift+V: without the text's formatting
+  final bool plain;
 }

@@ -58,7 +58,7 @@ class TextFieldMatchHelper {
   ) {
     final newEmojiText = textController.text;
 
-    if (isSubject || !newEmojiText.contains("@")) {
+    if (isSubject) {
       controller.mentionMatches.value = [];
       controller.mentionSelectedIndex.value = 0;
       return;
@@ -101,6 +101,23 @@ class TextFieldMatchHelper {
             .toList());
       }
       Logger.info("${allMatches.length} matches found for: $mentionName");
+    }
+
+    // Without an @, 3+ letters at the end of a word that start a participant's name offer the mention too
+    final cursor = textController.selection.start;
+    if (allMatches.isEmpty && cursor >= 0 && textController is MentionTextEditingController) {
+      final word = RegExp(r"(?<!\S)[^\s@]{3,}$").firstMatch(newEmojiText.substring(0, cursor))?.group(0);
+      final atWordEnd = cursor == newEmojiText.length || RegExp(r"\s").hasMatch(newEmojiText[cursor]);
+      if (word != null &&
+          atWordEnd &&
+          !textController.mentionRuns.any((r) => r.range[0] < cursor && r.range[0] + r.range[1] > cursor - word.length)) {
+        final query = word.toLowerCase();
+        allMatches = controller.mentionables
+            .where((e) =>
+                e.displayName.toLowerCase().startsWith(query) ||
+                e.handle.displayName.toLowerCase().split(" ").any((part) => part.startsWith(query)))
+            .toList();
+      }
     }
 
     if (allMatches.isNotEmpty) {

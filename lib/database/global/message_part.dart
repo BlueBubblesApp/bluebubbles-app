@@ -8,7 +8,7 @@ class MessagePart {
     this.subject,
     this.text,
     this.attachments = const [],
-    this.mentions = const [],
+    this.runs = const [],
     this.isUnsent = false,
     this.edits = const [],
     required this.part,
@@ -17,7 +17,7 @@ class MessagePart {
     this.collectionItems,
   }) {
     if (attachments.isEmpty) attachments = [];
-    if (mentions.isEmpty) mentions = [];
+    runs = List.of(runs);
     if (edits.isEmpty) edits = [];
   }
 
@@ -49,7 +49,10 @@ class MessagePart {
   }
 
   List<Attachment> attachments;
-  List<Mention> mentions;
+
+  /// Attributed runs relative to [text], using UTF-16 [offset, length] ranges.
+  /// Mentions and formatting share this source of truth.
+  List<Run> runs;
   bool isUnsent;
   List<MessagePart> edits;
   int part;
@@ -127,30 +130,35 @@ class MessagePart {
         if (!next.isMediaOnlyPart) break;
         groupedAttachments.addAll(next.attachments);
         groupedPartIndices.addAll(List.filled(next.attachments.length, next.part));
-        items.addAll(next.attachments.length == 1
-            ? [next]
-            : next.attachments.map((a) => MessagePart(
-                  part: next.part,
-                  attachments: [a],
-                  shouldRedact: next.shouldRedact,
-                  isUnsent: next.isUnsent,
-                )));
+        items.addAll(
+          next.attachments.length == 1
+              ? [next]
+              : next.attachments.map(
+                  (a) => MessagePart(
+                    part: next.part,
+                    attachments: [a],
+                    shouldRedact: next.shouldRedact,
+                    isUnsent: next.isUnsent,
+                  ),
+                ),
+        );
         j++;
       }
 
       if (groupedAttachments.length > 1) {
-        collapsed.add(MessagePart(
-          attachments: groupedAttachments,
-          // First raw id is the bubble's part id; attachmentPartIndices holds the
-          // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
-          part: current.part,
-          shouldRedact: current.shouldRedact,
-          mentions: const [],
-          edits: const [],
-          isUnsent: current.isUnsent,
-          attachmentPartIndices: groupedPartIndices,
-          collectionItems: items,
-        ));
+        collapsed.add(
+          MessagePart(
+            attachments: groupedAttachments,
+            // First raw id is the bubble's part id; attachmentPartIndices holds the
+            // full span. Trailing chrome uses MessageState.isTrailingMessagePart.
+            part: current.part,
+            shouldRedact: current.shouldRedact,
+            edits: const [],
+            isUnsent: current.isUnsent,
+            attachmentPartIndices: groupedPartIndices,
+            collectionItems: items,
+          ),
+        );
       } else {
         collapsed.add(current);
       }
@@ -182,14 +190,4 @@ class MessagePart {
       attachments.length > 1 &&
       !hasInlineAttachments &&
       attachments.every((a) => a.mimeStart == 'image' || a.mimeStart == 'video');
-}
-
-class Mention {
-  Mention({
-    this.mentionedAddress,
-    this.range = const [],
-  });
-
-  String? mentionedAddress;
-  List<int> range;
 }

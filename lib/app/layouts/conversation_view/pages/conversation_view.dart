@@ -183,20 +183,8 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
 
   void _buildActionsMap() {
     _actionsMap = {
-      OpenChatDetailsIntent: OpenChatDetailsAction(context, widget.chat.guid),
+      if (SettingsSvc.settings.enablePrivateAPI.value) ReplyRecentIntent: ReplyRecentAction(widget.chat.guid),
     };
-
-    if (SettingsSvc.settings.enablePrivateAPI.value) {
-      _actionsMap.addAll({
-        ReplyRecentIntent: ReplyRecentAction(widget.chat.guid),
-        HeartRecentIntent: HeartRecentAction(widget.chat.guid),
-        LikeRecentIntent: LikeRecentAction(widget.chat.guid),
-        DislikeRecentIntent: DislikeRecentAction(widget.chat.guid),
-        LaughRecentIntent: LaughRecentAction(widget.chat.guid),
-        EmphasizeRecentIntent: EmphasizeRecentAction(widget.chat.guid),
-        QuestionRecentIntent: QuestionRecentAction(widget.chat.guid),
-      });
-    }
   }
 
   @override
@@ -288,6 +276,12 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
               }
               if (controller.showGamePicker.value) {
                 controller.showGamePicker.value = false;
+                return;
+              }
+              if (controller.showTextFormattingPanel.value) {
+                // Unfocused first, or the field taking input again brings the keyboard up in the panel's place
+                controller.focusNode.unfocus();
+                controller.showTextFormattingPanel.value = false;
                 return;
               }
               if (LifecycleSvc.isBubble) {

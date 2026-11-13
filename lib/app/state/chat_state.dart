@@ -33,6 +33,8 @@ class ChatState {
   final RxnString subtitle;
   final Rxn<Message> latestMessage;
   final RxnString textFieldText;
+
+  final RxnString textFieldRuns;
   final RxList<String> textFieldAttachments;
   final RxnBool autoSendReadReceipts;
   final RxnBool autoSendTypingIndicators;
@@ -101,6 +103,7 @@ class ChatState {
               : (chat.dbLatestMessage.target?.indicatorToShow ?? MessageStatusIndicator.NONE),
         ),
         textFieldText = RxnString(chat.textFieldText),
+        textFieldRuns = RxnString(chat.textFieldRuns),
         textFieldAttachments = chat.textFieldAttachments.obs,
         autoSendReadReceipts = RxnBool(chat.autoSendReadReceipts),
         autoSendTypingIndicators = RxnBool(chat.autoSendTypingIndicators),
@@ -418,7 +421,8 @@ class ChatState {
     if (latestMessageStatus.value != value) latestMessageStatus.value = value;
   }
 
-  void updateTextFieldTextInternal(String? value) {
+  void updateTextFieldTextInternal(String? value, [String? runs]) {
+    if (textFieldRuns.value != runs) textFieldRuns.value = runs;
     if (textFieldText.value != value) {
       textFieldText.value = value;
     }
