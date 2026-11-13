@@ -1,5 +1,6 @@
 import "dart:math";
 
+import "package:bluebubbles/app/layouts/conversation_view/widgets/message/text/run_text_effects.dart";
 import "package:bluebubbles/helpers/helpers.dart";
 import "package:bluebubbles/database/models.dart";
 import "package:bluebubbles/services/services.dart";
@@ -541,7 +542,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         inserted > 0 &&
         newText.startsWith(oldText.substring(0, _pendingAt)) &&
         newText.endsWith(oldText.substring(_pendingAt))) {
-      for (final attribute in styleAttributes.values) {
+      for (final attribute in [...styleAttributes.values, effectAttribute]) {
         runs = restyle(runs, newText.length, _pendingAt, _pendingAt + inserted, attribute, pending[attribute]);
       }
     }
@@ -602,8 +603,13 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     'strikethrough': '__kIMTextStrikethroughAttributeName',
   };
 
+  static const effectAttribute = '__kIMTextEffectAttributeName';
+
   /// Adds the style [attribute] over the selection, or removes it when all of the selection already has it.
   void toggleStyle(String attribute) => _restyleSelection(attribute, 1, toggle: true);
+
+  /// Puts text effect [id] on the selection, or clears its effect when null.
+  void setEffect(int? id) => _restyleSelection(effectAttribute, id, toggle: false);
 
   /// Formatting chosen for the next typed text at [_pendingAt] (with a collapsed cursor), overriding what it would
   /// otherwise pick up from the run it extends.
@@ -623,16 +629,25 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         const {};
   }
 
-  /// Whether typing would carry formatting forward from the cursor, or a choice for it is pending.
+  /// Whether typing would carry formatting or an effect forward from the cursor, or a choice for it is pending.
   bool get hasActiveFormatting =>
       (_pendingTyping != null && _pendingAt == selection.baseOffset) ||
-      typingAttributes.keys.any(styleAttributes.containsValue);
+      typingAttributes.keys.any((k) => k == effectAttribute || styleAttributes.containsValue(k));
 
   /// Whether all of the selection (or, with a collapsed cursor, the next typed text) has [attribute] set to [value].
   bool selectionHas(String attribute, Object value) {
     if (selection.isCollapsed) return typingAttributes[attribute] == value;
     final (start, end) = _selectionRange();
     return start < end && segments(runs, start, end).every((s) => s.$3[attribute] == value);
+  }
+
+  /// The effect on all of the selection (or the next typed text), or null when there is none or it's mixed.
+  int? get selectionEffect {
+    if (selection.isCollapsed) return typingAttributes[effectAttribute] as int?;
+    final (start, end) = _selectionRange();
+    if (start >= end) return null;
+    final effects = segments(runs, start, end).map((s) => s.$3[effectAttribute]).toSet();
+    return effects.length == 1 ? effects.single as int? : null;
   }
 
   /// The selection, widened to whole mentions: they are styled as a unit.
@@ -783,7 +798,12 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         fontWeight: a.isBold || a.mention != null ? FontWeight.bold : null,
         fontStyle: a.isItalic ? FontStyle.italic : null,
         decoration: decorations.isEmpty ? null : TextDecoration.combine(decorations),
-        color: a.mention != null ? context.theme.colorScheme.primary : null,
+        // TextEffectOverlay draws effect text animated on top of the field
+        color: RunTextEffects.supports(a.textEffect)
+            ? Colors.transparent
+            : a.mention != null
+                ? context.theme.colorScheme.primary
+                : null,
       );
       // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible
       final selectedStyle = runStyle.copyWith(color: context.theme.colorScheme.onPrimary);

@@ -1652,7 +1652,7 @@ class ChatsService {
     final state = getChatState(chat.guid);
     final encodedRuns = runs.isEmpty ? null : jsonEncode(runs.map((r) => r.toMap()).toList());
 
-    if (state != null && state.textFieldText.value == value && state.textFieldRuns == encodedRuns) return;
+    if (state != null && state.textFieldText.value == value && state.textFieldRuns.value == encodedRuns) return;
 
     // Update ChatState first — this is the source of truth for the text field UI.
     state?.updateTextFieldTextInternal(value, encodedRuns);

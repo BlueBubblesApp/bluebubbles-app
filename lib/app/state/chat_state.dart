@@ -34,8 +34,8 @@ class ChatState {
   final Rxn<Message> latestMessage;
   final RxnString textFieldText;
 
-  /// [Chat.textFieldRuns]. Not reactive: only read when a draft is restored.
-  String? textFieldRuns;
+  /// [Chat.textFieldRuns]: the draft's runs as JSON.
+  final RxnString textFieldRuns;
   final RxList<String> textFieldAttachments;
   final RxnBool autoSendReadReceipts;
   final RxnBool autoSendTypingIndicators;
@@ -104,7 +104,7 @@ class ChatState {
               : (chat.dbLatestMessage.target?.indicatorToShow ?? MessageStatusIndicator.NONE),
         ),
         textFieldText = RxnString(chat.textFieldText),
-        textFieldRuns = chat.textFieldRuns,
+        textFieldRuns = RxnString(chat.textFieldRuns),
         textFieldAttachments = chat.textFieldAttachments.obs,
         autoSendReadReceipts = RxnBool(chat.autoSendReadReceipts),
         autoSendTypingIndicators = RxnBool(chat.autoSendTypingIndicators),
@@ -423,7 +423,7 @@ class ChatState {
   }
 
   void updateTextFieldTextInternal(String? value, [String? runs]) {
-    textFieldRuns = runs;
+    if (textFieldRuns.value != runs) textFieldRuns.value = runs;
     if (textFieldText.value != value) {
       textFieldText.value = value;
     }

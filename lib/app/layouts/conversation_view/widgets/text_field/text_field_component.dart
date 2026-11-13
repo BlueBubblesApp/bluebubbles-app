@@ -12,6 +12,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/for
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachments_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/reply_holder.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_suffix.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_overlay.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -151,6 +152,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   bool _showAttachmentPickerLocal = false;
   bool _pasteHandledOnKeyDown = false;
+  final _fieldKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +276,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     Obx(() {
                       final chatTitle =
                           chat == null ? null : (ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle());
-                      return TextField(
+                      final field = TextField(
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller?.focusNode ?? focusNode,
                         autocorrect: true,
@@ -428,6 +430,18 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         },
                         contentInsertionConfiguration:
                             ContentInsertionConfiguration(onContentInserted: onContentCommit),
+                      );
+                      return Stack(
+                        children: [
+                          KeyedSubtree(key: _fieldKey, child: field),
+                          Positioned.fill(
+                            child: TextEffectOverlay(
+                              controller: txtController,
+                              fieldKey: _fieldKey,
+                              style: context.theme.extension<BubbleText>()!.bubbleText,
+                            ),
+                          ),
+                        ],
                       );
                     }),
                   ],

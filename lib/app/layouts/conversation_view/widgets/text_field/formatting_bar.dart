@@ -1,8 +1,10 @@
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
+import 'package:bluebubbles/database/global/attributed_body.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Formatting controls shown above the composer input while text is selected or formatting is active.
+/// Formatting and text effect controls shown above the composer input while text is selected or formatting is
+/// active.
 class FormattingBar extends StatelessWidget {
   const FormattingBar({super.key, required this.controller, required this.focusNode});
 
@@ -24,6 +26,7 @@ class FormattingBar extends StatelessWidget {
         // Also up while typing would carry formatting forward, or new text picks it up unseen
         if (controller.selection.isCollapsed && !controller.hasActiveFormatting) return const SizedBox.shrink();
         final colors = context.theme.colorScheme;
+        final effect = controller.selectionEffect;
 
         Widget button({required Widget child, required bool active, required VoidCallback onPressed}) {
           return TextButton(
@@ -55,6 +58,18 @@ class FormattingBar extends StatelessWidget {
                       active: controller.selectionHas(MentionTextEditingController.styleAttributes[style]!, 1),
                       onPressed: () => controller.toggleStyle(MentionTextEditingController.styleAttributes[style]!),
                       child: Text(label, style: labelStyle),
+                    ),
+                  Container(
+                    width: 1,
+                    height: 18,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    color: colors.outlineVariant,
+                  ),
+                  for (final MapEntry(key: id, value: name) in Attributes.textEffectNames.entries)
+                    button(
+                      active: effect == id,
+                      onPressed: () => controller.setEffect(effect == id ? null : id),
+                      child: Text(name.capitalize!),
                     ),
                 ],
               ),
