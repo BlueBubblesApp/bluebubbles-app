@@ -29,7 +29,7 @@ ObjectBox entities are heavy (lazy-loaded relations, DB context required). Re-qu
 | `muteType` / `muteArgs` | `RxnString` | mute settings |
 | `title` / `displayName` / `subtitle` | `RxnString` | contact name changes |
 | `latestMessage` | `Rxn<Message>` | new message received |
-| `textFieldText` / `textFieldAttachments` | reactive | draft persistence |
+| `textFieldText` / `textFieldAttachments` | reactive | draft persistence; `textFieldRuns` (plain, JSON) holds the draft's mention runs |
 | `isActive` / `isAlive` | `RxBool` | lifecycle (conversation open) |
 
 ## MessageState Observable Fields

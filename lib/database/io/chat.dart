@@ -35,6 +35,9 @@ class Chat {
   bool? autoSendReadReceipts;
   bool? autoSendTypingIndicators;
   String? textFieldText;
+  /// JSON list of the draft's runs over [textFieldText].
+  @Property(uid: 4875992845906556952)
+  String? textFieldRuns;
   List<String> textFieldAttachments = [];
 
   /// ObjectBox ToOne relation to the latest message for O(1) lookup.
@@ -160,6 +163,7 @@ class Chat {
     this.autoSendReadReceipts,
     this.autoSendTypingIndicators,
     this.textFieldText,
+    this.textFieldRuns,
     this.textFieldAttachments = const [],
     this.dateDeleted,
     this.style,
@@ -215,6 +219,7 @@ class Chat {
       // `serverGroupPhotoGuid` when the map is our own `toMap`, `properties` when it came from the server.
       serverGroupPhotoGuid: json["serverGroupPhotoGuid"] ?? groupPhotoGuidInProperties(json["properties"]),
       textFieldText: json["textFieldText"],
+      textFieldRuns: json["textFieldRuns"],
       textFieldAttachments: (json["textFieldAttachments"] as List?)?.cast<String>() ?? const [],
     );
   }
@@ -835,7 +840,10 @@ class Chat {
     _pinIndex.value ??= other._pinIndex.value;
     autoSendReadReceipts ??= other.autoSendReadReceipts;
     autoSendTypingIndicators ??= other.autoSendTypingIndicators;
-    textFieldText ??= other.textFieldText;
+    if (textFieldText == null) {
+      textFieldText = other.textFieldText;
+      textFieldRuns = other.textFieldRuns;
+    }
     if (textFieldAttachments.isEmpty) {
       textFieldAttachments.addAll(other.textFieldAttachments);
     }
@@ -942,6 +950,7 @@ class Chat {
       "knownGroupPhotoGuid": knownGroupPhotoGuid,
       "serverGroupPhotoGuid": serverGroupPhotoGuid,
       "textFieldText": textFieldText,
+      "textFieldRuns": textFieldRuns,
       "textFieldAttachments": textFieldAttachments,
       "dbOnlyLatestMessageDate": dbOnlyLatestMessageDate?.millisecondsSinceEpoch,
       "dbLatestMessageId": dbLatestMessage.targetId,

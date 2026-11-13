@@ -227,9 +227,9 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
           ChatsSvc.activeChat!.controller!.textController.text = widget.initialText!;
         } else if (fakeController.value?.textController.text != null &&
             fakeController.value!.textController.text.isNotEmpty) {
-          ChatsSvc.activeChat!.controller!.textController.text = fakeController.value!.textController.text;
+          ChatsSvc.activeChat!.controller!.textController.copyFrom(fakeController.value!.textController);
         } else if (textController.text.isNotEmpty) {
-          ChatsSvc.activeChat!.controller!.textController.text = textController.text;
+          ChatsSvc.activeChat!.controller!.textController.copyFrom(textController);
         }
 
         fakeController.value = ChatsSvc.activeChat!.controller;
@@ -509,7 +509,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                               }
 
                               final ctrl = fakeController.value!;
-                              ctrl.textController.text = textController.text;
+                              ctrl.textController.copyFrom(textController);
                               ctrl.pickedAttachments.value = List<PlatformFile>.from(widget.initialAttachments);
                               ctrl.replyToMessage = null;
 
@@ -518,6 +518,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                               ctrl.pendingSend = SendData(
                                 attachments: widget.initialAttachments,
                                 text: ctrl.textController.text,
+                                runs: List.of(ctrl.textController.runs),
                                 subject: "",
                                 replyGuid: ctrl.replyToMessage?.message.threadOriginatorGuid ??
                                     ctrl.replyToMessage?.message.guid,

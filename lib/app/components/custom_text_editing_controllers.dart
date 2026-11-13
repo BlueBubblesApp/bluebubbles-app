@@ -17,10 +17,8 @@ class Mentionable {
   Mentionable({required this.handle});
 
   final Handle handle;
-  String? customDisplayName;
 
   String get displayName {
-    if (customDisplayName != null) return customDisplayName!;
     // For handles with a real contact, show first name only. For phone numbers
     // without a contact, show the full formatted address — splitting "+1 (555) 123-4567"
     // by space would yield just "+1" (the country code).
@@ -456,223 +454,202 @@ class SpellCheckTextEditingController extends TextEditingController {
 }
 
 class MentionTextEditingController extends SpellCheckTextEditingController {
-  MentionTextEditingController({
-    super.text,
-    super.focusNode,
-    this.mentionables = const <Mentionable>[],
-  });
-
-  static const escapingChar = "￼";
-  static const zeroWidthSpace = "​";
-  static final escapingRegex = RegExp('$escapingChar\\d+$escapingChar');
+  MentionTextEditingController({super.text, super.focusNode, this.mentionables = const <Mentionable>[]});
 
   List<Mentionable> mentionables;
 
-  void processMentions() => _processMentions(text);
+  /// Attributed runs over [text] in UTF-16 offsets, sorted and non-overlapping.
+  List<Run> runs = [];
 
-  void _processMentions(String text) {
-    final matches = escapingRegex.allMatches(text);
-    Iterable<int> mentionedIndices = matches.map((m) => int.tryParse(text.substring(m.start + 1, m.end - 1))).nonNulls;
-    mentionables.forEachIndexed((i, m) {
-      if (!mentionedIndices.contains(i)) {
-        m.customDisplayName = null;
-      }
-    });
+  Iterable<Run> get mentionRuns => runs.where((r) => r.attributes?.mention != null);
+
+  Mentionable? mentionableFor(Run run) => mentionables.firstWhereOrNull((m) => m.address == run.attributes?.mention);
+
+  void setTextAndRuns(String newText, List<Run> newRuns) {
+    runs = newRuns.where((r) => r.range[0] >= 0 && r.range[0] + r.range[1] <= newText.length).toList()
+      ..sort((a, b) => a.range[0].compareTo(b.range[0]));
+    super.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
   }
 
-  void addMention(String candidate, Mentionable mentionable) {
-    final indexSelection = selection.base.offset;
-    final atIndex = text.substring(0, indexSelection).lastIndexOf("@");
-    final index = mentionables.indexOf(mentionable);
-    if (index == -1 || atIndex == -1) return;
-    List<String> textParts = [
-      text.substring(0, atIndex),
-      text.substring(atIndex, indexSelection),
-      text.substring(indexSelection)
-    ];
-    final addSpace = !textParts[2].startsWith(" ");
-    final replacement = "$escapingChar$index$escapingChar${addSpace ? " " : ""}";
-    text = textParts[0] + textParts[1].replaceFirst(candidate, replacement) + textParts[2];
-    selection = TextSelection.collapsed(offset: indexSelection - candidate.length + replacement.length);
-    processMentions();
+  void copyFrom(MentionTextEditingController other) => setTextAndRuns(other.text, other.runs);
+
+  /// Replaces the "@query" or partly typed name at the cursor. False when there's nothing there.
+  bool addMention(Mentionable mentionable, {String? name}) {
+    final cursor = selection.baseOffset;
+    if (cursor < 0) return false;
+    final start = RegExp(r"@?[^\s@]*$").firstMatch(text.substring(0, cursor))!.start;
+    if (start == cursor) return false;
+    final end = cursor + RegExp(r"^[^\s@]*").firstMatch(text.substring(cursor))!.end;
+    final display = name ?? mentionable.displayName;
+    final addSpace = !text.substring(end).startsWith(" ");
+    _replace(start, end, display + (addSpace ? " " : ""),
+        run: Run(range: [start, display.length], attributes: Attributes(mention: mentionable.address)));
+    return true;
   }
 
-  String get cleansedText {
-    final res = escapingRegex.allMatches(text);
-    List<String> textSplit = <String>[];
-    int start = 0;
-    int end = 0;
-    int index = 0;
-    while (index < res.length) {
-      RegExpMatch elem = res.elementAt(index++);
-      end = elem.start;
-      if (start != end) {
-        textSplit.add(text.substring(start, end));
-      }
-      textSplit.add(text.substring(elem.start, elem.start + 1));
-      textSplit.add(text.substring(elem.start + 1, elem.end - 1));
-      textSplit.add(text.substring(elem.end - 1, elem.end));
-      start = elem.end;
-    }
-    if (start < text.length) {
-      textSplit.add(text.substring(start));
-    }
-    bool flag = false;
-    return textSplit.map((word) {
-      if (word == escapingChar) {
-        flag = !flag;
-        return "";
-      }
-      int? index = flag ? int.tryParse(word) : null;
-      if (index != null) {
-        final mention = mentionables[index];
-        return mention.displayName;
-      }
-      return word;
-    }).join();
+  void removeMention(Run mention) {
+    final start = mention.range[0];
+    final end = start + mention.range[1];
+    runs = runs.where((r) => r != mention).toList();
+    _replace(start, end, "@${text.substring(start, end)}");
+    // Past the following space, or the cursor sits on an "@name" and reopens the mention picker
+    final cursor = selection.baseOffset;
+    if (text.startsWith(" ", cursor)) selection = TextSelection.collapsed(offset: cursor + 1);
   }
 
-  static List<String> splitText(String text) {
-    final res = escapingRegex.allMatches(text);
-    List<String> textSplit = <String>[];
-    int start = 0;
-    int end = 0;
-    int index = 0;
-    while (index < res.length) {
-      RegExpMatch elem = res.elementAt(index++);
-      end = elem.start;
-      if (start != end) {
-        textSplit.add(text.substring(start, end));
-      }
-      textSplit.add(text.substring(elem.start, elem.start + 1));
-      textSplit.add(text.substring(elem.start + 1, elem.end - 1));
-      textSplit.add(text.substring(elem.end - 1, elem.end));
-      start = elem.end;
-    }
-    if (start < text.length) {
-      textSplit.add(text.substring(start));
-    }
-    return textSplit;
+  void renameMention(Run mention, String name) {
+    final start = mention.range[0];
+    runs = runs.where((r) => r != mention).toList();
+    _replace(
+      start,
+      start + mention.range[1],
+      name,
+      run: Run(range: [start, name.length], attributes: mention.attributes),
+    );
+  }
+
+  void _replace(int start, int end, String insert, {Run? run}) {
+    final newText = text.replaceRange(start, end, insert);
+    runs = [...shiftRuns(text, newText, runs, anchor: start), ?run]..sort((a, b) => a.range[0].compareTo(b.range[0]));
+    // super's setter, so these runs aren't shifted a second time
+    super.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + insert.length),
+    );
   }
 
   @override
   set value(TextEditingValue newValue) {
-    String newText = newValue.text;
-    int newOffset = newValue.selection.start;
+    if (runs.isEmpty || newValue.text == text) {
+      super.value = newValue;
+      return;
+    }
+    final anchor = selection.start >= 0 && newValue.selection.start >= 0
+        ? min(selection.start, newValue.selection.start)
+        : null;
+    runs = shiftRuns(text, newValue.text, runs, anchor: anchor);
+    final before = newValue.text;
+    super.value = newValue;
+    // Emoticon and shortcode replacement can rewrite the text on the way in.
+    if (text != before) runs = shiftRuns(before, text, runs);
+  }
 
-    // Need fewer chars for anything bad to happen
-    if (newText.length < text.length) {
-      // Search for the new state in the old state starting from the old selection's end
-      String textSearchPart = text.substring(selection.end);
-      int indexInNew = textSearchPart == "" || newValue.selection.end == -1
-          ? newText.length
-          : newText.indexOf(textSearchPart, newValue.selection.end);
-      if (indexInNew == -1) {
-        // This means that the cursor was behind the deleted portion (user used delete key probably)
-        textSearchPart = text.substring(0, selection.start);
-        indexInNew = textSearchPart == "" ? 0 : newText.indexOf(textSearchPart);
-        indexInNew += textSearchPart.length;
-      }
-
-      indexInNew = min(indexInNew, newText.length);
-
-      if (indexInNew != -1) {
-        // Just in case
-        bool deletingBadMention = false;
-
-        String textPart1 = newText.substring(0, indexInNew);
-        String textPart2 = newText.substring(indexInNew);
-
-        if (MentionTextEditingController.escapingChar.allMatches(textPart1).length % 2 != 0) {
-          final badMentionIndex = textPart1.lastIndexOf(MentionTextEditingController.escapingChar);
-          textPart1 = textPart1.substring(0, badMentionIndex);
-          deletingBadMention = true;
-        }
-        if (MentionTextEditingController.escapingChar.allMatches(textPart2).length % 2 != 0) {
-          final badMentionIndex = textPart2.indexOf(MentionTextEditingController.escapingChar);
-          textPart2 = textPart2.substring(badMentionIndex + 1);
-          deletingBadMention = true;
-        }
-
-        if (deletingBadMention) {
-          newText = textPart1 + textPart2;
-          newOffset = textPart1.length;
-          _processMentions(newText);
-
-          newValue = newValue.copyWith(
-            text: newText,
-            selection: TextSelection.collapsed(offset: newOffset),
-          );
-        }
+  /// [anchor] caps where the edit can start (the cursor): typing "S" before "Sam" otherwise reads as an edit
+  /// inside the mention.
+  @visibleForTesting
+  static List<Run> shiftRuns(String oldText, String newText, List<Run> runs, {int? anchor}) {
+    if (oldText == newText) return runs;
+    final maxCommon = min(oldText.length, newText.length);
+    final maxPrefix = min(maxCommon, anchor ?? maxCommon);
+    var prefix = 0;
+    while (prefix < maxPrefix && oldText.codeUnitAt(prefix) == newText.codeUnitAt(prefix)) {
+      prefix++;
+    }
+    var suffix = 0;
+    while (suffix < maxCommon - prefix &&
+        oldText.codeUnitAt(oldText.length - 1 - suffix) == newText.codeUnitAt(newText.length - 1 - suffix)) {
+      suffix++;
+    }
+    final oldEnd = oldText.length - suffix;
+    final newEnd = newText.length - suffix;
+    final delta = newText.length - oldText.length;
+    final kept = <Run>[];
+    for (final run in runs) {
+      final start = run.range[0];
+      final end = start + run.range[1];
+      if (end <= prefix) {
+        kept.add(run);
+      } else if (start >= oldEnd) {
+        kept.add(Run(range: [start + delta, run.range[1]], attributes: run.attributes));
+      } else if (run.attributes?.mention == null) {
+        final newStart = start < prefix ? start : newEnd;
+        final newRunEnd = end > oldEnd ? end + delta : newEnd;
+        if (newRunEnd > newStart) kept.add(Run(range: [newStart, newRunEnd - newStart], attributes: run.attributes));
       }
     }
+    return kept;
+  }
 
-    super.value = newValue;
+  /// Converts a draft saved in the old format, where a mention was `U+FFFC index U+FFFC` into [mentionables].
+  static (String, List<Run>) parseLegacyDraft(String draft, List<Mentionable> mentionables) {
+    final runs = <Run>[];
+    final out = StringBuffer();
+    var last = 0;
+    for (final match in RegExp('￼(\\d+)￼').allMatches(draft)) {
+      out.write(draft.substring(last, match.start));
+      final mention = mentionables.elementAtOrNull(int.parse(match.group(1)!));
+      if (mention != null) {
+        runs.add(
+          Run(
+            range: [out.length, mention.displayName.length],
+            attributes: Attributes(mention: mention.address),
+          ),
+        );
+        out.write(mention.displayName);
+      }
+      last = match.end;
+    }
+    out.write(draft.substring(last));
+    return (out.toString(), runs);
+  }
+
+  /// Sendable attributed-body runs: the whole string covered, all in message part 0.
+  static List<Run> attributedRuns(String text, List<Run> runs) {
+    if (runs.isEmpty) return const [];
+    final out = <Run>[];
+    var pos = 0;
+    for (final run in runs) {
+      if (run.range[0] > pos) out.add(Run(range: [pos, run.range[0] - pos], attributes: Attributes(messagePart: 0)));
+      out.add(
+        Run(
+          range: run.range,
+          attributes: Attributes(rawAttributes: run.attributes!.rawAttributes, messagePart: 0),
+        ),
+      );
+      pos = run.range[0] + run.range[1];
+    }
+    if (pos < text.length) out.add(Run(range: [pos, text.length - pos], attributes: Attributes(messagePart: 0)));
+    return out;
   }
 
   @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final textSplit = splitText(text);
-    bool flag = false;
-    int mentionIndexLength = 0;
-    return TextSpan(
-      children: textSplit.mapIndexed((idx, word) {
-        int offset = textSplit.slice(0, idx).join("").length;
-
-        if (word == escapingChar) flag = !flag;
-        int? index = flag ? int.tryParse(word) : null;
-        if (index != null) {
-          final mention = mentionables[index];
-          mentionIndexLength = "$index".length;
-          // Mandatory WidgetSpan so that it takes the appropriate char number.
-          return WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Listener(
-              onPointerDown: (PointerDownEvent e) {
-                if (selection.isCollapsed && e.buttons == 2) {
-                  // Right click
-                  selection = TextSelection(baseOffset: offset - 1, extentOffset: offset + word.length + 1);
-                }
-              },
-              child: ShaderMask(
-                blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => LinearGradient(
-                  colors: <Color>[
-                    context.theme.colorScheme.primary.darkenPercent(20),
-                    context.theme.colorScheme.primary.lightenPercent(20)
-                  ],
-                ).createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ),
-                child: Text(
-                  mention.displayName,
-                  style: style!.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          );
-        }
-        if (word == escapingChar) {
-          String text = zeroWidthSpace;
-          if (mentionIndexLength > 1) {
-            text = List.filled(mentionIndexLength, zeroWidthSpace).join();
-            mentionIndexLength = 0;
-          }
-          return TextSpan(text: text, style: style);
-        }
-
-        // Anything beyond this point is not a mention. So fallback to original style.
-        return buildMistakeTextSpans(
-          context: context,
-          chunk: word.replaceAll(escapingChar, zeroWidthSpace),
-          offset: offset,
-          style: style,
+  TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
+    final mentions = mentionRuns.where((r) => r.range[0] + r.range[1] <= text.length).toList();
+    if (mentions.isEmpty) return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+    final bold = (style ?? const TextStyle()).copyWith(fontWeight: FontWeight.bold);
+    final mentionStyle = bold.copyWith(color: context.theme.colorScheme.primary);
+    // The selection highlight is solid primary too (main.dart), so selected mention text inverts to stay visible
+    final selectedStyle = bold.copyWith(color: context.theme.colorScheme.onPrimary);
+    final selStart = selection.isCollapsed ? -1 : selection.start;
+    final selEnd = selection.isCollapsed ? -1 : selection.end;
+    final children = <InlineSpan>[];
+    var pos = 0;
+    for (final mention in mentions) {
+      final start = mention.range[0];
+      final end = start + mention.range[1];
+      if (start > pos) {
+        children.add(
+          buildMistakeTextSpans(context: context, chunk: text.substring(pos, start), offset: pos, style: style),
         );
-      }).toList(),
-    );
+      }
+      final cuts = {start, selStart.clamp(start, end), selEnd.clamp(start, end), end}.toList()..sort();
+      for (var i = 0; i + 1 < cuts.length; i++) {
+        final selected = cuts[i] >= selStart && cuts[i + 1] <= selEnd;
+        children.add(TextSpan(
+          children: buildAppleEmojiTextSpans(
+            text: text.substring(cuts[i], cuts[i + 1]),
+            style: selected ? selectedStyle : mentionStyle,
+          ),
+        ));
+      }
+      pos = end;
+    }
+    if (pos < text.length) {
+      children.add(buildMistakeTextSpans(context: context, chunk: text.substring(pos), offset: pos, style: style));
+    }
+    return TextSpan(style: style, children: children);
   }
 }
