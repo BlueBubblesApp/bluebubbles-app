@@ -1,28 +1,38 @@
 import 'dart:async';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:file_picker/file_picker.dart' show FileType;
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// The desktop composer's `+` menu: a popup list of everything the mobile attachment picker
-/// offers that desktop can do — Files, Photos & Videos, Genmoji (v2 server), Handwritten,
-/// Schedule and Location (not on Linux).
+/// The desktop composer's `+` menu: every supported [TextFieldButton] that isn't already in
+/// the composer row ([inRow]), so the Text Field Buttons setting decides what lives where.
 ///
 /// Wraps the `+` button: [builder] gets a callback that opens or closes the menu. The menu
 /// opens above the button when there's no room below (always, in the composer) and scrolls
 /// when the window is too short for it.
 class DesktopAttachmentMenu extends StatefulWidget {
-  const DesktopAttachmentMenu({super.key, required this.controller, required this.builder});
+  const DesktopAttachmentMenu({super.key, required this.controller, required this.builder, required this.inRow});
 
   final ConversationViewController controller;
+  final List<TextFieldButton> inRow;
   final Widget Function(BuildContext context, VoidCallback toggle) builder;
 
   @override
   State<DesktopAttachmentMenu> createState() => _DesktopAttachmentMenuState();
 }
+
+const Map<TextFieldButton, (IconData, Color)> desktopMenuIcons = {
+  TextFieldButton.Files: (Icons.folder_rounded, Color(0xFF007AFF)),
+  TextFieldButton.Genmoji: (Icons.add_reaction_rounded, Color(0xFFFF2D55)),
+  TextFieldButton.Handwritten: (Icons.draw_rounded, Color(0xFFAF52DE)),
+  TextFieldButton.Schedule: (Icons.schedule_rounded, Color(0xFFFF9500)),
+  TextFieldButton.Location: (Icons.location_on_rounded, Color(0xFF32ADE6)),
+  TextFieldButton.Gif: (Icons.gif_box_rounded, Color(0xFF34C759)),
+  TextFieldButton.Emoji: (Icons.emoji_emotions_rounded, Color(0xFFFFCC00)),
+};
 
 class _DesktopAttachmentMenuState extends State<DesktopAttachmentMenu> {
   final MenuController _menu = MenuController();
@@ -56,44 +66,12 @@ class _DesktopAttachmentMenuState extends State<DesktopAttachmentMenu> {
         ),
       ),
       menuChildren: [
-        _item(
-          icon: Icons.folder_rounded,
-          color: const Color(0xFF007AFF),
-          label: "Files",
-          onPressed: () => _run(() => AttachmentActions.pickFiles(controller)),
-        ),
-        _item(
-          icon: Icons.photo_library_rounded,
-          color: const Color(0xFF5856D6),
-          label: "Photos & Videos",
-          onPressed: () => _run(() => AttachmentActions.pickFiles(controller, type: FileType.media)),
-        ),
-        // v2 (Swift) server only.
-        if (SettingsSvc.getServerDetails().supportsGenmoji)
+        for (final b in TextFieldButton.values.platformSupportedButtons.whereNot(widget.inRow.contains))
           _item(
-            icon: Icons.add_reaction_rounded,
-            color: const Color(0xFFFF2D55),
-            label: "Genmoji",
-            onPressed: () => _run(() => showGenmojiLibraryPopover(context, controller)),
-          ),
-        _item(
-          icon: Icons.draw_rounded,
-          color: const Color(0xFFAF52DE),
-          label: "Handwritten",
-          onPressed: () => _run(() => AttachmentActions.handwritten(context, controller)),
-        ),
-        _item(
-          icon: Icons.schedule_rounded,
-          color: const Color(0xFFFF9500),
-          label: "Schedule",
-          onPressed: () => _run(() => AttachmentActions.schedule(context, controller)),
-        ),
-        if (AttachmentActions.supportsLocation)
-          _item(
-            icon: Icons.location_on_rounded,
-            color: const Color(0xFF32ADE6),
-            label: "Location",
-            onPressed: () => _run(() => AttachmentActions.shareLocation(controller)),
+            icon: desktopMenuIcons[b]!.$1,
+            color: desktopMenuIcons[b]!.$2,
+            label: b.label,
+            onPressed: () => _run(() => AttachmentActions.run(b, context, controller)),
           ),
       ],
       builder: (context, menu, _) => widget.builder(context, () => menu.isOpen ? menu.close() : menu.open()),

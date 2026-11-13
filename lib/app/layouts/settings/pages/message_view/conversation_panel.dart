@@ -192,11 +192,12 @@ class _ConversationPanelState extends State<ConversationPanel> with ThemeHelpers
                       },
                       trailing: const NextButton(),
                     ),
-                  if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                  if (!kIsWeb)
+                  // Android has no configurable buttons: its + opens the attachment sheet
+                  if (kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
+                  if (kIsDesktop)
                     SettingsTile(
                       title: "Text Field Buttons",
-                      subtitle: "Choose which buttons appear next to the message text field, and their order",
+                      subtitle: "Choose which buttons appear next to the message text field and which go in the + menu",
                       onTap: () {
                         NavigationSvc.pushSettings(context, const TextFieldButtonsPanel());
                       },
