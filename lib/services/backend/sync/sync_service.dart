@@ -32,7 +32,6 @@ class SyncService {
   DateTime? _lastIncrementalSyncTimestamp;
 
   // Desktop pulls every server contact with avatars, so incremental syncs refresh them at most daily.
-  // Contacts Management and Troubleshoot can still refresh by hand.
   static const Duration _serverContactSyncInterval = Duration(hours: 24);
   DateTime? _lastServerContactSync;
 
