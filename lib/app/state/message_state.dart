@@ -886,7 +886,9 @@ class MessageState extends StatefulController {
   List<MessagePart> attributedBodyToMessagePart(AttributedBody body) {
     final mainString = body.string;
     final list = <MessagePart>[];
-    body.runs.sort((a, b) => a.range.first.compareTo(b.range.first));
+    final runs = body.runs.where((r) => r.range.length == 2 && r.range[0] >= 0 && r.range[1] > 0 &&
+        r.range[0] + r.range[1] <= mainString.length).toList()
+      ..sort((a, b) => a.range.first.compareTo(b.range.first));
     final inlineGuids = body.inlineRuns.map((e) => e.attributes!.attachmentGuid).toSet();
     final chatGuid = cvController?.chat.guid ?? ChatsSvc.activeChat?.chat.guid;
     Attachment? loadedAttachment(String guid) =>
@@ -894,7 +896,7 @@ class MessageState extends StatefulController {
         (chatGuid == null ? null : maybeFindMessagesSvc(chatGuid)?.struct.getAttachment(guid));
     // Synchronous on purpose: the caller assigns the parts as soon as this returns, so a part found after an await
     // was lost, and later runs of its part were built without it
-    for (final (i, e) in body.runs.indexed) {
+    for (final (i, e) in runs.indexed) {
       if (e.attributes?.messagePart == null) continue;
       final isInline = inlineGuids.contains(e.attributes!.attachmentGuid);
       final attachment = e.isAttachment ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
@@ -908,12 +910,8 @@ class MessageState extends StatefulController {
           existingPart.text = (existingPart.text ?? "") + newText;
         }
         if (inlineAttachment != null) existingPart.attachments.add(inlineAttachment);
-        if (e.hasMention) {
-          existingPart.mentions.add(Mention(
-            mentionedAddress: e.attributes?.mention,
-            range: [currentLength, currentLength + e.range.last],
-          ));
-          existingPart.mentions.sort((a, b) => a.range.first.compareTo(b.range.first));
+        if (!e.isAttachment || inlineAttachment != null) {
+          existingPart.runs.add(Run(range: [currentLength, e.range.last], attributes: e.attributes));
         }
       } else {
         // Not loaded: skipped, as the lost async lookup effectively did, rather than drawn as an empty part
@@ -923,14 +921,7 @@ class MessageState extends StatefulController {
           subject: i == 0 ? message.subject : null,
           text: e.isAttachment && !isInline ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
           attachments: attachment != null ? [attachment] : [],
-          mentions: !e.hasMention
-              ? []
-              : [
-                  Mention(
-                    mentionedAddress: e.attributes?.mention,
-                    range: [0, e.range.last],
-                  )
-                ],
+          runs: e.isAttachment && !isInline ? [] : [Run(range: [0, e.range.last], attributes: e.attributes)],
           part: e.attributes!.messagePart!,
         ));
       }
