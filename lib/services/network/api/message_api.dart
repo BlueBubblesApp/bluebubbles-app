@@ -10,8 +10,11 @@ class MessageApi {
 
   MessageApi(this._svc);
 
-  // Routes that answer only once iMessage has acted: v2 cuts them off at 300s, 1.x worst case is ~3 min
-  Options get _awaitsIMessage => Options(receiveTimeout: const Duration(minutes: 5, seconds: 15));
+  /// How long to wait on a route that answers only once iMessage has acted: v2 cuts them off at 300s, 1.x worst
+  /// case is ~3 min. `chat/new` (which sends the first message) waits the same way.
+  static const awaitsIMessageTimeout = Duration(minutes: 5, seconds: 15);
+
+  Options get _awaitsIMessage => Options(receiveTimeout: awaitsIMessageTimeout);
 
   /// Get the number of messages in the server iMessage DB
   Future<Response> getCount({
