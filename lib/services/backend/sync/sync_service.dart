@@ -35,6 +35,9 @@ class SyncService {
   static const Duration _serverContactSyncInterval = Duration(hours: 24);
   DateTime? _lastServerContactSync;
 
+  /// The server that pull came from. Another server's contacts are pulled at once rather than after the day is up.
+  String? _lastServerContactSyncAddress;
+
   FullSyncManager? _manager;
   FullSyncManager? get fullSyncManager => _manager;
 
@@ -198,10 +201,16 @@ class SyncService {
     if (!kIsDesktop) {
       contactSyncResult = await performContactSyncToHandles();
     } else if (!chatSyncFailed &&
-        (_lastServerContactSync == null || now.difference(_lastServerContactSync!) >= _serverContactSyncInterval)) {
+        (_lastServerContactSync == null ||
+            _lastServerContactSyncAddress != SettingsSvc.settings.serverAddress.value ||
+            now.difference(_lastServerContactSync!) >= _serverContactSyncInterval)) {
       // A failed pull is swallowed in the isolate; a chat sync that reached the server stands in for its success
+      final address = SettingsSvc.settings.serverAddress.value;
       contactSyncResult = await performContactSyncToHandles();
-      if (contactSyncResult) _lastServerContactSync = now;
+      if (contactSyncResult) {
+        _lastServerContactSync = now;
+        _lastServerContactSyncAddress = address;
+      }
     }
     final contactUploadResult = await performContactSyncToServer();
 
