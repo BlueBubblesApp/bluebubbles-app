@@ -112,7 +112,11 @@ class SyncService {
           final messages = await runAsync(() => Database.messages.getMany(chunk).whereType<Message>().toList());
           for (final message in messages) {
             if (message.guid == null) continue;
-            await service.addNewMessage(message);
+            if (service.struct.getMessage(message.guid!) != null) {
+              service.updateMessage(message);
+            } else {
+              await service.addNewMessage(message);
+            }
             if (message.id != null) processedMessageIds.add(message.id!);
           }
         }
@@ -155,14 +159,18 @@ class SyncService {
 
         // Dispatch newly synced messages to any currently active chat view.
         // Skip messages already dispatched by a per-page event.
-        // MessagesService.addNewMessage() is a no-op if the message is already present,
-        // so this is safe even without the skip, but avoiding the call reduces churn.
+        // Existing messages need their receipt/edit state refreshed as well.
         for (final message in syncedMessages) {
           if (message.id != null && processedMessageIds.contains(message.id)) continue;
           final chatGuid = message.chat.target?.guid;
           if (chatGuid == null || message.guid == null) continue;
           if (Get.isRegistered<MessagesService>(tag: chatGuid)) {
-            unawaited(Get.find<MessagesService>(tag: chatGuid).addNewMessage(message));
+            final service = Get.find<MessagesService>(tag: chatGuid);
+            if (service.struct.getMessage(message.guid!) != null) {
+              service.updateMessage(message);
+            } else {
+              await service.addNewMessage(message);
+            }
           }
         }
       }

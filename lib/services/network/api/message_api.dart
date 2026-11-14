@@ -39,12 +39,15 @@ class MessageApi {
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`,
   /// `"attachment.metadata"`, `"attributedBody"`
+  /// [dateField] selects the date compared with [after]/[before] on v2 servers.
+  /// Leave it null for v1 servers.
   Future<Response> query({
     List<String> withQuery = const [],
     List<dynamic> where = const [],
     String sort = "DESC",
     int? before,
     int? after,
+    String? dateField,
     String? chatGuid,
     int offset = 0,
     int limit = 100,
@@ -61,6 +64,7 @@ class MessageApi {
           "sort": sort,
           "before": before,
           "after": after,
+          if (dateField != null) "dateField": dateField,
           "chatGuid": chatGuid,
           "offset": offset,
           "limit": limit,
