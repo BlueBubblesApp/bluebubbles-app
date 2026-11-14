@@ -72,7 +72,22 @@ class _TextFieldButtonsPanelState extends State<TextFieldButtonsPanel> with Them
   /// own background so the preview's band can stay transparent.
   Widget _tiled(Widget child) => ColoredBox(color: tileColor, child: child);
 
-  void _save() => SettingsSvc.settings.setTextFieldButtons(enabled.toList());
+  void _save() => SettingsSvc.settings.setTextFieldButtons(_withUnshown(enabled));
+
+  /// [shown] with the saved buttons this panel can't show put back where they were. Genmoji isn't shown before the
+  /// server's details load, or on a server without it, and an edit that had nothing to do with it shouldn't take it
+  /// out of the row.
+  static List<TextFieldButton> _withUnshown(List<TextFieldButton> shown) {
+    final saved = SettingsSvc.settings.textFieldButtons;
+    final out = [...shown];
+    for (final (i, b) in saved.indexed) {
+      if (b.isPlatformSupported || out.contains(b)) continue;
+      // After the button it followed, or first
+      final before = saved.take(i).lastWhereOrNull(out.contains);
+      out.insert(before == null ? 0 : out.indexOf(before) + 1, b);
+    }
+    return out;
+  }
 
   void _endDrag() {
     if (!mounted || !_dragging) return;
