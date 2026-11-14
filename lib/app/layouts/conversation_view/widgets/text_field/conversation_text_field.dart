@@ -311,6 +311,10 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       if (controller.textController.mentionRuns.isNotEmpty) {
         return showSnackbar("Error", "Mentions are not allowed in scheduled messages!", type: SnackbarType.error);
       }
+      // A scheduled message is sent as plain text, so its formatting would be dropped
+      if (controller.textController.sendableRuns.isNotEmpty) {
+        return showSnackbar("Error", "Formatting is not allowed in scheduled messages!", type: SnackbarType.error);
+      }
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -378,7 +382,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       await controller.send(SendData(
         attachments: controller.pickedAttachments,
         text: text,
-        runs: List.of(controller.textController.runs),
+        runs: controller.textController.sendableRuns,
         subject: controller.subjectTextController.text,
         replyGuid: controller.replyToMessage?.message.threadOriginatorGuid ?? controller.replyToMessage?.message.guid,
         replyPart: controller.replyToMessage?.partIndex,

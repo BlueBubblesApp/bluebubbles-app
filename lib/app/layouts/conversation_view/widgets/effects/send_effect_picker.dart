@@ -48,8 +48,14 @@ void sendEffectAction(
   String screenSelected = "echo";
   final lead = text.length - text.trimLeft().length;
   text = text.trim();
-  final runs = MentionTextEditingController.attributedRuns(
-      text, [for (final r in textRuns) Run(range: [r.range[0] - lead, r.range[1]], attributes: r.attributes)]);
+  // Runs over the trimmed whitespace are cut back to the text, or they'd fall outside it and not be drawn
+  final trimmedRuns = <Run>[];
+  for (final r in textRuns) {
+    final start = max(r.range[0] - lead, 0);
+    final end = min(r.range[0] + r.range[1] - lead, text.length);
+    if (end > start) trimmedRuns.add(Run(range: [start, end - start], attributes: r.attributes));
+  }
+  final runs = MentionTextEditingController.attributedRuns(text, trimmedRuns);
   final message = Message(
     text: text,
     subject: subjectText,

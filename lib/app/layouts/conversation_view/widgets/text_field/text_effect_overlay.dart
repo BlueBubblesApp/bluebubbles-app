@@ -140,6 +140,7 @@ class _RenderEffectGlyphs extends RenderBox {
     }
     if (style != _style || mentionColor != _mentionColor || selectedMentionColor != _selectedMentionColor) {
       _clearPainters();
+      _geometryKey = null;
     }
     _controller = controller;
     _fieldKey = fieldKey;
@@ -212,6 +213,42 @@ class _RenderEffectGlyphs extends RenderBox {
     });
   }
 
+  // Glyph boxes only move when the text, its runs, the field's size or its scroll do, so they're measured once for
+  // each rather than on every animation frame.
+  Object? _geometryKey;
+  List<_RunGeometry?> _geometry = const [];
+
+  /// One entry per run, null for a run with nothing on screen to draw (its place still counts in the stagger).
+  List<_RunGeometry?> _geometryFor(RenderEditable editable, String text, List<Run> runs) {
+    final key = (text, _controller.runs, editable.size, editable.offset.pixels, editable.textScaler);
+    if (key == _geometryKey) return _geometry;
+    _geometryKey = key;
+    return _geometry = [
+      for (final run in runs) _measure(editable, text, run),
+    ];
+  }
+
+  static _RunGeometry? _measure(RenderEditable editable, String text, Run run) {
+    final start = run.range[0].clamp(0, text.length);
+    final end = (run.range[0] + run.range[1]).clamp(start, text.length);
+    final lines = editable
+        .getBoxesForSelection(TextSelection(baseOffset: start, extentOffset: end))
+        .map((b) => b.toRect())
+        .toList();
+    if (lines.isEmpty) return null;
+    final runCenterX = lines.fold(0.0, (sum, r) => sum + r.center.dx) / lines.length;
+    final glyphs = <(String, Rect, int)>[];
+    var i = start;
+    for (final g in text.substring(start, end).characters) {
+      if (g.trim().isNotEmpty) {
+        final boxes = editable.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + g.length));
+        if (boxes.isNotEmpty) glyphs.add((g, boxes.first.toRect(), i));
+      }
+      i += g.length;
+    }
+    return (run, lines, runCenterX, glyphs);
+  }
+
   @override
   void paint(PaintingContext context, Offset offset) {
     final runs = RunTextEffects.orderedRuns(_controller.runs);
@@ -223,26 +260,11 @@ class _RenderEffectGlyphs extends RenderBox {
     canvas.translate(offset.dx, offset.dy);
     canvas.transform(editable.getTransformTo(this).storage);
     canvas.clipRect(Offset.zero & editable.size);
-    for (final (index, run) in runs.indexed) {
+    for (final (index, geometry) in _geometryFor(editable, text, runs).indexed) {
+      if (geometry == null) continue;
+      final (run, lines, runCenterX, glyphs) = geometry;
       final effect = run.attributes!.textEffect!;
       final phase = RunTextEffects.phaseFor(_animation.value, index, runs.length);
-      final start = run.range[0].clamp(0, text.length);
-      final end = (run.range[0] + run.range[1]).clamp(start, text.length);
-      final lines = editable
-          .getBoxesForSelection(TextSelection(baseOffset: start, extentOffset: end))
-          .map((b) => b.toRect())
-          .toList();
-      if (lines.isEmpty) continue;
-      final runCenterX = lines.fold(0.0, (sum, r) => sum + r.center.dx) / lines.length;
-      final glyphs = <(String, Rect, int)>[];
-      var i = start;
-      for (final g in text.substring(start, end).characters) {
-        if (g.trim().isNotEmpty) {
-          final boxes = editable.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + g.length));
-          if (boxes.isNotEmpty) glyphs.add((g, boxes.first.toRect(), i));
-        }
-        i += g.length;
-      }
       for (final (n, (glyph, rect, at)) in glyphs.indexed) {
         final TextEffectPose pose;
         if (phase <= 0 || phase >= 1) {
@@ -275,3 +297,6 @@ class _RenderEffectGlyphs extends RenderBox {
     canvas.restore();
   }
 }
+
+/// A run's line boxes, their center, and each visible grapheme with its box and offset in the text.
+typedef _RunGeometry = (Run, List<Rect>, double, List<(String, Rect, int)>);

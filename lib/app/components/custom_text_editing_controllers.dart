@@ -571,8 +571,24 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     return pieces;
   }
 
-  /// False where formatting isn't offered (a brand-new chat): every paste lands plain.
-  bool allowFormatting = true;
+  /// Whether formatting can be sent from this composer, asked each time since it can change while it's open (the
+  /// Private API switched off, the server swapped). Set by the owner: a conversation checks its chat and server, the
+  /// new-chat composer never formats.
+  bool Function() formattingAllowed = _always;
+  static bool _always() => true;
+
+  /// False where formatting can't be sent: the style and effect commands do nothing, every paste lands plain, and
+  /// [sendableRuns] keeps only mentions.
+  bool get allowFormatting => formattingAllowed();
+
+  /// [runs] as they can be sent: just the mentions where formatting isn't allowed, so a draft formatted before then
+  /// still goes out.
+  List<Run> get sendableRuns => allowFormatting
+      ? List.of(runs)
+      : [
+          for (final run in mentionRuns)
+            Run(range: run.range, attributes: Attributes(mention: run.attributes!.mention)),
+        ];
 
   String? _pasting;
   List<Run> _pastingRuns = const [];
@@ -658,12 +674,16 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   @override
   set value(TextEditingValue newValue) {
     final pending = _pendingTyping;
-    // A paste from anywhere (keyboard clipboard chip, context menu, Ctrl+V) that matches what was copied here
+    // On Android a paste can also come from the keyboard (its clipboard chip), which only shows here as an edit
+    // inserting what was copied. Desktop pastes all go through pasteText. Typing that composes a word (swiping,
+    // dictation) is never one, or swiping a word that was copied would pick up its formatting.
     final clipText = richClipboard?.text;
     final pasted = _pasting ??
-        (clipText != null &&
+        (!kIsDesktop &&
+                clipText != null &&
                 clipText.length > 1 &&
                 selection.start >= 0 &&
+                (!newValue.composing.isValid || newValue.composing.isCollapsed) &&
                 newValue.text == text.replaceRange(selection.start, selection.end, clipText)
             ? clipText
             : null);
@@ -851,6 +871,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   /// With [toggle], removes [attribute] instead when all of the selection already has [value].
   void _restyleSelection(String attribute, Object? value, {required bool toggle}) {
+    if (!allowFormatting) return;
     if (selection.isCollapsed) {
       if (selection.baseOffset < 0) return;
       // Nothing to restyle yet: this sets what the next typed text gets

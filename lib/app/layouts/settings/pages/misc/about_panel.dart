@@ -268,31 +268,6 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                                     ),
                                     DataRow(
                                       cells: <DataCell>[
-                                        DataCell(Text('ALT + G')),
-                                        DataCell(Text('Sync from server')),
-                                      ],
-                                    ),
-                                    DataRow(
-                                      cells: <DataCell>[
-                                        DataCell(Text('CTRL + SHIFT + R')),
-                                        DataCell(Text('Sync from server (Desktop only)')),
-                                      ],
-                                    ),
-                                    DataRow(
-                                      cells: <DataCell>[
-                                        DataCell(Text('CTRL + G')),
-                                        DataCell(Text('Sync from server (Desktop only)')),
-                                      ],
-                                    ),
-                                    DataRow(
-                                      cells: <DataCell>[
-                                        DataCell(Text('CTRL + SHIFT + 1-6')),
-                                        DataCell(Text(
-                                            'Apply reaction to most recent message in the currently selected chat')),
-                                      ],
-                                    ),
-                                    DataRow(
-                                      cells: <DataCell>[
                                         DataCell(Text('CTRL + ARROW DOWN')),
                                         DataCell(Text('Switch to the chat below the currently selected one')),
                                       ],
@@ -319,8 +294,20 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                                     ),
                                     DataRow(
                                       cells: <DataCell>[
-                                        DataCell(Text('CTRL + I')),
-                                        DataCell(Text('Open chat details page')),
+                                        DataCell(Text('CTRL + B / I / U')),
+                                        DataCell(Text('Bold, italic, or underline the selected text, or what you type next')),
+                                      ],
+                                    ),
+                                    DataRow(
+                                      cells: <DataCell>[
+                                        DataCell(Text('CTRL + SHIFT + X')),
+                                        DataCell(Text('Strike through the selected text, or what you type next')),
+                                      ],
+                                    ),
+                                    DataRow(
+                                      cells: <DataCell>[
+                                        DataCell(Text('CTRL + SHIFT + V')),
+                                        DataCell(Text('Paste without formatting')),
                                       ],
                                     ),
                                     DataRow(

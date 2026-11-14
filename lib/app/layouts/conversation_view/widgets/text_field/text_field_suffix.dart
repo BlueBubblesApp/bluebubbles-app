@@ -144,7 +144,7 @@ class _TextFieldSuffixState extends State<TextFieldSuffix> with ThemeHelpers {
                     widget.controller!.chat.guid,
                     widget.sendMessage,
                     widget.textController is MentionTextEditingController
-                        ? (widget.textController as MentionTextEditingController).runs
+                        ? (widget.textController as MentionTextEditingController).sendableRuns
                         : const [],
                   );
                 },

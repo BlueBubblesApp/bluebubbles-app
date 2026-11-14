@@ -103,6 +103,13 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(
     }
   }
   if (!context.mounted) return [];
+  // ML Kit's guesses are only linked when the text really looks like what it says, as before
+  final text = part.text!;
+  linkIndexMatches.removeWhere((e) {
+    if (const {'map', 'date', 'tracking', 'flight'}.contains(e.type)) return false;
+    final matched = text.substring(e.start, e.end);
+    return !_messageUrlRegex.hasMatch(matched) && !matched.isPhoneNumber && !matched.isEmail;
+  });
   return _renderMessageSpans(
     context,
     part,

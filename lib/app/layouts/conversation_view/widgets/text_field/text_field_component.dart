@@ -403,7 +403,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                                       item.onPressed?.call();
                                     })
                                   : item,
-                            if (!kIsDesktop && controller != null)
+                            if (!kIsDesktop && controller != null && txtController.allowFormatting)
                               ContextMenuButtonItem(
                                 onPressed: () {
                                   editableTextState.hideToolbar();
@@ -621,7 +621,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       return KeyEventResult.handled;
     }
 
-    if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+    // The subject field shares this handler, and has no formatting
+    final inMessageField = _fieldFocusNode?.hasFocus ?? false;
+    if (inMessageField && (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed)) {
       final shift = HardwareKeyboard.instance.isShiftPressed;
       // Let the field copy or cut as usual, with the formatting remembered for a paste
       if (!shift && (ev.logicalKey == LogicalKeyboardKey.keyC || ev.logicalKey == LogicalKeyboardKey.keyX)) {
@@ -634,8 +636,8 @@ class TextFieldComponentState extends State<TextFieldComponent> {
         LogicalKeyboardKey.keyX when shift => 'strikethrough',
         _ => null,
       };
-      // Not in a brand-new chat (no controller yet), which has no formatting for now
-      if (style != null && controller != null) {
+      // Not in a brand-new chat (no controller yet), or where formatting can't be sent; the key then does what it did
+      if (style != null && controller != null && controller!.textController.allowFormatting) {
         controller!.textController.toggleStyle(MentionTextEditingController.styleAttributes[style]!);
         return KeyEventResult.handled;
       }

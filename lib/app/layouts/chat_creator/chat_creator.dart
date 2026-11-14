@@ -518,7 +518,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                               ctrl.pendingSend = SendData(
                                 attachments: widget.initialAttachments,
                                 text: ctrl.textController.text,
-                                runs: List.of(ctrl.textController.runs),
+                                runs: ctrl.textController.sendableRuns,
                                 subject: "",
                                 replyGuid: ctrl.replyToMessage?.message.threadOriginatorGuid ??
                                     ctrl.replyToMessage?.message.guid,

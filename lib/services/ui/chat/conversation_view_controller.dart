@@ -98,6 +98,11 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   /// Formatting and text effects, shown below the text field in the keyboard's place (mobile).
   final RxBool showTextFormattingPanel = false.obs;
 
+  /// Whether this chat can send formatted text: formatted text goes out as a multipart message, which needs the
+  /// Private API, an iMessage chat, and a server that sends `textFormatting`.
+  bool get canFormatText =>
+      SettingsSvc.settings.enablePrivateAPI.value && chat.isIMessage && SettingsSvc.serverDetails.supportsTextFormatting;
+
   /// The keyboard's height when the panel last opened, so swapping one for the other doesn't move the field.
   double textFormattingPanelHeight = 300;
   /// The mobile attachment picker's grid is showing the Genmoji library rather than photos.
@@ -185,6 +190,7 @@ class ConversationViewController extends StatefulController with GetSingleTicker
     super.onInit();
 
     textController.mentionables = mentionables;
+    textController.formattingAllowed = () => canFormatText;
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       keyboardOpen = visible;
       if (scrollController.hasClients && scrollController.positions.length == 1) {

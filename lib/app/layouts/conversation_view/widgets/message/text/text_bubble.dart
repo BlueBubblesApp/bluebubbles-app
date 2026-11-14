@@ -50,7 +50,18 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
     _scheduleRunVisibilityCheck();
   }
 
+  /// Only a bubble with effects follows scrolling: every other text bubble would run a check per scrolled frame.
+  void _syncScrollListener() {
+    final position = _hasRunEffects ? Scrollable.maybeOf(context)?.position : null;
+    if (position == _scrollPosition) return;
+    _scrollPosition?.removeListener(_scheduleRunVisibilityCheck);
+    _scrollPosition = position;
+    _scrollPosition?.addListener(_scheduleRunVisibilityCheck);
+  }
+
   void _scheduleRunVisibilityCheck() {
+    // Nothing to start, and nothing running to stop
+    if (!_hasRunEffects && !_runAnimation.isAnimating && _runAnimation.value == 1) return;
     if (_visibilityCheckScheduled) return;
     _visibilityCheckScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,7 +80,8 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
           _runAnimation.duration = RunTextEffects.durationFor(part.runs);
           _runAnimation.repeat();
         }
-      } else {
+      } else if (_runAnimation.isAnimating || _runAnimation.value != 1) {
+        // Setting the value notifies, which repaints, so it's only reset when it isn't at rest already
         _runAnimation.stop();
         _runAnimation.value = 1;
       }
@@ -113,12 +125,7 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final position = Scrollable.maybeOf(context)?.position;
-    if (position != _scrollPosition) {
-      _scrollPosition?.removeListener(_scheduleRunVisibilityCheck);
-      _scrollPosition = position;
-      _scrollPosition?.addListener(_scheduleRunVisibilityCheck);
-    }
+    _syncScrollListener();
     _scheduleRunVisibilityCheck();
     if (_effectWorker == null) {
       final ms = MessageStateScope.maybeOf(context);
@@ -137,6 +144,7 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
   void didUpdateWidget(covariant TextBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.message != widget.message) _wasRunVisible = false;
+    _syncScrollListener();
     _scheduleRunVisibilityCheck();
   }
 

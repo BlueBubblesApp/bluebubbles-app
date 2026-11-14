@@ -103,9 +103,13 @@ class TextFieldMatchHelper {
       Logger.info("${allMatches.length} matches found for: $mentionName");
     }
 
-    // Without an @, 3+ letters at the end of a word that start a participant's name offer the mention too
+    // Without an @, 3+ letters at the end of a word that start a participant's name offer the mention too. Only in a
+    // group: in a 1:1 chat it would pop up for every word that starts the other person's name
     final cursor = textController.selection.start;
-    if (allMatches.isEmpty && cursor >= 0 && textController is MentionTextEditingController) {
+    if (allMatches.isEmpty &&
+        controller.chat.isGroup &&
+        cursor >= 0 &&
+        textController is MentionTextEditingController) {
       final word = RegExp(r"(?<!\S)[^\s@]{3,}$").firstMatch(newEmojiText.substring(0, cursor))?.group(0);
       final atWordEnd = cursor == newEmojiText.length || RegExp(r"\s").hasMatch(newEmojiText[cursor]);
       if (word != null &&

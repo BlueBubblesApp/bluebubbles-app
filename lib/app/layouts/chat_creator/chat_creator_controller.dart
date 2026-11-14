@@ -63,7 +63,8 @@ class ChatCreatorController extends StatefulController {
     super.onInit();
 
     // A brand-new chat has no formatting for now (chat/new sends plain text)
-    textController = MentionTextEditingController(text: initialText, focusNode: messageNode)..allowFormatting = false;
+    textController = MentionTextEditingController(text: initialText, focusNode: messageNode)
+      ..formattingAllowed = () => false;
 
     selectedContacts.addAll(initialSelected);
 
@@ -620,7 +621,7 @@ class ChatCreatorController extends StatefulController {
         ? activeController.value!.textController
         : textController;
     final capturedText = capturedController.text;
-    final capturedRuns = List.of(capturedController.runs);
+    final capturedRuns = capturedController.sendableRuns;
     final capturedAttachments = activeController.value?.pickedAttachments.isNotEmpty == true
         ? activeController.value!.pickedAttachments.toList()
         : List<PlatformFile>.from(initialAttachments);
