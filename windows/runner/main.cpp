@@ -5,6 +5,7 @@
 #include <string>
 
 #include "flutter_window.h"
+#include "gpu_watchdog.h"
 #include "splash_screen.h"
 #include "toast_forwarder.h"
 #include "utils.h"
@@ -14,6 +15,8 @@ auto bdw = bitsdojo_window_configure(BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP);
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  WaitForGpuRecoveryParent();
+
   if (ForwardToastActivationToRunningInstance(kWindowClassName, L"BlueBubbles")) {
     return EXIT_SUCCESS;
   }
@@ -47,6 +50,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
+  StartGpuWatchdog(window.GetHandle());
 
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {
