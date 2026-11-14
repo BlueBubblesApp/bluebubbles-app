@@ -244,7 +244,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       });
     } else {
       localController.debounceEmojiSearch?.cancel();
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
     }
 
@@ -256,7 +256,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       });
     } else {
       localController.debounceMentionSearch?.cancel();
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
     }
   }

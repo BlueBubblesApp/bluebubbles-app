@@ -13,7 +13,7 @@
 - `text_field_emoji_picker_section.dart` — inline emoji picker section
 - `text_field_recording_overlay.dart` — voice message recording overlay UI
 - `voice_message_recorder.dart` — voice message recording logic
-- `picked_attachment.dart` / `picked_attachments_holder.dart` — pending attachment chip + holder
+- `picked_attachment.dart` / `picked_attachments_holder.dart` — pending attachment chip + holder; `ComposerSuggestions` (also in the holder's file) floats the emoji/mention suggestions above the composer through an `OverlayPortal`, so they never change the composer's (animated) height
 - `reply_holder.dart` — selected reply preview above the field
 
 ## Buttons (`buttons/`)

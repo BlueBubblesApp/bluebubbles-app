@@ -241,6 +241,20 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
     return _cachedInline;
   }
 
+  // The draft's runs are decoded once per saved draft, not on every rebuild of the subtitle
+  String? _cachedDraftRunsJson;
+  List<Run> _cachedDraftRuns = const [];
+
+  List<Run> _draftRuns(String? json) {
+    if (json != _cachedDraftRunsJson) {
+      _cachedDraftRunsJson = json;
+      _cachedDraftRuns = json == null
+          ? const []
+          : (jsonDecode(json) as List).map((r) => Run.fromMap((r as Map).cast())).toList();
+    }
+    return _cachedDraftRuns;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -283,9 +297,7 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
       if (hasDraft) {
         final draftBody = hasDraftText ? draftText : 'Attachment';
         final draftRunsJson = chatState.textFieldRuns.value;
-        final draftRuns = hasDraftText && draftRunsJson != null
-            ? (jsonDecode(draftRunsJson) as List).map((r) => Run.fromMap((r as Map).cast())).toList()
-            : const <Run>[];
+        final draftRuns = hasDraftText ? _draftRuns(draftRunsJson) : const <Run>[];
         subtitleSpan = TextSpan(children: [
           TextSpan(
             text: 'Draft: ',

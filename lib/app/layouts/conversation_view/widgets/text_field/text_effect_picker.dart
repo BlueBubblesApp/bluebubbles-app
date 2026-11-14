@@ -138,72 +138,79 @@ class _TextEffectGridState extends State<TextEffectGrid> with SingleTickerProvid
     final bubbleColors = context.theme.extension<BubbleColors>();
     final effects = Attributes.textEffectNames.entries.toList();
     final rows = (effects.length / 2).ceil();
-    return ListenableBuilder(
-      listenable: widget.controller,
-      builder: (context, _) {
-        final selected = widget.controller.selectionEffect;
-        // Effects only go on selected text
-        final enabled = !widget.controller.selection.isCollapsed;
-        Widget tile(int id, String name) {
-          final label = name.capitalize!;
-          final active = selected == id;
-          // Each preview is a received bubble; the chosen one is outlined, since they all share its color
-          final bubble = Material(
-            color: bubbleColors?.receivedBubbleColor ?? colors.surfaceContainerHighest,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: active ? BorderSide(color: colors.primary, width: 2.5) : BorderSide.none,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: !enabled
-                  ? null
-                  : () {
-                      widget.controller.setEffect(active ? null : id);
-                      widget.onPicked?.call();
-                    },
-              child: Center(
-                child: RunTextEffects(
-                  runs: [
-                    Run(
-                      range: [0, label.length],
-                      attributes: Attributes(rawAttributes: {MentionTextEditingController.effectAttribute: id}),
-                    ),
-                  ],
-                  animation: _loop,
-                  child: RichText(
-                    text: TextSpan(
-                      text: label,
-                      style: textStyle.copyWith(color: bubbleColors?.onReceivedBubbleColor ?? colors.onSurface),
+    // Its own layer, so the looping previews repaint only the grid each frame, not the page around it
+    return RepaintBoundary(
+      child: ListenableBuilder(
+        listenable: widget.controller,
+        builder: (context, _) {
+          final selected = widget.controller.selectionEffect;
+          // Effects only go on selected text
+          final enabled = !widget.controller.selection.isCollapsed;
+          Widget tile(int id, String name) {
+            final label = name.capitalize!;
+            final active = selected == id;
+            // Disabled tiles are dimmed by their colors rather than an Opacity, which would add a layer per tile that
+            // the animation repaints every frame
+            Color dim(Color color) => enabled ? color : color.withValues(alpha: color.a * 0.4);
+            // Each preview is a received bubble; the chosen one is outlined, since they all share its color
+            return Material(
+              color: dim(bubbleColors?.receivedBubbleColor ?? colors.surfaceContainerHighest),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: active ? BorderSide(color: colors.primary, width: 2.5) : BorderSide.none,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: !enabled
+                    ? null
+                    : () {
+                        widget.controller.setEffect(active ? null : id);
+                        widget.onPicked?.call();
+                      },
+                child: Center(
+                  child: RunTextEffects(
+                    runs: [
+                      Run(
+                        range: [0, label.length],
+                        attributes: Attributes(rawAttributes: {MentionTextEditingController.effectAttribute: id}),
+                      ),
+                    ],
+                    animation: _loop,
+                    child: RichText(
+                      text: TextSpan(
+                        text: label,
+                        style: textStyle.copyWith(color: dim(bubbleColors?.onReceivedBubbleColor ?? colors.onSurface)),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            );
+          }
+
+          Widget row(int index) => Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, effect) in effects.skip(index * 2).take(2).indexed) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(child: tile(effect.key, effect.value)),
+              ],
+            ],
           );
-          return enabled ? bubble : Opacity(opacity: 0.4, child: bubble);
-        }
 
-        Widget row(int index) => Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, effect) in effects.skip(index * 2).take(2).indexed) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(child: tile(effect.key, effect.value)),
+          return Column(
+            mainAxisSize: widget.tileHeight == null ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              for (var i = 0; i < rows; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                widget.tileHeight == null
+                    ? Expanded(child: row(i))
+                    : SizedBox(height: widget.tileHeight, child: row(i)),
+              ],
             ],
-          ],
-        );
-
-        return Column(
-          mainAxisSize: widget.tileHeight == null ? MainAxisSize.max : MainAxisSize.min,
-          children: [
-            for (var i = 0; i < rows; i++) ...[
-              if (i > 0) const SizedBox(height: 8),
-              widget.tileHeight == null ? Expanded(child: row(i)) : SizedBox(height: widget.tileHeight, child: row(i)),
-            ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

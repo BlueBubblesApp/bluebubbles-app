@@ -48,13 +48,20 @@ class _TextEffectOverlayState extends State<TextEffectOverlay> with SingleTicker
     super.dispose();
   }
 
+  /// Whether the last build had effect runs to draw.
+  bool _drawing = false;
+
   void _onChanged() {
-    if (mounted) setState(() {});
+    // Most text has no effects: then a keystroke has nothing here to redraw, so it doesn't rebuild this
+    if (!mounted) return;
+    final hasEffects = widget.controller.runs.any((r) => RunTextEffects.supports(r.attributes?.textEffect));
+    if (_drawing || hasEffects) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final effects = RunTextEffects.orderedRuns(widget.controller.runs);
+    _drawing = effects.isNotEmpty;
     if (effects.isNotEmpty && TickerMode.valuesOf(context).enabled && !MediaQuery.disableAnimationsOf(context)) {
       final duration = RunTextEffects.durationFor(effects);
       if (_animation.duration != duration || !_animation.isAnimating) {
@@ -65,14 +72,19 @@ class _TextEffectOverlayState extends State<TextEffectOverlay> with SingleTicker
       _animation.stop();
       _animation.value = 0;
     }
-    return IgnorePointer(
-      child: _EffectGlyphs(
-        controller: widget.controller,
-        fieldKey: widget.fieldKey,
-        style: widget.style,
-        mentionColor: Theme.of(context).colorScheme.primary,
-        selectedMentionColor: Theme.of(context).colorScheme.onPrimary,
-        animation: _animation,
+    if (!_drawing) return const SizedBox.shrink();
+    // Its own layer: without one, each animation frame (and each keystroke) repaints everything up to the page's
+    // boundary, not just these glyphs
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: _EffectGlyphs(
+          controller: widget.controller,
+          fieldKey: widget.fieldKey,
+          style: widget.style,
+          mentionColor: Theme.of(context).colorScheme.primary,
+          selectedMentionColor: Theme.of(context).colorScheme.onPrimary,
+          animation: _animation,
+        ),
       ),
     );
   }
@@ -142,6 +154,7 @@ class _RenderEffectGlyphs extends RenderBox {
       _clearPainters();
       _geometryKey = null;
     }
+    if (fieldKey != _fieldKey) _editable = null;
     _controller = controller;
     _fieldKey = fieldKey;
     _style = style;
@@ -180,6 +193,15 @@ class _RenderEffectGlyphs extends RenderBox {
 
   @override
   Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
+
+  RenderEditable? _editable;
+
+  /// The field's [RenderEditable], looked up again only once the one found is gone.
+  RenderEditable? _currentEditable() {
+    final cached = _editable;
+    if (cached != null && cached.attached) return cached;
+    return _editable = _findEditable(_fieldKey.currentContext?.findRenderObject());
+  }
 
   static RenderEditable? _findEditable(RenderObject? node) {
     if (node is RenderEditable) return node;
@@ -252,8 +274,9 @@ class _RenderEffectGlyphs extends RenderBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     final runs = RunTextEffects.orderedRuns(_controller.runs);
-    final editable = _findEditable(_fieldKey.currentContext?.findRenderObject());
-    if (runs.isEmpty || editable == null || !editable.attached || !editable.hasSize) return;
+    if (runs.isEmpty) return;
+    final editable = _currentEditable();
+    if (editable == null || !editable.hasSize) return;
     final text = _controller.text;
     final canvas = context.canvas;
     canvas.save();

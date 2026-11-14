@@ -2,8 +2,18 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:bluebubbles/utils/emoji.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:unicode_emojis/unicode_emojis.dart';
+
+/// An [RxList] emits on every assignment, even of an equal list, so clearing the suggestions with `value = []` on
+/// each keystroke rebuilt them each time. This only assigns when the items change.
+extension RxListSetIfChanged<T> on RxList<T> {
+  void setIfChanged(List<T> items) {
+    if (!listEquals(this, items)) value = items;
+  }
+}
 
 /// Helper class for processing emoji and mention matches in the text field
 class TextFieldMatchHelper {
@@ -17,7 +27,7 @@ class TextFieldMatchHelper {
     final newEmojiText = textController.text;
 
     if (!newEmojiText.contains(":")) {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
       return;
     }
@@ -39,12 +49,12 @@ class TextFieldMatchHelper {
     }
 
     if (allMatches.isNotEmpty) {
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
-      controller.emojiMatches.value = allMatches;
+      controller.emojiMatches.setIfChanged(allMatches);
       controller.emojiSelectedIndex.value = 0;
     } else {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
     }
   }
@@ -59,7 +69,7 @@ class TextFieldMatchHelper {
     final newEmojiText = textController.text;
 
     if (isSubject) {
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
       return;
     }
@@ -125,12 +135,12 @@ class TextFieldMatchHelper {
     }
 
     if (allMatches.isNotEmpty) {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
-      controller.mentionMatches.value = allMatches;
+      controller.mentionMatches.setIfChanged(allMatches);
       controller.mentionSelectedIndex.value = 0;
     } else {
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
     }
   }

@@ -1645,12 +1645,21 @@ class ChatsService {
     _repositionChat(state.chat, immediate: repositionImmediate);
   }
 
+  /// The composer replaces its runs list on every change to it, so the same list is the same runs: a draft saved
+  /// again after only typing plain text reuses the JSON from last time instead of encoding it again.
+  final _encodedDraftRuns = Expando<String>('encodedDraftRuns');
+
+  String? _encodeDraftRuns(List<Run> runs) {
+    if (runs.isEmpty) return null;
+    return _encodedDraftRuns[runs] ??= jsonEncode(runs.map((r) => r.toMap()).toList());
+  }
+
   /// Set chat text field text
   /// ChatState is updated synchronously and is the source of truth for the UI.
   /// The DB write is fire-and-forget so callers never need to await this.
   Future<void> setChatTextFieldText(Chat chat, String? value, {List<Run> runs = const []}) async {
     final state = getChatState(chat.guid);
-    final encodedRuns = runs.isEmpty ? null : jsonEncode(runs.map((r) => r.toMap()).toList());
+    final encodedRuns = _encodeDraftRuns(runs);
 
     if (state != null && state.textFieldText.value == value && state.textFieldRuns.value == encodedRuns) return;
 

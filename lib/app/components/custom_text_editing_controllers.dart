@@ -795,6 +795,8 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
         }
       }
     }
+    // Nothing moved (typing after the last run): the same list, so what's keyed on it (a saved draft's JSON) still holds
+    if (kept.length == runs.length && kept.indexed.every((e) => identical(e.$2, runs[e.$1]))) return runs;
     return kept;
   }
 

@@ -212,6 +212,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (widget.controller != null) ComposerSuggestions(controller: widget.controller!),
                     if (widget.controller != null) ReplyHolder(controller: widget.controller!),
                     if (initialAttachments.isNotEmpty || !isChatCreator || widget.controller != null)
                       PickedAttachmentsHolder(

@@ -18,8 +18,20 @@ final _messageUrlRegex = RegExp(
   r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b',
 );
 
-List<TextEntityMatch> _detectMessageLinks(String text) =>
-    _messageUrlRegex.allMatches(text).map((match) => TextEntityMatch('link', match.start, match.end, null)).toList();
+/// The links found in each part, for the text they were found in. A bubble builds its spans twice (at once, then
+/// enriched) and again on every rebuild, so the URL scan runs once per text instead of each time.
+final _messageLinks = Expando<(String, List<TextEntityMatch>)>('messageLinks');
+
+List<TextEntityMatch> _detectMessageLinks(MessagePart part) {
+  final text = part.text ?? '';
+  final cached = _messageLinks[part];
+  if (cached != null && cached.$1 == text) return cached.$2;
+  final links = List<TextEntityMatch>.unmodifiable(
+    _messageUrlRegex.allMatches(text).map((match) => TextEntityMatch('link', match.start, match.end, null)),
+  );
+  _messageLinks[part] = (text, links);
+  return links;
+}
 
 List<InlineSpan> buildMessageSpans(
   BuildContext context,
@@ -31,7 +43,7 @@ List<InlineSpan> buildMessageSpans(
   context,
   part,
   message,
-  entities: _detectMessageLinks(part.text ?? ''),
+  entities: _detectMessageLinks(part),
   colorOverride: colorOverride,
   hideBodyText: hideBodyText,
 );
@@ -96,10 +108,7 @@ Future<List<InlineSpan>> buildEnrichedMessageSpans(
         }
       }
     } else {
-      List<RegExpMatch> matches = _messageUrlRegex.allMatches(part.text!).toList();
-      for (RegExpMatch match in matches) {
-        linkIndexMatches.add(TextEntityMatch("link", match.start, match.end, null));
-      }
+      linkIndexMatches.addAll(_detectMessageLinks(part));
     }
   }
   if (!context.mounted) return [];
