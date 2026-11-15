@@ -119,7 +119,6 @@ class SendMessageActions {
       chatGuid,
       tempGuid,
       parts,
-      hasAttachments: true,
       effectId: map['effectId'] as String?,
       subject: map['subject'] as String?,
       selectedMessageGuid: map['selectedMessageGuid'] as String?,
