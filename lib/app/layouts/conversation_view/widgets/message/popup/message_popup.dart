@@ -32,6 +32,10 @@ import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/tapback_icon.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/sticker_tapback_image.dart';
+import 'package:bluebubbles/models/library_sticker.dart';
+import 'package:bluebubbles/services/backend/settings/actions/shared_preferences_messaging_actions.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:get/get.dart';
 import 'package:sprung/sprung.dart';
 import 'package:universal_io/io.dart';
@@ -88,6 +92,12 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       chat.handles.firstWhereOrNull((handle) => handle.address == message.handleRelation.target?.address) != null);
   String? selfReaction;
   String? selfEmoji;
+
+  /// Your sticker tapback on this part, shown in the tapback row so it can be taken back
+  Message? selfSticker;
+
+  /// The library sticker [selfSticker] is, when it's one sent from here, so recents don't show it a second time
+  String? _selfStickerIdentifier;
   // Emoji you've reacted with, newest first (not the pickers' typed-emoji recents)
   late final List<String> recentEmojis = PrefsSvc.messaging.getRecentTapbackEmojis(chatGuid: chat.guid);
   String? currentlySelectedReaction = "init";
@@ -144,6 +154,12 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   void initState() {
     super.initState();
     controller.forward();
+    // Recent sticker tapbacks draw from, and send, the library's copies
+    if (SettingsSvc.serverDetails.supportsStickerTapbacks) {
+      StickerLibrarySvc.load().then((_) {
+        if (mounted) setState(() {});
+      });
+    }
     if (iOS) {
       _fitMenu();
     } else {
@@ -164,6 +180,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       if (self != null && !ReactionTypes.isRemoval(self)) {
         selfReaction = self;
         selfEmoji = selfMessage!.associatedMessageEmoji;
+        if (self == ReactionTypes.STICKER) {
+          selfSticker = selfMessage;
+          unawaited(_matchSelfSticker());
+        }
         currentlySelectedReaction = selfReaction;
       }
       setState(() {
@@ -231,8 +251,104 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       .clamp(0, context.height - (narrowScreen ? 200 : 125));
 
   Future<void> _pickEmojiTapback() async {
-    final picked = await showEmojiTapbackPicker(context);
-    if (picked != null && mounted) _sendEmojiTapback(picked);
+    final picked = await showEmojiTapbackPicker(context, stickers: SettingsSvc.serverDetails.supportsStickerTapbacks);
+    if (!mounted) return;
+    switch (picked) {
+      case EmojiTapbackPick(:final emoji):
+        _sendEmojiTapback(emoji);
+      case StickerTapbackPick(:final sticker):
+        await _sendStickerTapback(sticker);
+      case null:
+        break;
+    }
+  }
+
+  static bool _isStickerKey(String recent) =>
+      recent.startsWith(SharedPreferencesMessagingActions.stickerTapbackPrefix);
+
+  /// Recent emoji, and recent stickers the library still has, apart from your current sticker tapback, which the row
+  /// already shows first
+  bool _showRecent(String recent) {
+    if (!_isStickerKey(recent)) return true;
+    final sticker = _recentSticker(recent);
+    return sticker != null && sticker.identifier != _selfStickerIdentifier;
+  }
+
+  Future<void> _matchSelfSticker() async {
+    final attachment = selfSticker?.dbAttachments.firstOrNull;
+    if (attachment == null || !SettingsSvc.serverDetails.supportsStickerTapbacks) return;
+    await StickerLibrarySvc.load();
+    final identifier = await StickerLibrarySvc.identifierOfImage(File(attachment.path));
+    if (identifier != null && mounted) setState(() => _selfStickerIdentifier = identifier);
+  }
+
+  /// The library sticker a recent tapback names, or null for an emoji, or a sticker no longer in the library.
+  LibrarySticker? _recentSticker(String recent) {
+    if (!_isStickerKey(recent) || !SettingsSvc.serverDetails.supportsStickerTapbacks) return null;
+    final id = recent.substring(SharedPreferencesMessagingActions.stickerTapbackPrefix.length);
+    return StickerLibrarySvc.entries.firstWhereOrNull((s) => s.identifier == id);
+  }
+
+  // The size emoji draw at in the row (_emojiTapbackGlyph)
+  Widget _recentStickerGlyph(LibrarySticker sticker) => SizedBox.square(
+        dimension: 26,
+        child: StickerLibrarySvc.cachedThumbnails.contains(sticker.identifier)
+            ? Image.file(StickerLibrarySvc.thumbnailFile(sticker.identifier), fit: BoxFit.contain)
+            : Icon(Icons.sticky_note_2_outlined, size: 20, color: context.theme.colorScheme.outline),
+      );
+
+  /// Reacts with [sticker], replacing your current tapback, and shows it while sending like any tapback.
+  Future<void> _sendStickerTapback(LibrarySticker sticker) async {
+    HapticFeedback.lightImpact();
+    popDetails();
+    unawaited(PrefsSvc.messaging.addRecentTapbackEmoji(
+      SharedPreferencesMessagingActions.stickerTapbackKey(sticker.identifier),
+      chatGuid: chat.guid,
+    ));
+    // Only getting the image can fail here: once queued, a failed send shows on the tapback like any other
+    final Uint8List bytes;
+    try {
+      bytes = await StickerLibrarySvc.imageForSending(sticker);
+    } catch (e, s) {
+      Logger.error("Failed to get a sticker to send", error: e, trace: s, tag: "MessagePopup");
+      showSnackbar("Error", "Couldn't get the sticker", type: SnackbarType.error);
+      return;
+    }
+    await OutgoingMsgHandler.queueStickerTapback(
+      chat: chat,
+      selected: message,
+      part: part.part,
+      bytes: bytes,
+      fileName: "sticker.${sticker.fileExtension}",
+    );
+  }
+
+  /// Takes back your sticker tapback, shown while sending like any tapback. The removal is sent as a sticker too, so
+  /// it needs the image: the attachment's file, or its download when that isn't on disk.
+  Future<void> _removeStickerTapback() async {
+    final attachment = selfSticker?.dbAttachments.firstOrNull;
+    if (attachment == null) return;
+    HapticFeedback.lightImpact();
+    popDetails();
+    final Uint8List bytes;
+    try {
+      final file = File(attachment.path);
+      bytes = await file.exists()
+          ? await file.readAsBytes()
+          : Uint8List.fromList((await HttpSvc.attachment.download(attachment.guid!)).data as List<int>);
+    } catch (e, s) {
+      Logger.error("Failed to get the sticker to remove", error: e, trace: s, tag: "MessagePopup");
+      showSnackbar("Error", "Couldn't remove the sticker", type: SnackbarType.error);
+      return;
+    }
+    await OutgoingMsgHandler.queueStickerTapback(
+      chat: chat,
+      selected: message,
+      part: part.part,
+      bytes: bytes,
+      fileName: attachment.transferName ?? "sticker.png",
+      remove: true,
+    );
   }
 
   /// Sends [emoji] as your tapback, or takes it back when it's already yours, as Messages does.
@@ -372,9 +488,13 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     // Emoji tapbacks need a v2 server and macOS 15. As in Messages: one scrolling row of tapbacks, yours, then recents
     final emojiTapbacks = SettingsSvc.serverDetails.supportsEmojiTapbacks;
     final ownEmoji = selfReaction == ReactionTypes.EMOJI ? selfEmoji : null;
+    // Sticker tapbacks need the same server and macOS as emoji ones
+    final ownSticker = emojiTapbacks && selfSticker != null;
     final tapbackItems = [
       ...ReactionTypes.toList(),
-      if (emojiTapbacks) ...{?ownEmoji, ...recentEmojis},
+      if (ownSticker) _ownStickerItem,
+      // A recent sticker only while the library still has it
+      if (emojiTapbacks) ...{?ownEmoji, ...recentEmojis.where(_showRecent)},
     ];
     final double reactionRowContentWidth = reactionItemWidth * tapbackItems.length + 10;
     // A scrolling row never needs to wrap
@@ -572,13 +692,18 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                   .slice(narrowScreen && index == 1 ? 3 : 0,
                                                       narrowScreen && index == 0 ? 3 : null)
                                                   .map((e) {
-                                                final isEmoji = !ReactionTypes.toList().contains(e);
+                                                final isSticker = e == _ownStickerItem;
+                                                final recentSticker = _recentSticker(e);
+                                                final isEmoji = !isSticker &&
+                                                    recentSticker == null &&
+                                                    !ReactionTypes.toList().contains(e);
                                                 return Padding(
                                                   padding: iOS
                                                       ? const EdgeInsets.all(5.0)
                                                       : const EdgeInsets.symmetric(horizontal: 5),
                                                   child: Material(
-                                                    color: (isEmoji ? e == ownEmoji : currentlySelectedReaction == e)
+                                                    color: (isSticker ||
+                                                            (isEmoji ? e == ownEmoji : currentlySelectedReaction == e))
                                                         ? context.theme.colorScheme.primary
                                                         : Colors.transparent,
                                                     borderRadius: BorderRadius.circular(20),
@@ -588,6 +713,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                       child: InkWell(
                                                         borderRadius: BorderRadius.circular(20),
                                                         onTap: () async {
+                                                          if (isSticker) return _removeStickerTapback();
+                                                          if (recentSticker != null) {
+                                                            return _sendStickerTapback(recentSticker);
+                                                          }
                                                           if (isEmoji) return _sendEmojiTapback(e);
                                                           if (currentlySelectedReaction == e) {
                                                             currentlySelectedReaction = null;
@@ -601,9 +730,23 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                         },
                                                         child: Padding(
                                                           // Emoji ink covers less of its box than the tapback icons do
-                                                          padding: EdgeInsets.all(isEmoji ? 4.5 : 6.5)
+                                                          padding: EdgeInsets.all(
+                                                                  isEmoji || isSticker || recentSticker != null
+                                                                      ? 4.5
+                                                                      : 6.5)
                                                               .add(EdgeInsets.only(right: e == "emphasize" ? 2.5 : 0)),
-                                                          child: isEmoji
+                                                          child: isSticker
+                                                              ? Center(
+                                                                  child: SizedBox.square(
+                                                                    dimension: 26,
+                                                                    child: StickerTapbackImage(
+                                                                        attachment:
+                                                                            selfSticker!.dbAttachments.firstOrNull),
+                                                                  ),
+                                                                )
+                                                              : recentSticker != null
+                                                              ? Center(child: _recentStickerGlyph(recentSticker))
+                                                              : isEmoji
                                                               ? Center(child: _emojiTapbackGlyph(e))
                                                               : iOS
                                                               ? TapbackIcon(e)
@@ -972,6 +1115,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     ];
   }
 }
+
+/// The tapback row's item for your own sticker tapback: not a tapback type or an emoji, so it can't collide with one
+const String _ownStickerItem = '\u0000sticker';
 
 class _CircleClipper extends CustomClipper<Path> {
   const _CircleClipper();

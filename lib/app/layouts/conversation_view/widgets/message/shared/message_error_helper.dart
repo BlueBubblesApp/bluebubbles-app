@@ -2,8 +2,10 @@ import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 /// Helper class for getting error display information
 class ErrorHelper {
@@ -86,6 +88,13 @@ Future<void> retryReaction({
   required Chat chat,
   required Message selected,
 }) async {
+  // A sticker tapback is re-sent with its sticker, read before the failed one (and its file) goes
+  final sticker = ReactionTypes.isStickerTapback(reaction.associatedMessageType)
+      ? reaction.dbAttachments.firstOrNull
+      : null;
+  final stickerFile = sticker == null || kIsWeb ? null : File(sticker.path);
+  final stickerBytes = stickerFile != null && await stickerFile.exists() ? await stickerFile.readAsBytes() : null;
+
   // Remove the original message and notification
   await MessagesSvc(chat.guid).deleteMessage(reaction);
   await NotificationsSvc.clearFailedToSend(chat.id!);
@@ -97,6 +106,17 @@ Future<void> retryReaction({
   }
 
   // Re-send
+  if (stickerBytes != null) {
+    await OutgoingMsgHandler.queueStickerTapback(
+      chat: chat,
+      selected: selected,
+      part: reaction.associatedMessagePart ?? 0,
+      bytes: stickerBytes,
+      fileName: sticker!.transferName ?? 'sticker.png',
+      remove: reaction.associatedMessageType == ReactionTypes.REMOVED_STICKER,
+    );
+    return;
+  }
   OutgoingMsgHandler.queue(
     OutgoingReaction(
       chat: chat,

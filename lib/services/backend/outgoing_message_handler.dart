@@ -14,6 +14,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:universal_io/io.dart';
 
 // ─── Singleton accessor ───────────────────────────────────────────────────────
@@ -188,6 +189,42 @@ class OutgoingMessageHandler {
   /// Returns a [Future] that completes (or errors) when the item's
   /// [OutgoingQueueItem.completer] resolves — i.e. when the HTTP response arrives
   /// or an error is surfaced.
+  /// Reacts to [part] of [selected] with the sticker in [bytes], or with [remove] takes your sticker tapback back.
+  /// Shown while sending like any tapback: the temp reaction carries the sticker.
+  Future<void> queueStickerTapback({
+    required Chat chat,
+    required Message selected,
+    required int part,
+    required Uint8List bytes,
+    required String fileName,
+    bool remove = false,
+  }) {
+    final type = remove ? ReactionTypes.REMOVED_STICKER : ReactionTypes.STICKER;
+    return queue(
+      OutgoingReaction(
+        chat: chat,
+        message: Message(
+          associatedMessageGuid: selected.guid,
+          associatedMessageType: type,
+          associatedMessagePart: part,
+          dateCreated: DateTime.now(),
+          hasAttachments: true,
+          isFromMe: true,
+          handleId: 0,
+        ),
+        selectedMessage: selected,
+        reaction: type,
+        sticker: Attachment(
+          isOutgoing: true,
+          mimeType: mime(fileName) ?? 'image/png',
+          transferName: fileName,
+          totalBytes: bytes.length,
+          bytes: bytes,
+        ),
+      ),
+    );
+  }
+
   Future<void> queue(OutgoingQueueItem item) async {
     // Every item must have a stable temp GUID before prep/retry begins — see
     // [_ensureTempGuid]. Centralized here so individual UI call sites can't
@@ -239,6 +276,7 @@ class OutgoingMessageHandler {
     if (item.message.guid == null) item.message.generateTempGuid();
     if (item is OutgoingAttachment) item.attachment.guid = item.message.guid;
     if (item is OutgoingAppMessage) item.attachment?.guid = item.message.guid;
+    if (item is OutgoingReaction) item.sticker?.guid = item.message.guid;
     if (item is OutgoingMultiAttachment) {
       item.attachments.forEachIndexed((i, a) => a.guid = OutgoingMultiAttachment.tempGuidFor(item.message.guid!, i));
     }
@@ -298,6 +336,7 @@ class OutgoingMessageHandler {
               built!,
               item.reaction,
               clearNotificationsIfFromMe: item.clearNotificationsIfFromMe,
+              sticker: item is OutgoingReaction ? item.sticker : null,
             ),
           );
         }
@@ -346,6 +385,7 @@ class OutgoingMessageHandler {
         isRetry: item.isRetry,
         clearNotificationsIfFromMe: item.clearNotificationsIfFromMe,
         completer: item.completer,
+        sticker: item.sticker,
       );
     }
     if (item is OutgoingMultipartMessage) {
@@ -636,12 +676,22 @@ class OutgoingMessageHandler {
     List<Message> messages,
     String? r, {
     required bool clearNotificationsIfFromMe,
+    Attachment? sticker,
   }) async {
     final List<Message> saved = [];
     for (final message in messages) {
       final existing = Message.findOne(guid: message.guid);
-      final Message hydrated =
-          existing ?? (await c.addMessage(message, clearNotificationsIfFromMe: clearNotificationsIfFromMe)).message;
+      // A sticker tapback's image is on disk before its reaction is saved, so the reaction draws it at once
+      if (existing == null && sticker?.bytes != null && !kIsWeb) {
+        await (await File(sticker!.path).create(recursive: true)).writeAsBytes(sticker.bytes!);
+      }
+      final Message hydrated = existing ??
+          (await c.addMessage(
+            message,
+            clearNotificationsIfFromMe: clearNotificationsIfFromMe,
+            attachments: [?sticker],
+          ))
+              .message;
       saved.add(hydrated);
 
       final msgSvcRegistered = Get.isRegistered<MessagesService>(tag: c.guid);
@@ -812,6 +862,8 @@ class OutgoingMessageHandler {
               partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
               ddScan: SettingsSvc.serverDetails.supportsLinkScan && m.text!.hasUrl,
             )
+          : ReactionTypes.isStickerTapback(r)
+          ? _sendStickerTapback(c, m, selected!, r)
           : SendMessageInterface.sendTapback(
               chatGuid: c.guid,
               selectedMessageText: selected!.text ?? '',
@@ -820,28 +872,43 @@ class OutgoingMessageHandler {
               partIndex: m.associatedMessagePart,
               emoji: ReactionTypes.isEmojiTapback(r) ? m.associatedMessageEmoji : null,
             ),
-      onSuccess: (data) => _finalizeOutgoingSuccess(
-        c, tempGuid, data,
-        // Reactions live in the parent's associatedMessages list, not as
-        // top-level MessagesService entries.  Once the GUID is confirmed,
-        // explicitly update the parent so the badge reflects the real reaction.
-        onExtra: r != null
-            ? (confirmed) async {
-                if (confirmed.isReaction) {
-                  final parentState =
-                      maybeFindMessagesSvc(c.guid)?.getMessageStateIfExists(confirmed.associatedMessageGuid!);
-                  if (parentState != null) {
-                    parentState.updateAssociatedMessageInternal(confirmed, tempGuid: tempGuid);
-                  } else {
-                    Logger.warn(
-                      'Parent MessageState not found for ${confirmed.associatedMessageGuid} when updating reaction',
-                      tag: _tag,
-                    );
+      onSuccess: (data) async {
+        // A sticker tapback's attachment takes its real GUID too
+        if (r != null && ReactionTypes.isStickerTapback(r)) {
+          final attachments = ((data['data']?['attachments'] as List?) ?? const [])
+              .whereType<Map>()
+              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()));
+          for (final a in attachments) {
+            await _matchAttachmentWithExisting(c, tempGuid, a);
+          }
+        }
+        await _finalizeOutgoingSuccess(
+          c, tempGuid, data,
+          // Reactions live in the parent's associatedMessages list, not as
+          // top-level MessagesService entries.  Once the GUID is confirmed,
+          // explicitly update the parent so the badge reflects the real reaction.
+          onExtra: r != null
+              ? (confirmed) async {
+                  if (confirmed.isReaction) {
+                    // The saved sticker tapback links its sticker; the server's copy has no dbAttachments
+                    if (ReactionTypes.isStickerTapback(r)) {
+                      confirmed = Message.findOne(guid: confirmed.guid) ?? confirmed;
+                    }
+                    final parentState =
+                        maybeFindMessagesSvc(c.guid)?.getMessageStateIfExists(confirmed.associatedMessageGuid!);
+                    if (parentState != null) {
+                      parentState.updateAssociatedMessageInternal(confirmed, tempGuid: tempGuid);
+                    } else {
+                      Logger.warn(
+                        'Parent MessageState not found for ${confirmed.associatedMessageGuid} when updating reaction',
+                        tag: _tag,
+                      );
+                    }
                   }
                 }
-              }
-            : null,
-      ),
+              : null,
+        );
+      },
       onError: (error, stack) => _finalizeOutgoingFailure(
         c, m, tempGuid,
         logMessage: r == null ? 'Failed to send message' : 'Failed to send reaction',
@@ -860,6 +927,23 @@ class OutgoingMessageHandler {
             : null,
       ),
     );
+  }
+
+  /// A sticker tapback, or its removal, sends the sticker image itself: the temp reaction's attachment.
+  Future<Map<String, dynamic>> _sendStickerTapback(Chat c, Message m, Message selected, String r) async {
+    final sticker = m.dbAttachments.firstOrNull;
+    final file = sticker == null || kIsWeb ? null : File(sticker.path);
+    if (file == null || !await file.exists()) throw Exception('This sticker tapback has no sticker to send');
+    final response = await HttpSvc.sticker.send(
+      chatGuid: c.guid,
+      messageGuid: selected.guid!,
+      partIndex: m.associatedMessagePart ?? 0,
+      bytes: await file.readAsBytes(),
+      fileName: sticker!.transferName ?? 'sticker.png',
+      tapback: true,
+      remove: r == ReactionTypes.REMOVED_STICKER,
+    );
+    return (response.data as Map).cast<String, dynamic>();
   }
 
   /// Sends a multipart (mention / mixed-content) message.
@@ -1410,7 +1494,11 @@ class OutgoingMessageHandler {
 
   /// Why tapback [type] on [m] can't be sent, or null if it can.
   static String? _unsendableTapbackReason(String type, Message m) {
-    if (ReactionTypes.isStickerTapback(type)) return "Sticker tapbacks can't be sent from here";
+    if (ReactionTypes.isStickerTapback(type)) {
+      return SettingsSvc.serverDetails.supportsStickerTapbacks
+          ? null
+          : "Sticker tapbacks need a v2 server on macOS 15 or newer";
+    }
     if (!ReactionTypes.isEmojiTapback(type)) return null;
     if (isNullOrEmpty(m.associatedMessageEmoji)) return "This emoji tapback has no emoji";
     if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return "Emoji tapbacks need a v2 server on macOS 15 or newer";

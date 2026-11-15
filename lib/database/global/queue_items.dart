@@ -59,6 +59,10 @@ class OutgoingReaction extends OutgoingQueueItem {
   @override
   bool clearNotificationsIfFromMe;
 
+  /// A sticker tapback's image (its removal's too), saved with the temp reaction so it draws while sending. Shares
+  /// the message's temp GUID.
+  Attachment? sticker;
+
   OutgoingReaction({
     super.completer,
     required super.chat,
@@ -67,6 +71,7 @@ class OutgoingReaction extends OutgoingQueueItem {
     required this.reaction,
     this.isRetry = false,
     this.clearNotificationsIfFromMe = true,
+    this.sticker,
   }) : super(type: QueueType.sendReaction);
 }
 
