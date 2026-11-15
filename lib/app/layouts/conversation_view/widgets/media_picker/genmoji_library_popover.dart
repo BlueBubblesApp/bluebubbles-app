@@ -27,6 +27,8 @@ Future<void> showGenmojiLibraryPopover(BuildContext anchorContext, ConversationV
       ? Rect.fromLTWH(_margin, overlayBox.size.height - _margin, 0, 0)
       : anchorBox.localToGlobal(Offset.zero, ancestor: overlayBox) & anchorBox.size;
 
+  // showGeneralDialog doesn't carry the conversation's Theme to the root navigator like showDialog does
+  final themes = InheritedTheme.capture(from: anchorContext, to: navigator.context);
   unawaited(GenmojiLibrarySvc.sync());
   controller.showingOverlays = true;
   try {
@@ -50,7 +52,7 @@ Future<void> showGenmojiLibraryPopover(BuildContext anchorContext, ConversationV
               bottom: bottom,
               width: width,
               height: height,
-              child: _GenmojiLibraryPopover(controller: controller),
+              child: themes.wrap(_GenmojiLibraryPopover(controller: controller)),
             ),
           ],
         );

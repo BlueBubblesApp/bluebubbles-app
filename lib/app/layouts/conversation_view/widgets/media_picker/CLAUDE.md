@@ -8,8 +8,8 @@ UI for selecting media files to attach before sending a message.
 |------|---------|
 | `text_field_attachment_picker.dart` | Bottom-sheet picker that browses the photo library and recent files; tapping an item adds it to the composer draft |
 | `attachment_picker_file.dart` | Renders a single file/photo thumbnail item inside the picker |
-| `attachment_actions.dart` | `AttachmentActions` — the shared "add something" handlers (Files, Photos & Videos, Handwritten, Schedule, Location, Genmoji attach/create/delete). Both the mobile picker and the desktop `+` menu call these; add new actions here, not in either UI |
-| `desktop_attachment_menu.dart` | `DesktopAttachmentMenu` — desktop's `+` button is a `MenuAnchor` popup (opens upward, scrolls when short) listing the desktop-capable actions. Desktop has no attachment sheet |
+| `attachment_actions.dart` | `AttachmentActions` — the shared "add something" handlers (Files, Handwritten, Schedule, Location, Genmoji attach/create/delete). Both the mobile picker and the desktop `+` menu call these, and `run()` dispatches a `TextFieldButton` for the row and menu; add new actions here, not in either UI |
+| `desktop_attachment_menu.dart` | `DesktopAttachmentMenu` — desktop's `+` button is a `MenuAnchor` popup (opens upward, scrolls when short) listing every supported `TextFieldButton` not already in the composer row, so the Text Field Buttons setting decides what goes where. Desktop has no attachment sheet |
 | `genmoji_dialog.dart` | Skin-aware Genmoji creator (prompt → nebula while generating → Discard / New / Attach); checks `genmoji/status` on open. Opened by `AttachmentActions.createGenmoji` |
 | `genmoji_library_tile.dart` | `GenmojiLibraryTile` (cached thumbnail, in-draft ring, download spinner) and `GenmojiCreateTile` (the "New" tile), shared by both library UIs |
 | `genmoji_library_popover.dart` | Desktop Genmoji library: searchable grid anchored above `+`; click attaches and closes, right-click → Delete, "New" opens the creator |

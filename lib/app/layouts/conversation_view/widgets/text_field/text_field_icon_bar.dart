@@ -1,20 +1,16 @@
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/desktop_attachment_menu.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/conversation_text_field_local_controller.dart';
-import 'package:bluebubbles/database/io/klipy.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:klipy_flutter/klipy_flutter.dart';
 import 'package:universal_io/io.dart';
 
 /// Left-side icon buttons in the conversation text field row.
@@ -36,8 +32,6 @@ class TextFieldIconBar extends StatelessWidget {
 
   Chat get _chat => controller.chat;
 
-  bool get _iOS => SettingsSvc.settings.skin.value == Skins.iOS;
-
   bool get _showAttachmentPicker => controller.showAttachmentPicker.value;
 
   @override
@@ -46,17 +40,14 @@ class TextFieldIconBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            _attachmentButton(context),
-            ...SettingsSvc.settings.textFieldButtons.platformSupportedButtons.map((b) => _build(context, b)),
+            if (kIsDesktop && SettingsSvc.settings.textFieldButtons.leavesMenuEmpty)
+              const SizedBox(width: 6)
+            else
+              _attachmentButton(context),
+            ...SettingsSvc.settings.textFieldButtons.platformSupportedButtons.map(_button),
           ],
         ));
   }
-
-  Widget _build(BuildContext context, TextFieldButton button) => switch (button) {
-        TextFieldButton.Gif => _gifButton(context),
-        TextFieldButton.Emoji => _emojiButton(context),
-        TextFieldButton.Location => _locationButton(context),
-      };
 
   Widget _attachmentButton(BuildContext context) {
     final hasBackground = ChatsSvc.getChatState(controller.chat.guid)?.hasCustomWallpaper ?? false;
@@ -83,7 +74,11 @@ class TextFieldIconBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: kIsDesktop
           // Desktop has no attachment sheet: `+` opens a menu of the same actions instead.
-          ? DesktopAttachmentMenu(controller: controller, builder: (_, toggle) => button(toggle))
+          ? DesktopAttachmentMenu(
+              controller: controller,
+              inRow: SettingsSvc.settings.textFieldButtons,
+              builder: (_, toggle) => button(toggle),
+            )
           : button(() {
               if (kIsWeb) {
                 showBBDialog(
@@ -135,113 +130,12 @@ class TextFieldIconBar extends StatelessWidget {
     );
   }
 
-  Widget _gifButton(BuildContext context) => IconButton(
-              icon: Icon(Icons.gif, color: context.theme.colorScheme.outline, size: 28),
-              onPressed: () async {
-                if (kIsDesktop || kIsWeb) {
-                  controller.showingOverlays = true;
-                }
-                KlipyClient klipy = KlipyClient(apiKey: kIsWeb ? KLIPY_API_KEY : dotenv.get('KLIPY_API_KEY'));
-                TextEditingController klipyController = TextEditingController();
-                FocusNode focus = FocusNode();
-                Future<KlipyResultObject?> resultFuture = klipy.showAsBottomSheet(
-                  maxExtent: 0.8,
-                  minExtent: 0.5,
-                  debounce: const Duration(seconds: 1),
-                  context: context,
-                  searchFieldController: klipyController,
-                  // Copied and slightly modified from source, just so I can autofocus
-                  searchFieldWidget: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        TextField(
-                          focusNode: focus,
-                          controller: klipyController,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.fromLTRB(28, 5, 32, 7),
-                            filled: true,
-                            hintStyle: const KlipySearchFieldStyle().hintStyle,
-                            hintText: "Search KLIPY",
-                            isCollapsed: true,
-                            isDense: true,
-                          ),
-                          style: context.theme.textTheme.bodyMedium!,
-                        ),
-                        const Positioned(
-                          left: 4,
-                          child: Icon(
-                            Icons.search,
-                            color: Color(0xFF8A8A86),
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  style: KlipyStyle(
-                    color: context.theme.colorScheme.surfaceContainerHighest,
-                    attributionStyle: KlipyAttributionStyle(brightnes: context.theme.brightness),
-                    tabBarStyle: KlipyTabBarStyle(
-                      decoration: BoxDecoration(
-                          color: context.theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8)),
-                      indicator: BoxDecoration(
-                        color: context.theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      labelColor: context.theme.colorScheme.onSurface,
-                      unselectedLabelColor: context.theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                );
-                focus.requestFocus();
-                KlipyResultObject? result = await resultFuture;
-                if (kIsDesktop || kIsWeb) {
-                  controller.showingOverlays = false;
-                }
-                final selectedGif = result?.media.tinyGif ?? result?.media.tinyGifTransparent;
-                if (result != null && selectedGif != null) {
-                  final response = await HttpSvc.downloadFromUrl(selectedGif.url);
-                  if (response.statusCode == 200) {
-                    try {
-                      final Uint8List data = response.data;
-                      controller.pickedAttachments.add(PlatformFile(
-                        path: null,
-                        name: "${result.id}.gif",
-                        size: data.length,
-                        bytes: data,
-                      ));
-                      return;
-                    } catch (e, s) {
-                      Logger.warn("Failed to attach GIF from picker", error: e, trace: s, tag: 'TextFieldIconBar');
-                    }
-                  }
-                }
-              });
-
-  Widget _emojiButton(BuildContext context) => IconButton(
-        icon: Icon(_iOS ? CupertinoIcons.smiley_fill : Icons.emoji_emotions,
-            color: context.theme.colorScheme.outline, size: 28),
-        onPressed: () {
-          controller.showEmojiPicker.value = !controller.showEmojiPicker.value;
-          (controller.editing.lastOrNull?.controller.focusNode ?? controller.lastFocusedNode).requestFocus();
-        },
-      );
-
-  Widget _locationButton(BuildContext context) => IconButton(
-        icon: Icon(_iOS ? CupertinoIcons.location_solid : Icons.location_on_outlined,
-            color: context.theme.colorScheme.outline, size: 28),
-        onPressed: () async {
-          await Share.location(_chat);
-        },
+  Widget _button(TextFieldButton b) => Builder(
+        // Own context so the Genmoji popover anchors on this button
+        builder: (context) => IconButton(
+          tooltip: b.label,
+          icon: Icon(b.icon, color: context.theme.colorScheme.outline, size: 28),
+          onPressed: () => AttachmentActions.run(b, context, controller),
+        ),
       );
 }
