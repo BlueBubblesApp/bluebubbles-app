@@ -31,7 +31,8 @@ void closeChatPeek() => _peekNavigator.currentState?.maybePop();
 /// route cancels every pointer that navigator is tracking: the finger still holding the chat would lose its drag. The
 /// view's own pops land on that navigator, so they still just close the peek.
 Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
-  if (_peekNavigator.currentState != null) return;
+  // Not in tablet mode, where the chat opens beside the list anyway, as on desktop.
+  if (_peekNavigator.currentState != null || NavigationSvc.isTabletMode(context)) return;
   HapticFeedback.mediumImpact();
   final messages = Chat.getMessages(c, getDetails: true).where((e) => !e.isReaction).toList();
   final peek = PageRouteBuilder<void>(
@@ -123,8 +124,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
   @override
   void initState() {
     super.initState();
-    ChatsSvc.setActiveChatSync(widget.chat, clearNotifications: false);
-    ChatsSvc.activeChat!.controller = cvController;
 
     // Initialize messages service with message states for proper reactivity
     initializeMessagesService(
