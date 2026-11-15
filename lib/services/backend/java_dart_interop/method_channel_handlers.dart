@@ -133,11 +133,10 @@ class MethodChannelHandlers {
   ///
   /// Returns false when there's still no chat to route the message to, so the push is retried.
   Future<bool> _handlePushedMessage(MessageEventType type, Map<String, dynamic> data) async {
-    // Only a live or connecting socket can deliver. With the server unreachable, waiting and fetching would just delay
-    // the push copy by the API timeout.
-    final socketExpected = !service.headless &&
-        SocketSvc.connectionDesired &&
-        const [SocketState.connected, SocketState.connecting, SocketState.reconnecting].contains(SocketSvc.state.value);
+    // Only a connected socket can have delivered it. While connecting the server is often unreachable, so waiting and
+    // fetching would just delay the push copy by the API timeout.
+    final socketExpected =
+        !service.headless && SocketSvc.connectionDesired && SocketSvc.state.value == SocketState.connected;
     var fromUpdate = false;
     if (socketExpected || isNullOrEmpty(data['chats'])) {
       final pushed = Message.fromMap(data);
