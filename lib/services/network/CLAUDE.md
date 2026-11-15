@@ -19,6 +19,7 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` | `getDevices`, `refreshDevices`, `getFriends`, `refreshFriends`, `getAccountInfo`, `getAccountContact`, `setAccountAlias` |
 | `firebase` | `FirebaseApi` | `api/firebase_api.dart` | `getFirebaseProjects`, `getGoogleInfo`, `getServerUrlRTDB`, `getServerUrlCF`, `setRestartDateCF` |
 | `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` | `status`, `create`, `library` (ETag → null on 304), `libraryImages` (≤50, ≤320px), `libraryImage`, `deleteFromLibrary` — **v2 only**, gate on `ServerDetails.supportsGenmoji`; UI goes through `GenmojiLibrarySvc` for the library |
+| `sticker` | `StickerApi` | `api/sticker_api.dart` | `library` (all pages), `image` (full size or `thumbnail`), `send` (`message/sticker`, optional `tapback`/`remove`). **v2 only**; sticker tapbacks gate on `ServerDetails.supportsStickerTapbacks` |
 
 **Core utilities (on `HttpService` directly):**
 - `runApiGuarded()` — wraps every call; handles retries on 502, propagates errors

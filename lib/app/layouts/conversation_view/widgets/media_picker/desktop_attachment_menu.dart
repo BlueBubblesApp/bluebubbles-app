@@ -37,6 +37,7 @@ class DesktopAttachmentMenu extends StatefulWidget {
 const Map<TextFieldButton, (IconData, Color)> desktopMenuIcons = {
   TextFieldButton.Files: (Icons.folder_rounded, Color(0xFF007AFF)),
   TextFieldButton.Genmoji: (Icons.add_reaction_rounded, Color(0xFFFF2D55)),
+  TextFieldButton.Stickers: (Icons.sticky_note_2_rounded, Color(0xFF5856D6)),
   TextFieldButton.Handwritten: (Icons.draw_rounded, Color(0xFFAF52DE)),
   TextFieldButton.Schedule: (Icons.schedule_rounded, Color(0xFFFF9500)),
   TextFieldButton.Location: (Icons.location_on_rounded, Color(0xFF32ADE6)),

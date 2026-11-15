@@ -109,6 +109,9 @@ class ConversationViewController extends StatefulController with GetSingleTicker
   /// Lives here so the conversation view's back handler can step back to photos before it
   /// closes the picker. The picker resets it to false each time it opens.
   final RxBool showGenmojiLibrary = false.obs;
+
+  /// The same, for the Mac's sticker library. At most one of the two is set.
+  final RxBool showStickerLibrary = false.obs;
   RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;

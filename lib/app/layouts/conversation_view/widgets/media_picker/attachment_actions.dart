@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/database/io/klipy.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
@@ -64,6 +65,7 @@ class AttachmentActions {
       switch (button) {
         TextFieldButton.Files => pickFiles(controller),
         TextFieldButton.Genmoji => showGenmojiLibraryPopover(context, controller),
+        TextFieldButton.Stickers => showStickerLibrary(context),
         TextFieldButton.Handwritten => handwritten(context, controller),
         TextFieldButton.Schedule => schedule(context, controller),
         TextFieldButton.Location => shareLocation(controller),

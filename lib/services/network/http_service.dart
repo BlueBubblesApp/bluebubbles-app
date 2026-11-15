@@ -11,6 +11,7 @@ import 'package:bluebubbles/services/network/api/fcm_api.dart';
 import 'package:bluebubbles/services/network/api/icloud_api.dart';
 import 'package:bluebubbles/services/network/api/firebase_api.dart';
 import 'package:bluebubbles/services/network/api/genmoji_api.dart';
+import 'package:bluebubbles/services/network/api/sticker_api.dart';
 import 'package:bluebubbles/services/network/api/handle_api.dart';
 import 'package:bluebubbles/services/network/api/message_api.dart';
 import 'package:bluebubbles/services/network/api/server_api.dart';
@@ -49,6 +50,7 @@ class HttpService implements BaseApi {
   late iCloudApi icloud;
   late FirebaseApi firebase;
   late GenmojiApi genmoji;
+  late StickerApi sticker;
 
   /// Get the URL origin from the current server address
   @override
@@ -170,6 +172,7 @@ class HttpService implements BaseApi {
     icloud = iCloudApi(this);
     firebase = FirebaseApi(this);
     genmoji = GenmojiApi(this);
+    sticker = StickerApi(this);
   }
 
   void updateHeaders() {

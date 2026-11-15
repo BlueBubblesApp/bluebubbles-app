@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 /// each map below, the menu's entry, and its handler in `AttachmentActions.run`.
 /// The attachment (+) button is deliberately not here: it is always shown, always
 /// first, and is not configurable.
-enum TextFieldButton { Files, Genmoji, Handwritten, Schedule, Location, Gif, Emoji }
+enum TextFieldButton { Files, Genmoji, Stickers, Handwritten, Schedule, Location, Gif, Emoji }
 
 const List<TextFieldButton> defaultTextFieldButtons = [
   TextFieldButton.Gif,
@@ -28,6 +28,7 @@ const List<TextFieldButton> defaultTextFieldButtons = [
 const Map<TextFieldButton, (bool, bool, bool, bool)> _buttonPlatformSupport = {
   TextFieldButton.Files: (false, true, true, false),
   TextFieldButton.Genmoji: (false, true, true, false),
+  TextFieldButton.Stickers: (false, true, true, false),
   TextFieldButton.Handwritten: (false, true, true, false),
   TextFieldButton.Schedule: (false, true, true, false),
   TextFieldButton.Location: (false, true, false, false),
@@ -38,6 +39,7 @@ const Map<TextFieldButton, (bool, bool, bool, bool)> _buttonPlatformSupport = {
 const Map<TextFieldButton, String> _buttonToText = {
   TextFieldButton.Files: "Files",
   TextFieldButton.Genmoji: "Genmoji",
+  TextFieldButton.Stickers: "Stickers",
   TextFieldButton.Handwritten: "Handwritten",
   TextFieldButton.Schedule: "Schedule",
   TextFieldButton.Location: "Location",
@@ -49,6 +51,7 @@ const Map<TextFieldButton, String> _buttonToText = {
 const Map<TextFieldButton, (IconData, IconData)> _buttonToIcon = {
   TextFieldButton.Files: (CupertinoIcons.folder_fill, Icons.folder_outlined),
   TextFieldButton.Genmoji: (Icons.add_reaction_rounded, Icons.add_reaction_outlined),
+  TextFieldButton.Stickers: (Icons.sticky_note_2_rounded, Icons.sticky_note_2_outlined),
   TextFieldButton.Handwritten: (CupertinoIcons.scribble, Icons.draw_outlined),
   TextFieldButton.Schedule: (CupertinoIcons.clock_fill, Icons.schedule),
   TextFieldButton.Location: (CupertinoIcons.location_solid, Icons.location_on_outlined),
@@ -65,6 +68,7 @@ extension TextFieldButtonExtension on TextFieldButton {
 
   bool get isPlatformSupported {
     if (this == TextFieldButton.Genmoji && !SettingsSvc.getServerDetails().supportsGenmoji) return false;
+    if (this == TextFieldButton.Stickers && !SettingsSvc.getServerDetails().supportsStickers) return false;
     final (android, windows, linux, web) = _buttonPlatformSupport[this]!;
     if (kIsWeb) return web;
     if (Platform.isAndroid) return android;

@@ -22,6 +22,7 @@ Barrel export: `models/models.dart`
 | `handle_lookup_key.dart` | Composite key (address + service) for handle deduplication |
 | `handle_sync_page.dart` | Pagination cursor for handle sync requests |
 | `location_attachment_data.dart` | Parsed location payload from a location message |
+| `library_sticker.dart` | One sticker in the Mac's sticker library from `/api/v2/sticker` (`LibrarySticker`) |
 | `message_receipt_info.dart` | Delivered/read receipt metadata for a message |
 | `message_reply_context.dart` | Context for a reply thread entry (parent message, part index, optional attachment GUID) |
 | `message_save_result.dart` | Result returned by message save action (id, status) |
