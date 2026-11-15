@@ -666,6 +666,8 @@ class MessageState extends StatefulController {
   /// Update state from database message object
   /// Used when message is refreshed from DB or merged with updates
   void updateFromMessage(Message updatedMessage) {
+    // Before the text and edit date: whether formatting is kept depends on whether they changed
+    message.takeOmittableFieldsFrom(updatedMessage);
     // Update all observable fields
     updateGuidInternal(updatedMessage.guid);
     updateTextInternal(updatedMessage.text);
@@ -705,9 +707,7 @@ class MessageState extends StatefulController {
     // Merge other non-observable properties
     message.handleId = updatedMessage.handleId;
     message.otherHandle = updatedMessage.otherHandle;
-    message.country = updatedMessage.country ?? message.country;
     message.hasDdResults = updatedMessage.hasDdResults;
-    message.datePlayed = updatedMessage.datePlayed ?? message.datePlayed;
     message.itemType = updatedMessage.itemType;
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
@@ -718,12 +718,7 @@ class MessageState extends StatefulController {
     // A local delete isn't the server's to undo.
     message.dateDeleted = updatedMessage.dateDeleted ?? message.dateDeleted;
     message.metadata = updatedMessage.metadata;
-    message.threadOriginatorPart = updatedMessage.threadOriginatorPart ?? message.threadOriginatorPart;
     message.bigEmoji = updatedMessage.bigEmoji;
-    // Kept when the update lacks them, as a push copy does.
-    if (updatedMessage.attributedBody.isNotEmpty) message.attributedBody = updatedMessage.attributedBody;
-    if (updatedMessage.messageSummaryInfo.isNotEmpty) message.messageSummaryInfo = updatedMessage.messageSummaryInfo;
-    message.payloadData = updatedMessage.payloadData ?? message.payloadData;
     message.hasApplePayloadData = updatedMessage.hasApplePayloadData;
     message.isBookmarked = updatedMessage.isBookmarked;
 

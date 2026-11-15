@@ -43,12 +43,14 @@ class NetworkTasks {
       }
     }
 
-    // When we re-connect, try an incremental sync.
-    // The sync function has a guard based on time to ensure that it doesn't
-    // get invoked multiple times in quick succession.
-    unawaited(SyncSvc.startIncrementalSync().whenComplete(ServerV2Migrations.retryAfterReconnect).catchError(
-      (Object e, StackTrace s) => Logger.warn('Reconnect sync failed', error: e, trace: s, tag: 'NetworkTasks'),
-    ));
+    // When we re-connect, try an incremental sync. The sync's cooldown keeps it from running several times in quick
+    // succession, but this one is a catch-up: a sync that started before the socket connected (the one on resume)
+    // may have missed what reached the server in between, so it runs once the cooldown is over instead of not at all.
+    unawaited(
+      SyncSvc.startIncrementalSync(catchUp: true).whenComplete(ServerV2Migrations.retryAfterReconnect).catchError(
+            (Object e, StackTrace s) => Logger.warn('Reconnect sync failed', error: e, trace: s, tag: 'NetworkTasks'),
+          ),
+    );
   }
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) {

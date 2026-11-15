@@ -195,12 +195,11 @@ class AttachmentActions {
         conflicting.originalROWID = newAttachment.originalROWID;
         conflicting.uti = newAttachment.uti;
         conflicting.mimeType = newAttachment.mimeType ?? conflicting.mimeType;
-        conflicting.isOutgoing = newAttachment.isOutgoing == true || conflicting.isOutgoing == true;
+        conflicting.takeFlagsFrom(newAttachment);
         conflicting.transferName = newAttachment.transferName;
         conflicting.totalBytes = newAttachment.totalBytes;
         conflicting.bytes = newAttachment.bytes;
         conflicting.webUrl = newAttachment.webUrl;
-        conflicting.hasLivePhoto = newAttachment.hasLivePhoto || conflicting.hasLivePhoto;
         conflicting.stickerPlacement = newAttachment.stickerPlacement ?? conflicting.stickerPlacement;
         Database.attachments.put(conflicting);
         Database.attachments.remove(existing.id!);
@@ -217,12 +216,11 @@ class AttachmentActions {
       existing.originalROWID = newAttachment.originalROWID;
       existing.uti = newAttachment.uti;
       existing.mimeType = newAttachment.mimeType ?? existing.mimeType;
-      existing.isOutgoing = newAttachment.isOutgoing == true || existing.isOutgoing == true;
+      existing.takeFlagsFrom(newAttachment);
       existing.transferName = newAttachment.transferName;
       existing.totalBytes = newAttachment.totalBytes;
       existing.bytes = newAttachment.bytes;
       existing.webUrl = newAttachment.webUrl;
-      existing.hasLivePhoto = newAttachment.hasLivePhoto || existing.hasLivePhoto;
       existing.stickerPlacement = newAttachment.stickerPlacement ?? existing.stickerPlacement;
       // Use synchronous put within the transaction to preserve the message relationship.
       // saveAsync(null) would run outside this transaction and would fail to find the

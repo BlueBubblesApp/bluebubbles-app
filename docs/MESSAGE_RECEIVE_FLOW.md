@@ -67,13 +67,18 @@ Routing by `MessageEventType`:
 
 **Key file:** `lib/services/backend/incoming_message_handler.dart`
 
+**Push copies and catch-up.** A push (FCM / UnifiedPush, `MessageSource.methodChannel`) is handed in as soon as it arrives, whether or not a socket is connected, so its notification isn't held up. Its copy is lighter than the socket's: the server trims it to fit FCM's 4KB limit (no `attributedBody`, `messageSummaryInfo`, `payloadData`/`appPayload`, `threadOriginatorPart`, `datePlayed`, `country`, nor attachments' `hasLivePhoto`/`isOutgoing`). So:
+- A copy saved from a push is remembered in `_pushCopies`. The socket's copy of it gets past dedupe and replaces it (`Message.fillsGapsIn` lets an equally recent copy replace one that lacks fields), and merges keep what a lighter copy leaves out (`Message.takeOmittableFieldsFrom`, `Attachment.takeFlagsFrom`).
+- If the socket hasn't replaced it within 5s, or a message was lost on the way (an update push with no stored message, or a parked update that expired), one catch-up incremental sync is asked for (`requestCatchUp`). Everything within those 5s shares it, and the sync fetches in pages from its own isolate, so a burst of pushes costs one sync, never a request per message. It only runs with the socket connected: otherwise the sync on reconnecting covers them. A headless isolate's push copies are filled in by the app's next sync.
+- `startIncrementalSync(catchUp: true)` (the catch-up, and the sync on socket connect) isn't dropped by the 30s cooldown: it runs once the cooldown is over, so a sync that started before the socket connected can't leave a gap.
+
 ---
 
 ### Step 4 — Handle New Message (`incoming_message_handler.dart`)
 
 **`_processNewMessage(IncomingPayload)`:**
 
-1. **Deduplication** — checks `_processedGuids` (a 100-entry ring buffer). If the real GUID was already processed (e.g. delivered by both socket and Firebase), returns early.
+1. **Deduplication** — checks `_processedGuids` (a 100-entry ring buffer). If the real GUID was already processed (e.g. delivered by both socket and Firebase), returns early, unless it's a fuller copy of one saved from a push (see Step 3).
 
 2. **Existing record check** — looks up the message by `tempGuid` and by real GUID. If either already exists in the DB (HTTP response saved it before the socket event, or duplicate delivery), redirects to `_processUpdatedMessage()` for a clean GUID swap or field refresh. There, a group photo state row (`itemType` 3, `groupActionType` 3) arriving again under its stored GUID is ignored, so a resent photo does not move the stored event to now.
 
@@ -108,7 +113,7 @@ Routing by `MessageEventType`:
 
 2. **Locate existing DB record** — tries `tempGuid` first (outgoing echo), then the real GUID.
 
-3. **Out-of-order buffering** — if no DB record exists yet, parks the payload via `_parkPendingUpdate()` (which re-checks the DB once more for a race, replaces any existing pending entry for the same GUID, evicts the oldest entry past a 500-item cap, and expires/processes-anyway after a 10s timeout) and returns. `_flushPendingUpdate()` replays it once the matching `new-message` is processed.
+3. **Out-of-order buffering** — if no DB record exists yet, parks the payload via `_parkPendingUpdate()` (which re-checks the DB once more for a race, replaces any existing pending entry for the same GUID, evicts the oldest entry past a 500-item cap, and drops it for a catch-up sync after a 10s timeout, since its new-message was lost) and returns. `_flushPendingUpdate()` replays it once the matching `new-message` is processed.
 
 4. **Chat hydration** — calls `_hydrateChat()`, same as new-message step 3.
 

@@ -65,10 +65,6 @@ class IncomingPayload {
   /// Present only when the server is echoing back one of our own sends.
   final String? tempGuid;
 
-  /// A new-message saved from an updated-message event, because the new-message it followed never arrived. It
-  /// doesn't notify: updates never do, and the message may be old.
-  final bool fromUpdate;
-
   const IncomingPayload({
     required this.type,
     required this.source,
@@ -76,7 +72,6 @@ class IncomingPayload {
     required this.message,
     this.attachments = const [],
     this.tempGuid,
-    this.fromUpdate = false,
   });
 
   IncomingPayload copyWith({
@@ -86,7 +81,6 @@ class IncomingPayload {
     Message? message,
     List<Attachment>? attachments,
     String? tempGuid,
-    bool? fromUpdate,
   }) {
     return IncomingPayload(
       type: type ?? this.type,
@@ -95,7 +89,6 @@ class IncomingPayload {
       message: message ?? this.message,
       attachments: attachments ?? this.attachments,
       tempGuid: tempGuid ?? this.tempGuid,
-      fromUpdate: fromUpdate ?? this.fromUpdate,
     );
   }
 }
@@ -169,6 +162,20 @@ class IncomingMessageHandler {
   /// evicted (timer cancelled + warning) to prevent unbounded memory growth
   /// when a server sends many update events for GUIDs that never resolve.
   static const int _maxPendingUpdates = 500;
+
+  // ── Push copies and catch-up ─────────────────────────────────────────────
+
+  /// GUIDs saved here from a push copy that no fuller copy has replaced yet. A push copy lacks fields the socket
+  /// sends (the server trims it for FCM's 4KB limit), so the socket's copy of one goes through dedupe to replace it.
+  final Set<String> _pushCopies = {};
+
+  /// How long the socket gets to deliver its own copy of a pushed message before a catch-up sync is asked for.
+  static const Duration _socketCopyGrace = Duration(seconds: 5);
+
+  /// Whether a message was lost on the way (an update for a message never stored), so the next catch-up runs even
+  /// with no push copy left.
+  bool _catchUpRequested = false;
+  Timer? _catchUpTimer;
 
   // ── Per-GUID serial chain ────────────────────────────────────────────────
 
@@ -309,6 +316,9 @@ class IncomingMessageHandler {
     _pendingUpdates.clear();
     _inflightByGuid.clear();
     _processedGuids.clear();
+    _catchUpTimer?.cancel();
+    _catchUpTimer = null;
+    _pushCopies.clear();
     // Fail any payloads still waiting in the queue so their futures don't hang.
     while (_incomingQueue.isNotEmpty) {
       _incomingQueue.removeFirst().completer.completeError(
@@ -330,9 +340,10 @@ class IncomingMessageHandler {
       tag: _tag,
     );
 
-    // 1. Deduplication — skip real GUIDs we have already fully handled.
-    // A socket copy still goes through, to replace a push copy saved first.
-    if (m.guid != null && _hasProcessed(m.guid!) && payload.source != MessageSource.socket) {
+    // 1. Deduplication — skip real GUIDs we have already fully handled, unless this is a fuller copy of one saved
+    //    from a push.
+    final replacesPushCopy = payload.source != MessageSource.methodChannel && _pushCopies.contains(m.guid);
+    if (m.guid != null && _hasProcessed(m.guid!) && !replacesPushCopy) {
       Logger.debug('[new-message] skipping already-processed ${m.guid}', tag: _tag);
       return;
     }
@@ -388,7 +399,10 @@ class IncomingMessageHandler {
 
     // 5. Mark as processed before any async I/O so a duplicate delivery that
     //    races in while we're playing a sound or sending a notification skips.
-    if (saved.guid != null) _markProcessed(saved.guid!);
+    if (saved.guid != null) {
+      _markProcessed(saved.guid!);
+      _notePersisted(saved.guid!, payload.source);
+    }
 
     // 6. Complete any pending outgoing send-progress tracker.
     if (tempGuid != null && GetIt.I.isRegistered<OutgoingMessageHandler>()) {
@@ -442,9 +456,7 @@ class IncomingMessageHandler {
     // Must be awaited: the notification pipeline posts a MethodChannel call back
     // to Android. Without await, the DartWorker engine can be destroyed before
     // that call fires, silently dropping the notification.
-    if (payload.fromUpdate) {
-      Logger.debug('[new-message] ${saved.guid} was saved from an update, not notifying', tag: _tag);
-    } else if (GetIt.I.isRegistered<NotificationsService>()) {
+    if (GetIt.I.isRegistered<NotificationsService>()) {
       await GetIt.I.isReady<NotificationsService>();
       await NotificationsSvc.tryCreateNewMessageNotification(saved, c);
     } else {
@@ -535,6 +547,10 @@ class IncomingMessageHandler {
       return;
     }
 
+    // A push copy never carries datePlayed, which isNewerThan counts: without it, a pushed edit or unsend of a played
+    // message would look older than the stored one.
+    if (payload.source == MessageSource.methodChannel) m.datePlayed ??= existing.datePlayed;
+
     // 3b. A group photo resent. Messages writes the group's photo state again under the GUID it already has and
     //     dated now, and the server announces it as a new row. Applying it would move the stored event to now and
     //     draw it a second time after whatever the user just sent, for a photo that did not change.
@@ -552,7 +568,11 @@ class IncomingMessageHandler {
 
     // 5. Persist the GUID swap / field update.
     final existingGuid = tempGuid ?? existing.guid!;
-    await _replaceMessage(c, existingGuid, existing, m, winsTie: payload.source == MessageSource.socket);
+    final written = await _replaceMessage(c, existingGuid, existing, m);
+    // A full copy that adds nothing to the stored one leaves it as complete as written
+    if (m.guid != null && (written || (payload.source != MessageSource.methodChannel && !m.fillsGapsIn(existing)))) {
+      _notePersisted(m.guid!, payload.source);
+    }
 
     // 6. Persist attachment GUID swaps (e.g. temp attachment → real GUID).
     await _replaceAttachments(c, existingGuid, existing, m, replacementAttachments);
@@ -615,14 +635,11 @@ class IncomingMessageHandler {
   ///
   /// Handles the case where a parallel delivery path (e.g. HTTP response +
   /// socket) has already written [replacement.guid] to the DB.
-  Future<void> _replaceMessage(
-    Chat chat,
-    String existingGuid,
-    Message existing,
-    Message replacement, {
-    bool winsTie = false,
-  }) async {
+  ///
+  /// Returns whether [replacement] was written.
+  Future<bool> _replaceMessage(Chat chat, String existingGuid, Message existing, Message replacement) async {
     final alreadyPresent = Message.findOne(guid: replacement.guid);
+    var written = false;
 
     if (alreadyPresent != null) {
       // The replacement record already exists (parallel delivery).
@@ -631,13 +648,14 @@ class IncomingMessageHandler {
       // take a replaced turn back to type 2 doesn't count.
       final relinkedType = AppSessionTypes.mergedType(alreadyPresent.balloonBundleId,
           alreadyPresent.associatedMessageType, replacement.associatedMessageType);
-      // A socket copy replaces an equally recent one (a push copy lacks some fields), never a newer one.
-      if ((winsTie && !alreadyPresent.isNewerThan(replacement)) ||
+      // An equally recent copy replaces it too when it has fields the stored one lacks (a push copy saved first).
+      if ((!alreadyPresent.isNewerThan(replacement) && replacement.fillsGapsIn(alreadyPresent)) ||
           replacement.isNewerThan(alreadyPresent) ||
           relinkedType != alreadyPresent.associatedMessageType ||
           (relinkedType == replacement.associatedMessageType &&
               replacement.associatedMessageGuid != alreadyPresent.associatedMessageGuid)) {
         await Message.replaceMessage(replacement.guid, replacement);
+        written = true;
       }
 
       // Clean up the stale temp record when the real one is now present.
@@ -648,6 +666,7 @@ class IncomingMessageHandler {
     } else {
       try {
         await Message.replaceMessage(existingGuid, replacement);
+        written = true;
       } catch (ex, st) {
         Logger.warn(
           '[_replaceMessage] failed: $existingGuid → ${replacement.guid}',
@@ -657,6 +676,7 @@ class IncomingMessageHandler {
         );
       }
     }
+    return written;
   }
 
   /// Swaps attachment GUIDs on the replacement message's attachments.
@@ -863,8 +883,9 @@ class IncomingMessageHandler {
   /// always carries the most up-to-date data.  The expiry timer is reset so the
   /// fresh update gets its own full timeout window.
   ///
-  /// If no matching new-message arrives within [_pendingUpdateTimeout], the parked payload is saved as a new message:
-  /// it carries the whole message, and the new-message it was waiting for was lost.
+  /// If no matching new-message arrives within [_pendingUpdateTimeout], it was lost, and the parked payload is dropped
+  /// for a catch-up sync ([requestCatchUp]), which brings the message back as it is now. Saving the update as the
+  /// message instead could bring back one from before the last sync, notifying for it.
   Future<void> _parkPendingUpdate(IncomingPayload payload) async {
     final guid = payload.message.guid;
     if (guid == null) return;
@@ -898,18 +919,10 @@ class IncomingMessageHandler {
       final oldest = _pendingUpdates.remove(oldestGuid)!;
       oldest.expiryTimer?.cancel();
       Logger.warn(
-        'Pending-update buffer full ($_maxPendingUpdates): evicting oldest entry $oldestGuid, saving it as new',
+        'Pending-update buffer full ($_maxPendingUpdates): evicting oldest entry $oldestGuid for a catch-up sync',
         tag: _tag,
       );
-      unawaited(handle(oldest.payload.copyWith(type: MessageEventType.newMessage, fromUpdate: true), front: true)
-          .catchError((e, st) {
-        Logger.warn(
-          'Failed to process evicted buffered update for $oldestGuid',
-          error: e,
-          trace: st,
-          tag: _tag,
-        );
-      }));
+      requestCatchUp();
     }
 
     final pending = _PendingUpdate(payload: payload);
@@ -918,18 +931,10 @@ class IncomingMessageHandler {
       if (expired != null) {
         Logger.warn(
           'Buffered update for $guid expired after ${_pendingUpdateTimeout.inSeconds}s '
-          'without a matching new-message, saving it as new',
+          'without a matching new-message, asking for a catch-up sync',
           tag: _tag,
         );
-        unawaited(handle(expired.payload.copyWith(type: MessageEventType.newMessage, fromUpdate: true), front: true)
-            .catchError((e, st) {
-          Logger.warn(
-            'Failed to process expired buffered update for $guid',
-            error: e,
-            trace: st,
-            tag: _tag,
-          );
-        }));
+        requestCatchUp();
       }
     });
     _pendingUpdates[guid] = pending;
@@ -958,6 +963,43 @@ class IncomingMessageHandler {
         tag: _tag,
       );
     }));
+  }
+
+  // ── Catch-up ─────────────────────────────────────────────────────────────
+
+  /// Records which kind of copy of [guid] is stored now: a push copy waits for the socket's, and has a catch-up sync
+  /// fill it in if that doesn't come.
+  void _notePersisted(String guid, MessageSource source) {
+    if (source == MessageSource.methodChannel) {
+      _pushCopies.add(guid);
+      _armCatchUp();
+    } else {
+      _pushCopies.remove(guid);
+    }
+  }
+
+  /// Asks for one incremental sync, for a message lost on the way. Every request and push copy within
+  /// [_socketCopyGrace] shares it, and the sync fetches them in pages from its own isolate, so a burst of pushes
+  /// costs one sync rather than a request each.
+  void requestCatchUp() {
+    _catchUpRequested = true;
+    _armCatchUp();
+  }
+
+  void _armCatchUp() {
+    // The sync runs from the app. A headless isolate's push copies are filled in by the app's next sync instead.
+    if (!GetIt.I.isRegistered<SyncService>() || !GetIt.I.isRegistered<SocketService>()) return;
+    _catchUpTimer ??= Timer(_socketCopyGrace, () {
+      _catchUpTimer = null;
+      if (!_catchUpRequested && _pushCopies.isEmpty) return;
+      final count = _pushCopies.length;
+      _catchUpRequested = false;
+      _pushCopies.clear();
+      // Without a socket the server is likely out of reach, and the sync that runs on reconnecting covers these
+      if (SocketSvc.state.value != SocketState.connected) return;
+      Logger.info('Catch-up sync for $count push copies the socket did not replace', tag: _tag);
+      unawaited(SyncSvc.startIncrementalSync(catchUp: true));
+    });
   }
 
   // ── Deduplication helpers ────────────────────────────────────────────────

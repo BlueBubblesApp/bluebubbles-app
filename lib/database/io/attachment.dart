@@ -380,6 +380,13 @@ class Attachment {
   /// behind them leaks through the holes — callers use this to suppress both.
   bool get isPkPass => pkPass != null;
 
+  /// Takes [incoming]'s live photo and outgoing flags without ever clearing them: a push copy leaves both out, which
+  /// reads as false, and neither turns back off once set.
+  void takeFlagsFrom(Attachment incoming) {
+    hasLivePhoto = hasLivePhoto || incoming.hasLivePhoto;
+    isOutgoing = isOutgoing == true || incoming.isOutgoing == true;
+  }
+
   static Attachment merge(Attachment attachment1, Attachment attachment2) {
     attachment1.id ??= attachment2.id;
     attachment1.bytes ??= attachment2.bytes;
