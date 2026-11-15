@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_l
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/samsung_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -92,13 +93,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final loaded = ChatsSvc.loadedFirstChatBatch.value;
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
-                final _chats = ChatsSvc.getFilteredChats(
+                final _unpinnedChats = ChatsSvc.getFilteredChats(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
+                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
-                final _pinnedChats = _chats.where((e) => e.isPinned ?? false).toList();
-                final _unpinnedChats = _chats.where((e) => !(e.isPinned ?? false)).toList();
 
                 return CustomScrollView(
                   physics: ThemeSwitcher.getScrollPhysics(),
@@ -111,6 +111,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           padding: EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 16),
                         ),
                       ),
+                    PinnedChatsGrid(controller: controller),
                     if (!loaded || _unpinnedChats.isEmpty)
                       SliverToBoxAdapter(
                         child: Center(
@@ -133,27 +134,6 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                                     ],
                                   ),
                           ),
-                        ),
-                      ),
-                    if (_pinnedChats.isNotEmpty)
-                      SliverPadding(
-                        padding: const EdgeInsets.only(bottom: 15),
-                        sliver: SliverDecoration(
-                          color: _tileColor,
-                          borderRadius: BorderRadius.circular(25),
-                          sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = _pinnedChats[index];
-                              return ListItem(
-                                  chat: chat,
-                                  controller: controller,
-                                  update: () {
-                                    setState(() {});
-                                  });
-                            },
-                            childCount: _pinnedChats.length,
-                          )),
                         ),
                       ),
                     SliverPadding(

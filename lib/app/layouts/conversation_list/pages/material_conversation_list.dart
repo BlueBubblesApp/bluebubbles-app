@@ -3,6 +3,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -91,64 +92,74 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 final _chats = ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
+                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
 
-                final Widget content;
-                if (!loaded || _chats.isEmpty) {
-                  content = Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 100),
-                      child: loaded
-                          ? buildEmptyChatListState(context,
-                              showArchived: showArchived, showUnknown: showUnknown, filters: ChatsSvc.chatListFilters.value)
-                          : Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    "Loading chats...",
-                                    style: context.theme.textTheme.labelLarge,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                buildProgressIndicator(context, size: 15),
-                              ],
-                            ),
-                    ),
-                  );
-                } else {
-                  content = NotificationListener(
-                    onNotification: (notif) {
-                      if (notif is ScrollStartNotification) {
-                        controller.materialScrollStartPosition = controller.materialScrollController.offset;
-                      }
-                      return true;
-                    },
-                    child: ScrollbarWrapper(
-                      showScrollbar: true,
+                final content = NotificationListener(
+                  onNotification: (notif) {
+                    if (notif is ScrollStartNotification) {
+                      controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                    }
+                    return true;
+                  },
+                  child: ScrollbarWrapper(
+                    showScrollbar: true,
+                    controller: controller.materialScrollController,
+                    child: CustomScrollView(
                       controller: controller.materialScrollController,
-                      child: Obx(() => ListView.builder(
-                            controller: controller.materialScrollController,
-                            physics: ThemeSwitcher.getScrollPhysics(),
-                            padding: const EdgeInsets.only(top: 8),
-                            findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
-                            itemBuilder: (context, index) {
-                              final chat = _chats[index];
-                              return Container(
-                                  key: ValueKey(chat.guid),
-                                  child: ListItem(
-                                      chat: chat,
-                                      controller: controller,
-                                      update: () {
-                                        setState(() {});
-                                      }));
-                            },
-                            itemCount: _chats.length,
-                          )),
+                      physics: ThemeSwitcher.getScrollPhysics(),
+                      slivers: [
+                        const SliverPadding(padding: EdgeInsets.only(top: 8)),
+                        PinnedChatsGrid(controller: controller),
+                        if (!loaded || _chats.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 100),
+                                child: loaded
+                                    ? buildEmptyChatListState(context,
+                                        showArchived: showArchived,
+                                        showUnknown: showUnknown,
+                                        filters: ChatsSvc.chatListFilters.value)
+                                    : Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              "Loading chats...",
+                                              style: context.theme.textTheme.labelLarge,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          buildProgressIndicator(context, size: 15),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          )
+                        else
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = _chats[index];
+                                return Container(
+                                    key: ValueKey(chat.guid),
+                                    child: ListItem(
+                                        chat: chat,
+                                        controller: controller,
+                                        update: () {
+                                          setState(() {});
+                                        }));
+                              },
+                              findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
+                              childCount: _chats.length,
+                            ),
+                          ),
+                      ],
                     ),
-                  );
-                }
+                  ),
+                );
 
                 return Column(
                   children: [

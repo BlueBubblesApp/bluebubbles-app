@@ -17,6 +17,7 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
@@ -75,23 +76,41 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
     super.dispose();
   }
 
+  /// Material and Samsung select on long press, like their list tiles, so the header actions apply to pins.
+  bool get _selectable => !iOS;
+
+  void _toggleSelected() {
+    final chat = controller.chat;
+    if (controller.isSelected) {
+      listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
+    } else {
+      listController.selectedChats.add(chat);
+    }
+    listController.updateSelectedChats();
+    HapticFeedback.lightImpact();
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(left: 4, right: 4, top: 1),
       child: Obx(() {
         NavigationSvc.listener.value;
+        final selected = _selectable && controller.isSelected;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
-            color: controller.shouldPartialHighlight.value
-                ? context.theme.colorScheme.surfaceContainerHighest.lightenOrDarken(10)
-                : controller.shouldHighlight.value
-                    ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
-                    : Colors.transparent,
+            color: selected
+                ? context.theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                : controller.shouldPartialHighlight.value
+                    ? context.theme.colorScheme.surfaceContainerHighest.lightenOrDarken(10)
+                    : controller.shouldHighlight.value
+                        ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                        : Colors.transparent,
             borderRadius: BorderRadius.circular(
-                controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? 8 : 0),
+                selected || controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? 8 : 0),
           ),
           child: Material(
             type: MaterialType.transparency,
@@ -99,12 +118,16 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
               onPointerDown: (event) => longPressPosition = event.position,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () => controller.onTap(context),
+                onTap: () => _selectable && listController.selectedChats.isNotEmpty
+                    ? _toggleSelected()
+                    : controller.onTap(context),
                 onLongPress: kIsDesktop || kIsWeb
                     ? null
-                    : () async {
-                        await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
-                      },
+                    : _selectable
+                        ? _toggleSelected
+                        : () async {
+                            await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+                          },
                 onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -135,6 +158,22 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                 // coordinates are unambiguously relative to the avatar bounds.
                                 SenderIcon(width: widget.avatarSize, parentController: controller),
                                 ReactionIcon(width: widget.avatarSize, parentController: controller),
+                                if (selected)
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: widget.avatarSize * 0.3,
+                                      height: widget.avatarSize * 0.3,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: context.theme.colorScheme.primary,
+                                        border: Border.all(color: context.theme.colorScheme.surface, width: 2),
+                                      ),
+                                      child: Icon(Icons.check,
+                                          size: widget.avatarSize * 0.2, color: context.theme.colorScheme.onPrimary),
+                                    ),
+                                  ),
                                 // Group bubble: anchored so its bottom aligns with the
                                 // sender avatar bottom (senderSize=0.25w, top=0.375w, bottom=0.625w).
                                 if (controller.chat.isGroup)

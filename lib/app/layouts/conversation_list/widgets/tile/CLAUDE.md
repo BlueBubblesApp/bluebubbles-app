@@ -41,7 +41,7 @@ All three skins receive the same `ConversationTileController` and read its `Rx*`
 
 ## Pinned Tiles
 
-Pinned chats are rendered in a horizontal `GridView` at the top of the list. `PinnedConversationTile` uses a column layout (avatar + name stacked vertically) rather than the row layout of standard tiles.
+Pinned chats are rendered by `PinnedChatsGrid` (`../pinned_chats_grid.dart`) at the top of the list in every skin, in `pinIndex` order (a pinned chat always has one). On Material/Samsung a long press selects the pin instead of peeking. `PinnedConversationTile` uses a column layout (avatar + name stacked vertically) rather than the row layout of standard tiles.
 
 ## Swipe Actions
 
