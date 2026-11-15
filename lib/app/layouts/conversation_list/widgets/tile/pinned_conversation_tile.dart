@@ -48,6 +48,10 @@ class PinnedConversationTile extends CustomStateful<ConversationTileController> 
 }
 
 class _PinnedConversationTileState extends CustomState<PinnedConversationTile, void, ConversationTileController> {
+  /// How far a text bubble may reach past the avatar. The tile's margin (4) and padding (6) leave 10 beside it, so
+  /// neighbors' bubbles stay at least 6 apart.
+  static const double _bubbleReach = 7;
+
   ConversationListController get listController => controller.listController;
   Offset? longPressPosition;
   StreamSubscription? _activeSub;
@@ -211,7 +215,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                   Positioned(
                                     bottom: widget.avatarSize * 0.575,
                                     left: widget.avatarSize * 0.05,
-                                    width: widget.avatarSize * 1.15,
+                                    width: widget.avatarSize * 0.95 + _bubbleReach,
                                     child: PinnedTileTextBubble(
                                       chat: controller.chat,
                                       size: widget.avatarSize,
@@ -227,7 +231,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                         if (!controller.chat.isGroup)
                           Positioned(
                             top: 0,
-                            width: widget.avatarSize * 1.35,
+                            width: widget.avatarSize + 2 * _bubbleReach,
                             child: PinnedTileTextBubble(
                               chat: controller.chat,
                               size: widget.avatarSize,
