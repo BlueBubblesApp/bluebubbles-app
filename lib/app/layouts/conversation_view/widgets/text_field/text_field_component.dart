@@ -109,9 +109,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   FocusNode? _fieldFocusNode;
 
-  /// The formatting panel stands in for the keyboard, so it goes with focus
+  /// The formatting panel and the chat creator's attachment picker both stand in for the keyboard: the panel goes
+  /// when the field loses focus, and focusing the field closes the picker
   void _onFieldFocusChange() {
     if (!_fieldFocusNode!.hasFocus) controller?.showTextFormattingPanel.value = false;
+    if (_fieldFocusNode!.hasFocus && _showAttachmentPickerLocal) setState(() => _showAttachmentPickerLocal = false);
   }
 
   @override
