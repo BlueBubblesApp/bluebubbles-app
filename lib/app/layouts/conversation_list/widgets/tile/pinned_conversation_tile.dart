@@ -21,6 +21,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+/// A pin's title: for a DM, the nickname if set, otherwise the first name, like iOS. ChatState handles redacted mode.
+String pinnedChatTitle(Chat chat) {
+  final chatState = ChatsSvc.getChatState(chat.guid);
+  final isDm = !chat.isGroup && isNullOrEmpty(chat.displayName);
+  if (isDm && chatState != null && chatState.participants.isNotEmpty) {
+    return chatState.participants.first.reactionDisplayName.value ?? chatState.title.value ?? chat.getTitle();
+  }
+  return chatState?.title.value ?? chat.getTitle();
+}
+
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   final double avatarSize;
 
@@ -376,18 +386,8 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           fontSizeFactor: isPinned ? 0.95 : 1,
         );
 
-        // Get title from ChatState - it handles all title logic including redacted mode
         final chatState = ChatsSvc.getChatState(controller.chat.guid);
-        final String _title;
-        final isDm = !controller.chat.isGroup && isNullOrEmpty(controller.chat.displayName);
-        if (isDm && chatState != null && chatState.participants.isNotEmpty) {
-          // Match iOS pinned tile: nickname if set, otherwise first name
-          _title = chatState.participants.first.reactionDisplayName.value ??
-              chatState.title.value ??
-              controller.chat.getTitle();
-        } else {
-          _title = chatState?.title.value ?? controller.chat.getTitle();
-        }
+        final _title = pinnedChatTitle(controller.chat);
         final unread = chatState?.hasUnreadMessage.value ?? false;
 
         // Reserve equal horizontal space on both sides so the text stays

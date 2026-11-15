@@ -732,7 +732,7 @@ class _ChatDragFeedback extends StatelessWidget {
                         children: [
                           ContactAvatarGroupWidget(chat: chat, size: _pinAvatarSize, editable: false),
                           const SizedBox(height: 6),
-                          Text(title,
+                          Text(pinnedChatTitle(chat),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
