@@ -39,6 +39,7 @@ import kotlinx.coroutines.guava.future
 // Background worker plugins — only those required for notification/sync processing
 import com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin
 import com.github.dart_lang.jni.JniPlugin
+import com.github.dart_lang.jni_flutter.JniFlutterPlugin
 import com.johnstef.flutter_user_certificates_android.FlutterUserCertificatesAndroidPlugin
 import dev.fluttercommunity.plus.device_info.DeviceInfoPlusPlugin
 import dev.fluttercommunity.plus.packageinfo.PackageInfoPlugin
@@ -314,6 +315,7 @@ class DartWorker(context: Context, workerParams: WorkerParameters): ListenableWo
         plugins.add(FlutterLocalNotificationsPlugin())
         // JNI bridge: path_provider (2.3+) and flutter_user_certificates_android call Android through it
         plugins.add(JniPlugin())
+        plugins.add(JniFlutterPlugin()) // supplies the application context jni lookups need
         // Transport security (custom user certificates)
         plugins.add(FlutterUserCertificatesAndroidPlugin())
         // Timezone (used during message date handling)
