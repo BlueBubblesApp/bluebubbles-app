@@ -892,7 +892,6 @@ class IncomingMessageHandler {
         'Pending-update buffer full ($_maxPendingUpdates): evicting oldest entry $oldestGuid, saving it as new',
         tag: _tag,
       );
-      // As an update it would find no row and be parked again.
       unawaited(handle(oldest.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
         Logger.warn(
           'Failed to process evicted buffered update for $oldestGuid',
@@ -912,7 +911,6 @@ class IncomingMessageHandler {
           'without a matching new-message, saving it as new',
           tag: _tag,
         );
-        // As an update it would find no row and be parked again, every timeout, forever.
         unawaited(handle(expired.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
           Logger.warn(
             'Failed to process expired buffered update for $guid',
