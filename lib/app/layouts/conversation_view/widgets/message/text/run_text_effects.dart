@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:bluebubbles/database/global/attributed_body.dart';
 import 'package:flutter/rendering.dart';
@@ -205,7 +206,7 @@ class RenderRunTextEffects extends RenderProxyBox {
   }
 
   static List<Rect> _rects(RenderParagraph paragraph, int start, int end) => paragraph
-      .getBoxesForSelection(TextSelection(baseOffset: start, extentOffset: end))
+      .getBoxesForSelection(TextSelection(baseOffset: start, extentOffset: end), boxHeightStyle: ui.BoxHeightStyle.max)
       .map((box) => box.toRect())
       .where((rect) => !rect.isEmpty)
       .toList();
