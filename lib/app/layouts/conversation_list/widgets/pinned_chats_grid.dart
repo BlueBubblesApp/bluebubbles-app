@@ -137,7 +137,8 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
   DateTime _lastReorder = DateTime(0);
 
   void _hover(List<Chat> shown, String dragged, String target) {
-    if (dragged == target) return;
+    // A hold that selects resizes the header, sliding the pins under a still finger: only a real drag reorders.
+    if (dragged == target || !_dragMoved.value) return;
     if (DateTime.now().difference(_lastReorder) < _slide) return;
     _lastReorder = DateTime.now();
     final order = shown.map((c) => c.guid).toList();
@@ -150,6 +151,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
   }
 
   void _hoverEnd(List<Chat> shown, String dragged) {
+    if (!_dragMoved.value) return;
     final order = shown.map((c) => c.guid).toList();
     if (order.isNotEmpty && order.last == dragged) return;
     if (DateTime.now().difference(_lastReorder) < _slide) return;
@@ -191,6 +193,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
   }
 
   void _drop(DragTargetDetails<String> details, List<Chat> pinned) {
+    if (!_dragMoved.value) return;
     _dropped.value = true;
     _pendingDrop = _accept(details.data, pinned);
     _DropFlight.show(context, details.data, details.offset, toPin: true);
@@ -963,6 +966,8 @@ class UnpinDropTarget extends StatelessWidget {
         return ChatsSvc.findChatByGuid(details.data)?.isPinned ?? false;
       },
       onAcceptWithDetails: (details) {
+        // Released from a hold that never moved, after a select slid the list under it.
+        if (!_dragMoved.value) return;
         final chat = ChatsSvc.findChatByGuid(details.data);
         if (chat == null) return;
         _dropped.value = true;
