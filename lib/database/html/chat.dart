@@ -62,6 +62,8 @@ class Chat {
   bool? autoSendReadReceipts = true;
   bool? autoSendTypingIndicators = true;
   String? textFieldText;
+  /// JSON list of the draft's runs over [textFieldText].
+  String? textFieldRuns;
   List<String> textFieldAttachments = [];
   Message? _latestMessage;
 
@@ -117,6 +119,7 @@ class Chat {
     this.autoSendReadReceipts = true,
     this.autoSendTypingIndicators = true,
     this.textFieldText,
+    this.textFieldRuns,
     this.textFieldAttachments = const [],
     this.dateDeleted,
     this.style,
@@ -514,7 +517,10 @@ class Chat {
     _pinIndex.value ??= other._pinIndex.value;
     autoSendReadReceipts ??= other.autoSendReadReceipts;
     autoSendTypingIndicators ??= other.autoSendTypingIndicators;
-    textFieldText ??= other.textFieldText;
+    if (textFieldText == null) {
+      textFieldText = other.textFieldText;
+      textFieldRuns = other.textFieldRuns;
+    }
     if (textFieldAttachments.isEmpty) {
       textFieldAttachments.addAll(other.textFieldAttachments);
     }

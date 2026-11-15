@@ -4,8 +4,8 @@ import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
-Future<String?> showCustomMentionDialog(BuildContext context, Mentionable? mention) async {
-  final TextEditingController mentionController = TextEditingController(text: mention?.displayName);
+Future<String?> showCustomMentionDialog(BuildContext context, Mentionable? mention, {String? initial}) async {
+  final TextEditingController mentionController = TextEditingController(text: initial ?? mention?.displayName);
   String? changed;
   await showBBDialog(
     context: context,

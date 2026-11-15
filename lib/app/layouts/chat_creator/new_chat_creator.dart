@@ -4,6 +4,7 @@ import 'package:bluebubbles/app/layouts/chat_creator/widgets/recipient_chips_row
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/search_results_list.dart';
 import 'package:bluebubbles/app/layouts/chat_creator/widgets/service_type_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_effect_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/text_field_component.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
@@ -216,7 +217,7 @@ class _TextFieldArea extends StatelessWidget {
       final activeCVC = controller.activeController.value;
       final sending = controller.isSending.value;
 
-      return Padding(
+      final composer = Padding(
         padding: const EdgeInsets.all(10.0),
         child: Theme(
           data: context.theme.copyWith(
@@ -270,6 +271,16 @@ class _TextFieldArea extends StatelessWidget {
                   ),
           ),
         ),
+      );
+      // The selection menu's Text Effects opens this in the keyboard's place, as in a conversation. The composer
+      // keeps its place in the tree either way: moving it remounts the field, which loses its keyboard and cursor.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          composer,
+          if (activeCVC != null && activeCVC.showTextFormattingPanel.value)
+            TextFormattingPanel(controller: activeCVC.textController, height: activeCVC.textFormattingPanelHeight),
+        ],
       );
     });
   }

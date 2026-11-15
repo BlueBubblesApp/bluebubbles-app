@@ -109,7 +109,7 @@
     },
     {
       "id": "3:9017250848141753702",
-      "lastPropertyId": "40:2602396250608668078",
+      "lastPropertyId": "41:4875992845906556952",
       "name": "Chat",
       "properties": [
         {
@@ -261,6 +261,11 @@
         {
           "id": "40:2602396250608668078",
           "name": "knownGroupPhotoGuid",
+          "type": 9
+        },
+        {
+          "id": "41:4875992845906556952",
+          "name": "textFieldRuns",
           "type": 9
         }
       ],

@@ -57,6 +57,7 @@ dependencies:
   encrypter_plus: ^5.1.0
   exif: ^3.3.0
   faker: ^2.2.0
+  ffi: ^2.2.0
   # The package will fail to build arm64 linux binaries due to the ffmpeg
   # build for it not existing in the upstream repo. Instead, we forked the
   # repository and no-op'd the arm64 linux branch. The app will shell-out

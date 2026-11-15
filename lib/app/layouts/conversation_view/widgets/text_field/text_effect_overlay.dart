@@ -1,0 +1,325 @@
+import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/text/run_text_effects.dart';
+import 'package:bluebubbles/database/global/attributed_body.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
+/// Animates the composer's text effect runs on top of the field, which draws those runs transparent.
+///
+/// An editable field can't be repainted per glyph the way [RunTextEffects] repaints a paragraph, so this draws
+/// each effect glyph itself, at the box the field's own [RenderEditable] reports for it. Wrapping, scrolling and
+/// padding therefore always match the field.
+class TextEffectOverlay extends StatefulWidget {
+  const TextEffectOverlay({super.key, required this.controller, required this.fieldKey, required this.style});
+
+  final MentionTextEditingController controller;
+
+  /// Wraps the field whose [RenderEditable] is drawn over.
+  final GlobalKey fieldKey;
+
+  final TextStyle style;
+
+  @override
+  State<TextEffectOverlay> createState() => _TextEffectOverlayState();
+}
+
+class _TextEffectOverlayState extends State<TextEffectOverlay> with SingleTickerProviderStateMixin {
+  late final AnimationController _animation = AnimationController(vsync: this);
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+  }
+
+  @override
+  void didUpdateWidget(TextEffectOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onChanged);
+      widget.controller.addListener(_onChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    _animation.dispose();
+    super.dispose();
+  }
+
+  /// Whether the last build had effect runs to draw.
+  bool _drawing = false;
+
+  void _onChanged() {
+    // Most text has no effects: then a keystroke has nothing here to redraw, so it doesn't rebuild this
+    if (!mounted) return;
+    final hasEffects = widget.controller.runs.any((r) => RunTextEffects.supports(r.attributes?.textEffect));
+    if (_drawing || hasEffects) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final effects = RunTextEffects.orderedRuns(widget.controller.runs);
+    _drawing = effects.isNotEmpty;
+    if (effects.isNotEmpty && TickerMode.valuesOf(context).enabled && !MediaQuery.disableAnimationsOf(context)) {
+      final duration = RunTextEffects.durationFor(effects);
+      if (_animation.duration != duration || !_animation.isAnimating) {
+        _animation.duration = duration;
+        _animation.repeat();
+      }
+    } else if (_animation.isAnimating) {
+      _animation.stop();
+      _animation.value = 0;
+    }
+    if (!_drawing) return const SizedBox.shrink();
+    // Its own layer: without one, each animation frame (and each keystroke) repaints everything up to the page's
+    // boundary, not just these glyphs
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: _EffectGlyphs(
+          controller: widget.controller,
+          fieldKey: widget.fieldKey,
+          style: widget.style,
+          mentionColor: Theme.of(context).colorScheme.primary,
+          selectedMentionColor: Theme.of(context).colorScheme.onPrimary,
+          animation: _animation,
+        ),
+      ),
+    );
+  }
+}
+
+class _EffectGlyphs extends LeafRenderObjectWidget {
+  const _EffectGlyphs({
+    required this.controller,
+    required this.fieldKey,
+    required this.style,
+    required this.mentionColor,
+    required this.selectedMentionColor,
+    required this.animation,
+  });
+
+  final MentionTextEditingController controller;
+  final GlobalKey fieldKey;
+  final TextStyle style;
+  final Color mentionColor;
+
+  /// On the selection highlight, which is solid primary (main.dart), as the field draws selected mentions.
+  final Color selectedMentionColor;
+  final Animation<double> animation;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderEffectGlyphs(controller, fieldKey, style, mentionColor, selectedMentionColor, animation);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderEffectGlyphs renderObject) {
+    renderObject.update(controller, fieldKey, style, mentionColor, selectedMentionColor, animation);
+  }
+}
+
+class _RenderEffectGlyphs extends RenderBox {
+  _RenderEffectGlyphs(
+    this._controller,
+    this._fieldKey,
+    this._style,
+    this._mentionColor,
+    this._selectedMentionColor,
+    this._animation,
+  );
+
+  MentionTextEditingController _controller;
+  GlobalKey _fieldKey;
+  TextStyle _style;
+  Color _mentionColor;
+  Color _selectedMentionColor;
+  Animation<double> _animation;
+  final Map<String, (TextPainter, Offset)> _painters = {};
+
+  void update(
+    MentionTextEditingController controller,
+    GlobalKey fieldKey,
+    TextStyle style,
+    Color mentionColor,
+    Color selectedMentionColor,
+    Animation<double> animation,
+  ) {
+    if (animation != _animation) {
+      if (attached) _animation.removeListener(markNeedsPaint);
+      _animation = animation;
+      if (attached) _animation.addListener(markNeedsPaint);
+    }
+    if (style != _style || mentionColor != _mentionColor || selectedMentionColor != _selectedMentionColor) {
+      _clearPainters();
+      _geometryKey = null;
+    }
+    if (fieldKey != _fieldKey) _editable = null;
+    _controller = controller;
+    _fieldKey = fieldKey;
+    _style = style;
+    _mentionColor = mentionColor;
+    _selectedMentionColor = selectedMentionColor;
+    markNeedsPaint();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _animation.addListener(markNeedsPaint);
+  }
+
+  @override
+  void detach() {
+    _animation.removeListener(markNeedsPaint);
+    super.detach();
+  }
+
+  @override
+  void dispose() {
+    _clearPainters();
+    super.dispose();
+  }
+
+  void _clearPainters() {
+    for (final (painter, _) in _painters.values) {
+      painter.dispose();
+    }
+    _painters.clear();
+  }
+
+  @override
+  bool get sizedByParent => true;
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
+
+  RenderEditable? _editable;
+
+  /// The field's [RenderEditable], looked up again only once the one found is gone.
+  RenderEditable? _currentEditable() {
+    final cached = _editable;
+    if (cached != null && cached.attached) return cached;
+    return _editable = _findEditable(_fieldKey.currentContext?.findRenderObject());
+  }
+
+  static RenderEditable? _findEditable(RenderObject? node) {
+    if (node is RenderEditable) return node;
+    RenderEditable? found;
+    node?.visitChildren((child) => found ??= _findEditable(child));
+    return found;
+  }
+
+  /// A painter for [glyph], and where its tight glyph box sits relative to the painter's origin.
+  (TextPainter, Offset) _painterFor(String glyph, Attributes attributes, TextScaler textScaler, bool selected) {
+    final decorations = [
+      if (attributes.isUnderlined) TextDecoration.underline,
+      if (attributes.isStrikethrough) TextDecoration.lineThrough,
+    ];
+    final mention = attributes.mention != null;
+    final key = '$glyph|${attributes.isBold}|${attributes.isItalic}|$decorations|$mention|${mention && selected}';
+    return _painters.putIfAbsent(key, () {
+      final style = _style.copyWith(
+        fontWeight: attributes.isBold || attributes.mention != null ? FontWeight.bold : null,
+        fontStyle: attributes.isItalic ? FontStyle.italic : null,
+        decoration: decorations.isEmpty ? null : TextDecoration.combine(decorations),
+        color: !mention ? null : (selected ? _selectedMentionColor : _mentionColor),
+      );
+      final painter = TextPainter(
+        text: TextSpan(children: _controller.buildAppleEmojiTextSpans(text: glyph, style: style)),
+        textDirection: TextDirection.ltr,
+        textScaler: textScaler,
+      )..layout();
+      final boxes = painter.getBoxesForSelection(TextSelection(baseOffset: 0, extentOffset: glyph.length));
+      return (painter, boxes.isEmpty ? Offset.zero : boxes.first.toRect().topLeft);
+    });
+  }
+
+  // Glyph boxes only move when the text, its runs, the field's size or its scroll do, so they're measured once for
+  // each rather than on every animation frame.
+  Object? _geometryKey;
+  List<_RunGeometry?> _geometry = const [];
+
+  /// One entry per run, null for a run with nothing on screen to draw (its place still counts in the stagger).
+  List<_RunGeometry?> _geometryFor(RenderEditable editable, String text, List<Run> runs) {
+    final key = (text, _controller.runs, editable.size, editable.offset.pixels, editable.textScaler);
+    if (key == _geometryKey) return _geometry;
+    _geometryKey = key;
+    return _geometry = [
+      for (final run in runs) _measure(editable, text, run),
+    ];
+  }
+
+  static _RunGeometry? _measure(RenderEditable editable, String text, Run run) {
+    final start = run.range[0].clamp(0, text.length);
+    final end = (run.range[0] + run.range[1]).clamp(start, text.length);
+    final lines = editable
+        .getBoxesForSelection(TextSelection(baseOffset: start, extentOffset: end))
+        .map((b) => b.toRect())
+        .toList();
+    if (lines.isEmpty) return null;
+    final runCenterX = lines.fold(0.0, (sum, r) => sum + r.center.dx) / lines.length;
+    final glyphs = <(String, Rect, int)>[];
+    var i = start;
+    for (final g in text.substring(start, end).characters) {
+      if (g.trim().isNotEmpty) {
+        final boxes = editable.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + g.length));
+        if (boxes.isNotEmpty) glyphs.add((g, boxes.first.toRect(), i));
+      }
+      i += g.length;
+    }
+    return (run, lines, runCenterX, glyphs);
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final runs = RunTextEffects.orderedRuns(_controller.runs);
+    if (runs.isEmpty) return;
+    final editable = _currentEditable();
+    if (editable == null || !editable.hasSize) return;
+    final text = _controller.text;
+    final canvas = context.canvas;
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.transform(editable.getTransformTo(this).storage);
+    canvas.clipRect(Offset.zero & editable.size);
+    for (final (index, geometry) in _geometryFor(editable, text, runs).indexed) {
+      if (geometry == null) continue;
+      final (run, lines, runCenterX, glyphs) = geometry;
+      final effect = run.attributes!.textEffect!;
+      final phase = RunTextEffects.phaseFor(_animation.value, index, runs.length);
+      for (final (n, (glyph, rect, at)) in glyphs.indexed) {
+        final TextEffectPose pose;
+        if (phase <= 0 || phase >= 1) {
+          pose = (transform: Matrix4.identity(), alpha: 1, bold: 0);
+        } else if (RunTextEffects.perGlyph(effect)) {
+          final frac = glyphs.length > 1 ? n / (glyphs.length - 1) : 0.5;
+          pose = RenderRunTextEffects.glyphPose(effect, phase, n, frac, rect, runCenterX);
+        } else {
+          final line = lines.firstWhere((l) => l.contains(rect.center), orElse: () => rect);
+          pose = RenderRunTextEffects.runPose(effect, phase, line);
+        }
+        if (pose.alpha <= 0) continue;
+        final selection = _controller.selection;
+        final selected = !selection.isCollapsed && selection.start <= at && at < selection.end;
+        final (painter, ownBoxTopLeft) = _painterFor(glyph, run.attributes!, editable.textScaler, selected);
+        // The field reports tight glyph boxes; lining up the painter's own tight box keeps baselines equal
+        final origin = rect.topLeft - ownBoxTopLeft;
+        for (final dx in [0.0, if (pose.bold >= 0.05) ...[pose.bold / 2, pose.bold]]) {
+          canvas.save();
+          canvas.transform((Matrix4.translationValues(dx, 0, 0)..multiply(pose.transform)).storage);
+          if (pose.alpha < 1) {
+            canvas.saveLayer(rect.inflate(rect.height), Paint()..color = Color.fromRGBO(0, 0, 0, pose.alpha));
+          }
+          painter.paint(canvas, origin);
+          if (pose.alpha < 1) canvas.restore();
+          canvas.restore();
+        }
+      }
+    }
+    canvas.restore();
+  }
+}
+
+/// A run's line boxes, their center, and each visible grapheme with its box and offset in the text.
+typedef _RunGeometry = (Run, List<Rect>, double, List<(String, Rect, int)>);

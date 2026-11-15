@@ -2,8 +2,18 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/services/ui/chat/conversation_view_controller.dart';
 import 'package:bluebubbles/utils/emoji.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:unicode_emojis/unicode_emojis.dart';
+
+/// An [RxList] emits on every assignment, even of an equal list, so clearing the suggestions with `value = []` on
+/// each keystroke rebuilt them each time. This only assigns when the items change.
+extension RxListSetIfChanged<T> on RxList<T> {
+  void setIfChanged(List<T> items) {
+    if (!listEquals(this, items)) value = items;
+  }
+}
 
 /// Helper class for processing emoji and mention matches in the text field
 class TextFieldMatchHelper {
@@ -17,7 +27,7 @@ class TextFieldMatchHelper {
     final newEmojiText = textController.text;
 
     if (!newEmojiText.contains(":")) {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
       return;
     }
@@ -39,12 +49,12 @@ class TextFieldMatchHelper {
     }
 
     if (allMatches.isNotEmpty) {
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
-      controller.emojiMatches.value = allMatches;
+      controller.emojiMatches.setIfChanged(allMatches);
       controller.emojiSelectedIndex.value = 0;
     } else {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
     }
   }
@@ -58,8 +68,8 @@ class TextFieldMatchHelper {
   ) {
     final newEmojiText = textController.text;
 
-    if (isSubject || !newEmojiText.contains("@")) {
-      controller.mentionMatches.value = [];
+    if (isSubject) {
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
       return;
     }
@@ -103,13 +113,34 @@ class TextFieldMatchHelper {
       Logger.info("${allMatches.length} matches found for: $mentionName");
     }
 
+    // Without an @, 3+ letters at the end of a word that start a participant's name offer the mention too. Only in a
+    // group: in a 1:1 chat it would pop up for every word that starts the other person's name
+    final cursor = textController.selection.start;
+    if (allMatches.isEmpty &&
+        controller.chat.isGroup &&
+        cursor >= 0 &&
+        textController is MentionTextEditingController) {
+      final word = RegExp(r"(?<!\S)[^\s@]{3,}$").firstMatch(newEmojiText.substring(0, cursor))?.group(0);
+      final atWordEnd = cursor == newEmojiText.length || RegExp(r"\s").hasMatch(newEmojiText[cursor]);
+      if (word != null &&
+          atWordEnd &&
+          !textController.mentionRuns.any((r) => r.range[0] < cursor && r.range[0] + r.range[1] > cursor - word.length)) {
+        final query = word.toLowerCase();
+        allMatches = controller.mentionables
+            .where((e) =>
+                e.displayName.toLowerCase().startsWith(query) ||
+                e.handle.displayName.toLowerCase().split(" ").any((part) => part.startsWith(query)))
+            .toList();
+      }
+    }
+
     if (allMatches.isNotEmpty) {
-      controller.emojiMatches.value = [];
+      controller.emojiMatches.setIfChanged([]);
       controller.emojiSelectedIndex.value = 0;
-      controller.mentionMatches.value = allMatches;
+      controller.mentionMatches.setIfChanged(allMatches);
       controller.mentionSelectedIndex.value = 0;
     } else {
-      controller.mentionMatches.value = [];
+      controller.mentionMatches.setIfChanged([]);
       controller.mentionSelectedIndex.value = 0;
     }
   }

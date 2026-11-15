@@ -33,6 +33,7 @@ After any `@Entity` annotation change: run `dart run build_runner build`. Never 
 | `autoSendReadReceipts` | `bool?` | Per-chat override of the global setting |
 | `autoSendTypingIndicators` | `bool?` | Per-chat override of the global setting |
 | `textFieldText` | `String?` | Persisted draft text for the compose field |
+| `textFieldRuns` | `String?` | JSON list of the draft's `Run`s (mentions) over `textFieldText`; null when none |
 | `textFieldAttachments` | `List<String>` | Persisted draft attachment paths |
 | `dbOnlyLatestMessageDate` | `DateTime?` | `@Property(uid: 526293286661780207)` -- sort key kept in sync with `dbLatestMessage` via `setLatestMessage()` |
 | `dateDeleted` | `DateTime?` | -- |

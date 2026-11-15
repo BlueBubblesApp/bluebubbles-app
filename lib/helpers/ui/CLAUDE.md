@@ -9,6 +9,8 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 | `ui_helpers.dart` | General widget utilities; custom back button with gesture support |
 | `theme_helpers.dart` | `HexColor` (hex string → `Color`), `BubbleColors` theme extension, desktop window effects (Mica/acrylic) |
 | `message_widget_helpers.dart` | `buildMessageSpans()` — rich text for message bubbles; `resolveMediaCollectionLayout()` — collage/stack/grid for multi-attachment parts |
+| `message_run_spans.dart` | Splits text at attributed-run and detected-entity boundaries, composes formatting, and reads mentions from runs; shared by initial and enriched rendering |
+| `html_runs.dart` | `htmlRuns(html, plain)` — bold/italic/underline/strikethrough runs over pasted plain text from another app's HTML copy (Windows CF_HTML or Android HTML clip), matched ignoring whitespace |
 | `attributed_body_helpers.dart` | Extracts audio transcripts from `AttributedBody` rich text; parses `Run` objects by part number |
 | `reaction_helpers.dart` | `ReactionTypes` — string constants for iMessage tapbacks (`love`, `like`, `dislike`, `laugh`, `emphasize`, `question`) and their verb forms |
 | `facetime_helpers.dart` | `showFaceTimeOverlay()` / `hideFaceTimeOverlay()` — incoming FaceTime call UI overlay |
@@ -21,7 +23,7 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 
 ## Key Usage Notes
 
-**Message text rendering** — always use `buildMessageSpans()` from `message_widget_helpers.dart` to render message text inside bubbles. It handles emoji font sizing, mention highlighting, and URL styling consistently.
+**Message text rendering** — always use `buildMessageSpans()` from `message_widget_helpers.dart` to render message text inside bubbles. Initial and enriched rendering share a run-based formatter for bold, italic, underline, strikethrough, mention highlighting, and URL actions, before inline Genmoji substitution. Redacted text skips source ranges and actions.
 
 **Bubble colors** — `BubbleColors` is a `ThemeExtension`; access via `Theme.of(context).extension<BubbleColors>()`. Don't hardcode bubble colors.
 

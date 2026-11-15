@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/dialogs/custom_mention_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/picked_attachment.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -34,27 +33,6 @@ class _PickedAttachmentsHolderState extends State<PickedAttachmentsHolder> with 
 
   List<PlatformFile> get pickedAttachments =>
       widget.controller != null ? widget.controller!.pickedAttachments : widget.initialAttachments;
-
-  void selectMention(int index, bool custom) async {
-    if (widget.textController is! MentionTextEditingController) return;
-    final mention = widget.controller!.mentionMatches[index];
-    if (custom) {
-      final changed = await showCustomMentionDialog(context, mention);
-      if (isNullOrEmpty(changed)) return;
-      mention.customDisplayName = changed!;
-    }
-    final _controller = widget.textController as MentionTextEditingController;
-    widget.controller!.mentionSelectedIndex.value = 0;
-    final text = _controller.text;
-    final regExp = RegExp(r"@(?:[^@ \n]+|$)(?=[ \n]|$)", multiLine: true);
-    final matches = regExp.allMatches(text);
-    if (matches.isNotEmpty && matches.any((m) => m.start < _controller.selection.start)) {
-      final match = matches.lastWhere((m) => m.start < _controller.selection.start);
-      _controller.addMention(text.substring(match.start, match.end), mention);
-    }
-    widget.controller!.mentionMatches.clear();
-    widget.controller!.focusNode.requestFocus();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,27 +80,77 @@ class _PickedAttachmentsHolderState extends State<PickedAttachmentsHolder> with 
             ),
           );
         }),
-        // Emoji/Mention suggestions overlay - isolated Obx
-        if (widget.controller != null)
-          Obx(() {
-            final hasEmojiMatches = widget.controller!.emojiMatches.isNotEmpty;
-            final hasMentionMatches = widget.controller!.mentionMatches.isNotEmpty;
-
-            if (hasEmojiMatches) {
-              return _EmojiSuggestions(
-                controller: widget.controller!,
-                isIOS: _isIOS,
-              );
-            } else if (hasMentionMatches) {
-              return _MentionSuggestions(
-                controller: widget.controller!,
-                isIOS: _isIOS,
-                onSelect: selectMention,
-              );
-            }
-            return const SizedBox.shrink();
-          }),
       ],
+    );
+  }
+}
+
+/// The emoji and mention suggestions, floating above the top of the composer, where this sits, rather than in it.
+/// The composer animates to its content's size, so suggestions taking room in it would grow and shrink it (and
+/// resize the message list) each time they came and went, which typing a name without "@" does word by word.
+class ComposerSuggestions extends StatefulWidget {
+  const ComposerSuggestions({super.key, required this.controller});
+
+  final ConversationViewController controller;
+
+  @override
+  State<ComposerSuggestions> createState() => _ComposerSuggestionsState();
+}
+
+class _ComposerSuggestionsState extends State<ComposerSuggestions> {
+  late final bool _isIOS = SettingsSvc.settings.skin.value == Skins.iOS;
+
+  // Always shown: what it shows (nothing, most of the time) is up to the Obx inside
+  final _portal = OverlayPortalController()..show();
+
+  Future<void> _selectMention(int index, bool custom) async {
+    final controller = widget.controller;
+    final mention = controller.mentionMatches[index];
+    String? name;
+    if (custom) {
+      name = await showCustomMentionDialog(context, mention);
+      if (isNullOrEmpty(name) || !mounted) return;
+    }
+    controller.mentionSelectedIndex.value = 0;
+    controller.textController.addMention(mention, name: name);
+    controller.mentionMatches.clear();
+    controller.focusNode.requestFocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayPortal.overlayChildLayoutBuilder(
+      controller: _portal,
+      overlayChildBuilder: (context, info) {
+        final origin = MatrixUtils.transformPoint(info.childPaintTransform, Offset.zero);
+        return Stack(
+          children: [
+            Positioned(
+              left: origin.dx,
+              width: info.childSize.width,
+              bottom: info.overlaySize.height - origin.dy,
+              // In the field's tap group, so picking one doesn't count as tapping away from the field
+              child: TextFieldTapRegion(
+                child: Obx(() {
+                  if (widget.controller.emojiMatches.isNotEmpty) {
+                    return _EmojiSuggestions(controller: widget.controller, isIOS: _isIOS);
+                  }
+                  if (widget.controller.mentionMatches.isNotEmpty) {
+                    return _MentionSuggestions(
+                      controller: widget.controller,
+                      isIOS: _isIOS,
+                      onSelect: _selectMention,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
+              ),
+            ),
+          ],
+        );
+      },
+      // The anchor: the composer's full width, taking no height
+      child: const SizedBox(width: double.infinity, height: 0),
     );
   }
 }
@@ -288,6 +316,8 @@ class _MentionSuggestions extends StatelessWidget {
                             size: 25,
                             fontSize: 15,
                             borderThickness: 0,
+                            // A tap anywhere on the row picks the mention
+                            editable: false,
                           ),
                           const SizedBox(width: 12),
                           Text(

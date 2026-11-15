@@ -46,7 +46,7 @@ class _ReplyHolderState extends State<ReplyHolder> with ThemeHelpers {
               text: matched.text,
               subject: matched.subject,
               attachments: matched.attachments.where((a) => a.guid == attachmentGuid).toList(),
-              mentions: matched.mentions,
+              runs: matched.runs,
               edits: matched.edits,
               isUnsent: matched.isUnsent,
               shouldRedact: matched.shouldRedact,
