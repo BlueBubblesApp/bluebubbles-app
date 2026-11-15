@@ -500,6 +500,25 @@ class Message {
     return null;
   }
 
+  /// The sticker tapback [removal] (a `3007`) takes back: the same sender's latest sticker tapback on that message
+  /// part before it. A removal from another device can come without the sticker, which is on this one.
+  static Message? findRemovedStickerTapback(Message removal) {
+    if (kIsWeb || removal.associatedMessageGuid == null) return null;
+    var condition = Message_.associatedMessageGuid.equals(removal.associatedMessageGuid!) &
+        Message_.associatedMessageType.equals(ReactionTypes.STICKER) &
+        Message_.isFromMe.equals(removal.isFromMe ?? false);
+    if (removal.isFromMe != true && removal.handleId != null) {
+      condition = condition & Message_.handleId.equals(removal.handleId!);
+    }
+    if (removal.dateCreated != null) {
+      condition = condition & Message_.dateCreated.lessOrEqual(removal.dateCreated!.millisecondsSinceEpoch);
+    }
+    final query = (Database.messages.query(condition)..order(Message_.dateCreated, flags: Order.descending)).build();
+    final candidates = query.find();
+    query.close();
+    return candidates.firstWhereOrNull((m) => (m.associatedMessagePart ?? 0) == (removal.associatedMessagePart ?? 0));
+  }
+
   static Future<Message?> findOneAsync({String? guid, String? associatedMessageGuid}) async {
     if (kIsWeb) return null;
 

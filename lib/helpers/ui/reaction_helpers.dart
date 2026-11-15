@@ -1,4 +1,5 @@
 import 'package:bluebubbles/database/models.dart' hide Entity;
+import 'package:bluebubbles/helpers/types/helpers/string_helpers.dart';
 import 'package:flutter/foundation.dart';
 
 class ReactionTypes {
@@ -96,9 +97,14 @@ class ReactionTypes {
   static String emojiFor(Message message) =>
       message.associatedMessageEmoji ?? reactionToEmoji[message.associatedMessageType] ?? "X";
 
-  static String? verbFor(Message message) {
+  /// With [inlineSticker], a sticker tapback names its sticker with a U+FFFC, for a preview that draws it there
+  /// (`Message.previewInlineAttachments`).
+  static String? verbFor(Message message, {bool inlineSticker = false}) {
     final type = message.associatedMessageType;
-    if (isStickerTapback(type)) return type == STICKER ? "reacted with a sticker to" : "removed a sticker from";
+    if (isStickerTapback(type)) {
+      final sticker = inlineSticker ? objectReplacementChar : "a sticker";
+      return type == STICKER ? "reacted ${inlineSticker ? sticker : "with $sticker"} to" : "removed $sticker from";
+    }
     if (!isEmojiTapback(type)) return reactionToVerb[type];
     // Synced before the server sent the emoji; the backfill fills it in
     final emoji = message.associatedMessageEmoji;

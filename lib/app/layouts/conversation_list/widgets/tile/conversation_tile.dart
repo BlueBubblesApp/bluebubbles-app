@@ -231,12 +231,17 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
   String? _cachedInlineKey;
   List<Attachment?> _cachedInline = const [];
 
+  /// Whether the first of [_cachedInline] is a sticker tapback's sticker, which reads as words until it's downloaded
+  bool _cachedLeadingSticker = false;
+
   List<Attachment?> _inlineAttachments(Message? message, String subtitle) {
     // The attachment count too: a Genmoji linked after the first build doesn't change the subtitle
     final key = "${message?.guid}|${message?.dbAttachments.length}|$subtitle";
     if (_cachedInlineKey != key) {
       _cachedInlineKey = key;
       _cachedInline = message?.previewInlineAttachments ?? const [];
+      final sticker = message?.previewSticker;
+      _cachedLeadingSticker = sticker != null && _cachedInline.firstOrNull?.guid == sticker.guid;
     }
     return _cachedInline;
   }
@@ -329,7 +334,14 @@ class _ChatSubtitleState extends CustomState<ChatSubtitle, void, ConversationTil
         final inline = _subtitle.contains(objectReplacementChar)
             ? _inlineAttachments(latestMessage, _subtitle)
             : const <Attachment?>[];
-        subtitleSpan = TextSpan(children: inline.isEmpty ? spans : withInlineAttachments(spans, inline, style));
+        final stickerPlaceholder = inline.isNotEmpty && _cachedLeadingSticker
+            ? (latestMessage?.associatedMessageType == ReactionTypes.STICKER ? "with a sticker" : "a sticker")
+            : null;
+        subtitleSpan = TextSpan(
+          children: inline.isEmpty
+              ? spans
+              : withInlineAttachments(spans, inline, style, leadingPlaceholder: stickerPlaceholder),
+        );
       }
 
       final richText = RichText(

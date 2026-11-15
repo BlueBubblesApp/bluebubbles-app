@@ -7,8 +7,14 @@ import 'package:universal_io/io.dart';
 /// A small image attachment (sticker tapback or inline Genmoji), downloaded on first show when auto-download allows,
 /// or on a tap otherwise.
 class StickerTapbackImage extends StatefulWidget {
-  const StickerTapbackImage({super.key, required this.attachment});
+  const StickerTapbackImage({super.key, required this.attachment, this.placeholder, this.size});
   final Attachment? attachment;
+
+  /// Shown until the image is on disk, and instead of it when it can't be: words in a preview line, say.
+  final Widget? placeholder;
+
+  /// The image's size once shown, for a placeholder that takes its own
+  final double? size;
 
   @override
   State<StickerTapbackImage> createState() => _StickerTapbackImageState();
@@ -68,6 +74,19 @@ class _StickerTapbackImageState extends State<StickerTapbackImage> {
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = widget.placeholder;
+    if (placeholder != null) {
+      if (_path == null || _failed) return placeholder;
+      return SizedBox.square(
+        dimension: widget.size,
+        child: Image.file(
+          File(_path!),
+          gaplessPlayback: true,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => placeholder,
+        ),
+      );
+    }
     final fallback = Icon(Icons.broken_image_outlined, color: context.theme.colorScheme.outline);
     if (_failed) return fallback;
     if (_awaitingTap && widget.attachment != null) {

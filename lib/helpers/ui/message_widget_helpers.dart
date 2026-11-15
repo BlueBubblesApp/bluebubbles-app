@@ -223,10 +223,17 @@ Future<void> _onMessageEntityTap(TextEntityMatch entity, String text) async {
 List<InlineSpan> _withInlineAttachments(List<InlineSpan> spans, MessagePart part, TextStyle style) =>
     part.hasInlineAttachments ? withInlineAttachments(spans, part.attachments, style) : spans;
 
-/// Swaps each U+FFFC in [spans] for the next of [inline] (Genmoji), drawn at text height.
-List<InlineSpan> withInlineAttachments(List<InlineSpan> spans, Iterable<Attachment?> inline, TextStyle style) {
+/// Swaps each U+FFFC in [spans] for the next of [inline] (Genmoji), drawn at text height. [leadingPlaceholder] reads
+/// in place of the first image until it's on disk: a preview's sticker tapback, which can still be downloading.
+List<InlineSpan> withInlineAttachments(
+  List<InlineSpan> spans,
+  Iterable<Attachment?> inline,
+  TextStyle style, {
+  String? leadingPlaceholder,
+}) {
   final attachments = inline.iterator;
   final size = (style.fontSize ?? 14) * 1.25;
+  var first = true;
   return spans.expand<InlineSpan>((span) {
     if (span is! TextSpan || !(span.text?.contains(objectReplacementChar) ?? false)) return [span];
     final pieces = span.text!.split(objectReplacementChar);
@@ -235,10 +242,19 @@ List<InlineSpan> withInlineAttachments(List<InlineSpan> spans, Iterable<Attachme
         if (i > 0)
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: SizedBox.square(
-              dimension: size,
-              child: attachments.moveNext() ? StickerTapbackImage(attachment: attachments.current) : null,
-            ),
+            child: () {
+              final next = attachments.moveNext() ? attachments.current : null;
+              final placeholder = first ? leadingPlaceholder : null;
+              first = false;
+              if (placeholder != null) {
+                return StickerTapbackImage(
+                  attachment: next,
+                  size: size,
+                  placeholder: Text(placeholder, style: span.style ?? style),
+                );
+              }
+              return SizedBox.square(dimension: size, child: next == null ? null : StickerTapbackImage(attachment: next));
+            }(),
           ),
         if (pieces[i].isNotEmpty) TextSpan(text: pieces[i], style: span.style, recognizer: span.recognizer),
       ],
