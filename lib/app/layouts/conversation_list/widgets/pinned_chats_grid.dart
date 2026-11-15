@@ -250,6 +250,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
 
   @override
   Widget build(BuildContext context) {
+    _gridContext = context;
     return SliverToBoxAdapter(
         child: AnimatedSize(
       duration: const Duration(milliseconds: 250),
@@ -566,6 +567,9 @@ class _ChatDragSourceState extends State<ChatDragSource> {
   VoidCallback? _undoHold;
   bool _moved = false;
 
+  /// The list row, for a drag that doesn't pin to fly back into.
+  final GlobalKey _rowKey = GlobalKey();
+
   void _onStart() {
     _draggedGuid.value = widget.chat.guid;
     _dragFromPins.value = widget.startsInPinArea;
@@ -598,6 +602,23 @@ class _ChatDragSourceState extends State<ChatDragSource> {
     _undoHold = null;
   }
 
+  void _onCanceled(Offset offset) {
+    if (_dragMoved.value) {
+      if (widget.startsInPinArea) {
+        // Released off both the pins and the list: still a pin, so back to its place. The pin left the grid when
+        // the drag left it, so this state may be gone.
+        final grid = _gridContext;
+        _overPinArea.value = true;
+        if (grid != null && grid.mounted) _DropFlight.show(grid, widget.chat.guid, offset, toPin: true);
+      } else if (mounted) {
+        // Not pinned after all: back into its row, turning from a pin into it on the way.
+        _overPinArea.value = false;
+        _DropFlight.show(context, widget.chat.guid, offset, toPin: false, rowKey: _rowKey);
+      }
+    }
+    _onEnd();
+  }
+
   Future<void> _onEnd() async {
     _undoHold = null;
     final pending = _pendingDrop;
@@ -621,10 +642,12 @@ class _ChatDragSourceState extends State<ChatDragSource> {
       alwaysPin: true,
     );
     Widget listLook({required bool dragging}) => Obx(() {
-          if (_flyingGuid.value == widget.chat.guid) return Opacity(opacity: 0, child: widget.child);
+          // Inside the fades, so a snapshot of it shows the row as it lands.
+          final row = RepaintBoundary(key: _rowKey, child: widget.child);
+          if (_flyingGuid.value == widget.chat.guid) return Opacity(opacity: 0, child: row);
           final mine = _draggedGuid.value == widget.chat.guid;
           if (mine && _overPinArea.value) return const SizedBox.shrink();
-          return mine && dragging && _dragMoved.value ? Opacity(opacity: 0.3, child: widget.child) : widget.child;
+          return mine && dragging && _dragMoved.value ? Opacity(opacity: 0.3, child: row) : row;
         });
     final Widget child = widget.startsInPinArea ? widget.child : listLook(dragging: false);
     final Widget whileDragging = widget.startsInPinArea ? widget.child : listLook(dragging: true);
@@ -639,7 +662,7 @@ class _ChatDragSourceState extends State<ChatDragSource> {
             // Not onDragEnd: Flutter skips it once the source is unmounted, which a pin is as soon as hovering the
             // list takes it out of the grid. These two always run.
             onDragCompleted: _onEnd,
-            onDraggableCanceled: (_, _) => _onEnd(),
+            onDraggableCanceled: (_, offset) => _onCanceled(offset),
             child: child,
           )
         : LongPressDraggable<String>(
@@ -653,7 +676,7 @@ class _ChatDragSourceState extends State<ChatDragSource> {
             onDragStarted: _onStart,
             onDragUpdate: _onUpdate,
             onDragCompleted: _onEnd,
-            onDraggableCanceled: (_, _) => _onEnd(),
+            onDraggableCanceled: (_, offset) => _onCanceled(offset),
             child: child,
           );
     return Listener(
@@ -787,6 +810,9 @@ class _ChatDragFeedback extends StatelessWidget {
 
 final GlobalKey _unpinRowBoundary = GlobalKey();
 
+/// The grid, for a pin's cancelled drag to fly back from once the pin itself has left it.
+BuildContext? _gridContext;
+
 /// The pins' avatar size as last laid out, so a dragged pin matches them.
 double _pinAvatarSize = 72;
 
@@ -855,15 +881,18 @@ class _DropFlight extends StatefulWidget {
   final double? width;
   final VoidCallback onDone;
 
-  static void show(BuildContext context, String guid, Offset position, {required bool toPin}) {
+  /// [rowKey] lands it on that row instead of the room the list made for an unpin.
+  static void show(BuildContext context, String guid, Offset position, {required bool toPin, GlobalKey? rowKey}) {
     final chat = ChatsSvc.findChatByGuid(guid);
     if (chat == null) return;
     final overlay = Overlay.of(context);
     final overlayBox = overlay.context.findRenderObject() as RenderBox;
-    final slot = (toPin ? _pinSlotContext : _unpinSlotContext)?.findRenderObject() as RenderBox?;
+    RenderBox? slotBox() =>
+        (rowKey?.currentContext ?? (toPin ? _pinSlotContext : _unpinSlotContext))?.findRenderObject() as RenderBox?;
+    final slot = slotBox();
     final hasSlot = slot != null && slot.attached && slot.hasSize;
-    final boundary = toPin ? null : _unpinRowBoundary.currentContext?.findRenderObject();
-    final row = boundary is RenderRepaintBoundary && boundary.hasSize
+    final boundary = toPin ? null : (rowKey ?? _unpinRowBoundary).currentContext?.findRenderObject();
+    final row = boundary is RenderRepaintBoundary && boundary.hasSize && !boundary.size.isEmpty
         ? boundary.toImage(pixelRatio: View.of(context).devicePixelRatio)
         : null;
     _flyingGuid.value = guid;
@@ -877,7 +906,7 @@ class _DropFlight extends StatefulWidget {
           toPin: toPin,
           from: overlayBox.globalToLocal(position),
           overlayBox: overlayBox,
-          slot: () => (toPin ? _pinSlotContext : _unpinSlotContext)?.findRenderObject() as RenderBox?,
+          slot: slotBox,
           width: hasSlot ? slot.size.width : null,
           row: row,
           landed: landed,
