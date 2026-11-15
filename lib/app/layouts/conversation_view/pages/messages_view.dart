@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 import 'handlers/drop_zone_manager.dart';
@@ -624,6 +625,9 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
   @override
   Widget build(BuildContext context) {
     return DropTarget(
+      // desktop_drop 0.7 releases Android's URI permission before Dart can read a drop, so nothing would attach.
+      // Upstream 0.9 fixes it but needs cross_file 0.4, which the pickers and share_plus don't support yet.
+      enable: !Platform.isAndroid,
       onDragEntered: (DropEventDetails details) => dropZoneManager.onDropOver(details),
       onDragUpdated: (DropEventDetails details) => dropZoneManager.onDropOver(details),
       onDragExited: (DropEventDetails details) => dropZoneManager.onDropLeave(details),

@@ -172,8 +172,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
   Future<void> send(SendData data) async {
     // do not add anything above this line, the attachments must be extracted first
     final attachments = List<PlatformFile>.from(data.attachments);
-    // text is mutable — reassigned during mention processing below
-    String text = data.text;
+    final text = data.text;
     // The pill row holds two kinds of pill. Smart replies are ML suggestions and
     // are cleared once the outgoing message is inserted; quick actions ("Attach
     // recent photo", "Jump to oldest unread") are the app's own and survive a
@@ -265,26 +264,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
     }
 
     if (text.isNotEmpty || data.subject.isNotEmpty) {
-      final textSplit = MentionTextEditingController.splitText(text);
-      bool flag = false;
-      final newText = [];
-      if (textSplit.length > 1) {
-        for (String word in textSplit) {
-          if (word == MentionTextEditingController.escapingChar) flag = !flag;
-          int? index = flag ? int.tryParse(word) : null;
-          if (index != null) {
-            final mention = controller.textController.mentionables[index];
-            newText.add(mention);
-            continue;
-          }
-          if (word == MentionTextEditingController.escapingChar) {
-            continue;
-          }
-          newText.add(word.replaceAll(MentionTextEditingController.escapingChar, ""));
-        }
-        text = newText.join("");
-      }
-      int currentPos = 0;
+      final runs = MentionTextEditingController.attributedRuns(text, data.runs);
       final _message = Message(
         text: text.isEmpty && data.subject.isNotEmpty ? data.subject : text,
         subject: text.isEmpty && data.subject.isNotEmpty ? null : data.subject,
@@ -296,35 +276,7 @@ class _SendAnimationState extends CustomState<SendAnimation, SendData, Conversat
         isFromMe: true,
         handleId: 0,
         hasDdResults: true,
-        attributedBody: [
-          if (textSplit.length > 1)
-            AttributedBody(
-              string: text,
-              runs: newText.whereType<Mentionable>().isEmpty
-                  ? []
-                  : newText.map((e) {
-                      if (e is Mentionable) {
-                        final run = Run(
-                            range: [currentPos, e.toString().length],
-                            attributes: Attributes(
-                              mention: e.address,
-                              messagePart: 0,
-                            ));
-                        currentPos += e.toString().length;
-                        return run;
-                      } else {
-                        final run = Run(
-                          range: [currentPos, e.length],
-                          attributes: Attributes(
-                            messagePart: 0,
-                          ),
-                        );
-                        currentPos += e.toString().length;
-                        return run;
-                      }
-                    }).toList(),
-            ),
-        ],
+        attributedBody: [if (runs.isNotEmpty) AttributedBody(string: text, runs: runs)],
       );
       // Close the message list gate before the outgoing message is queued, so
       // that a message arriving during the flight can't insert into the list or

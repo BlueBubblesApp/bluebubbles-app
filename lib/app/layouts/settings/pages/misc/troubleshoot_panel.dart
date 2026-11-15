@@ -112,7 +112,7 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
     ));
     int? filled;
     try {
-      filled = await ServerV2Migrations.run(onProgress: (s, p) {
+      filled = await ServerV2Migrations.run(onProgress: (s, p, {completed, total}) {
         step.value = s;
         progress.value = p;
       });

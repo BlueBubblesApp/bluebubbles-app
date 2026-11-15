@@ -28,5 +28,9 @@ One file per server API domain. Each class implements `BaseApi` and is exposed o
 3. Never add request methods directly to `HttpService` — see `../CLAUDE.md` and `.claude/rules/api.md`.
 
 ## Related
+
+`MessageApi.query` accepts the optional v2 `dateField` selector (`created`, `delivered`, `read`,
+`updated`, `edited`, `retracted`) for its `after`/`before` bounds. Omit it for legacy server requests.
+
 - Full method-level reference table: `../CLAUDE.md`
 - HTTP conventions (`runApiGuarded`, `buildQueryParams`, error handling): `.claude/rules/api.md`

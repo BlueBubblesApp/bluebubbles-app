@@ -1,4 +1,5 @@
 import 'package:bluebubbles/services/network/api/base_api.dart';
+import 'package:bluebubbles/services/network/api/message_api.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:dio/dio.dart';
 
@@ -109,6 +110,8 @@ class ChatApi {
           "service": service,
           "method": SettingsSvc.settings.enablePrivateAPI.value ? 'private-api' : 'apple-script',
         },
+        // The server answers once Messages has made the chat and sent its first message, as on the send routes
+        options: Options(receiveTimeout: MessageApi.awaitsIMessageTimeout),
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);

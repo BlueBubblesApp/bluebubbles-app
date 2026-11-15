@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/async_task.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
@@ -29,6 +30,13 @@ class SyncService {
   static const Duration _incrementalSyncCooldown = Duration(seconds: 30);
   static const int _dispatchChunkSize = 50;
   DateTime? _lastIncrementalSyncTimestamp;
+
+  // Desktop pulls every server contact with avatars, so incremental syncs refresh them at most daily.
+  static const Duration _serverContactSyncInterval = Duration(hours: 24);
+  DateTime? _lastServerContactSync;
+
+  /// The server that pull came from. Another server's contacts are pulled at once rather than after the day is up.
+  String? _lastServerContactSyncAddress;
 
   FullSyncManager? _manager;
   FullSyncManager? get fullSyncManager => _manager;
@@ -112,7 +120,11 @@ class SyncService {
           final messages = await runAsync(() => Database.messages.getMany(chunk).whereType<Message>().toList());
           for (final message in messages) {
             if (message.guid == null) continue;
-            await service.addNewMessage(message);
+            if (service.struct.getMessage(message.guid!) != null) {
+              service.updateMessage(message);
+            } else {
+              await service.addNewMessage(message);
+            }
             if (message.id != null) processedMessageIds.add(message.id!);
           }
         }
@@ -155,14 +167,18 @@ class SyncService {
 
         // Dispatch newly synced messages to any currently active chat view.
         // Skip messages already dispatched by a per-page event.
-        // MessagesService.addNewMessage() is a no-op if the message is already present,
-        // so this is safe even without the skip, but avoiding the call reduces churn.
+        // Existing messages need their receipt/edit state refreshed as well.
         for (final message in syncedMessages) {
           if (message.id != null && processedMessageIds.contains(message.id)) continue;
           final chatGuid = message.chat.target?.guid;
           if (chatGuid == null || message.guid == null) continue;
           if (Get.isRegistered<MessagesService>(tag: chatGuid)) {
-            unawaited(Get.find<MessagesService>(tag: chatGuid).addNewMessage(message));
+            final service = Get.find<MessagesService>(tag: chatGuid);
+            if (service.struct.getMessage(message.guid!) != null) {
+              service.updateMessage(message);
+            } else {
+              await service.addNewMessage(message);
+            }
           }
         }
       }
@@ -189,7 +205,21 @@ class SyncService {
       _lastIncrementalSyncTimestamp = null;
     }
 
-    final contactSyncResult = await performContactSyncToHandles();
+    var contactSyncResult = true;
+    if (!kIsDesktop) {
+      contactSyncResult = await performContactSyncToHandles();
+    } else if (!chatSyncFailed &&
+        (_lastServerContactSync == null ||
+            _lastServerContactSyncAddress != SettingsSvc.settings.serverAddress.value ||
+            now.difference(_lastServerContactSync!) >= _serverContactSyncInterval)) {
+      // A failed pull is swallowed in the isolate; a chat sync that reached the server stands in for its success
+      final address = SettingsSvc.settings.serverAddress.value;
+      contactSyncResult = await performContactSyncToHandles();
+      if (contactSyncResult) {
+        _lastServerContactSync = now;
+        _lastServerContactSyncAddress = address;
+      }
+    }
     final contactUploadResult = await performContactSyncToServer();
 
     // The chat sync is the one that matters, so its failure is reported alone and wins over the rest.

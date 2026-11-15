@@ -62,7 +62,9 @@ class ChatCreatorController extends StatefulController {
   void onInit() {
     super.onInit();
 
-    textController = MentionTextEditingController(text: initialText, focusNode: messageNode);
+    // A brand-new chat has no formatting for now (chat/new sends plain text)
+    textController = MentionTextEditingController(text: initialText, focusNode: messageNode)
+      ..formattingAllowed = () => false;
 
     selectedContacts.addAll(initialSelected);
 
@@ -409,9 +411,9 @@ class ChatCreatorController extends StatefulController {
       if (initialText != null && initialText!.isNotEmpty) {
         newCVC.textController.text = initialText!;
       } else if (activeController.value != null && activeController.value!.textController.text.isNotEmpty) {
-        newCVC.textController.text = activeController.value!.textController.text;
+        newCVC.textController.copyFrom(activeController.value!.textController);
       } else if (textController.text.isNotEmpty) {
-        newCVC.textController.text = textController.text;
+        newCVC.textController.copyFrom(textController);
       }
     }
 
@@ -615,9 +617,11 @@ class ChatCreatorController extends StatefulController {
     // Capture content now, before _activateExistingChat runs.
     // For existing chats the CVC already has the live text; for new chats the
     // text is still only in the chat creator's own textController.
-    final capturedText = activeController.value?.textController.text.isNotEmpty == true
-        ? activeController.value!.textController.text
-        : textController.text;
+    final capturedController = activeController.value?.textController.text.isNotEmpty == true
+        ? activeController.value!.textController
+        : textController;
+    final capturedText = capturedController.text;
+    final capturedRuns = capturedController.sendableRuns;
     final capturedAttachments = activeController.value?.pickedAttachments.isNotEmpty == true
         ? activeController.value!.pickedAttachments.toList()
         : List<PlatformFile>.from(initialAttachments);
@@ -661,6 +665,7 @@ class ChatCreatorController extends StatefulController {
       activeCVC.pendingSend = SendData(
         attachments: capturedAttachments,
         text: capturedText,
+        runs: capturedRuns,
         subject: '',
         replyGuid: activeCVC.replyToMessage?.message.threadOriginatorGuid ?? activeCVC.replyToMessage?.message.guid,
         replyPart: activeCVC.replyToMessage?.partIndex,
