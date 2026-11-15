@@ -761,6 +761,24 @@ class MessagesService extends GetxController {
     await _handleNewMessage(message);
   }
 
+  /// Shows messages another isolate saved while this chat was open, newer than the newest one showing.
+  ///
+  /// Nothing tells this isolate about them: on Android a push is saved by the main or worker engine and never by a
+  /// bubble's, so a bubble misses everything pushed while it was collapsed, and its socket copy of one that was saved
+  /// first only reaches [updateMessage], which skips messages it isn't showing.
+  Future<void> addMissedFromDb() async {
+    if (kIsWeb || chat.id == null) return;
+    final newest = struct.messages.map((m) => m.dateCreated).whereType<DateTime>().fold<DateTime?>(
+        null, (latest, date) => latest == null || date.isAfter(latest) ? date : latest);
+    if (newest == null) return;
+    // Only the newest 25 are checked; a longer gap shows once the chat is reopened.
+    final recent = Chat.getMessages(chat, limit: 25, getDetails: true);
+    for (final message in recent.reversed) {
+      if (message.dateCreated == null || message.dateCreated!.isBefore(newest)) continue;
+      await addNewMessage(message);
+    }
+  }
+
   /// The on-screen half of [MessageActions.retireEarlierTurns]: a turn that arrives while this chat is open, live, by
   /// sync or as our own send, collapses the earlier turns of its session already showing.
   void _retireEarlierTurns(Message turn) {
