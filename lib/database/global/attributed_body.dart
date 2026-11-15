@@ -14,6 +14,16 @@ class AttributedBody {
     "runs": List<Map<String, dynamic>>.from(runs.map((x) => x.toMap())),
   };
 
+  /// The runs in [part]. A run without a part number continues the part before it (part 0 when first), as Messages
+  /// reads it: text effects leave the spaces between their runs unnumbered.
+  Iterable<Run> runsInPart(int part) sync* {
+    int? last;
+    for (final run in runs) {
+      last = run.attributes?.messagePart ?? last ?? 0;
+      if (last == part) yield run;
+    }
+  }
+
   /// Genmoji drawn inside their part's text. One alone in its part shows as an image instead, as iMessage does.
   Iterable<Run> get inlineRuns {
     final textParts = runs.where((r) => !r.isAttachment).map((r) => r.attributes?.messagePart).toSet();
