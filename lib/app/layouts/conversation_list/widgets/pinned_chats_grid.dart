@@ -154,15 +154,14 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     setState(() => _dragOrder = order);
   }
 
-  void _hoverEnd(List<Chat> shown, String dragged) {
+  void _hoverEdge(List<Chat> shown, String dragged, {required bool start}) {
     if (!_dragMoved.value) return;
     final order = shown.map((c) => c.guid).toList();
-    if (order.isNotEmpty && order.last == dragged) return;
+    if (order.isNotEmpty && (start ? order.first : order.last) == dragged) return;
     if (DateTime.now().difference(_lastReorder) < _slide) return;
     _lastReorder = DateTime.now();
-    order
-      ..remove(dragged)
-      ..add(dragged);
+    order.remove(dragged);
+    start ? order.insert(0, dragged) : order.add(dragged);
     setState(() => _dragOrder = order);
   }
 
@@ -203,15 +202,16 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     _DropFlight.show(context, details.data, details.offset, toPin: true);
   }
 
-  Widget _dropZone(List<Chat> pinned, Widget child) {
+  /// Pins a drag at the end, or with [start] at the start: the room left of a centered row.
+  Widget _dropZone(List<Chat> pinned, Widget child, {bool start = false}) {
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) {
         _overPinArea.value = true;
-        _hoverEnd(_ordered(pinned), details.data);
+        _hoverEdge(_ordered(pinned), details.data, start: start);
         return true;
       },
       // Entered while the pins were still sliding, so retried until it takes.
-      onMove: (details) => _hoverEnd(_ordered(pinned), details.data),
+      onMove: (details) => _hoverEdge(_ordered(pinned), details.data, start: start),
       onAcceptWithDetails: (details) => _drop(details, pinned),
       builder: (context, _, _) => child,
     );
@@ -406,6 +406,14 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
+                                    if (pageIndex == 0 && rowInset > 0)
+                                      Positioned(
+                                        left: 0,
+                                        top: 0,
+                                        width: rowInset,
+                                        height: tileHeight,
+                                        child: _dropZone(pinned, const SizedBox.expand(), start: true),
+                                      ),
                                     for (final (slot, chat) in pageChats.indexed)
                                       AnimatedPositioned(
                                         key: ValueKey(chat.guid),
@@ -420,6 +428,8 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                                             _hover(_chats, details.data, chat.guid);
                                             return true;
                                           },
+                                          // An entry during the slide cooldown is dropped, so retried until it takes.
+                                          onMove: (details) => _hover(_chats, details.data, chat.guid),
                                           onAcceptWithDetails: (details) => _drop(details, pinned),
                                           builder: (context, _, _) {
                                             final tile = Opacity(
