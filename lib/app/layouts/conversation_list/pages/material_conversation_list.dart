@@ -89,12 +89,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
 
-                final _chats = ChatsSvc.getFilteredChats(
+                final _chats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
                   excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
-                );
+                ));
 
                 final content = NotificationListener(
                   onNotification: (notif) {

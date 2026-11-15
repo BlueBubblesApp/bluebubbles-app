@@ -98,6 +98,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
       _toggleSelected(haptic: false);
       return () => _toggleSelected(haptic: false);
     }
+    if (NavigationSvc.isTabletMode(context)) return null;
     peekChat(context, controller.chat, position);
     return closeChatPeek;
   }
@@ -119,7 +120,13 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   Widget build(BuildContext context) {
     final tile = _buildTile(context, holdHandledByDrag: widget.draggable);
     if (!widget.draggable) return tile;
-    return ChatDragSource(chat: controller.chat, startsInPinArea: true, onHold: _holdForDrag, child: tile);
+    return ChatDragSource(
+      key: ValueKey(controller.chat.guid),
+      chat: controller.chat,
+      startsInPinArea: true,
+      onHold: _holdForDrag,
+      child: tile,
+    );
   }
 
   Widget _buildTile(BuildContext context, {required bool holdHandledByDrag}) {
@@ -156,8 +163,8 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                 child: Padding(
                   padding: const EdgeInsets.only(
                     top: 4,
-                    left: 11,
-                    right: 11,
+                    left: 6,
+                    right: 6,
                     bottom: 2,
                   ),
                   child: ConstrainedBox(

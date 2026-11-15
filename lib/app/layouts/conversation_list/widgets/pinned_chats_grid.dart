@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
@@ -12,7 +13,9 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -28,8 +31,41 @@ final RxBool _dragMoved = false.obs;
 /// The chat being dragged, so it shows faded only where a drop would put it.
 final RxnString _draggedGuid = RxnString();
 
+/// Whether the chat being dragged is a pin, so the list can make room where unpinning would put it.
+final RxBool _dragFromPins = false.obs;
+
+/// Set from the drop until the drag finishes: the empty pin closes at once, so a drop's flight lands where the list
+/// ends up.
+final RxBool _dropped = false.obs;
+
+/// The chats for the list, with room made for a pin being dragged over it, where unpinning would put it. Read it in
+/// the list's Obx so the room opens and closes with the drag.
+List<Chat> chatsWithUnpinPreview(List<Chat> chats) {
+  final fromPins = _dragFromPins.value;
+  final moved = _dragMoved.value;
+  final overPins = _overPinArea.value;
+  final guid = _draggedGuid.value;
+  if (!fromPins || !moved || overPins || guid == null || chats.any((c) => c.guid == guid)) return chats;
+  final chat = ChatsSvc.findChatByGuid(guid);
+  if (chat == null) return chats;
+  DateTime latest(Chat c) =>
+      ChatsSvc.getChatState(c.guid)?.latestMessage.value?.dateCreated ??
+      c.dbOnlyLatestMessageDate ??
+      DateTime.fromMillisecondsSinceEpoch(0);
+  final date = latest(chat);
+  final at = chats.indexWhere((c) => latest(c).isBefore(date));
+  return [...chats]..insert(at < 0 ? chats.length : at, chat);
+}
+
+bool _isUnpinPreview(Chat chat) =>
+    _dragFromPins.value && _dragMoved.value && !_overPinArea.value && _draggedGuid.value == chat.guid;
+
 /// The save a drop started. The drag's look holds until it lands, so the chat doesn't flash back where it was.
 Future<void>? _pendingDrop;
+
+/// The drop's flight. The drag's look holds until it lands too: its landing place only exists while the drag does, and
+/// the flight follows that place as the list moves.
+Future<void>? _pendingFlight;
 
 /// The paged grid of pinned chats at the top of the chat list, shared by every skin. A sliver.
 ///
@@ -46,7 +82,6 @@ class PinnedChatsGrid extends StatefulWidget {
 }
 
 class _PinnedChatsGridState extends State<PinnedChatsGrid> {
-  static const double _zoneMargin = 8;
   static const Duration _slide = Duration(milliseconds: 220);
 
   final PageController _controller = PageController();
@@ -155,6 +190,12 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     }
   }
 
+  void _drop(DragTargetDetails<String> details, List<Chat> pinned) {
+    _dropped.value = true;
+    _pendingDrop = _accept(details.data, pinned);
+    _DropFlight.show(context, details.data, details.offset, toPin: true);
+  }
+
   Widget _dropZone(List<Chat> pinned, Widget child) {
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) {
@@ -164,20 +205,35 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
       },
       // Entered while the pins were still sliding, so retried until it takes.
       onMove: (details) => _hoverEnd(_ordered(pinned), details.data),
-      onAcceptWithDetails: (details) => _pendingDrop = _accept(details.data, pinned),
-      builder: (context, _, _) => Obx(
-        () => AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: _zoneMargin),
-          decoration: BoxDecoration(
-            color: _listDragActive.value
-                ? context.theme.colorScheme.primaryContainer.withValues(alpha: 0.35)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: child,
-        ),
-      ),
+      onAcceptWithDetails: (details) => _drop(details, pinned),
+      builder: (context, _, _) => child,
+    );
+  }
+
+  // PageView horizontal padding (8 each side)
+  static const double _pageHPadding = 16.0;
+
+  // Where a tile draws its avatar: AnimatedContainer margin (top: 1) + padding (top: 4)
+  static const double _tileAvatarTop = 5.0;
+
+  /// A pin tile's avatar size and footprint for [colCount] columns across [maxWidth].
+  static ({double avatar, double width, double height}) _tileSize(BuildContext context, double maxWidth, int colCount) {
+    // Horizontal overhead per tile: margins (4+4) + padding (6+6)
+    const double tileHOverhead = 20.0;
+    // Vertical overhead per tile: AnimatedContainer margins (top:1) + padding (4+2)
+    //   + ChatTitle fixed padding (top:6 + bottom:4)
+    const double tileVOverhead = 17.0;
+    // Extra per-row safety margin so real-device font/DPI variance can't make the
+    // estimate come in short and let the last row bleed into the space below it.
+    const double tileVSafetyBuffer = 4.0;
+    // Derive a clean, capped avatar size from the actual available width
+    final double avatar = min((maxWidth - _pageHPadding - colCount * tileHOverhead) / colCount, 120.0);
+    final TextStyle style = context.theme.textTheme.bodyMedium!;
+    final double textHeight = (style.height ?? 1.2) * (style.fontSize ?? 14);
+    return (
+      avatar: avatar,
+      width: avatar + tileHOverhead,
+      height: avatar + textHeight + tileVOverhead + tileVSafetyBuffer,
     );
   }
 
@@ -211,28 +267,9 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
         filters: ChatsSvc.chatListFilters.value,
       );
       final dragged = _dragMoved.value ? _draggedGuid.value : null;
+      final flying = _flyingGuid.value;
       final unpinning = dragged != null && !_overPinArea.value;
       final _chats = unpinning ? _ordered(pinned).where((c) => c.guid != dragged).toList() : _ordered(pinned);
-
-      if (_chats.isEmpty) {
-        // With no pins there is no grid to drop on, so a list drag gets a zone of its own.
-        if (!_listDragActive.value) return const SizedBox(width: double.infinity);
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: _dropZone(
-              pinned,
-              SizedBox(
-                height: 80,
-                child: Center(
-                  child: Text(
-                    "Drop here to pin",
-                    style: context.theme.textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.primary),
-                  ),
-                ),
-              ),
-            ),
-        );
-      }
 
       int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
           ? SettingsSvc.settings.pinRowsPortrait.value
@@ -240,6 +277,50 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
       int colCount = kIsDesktop
           ? SettingsSvc.settings.pinColumnsLandscape.value
           : SettingsSvc.settings.pinColumnsPortrait.value;
+
+      if (_chats.isEmpty) {
+        // With no pins there is no grid to drop on, so a list drag gets a zone of its own.
+        final dragging = _listDragActive.value && !_dropped.value;
+        if (!dragging) return const SizedBox(width: double.infinity);
+        // An empty pin where the first one goes, taking exactly the room that pin will so dropping it doesn't resize
+        // anything: the grid's padding, a tile's height, and the circle where a tile draws its avatar.
+        return Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 2),
+          child: LayoutBuilder(builder: (context, constraints) {
+            final tile = _tileSize(context, constraints.maxWidth, colCount);
+            return _dropZone(
+              pinned,
+              SizedBox(
+                height: tile.height,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: _tileAvatarTop),
+                    child: CustomPaint(
+                      painter: _DashedCircle(context.theme.colorScheme.outline),
+                      child: SizedBox.square(
+                        dimension: tile.avatar,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text(
+                              "Drag here to pin",
+                              textAlign: TextAlign.center,
+                              style: context.theme.textTheme.labelSmall!
+                                  .copyWith(color: context.theme.colorScheme.outline),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        );
+      }
+
       int pinCount = _chats.length;
       int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
       int maxOnPage = rowCount * colCount;
@@ -253,27 +334,11 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
         padding: const EdgeInsets.only(top: 6, bottom: 2),
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              // Horizontal overhead per tile: margins (4+4) + padding (11+11) + extra gap
-              const double tileHOverhead = 42.0;
-              // Vertical overhead per tile: AnimatedContainer margins (top:1) + padding (4+2)
-              //   + ChatTitle fixed padding (top:6 + bottom:4)
-              const double tileVOverhead = 17.0;
-              // Extra per-row safety margin so real-device font/DPI variance can't make the
-              // estimate come in short and let the last row bleed into the space below it.
-              const double tileVSafetyBuffer = 4.0;
-              // PageView horizontal padding (10 each side)
-              const double pageHPadding = 20.0;
-
-              // Derive a clean, capped avatar size from the actual available width
-              // The drop zone around the grid takes its margin off both sides.
-              final double rawAvatarSize =
-                  (constraints.maxWidth - 2 * _zoneMargin - pageHPadding - colCount * tileHOverhead) / colCount;
-              final double avatarSize = min(rawAvatarSize, 120.0);
-              final double tileWidth = avatarSize + tileHOverhead;
-
-              final TextStyle style = context.theme.textTheme.bodyMedium!;
-              final double textHeight = (style.height ?? 1.2) * (style.fontSize ?? 14);
-              final double tileHeight = avatarSize + textHeight + tileVOverhead + tileVSafetyBuffer;
+              final tile = _tileSize(context, constraints.maxWidth, colCount);
+              final double avatarSize = tile.avatar;
+              _pinAvatarSize = avatarSize;
+              final double tileWidth = tile.width;
+              final double tileHeight = tile.height;
               final double totalHeight = usedRowCount * tileHeight;
 
               // avatar only
@@ -323,13 +388,13 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                               final int start = pageIndex * maxOnPage;
                               final List<Chat> pageChats = _chats.sublist(start, min(start + maxOnPage, pinCount));
 
-                              // Each pin sits at its slot in a stack, keyed by chat, so a reorder slides it there rather than
-                              // rebuilding the rows in the new order.
-                              final double pageWidth = constraints.maxWidth - 2 * _zoneMargin - pageHPadding;
+                              // Each pin sits at its slot in a stack, keyed by chat, so a reorder slides it there
+                              // rather than rebuilding the rows in the new order.
+                              final double pageWidth = constraints.maxWidth - _pageHPadding;
                               final double rowInset =
                                   singleRow ? max(0, (pageWidth - pageChats.length * tileWidth) / 2) : 0;
                               return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: _pageHPadding / 2),
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
@@ -347,16 +412,19 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                                             _hover(_chats, details.data, chat.guid);
                                             return true;
                                           },
-                                          onAcceptWithDetails: (details) => _pendingDrop = _accept(details.data, pinned),
-                                          builder: (context, _, _) => Opacity(
-                                            opacity: chat.guid == dragged ? 0.3 : 1,
-                                            child: PinnedConversationTile(
-                                              chat: chat,
-                                              avatarSize: avatarSize,
-                                              controller: controller,
-                                              draggable: true,
-                                            ),
-                                          ),
+                                          onAcceptWithDetails: (details) => _drop(details, pinned),
+                                          builder: (context, _, _) {
+                                            final tile = Opacity(
+                                              opacity: chat.guid == flying ? 0 : (chat.guid == dragged ? 0.3 : 1),
+                                              child: PinnedConversationTile(
+                                                chat: chat,
+                                                avatarSize: avatarSize,
+                                                controller: controller,
+                                                draggable: true,
+                                              ),
+                                            );
+                                            return chat.guid == dragged ? _DropSlot(pin: true, child: tile) : tile;
+                                          },
                                         ),
                                       ),
                                   ],
@@ -428,11 +496,30 @@ class PinDragSource extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The room made for a pin being dragged over the list, which stays until its own row takes over.
+    if (_isUnpinPreview(chat)) {
+      return _DropSlot(
+        pin: false,
+        child: _GrowIn(
+          child: IgnorePointer(
+            // Faded while the drag hovers; hidden once dropped, while the flight carries the pin into it.
+            child: Obx(() => Opacity(
+                  opacity: _flyingGuid.value == chat.guid ? 0 : 0.3,
+                  child: RepaintBoundary(key: _unpinRowBoundary, child: child),
+                )),
+          ),
+        ),
+      );
+    }
+    // Keyed by chat: the lists build rows by index, so after a drop the row a chat left would otherwise hand its
+    // drag state (a collapsed size, mid-animation) to whichever chat moves into it.
     return ChatDragSource(
+      key: ValueKey(chat.guid),
       chat: chat,
       startsInPinArea: false,
       onHold: (position) {
         if (SettingsSvc.settings.skin.value == Skins.iOS) {
+          if (NavigationSvc.isTabletMode(context)) return null;
           peekChat(context, chat, position);
           return closeChatPeek;
         }
@@ -478,6 +565,7 @@ class _ChatDragSourceState extends State<ChatDragSource> {
 
   void _onStart() {
     _draggedGuid.value = widget.chat.guid;
+    _dragFromPins.value = widget.startsInPinArea;
     _overPinArea.value = widget.startsInPinArea;
     _moved = false;
     // A mouse drag only starts once it has moved.
@@ -486,9 +574,16 @@ class _ChatDragSourceState extends State<ChatDragSource> {
       _listDragActive.value = true;
       return;
     }
-    // The iOS peek buzzes on its own.
-    if (SettingsSvc.settings.skin.value != Skins.iOS) HapticFeedback.mediumImpact();
     _undoHold = widget.onHold(_downPosition);
+    final peeking = _undoHold == closeChatPeek;
+    // The peek buzzes on its own.
+    if (!peeking) HapticFeedback.mediumImpact();
+    // A hold with nothing of its own to do (no peek in tablet mode) is the drag already.
+    if (_undoHold == null) {
+      _moved = true;
+      _dragMoved.value = true;
+      _listDragActive.value = true;
+    }
   }
 
   void _onUpdate(DragUpdateDetails details) {
@@ -503,17 +598,27 @@ class _ChatDragSourceState extends State<ChatDragSource> {
   Future<void> _onEnd() async {
     _undoHold = null;
     final pending = _pendingDrop;
+    final flight = _pendingFlight;
     _pendingDrop = null;
+    _pendingFlight = null;
     if (pending != null) await pending.catchError((_) {});
+    if (flight != null) await flight;
     _listDragActive.value = false;
     _draggedGuid.value = null;
     _dragMoved.value = false;
+    _dragFromPins.value = false;
+    _dropped.value = false;
   }
 
   @override
   Widget build(BuildContext context) {
-    final feedback = _ChatDragFeedback(chat: widget.chat, listWidth: min(MediaQuery.sizeOf(context).width - 24, 480));
+    final feedback = _ChatDragFeedback(
+      chat: widget.chat,
+      listWidth: min(MediaQuery.sizeOf(context).width - 24, 480),
+      alwaysPin: true,
+    );
     Widget listLook({required bool dragging}) => Obx(() {
+          if (_flyingGuid.value == widget.chat.guid) return Opacity(opacity: 0, child: widget.child);
           final mine = _draggedGuid.value == widget.chat.guid;
           if (mine && _overPinArea.value) return const SizedBox.shrink();
           return mine && dragging && _dragMoved.value ? Opacity(opacity: 0.3, child: widget.child) : widget.child;
@@ -564,20 +669,39 @@ class _ChatDragSourceState extends State<ChatDragSource> {
 
 /// What follows the finger: a pin over the pin area, a list tile anywhere else.
 class _ChatDragFeedback extends StatelessWidget {
-  const _ChatDragFeedback({required this.chat, required this.listWidth});
+  const _ChatDragFeedback({
+    required this.chat,
+    required this.listWidth,
+    required this.alwaysPin,
+    this.look,
+    this.listLook,
+  });
 
   final Chat chat;
   final double listWidth;
 
+  /// A drag is always a pin; only a drop's flight into the list turns it into a row.
+  final bool alwaysPin;
+
+  /// Whether it looks like a pin, when set: the drag's own state no longer applies once it's dropped.
+  final RxBool? look;
+
+  /// Shown in place of the built tile look: a drop's flight shows the row it lands as.
+  final Widget? listLook;
+
   @override
   Widget build(BuildContext context) {
     final chatState = ChatsSvc.getChatState(chat.guid);
+    // Like the tiles, which go transparent under a desktop window effect.
+    final opaque = SettingsSvc.settings.windowEffect.value == WindowEffect.disabled;
     final title = chatState?.title.value ?? chat.getTitle();
     final subtitle = chatState?.subtitle.value ?? chat.dbLatestMessage.target?.getNotificationText();
     final textTheme = context.theme.textTheme;
     // A zero-size box at the pointer with the content centered on it, so whichever look is showing (and both,
     // mid-switch) sits under the finger.
-    return Obx(() => !_dragMoved.value
+    return Obx(() {
+      final moved = _dragMoved.value;
+      return look == null && !moved
         ? const SizedBox.shrink()
         : SizedBox.shrink(
       child: OverflowBox(
@@ -586,15 +710,24 @@ class _ChatDragFeedback extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: Obx(() => AnimatedSwitcher(
-              duration: const Duration(milliseconds: 150),
-              child: _overPinArea.value
+              duration: const Duration(milliseconds: 220),
+              // The new look grows out of the old one's center rather than appearing at full size.
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween(begin: 0.3, end: 1.0)
+                      .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                  child: child,
+                ),
+              ),
+              child: look?.value ?? (_overPinArea.value || alwaysPin)
                   ? SizedBox(
                       key: const ValueKey('pin'),
-                      width: 88,
+                      width: _pinAvatarSize + 16,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ContactAvatarGroupWidget(chat: chat, size: 72, editable: false),
+                          ContactAvatarGroupWidget(chat: chat, size: _pinAvatarSize, editable: false),
                           const SizedBox(height: 6),
                           Text(title,
                               maxLines: 1,
@@ -604,10 +737,12 @@ class _ChatDragFeedback extends StatelessWidget {
                         ],
                       ),
                     )
-                  : Material(
+                  : listLook != null
+                      ? KeyedSubtree(key: const ValueKey('list'), child: listLook!)
+                      : Material(
                       key: const ValueKey('list'),
-                      elevation: 6,
-                      color: context.theme.colorScheme.surface,
+                      elevation: opaque ? 6 : 0,
+                      color: opaque ? context.theme.colorScheme.surface : Colors.transparent,
                       borderRadius: BorderRadius.circular(14),
                       child: SizedBox(
                         width: listWidth,
@@ -640,7 +775,177 @@ class _ChatDragFeedback extends StatelessWidget {
                     ),
             )),
       ),
-    )));
+    ));
+    });
+  }
+}
+
+final GlobalKey _unpinRowBoundary = GlobalKey();
+
+/// The pins' avatar size as last laid out, so a dragged pin matches them.
+double _pinAvatarSize = 72;
+
+/// The chat a drop's flight is carrying: its landing tile stays hidden until it arrives, so it looks like it went
+/// there.
+final RxnString _flyingGuid = RxnString();
+
+/// Where a drop lands, for its flight to aim at: the dragged chat's slot among the pins, or the room the list made.
+BuildContext? _pinSlotContext;
+BuildContext? _unpinSlotContext;
+
+class _DropSlot extends StatefulWidget {
+  const _DropSlot({required this.pin, required this.child});
+
+  final bool pin;
+  final Widget child;
+
+  @override
+  State<_DropSlot> createState() => _DropSlotState();
+}
+
+class _DropSlotState extends State<_DropSlot> {
+  @override
+  void initState() {
+    super.initState();
+    widget.pin ? _pinSlotContext = context : _unpinSlotContext = context;
+  }
+
+  @override
+  void dispose() {
+    if (_pinSlotContext == context) _pinSlotContext = null;
+    if (_unpinSlotContext == context) _unpinSlotContext = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// A dropped chat flying from [from] to where it lands, as a pin among the pins or turning into a tile for the list,
+/// then fading as its own tile takes over. Without the landing place in view it changes where it was dropped.
+class _DropFlight extends StatefulWidget {
+  const _DropFlight({
+    required this.chat,
+    required this.toPin,
+    required this.from,
+    required this.overlayBox,
+    required this.slot,
+    this.width,
+    this.row,
+    required this.landed,
+    required this.onDone,
+  });
+
+  /// Completed on landing, or if the flight is torn down first, so the drag never waits on it forever.
+  final Completer<void> landed;
+
+  final Chat chat;
+  final bool toPin;
+
+  /// The landing row as it looks, for the flight to the list to turn into.
+  final Future<ui.Image>? row;
+  final Offset from;
+  final RenderBox overlayBox;
+  final RenderBox? Function() slot;
+  final double? width;
+  final VoidCallback onDone;
+
+  static void show(BuildContext context, String guid, Offset position, {required bool toPin}) {
+    final chat = ChatsSvc.findChatByGuid(guid);
+    if (chat == null) return;
+    final overlay = Overlay.of(context);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final slot = (toPin ? _pinSlotContext : _unpinSlotContext)?.findRenderObject() as RenderBox?;
+    final hasSlot = slot != null && slot.attached && slot.hasSize;
+    final boundary = toPin ? null : _unpinRowBoundary.currentContext?.findRenderObject();
+    final row = boundary is RenderRepaintBoundary && boundary.hasSize
+        ? boundary.toImage(pixelRatio: View.of(context).devicePixelRatio)
+        : null;
+    _flyingGuid.value = guid;
+    final landed = Completer<void>();
+    _pendingFlight = landed.future;
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => IgnorePointer(
+        child: _DropFlight(
+          chat: chat,
+          toPin: toPin,
+          from: overlayBox.globalToLocal(position),
+          overlayBox: overlayBox,
+          slot: () => (toPin ? _pinSlotContext : _unpinSlotContext)?.findRenderObject() as RenderBox?,
+          width: hasSlot ? slot.size.width : null,
+          row: row,
+          landed: landed,
+          onDone: () {
+            if (_flyingGuid.value == guid) _flyingGuid.value = null;
+            if (!landed.isCompleted) landed.complete();
+            entry.remove();
+          },
+        ),
+      ),
+    );
+    overlay.insert(entry);
+  }
+
+  @override
+  State<_DropFlight> createState() => _DropFlightState();
+}
+
+class _DropFlightState extends State<_DropFlight> with TickerProviderStateMixin {
+  final RxBool _asPin = true.obs;
+  Offset? _lastTo;
+
+  Offset get _to {
+    final slot = widget.slot();
+    if (slot != null && slot.attached && slot.hasSize) {
+      _lastTo = widget.overlayBox.globalToLocal(slot.localToGlobal(slot.size.center(Offset.zero)));
+    }
+    return _lastTo ?? widget.from;
+  }
+  final Rxn<ui.Image> _row = Rxn<ui.Image>();
+  late final AnimationController _move = AnimationController(vsync: this, duration: const Duration(milliseconds: 260));
+
+  @override
+  void initState() {
+    super.initState();
+    widget.row?.then((image) => mounted ? _row.value = image : image.dispose());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _asPin.value = widget.toPin;
+      await _move.forward();
+      // Swapped for the landing tile in one frame, so it looks like it went there.
+      if (mounted) widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    if (!widget.landed.isCompleted) widget.landed.complete();
+    _row.value?.dispose();
+    _move.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = View.of(context).devicePixelRatio;
+    final card = Obx(() {
+        final row = _row.value;
+        return _ChatDragFeedback(
+          chat: widget.chat,
+          listWidth: widget.width ?? min(MediaQuery.sizeOf(context).width - 24, 480),
+          alwaysPin: false,
+          look: _asPin,
+          listLook: row == null ? null : RawImage(image: row, width: row.width / dpr, height: row.height / dpr),
+        );
+      });
+    return AnimatedBuilder(
+      animation: _move,
+      builder: (context, child) {
+        final at = Offset.lerp(widget.from, _to, Curves.easeOutCubic.transform(_move.value))!;
+        return Stack(children: [Positioned(left: at.dx, top: at.dy, child: child!)]);
+      },
+      child: card,
+    );
   }
 }
 
@@ -659,9 +964,69 @@ class UnpinDropTarget extends StatelessWidget {
       },
       onAcceptWithDetails: (details) {
         final chat = ChatsSvc.findChatByGuid(details.data);
-        if (chat != null) _pendingDrop = ChatsSvc.setChatPinned(chat, false);
+        if (chat == null) return;
+        _dropped.value = true;
+        _pendingDrop = ChatsSvc.setChatPinned(chat, false);
+        // With pointerDragAnchorStrategy the drop offset is the finger, where the pin was drawn.
+        _DropFlight.show(context, details.data, details.offset, toPin: false);
       },
-      builder: (context, _, _) => child,
+      // Tiles don't light up under a mouse while it's carrying a chat.
+      builder: (context, _, _) => Obx(() {
+        final dragging = _listDragActive.value;
+        final theme = context.theme;
+        return Theme(data: dragging ? theme.copyWith(hoverColor: Colors.transparent) : theme, child: child);
+      }),
     );
   }
+}
+
+/// Opens from nothing to its child's height.
+class _GrowIn extends StatefulWidget {
+  const _GrowIn({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_GrowIn> createState() => _GrowInState();
+}
+
+class _GrowInState extends State<_GrowIn> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 200))..forward();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SizeTransition(
+        sizeFactor: CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+        alignment: Alignment.topCenter,
+        child: widget.child,
+      );
+}
+
+class _DashedCircle extends CustomPainter {
+  const _DashedCircle(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dashes = 24;
+    const sweep = 2 * pi / dashes;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final rect = (Offset.zero & size).deflate(1);
+    for (var i = 0; i < dashes; i++) {
+      canvas.drawArc(rect, i * sweep, sweep * 0.55, false, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedCircle old) => old.color != color;
 }

@@ -83,11 +83,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       final loaded = ChatsSvc.loadedFirstChatBatch.value;
                       // Observe chat list version to trigger rebuild when order changes
                       final _ = ChatsSvc.chatListVersion.value;
-                      final _chats = ChatsSvc.getFilteredChats(
+                      final _chats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
                           showArchived: showArchived,
                           showUnknown: showUnknown,
                           excludePinned: true,
-                          filters: ChatsSvc.chatListFilters.value);
+                          filters: ChatsSvc.chatListFilters.value));
 
                       if (!loaded || _chats.isEmpty) {
                         return SliverToBoxAdapter(
@@ -126,11 +126,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                               final chat = ChatsSvc.findChatByGuid(_chats[index].guid)!;
 
                               // No need for Obx here - ConversationTile handles its own reactivity
-                              final child = PinDragSource(chat: chat, child: ConversationTile(
+                              final child = ConversationTile(
                                 key: Key(chat.guid),
                                 chat: chat,
                                 controller: controller,
-                              ));
+                              );
 
                               final separator = Obx(() => !SettingsSvc.settings.hideDividers.value
                                   ? Padding(
@@ -158,13 +158,18 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                                         )
                                       : const SizedBox.shrink());
 
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  topDivider,
-                                  child,
-                                  separator,
-                                ],
+                              // The dividers are inside the drag source so they collapse with the row when its chat
+                              // is dragged to the pins, rather than stacking up where it was.
+                              return PinDragSource(
+                                chat: chat,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    topDivider,
+                                    child,
+                                    separator,
+                                  ],
+                                ),
                               );
                             },
                             childCount: _chats.length,

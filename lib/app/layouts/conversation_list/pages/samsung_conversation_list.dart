@@ -93,12 +93,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final loaded = ChatsSvc.loadedFirstChatBatch.value;
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
-                final _unpinnedChats = ChatsSvc.getFilteredChats(
+                final _unpinnedChats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
                   excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
-                );
+                ));
 
                 return CustomScrollView(
                   physics: ThemeSwitcher.getScrollPhysics(),
