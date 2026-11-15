@@ -7,7 +7,7 @@ One subdirectory per settings category. Each contains one or more `*_panel.dart`
 | Directory | Contents | Panel Count |
 |-----------|----------|-------------|
 | `advanced/` | Firebase, Private API, Redacted Mode, Notification Providers, Tasker, UnifiedPush | 6 |
-| `conversation_list/` | Chat list appearance, pinned order | 2 |
+| `conversation_list/` | Chat list appearance | 1 |
 | `desktop/` | Desktop-specific settings | 1 |
 | `message_view/` | Attachment, conversation, message options order, and text field buttons panels | 4 |
 | `misc/` | About, logging (live + export), misc tweaks, soft-deleted chats, troubleshoot | 6 |

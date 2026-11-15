@@ -103,7 +103,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     }
                     return true;
                   },
-                  child: ScrollbarWrapper(
+                  child: UnpinDropTarget(child: ScrollbarWrapper(
                     showScrollbar: true,
                     controller: controller.materialScrollController,
                     child: CustomScrollView(
@@ -145,12 +145,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                 final chat = _chats[index];
                                 return Container(
                                     key: ValueKey(chat.guid),
-                                    child: ListItem(
+                                    child: PinDragSource(chat: chat, child: ListItem(
                                         chat: chat,
                                         controller: controller,
                                         update: () {
                                           setState(() {});
-                                        }));
+                                        })));
                               },
                               findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
                               childCount: _chats.length,
@@ -158,7 +158,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                           ),
                       ],
                     ),
-                  ),
+                  )),
                 );
 
                 return Column(

@@ -67,7 +67,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
           : null,
       body: Stack(
         children: [
-          ScrollbarWrapper(
+          UnpinDropTarget(child: ScrollbarWrapper(
             showScrollbar: true,
             controller: controller.iosScrollController,
             child: Obx(() => CustomScrollView(
@@ -126,11 +126,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                               final chat = ChatsSvc.findChatByGuid(_chats[index].guid)!;
 
                               // No need for Obx here - ConversationTile handles its own reactivity
-                              final child = ConversationTile(
+                              final child = PinDragSource(chat: chat, child: ConversationTile(
                                 key: Key(chat.guid),
                                 chat: chat,
                                 controller: controller,
-                              );
+                              ));
 
                               final separator = Obx(() => !SettingsSvc.settings.hideDividers.value
                                   ? Padding(
@@ -174,7 +174,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                     }),
                   ],
                 )),
-          ),
+          )),
           if (!showArchived && !showUnknown) CupertinoMiniHeader(controller: controller),
         ],
       ),

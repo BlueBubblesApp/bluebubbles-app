@@ -13,7 +13,6 @@ Individual chat row rendered in the conversation list. Each tile displays the ch
 | `pinned_conversation_tile.dart` | Horizontal layout for the pinned chats section |
 | `pinned_tile_text_bubble.dart` | Text preview bubble rendered inside the pinned section |
 | `list_item.dart` | Generic row wrapper; adds `Dismissible` swipe actions (Material only) |
-| `draggable_conversation_tile.dart` | Drag source wrapper for desktop drag-and-drop (e.g. pin reordering) |
 | `trailing_state_mixin.dart` | Mixin sharing trailing-widget (timestamp/badge) reactive state across tile skins |
 
 ## Controller: `ConversationTileController`
@@ -41,7 +40,7 @@ All three skins receive the same `ConversationTileController` and read its `Rx*`
 
 ## Pinned Tiles
 
-Pinned chats are rendered by `PinnedChatsGrid` (`../pinned_chats_grid.dart`) at the top of the list in every skin, in `pinIndex` order (a pinned chat always has one). On Material/Samsung a long press selects the pin instead of peeking. `PinnedConversationTile` uses a column layout (avatar + name stacked vertically) rather than the row layout of standard tiles.
+Pinned chats are rendered by `PinnedChatsGrid` (`../pinned_chats_grid.dart`) at the top of the list in every skin, in `pinIndex` order (a pinned chat always has one). Dragging (hold then drag on touch, click and drag with a mouse) reorders pins, pins a list chat dropped on the grid (`PinDragSource`), and unpins a pin dropped on the list (`UnpinDropTarget`); all three live in `pinned_chats_grid.dart`. Because the drag claims the hold, a hold released in place peeks on iOS and selects on Material/Samsung. There is no separate pin order screen. `PinnedConversationTile` uses a column layout (avatar + name stacked vertically) rather than the row layout of standard tiles.
 
 ## Swipe Actions
 

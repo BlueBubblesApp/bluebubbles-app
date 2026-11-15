@@ -85,7 +85,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               }
               return false;
             },
-            child: ScrollbarWrapper(
+            child: UnpinDropTarget(child: ScrollbarWrapper(
               showScrollbar: true,
               controller: controller.samsungScrollController,
               child: Obx(() {
@@ -145,12 +145,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final chat = _unpinnedChats[index];
-                              return ListItem(
+                              return PinDragSource(chat: chat, child: ListItem(
                                   chat: chat,
                                   controller: controller,
                                   update: () {
                                     setState(() {});
-                                  });
+                                  }));
                             },
                             childCount: _unpinnedChats.length,
                           ),
@@ -160,7 +160,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   ],
                 );
               }),
-            ),
+            )),
           ),
         ),
         bottomNavigationBar: SamsungFooter(parentController: controller),

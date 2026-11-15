@@ -250,6 +250,30 @@ class ChatsService {
   /// to the front.
   static const int _unindexedPin = 1 << 30;
 
+  /// Saves a new pin order. [visible] may be a filtered subset of the pins: the pins it leaves out keep their
+  /// positions, and the visible ones fill the remaining positions in the new order.
+  Future<void> reorderPins(List<Chat> visible) async {
+    visible = visible.where((c) => c.isPinned ?? false).toList();
+    final visibleGuids = visible.map((c) => c.guid).toSet();
+    final reordered = visible.iterator;
+    final ordered = [
+      for (final chat in pinnedChats) visibleGuids.contains(chat.guid) ? (reordered..moveNext()).current : chat,
+    ];
+    final changed = <Chat>[];
+    ordered.forEachIndexed((i, chat) {
+      if (chat.pinIndex == i) return;
+      chat.pinIndex = i;
+      chatStates[chat.guid]?.updatePinIndexInternal(i);
+      changed.add(chat);
+    });
+    if (changed.isEmpty) return;
+    // Re-sort before saving so the grid shows the new order without waiting on the DB.
+    refreshSortOrder();
+    for (final chat in changed) {
+      await chat.saveAsync(updatePinIndex: true);
+    }
+  }
+
   int get _nextPinIndex => pinnedChats.fold<int>(-1, (m, c) => max(m, c.pinIndex ?? -1)) + 1;
 
   /// Search chats by title

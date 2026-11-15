@@ -1,8 +1,6 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -400,19 +398,6 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                             ],
                           ),
                     if (kIsDesktop) const SizedBox(height: 24),
-                    if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (!kIsWeb)
-                      SettingsTile(
-                        title: "Pinned Order",
-                        subtitle: "Set the order for your pinned chats",
-                        onTap: () {
-                          NavigationSvc.pushSettings(
-                            context,
-                            const PinnedOrderPanel(),
-                          );
-                        },
-                        trailing: const NextButton(),
-                      ),
                   ],
                 )),
                 if (!kIsWeb && !kIsDesktop && !iOS)
