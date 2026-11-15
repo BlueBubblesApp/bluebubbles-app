@@ -62,19 +62,29 @@ class SyncService {
     await _manager!.start();
   }
 
-  Future<void> startIncrementalSync({bool useGlobalIsolate = false}) async {
-    if (isIncrementalSyncing.value) return;
-
+  /// [catchUp]: a sync that must not be lost to the cooldown, because something may have been missed since the last
+  /// one started (the socket just connected, or a push copy the socket never replaced). If a sync is running or ran
+  /// within the cooldown, it runs once that's over instead of being skipped. Requests in the meantime share that one
+  /// run, so a burst of them still costs a single sync.
+  Future<void> startIncrementalSync({bool useGlobalIsolate = false, bool catchUp = false}) async {
     final now = DateTime.now();
-    if (_lastIncrementalSyncTimestamp != null &&
-        now.difference(_lastIncrementalSyncTimestamp!) < _incrementalSyncCooldown) {
-      Logger.debug(
-        'Skipping incremental sync... Last ran ${now.difference(_lastIncrementalSyncTimestamp!).inSeconds}s ago '
-        '(cooldown: ${_incrementalSyncCooldown.inSeconds}s)',
-        tag: 'Incremental Chat Sync',
-      );
+    final sinceLast = _lastIncrementalSyncTimestamp == null ? null : now.difference(_lastIncrementalSyncTimestamp!);
+    if (isIncrementalSyncing.value) {
+      // The running sync may have queried the server before what this is catching up on got there
+      if (catchUp) _scheduleCatchUp(_incrementalSyncCooldown - (sinceLast ?? Duration.zero), useGlobalIsolate);
       return;
     }
+    if (sinceLast != null && sinceLast < _incrementalSyncCooldown) {
+      Logger.debug(
+        'Skipping incremental sync... Last ran ${sinceLast.inSeconds}s ago '
+        '(cooldown: ${_incrementalSyncCooldown.inSeconds}s)${catchUp ? ', running it when the cooldown ends' : ''}',
+        tag: 'Incremental Chat Sync',
+      );
+      if (catchUp) _scheduleCatchUp(_incrementalSyncCooldown - sinceLast, useGlobalIsolate);
+      return;
+    }
+    _catchUpTimer?.cancel();
+    _catchUpTimer = null;
 
     _lastIncrementalSyncTimestamp = now;
     isIncrementalSyncing.value = true;
@@ -236,6 +246,19 @@ class SyncService {
     }
 
     isIncrementalSyncing.value = false;
+  }
+
+  /// The one pending catch-up sync, if a [startIncrementalSync] `catchUp` request was held off.
+  Timer? _catchUpTimer;
+
+  void _scheduleCatchUp(Duration wait, bool useGlobalIsolate) {
+    if (_catchUpTimer?.isActive ?? false) return;
+    // A sync still running past the cooldown is retried shortly after
+    final delay = wait > Duration.zero ? wait : const Duration(seconds: 5);
+    _catchUpTimer = Timer(delay, () {
+      _catchUpTimer = null;
+      unawaited(startIncrementalSync(useGlobalIsolate: useGlobalIsolate, catchUp: true));
+    });
   }
 
   Future<bool> performContactSyncToHandles() async {

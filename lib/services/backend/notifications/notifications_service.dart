@@ -292,6 +292,8 @@ class NotificationsService {
       return;
     }
     if (message.isKeptAudio) return;
+    // Already read on another device, e.g. a message the socket missed that arrived late.
+    if (message.dateRead != null) return;
     if (chat.shouldMuteNotification(message)) return;
     if (!headless && LifecycleSvc.isAlive) {
       if (ChatsSvc.isChatActive(chat.guid)) return;

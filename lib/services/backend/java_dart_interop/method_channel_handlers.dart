@@ -82,35 +82,10 @@ class MethodChannelHandlers {
     }
 
     try {
-      // Only drop the push copy when the socket really is going to deliver this
-      // message. `isAlive` is not good enough: it also returns true on a stale
-      // `bg_isolate` marker, and dropping then means neither transport delivers and
-      // the notification is silently lost.
-      if (!service.headless &&
-          LifecycleSvc.isForeground &&
-          (SocketSvc.socket?.connected ?? false) &&
-          SettingsSvc.settings.endpointUnifiedPush.value == '') {
-        Logger.debug('App is in the foreground with a connected socket, ignoring new message...');
-        return await _ok();
-      } else if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
-        Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
-        return await _ok();
-      }
-
       final Map<String, dynamic>? data = arguments;
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
-        await IncomingMsgHandler.handle(IncomingPayload(
-          type: MessageEventType.newMessage,
-          source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
-              .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
-              .toList(),
-          tempGuid: payload.data['tempGuid'],
-        ));
+        await _handlePushedMessage(MessageEventType.newMessage, payload.data);
       }
     } catch (e, s) {
       debugPrint('Error processing new message: $e');
@@ -131,45 +106,51 @@ class MethodChannelHandlers {
       return _retry();
     }
 
-    if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
-      Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
-      return _ok();
-    }
-
     try {
       final Map<String, dynamic>? data = arguments;
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
-
-        if (payload.data['chats'] == null || payload.data['chats'].isEmpty) {
-          Logger.info('No chat data found, attempting to find chat from message guid: ${payload.data['guid']}...');
-          final existingMsg = Message.findOne(guid: payload.data['guid']);
-          if (existingMsg != null && existingMsg.chat.target != null) {
-            Logger.info('Found chat from message guid, adding to payload');
-            payload.data['chats'] = [existingMsg.chat.target!.toMap()];
-          } else {
-            Logger.warn('No chat data found, and unable to find chat from message guid: ${payload.data['guid']}');
-            return await _retry();
-          }
-        }
-
-        await IncomingMsgHandler.handle(IncomingPayload(
-          type: MessageEventType.updatedMessage,
-          source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
-              .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
-              .toList(),
-          tempGuid: payload.data['tempGuid'],
-        ));
+        await _handlePushedMessage(MessageEventType.updatedMessage, payload.data);
       }
     } catch (e, s) {
       return Future.error(e, s);
     }
 
     return _ok();
+  }
+
+  /// Hands a pushed message to [IncomingMsgHandler] as soon as it arrives, so its notification isn't held up.
+  ///
+  /// A push copy is lighter than the socket's (the server trims it to fit FCM's 4KB limit), and the handler has the
+  /// socket's copy or a catch-up sync fill in the rest. Nothing is fetched per push: a burst of pushes must not turn
+  /// into a burst of requests.
+  Future<void> _handlePushedMessage(MessageEventType type, Map<String, dynamic> data) async {
+    var chats = data['chats'];
+    if (isNullOrEmpty(chats)) {
+      // Update pushes carry no chats, so the stored message gives one
+      final chat = Message.findOne(guid: data['guid'])?.chat.target;
+      if (chat == null) {
+        // Its new-message was lost too. A catch-up sync brings the message back as it is now.
+        Logger.info('No stored message for ${type.name} ${data['guid']}, asking for a catch-up sync');
+        IncomingMsgHandler.requestCatchUp();
+        return;
+      }
+      chats = [chat.toMap()];
+    }
+
+    await IncomingMsgHandler.handle(
+      IncomingPayload(
+        type: type,
+        source: MessageSource.methodChannel,
+        chat: Chat.fromMap((chats as List).first.cast<String, dynamic>()),
+        message: Message.fromMap(data),
+        attachments: ((data['attachments'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList(),
+        tempGuid: data['tempGuid'],
+      ),
+    );
   }
 
   Future<bool> _handleGroupUpdate(MethodCall call, Map<String, dynamic>? arguments) async {

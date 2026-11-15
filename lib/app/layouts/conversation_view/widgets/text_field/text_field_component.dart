@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:collection/collection.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/components/custom/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart';
@@ -109,9 +110,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
 
   FocusNode? _fieldFocusNode;
 
-  /// The formatting panel stands in for the keyboard, so it goes with focus
+  /// The formatting panel and the chat creator's attachment picker both stand in for the keyboard: the panel goes
+  /// when the field loses focus, and focusing the field closes the picker
   void _onFieldFocusChange() {
     if (!_fieldFocusNode!.hasFocus) controller?.showTextFormattingPanel.value = false;
+    if (_fieldFocusNode!.hasFocus && _showAttachmentPickerLocal) setState(() => _showAttachmentPickerLocal = false);
   }
 
   @override
@@ -555,7 +558,12 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                   );
               // Desktop has no attachment sheet: `+` opens a menu of the same actions instead.
               if (kIsDesktop) {
-                return DesktopAttachmentMenu(controller: controller!, builder: (_, toggle) => button(toggle));
+                return DesktopAttachmentMenu(
+                  controller: controller!,
+                  // The chat creator has no button row; this keeps GIF and emoji out of its menu
+                  inRow: const [TextFieldButton.Gif, TextFieldButton.Emoji],
+                  builder: (_, toggle) => button(toggle),
+                );
               }
               return button(() {
                 if (!_showAttachmentPickerLocal) FocusScope.of(context).unfocus();

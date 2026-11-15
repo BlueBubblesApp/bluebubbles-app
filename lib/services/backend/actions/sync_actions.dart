@@ -380,6 +380,7 @@ class SyncActions {
     for (final inputA in inputAttachments) {
       final existing = existingMap[inputA.guid];
       existing?.stickerPlacement ??= inputA.stickerPlacement;
+      existing?.takeFlagsFrom(inputA);
       final toSave = existing ?? inputA;
       final ownerGuid = ownerGuidByAttachmentGuid[inputA.guid];
       if (ownerGuid != null) {
