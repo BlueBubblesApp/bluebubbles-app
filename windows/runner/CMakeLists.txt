@@ -8,6 +8,7 @@ project(runner LANGUAGES CXX)
 # Any new source files that you add to the application should be added here.
 add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"
+  "gpu_watchdog.cpp"
   "main.cpp"
   "splash_screen.cpp"
   "store_update.cpp"
@@ -38,6 +39,7 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 # Add dependency libraries and include directories. Add any application-specific
 # dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
+target_link_libraries(${BINARY_NAME} PRIVATE "d3d11.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE "gdiplus.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE "version.lib")
