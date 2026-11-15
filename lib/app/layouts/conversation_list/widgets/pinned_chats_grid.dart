@@ -10,6 +10,7 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_co
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -62,6 +63,9 @@ bool _isUnpinPreview(Chat chat) =>
 
 /// The save a drop started. The drag's look holds until it lands, so the chat doesn't flash back where it was.
 Future<void>? _pendingDrop;
+
+/// Bumped by every drag, so a drag that ends after the next one has started leaves that one's state alone.
+int _dragGeneration = 0;
 
 /// The drop's flight. The drag's look holds until it lands too: its landing place only exists while the drag does, and
 /// the flight follows that place as the list moves.
@@ -570,7 +574,11 @@ class _ChatDragSourceState extends State<ChatDragSource> {
   /// The list row, for a drag that doesn't pin to fly back into.
   final GlobalKey _rowKey = GlobalKey();
 
+  int _generation = 0;
+
   void _onStart() {
+    _generation = ++_dragGeneration;
+    _dropped.value = false;
     _draggedGuid.value = widget.chat.guid;
     _dragFromPins.value = widget.startsInPinArea;
     _overPinArea.value = widget.startsInPinArea;
@@ -625,8 +633,11 @@ class _ChatDragSourceState extends State<ChatDragSource> {
     final flight = _pendingFlight;
     _pendingDrop = null;
     _pendingFlight = null;
-    if (pending != null) await pending.catchError((_) {});
+    if (pending != null) {
+      await pending.catchError((e, s) => Logger.error('Failed to save a pin drop', error: e, trace: s, tag: 'Pins'));
+    }
     if (flight != null) await flight;
+    if (_generation != _dragGeneration) return;
     _listDragActive.value = false;
     _draggedGuid.value = null;
     _dragMoved.value = false;

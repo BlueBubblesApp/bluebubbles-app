@@ -269,9 +269,8 @@ class ChatsService {
     if (changed.isEmpty) return;
     // Re-sort before saving so the grid shows the new order without waiting on the DB.
     refreshSortOrder();
-    for (final chat in changed) {
-      await chat.saveAsync(updatePinIndex: true);
-    }
+    // All of them, even past a failure, so one bad write doesn't leave the rest of the order unsaved.
+    await Future.wait(changed.map((chat) => chat.saveAsync(updatePinIndex: true)));
   }
 
   int get _nextPinIndex => pinnedChats.fold<int>(-1, (m, c) => max(m, c.pinIndex ?? -1)) + 1;
