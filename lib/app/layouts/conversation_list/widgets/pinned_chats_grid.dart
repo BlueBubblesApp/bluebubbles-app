@@ -16,11 +16,20 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-/// True while any chat is being dragged, so the grid can show itself as a drop zone.
+/// True while any chat is being dragged (past a hold), so the grid can show itself as a drop zone.
 final RxBool _listDragActive = false.obs;
 
 /// Whether the chat being dragged is over the pin area, so its drag preview can look like a pin or a list tile.
 final RxBool _overPinArea = false.obs;
+
+/// Whether the drag has moved past a hold. Until it has, nothing looks dragged: a hold is a peek or a select.
+final RxBool _dragMoved = false.obs;
+
+/// The chat being dragged, so it shows faded only where a drop would put it.
+final RxnString _draggedGuid = RxnString();
+
+/// The save a drop started. The drag's look holds until it lands, so the chat doesn't flash back where it was.
+Future<void>? _pendingDrop;
 
 /// The paged grid of pinned chats at the top of the chat list, shared by every skin. A sliver.
 ///
@@ -37,18 +46,26 @@ class PinnedChatsGrid extends StatefulWidget {
 }
 
 class _PinnedChatsGridState extends State<PinnedChatsGrid> {
+  static const double _zoneMargin = 8;
+  static const Duration _slide = Duration(milliseconds: 220);
+
   final PageController _controller = PageController();
 
   /// Guids in their previewed order while a drag hovers the pins, otherwise null.
   List<String>? _dragOrder;
   Timer? _pageFlipCooldown;
   late final Worker _listDragWorker;
+  late final Worker _leftPinAreaWorker;
 
   @override
   void initState() {
     super.initState();
     _listDragWorker = ever(_listDragActive, (bool active) {
       if (!active) _cancelPreview();
+    });
+    // Hovering through the pins previews where the drag would land; leaving them puts everything back.
+    _leftPinAreaWorker = ever(_overPinArea, (bool over) {
+      if (!over) _cancelPreview();
     });
   }
 
@@ -62,6 +79,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
   void dispose() {
     _pageFlipCooldown?.cancel();
     _listDragWorker.dispose();
+    _leftPinAreaWorker.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -78,17 +96,41 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     ];
   }
 
+  /// A reorder slides pins under a still finger, which reads as entering them and would reorder again, back and
+  /// forth, so entries are ignored while the pins slide. A pin entered meanwhile stays entered, so it doesn't fire
+  /// once they settle.
+  DateTime _lastReorder = DateTime(0);
+
   void _hover(List<Chat> shown, String dragged, String target) {
     if (dragged == target) return;
+    if (DateTime.now().difference(_lastReorder) < _slide) return;
+    _lastReorder = DateTime.now();
     final order = shown.map((c) => c.guid).toList();
-    order.remove(dragged);
     final to = order.indexOf(target);
     if (to < 0) return;
+    // Taken out first, so a pin moving forward lands after the target and one moving back lands before it.
+    order.remove(dragged);
     order.insert(to, dragged);
     setState(() => _dragOrder = order);
   }
 
+  void _hoverEnd(List<Chat> shown, String dragged) {
+    final order = shown.map((c) => c.guid).toList();
+    if (order.isNotEmpty && order.last == dragged) return;
+    if (DateTime.now().difference(_lastReorder) < _slide) return;
+    _lastReorder = DateTime.now();
+    order
+      ..remove(dragged)
+      ..add(dragged);
+    setState(() => _dragOrder = order);
+  }
+
+  /// A drop being saved: its preview stays up until the saved order replaces it, so the grid doesn't show the old
+  /// order in between. The drag ending right after the drop would otherwise clear it.
+  bool _committing = false;
+
   void _cancelPreview() {
+    if (_committing) return;
     if (_dragOrder != null && mounted) setState(() => _dragOrder = null);
   }
 
@@ -96,26 +138,37 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
   /// saves the previewed order.
   Future<void> _accept(String guid, List<Chat> pinned) async {
     final order = _ordered(pinned);
-    setState(() => _dragOrder = null);
     final chat = ChatsSvc.findChatByGuid(guid);
-    if (chat == null) return;
-    if (!(chat.isPinned ?? false)) {
-      await ChatsSvc.setChatPinned(chat, true);
-      if (!order.any((c) => c.guid == guid)) return;
-    }
-    if (!listEquals(order.map((c) => c.guid).toList(), pinned.map((c) => c.guid).toList())) {
-      await ChatsSvc.reorderPins(order);
+    if (chat == null) return _cancelPreview();
+    _committing = true;
+    try {
+      if (!(chat.isPinned ?? false)) {
+        await ChatsSvc.setChatPinned(chat, true);
+      }
+      if (order.any((c) => c.guid == guid) &&
+          !listEquals(order.map((c) => c.guid).toList(), pinned.map((c) => c.guid).toList())) {
+        await ChatsSvc.reorderPins(order);
+      }
+    } finally {
+      _committing = false;
+      _cancelPreview();
     }
   }
 
   Widget _dropZone(List<Chat> pinned, Widget child) {
     return DragTarget<String>(
-      onWillAcceptWithDetails: (_) => _overPinArea.value = true,
-      onAcceptWithDetails: (details) => _accept(details.data, pinned),
+      onWillAcceptWithDetails: (details) {
+        _overPinArea.value = true;
+        _hoverEnd(_ordered(pinned), details.data);
+        return true;
+      },
+      // Entered while the pins were still sliding, so retried until it takes.
+      onMove: (details) => _hoverEnd(_ordered(pinned), details.data),
+      onAcceptWithDetails: (details) => _pendingDrop = _accept(details.data, pinned),
       builder: (context, _, _) => Obx(
         () => AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          margin: const EdgeInsets.symmetric(horizontal: _zoneMargin),
           decoration: BoxDecoration(
             color: _listDragActive.value
                 ? context.theme.colorScheme.primaryContainer.withValues(alpha: 0.35)
@@ -138,7 +191,12 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
+    return SliverToBoxAdapter(
+        child: AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: Obx(() {
       // Force reactivity by accessing observable values first
       // ignore: unused_local_variable
       final loaded = ChatsSvc.loadedFirstChatBatch.value;
@@ -152,15 +210,16 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
         pinnedOnly: true,
         filters: ChatsSvc.chatListFilters.value,
       );
-      final _chats = _ordered(pinned);
+      final dragged = _dragMoved.value ? _draggedGuid.value : null;
+      final unpinning = dragged != null && !_overPinArea.value;
+      final _chats = unpinning ? _ordered(pinned).where((c) => c.guid != dragged).toList() : _ordered(pinned);
 
       if (_chats.isEmpty) {
         // With no pins there is no grid to drop on, so a list drag gets a zone of its own.
-        if (!_listDragActive.value) return const SliverToBoxAdapter(child: SizedBox.shrink());
-        return SliverPadding(
+        if (!_listDragActive.value) return const SizedBox(width: double.infinity);
+        return Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          sliver: SliverToBoxAdapter(
-            child: _dropZone(
+          child: _dropZone(
               pinned,
               SizedBox(
                 height: 80,
@@ -172,7 +231,6 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                 ),
               ),
             ),
-          ),
         );
       }
 
@@ -188,12 +246,11 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
       int _pageCount = (pinCount / maxOnPage).ceil();
       bool singleRow = usedRowCount == 1;
 
-      return SliverPadding(
+      return Padding(
         // Bottom padding guarantees visible separation from the regular chat list even if
         // totalHeight below slightly underestimates the tiles' real rendered height on a
         // given device (font metrics can vary enough to make the estimate come in short).
         padding: const EdgeInsets.only(top: 6, bottom: 2),
-        sliver: SliverToBoxAdapter(
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               // Horizontal overhead per tile: margins (4+4) + padding (11+11) + extra gap
@@ -208,7 +265,9 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
               const double pageHPadding = 20.0;
 
               // Derive a clean, capped avatar size from the actual available width
-              final double rawAvatarSize = (constraints.maxWidth - pageHPadding - colCount * tileHOverhead) / colCount;
+              // The drop zone around the grid takes its margin off both sides.
+              final double rawAvatarSize =
+                  (constraints.maxWidth - 2 * _zoneMargin - pageHPadding - colCount * tileHOverhead) / colCount;
               final double avatarSize = min(rawAvatarSize, 120.0);
               final double tileWidth = avatarSize + tileHOverhead;
 
@@ -264,43 +323,43 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                               final int start = pageIndex * maxOnPage;
                               final List<Chat> pageChats = _chats.sublist(start, min(start + maxOnPage, pinCount));
 
+                              // Each pin sits at its slot in a stack, keyed by chat, so a reorder slides it there rather than
+                              // rebuilding the rows in the new order.
+                              final double pageWidth = constraints.maxWidth - 2 * _zoneMargin - pageHPadding;
+                              final double rowInset =
+                                  singleRow ? max(0, (pageWidth - pageChats.length * tileWidth) / 2) : 0;
                               return Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: List.generate(usedRowCount, (rowIndex) {
-                                    final int rowStart = rowIndex * colCount;
-                                    final List<Chat> rowChats = pageChats.skip(rowStart).take(colCount).toList();
-
-                                    return Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: singleRow ? MainAxisAlignment.center : MainAxisAlignment.start,
-                                      children: [
-                                        for (final chat in rowChats)
-                                          SizedBox(
-                                            key: Key(chat.guid),
-                                            width: tileWidth,
-                                            child: DragTarget<String>(
-                                              onWillAcceptWithDetails: (details) {
-                                                _overPinArea.value = true;
-                                                _hover(_chats, details.data, chat.guid);
-                                                return true;
-                                              },
-                                              onAcceptWithDetails: (details) => _accept(details.data, pinned),
-                                              builder: (context, _, _) => PinnedConversationTile(
-                                                chat: chat,
-                                                avatarSize: avatarSize,
-                                                controller: controller,
-                                                draggable: true,
-                                              ),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    for (final (slot, chat) in pageChats.indexed)
+                                      AnimatedPositioned(
+                                        key: ValueKey(chat.guid),
+                                        duration: _slide,
+                                        curve: Curves.easeOutCubic,
+                                        left: rowInset + (slot % colCount) * tileWidth,
+                                        top: (slot ~/ colCount) * tileHeight,
+                                        width: tileWidth,
+                                        child: DragTarget<String>(
+                                          onWillAcceptWithDetails: (details) {
+                                            _overPinArea.value = true;
+                                            _hover(_chats, details.data, chat.guid);
+                                            return true;
+                                          },
+                                          onAcceptWithDetails: (details) => _pendingDrop = _accept(details.data, pinned),
+                                          builder: (context, _, _) => Opacity(
+                                            opacity: chat.guid == dragged ? 0.3 : 1,
+                                            child: PinnedConversationTile(
+                                              chat: chat,
+                                              avatarSize: avatarSize,
+                                              controller: controller,
+                                              draggable: true,
                                             ),
                                           ),
-                                        // Fill empty slots in multi-row mode so rows align
-                                        if (!singleRow)
-                                          for (int i = rowChats.length; i < colCount; i++) SizedBox(width: tileWidth),
-                                      ],
-                                    );
-                                  }),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               );
                             },
@@ -353,9 +412,9 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
               );
             },
           ),
-        ),
       );
-    });
+    }),
+    ));
   }
 }
 
@@ -418,10 +477,15 @@ class _ChatDragSourceState extends State<ChatDragSource> {
   bool _moved = false;
 
   void _onStart() {
-    _listDragActive.value = true;
+    _draggedGuid.value = widget.chat.guid;
     _overPinArea.value = widget.startsInPinArea;
     _moved = false;
-    if (kIsDesktop || kIsWeb) return;
+    // A mouse drag only starts once it has moved.
+    _dragMoved.value = kIsDesktop || kIsWeb;
+    if (kIsDesktop || kIsWeb) {
+      _listDragActive.value = true;
+      return;
+    }
     // The iOS peek buzzes on its own.
     if (SettingsSvc.settings.skin.value != Skins.iOS) HapticFeedback.mediumImpact();
     _undoHold = widget.onHold(_downPosition);
@@ -430,19 +494,32 @@ class _ChatDragSourceState extends State<ChatDragSource> {
   void _onUpdate(DragUpdateDetails details) {
     if (_moved || (details.globalPosition - _downPosition).distance < _holdSlop) return;
     _moved = true;
+    _dragMoved.value = true;
+    _listDragActive.value = true;
     _undoHold?.call();
     _undoHold = null;
   }
 
-  void _onEnd() {
-    _listDragActive.value = false;
+  Future<void> _onEnd() async {
     _undoHold = null;
+    final pending = _pendingDrop;
+    _pendingDrop = null;
+    if (pending != null) await pending.catchError((_) {});
+    _listDragActive.value = false;
+    _draggedGuid.value = null;
+    _dragMoved.value = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final feedback = _ChatDragFeedback(chat: widget.chat, listWidth: min(MediaQuery.sizeOf(context).width - 24, 480));
-    final whileDragging = Opacity(opacity: 0.3, child: widget.child);
+    Widget listLook({required bool dragging}) => Obx(() {
+          final mine = _draggedGuid.value == widget.chat.guid;
+          if (mine && _overPinArea.value) return const SizedBox.shrink();
+          return mine && dragging && _dragMoved.value ? Opacity(opacity: 0.3, child: widget.child) : widget.child;
+        });
+    final Widget child = widget.startsInPinArea ? widget.child : listLook(dragging: false);
+    final Widget whileDragging = widget.startsInPinArea ? widget.child : listLook(dragging: true);
     final data = widget.chat.guid;
     final Widget draggable = kIsDesktop || kIsWeb
         ? Draggable<String>(
@@ -451,8 +528,11 @@ class _ChatDragSourceState extends State<ChatDragSource> {
             childWhenDragging: whileDragging,
             dragAnchorStrategy: pointerDragAnchorStrategy,
             onDragStarted: _onStart,
-            onDragEnd: (_) => _onEnd(),
-            child: widget.child,
+            // Not onDragEnd: Flutter skips it once the source is unmounted, which a pin is as soon as hovering the
+            // list takes it out of the grid. These two always run.
+            onDragCompleted: _onEnd,
+            onDraggableCanceled: (_, _) => _onEnd(),
+            child: child,
           )
         : LongPressDraggable<String>(
             data: data,
@@ -464,10 +544,21 @@ class _ChatDragSourceState extends State<ChatDragSource> {
             hapticFeedbackOnStart: false,
             onDragStarted: _onStart,
             onDragUpdate: _onUpdate,
-            onDragEnd: (_) => _onEnd(),
-            child: widget.child,
+            onDragCompleted: _onEnd,
+            onDraggableCanceled: (_, _) => _onEnd(),
+            child: child,
           );
-    return Listener(onPointerDown: (event) => _downPosition = event.position, child: draggable);
+    return Listener(
+      onPointerDown: (event) => _downPosition = event.position,
+      child: widget.startsInPinArea
+          ? draggable
+          : AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: draggable,
+            ),
+    );
   }
 }
 
@@ -480,11 +571,15 @@ class _ChatDragFeedback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle();
+    final chatState = ChatsSvc.getChatState(chat.guid);
+    final title = chatState?.title.value ?? chat.getTitle();
+    final subtitle = chatState?.subtitle.value ?? chat.dbLatestMessage.target?.getNotificationText();
     final textTheme = context.theme.textTheme;
     // A zero-size box at the pointer with the content centered on it, so whichever look is showing (and both,
     // mid-switch) sits under the finger.
-    return SizedBox.shrink(
+    return Obx(() => !_dragMoved.value
+        ? const SizedBox.shrink()
+        : SizedBox.shrink(
       child: OverflowBox(
       maxWidth: double.infinity,
       maxHeight: double.infinity,
@@ -523,8 +618,20 @@ class _ChatDragFeedback extends StatelessWidget {
                               ContactAvatarGroupWidget(chat: chat, size: 44, editable: false),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(title,
-                                    maxLines: 1, overflow: TextOverflow.ellipsis, style: textTheme.titleMedium),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(title,
+                                        maxLines: 1, overflow: TextOverflow.ellipsis, style: textTheme.titleMedium),
+                                    if (!isNullOrEmpty(subtitle))
+                                      Text(subtitle!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: textTheme.bodySmall!
+                                              .copyWith(color: context.theme.colorScheme.outline)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -533,7 +640,7 @@ class _ChatDragFeedback extends StatelessWidget {
                     ),
             )),
       ),
-    ));
+    )));
   }
 }
 
@@ -552,7 +659,7 @@ class UnpinDropTarget extends StatelessWidget {
       },
       onAcceptWithDetails: (details) {
         final chat = ChatsSvc.findChatByGuid(details.data);
-        if (chat != null) ChatsSvc.setChatPinned(chat, false);
+        if (chat != null) _pendingDrop = ChatsSvc.setChatPinned(chat, false);
       },
       builder: (context, _, _) => child,
     );
