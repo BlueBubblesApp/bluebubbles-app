@@ -324,7 +324,8 @@ class IncomingMessageHandler {
     );
 
     // 1. Deduplication — skip real GUIDs we have already fully handled.
-    if (m.guid != null && _hasProcessed(m.guid!)) {
+    // A socket copy still goes through, to replace a push copy saved first.
+    if (m.guid != null && _hasProcessed(m.guid!) && payload.source != MessageSource.socket) {
       Logger.debug('[new-message] skipping already-processed ${m.guid}', tag: _tag);
       return;
     }
@@ -542,7 +543,7 @@ class IncomingMessageHandler {
 
     // 5. Persist the GUID swap / field update.
     final existingGuid = tempGuid ?? existing.guid!;
-    await _replaceMessage(c, existingGuid, existing, m);
+    await _replaceMessage(c, existingGuid, existing, m, winsTie: payload.source == MessageSource.socket);
 
     // 6. Persist attachment GUID swaps (e.g. temp attachment → real GUID).
     await _replaceAttachments(c, existingGuid, existing, m, replacementAttachments);
@@ -609,8 +610,9 @@ class IncomingMessageHandler {
     Chat chat,
     String existingGuid,
     Message existing,
-    Message replacement,
-  ) async {
+    Message replacement, {
+    bool winsTie = false,
+  }) async {
     final alreadyPresent = Message.findOne(guid: replacement.guid);
 
     if (alreadyPresent != null) {
@@ -620,7 +622,9 @@ class IncomingMessageHandler {
       // take a replaced turn back to type 2 doesn't count.
       final relinkedType = AppSessionTypes.mergedType(alreadyPresent.balloonBundleId,
           alreadyPresent.associatedMessageType, replacement.associatedMessageType);
-      if (replacement.isNewerThan(alreadyPresent) ||
+      // A socket copy replaces an equally recent one (a push copy lacks some fields), never a newer one.
+      if ((winsTie && !alreadyPresent.isNewerThan(replacement)) ||
+          replacement.isNewerThan(alreadyPresent) ||
           relinkedType != alreadyPresent.associatedMessageType ||
           (relinkedType == replacement.associatedMessageType &&
               replacement.associatedMessageGuid != alreadyPresent.associatedMessageGuid)) {
@@ -850,8 +854,8 @@ class IncomingMessageHandler {
   /// always carries the most up-to-date data.  The expiry timer is reset so the
   /// fresh update gets its own full timeout window.
   ///
-  /// If no matching new-message arrives within [_pendingUpdateTimeout], the
-  /// parked payload is discarded with a warning.
+  /// If no matching new-message arrives within [_pendingUpdateTimeout], the parked payload is saved as a new message:
+  /// it carries the whole message, and the new-message it was waiting for was lost.
   Future<void> _parkPendingUpdate(IncomingPayload payload) async {
     final guid = payload.message.guid;
     if (guid == null) return;
@@ -885,10 +889,11 @@ class IncomingMessageHandler {
       final oldest = _pendingUpdates.remove(oldestGuid)!;
       oldest.expiryTimer?.cancel();
       Logger.warn(
-        'Pending-update buffer full ($_maxPendingUpdates) — evicting oldest entry $oldestGuid, processing anyway',
+        'Pending-update buffer full ($_maxPendingUpdates): evicting oldest entry $oldestGuid, saving it as new',
         tag: _tag,
       );
-      unawaited(handle(oldest.payload, front: true).catchError((e, st) {
+      // As an update it would find no row and be parked again.
+      unawaited(handle(oldest.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
         Logger.warn(
           'Failed to process evicted buffered update for $oldestGuid',
           error: e,
@@ -904,10 +909,11 @@ class IncomingMessageHandler {
       if (expired != null) {
         Logger.warn(
           'Buffered update for $guid expired after ${_pendingUpdateTimeout.inSeconds}s '
-          'without a matching new-message — processing anyway',
+          'without a matching new-message, saving it as new',
           tag: _tag,
         );
-        unawaited(handle(expired.payload, front: true).catchError((e, st) {
+        // As an update it would find no row and be parked again, every timeout, forever.
+        unawaited(handle(expired.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
           Logger.warn(
             'Failed to process expired buffered update for $guid',
             error: e,

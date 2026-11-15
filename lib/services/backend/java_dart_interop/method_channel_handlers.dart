@@ -82,35 +82,10 @@ class MethodChannelHandlers {
     }
 
     try {
-      // Only drop the push copy when the socket really is going to deliver this
-      // message. `isAlive` is not good enough: it also returns true on a stale
-      // `bg_isolate` marker, and dropping then means neither transport delivers and
-      // the notification is silently lost.
-      if (!service.headless &&
-          LifecycleSvc.isForeground &&
-          (SocketSvc.socket?.connected ?? false) &&
-          SettingsSvc.settings.endpointUnifiedPush.value == '') {
-        Logger.debug('App is in the foreground with a connected socket, ignoring new message...');
-        return await _ok();
-      } else if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
-        Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
-        return await _ok();
-      }
-
       final Map<String, dynamic>? data = arguments;
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
-        await IncomingMsgHandler.handle(IncomingPayload(
-          type: MessageEventType.newMessage,
-          source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
-              .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
-              .toList(),
-          tempGuid: payload.data['tempGuid'],
-        ));
+        if (!await _handlePushedMessage(MessageEventType.newMessage, payload.data)) return await _retry();
       }
     } catch (e, s) {
       debugPrint('Error processing new message: $e');
@@ -131,45 +106,82 @@ class MethodChannelHandlers {
       return _retry();
     }
 
-    if (!service.headless && !LifecycleSvc.isAlive && SettingsSvc.settings.keepAppAlive.value) {
-      Logger.debug('Ignoring FCM message while app is not alive, but keepAppAlive is enabled');
-      return _ok();
-    }
-
     try {
       final Map<String, dynamic>? data = arguments;
       if (!isNullOrEmpty(data)) {
         final payload = ServerPayload.fromJson(data!);
 
+        // Update pushes carry no chats. Without a stored message to take one from, it's fetched below.
         if (payload.data['chats'] == null || payload.data['chats'].isEmpty) {
-          Logger.info('No chat data found, attempting to find chat from message guid: ${payload.data['guid']}...');
           final existingMsg = Message.findOne(guid: payload.data['guid']);
           if (existingMsg != null && existingMsg.chat.target != null) {
-            Logger.info('Found chat from message guid, adding to payload');
             payload.data['chats'] = [existingMsg.chat.target!.toMap()];
-          } else {
-            Logger.warn('No chat data found, and unable to find chat from message guid: ${payload.data['guid']}');
-            return await _retry();
           }
         }
 
-        await IncomingMsgHandler.handle(IncomingPayload(
-          type: MessageEventType.updatedMessage,
-          source: MessageSource.methodChannel,
-          chat: Chat.fromMap(payload.data['chats'].first.cast<String, dynamic>()),
-          message: Message.fromMap(payload.data),
-          attachments: ((payload.data['attachments'] as List?) ?? const [])
-              .whereType<Map>()
-              .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
-              .toList(),
-          tempGuid: payload.data['tempGuid'],
-        ));
+        if (!await _handlePushedMessage(MessageEventType.updatedMessage, payload.data)) return await _retry();
       }
     } catch (e, s) {
       return Future.error(e, s);
     }
 
     return _ok();
+  }
+
+  /// The push copy lacks fields the socket sends, so while a socket should be up, prefer the socket's copy or a
+  /// fetched one. A push copy that does get saved is replaced by the socket's if that arrives later.
+  ///
+  /// Returns false when there's still no chat to route the message to, so the push is retried.
+  Future<bool> _handlePushedMessage(MessageEventType type, Map<String, dynamic> data) async {
+    // Only a live or connecting socket can deliver. With the server unreachable, waiting and fetching would just delay
+    // the push copy by the API timeout.
+    final socketExpected = !service.headless &&
+        SocketSvc.connectionDesired &&
+        const [SocketState.connected, SocketState.connecting, SocketState.reconnecting].contains(SocketSvc.state.value);
+    if (socketExpected || isNullOrEmpty(data['chats'])) {
+      final pushed = Message.fromMap(data);
+      if (socketExpected) await Future.delayed(const Duration(seconds: 3));
+      final stored = Message.findOne(guid: pushed.guid);
+      // The push copy never carries datePlayed; without this a played message's later edit or unsend looks older.
+      pushed.datePlayed ??= stored?.datePlayed;
+      if (socketExpected && stored != null && !pushed.isNewerThan(stored)) return true;
+
+      Logger.info('Fetching ${type.name} ${pushed.guid}: the socket did not deliver it, or the push has no chat');
+      try {
+        final response = await HttpSvc.message.fetchOne(
+          pushed.guid!,
+          // appPayload is v2-only and ignored by v1.
+          withQuery: "chats,chats.participants,attachments,attributedBody,messageSummaryInfo,payloadData,appPayload",
+        );
+        final fetched = (response.data['data'] as Map).cast<String, dynamic>();
+        if (isNullOrEmpty(fetched['chats'])) fetched.remove('chats');
+        data = {...data, ...fetched};
+      } catch (e) {
+        Logger.warn('Failed to fetch ${pushed.guid}, using the push copy', error: e);
+      }
+      // The new-message was lost too. The update carries the whole message, so save it now rather than buffering it.
+      if (stored == null) type = MessageEventType.newMessage;
+    }
+
+    if (isNullOrEmpty(data['chats'])) {
+      Logger.warn('No chat for ${type.name} ${data['guid']}, requesting a retry');
+      return false;
+    }
+
+    await IncomingMsgHandler.handle(
+      IncomingPayload(
+        type: type,
+        source: MessageSource.methodChannel,
+        chat: Chat.fromMap(data['chats'].first.cast<String, dynamic>()),
+        message: Message.fromMap(data),
+        attachments: ((data['attachments'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
+            .toList(),
+        tempGuid: data['tempGuid'],
+      ),
+    );
+    return true;
   }
 
   Future<bool> _handleGroupUpdate(MethodCall call, Map<String, dynamic>? arguments) async {
