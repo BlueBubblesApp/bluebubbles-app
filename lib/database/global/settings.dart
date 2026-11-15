@@ -680,8 +680,6 @@ class Settings {
     SettingsSvc.settings.editLastSentMessageOnUpArrow.value =
         map['editLastSentMessageOnUpArrow'] ?? SettingsSvc.settings.editLastSentMessageOnUpArrow.value;
     SettingsSvc.settings.redactedMode.value = map['redactedMode'] ?? SettingsSvc.settings.redactedMode.value;
-    // generateFakeMessageContent is its old name, read only when the new one isn't there: saving the one setting
-    // doesn't rewrite the old key, so it goes stale.
     SettingsSvc.settings.hideMessageContent.value = map['hideMessageContent'] ??
         map['generateFakeMessageContent'] ??
         SettingsSvc.settings.hideMessageContent.value;
