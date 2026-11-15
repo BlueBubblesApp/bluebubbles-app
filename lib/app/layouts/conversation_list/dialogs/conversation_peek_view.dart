@@ -14,46 +14,92 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-Route<void>? _openPeek;
+final GlobalKey<NavigatorState> _peekNavigator = GlobalKey<NavigatorState>();
 
-/// Closes the peek [peekChat] opened, if it's still up: a hold that turned into a drag.
-void closeChatPeek() {
-  final route = _openPeek;
-  _openPeek = null;
-  if (route == null || !route.isActive) return;
-  if (route.isCurrent) {
-    route.navigator!.pop();
-  } else {
-    route.navigator!.removeRoute(route);
-  }
-}
+/// Closes the open peek, if any: a hold that turned into a drag.
+void closeChatPeek() => _peekNavigator.currentState?.maybePop();
 
+/// Shows [ConversationPeekView] over everything.
+///
+/// It lives in its own navigator in an overlay entry rather than as a route on the app's navigator, because pushing a
+/// route cancels every pointer that navigator is tracking: the finger still holding the chat would lose its drag. The
+/// view's own pops land on that navigator, so they still just close the peek.
 Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
+  if (_peekNavigator.currentState != null) return;
   HapticFeedback.mediumImpact();
   final messages = Chat.getMessages(c, getDetails: true).where((e) => !e.isReaction).toList();
-  final route = PageRouteBuilder<void>(
-      transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return FadeTransition(
-          opacity: animation,
-          child: ConversationPeekView(
-            position: offset,
-            chat: c,
-            messages: messages,
-          ),
-        );
-      },
-      fullscreenDialog: true,
-      opaque: false,
+  final peek = PageRouteBuilder<void>(
+    transitionDuration: const Duration(milliseconds: 150),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return FadeTransition(
+        opacity: animation,
+        child: ConversationPeekView(
+          position: offset,
+          chat: c,
+          messages: messages,
+        ),
+      );
+    },
+    fullscreenDialog: true,
+    opaque: false,
   );
-  _openPeek = route;
-  await Navigator.push(Get.context!, route);
-  if (_openPeek == route) _openPeek = null;
+  // Something for the peek to pop back to; a navigator can't pop its last route.
+  final base = PageRouteBuilder<void>(
+    pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+    opaque: false,
+    transitionDuration: Duration.zero,
+  );
+  final overlay = Overlay.of(Get.context!, rootOverlay: true);
+  // An overlay entry only inherits what's above the root overlay, so bring the caller's themes along, as dialogs do.
+  final themes = InheritedTheme.capture(from: context, to: overlay.context);
+  final entry = OverlayEntry(
+    builder: (context) => themes.wrap(Navigator(
+      key: _peekNavigator,
+      onGenerateInitialRoutes: (navigator, initialRoute) => [base, peek],
+    )),
+  );
+  overlay.insert(entry);
+
+  // Back goes to the app's navigator, which knows nothing of the peek. Once the finger is up (pushing earlier would
+  // cancel it), an empty route there takes the back press and closes the peek.
+  Route<void>? backGuard;
+  var listening = true;
+  late final void Function(PointerEvent) onPointer;
+  void stopListening() {
+    if (!listening) return;
+    listening = false;
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(onPointer);
+  }
+
+  onPointer = (PointerEvent event) {
+    if (event is! PointerUpEvent && event is! PointerCancelEvent) return;
+    stopListening();
+    if (_peekNavigator.currentState == null) return;
+    backGuard = PageRouteBuilder<void>(
+      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+      opaque: false,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+    );
+    Navigator.of(Get.context!, rootNavigator: true).push(backGuard!).then((_) => closeChatPeek());
+  };
+
+  GestureBinding.instance.pointerRouter.addGlobalRoute(onPointer);
+  try {
+    await peek.completed;
+  } finally {
+    // Whatever happens, the entry goes: left behind, its empty route would swallow every touch.
+    stopListening();
+    entry.remove();
+    final guard = backGuard;
+    if (guard != null && guard.isActive) guard.navigator!.removeRoute(guard);
+  }
 }
 
 class ConversationPeekView extends StatefulWidget {
@@ -96,14 +142,6 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
   }
 
   void popPeekView() {
-    bool dialogOpen = Get.isDialogOpen ?? false;
-    if (dialogOpen) {
-      if (kIsWeb) {
-        Get.back();
-      } else {
-        Navigator.of(context).pop();
-      }
-    }
     Navigator.of(context).pop();
   }
 
@@ -378,8 +416,11 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
+              // The peek sits above the app's routes, so it closes before the dialog opens on them.
+              final chat = widget.chat;
+              popPeekView();
               final group = await showBBListSelector<CustomGroup>(
-                context: context,
+                context: Get.context!,
                 title: "Add to Custom Group",
                 options: CustomGroupsSvc.groups
                     .map((g) => BBListSelectorOption(label: g.name, value: g))
@@ -387,10 +428,9 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
               );
               if (group != null) {
                 final chatGuids = group.chats.map((c) => c.guid).toSet();
-                chatGuids.add(widget.chat.guid);
+                chatGuids.add(chat.guid);
                 await CustomGroupInterface.updateChats(id: group.id!, chatGuids: chatGuids.toList());
               }
-              if (mounted) popPeekView();
             },
             child: ListTile(
               mouseCursor: MouseCursor.defer,
@@ -409,28 +449,31 @@ class _ConversationPeekViewState extends State<ConversationPeekView>
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
+            // The peek sits above the app's routes, so it closes before the dialog opens on them.
+            final chat = widget.chat;
+            final appContext = Get.context!;
+            popPeekView();
             await showBBDialog(
               barrierDismissible: false,
-              context: context,
+              context: appContext,
               title: "Are you sure?",
               body: "This chat will be deleted from this device only",
               actions: [
                 BBDialogAction(
                   text: "No",
-                  onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                  onPressed: () => Navigator.of(appContext, rootNavigator: true).pop(),
                 ),
                 BBDialogAction(
                   text: "Yes",
                   isDefault: true,
                   onPressed: () {
-                    ChatsSvc.removeChat(widget.chat);
-                    ChatsSvc.softDeleteChat(widget.chat);
-                    Navigator.of(context, rootNavigator: true).pop();
+                    ChatsSvc.removeChat(chat);
+                    ChatsSvc.softDeleteChat(chat);
+                    Navigator.of(appContext, rootNavigator: true).pop();
                   },
                 ),
               ],
             );
-            if (mounted) popPeekView();
           },
           child: ListTile(
             mouseCursor: MouseCursor.defer,
