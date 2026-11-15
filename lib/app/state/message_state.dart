@@ -707,7 +707,6 @@ class MessageState extends StatefulController {
     message.otherHandle = updatedMessage.otherHandle;
     message.country = updatedMessage.country ?? message.country;
     message.hasDdResults = updatedMessage.hasDdResults;
-    // A push copy leaves these out, and a local delete isn't the server's to undo.
     message.datePlayed = updatedMessage.datePlayed ?? message.datePlayed;
     message.itemType = updatedMessage.itemType;
     message.groupTitle = updatedMessage.groupTitle;
@@ -716,10 +715,12 @@ class MessageState extends StatefulController {
     // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
     message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
+    // A local delete isn't the server's to undo.
     message.dateDeleted = updatedMessage.dateDeleted ?? message.dateDeleted;
     message.metadata = updatedMessage.metadata;
     message.threadOriginatorPart = updatedMessage.threadOriginatorPart ?? message.threadOriginatorPart;
     message.bigEmoji = updatedMessage.bigEmoji;
+    // Kept when the update lacks them, as a push copy does.
     if (updatedMessage.attributedBody.isNotEmpty) message.attributedBody = updatedMessage.attributedBody;
     if (updatedMessage.messageSummaryInfo.isNotEmpty) message.messageSummaryInfo = updatedMessage.messageSummaryInfo;
     message.payloadData = updatedMessage.payloadData ?? message.payloadData;
