@@ -736,7 +736,9 @@ class _ChatDragFeedback extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                              // Pins' titles render at 0.95 (ChatTitle).
+                              style: textTheme.bodyMedium!
+                                  .apply(color: context.theme.colorScheme.outline, fontSizeFactor: 0.95)),
                         ],
                       ),
                     )
