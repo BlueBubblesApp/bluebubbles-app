@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_tile.dart';
 import 'package:bluebubbles/models/genmoji.dart';
@@ -20,6 +21,13 @@ const double _margin = 12;
 /// Clicking a Genmoji attaches it and closes the popover; right-clicking offers Delete. Click
 /// outside or press Escape to dismiss. Only open this when `ServerDetails.supportsGenmoji`.
 Future<void> showGenmojiLibraryPopover(BuildContext anchorContext, ConversationViewController controller) async {
+  if (SubscriptionSvc.locked) {
+    return showSubscriptionRequired(
+      anchorContext,
+      feature: ProFeature.genmoji,
+      onUnlocked: () => anchorContext.mounted ? showGenmojiLibraryPopover(anchorContext, controller) : null,
+    );
+  }
   final navigator = Navigator.of(anchorContext, rootNavigator: true);
   final overlayBox = navigator.overlay!.context.findRenderObject() as RenderBox;
   final anchorBox = anchorContext.findRenderObject() as RenderBox?;

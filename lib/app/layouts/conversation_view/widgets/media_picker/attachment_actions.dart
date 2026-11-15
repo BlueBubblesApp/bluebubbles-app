@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
@@ -328,6 +329,14 @@ class AttachmentActions {
   /// was attached. The library is re-synced afterwards either way, since the Mac files what
   /// it draws there (macOS 27's Image Playground always does).
   static Future<bool> createGenmoji(BuildContext context, ConversationViewController controller) async {
+    if (SubscriptionSvc.locked) {
+      await showSubscriptionRequired(
+        context,
+        feature: ProFeature.genmoji,
+        onUnlocked: () => context.mounted ? createGenmoji(context, controller) : null,
+      );
+      return false;
+    }
     final image = await showGenmojiDialog(context, isIMessage: controller.chat.isIMessage);
     unawaited(GenmojiLibrarySvc.sync());
     if (image == null) return false;

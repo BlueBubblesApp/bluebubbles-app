@@ -37,6 +37,9 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 
 See `.claude/rules/api.md` for full HTTP conventions.
 
+## Subscription (`subscription_service.dart`)
+`SubscriptionSvc`: whether the server holds Pro, which games, stickers and Genmoji need. Asks `server.subscription()` at startup, on resume and on every server change; `runApiGuarded` reports any `402` to it (`refused`), which covers tokens without `server:admin` that can't ask. Gate an entry point on `locked` (the server said no, it can't be reached to ask (`offline`, rechecked when the socket reconnects), or Developer Tools' "Disable Subscription Features", `debugDisabled`) and show `showSubscriptionRequired` (`app/components/subscription_required.dart`), which says "Server Offline" with Retry while `offline`; gate offering something on `hasPro` (known yes). Unknown is neither, so the `402` path still decides.
+
 ## WebSocket (`socket_service.dart`)
 socket_io_client connection to the BlueBubbles server. Don't create additional
 `Socket` instances — one connection is managed here.

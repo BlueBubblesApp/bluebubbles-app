@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/actions/media_actions.dart'
     as popup_media_actions;
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/actions/message_actions.dart'
@@ -284,7 +285,9 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   /// The library sticker a recent tapback names, or null for an emoji, or a sticker no longer in the library.
   LibrarySticker? _recentSticker(String recent) {
-    if (!_isStickerKey(recent) || !SettingsSvc.serverDetails.supportsStickerTapbacks) return null;
+    if (!_isStickerKey(recent) || !SettingsSvc.serverDetails.supportsStickerTapbacks || SubscriptionSvc.locked) {
+      return null;
+    }
     final id = recent.substring(SharedPreferencesMessagingActions.stickerTapbackPrefix.length);
     return StickerLibrarySvc.entries.firstWhereOrNull((s) => s.identifier == id);
   }
@@ -328,6 +331,13 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   Future<void> _removeStickerTapback() async {
     final attachment = selfSticker?.dbAttachments.firstOrNull;
     if (attachment == null) return;
+    if (SubscriptionSvc.locked) {
+      return showSubscriptionRequired(
+        context,
+        feature: ProFeature.stickers,
+        onUnlocked: () => mounted ? _removeStickerTapback() : null,
+      );
+    }
     HapticFeedback.lightImpact();
     popDetails();
     final Uint8List bytes;

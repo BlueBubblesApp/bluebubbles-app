@@ -1,17 +1,24 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Shows the server Mac's sticker library ([StickerLibrarySvc]), with a button to add an image from this device to it.
 ///
 /// Browse-only: the desktop composer's Stickers button. Only open this when `ServerDetails.supportsStickers`.
-Future<void> showStickerLibrary(BuildContext context) {
+Future<void> showStickerLibrary(BuildContext context) async {
+  if (SubscriptionSvc.locked) {
+    return showSubscriptionRequired(
+      context,
+      feature: ProFeature.stickers,
+      onUnlocked: () => context.mounted ? showStickerLibrary(context) : null,
+    );
+  }
   // The cached library draws at once; this brings it up to date behind it
   unawaited(StickerLibrarySvc.sync());
   final colors = context.theme.colorScheme;
@@ -49,14 +56,42 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
     final svc = StickerLibrarySvc;
     return Column(
       children: [
-        if (widget.title || SettingsSvc.settings.enablePrivateAPI.value) _header(),
+        Obx(
+          () => widget.title || (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
+              ? _header()
+              : const SizedBox.shrink(),
+        ),
         Expanded(
           child: Obx(() {
+            // The cached library stays on disk for when the subscription comes back
+            if (SubscriptionSvc.locked) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SubscriptionRequiredCard(feature: ProFeature.stickers),
+                      if (SubscriptionSvc.offline)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: TextButton(onPressed: retrySubscriptionCheck, child: const Text("Retry")),
+                        )
+                      else if (SubscriptionSvc.purchaseUrl.value != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: TextButton(onPressed: openSubscriptionPage, child: const Text("Learn More")),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }
             final stickers = svc.entries.toList();
             if (stickers.isEmpty) {
               if (!svc.loaded.value || svc.syncing.value) return const Center(child: CircularProgressIndicator());
               final error = svc.syncError.value;
-              if (error != null) return _message(error, learnMoreUrl: svc.syncErrorUrl.value);
+              if (error != null) return _message(error);
               return _message(svc.unavailableReason.value ?? "No stickers yet");
             }
             final saved = stickers.where((s) => s.isSaved).toList();
@@ -80,7 +115,7 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
       children: [
         Expanded(child: widget.title ? Text("Stickers", style: context.textTheme.titleMedium) : const SizedBox()),
         // Adding goes through the server's Private API helper
-        if (SettingsSvc.settings.enablePrivateAPI.value)
+        if (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
           Obx(
             () => StickerLibrarySvc.adding.value
                 ? const Padding(
@@ -98,7 +133,7 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
     ),
   );
 
-  Widget _message(String text, {String? learnMoreUrl}) => Center(
+  Widget _message(String text) => Center(
     child: Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -109,14 +144,6 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
             textAlign: TextAlign.center,
             style: context.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.outline),
           ),
-          if (learnMoreUrl != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: TextButton(
-                onPressed: () => launchUrl(Uri.parse(learnMoreUrl), mode: LaunchMode.externalApplication),
-                child: const Text("Learn More"),
-              ),
-            ),
         ],
       ),
     ),

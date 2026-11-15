@@ -100,6 +100,10 @@ class HttpService implements BaseApi {
           : e is DioException
               ? e.response?.statusCode
               : null;
+      // A paid route refusing: the server has no subscription, whatever the last check said
+      if (statusCode == 402 && GetIt.I.isRegistered<SubscriptionService>()) {
+        SubscriptionSvc.refused(e is Response ? e.data : (e as DioException).response?.data);
+      }
       if (statusCode == 502 && apiRoot.contains("trycloudflare")) {
         try {
           return await func();

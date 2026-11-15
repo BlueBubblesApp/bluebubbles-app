@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_tile.dart';
@@ -14,7 +15,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -511,6 +511,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   Widget _buildGenmojiGrid() => Obx(() => _buildGenmojiContent());
 
   Widget _buildGenmojiContent() {
+    if (SubscriptionSvc.locked) return _subscriptionRequired(ProFeature.genmoji);
     final svc = GenmojiLibrarySvc;
     final entries = svc.entries.toList();
     final leading = _genmojiLeadingTiles;
@@ -560,6 +561,49 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
         }),
       );
 
+  /// A library grid on a server without the subscription: Photos, and the feature's locked badge and reason (as the
+  /// dialog draws them) with Learn More.
+  Widget _subscriptionRequired(ProFeature feature) {
+    // Offline, Retry rechecks: there's nothing to buy until the server says what it has
+    final url = SubscriptionSvc.offline ? null : SubscriptionSvc.purchaseUrl.value;
+    return SliverMainAxisGroup(
+      slivers: [
+        _leadingColumn([_BackToPhotosTile(onTap: _backToPhotos)]),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            width: 220,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SubscriptionRequiredCard(feature: feature),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: context.theme.colorScheme.primary,
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                      ),
+                      onPressed: url != null ? openSubscriptionPage : retrySubscriptionCheck,
+                      child: Text(url != null ? "Learn More" : "Retry"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _backToPhotos() {
+    controller.showGenmojiLibrary.value = false;
+    controller.showStickerLibrary.value = false;
+  }
+
   /// "Photos" and, with the Private API, "Add": the first column of the sticker grid.
   List<Widget> get _stickerLeadingTiles => [
         _BackToPhotosTile(onTap: () => controller.showStickerLibrary.value = false),
@@ -569,6 +613,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   /// The Mac's sticker library in the photo grid's place, laid out like the Genmoji grid: saved stickers, then
   /// recents.
   Widget _buildStickerGrid() => Obx(() {
+        if (SubscriptionSvc.locked) return _subscriptionRequired(ProFeature.stickers);
         final svc = StickerLibrarySvc;
         final entries = [...svc.entries.where((e) => e.isSaved), ...svc.entries.where((e) => !e.isSaved)];
         final leading = _stickerLeadingTiles;
@@ -600,13 +645,12 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     }
     final error = svc.syncError.value;
     if (error != null) {
-      final url = svc.syncErrorUrl.value;
       return _buildStatusSliver(
         icon: Icons.cloud_off_rounded,
         title: "Couldn't Load Stickers",
         message: error,
-        buttonLabel: url != null ? "Learn More" : "Retry",
-        onPressed: () => url != null ? launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication) : svc.sync(),
+        buttonLabel: "Retry",
+        onPressed: svc.sync,
         width: 220,
       );
     }

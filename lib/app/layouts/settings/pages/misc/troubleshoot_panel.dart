@@ -528,6 +528,23 @@ class _TroubleshootPanelState extends State<TroubleshootPanel> with ThemeHelpers
                       subtitle:
                           "Permanently deletes ALL messages, chats, attachments, participants, and contacts on this device."),
                 ]),
+                SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Subscription"),
+                SettingsSection(backgroundColor: tileColor, children: [
+                  Obx(() => SettingsSwitch(
+                        onChanged: (bool val) => SubscriptionSvc.debugDisabled.value = val,
+                        initialVal: SubscriptionSvc.debugDisabled.value,
+                        title: "Disable Subscription Features",
+                        subtitle: "Acts as if your server had no subscription, to see how games, stickers and Genmoji "
+                            "look without one. Turns off again when the app restarts.",
+                        isThreeLine: true,
+                        backgroundColor: tileColor,
+                        leading: const SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.lock,
+                          materialIcon: Icons.lock_outline,
+                          containerColor: Colors.orange,
+                        ),
+                      )),
+                ]),
                 SettingsHeader(iosSubtitle: iosSubtitle, materialSubtitle: materialSubtitle, text: "Audit"),
                 SettingsSection(backgroundColor: tileColor, children: [
                   SettingsTile(

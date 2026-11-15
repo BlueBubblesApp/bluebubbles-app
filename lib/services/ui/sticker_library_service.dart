@@ -41,10 +41,8 @@ class StickerLibraryService {
   /// An upload from this device is in flight
   final RxBool adding = false.obs;
 
-  /// The sentence to show for the last failed sync, and for a `402` the page to get the subscription, cleared when a
-  /// sync succeeds.
+  /// The sentence to show for the last failed sync, cleared when one succeeds. A `402` locks [SubscriptionSvc] instead.
   final RxnString syncError = RxnString();
-  final RxnString syncErrorUrl = RxnString();
 
   /// Set when the Mac answered with an empty library and a reason (no sticker store yet, or no Full Disk Access).
   final RxnString unavailableReason = RxnString();
@@ -98,7 +96,7 @@ class StickerLibraryService {
   Future<void> sync() => _syncing ??= _sync().whenComplete(() => _syncing = null);
 
   Future<void> _sync() async {
-    if (kIsWeb) return;
+    if (kIsWeb || SubscriptionSvc.locked) return;
     await load();
     syncing.value = true;
     try {
@@ -106,7 +104,6 @@ class StickerLibraryService {
       entries.assignAll(stickers);
       unavailableReason.value = stickers.isEmpty ? reason : null;
       syncError.value = null;
-      syncErrorUrl.value = null;
       await _writeIndex();
       await _fetchMissingThumbnails();
       await _pruneFiles();
@@ -114,7 +111,6 @@ class StickerLibraryService {
       final refusal = stickerRefusal(e);
       Logger.warn("Sticker library sync failed", error: e, trace: s, tag: 'StickerLibrary');
       syncError.value = refusal.message ?? "Couldn't reach your server to load your stickers.";
-      syncErrorUrl.value = refusal.purchaseUrl;
     } finally {
       syncing.value = false;
     }

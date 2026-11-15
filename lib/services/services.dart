@@ -43,6 +43,7 @@ export 'ui/contact_service_v2.dart';
 export 'ui/name_and_photo_sharing_service.dart';
 export 'ui/genmoji_library_service.dart';
 export 'ui/sticker_library_service.dart';
+export 'network/subscription_service.dart';
 export 'ui/typing_indicator_service.dart';
 export 'ui/unifiedpush.dart';
 export 'isolates/isolate_event.dart';
