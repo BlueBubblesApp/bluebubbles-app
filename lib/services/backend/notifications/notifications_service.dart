@@ -292,7 +292,7 @@ class NotificationsService {
       return;
     }
     if (message.isKeptAudio) return;
-    // Already read on another device, e.g. a missed message saved late from its update.
+    // Already read on another device, e.g. a new-message fetched late after the socket missed it.
     if (message.dateRead != null) return;
     if (chat.shouldMuteNotification(message)) return;
     if (!headless && LifecycleSvc.isAlive) {

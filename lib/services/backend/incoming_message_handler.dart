@@ -65,6 +65,10 @@ class IncomingPayload {
   /// Present only when the server is echoing back one of our own sends.
   final String? tempGuid;
 
+  /// A new-message saved from an updated-message event, because the new-message it followed never arrived. It
+  /// doesn't notify: updates never do, and the message may be old.
+  final bool fromUpdate;
+
   const IncomingPayload({
     required this.type,
     required this.source,
@@ -72,6 +76,7 @@ class IncomingPayload {
     required this.message,
     this.attachments = const [],
     this.tempGuid,
+    this.fromUpdate = false,
   });
 
   IncomingPayload copyWith({
@@ -81,6 +86,7 @@ class IncomingPayload {
     Message? message,
     List<Attachment>? attachments,
     String? tempGuid,
+    bool? fromUpdate,
   }) {
     return IncomingPayload(
       type: type ?? this.type,
@@ -89,6 +95,7 @@ class IncomingPayload {
       message: message ?? this.message,
       attachments: attachments ?? this.attachments,
       tempGuid: tempGuid ?? this.tempGuid,
+      fromUpdate: fromUpdate ?? this.fromUpdate,
     );
   }
 }
@@ -435,7 +442,9 @@ class IncomingMessageHandler {
     // Must be awaited: the notification pipeline posts a MethodChannel call back
     // to Android. Without await, the DartWorker engine can be destroyed before
     // that call fires, silently dropping the notification.
-    if (GetIt.I.isRegistered<NotificationsService>()) {
+    if (payload.fromUpdate) {
+      Logger.debug('[new-message] ${saved.guid} was saved from an update, not notifying', tag: _tag);
+    } else if (GetIt.I.isRegistered<NotificationsService>()) {
       await GetIt.I.isReady<NotificationsService>();
       await NotificationsSvc.tryCreateNewMessageNotification(saved, c);
     } else {
@@ -892,7 +901,8 @@ class IncomingMessageHandler {
         'Pending-update buffer full ($_maxPendingUpdates): evicting oldest entry $oldestGuid, saving it as new',
         tag: _tag,
       );
-      unawaited(handle(oldest.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
+      unawaited(handle(oldest.payload.copyWith(type: MessageEventType.newMessage, fromUpdate: true), front: true)
+          .catchError((e, st) {
         Logger.warn(
           'Failed to process evicted buffered update for $oldestGuid',
           error: e,
@@ -911,7 +921,8 @@ class IncomingMessageHandler {
           'without a matching new-message, saving it as new',
           tag: _tag,
         );
-        unawaited(handle(expired.payload.copyWith(type: MessageEventType.newMessage), front: true).catchError((e, st) {
+        unawaited(handle(expired.payload.copyWith(type: MessageEventType.newMessage, fromUpdate: true), front: true)
+            .catchError((e, st) {
           Logger.warn(
             'Failed to process expired buffered update for $guid',
             error: e,

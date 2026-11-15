@@ -138,6 +138,7 @@ class MethodChannelHandlers {
     final socketExpected = !service.headless &&
         SocketSvc.connectionDesired &&
         const [SocketState.connected, SocketState.connecting, SocketState.reconnecting].contains(SocketSvc.state.value);
+    var fromUpdate = false;
     if (socketExpected || isNullOrEmpty(data['chats'])) {
       final pushed = Message.fromMap(data);
       if (socketExpected) await Future.delayed(const Duration(seconds: 3));
@@ -160,7 +161,10 @@ class MethodChannelHandlers {
         Logger.warn('Failed to fetch ${pushed.guid}, using the push copy', error: e);
       }
       // The new-message was lost too. The update carries the whole message, so save it now rather than buffering it.
-      if (stored == null) type = MessageEventType.newMessage;
+      if (stored == null && type == MessageEventType.updatedMessage) {
+        type = MessageEventType.newMessage;
+        fromUpdate = true;
+      }
     }
 
     if (isNullOrEmpty(data['chats'])) {
@@ -179,6 +183,7 @@ class MethodChannelHandlers {
             .map((e) => Attachment.fromMap(e.cast<String, dynamic>()))
             .toList(),
         tempGuid: data['tempGuid'],
+        fromUpdate: fromUpdate,
       ),
     );
     return true;
