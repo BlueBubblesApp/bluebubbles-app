@@ -63,7 +63,12 @@ class RenderRunTextEffects extends RenderProxyBox {
   Animation<double> _animation;
   int _textOffset;
   // Selection boxes only change with layout, so they're measured once rather than every frame.
-  List<_RunGeometry>? _geometry;
+  _Geometry? _geometry;
+
+  void _dropGeometry() {
+    _geometry?.dispose();
+    _geometry = null;
+  }
 
   void update(List<Run> runs, Animation<double> animation, int textOffset) {
     if (animation != _animation) {
@@ -73,7 +78,7 @@ class RenderRunTextEffects extends RenderProxyBox {
     }
     _runs = runs;
     _textOffset = textOffset;
-    _geometry = null;
+    _dropGeometry();
     markNeedsPaint();
   }
 
@@ -90,9 +95,15 @@ class RenderRunTextEffects extends RenderProxyBox {
   }
 
   @override
+  void dispose() {
+    _dropGeometry();
+    super.dispose();
+  }
+
+  @override
   void performLayout() {
     super.performLayout();
-    _geometry = null;
+    _dropGeometry();
   }
 
   @override
@@ -111,6 +122,7 @@ class RenderRunTextEffects extends RenderProxyBox {
     }
     final cut = <Rect>[];
     final pieces = <(Rect, Matrix4, double)>[];
+    final glyphs = <(_Glyph, Matrix4, double)>[];
     void add(Rect rect, TextEffectPose pose) {
       // Resting fragments stay in the single untransformed paint.
       if (pose.alpha >= 1 && pose.bold < 0.05 && pose.transform.isIdentity()) return;
@@ -123,41 +135,57 @@ class RenderRunTextEffects extends RenderProxyBox {
       pieces.add((rect, Matrix4.translationValues(pose.bold, 0, 0)..multiply(pose.transform), pose.alpha));
     }
 
+    void addGlyph(_Glyph glyph, TextEffectPose pose) {
+      if (pose.alpha <= 0) return;
+      glyphs.add((glyph, pose.transform, pose.alpha));
+      if (pose.bold < 0.05) return;
+      glyphs.add((glyph, Matrix4.translationValues(pose.bold / 2, 0, 0)..multiply(pose.transform), pose.alpha));
+      glyphs.add((glyph, Matrix4.translationValues(pose.bold, 0, 0)..multiply(pose.transform), pose.alpha));
+    }
+
     final geometry = _geometry ??= _measure(paragraph);
-    for (final (index, run) in geometry.indexed) {
-      final phase = RunTextEffects.phaseFor(progress, index, geometry.length);
-      if (phase <= 0 || phase >= 1) continue;
-      if (run.glyphs == null) {
+    for (final (index, run) in geometry.runs.indexed) {
+      final phase = RunTextEffects.phaseFor(progress, index, geometry.runs.length);
+      final glyphsOfRun = run.glyphs;
+      if (glyphsOfRun == null) {
+        if (phase <= 0 || phase >= 1) continue;
         for (final rect in run.lines) {
           add(rect, runPose(run.effect, phase, rect));
         }
         continue;
       }
+      // These runs are blank in the base paint for the whole animation, so their glyphs paint even at rest.
       final last = run.glyphCount - 1;
-      for (final (n, rect) in run.glyphs!) {
-        add(rect, glyphPose(run.effect, phase, n, last > 0 ? n / last : 0.5, rect, run.centerX));
+      for (final glyph in glyphsOfRun) {
+        addGlyph(
+          glyph,
+          phase <= 0 || phase >= 1
+              ? _pose(Matrix4.identity())
+              : glyphPose(run.effect, phase, glyph.index, last > 0 ? glyph.index / last : 0.5, glyph.rect, run.centerX),
+        );
       }
     }
-    if (cut.isEmpty) {
+    final hidden = geometry.hidden;
+    if (cut.isEmpty && hidden == null) {
       super.paint(context, offset);
       return;
     }
+    void paintBase(PaintingContext context, Offset offset) =>
+        hidden == null ? context.paintChild(paragraph, offset) : hidden.paint(context.canvas, offset);
     // Paint the unaffected text once, then each affected fragment under its own transform.
     // Cut rects don't overlap, so even-odd filling subtracts them without path boolean ops.
-    final remaining = Path()
-      ..fillType = PathFillType.evenOdd
-      ..addRect(Offset.zero & size);
-    for (final rect in cut) {
-      remaining.addRect(rect);
+    if (cut.isEmpty) {
+      paintBase(context, offset);
+    } else {
+      final remaining = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(Offset.zero & size);
+      for (final rect in cut) {
+        remaining.addRect(rect);
+      }
+      context.pushClipPath(needsCompositing, offset, Offset.zero & size, remaining, paintBase,
+          clipBehavior: Clip.hardEdge);
     }
-    context.pushClipPath(
-      needsCompositing,
-      offset,
-      Offset.zero & size,
-      remaining,
-      (context, offset) => context.paintChild(paragraph, offset),
-      clipBehavior: Clip.hardEdge,
-    );
     for (final (rect, transform, alpha) in pieces) {
       context.pushTransform(needsCompositing, offset, transform, (context, offset) {
         // A canvas layer rather than an OpacityLayer, so the bubble's canvas clip still applies.
@@ -172,14 +200,32 @@ class RenderRunTextEffects extends RenderProxyBox {
         if (alpha < 1) context.canvas.restore();
       });
     }
+    // Each glyph paints by itself rather than as a slice of the paragraph: a glyph's ink spills past its box
+    // (side bearings, italics, kerning), so a slice carries a neighbor's edge and leaves its own overhang behind.
+    for (final (glyph, transform, alpha) in glyphs) {
+      context.pushTransform(needsCompositing, offset, transform, (context, offset) {
+        final origin = offset + glyph.origin;
+        if (alpha < 1) {
+          context.canvas.saveLayer(
+              (origin & glyph.painter.size).inflate(glyph.rect.height), Paint()..color = Color.fromRGBO(0, 0, 0, alpha));
+        }
+        glyph.painter.paint(context.canvas, origin);
+        if (alpha < 1) context.canvas.restore();
+      });
+    }
   }
 
-  List<_RunGeometry> _measure(RenderParagraph paragraph) {
+  _Geometry _measure(RenderParagraph paragraph) {
     final text = paragraph.text.toPlainText(includeSemanticsLabels: false);
-    return [
+    final runs = [
       for (final run in RunTextEffects.orderedRuns(_runs))
         _measureRun(paragraph, text, run.attributes!.textEffect!, run.range[0], run.range[1]),
     ];
+    final perGlyph = [
+      for (final run in runs)
+        if (run.glyphs != null) (run.start, run.end),
+    ];
+    return (runs: runs, hidden: perGlyph.isEmpty ? null : _hiddenPainter(paragraph, perGlyph));
   }
 
   _RunGeometry _measureRun(RenderParagraph paragraph, String text, int effect, int location, int length) {
@@ -187,22 +233,117 @@ class RenderRunTextEffects extends RenderProxyBox {
     final end = math.min(start + length, text.length);
     final lines = _rects(paragraph, start, end);
     if (!RunTextEffects.perGlyph(effect) || lines.isEmpty) {
-      return (effect: effect, lines: lines, glyphs: null, glyphCount: 0, centerX: 0);
+      return (effect: effect, start: start, end: end, lines: lines, glyphs: null, glyphCount: 0, centerX: 0);
     }
-    final glyphs = <(int, Rect)>[];
+    final glyphs = <_Glyph>[];
     var count = 0;
     var i = start;
     for (final g in text.substring(start, end).characters) {
       if (g.trim().isNotEmpty) {
-        for (final rect in _rects(paragraph, i, i + g.length)) {
-          glyphs.add((count, rect));
+        final selection = TextSelection(baseOffset: i, extentOffset: i + g.length);
+        final tight = paragraph.getBoxesForSelection(selection).map((box) => box.toRect()).firstOrNull;
+        final rect = _rects(paragraph, i, i + g.length).firstOrNull;
+        if (tight != null && rect != null) {
+          final painter = TextPainter(
+            text: TextSpan(text: g, style: _styleAt(paragraph.text, i)),
+            textDirection: paragraph.textDirection,
+            textScaler: paragraph.textScaler,
+            locale: paragraph.locale,
+          )..layout();
+          final own = painter.getBoxesForSelection(TextSelection(baseOffset: 0, extentOffset: g.length)).firstOrNull;
+          // Line its glyph box up with the one the paragraph laid out.
+          glyphs.add((
+            index: count,
+            rect: rect,
+            painter: painter,
+            origin: tight.topLeft - (own?.toRect().topLeft ?? Offset.zero),
+          ));
         }
         count++;
       }
       i += g.length;
     }
     final centerX = lines.fold(0.0, (sum, r) => sum + r.center.dx) / lines.length;
-    return (effect: effect, lines: lines, glyphs: glyphs, glyphCount: count, centerX: centerX);
+    return (effect: effect, start: start, end: end, lines: lines, glyphs: glyphs, glyphCount: count, centerX: centerX);
+  }
+
+  /// The style the paragraph paints [offset] with, inherited down its spans.
+  static TextStyle? _styleAt(InlineSpan root, int offset) {
+    var position = 0;
+    TextStyle? found;
+    bool visit(InlineSpan span, TextStyle? inherited) {
+      if (span is! TextSpan) {
+        position++;
+        return false;
+      }
+      final style = inherited == null ? span.style : inherited.merge(span.style);
+      final text = span.text;
+      if (text != null) {
+        if (offset < position + text.length) {
+          found = style;
+          return true;
+        }
+        position += text.length;
+      }
+      for (final child in span.children ?? const <InlineSpan>[]) {
+        if (visit(child, style)) return true;
+      }
+      return false;
+    }
+
+    visit(root, null);
+    return found;
+  }
+
+  /// The paragraph laid out as it is, with the [ranges] painted transparent: the base under per-glyph effects.
+  static TextPainter _hiddenPainter(RenderParagraph paragraph, List<(int, int)> ranges) {
+    const clear = TextStyle(color: Color(0x00000000));
+    bool hides(int offset) => ranges.any((r) => offset >= r.$1 && offset < r.$2);
+    var position = 0;
+    InlineSpan hide(InlineSpan span) {
+      if (span is! TextSpan) {
+        position++;
+        return span;
+      }
+      final text = span.text;
+      final pieces = <InlineSpan>[];
+      if (text != null && text.isNotEmpty) {
+        final from = position;
+        position += text.length;
+        final cuts = {0, text.length};
+        for (final (a, b) in ranges) {
+          if (b <= from || a >= position) continue;
+          cuts
+            ..add((a - from).clamp(0, text.length))
+            ..add((b - from).clamp(0, text.length));
+        }
+        final sorted = cuts.toList()..sort();
+        for (var k = 0; k + 1 < sorted.length; k++) {
+          pieces.add(TextSpan(
+            text: text.substring(sorted[k], sorted[k + 1]),
+            style: hides(from + sorted[k]) ? clear : null,
+          ));
+        }
+      }
+      return TextSpan(style: span.style, children: [...pieces, ...?span.children?.map(hide)]);
+    }
+
+    final widthMatters = paragraph.softWrap || paragraph.overflow == TextOverflow.ellipsis;
+    return TextPainter(
+      text: hide(paragraph.text),
+      textAlign: paragraph.textAlign,
+      textDirection: paragraph.textDirection,
+      textScaler: paragraph.textScaler,
+      maxLines: paragraph.maxLines,
+      ellipsis: paragraph.overflow == TextOverflow.ellipsis ? '…' : null,
+      locale: paragraph.locale,
+      strutStyle: paragraph.strutStyle,
+      textWidthBasis: paragraph.textWidthBasis,
+      textHeightBehavior: paragraph.textHeightBehavior,
+    )..layout(
+        minWidth: paragraph.constraints.minWidth,
+        maxWidth: widthMatters ? paragraph.constraints.maxWidth : double.infinity,
+      );
   }
 
   static List<Rect> _rects(RenderParagraph paragraph, int start, int end) => paragraph
@@ -336,5 +477,28 @@ class RenderRunTextEffects extends RenderProxyBox {
 }
 
 typedef TextEffectPose = ({Matrix4 transform, double alpha, double bold});
-// [glyphs] is null for effects that transform whole line fragments; each entry is (glyph index, box).
-typedef _RunGeometry = ({int effect, List<Rect> lines, List<(int, Rect)>? glyphs, int glyphCount, double centerX});
+// [rect] is the glyph's line-height box, which poses move about; [origin] is where [painter] paints it.
+typedef _Glyph = ({int index, Rect rect, TextPainter painter, Offset origin});
+// [glyphs] is null for effects that transform whole line fragments.
+typedef _RunGeometry = ({
+  int effect,
+  int start,
+  int end,
+  List<Rect> lines,
+  List<_Glyph>? glyphs,
+  int glyphCount,
+  double centerX,
+});
+// [hidden] paints the paragraph with the per-glyph runs blank, or is null when there are none.
+typedef _Geometry = ({List<_RunGeometry> runs, TextPainter? hidden});
+
+extension on _Geometry {
+  void dispose() {
+    hidden?.dispose();
+    for (final run in runs) {
+      for (final glyph in run.glyphs ?? const <_Glyph>[]) {
+        glyph.painter.dispose();
+      }
+    }
+  }
+}
