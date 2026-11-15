@@ -13,10 +13,12 @@ class ChatInterface {
   static Future<void> clearNotificationForChat({
     required int chatId,
     required String chatGuid,
+    int? readBefore,
   }) async {
     final data = {
       'chatId': chatId,
       'chatGuid': chatGuid,
+      'readBefore': readBefore,
     };
 
     if (isIsolate) {

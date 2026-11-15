@@ -149,11 +149,15 @@ class ActionHandler extends GetxService {
         return;
       case "chat-read-status-changed":
         Chat? chat = Chat.findOne(guid: data["chatGuid"]);
+        final int? readBefore = (data["lastReadMessageTimestamp"] as num?)?.toInt();
+        if (chat != null && data["read"] == true && await chat.clearNotificationsForPartialRead(readBefore)) return;
         if (chat != null && (data["read"] == true || data["read"] == false)) {
           // Route through ChatsService so the ChatState the conversation list
           // renders from is updated too. Writing only to the DB row leaves the
           // unread dot stale until the state is rebuilt (open chat / restart).
-          await ChatsSvc.setChatHasUnread(chat, !data["read"]!, privateMark: false);
+          // Forced so a chat already marked read locally (e.g. by a reply from another device) still clears.
+          await ChatsSvc.setChatHasUnread(chat, !data["read"]!,
+              force: data["read"] == true, privateMark: false, readBefore: readBefore);
         }
         return;
       case "typing-indicator":

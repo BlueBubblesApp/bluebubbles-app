@@ -14,7 +14,8 @@ class ChatActions {
     if (kIsDesktop || kIsWeb) return;
     final chatId = data['chatId'] as int;
 
-    await MethodChannelSvc.actions.deleteNotification(notificationId: chatId, tag: 'new_message');
+    await MethodChannelSvc.actions.deleteNotification(
+        notificationId: chatId, tag: 'new_message', readBefore: data['readBefore'] as int?);
   }
 
   static Future<void> markAllChatsRead(dynamic data) async {
