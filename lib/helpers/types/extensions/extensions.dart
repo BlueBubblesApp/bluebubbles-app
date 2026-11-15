@@ -196,14 +196,6 @@ extension ChatListHelpers on RxList<Chat> {
     }
   }
 
-  RxList<Chat> bigPinHelper(bool pinned) {
-    if (pinned) {
-      return where((e) => e.isPinned ?? false).toList().obs;
-    } else {
-      return where((e) => !(e.isPinned ?? false)).toList().obs;
-    }
-  }
-
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!SettingsSvc.settings.filterUnknownSenders.value) return this;
     if (unknown) {

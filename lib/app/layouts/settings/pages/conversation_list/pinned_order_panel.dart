@@ -61,13 +61,6 @@ class _PinnedOrderPanelState extends State<PinnedOrderPanel> {
     }
   }
 
-  void _onReset() {
-    ChatsSvc.removePinIndices();
-    setState(() {
-      _pinnedChats = ChatsSvc.getFilteredChats(pinnedOnly: true);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return BBScaffold(
@@ -75,13 +68,6 @@ class _PinnedOrderPanelState extends State<PinnedOrderPanel> {
       appBar: BBAppBar(
         titleText: "Pinned Chat Order",
         leading: buildBackButton(context),
-        actions: [
-          TextButton(
-            onPressed: _onReset,
-            child: Text("Reset",
-                style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-          ),
-        ],
       ),
       body: !_loaded
           ? Center(

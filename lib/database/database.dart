@@ -18,7 +18,7 @@ import 'package:io/io.dart';
 import 'package:path/path.dart';
 
 class Database {
-  static int version = 10;
+  static int version = 11;
 
   /// Bump this whenever preset theme definitions change (colors, font sizes,
   /// etc.) to force existing installs to re-seed preset themes on next launch.
@@ -295,6 +295,28 @@ class Database {
             final path = FilesystemSvc.urlPreviewImagePath(hash);
             if (File(path).existsSync()) ImageActions.flattenAnimatedPng(path);
           }
+          break;
+
+        // Version 11: every pin has an index. Unordered pins, which showed after the ordered ones by latest
+        // message, get indexes in that same order, and unpinned chats drop any index they kept.
+        case 11:
+          Database.runInTransaction(TxMode.write, () {
+            final query = Database.chats.query(Chat_.isPinned.equals(true).or(Chat_.pinIndex.notNull())).build();
+            final chats = query.find();
+            query.close();
+            final epoch = DateTime.fromMillisecondsSinceEpoch(0);
+            final pinned = chats.where((c) => c.isPinned ?? false).toList()
+              ..sort((a, b) {
+                if ((a.pinIndex == null) != (b.pinIndex == null)) return a.pinIndex == null ? 1 : -1;
+                if (a.pinIndex != null) return a.pinIndex!.compareTo(b.pinIndex!);
+                return (b.dbOnlyLatestMessageDate ?? epoch).compareTo(a.dbOnlyLatestMessageDate ?? epoch);
+              });
+            for (final chat in chats) {
+              chat.pinIndex = null;
+            }
+            pinned.forEachIndexed((i, chat) => chat.pinIndex = i);
+            Database.chats.putMany(chats);
+          });
           break;
       }
 

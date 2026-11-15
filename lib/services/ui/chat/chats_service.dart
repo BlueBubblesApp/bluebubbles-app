@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:app_links/app_links.dart';
 import 'package:bluebubbles/app/components/wallpaper/chat_wallpaper_type.dart';
@@ -242,11 +243,14 @@ class ChatsService {
     return allChats.where((c) => c.isGroup).toList();
   }
 
-  /// Get pinned chats
-  List<Chat> get pinnedChats {
-    return getSortedChats().where((c) => (c.pinIndex ?? -1) >= 0).toList()
-      ..sort((a, b) => (a.pinIndex ?? 0).compareTo(b.pinIndex ?? 0));
-  }
+  /// Pinned chats in pin order ([getSortedChats] already puts them first, ordered).
+  List<Chat> get pinnedChats => getSortedChats().where((c) => c.isPinned ?? false).toList();
+
+  /// Sorts a pin that somehow lacks an index after every indexed one, so it still shows instead of jumping
+  /// to the front.
+  static const int _unindexedPin = 1 << 30;
+
+  int get _nextPinIndex => pinnedChats.fold<int>(-1, (m, c) => max(m, c.pinIndex ?? -1)) + 1;
 
   /// Search chats by title
   List<Chat> searchChats(String query) {
@@ -651,30 +655,18 @@ class ChatsService {
 
   /// State-aware sort comparison used by [_findInsertionIndex] and [refreshSortOrder].
   ///
-  /// Mirrors [Chat.sort] for pin-index ordering but resolves the latest-message
-  /// date from [chatStates] instead of [Chat.dbOnlyLatestMessageDate].  Using the
-  /// reactive state avoids a race condition where the DB write for the new message
-  /// has not yet completed when the chat list needs to be repositioned.
+  /// Pins first in [Chat.pinIndex] order, then everything else by latest message. The date comes from
+  /// [chatStates] rather than [Chat.dbOnlyLatestMessageDate], because the DB write for a new message may not
+  /// have landed yet when the list is repositioned.
   int _sortCompare(Chat a, Chat b) {
     final aIsPinned = a.isPinned ?? false;
     final bIsPinned = b.isPinned ?? false;
-
-    // Both pinned with an explicit order → sort by pinIndex.
-    if (aIsPinned && bIsPinned && a.pinIndex != null && b.pinIndex != null) {
-      return a.pinIndex!.compareTo(b.pinIndex!);
+    if (aIsPinned != bIsPinned) return aIsPinned ? -1 : 1;
+    if (aIsPinned) {
+      final byIndex = (a.pinIndex ?? _unindexedPin).compareTo(b.pinIndex ?? _unindexedPin);
+      if (byIndex != 0) return byIndex;
     }
 
-    // b is ordered-pinned, a is not → b comes first.
-    if (bIsPinned && b.pinIndex != null && (!aIsPinned || a.pinIndex == null)) return 1;
-    // a is ordered-pinned, b is not → a comes first.
-    if (aIsPinned && a.pinIndex != null && (!bIsPinned || b.pinIndex == null)) return -1;
-
-    // One pinned, one not.
-    if (!aIsPinned && bIsPinned) return 1;
-    if (aIsPinned && !bIsPinned) return -1;
-
-    // Both unpinned (or both pinned without an index): sort by most-recent message.
-    // Use ChatState latestMessage date to avoid the DB-write race condition.
     final aDate = chatStates[a.guid]?.latestMessage.value?.dateCreated ??
         a.dbOnlyLatestMessageDate ??
         DateTime.fromMillisecondsSinceEpoch(0);
@@ -837,50 +829,6 @@ class ChatsService {
     } catch (e, stack) {
       Logger.error("Error marking all chats as read", error: e, trace: stack, tag: "ChatsService");
       showToast("Failed to mark all chats as read!", isError: true);
-    }
-  }
-
-  void updateChatPinIndex(int oldIndex, int newIndex) {
-    final chatList = getSortedChats();
-    final items = List<Chat>.from(chatList.where((c) => (c.pinIndex ?? -1) >= 0));
-    items.sort((a, b) => (a.pinIndex ?? 0).compareTo(b.pinIndex ?? 0));
-
-    final item = items[oldIndex];
-
-    // Remove the item at the old index, and re-add it at the newIndex
-    // We dynamically subtract 1 from the new index depending on if the newIndex is > the oldIndex
-    items.removeAt(oldIndex);
-    items.insert(newIndex + (oldIndex < newIndex ? -1 : 0), item);
-
-    // Move the pinIndex for each of the chats, and save the pinIndex in the DB
-    items.forEachIndexed((i, e) async {
-      e.pinIndex = i;
-      await e.saveAsync(updatePinIndex: true);
-
-      // Update chat state
-      final state = chatStates[e.guid];
-      if (state != null) {
-        state.pinIndex.value = i;
-      }
-    });
-  }
-
-  void removePinIndices() {
-    final chatList = getSortedChats();
-    // Create a snapshot to avoid concurrent modification during iteration
-    final pinnedChats = List<Chat>.from(chatList.where((c) => (c.pinIndex ?? -1) >= 0 && c.pinIndex != null));
-    for (var element in pinnedChats) {
-      element.pinIndex = null;
-      element.saveAsync(updatePinIndex: true);
-
-      // Update chat state
-      final state = chatStates[element.guid];
-      if (state != null) {
-        state.pinIndex.value = null;
-      }
-
-      // Trigger reposition to re-sort the chat
-      _repositionChat(element, immediate: true);
     }
   }
 
@@ -1206,8 +1154,8 @@ class ChatsService {
 
   /// Toggle chat pin status with service updates
   Future<Chat> _toggleChatPin(Chat chat, bool isPinned) async {
-    // Perform DB operation
-    await chat.togglePinAsync(isPinned);
+    // A new pin goes at the end, like Messages on the Mac.
+    await chat.togglePinAsync(isPinned, pinIndex: isPinned ? _nextPinIndex : null);
 
     // Update service state
     updateChat(chat);
@@ -1312,28 +1260,14 @@ class ChatsService {
   Future<void> setChatPinned(Chat chat, bool value) async {
     final state = getChatState(chat.guid);
 
-    if (state != null && state.isPinned.value == value) return;
+    if ((state?.isPinned.value ?? chat.isPinned ?? false) == value) return;
 
     // Update DB
     await _toggleChatPin(chat, value);
 
     // Update state if available
     state?.updateIsPinnedInternal(value);
-  }
-
-  /// Set chat pin index
-  Future<void> setChatPinIndex(Chat chat, int? value) async {
-    final state = getChatState(chat.guid);
-
-    if (state != null && state.pinIndex.value == value) return;
-
-    // Update Chat model (use state.chat if available, otherwise use passed in chat)
-    final chatToUpdate = state?.chat ?? chat;
-    chatToUpdate.pinIndex = value;
-    await chatToUpdate.saveAsync(updatePinIndex: true);
-
-    // Update state if available
-    state?.updatePinIndexInternal(value);
+    state?.updatePinIndexInternal(chat.pinIndex);
   }
 
   /// Set chat unread status
@@ -1382,6 +1316,9 @@ class ChatsService {
 
     // Update state if available
     state?.updateArchivedInternal(value);
+    // Archiving unpins.
+    state?.updateIsPinnedInternal(chat.isPinned ?? false);
+    state?.updatePinIndexInternal(chat.pinIndex);
   }
 
   /// Set chat auto send read receipts
