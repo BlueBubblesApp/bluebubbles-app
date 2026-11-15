@@ -150,8 +150,11 @@ class SpellCheckTextEditingController extends TextEditingController {
     super.selection = newSelection;
   }
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     _languageCheckService.dispose();
     _mistakeTooltip?.remove();
     _mistakeTooltip = null;
@@ -209,7 +212,7 @@ class SpellCheckTextEditingController extends TextEditingController {
     final mistakesWrapper = await _latestResponseService.processLatestOperation(
       () => _languageCheckService.findMistakes(newText),
     );
-    if (mistakesWrapper == null || !mistakesWrapper.hasResult) return;
+    if (_disposed || mistakesWrapper == null || !mistakesWrapper.hasResult) return;
 
     final mistakes = mistakesWrapper.result();
     _fetchError = mistakesWrapper.error;
