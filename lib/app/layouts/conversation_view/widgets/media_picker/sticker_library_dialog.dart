@@ -5,12 +5,15 @@ import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Shows the server Mac's sticker library ([StickerLibrarySvc]), with a button to add an image from this device to it.
 ///
-/// Browse-only: the desktop composer's Stickers button. Only open this when `ServerDetails.supportsStickers`.
+/// The desktop composer's Stickers button. In tablet mode it's a panel over the chat list rather than a dialog, so the
+/// conversation stays in view and usable; pressing the button again closes it. Only open this when
+/// `ServerDetails.supportsStickers`.
 Future<void> showStickerLibrary(BuildContext context) async {
   if (SubscriptionSvc.locked) {
     return showSubscriptionRequired(
@@ -19,8 +22,10 @@ Future<void> showStickerLibrary(BuildContext context) async {
       onUnlocked: () => context.mounted ? showStickerLibrary(context) : null,
     );
   }
+  if (_sidePanel != null) return _closeSidePanel();
   // The cached library draws at once; this brings it up to date behind it
   unawaited(StickerLibrarySvc.sync());
+  if (kIsDesktop && NavigationSvc.widthChatListLeft(context) >= _sidePanelMinPane) return _openSidePanel(context);
   final colors = context.theme.colorScheme;
   final height = min(460.0, MediaQuery.sizeOf(context).height - MediaQuery.paddingOf(context).vertical - 48);
   return showDialog<void>(
@@ -38,13 +43,52 @@ Future<void> showStickerLibrary(BuildContext context) async {
   );
 }
 
+OverlayEntry? _sidePanel;
+
+/// The narrowest chat list pane the panel goes over; a narrower one (avatars only) gets the dialog.
+const double _sidePanelMinPane = 240;
+const double _sidePanelMargin = 12;
+
+void _openSidePanel(BuildContext context) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  // The root overlay doesn't carry the conversation's theme
+  final themes = InheritedTheme.capture(from: context, to: overlay.context);
+  final paneWidth = NavigationSvc.widthChatListLeft(context);
+  final colors = context.theme.colorScheme;
+  _sidePanel = OverlayEntry(
+    builder: (overlayContext) => Positioned(
+      left: _sidePanelMargin,
+      bottom: _sidePanelMargin,
+      width: min(420.0, paneWidth - _sidePanelMargin * 2),
+      height: min(520.0, MediaQuery.sizeOf(overlayContext).height - 80),
+      child: themes.wrap(
+        Material(
+          color: colors.surfaceContainerHighest,
+          elevation: 8,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: const StickerLibraryView(onClose: _closeSidePanel),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(_sidePanel!);
+}
+
+void _closeSidePanel() {
+  _sidePanel?.remove();
+  _sidePanel = null;
+}
+
 /// The library itself: saved stickers then recents, with an add button. [onPicked], when set, makes stickers tappable.
-/// Without [title] it leaves the heading to its container (the emoji tapback picker's Stickers tab).
+/// Without [title] it leaves the heading to its container (the emoji tapback picker's Stickers tab). [onClose] adds a
+/// close button, for the desktop panel.
 class StickerLibraryView extends StatefulWidget {
-  const StickerLibraryView({super.key, this.onPicked, this.title = true});
+  const StickerLibraryView({super.key, this.onPicked, this.title = true, this.onClose});
 
   final ValueChanged<LibrarySticker>? onPicked;
   final bool title;
+  final VoidCallback? onClose;
 
   @override
   State<StickerLibraryView> createState() => _StickerLibraryViewState();
@@ -57,7 +101,10 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
     return Column(
       children: [
         Obx(
-          () => widget.title || (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
+          () =>
+              widget.title ||
+                  widget.onClose != null ||
+                  (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
               ? _header()
               : const SizedBox.shrink(),
         ),
@@ -129,6 +176,8 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
                     onPressed: pickAndAddSticker,
                   ),
           ),
+        if (widget.onClose != null)
+          IconButton(icon: const Icon(Icons.close), tooltip: "Close", onPressed: widget.onClose),
       ],
     ),
   );
