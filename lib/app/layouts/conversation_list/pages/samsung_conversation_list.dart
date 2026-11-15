@@ -99,6 +99,14 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 ));
+                // With every chat pinned, the pins are the list.
+                final noChats = _unpinnedChats.isEmpty &&
+                    ChatsSvc.getFilteredChats(
+                      showArchived: controller.showArchivedChats,
+                      showUnknown: controller.showUnknownSenders,
+                      pinnedOnly: true,
+                      filters: ChatsSvc.chatListFilters.value,
+                    ).isEmpty;
 
                 return CustomScrollView(
                   physics: ThemeSwitcher.getScrollPhysics(),
@@ -112,7 +120,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                         ),
                       ),
                     PinnedChatsGrid(controller: controller),
-                    if (!loaded || _unpinnedChats.isEmpty)
+                    if (!loaded || noChats)
                       SliverToBoxAdapter(
                         child: Center(
                           child: Padding(

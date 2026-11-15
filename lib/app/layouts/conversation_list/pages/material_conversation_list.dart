@@ -95,6 +95,14 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 ));
+                // With every chat pinned, the pins are the list.
+                final noChats = _chats.isEmpty &&
+                    ChatsSvc.getFilteredChats(
+                      showArchived: showArchived,
+                      showUnknown: showUnknown,
+                      pinnedOnly: true,
+                      filters: ChatsSvc.chatListFilters.value,
+                    ).isEmpty;
 
                 final content = NotificationListener(
                   onNotification: (notif) {
@@ -112,7 +120,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                       slivers: [
                         const SliverPadding(padding: EdgeInsets.only(top: 8)),
                         PinnedChatsGrid(controller: controller),
-                        if (!loaded || _chats.isEmpty)
+                        if (!loaded || noChats)
                           SliverToBoxAdapter(
                             child: Center(
                               child: Padding(

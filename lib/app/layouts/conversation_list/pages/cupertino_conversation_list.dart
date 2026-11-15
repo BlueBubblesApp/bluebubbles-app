@@ -88,8 +88,16 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                           showUnknown: showUnknown,
                           excludePinned: true,
                           filters: ChatsSvc.chatListFilters.value));
+                      // With every chat pinned, the pins are the list.
+                      final noChats = _chats.isEmpty &&
+                          ChatsSvc.getFilteredChats(
+                                  showArchived: showArchived,
+                                  showUnknown: showUnknown,
+                                  pinnedOnly: true,
+                                  filters: ChatsSvc.chatListFilters.value)
+                              .isEmpty;
 
-                      if (!loaded || _chats.isEmpty) {
+                      if (!loaded || noChats) {
                         return SliverToBoxAdapter(
                           child: Center(
                             child: Padding(
