@@ -12,11 +12,15 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-/// True while a chat list tile is being dragged, so the grid can show itself as a drop zone.
+/// True while any chat is being dragged, so the grid can show itself as a drop zone.
 final RxBool _listDragActive = false.obs;
+
+/// Whether the chat being dragged is over the pin area, so its drag preview can look like a pin or a list tile.
+final RxBool _overPinArea = false.obs;
 
 /// The paged grid of pinned chats at the top of the chat list, shared by every skin. A sliver.
 ///
@@ -106,7 +110,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
 
   Widget _dropZone(List<Chat> pinned, Widget child) {
     return DragTarget<String>(
-      onWillAcceptWithDetails: (_) => true,
+      onWillAcceptWithDetails: (_) => _overPinArea.value = true,
       onAcceptWithDetails: (details) => _accept(details.data, pinned),
       builder: (context, _, _) => Obx(
         () => AnimatedContainer(
@@ -278,6 +282,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                                             width: tileWidth,
                                             child: DragTarget<String>(
                                               onWillAcceptWithDetails: (details) {
+                                                _overPinArea.value = true;
                                                 _hover(_chats, details.data, chat.guid);
                                                 return true;
                                               },
@@ -286,7 +291,7 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
                                                 chat: chat,
                                                 avatarSize: avatarSize,
                                                 controller: controller,
-                                                onReorderEnd: _cancelPreview,
+                                                draggable: true,
                                               ),
                                             ),
                                           ),
@@ -355,74 +360,180 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
 }
 
 /// Makes a chat list tile draggable into [PinnedChatsGrid] to pin it: hold then drag on touch, click and drag with
-/// a mouse.
-class PinDragSource extends StatefulWidget {
+/// a mouse. A hold that doesn't move does what the tile's long press does: peek on iOS, select otherwise.
+class PinDragSource extends StatelessWidget {
   const PinDragSource({super.key, required this.chat, required this.child});
 
   final Chat chat;
   final Widget child;
 
   @override
-  State<PinDragSource> createState() => _PinDragSourceState();
+  Widget build(BuildContext context) {
+    return ChatDragSource(
+      chat: chat,
+      startsInPinArea: false,
+      onHold: (position) {
+        if (SettingsSvc.settings.skin.value == Skins.iOS) {
+          peekChat(context, chat, position);
+          return closeChatPeek;
+        }
+        if (!Get.isRegistered<ConversationTileController>(tag: chat.guid)) return null;
+        final tile = Get.find<ConversationTileController>(tag: chat.guid)..onSelected();
+        return tile.onSelected;
+      },
+      child: child,
+    );
+  }
 }
 
-class _PinDragSourceState extends State<PinDragSource> {
-  static const double _holdSlop = 12;
-  double _dragDistance = 0;
-  Offset _downPosition = Offset.zero;
+/// Drags a chat (a pin or a list tile) for [PinnedChatsGrid] and [UnpinDropTarget].
+///
+/// On touch the drag starts on the hold, so [onHold] runs right then (opening the peek, say) and returns how to
+/// undo it; the undo runs once the finger moves, which is what turns the hold into a drag. With a mouse a plain
+/// click and drag starts it and there is no hold.
+class ChatDragSource extends StatefulWidget {
+  const ChatDragSource({
+    super.key,
+    required this.chat,
+    required this.startsInPinArea,
+    required this.onHold,
+    required this.child,
+  });
 
-  /// The drag claims the hold before the tile's own long press can, so a hold released in place does what the
-  /// tile's long press would have: peek on iOS, select on Material and Samsung.
-  Future<void> _onHold() async {
-    if (SettingsSvc.settings.skin.value == Skins.iOS) {
-      await peekChat(context, widget.chat, _downPosition);
-    } else if (Get.isRegistered<ConversationTileController>(tag: widget.chat.guid)) {
-      Get.find<ConversationTileController>(tag: widget.chat.guid).onLongPress();
-    }
+  final Chat chat;
+  final bool startsInPinArea;
+  final VoidCallback? Function(Offset position) onHold;
+  final Widget child;
+
+  @override
+  State<ChatDragSource> createState() => _ChatDragSourceState();
+}
+
+class _ChatDragSourceState extends State<ChatDragSource> {
+  /// How far the finger moves before a hold becomes a drag.
+  static const double _holdSlop = 12;
+
+  Offset _downPosition = Offset.zero;
+  VoidCallback? _undoHold;
+  bool _moved = false;
+
+  void _onStart() {
+    _listDragActive.value = true;
+    _overPinArea.value = widget.startsInPinArea;
+    _moved = false;
+    if (kIsDesktop || kIsWeb) return;
+    // The iOS peek buzzes on its own.
+    if (SettingsSvc.settings.skin.value != Skins.iOS) HapticFeedback.mediumImpact();
+    _undoHold = widget.onHold(_downPosition);
+  }
+
+  void _onUpdate(DragUpdateDetails details) {
+    if (_moved || (details.globalPosition - _downPosition).distance < _holdSlop) return;
+    _moved = true;
+    _undoHold?.call();
+    _undoHold = null;
   }
 
   void _onEnd() {
     _listDragActive.value = false;
-    if (!kIsDesktop && !kIsWeb && _dragDistance < _holdSlop && mounted) _onHold();
+    _undoHold = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final feedback = Material(
-      type: MaterialType.transparency,
-      child: ContactAvatarGroupWidget(chat: widget.chat, size: 56, editable: false),
-    );
-    final whileDragging = Opacity(opacity: 0.4, child: widget.child);
-    void onStart() {
-      _dragDistance = 0;
-      _listDragActive.value = true;
-    }
+    final feedback = _ChatDragFeedback(chat: widget.chat, listWidth: min(MediaQuery.sizeOf(context).width - 24, 480));
+    final whileDragging = Opacity(opacity: 0.3, child: widget.child);
+    final data = widget.chat.guid;
+    final Widget draggable = kIsDesktop || kIsWeb
+        ? Draggable<String>(
+            data: data,
+            feedback: feedback,
+            childWhenDragging: whileDragging,
+            dragAnchorStrategy: pointerDragAnchorStrategy,
+            onDragStarted: _onStart,
+            onDragEnd: (_) => _onEnd(),
+            child: widget.child,
+          )
+        : LongPressDraggable<String>(
+            data: data,
+            feedback: feedback,
+            childWhenDragging: whileDragging,
+            dragAnchorStrategy: pointerDragAnchorStrategy,
+            // Beats the tile's own long press to the gesture; the hold action runs from here instead.
+            delay: kLongPressTimeout - const Duration(milliseconds: 100),
+            hapticFeedbackOnStart: false,
+            onDragStarted: _onStart,
+            onDragUpdate: _onUpdate,
+            onDragEnd: (_) => _onEnd(),
+            child: widget.child,
+          );
+    return Listener(onPointerDown: (event) => _downPosition = event.position, child: draggable);
+  }
+}
 
-    if (kIsDesktop || kIsWeb) {
-      return Draggable<String>(
-        data: widget.chat.guid,
-        feedback: feedback,
-        childWhenDragging: whileDragging,
-        onDragStarted: onStart,
-        onDragEnd: (_) => _onEnd(),
-        child: widget.child,
-      );
-    }
-    return Listener(
-      onPointerDown: (event) => _downPosition = event.position,
-      child: LongPressDraggable<String>(
-        data: widget.chat.guid,
-        // Shorter than the tile's long press so the drag wins the gesture.
-        delay: kLongPressTimeout - const Duration(milliseconds: 100),
-        feedback: feedback,
-        childWhenDragging: whileDragging,
-        hapticFeedbackOnStart: true,
-        onDragStarted: onStart,
-        onDragUpdate: (details) => _dragDistance += details.delta.distance,
-        onDragEnd: (_) => _onEnd(),
-        child: widget.child,
+/// What follows the finger: a pin over the pin area, a list tile anywhere else.
+class _ChatDragFeedback extends StatelessWidget {
+  const _ChatDragFeedback({required this.chat, required this.listWidth});
+
+  final Chat chat;
+  final double listWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = ChatsSvc.getChatState(chat.guid)?.title.value ?? chat.getTitle();
+    final textTheme = context.theme.textTheme;
+    // A zero-size box at the pointer with the content centered on it, so whichever look is showing (and both,
+    // mid-switch) sits under the finger.
+    return SizedBox.shrink(
+      child: OverflowBox(
+      maxWidth: double.infinity,
+      maxHeight: double.infinity,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Obx(() => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 150),
+              child: _overPinArea.value
+                  ? SizedBox(
+                      key: const ValueKey('pin'),
+                      width: 88,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ContactAvatarGroupWidget(chat: chat, size: 72, editable: false),
+                          const SizedBox(height: 6),
+                          Text(title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodyMedium!.copyWith(color: context.theme.colorScheme.outline)),
+                        ],
+                      ),
+                    )
+                  : Material(
+                      key: const ValueKey('list'),
+                      elevation: 6,
+                      color: context.theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      child: SizedBox(
+                        width: listWidth,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              ContactAvatarGroupWidget(chat: chat, size: 44, editable: false),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(title,
+                                    maxLines: 1, overflow: TextOverflow.ellipsis, style: textTheme.titleMedium),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+            )),
       ),
-    );
+    ));
   }
 }
 
@@ -435,7 +546,10 @@ class UnpinDropTarget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DragTarget<String>(
-      onWillAcceptWithDetails: (details) => ChatsSvc.findChatByGuid(details.data)?.isPinned ?? false,
+      onWillAcceptWithDetails: (details) {
+        _overPinArea.value = false;
+        return ChatsSvc.findChatByGuid(details.data)?.isPinned ?? false;
+      },
       onAcceptWithDetails: (details) {
         final chat = ChatsSvc.findChatByGuid(details.data);
         if (chat != null) ChatsSvc.setChatPinned(chat, false);

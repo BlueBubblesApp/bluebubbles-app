@@ -19,12 +19,24 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+Route<void>? _openPeek;
+
+/// Closes the peek [peekChat] opened, if it's still up: a hold that turned into a drag.
+void closeChatPeek() {
+  final route = _openPeek;
+  _openPeek = null;
+  if (route == null || !route.isActive) return;
+  if (route.isCurrent) {
+    route.navigator!.pop();
+  } else {
+    route.navigator!.removeRoute(route);
+  }
+}
+
 Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
   HapticFeedback.mediumImpact();
   final messages = Chat.getMessages(c, getDetails: true).where((e) => !e.isReaction).toList();
-  await Navigator.push(
-    Get.context!,
-    PageRouteBuilder(
+  final route = PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 150),
       pageBuilder: (context, animation, secondaryAnimation) {
         return FadeTransition(
@@ -38,8 +50,10 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
       },
       fullscreenDialog: true,
       opaque: false,
-    ),
   );
+  _openPeek = route;
+  await Navigator.push(Get.context!, route);
+  if (_openPeek == route) _openPeek = null;
 }
 
 class ConversationPeekView extends StatefulWidget {

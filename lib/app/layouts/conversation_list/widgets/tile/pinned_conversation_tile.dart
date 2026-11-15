@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
@@ -23,16 +24,15 @@ import 'package:get/get.dart';
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   final double avatarSize;
 
-  /// Makes the tile draggable (hold then drag on touch, click and drag with a mouse); called when a drag ends,
-  /// wherever it lands.
-  final VoidCallback? onReorderEnd;
+  /// Makes the tile draggable for [PinnedChatsGrid]: hold then drag on touch, click and drag with a mouse.
+  final bool draggable;
 
   PinnedConversationTile({
     super.key,
     required Chat chat,
     required ConversationListController controller,
     required this.avatarSize,
-    this.onReorderEnd,
+    this.draggable = false,
   }) : super(
             parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
                 ? Get.find<ConversationTileController>(tag: chat.guid)
@@ -84,53 +84,25 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   /// Material and Samsung select on long press, like their list tiles, so the header actions apply to pins.
   bool get _selectable => !iOS;
 
+  bool get _touch => !kIsDesktop && !kIsWeb;
+
   /// A hold on touch: peek on iOS, select on Material and Samsung.
   Future<void> _onHold() async {
     if (_selectable) return _toggleSelected();
     await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
   }
 
-  bool get _touch => !kIsDesktop && !kIsWeb;
-
-  /// How far a touch drag has to travel before releasing it counts as a drag rather than a hold.
-  static const double _holdSlop = 12;
-  double _dragDistance = 0;
-
-  Widget _draggable(Widget tile, VoidCallback onReorderEnd) {
-    final feedback = Material(
-      type: MaterialType.transparency,
-      child: ContactAvatarGroupWidget(chat: controller.chat, size: widget.avatarSize * 1.1, editable: false),
-    );
-    final whileDragging = Opacity(opacity: 0.3, child: tile);
-    final data = controller.chat.guid;
-    if (!_touch) {
-      return Draggable<String>(
-        data: data,
-        feedback: feedback,
-        childWhenDragging: whileDragging,
-        onDragEnd: (_) => onReorderEnd(),
-        child: tile,
-      );
+  /// The hold a drag starts with, and how to undo it once the finger moves.
+  VoidCallback? _holdForDrag(Offset position) {
+    if (_selectable) {
+      _toggleSelected(haptic: false);
+      return () => _toggleSelected(haptic: false);
     }
-    // The drag starts on the hold itself, so a hold released in place still has to do what a hold does.
-    return LongPressDraggable<String>(
-      data: data,
-      feedback: feedback,
-      childWhenDragging: whileDragging,
-      hapticFeedbackOnStart: true,
-      onDragStarted: () => _dragDistance = 0,
-      onDragUpdate: (details) => _dragDistance += details.delta.distance,
-      onDragEnd: (_) {
-        onReorderEnd();
-        if (_dragDistance < _holdSlop && mounted) {
-          _onHold();
-        }
-      },
-      child: tile,
-    );
+    peekChat(context, controller.chat, position);
+    return closeChatPeek;
   }
 
-  void _toggleSelected() {
+  void _toggleSelected({bool haptic = true}) {
     final chat = controller.chat;
     if (controller.isSelected) {
       listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
@@ -138,15 +110,16 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
       listController.selectedChats.add(chat);
     }
     listController.updateSelectedChats();
-    HapticFeedback.lightImpact();
-    setState(() {});
+    if (haptic) HapticFeedback.lightImpact();
+    // The drag can move this tile to another row mid-hold, disposing this state before the undo runs.
+    controller.updateWidgets<PinnedConversationTile>(null);
   }
 
   @override
   Widget build(BuildContext context) {
-    final onReorderEnd = widget.onReorderEnd;
-    final tile = _buildTile(context, holdHandledByDrag: onReorderEnd != null);
-    return onReorderEnd == null ? tile : _draggable(tile, onReorderEnd);
+    final tile = _buildTile(context, holdHandledByDrag: widget.draggable);
+    if (!widget.draggable) return tile;
+    return ChatDragSource(chat: controller.chat, startsInPinArea: true, onHold: _holdForDrag, child: tile);
   }
 
   Widget _buildTile(BuildContext context, {required bool holdHandledByDrag}) {
