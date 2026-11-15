@@ -185,7 +185,8 @@ class ContactServiceV2 {
     if (!headless) {
       await hasContactAccess;
       Logger.info('[ContactServiceV2] Contact access: $_hasContactAccess');
-      await syncContactsToHandles(wait: false);
+      // Desktop pulls from the server in the incremental sync that follows launch
+      if (!kIsDesktop) await syncContactsToHandles(wait: false);
 
       // Subscribe to device contact change events (mobile only)
       if (!kIsDesktop && !kIsWeb) {

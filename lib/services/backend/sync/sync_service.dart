@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/async_task.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
@@ -29,6 +30,13 @@ class SyncService {
   static const Duration _incrementalSyncCooldown = Duration(seconds: 30);
   static const int _dispatchChunkSize = 50;
   DateTime? _lastIncrementalSyncTimestamp;
+
+  // Desktop pulls every server contact with avatars, so incremental syncs refresh them at most daily.
+  static const Duration _serverContactSyncInterval = Duration(hours: 24);
+  DateTime? _lastServerContactSync;
+
+  /// The server that pull came from. Another server's contacts are pulled at once rather than after the day is up.
+  String? _lastServerContactSyncAddress;
 
   FullSyncManager? _manager;
   FullSyncManager? get fullSyncManager => _manager;
@@ -197,7 +205,21 @@ class SyncService {
       _lastIncrementalSyncTimestamp = null;
     }
 
-    final contactSyncResult = await performContactSyncToHandles();
+    var contactSyncResult = true;
+    if (!kIsDesktop) {
+      contactSyncResult = await performContactSyncToHandles();
+    } else if (!chatSyncFailed &&
+        (_lastServerContactSync == null ||
+            _lastServerContactSyncAddress != SettingsSvc.settings.serverAddress.value ||
+            now.difference(_lastServerContactSync!) >= _serverContactSyncInterval)) {
+      // A failed pull is swallowed in the isolate; a chat sync that reached the server stands in for its success
+      final address = SettingsSvc.settings.serverAddress.value;
+      contactSyncResult = await performContactSyncToHandles();
+      if (contactSyncResult) {
+        _lastServerContactSync = now;
+        _lastServerContactSyncAddress = address;
+      }
+    }
     final contactUploadResult = await performContactSyncToServer();
 
     // The chat sync is the one that matters, so its failure is reported alone and wins over the rest.
