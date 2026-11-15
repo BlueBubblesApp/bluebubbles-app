@@ -974,11 +974,6 @@ class Settings {
     unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
   }
 
-  void resetTextFieldButtons() {
-    SettingsSvc.settings.textFieldButtons.value = defaultTextFieldButtons;
-    unawaited(SettingsSvc.settings.saveOneAsync('textFieldButtons'));
-  }
-
   void resetDetailsMenuActions() {
     SettingsSvc.settings._detailsMenuActions.value = DetailsMenuAction.values;
     unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
