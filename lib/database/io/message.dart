@@ -980,9 +980,14 @@ class Message {
       existing.dbAttachments.addAll(newMessage.dbAttachments);
     }
 
-    if (existing.payloadData == null && newMessage.payloadData != null) {
+    // A push copy saves an app balloon without its session, and leaves out threadOriginatorPart and country, so a
+    // sync that brings the full row back fills them in.
+    if ((existing.payloadData == null && newMessage.payloadData != null) ||
+        (!existing.payloadData.hasAppSession && newMessage.payloadData.hasAppSession)) {
       existing.payloadData = newMessage.payloadData;
     }
+    existing.threadOriginatorPart ??= newMessage.threadOriginatorPart;
+    existing.country ??= newMessage.country;
 
     existing.associatedMessageEmoji ??= newMessage.associatedMessageEmoji;
 

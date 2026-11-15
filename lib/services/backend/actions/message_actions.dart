@@ -71,12 +71,18 @@ class MessageActions {
       existing.isDelivered = inputNewMessage.isDelivered;
       existing.dateRead = inputNewMessage.dateRead ?? existing.dateRead;
       existing.dateEdited = inputNewMessage.dateEdited ?? existing.dateEdited;
+      // Push payloads leave these out, so a socket copy that arrives after one fills them in.
+      existing.datePlayed = inputNewMessage.datePlayed ?? existing.datePlayed;
+      existing.threadOriginatorPart = inputNewMessage.threadOriginatorPart ?? existing.threadOriginatorPart;
+      existing.country = inputNewMessage.country ?? existing.country;
       existing.attributedBody =
           inputNewMessage.attributedBody.isNotEmpty ? inputNewMessage.attributedBody : existing.attributedBody;
       existing.messageSummaryInfo = inputNewMessage.messageSummaryInfo.isNotEmpty
           ? inputNewMessage.messageSummaryInfo
           : existing.messageSummaryInfo;
-      existing.payloadData = inputNewMessage.payloadData ?? existing.payloadData;
+      if (inputNewMessage.payloadData.hasAppSession || !existing.payloadData.hasAppSession) {
+        existing.payloadData = inputNewMessage.payloadData ?? existing.payloadData;
+      }
       existing.wasDeliveredQuietly =
           inputNewMessage.wasDeliveredQuietly ? inputNewMessage.wasDeliveredQuietly : existing.wasDeliveredQuietly;
       existing.didNotifyRecipient =

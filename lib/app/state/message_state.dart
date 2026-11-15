@@ -705,9 +705,10 @@ class MessageState extends StatefulController {
     // Merge other non-observable properties
     message.handleId = updatedMessage.handleId;
     message.otherHandle = updatedMessage.otherHandle;
-    message.country = updatedMessage.country;
+    message.country = updatedMessage.country ?? message.country;
     message.hasDdResults = updatedMessage.hasDdResults;
-    message.datePlayed = updatedMessage.datePlayed;
+    // A push copy leaves these out, and a local delete isn't the server's to undo.
+    message.datePlayed = updatedMessage.datePlayed ?? message.datePlayed;
     message.itemType = updatedMessage.itemType;
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
@@ -715,13 +716,13 @@ class MessageState extends StatefulController {
     // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
     message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
-    message.dateDeleted = updatedMessage.dateDeleted;
+    message.dateDeleted = updatedMessage.dateDeleted ?? message.dateDeleted;
     message.metadata = updatedMessage.metadata;
-    message.threadOriginatorPart = updatedMessage.threadOriginatorPart;
+    message.threadOriginatorPart = updatedMessage.threadOriginatorPart ?? message.threadOriginatorPart;
     message.bigEmoji = updatedMessage.bigEmoji;
-    message.attributedBody = updatedMessage.attributedBody;
-    message.messageSummaryInfo = updatedMessage.messageSummaryInfo;
-    message.payloadData = updatedMessage.payloadData;
+    if (updatedMessage.attributedBody.isNotEmpty) message.attributedBody = updatedMessage.attributedBody;
+    if (updatedMessage.messageSummaryInfo.isNotEmpty) message.messageSummaryInfo = updatedMessage.messageSummaryInfo;
+    message.payloadData = updatedMessage.payloadData ?? message.payloadData;
     message.hasApplePayloadData = updatedMessage.hasApplePayloadData;
     message.isBookmarked = updatedMessage.isBookmarked;
 

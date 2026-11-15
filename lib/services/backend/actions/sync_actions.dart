@@ -380,6 +380,9 @@ class SyncActions {
     for (final inputA in inputAttachments) {
       final existing = existingMap[inputA.guid];
       existing?.stickerPlacement ??= inputA.stickerPlacement;
+      // A push copy leaves these out; neither flips back once true.
+      if (existing != null && inputA.hasLivePhoto) existing.hasLivePhoto = true;
+      if (existing != null && inputA.isOutgoing == true) existing.isOutgoing = true;
       final toSave = existing ?? inputA;
       final ownerGuid = ownerGuidByAttachmentGuid[inputA.guid];
       if (ownerGuid != null) {
