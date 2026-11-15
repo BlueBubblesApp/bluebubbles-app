@@ -13,7 +13,7 @@ UI for selecting media files to attach before sending a message.
 | `genmoji_dialog.dart` | Skin-aware Genmoji creator (prompt → nebula while generating → Discard / New / Attach); checks `genmoji/status` on open. Opened by `AttachmentActions.createGenmoji` |
 | `genmoji_library_tile.dart` | `GenmojiLibraryTile` (cached thumbnail, in-draft ring, download spinner) and `GenmojiCreateTile` (the "New" tile), shared by both library UIs |
 | `sticker_library_dialog.dart` | `StickerLibraryView`: the Mac's sticker library (Stickers + Recents, from `StickerLibrarySvc`) with `+` to upload an image from this device (lands in Recents). `showStickerLibrary` shows it for the desktop composer's "Stickers" button, as a non-modal panel over the chat list in tablet mode (so the conversation stays usable; pressing the button again closes it) and a dialog otherwise; the emoji tapback picker's Stickers tab uses it to react with a sticker |
-| `sticker_library_tile.dart` | `StickerLibraryTile`, `StickerAddTile` and `pickAndAddSticker`, shared by the dialog and the mobile picker's sticker grid |
+| `sticker_library_tile.dart` | `StickerLibraryTile` (long press / right-click offers `confirmRemoveSticker`, which removes it from the Mac via `DELETE /api/v2/sticker/:id`, Private API only), `StickerAddTile` and `pickAndAddSticker`, shared by the dialog and the mobile picker's sticker grid |
 | `genmoji_library_popover.dart` | Desktop Genmoji library: searchable grid anchored above `+`; click attaches and closes, right-click → Delete, "New" opens the creator |
 
 ## Genmoji

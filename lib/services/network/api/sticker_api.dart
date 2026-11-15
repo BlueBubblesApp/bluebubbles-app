@@ -79,6 +79,19 @@ class StickerApi {
     return data is Map && data['identifier'] is String ? LibrarySticker.fromMap(data.cast<String, dynamic>()) : null;
   }
 
+  /// `DELETE sticker/:id`: removes the sticker with [identifier] (a library listing's) from the Mac's library. Needs
+  /// the Private API. Throws when the server refuses; [stickerRefusal] reads why.
+  Future<Response> delete(String identifier, {CancelToken? cancelToken}) async {
+    return _svc.runApiGuarded(() async {
+      final response = await _svc.dio.delete(
+        "${_svc.apiRootV2}/sticker/${Uri.encodeComponent(identifier)}",
+        queryParameters: _svc.buildQueryParams(),
+        cancelToken: cancelToken,
+      );
+      return _svc.returnSuccessOrError(response);
+    });
+  }
+
   /// `POST message/sticker`: puts the sticker in [bytes] on part [partIndex] of [messageGuid].
   ///
   /// With [tapback] it goes out as a sticker tapback, replacing your previous tapback on that message;

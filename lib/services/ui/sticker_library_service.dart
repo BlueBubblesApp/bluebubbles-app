@@ -182,6 +182,20 @@ class StickerLibraryService {
     return null;
   }
 
+  /// Removes [sticker] from the Mac's library, then from the cache. A saved sticker you've used also has a copy in
+  /// Recents under its own identifier, so a sync afterwards shows whatever the Mac still lists. Throws when the server
+  /// refuses; [stickerRefusal] reads why.
+  Future<void> delete(LibrarySticker sticker) async {
+    await HttpSvc.sticker.delete(sticker.identifier);
+    entries.removeWhere((e) => e.identifier == sticker.identifier);
+    cachedThumbnails.remove(sticker.identifier);
+    await _writeIndex();
+    for (final file in [thumbnailFile(sticker.identifier), _fullFile(sticker.identifier)]) {
+      if (await file.exists()) await file.delete();
+    }
+    unawaited(sync());
+  }
+
   /// Adds the image in [bytes] to the Mac's library (it lands in Recents), then syncs so it shows. Throws when the
   /// server refuses; [stickerRefusal] reads why.
   Future<void> add(Uint8List bytes, String fileName) async {
