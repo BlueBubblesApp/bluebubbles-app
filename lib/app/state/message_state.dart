@@ -666,6 +666,8 @@ class MessageState extends StatefulController {
   /// Update state from database message object
   /// Used when message is refreshed from DB or merged with updates
   void updateFromMessage(Message updatedMessage) {
+    // Before the text and edit date: whether formatting is kept depends on whether they changed
+    message.takeOmittableFieldsFrom(updatedMessage);
     // Update all observable fields
     updateGuidInternal(updatedMessage.guid);
     updateTextInternal(updatedMessage.text);
@@ -705,9 +707,7 @@ class MessageState extends StatefulController {
     // Merge other non-observable properties
     message.handleId = updatedMessage.handleId;
     message.otherHandle = updatedMessage.otherHandle;
-    message.country = updatedMessage.country;
     message.hasDdResults = updatedMessage.hasDdResults;
-    message.datePlayed = updatedMessage.datePlayed;
     message.itemType = updatedMessage.itemType;
     message.groupTitle = updatedMessage.groupTitle;
     message.groupActionType = updatedMessage.groupActionType;
@@ -715,13 +715,10 @@ class MessageState extends StatefulController {
     // Kept when the update lacks it, like Message.merge: only v2 servers send it, and the backfill fills it in later
     message.associatedMessageEmoji = updatedMessage.associatedMessageEmoji ?? message.associatedMessageEmoji;
     message.expressiveSendStyleId = updatedMessage.expressiveSendStyleId;
-    message.dateDeleted = updatedMessage.dateDeleted;
+    // A local delete isn't the server's to undo.
+    message.dateDeleted = updatedMessage.dateDeleted ?? message.dateDeleted;
     message.metadata = updatedMessage.metadata;
-    message.threadOriginatorPart = updatedMessage.threadOriginatorPart;
     message.bigEmoji = updatedMessage.bigEmoji;
-    message.attributedBody = updatedMessage.attributedBody;
-    message.messageSummaryInfo = updatedMessage.messageSummaryInfo;
-    message.payloadData = updatedMessage.payloadData;
     message.hasApplePayloadData = updatedMessage.hasApplePayloadData;
     message.isBookmarked = updatedMessage.isBookmarked;
 

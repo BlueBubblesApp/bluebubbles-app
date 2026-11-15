@@ -52,6 +52,11 @@ class PayloadData {
       };
 }
 
+extension PayloadDataAppSession on PayloadData? {
+  /// Whether this is an app balloon with its session, which a push copy leaves out.
+  bool get hasAppSession => this?.appData?.firstOrNull?.sessionId != null;
+}
+
 class UrlPreviewData {
   UrlPreviewData({
     this.imageMetadata,

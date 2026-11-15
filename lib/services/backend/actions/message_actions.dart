@@ -63,6 +63,8 @@ class MessageActions {
       if (existing.guid != inputNewMessage.guid) {
         existing.guid = inputNewMessage.guid;
       }
+      // Before the text and edit date: whether formatting is kept depends on whether they changed
+      existing.takeOmittableFieldsFrom(inputNewMessage);
       if (inputNewMessage.text != null) {
         existing.text = inputNewMessage.text;
       }
@@ -71,12 +73,6 @@ class MessageActions {
       existing.isDelivered = inputNewMessage.isDelivered;
       existing.dateRead = inputNewMessage.dateRead ?? existing.dateRead;
       existing.dateEdited = inputNewMessage.dateEdited ?? existing.dateEdited;
-      existing.attributedBody =
-          inputNewMessage.attributedBody.isNotEmpty ? inputNewMessage.attributedBody : existing.attributedBody;
-      existing.messageSummaryInfo = inputNewMessage.messageSummaryInfo.isNotEmpty
-          ? inputNewMessage.messageSummaryInfo
-          : existing.messageSummaryInfo;
-      existing.payloadData = inputNewMessage.payloadData ?? existing.payloadData;
       existing.wasDeliveredQuietly =
           inputNewMessage.wasDeliveredQuietly ? inputNewMessage.wasDeliveredQuietly : existing.wasDeliveredQuietly;
       existing.didNotifyRecipient =

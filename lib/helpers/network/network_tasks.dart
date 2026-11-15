@@ -43,13 +43,26 @@ class NetworkTasks {
       }
     }
 
-    // When we re-connect, try an incremental sync.
-    // The sync function has a guard based on time to ensure that it doesn't
-    // get invoked multiple times in quick succession.
-    unawaited(SyncSvc.startIncrementalSync().whenComplete(ServerV2Migrations.retryAfterReconnect).catchError(
-      (Object e, StackTrace s) => Logger.warn('Reconnect sync failed', error: e, trace: s, tag: 'NetworkTasks'),
-    ));
+    // When we re-connect, try an incremental sync. The sync's cooldown keeps it from running several times in quick
+    // succession. Without pushes this one is a catch-up: a sync that started before the socket connected (the one on
+    // resume) may have missed what reached the server in between, so it runs once the cooldown is over instead of
+    // not at all. With pushes, that message arrives as one and its push copy asks for a catch-up itself, so a device
+    // that gets pushes doesn't sync a second time on every resume: the server pays for each device that does.
+    unawaited(
+      SyncSvc.startIncrementalSync(catchUp: !_receivesPushes)
+          .whenComplete(ServerV2Migrations.retryAfterReconnect)
+          .catchError(
+            (Object e, StackTrace s) => Logger.warn('Reconnect sync failed', error: e, trace: s, tag: 'NetworkTasks'),
+          ),
+    );
   }
+
+  /// Whether the server pushes this device every message (FCM or UnifiedPush), socket or not.
+  static bool get _receivesPushes =>
+      !kIsWeb &&
+      Platform.isAndroid &&
+      (SettingsSvc.settings.endpointUnifiedPush.value.isNotEmpty ||
+          (!SettingsSvc.fcmData.isNull && SettingsSvc.settings.firstFcmRegisterDate.value != 0));
 
   static Future<void> detectLocalhost({bool createSnackbar = false}) {
     // Deduplicate: if already running, all callers share the same future.
