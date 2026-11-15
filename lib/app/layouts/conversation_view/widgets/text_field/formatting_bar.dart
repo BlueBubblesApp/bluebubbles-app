@@ -20,11 +20,13 @@ class FormattingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: controller,
+      listenable: Listenable.merge([controller, conversation?.subjectFocusNode]),
       builder: (context, _) {
         // No formatting in a brand-new chat for now: chat/new sends its first message as plain text
-        // nor where it can't be sent (no Private API, SMS, an older server)
-        if (conversation == null || !controller.allowFormatting) return const SizedBox.shrink();
+        // nor where it can't be sent (no Private API, SMS, an older server), nor for the subject
+        if (conversation == null || !controller.allowFormatting || conversation!.subjectFocusNode.hasFocus) {
+          return const SizedBox.shrink();
+        }
         // Also up while a style is toggled on or any of the text is formatted
         if (controller.selection.isCollapsed && !controller.hasActiveFormatting) return const SizedBox.shrink();
         final usePanel = !kIsDesktop && conversation != null;
