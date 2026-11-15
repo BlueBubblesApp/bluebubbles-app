@@ -673,7 +673,6 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
 
   @override
   set value(TextEditingValue newValue) {
-    final pending = _pendingTyping;
     // On Android a paste can also come from the keyboard (its clipboard chip), which only shows here as an edit
     // inserting what was copied. Desktop pastes all go through pasteText. Typing that composes a word (swiping,
     // dictation) is never one, or swiping a word that was copied would pick up its formatting.
@@ -689,24 +688,26 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
             : null);
     final pasteAt = selection.start;
     if (newValue.text == text) {
-      if (!newValue.selection.isCollapsed || newValue.selection.baseOffset != _pendingAt) _pendingTyping = null;
       super.value = newValue;
       return;
     }
-    _pendingTyping = null;
     final anchor = selection.start >= 0 && newValue.selection.start >= 0
         ? min(selection.start, newValue.selection.start)
         : null;
     final oldText = text;
     final newText = newValue.text;
     if (runs.isNotEmpty) runs = shiftRuns(oldText, newText, runs, anchor: anchor);
-    final inserted = newText.length - oldText.length;
-    if (pending != null &&
-        inserted > 0 &&
-        newText.startsWith(oldText.substring(0, _pendingAt)) &&
-        newText.endsWith(oldText.substring(_pendingAt))) {
+    // Typed text (at the cursor or over the selection) gets exactly the styles toggled on, and never an effect
+    final typed = newText.length - oldText.length + selection.end - selection.start;
+    if (pasted == null &&
+        selection.start >= 0 &&
+        typed > 0 &&
+        newText.startsWith(oldText.substring(0, selection.start)) &&
+        newText.endsWith(oldText.substring(selection.end))) {
+      final from = selection.start;
       for (final attribute in [...styleAttributes.values, effectAttribute]) {
-        runs = restyle(runs, newText.length, _pendingAt, _pendingAt + inserted, attribute, pending[attribute]);
+        final value = activeStyles.contains(attribute) ? 1 : null;
+        runs = restyle(runs, newText.length, from, from + typed, attribute, value);
       }
     }
     if (pasted != null) {
@@ -758,16 +759,8 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     for (final run in runs) {
       final start = run.range[0];
       final end = start + run.range[1];
-      final typingAtEnd = end == prefix && oldEnd == prefix && run.attributes?.mention == null;
-      if (end <= prefix && !typingAtEnd) {
+      if (end <= prefix) {
         kept.add(run);
-      } else if (typingAtEnd && run.attributes!.textEffect != null) {
-        // Typing on from an effect carries its styles but not the effect itself
-        kept.add(run);
-        final rest = Map<String, dynamic>.of(run.attributes!.rawAttributes)..remove(effectAttribute);
-        if (rest.isNotEmpty) kept.add(Run(range: [end, delta], attributes: Attributes(rawAttributes: rest)));
-      } else if (typingAtEnd) {
-        kept.add(Run(range: [start, run.range[1] + delta], attributes: run.attributes));
       } else if (start >= oldEnd) {
         kept.add(Run(range: [start + delta, run.range[1]], attributes: run.attributes));
       } else {
@@ -816,41 +809,32 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     if (!selection.isCollapsed) _restyleSelection(effectAttribute, id, toggle: false);
   }
 
-  /// Formatting chosen for the next typed text at [_pendingAt] (with a collapsed cursor), overriding what it would
-  /// otherwise pick up from the run it extends.
-  Map<String, dynamic>? _pendingTyping;
-  int _pendingAt = -1;
+  /// The style attributes toggled on for typed text. They stay on, wherever the cursor goes, until toggled off.
+  final Set<String> activeStyles = {};
 
-  /// The attributes the next typed text gets: a pending choice, else those of the run that typing extends.
-  Map<String, dynamic> get typingAttributes {
-    final caret = selection.baseOffset;
-    if (!selection.isCollapsed || caret < 0) return const {};
-    if (_pendingTyping != null && _pendingAt == caret) return _pendingTyping!;
-    final attrs = runs
-            .firstWhereOrNull(
-                (r) => r.attributes?.mention == null && r.range[0] < caret && caret <= r.range[0] + r.range[1])
-            ?.attributes
-            ?.rawAttributes ??
-        const <String, dynamic>{};
-    // Typed text never takes an effect (see shiftRuns)
-    return attrs.containsKey(effectAttribute) ? (Map.of(attrs)..remove(effectAttribute)) : attrs;
-  }
-
-  /// Whether typing would carry formatting or an effect forward from the cursor, or a choice for it is pending.
+  /// Whether a style is toggled on or any of the text is formatted (mentions don't count).
   bool get hasActiveFormatting =>
-      (_pendingTyping != null && _pendingAt == selection.baseOffset) ||
-      typingAttributes.keys.any((k) => k == effectAttribute || styleAttributes.containsValue(k));
+      activeStyles.isNotEmpty ||
+      runs.any((r) => r.attributes!.rawAttributes.keys
+          .any((k) => k == effectAttribute || styleAttributes.containsValue(k)));
+
+  /// Called after each send, so the next message starts unformatted.
+  @override
+  void clear() {
+    activeStyles.clear();
+    super.clear();
+  }
 
   /// Whether all of the selection (or, with a collapsed cursor, the next typed text) has [attribute] set to [value].
   bool selectionHas(String attribute, Object value) {
-    if (selection.isCollapsed) return typingAttributes[attribute] == value;
+    if (selection.isCollapsed) return value == 1 && activeStyles.contains(attribute);
     final (start, end) = _selectionRange();
     return start < end && segments(runs, start, end).every((s) => s.$3[attribute] == value);
   }
 
   /// The effect on all of the selection (or the next typed text), or null when there is none or it's mixed.
   int? get selectionEffect {
-    if (selection.isCollapsed) return typingAttributes[effectAttribute] as int?;
+    if (selection.isCollapsed) return null;
     final (start, end) = _selectionRange();
     if (start >= end) return null;
     final effects = segments(runs, start, end).map((s) => s.$3[effectAttribute]).toSet();
@@ -875,19 +859,17 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   void _restyleSelection(String attribute, Object? value, {required bool toggle}) {
     if (!allowFormatting) return;
     if (selection.isCollapsed) {
-      if (selection.baseOffset < 0) return;
-      // Nothing to restyle yet: this sets what the next typed text gets
-      final pending = Map<String, dynamic>.of(typingAttributes);
-      value == null || (toggle && pending[attribute] == value) ? pending.remove(attribute) : pending[attribute] = value;
-      _pendingTyping = pending;
-      _pendingAt = selection.baseOffset;
+      if (attribute == effectAttribute) return;
+      if (!activeStyles.remove(attribute)) activeStyles.add(attribute);
       notifyListeners();
       return;
     }
     final (start, end) = _selectionRange();
     if (start >= end) return;
-    runs = restyle(runs, text.length, start, end, attribute,
-        value == null || (toggle && selectionHas(attribute, value)) ? null : value);
+    final applied = value == null || (toggle && selectionHas(attribute, value)) ? null : value;
+    runs = restyle(runs, text.length, start, end, attribute, applied);
+    // The bar shows the same state once the selection changes
+    if (attribute != effectAttribute) applied == null ? activeStyles.remove(attribute) : activeStyles.add(attribute);
     notifyListeners();
   }
 

@@ -25,7 +25,7 @@ class FormattingBar extends StatelessWidget {
         // No formatting in a brand-new chat for now: chat/new sends its first message as plain text
         // nor where it can't be sent (no Private API, SMS, an older server)
         if (conversation == null || !controller.allowFormatting) return const SizedBox.shrink();
-        // Also up while typing would carry formatting forward, or new text picks it up unseen
+        // Also up while a style is toggled on or any of the text is formatted
         if (controller.selection.isCollapsed && !controller.hasActiveFormatting) return const SizedBox.shrink();
         final usePanel = !kIsDesktop && conversation != null;
         // The selection menu covers the bar here, so its "Text Effects" item opens the panel instead
