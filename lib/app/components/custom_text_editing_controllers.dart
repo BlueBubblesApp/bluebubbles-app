@@ -831,32 +831,24 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   /// Whether all of the selection (or, with a collapsed cursor, the next typed text) has [attribute] set to [value].
   bool selectionHas(String attribute, Object value) {
     if (selection.isCollapsed) return value == 1 && activeStyles.contains(attribute);
-    final (start, end) = _selectionRange();
-    return start < end && segments(runs, start, end).every((s) => s.$3[attribute] == value);
+    final formattable = _formattableSegments();
+    return formattable.isNotEmpty && formattable.every((s) => s.$3[attribute] == value);
   }
 
   /// The effect on all of the selection (or the next typed text), or null when there is none or it's mixed.
   int? get selectionEffect {
     if (selection.isCollapsed) return null;
-    final (start, end) = _selectionRange();
-    if (start >= end) return null;
-    final effects = segments(runs, start, end).map((s) => s.$3[effectAttribute]).toSet();
+    final effects = _formattableSegments().map((s) => s.$3[effectAttribute]).toSet();
     return effects.length == 1 ? effects.single as int? : null;
   }
 
-  /// The selection, widened to whole mentions: they are styled as a unit.
-  (int, int) _selectionRange() {
-    var start = selection.start;
-    var end = selection.end;
-    if (start < 0) return (0, 0);
-    for (final mention in mentionRuns) {
-      if (mention.range[0] < end && mention.range[0] + mention.range[1] > start) {
-        start = min(start, mention.range[0]);
-        end = max(end, mention.range[0] + mention.range[1]);
-      }
-    }
-    return (start, end);
+  /// The selection's segments, less mentions (they never take formatting).
+  List<(int, int, Map<String, dynamic>)> _formattableSegments() {
+    final (start, end) = _selectionRange();
+    return start < end ? segments(runs, start, end).where((s) => !s.$3.containsKey(_mentionAttribute)).toList() : [];
   }
+
+  (int, int) _selectionRange() => selection.start < 0 ? (0, 0) : (selection.start, selection.end);
 
   /// With [toggle], removes [attribute] instead when all of the selection already has [value].
   void _restyleSelection(String attribute, Object? value, {required bool toggle}) {
@@ -889,13 +881,20 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
   }
 
   /// [runs] with [attribute] set to [value] over [start, end) of a [length]-long text, or removed there when
-  /// [value] is null. Adjacent runs that end up identical are merged; mentions never are.
+  /// [value] is null. Mentions never take formatting, and adjacent runs that end up identical are merged (mentions
+  /// never are).
   @visibleForTesting
   static List<Run> restyle(List<Run> runs, int length, int start, int end, String attribute, Object? value) {
     final out = <Run>[];
     for (final (from, to, attrs) in segments(runs, 0, length, [start, end])) {
       final changed = Map<String, dynamic>.of(attrs);
-      if (from >= start && to <= end) value == null ? changed.remove(attribute) : changed[attribute] = value;
+      if (from >= start && to <= end) {
+        if (value == null) {
+          changed.remove(attribute);
+        } else if (!attrs.containsKey(_mentionAttribute)) {
+          changed[attribute] = value;
+        }
+      }
       if (changed.isEmpty) continue;
       final last = out.lastOrNull;
       if (last != null &&
