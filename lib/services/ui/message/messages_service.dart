@@ -771,10 +771,14 @@ class MessagesService extends GetxController {
     final newest = struct.messages.map((m) => m.dateCreated).whereType<DateTime>().fold<DateTime?>(
         null, (latest, date) => latest == null || date.isAfter(latest) ? date : latest);
     if (newest == null) return;
-    // Only the newest 25 are checked; a longer gap shows once the chat is reopened.
-    final recent = Chat.getMessages(chat, limit: 25, getDetails: true);
-    for (final message in recent.reversed) {
-      if (message.dateCreated == null || message.dateCreated!.isBefore(newest)) continue;
+    // Pages back from the newest until a page reaches past what's showing, so a gap of any size is covered.
+    final missed = <Message>[];
+    for (var offset = 0;; offset += 25) {
+      final page = Chat.getMessages(chat, offset: offset, limit: 25, getDetails: true);
+      missed.addAll(page.where((m) => m.dateCreated != null && !m.dateCreated!.isBefore(newest)));
+      if (page.isEmpty || page.last.dateCreated?.isBefore(newest) != false) break;
+    }
+    for (final message in missed.reversed) {
       await addNewMessage(message);
     }
   }
