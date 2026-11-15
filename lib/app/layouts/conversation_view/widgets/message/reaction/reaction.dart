@@ -94,7 +94,8 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
 
   /// Guard against associatedMessageType being null.
   /// An empty string produces no SVG match, which is handled in build().
-  String get reactionType => reaction.associatedMessageType ?? '';
+  // A failed removal is drawn as the tapback it was taking back
+  String get reactionType => ReactionTypes.addedType(reaction.associatedMessageType) ?? '';
 
   MessageState? get reactionController {
     // Use same resolution order as reaction getter
@@ -322,6 +323,10 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                             reaction: reaction,
                             chat: chat,
                           ),
+                          removeLabel: ReactionTypes.isRemoval(reaction.associatedMessageType) ? "OK" : "Remove",
+                          title: ReactionTypes.isRemoval(reaction.associatedMessageType)
+                              ? "Couldn't Remove Reaction"
+                              : null,
                         ),
                       );
                     },

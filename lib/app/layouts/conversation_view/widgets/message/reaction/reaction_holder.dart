@@ -87,7 +87,7 @@ class ReactionHolder extends StatefulWidget {
 class _ReactionHolderState extends State<ReactionHolder> {
   Iterable<Message> get reactions => getUniqueReactionMessages(widget.reactions.toList());
 
-  // Cache the unique reactions to prevent unnecessary rebuilds
+  // Each sender's latest reaction, worked out once per update rather than on every build
   late List<Message> _cachedReactions;
 
   // Track which reaction keys have been animated
@@ -103,22 +103,10 @@ class _ReactionHolderState extends State<ReactionHolder> {
   @override
   void didUpdateWidget(ReactionHolder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Only rebuild if reactions actually changed
-    if (!_reactionsEqual(oldWidget.reactions, widget.reactions)) {
-      _cachedReactions = reactions.toList();
-    }
-  }
-
-  /// Check if two reaction lists are equal by comparing GUIDs
-  /// This prevents unnecessary rebuilds when the same data is passed
-  bool _reactionsEqual(Iterable<Message> a, Iterable<Message> b) {
-    final listA = a.toList();
-    final listB = b.toList();
-    if (listA.length != listB.length) return false;
-    for (int i = 0; i < listA.length; i++) {
-      if (listA[i].guid != listB[i].guid) return false;
-    }
-    return true;
+    // Always: a send that fails changes its reaction in place (same GUID, same object), so comparing the old list
+    // with the new can't see it, and a failed removal is drawn where the pending one wasn't. Pop-ins are tracked by
+    // _seenReactionKeys, not by this list, so recomputing doesn't replay them.
+    _cachedReactions = reactions.toList();
   }
 
   @override

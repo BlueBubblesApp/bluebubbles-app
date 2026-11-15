@@ -79,6 +79,14 @@ class ReactionTypes {
 
   static bool isStickerTapback(String? type) => type == STICKER || type == REMOVED_STICKER;
 
+  /// The tapback a removal takes back ("-love" is "love"), for drawing a failed one in its place
+  static String? addedType(String? type) => switch (type) {
+        REMOVED_EMOJI => EMOJI,
+        REMOVED_STICKER => STICKER,
+        final t? when t.startsWith("-") => t.substring(1),
+        _ => type,
+      };
+
   static bool isRemoval(String? type) =>
       type != null && (type.startsWith("-") || type == REMOVED_EMOJI || type == REMOVED_STICKER);
 
@@ -95,7 +103,7 @@ class ReactionTypes {
   }
 
   static String emojiFor(Message message) =>
-      message.associatedMessageEmoji ?? reactionToEmoji[message.associatedMessageType] ?? "X";
+      message.associatedMessageEmoji ?? reactionToEmoji[addedType(message.associatedMessageType)] ?? "X";
 
   /// With [inlineSticker], a sticker tapback names its sticker with a U+FFFC, for a preview that draws it there
   /// (`Message.previewInlineAttachments`).
@@ -211,8 +219,10 @@ List<Message> getUniqueReactionMessages(List<Message> messages) {
     int cache = msg.isFromMe! ? 0 : msg.handleId ?? 0;
     if (!handleCache.contains(cache) && !kIsWeb) {
       handleCache.add(cache);
-      // Only add the reaction if it's not a "negative"
-      if (!ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {
+      // Only add the reaction if it's not a "negative", except a removal that failed: it stands in for the tapback it
+      // was taking back, with its error to retry or dismiss (which brings that tapback back)
+      final removal = ReactionTypes.isRemoval(msg.associatedMessageType);
+      if ((!removal || msg.error > 0) && ReactionTypes.isTapback(msg)) {
         output.add(msg);
       }
     } else if (kIsWeb && !ReactionTypes.isRemoval(msg.associatedMessageType) && ReactionTypes.isTapback(msg)) {

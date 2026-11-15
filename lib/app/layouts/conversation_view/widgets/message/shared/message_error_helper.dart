@@ -37,6 +37,8 @@ class MessageErrorDialog extends StatelessWidget {
     required this.onRetry,
     required this.onRemove,
     required this.chatId,
+    this.removeLabel = "Remove",
+    this.title,
   });
 
   final int errorCode;
@@ -45,11 +47,17 @@ class MessageErrorDialog extends StatelessWidget {
   final VoidCallback onRemove;
   final int chatId;
 
+  /// [onRemove]'s button. A failed tapback removal's just dismisses it (the tapback stays), so it reads "OK"
+  final String removeLabel;
+
+  /// In place of the error code's title, for an error that's better named by what failed
+  final String? title;
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-      title: Text(ErrorHelper.getErrorTitle(errorCode), style: context.theme.textTheme.titleLarge),
+      title: Text(title ?? ErrorHelper.getErrorTitle(errorCode), style: context.theme.textTheme.titleLarge),
       content: Text(errorText, style: context.theme.textTheme.bodyLarge),
       actions: <Widget>[
         TextButton(
@@ -61,7 +69,7 @@ class MessageErrorDialog extends StatelessWidget {
           },
         ),
         TextButton(
-          child: Text("Remove",
+          child: Text(removeLabel,
               style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
           onPressed: () async {
             Navigator.of(context).pop();
