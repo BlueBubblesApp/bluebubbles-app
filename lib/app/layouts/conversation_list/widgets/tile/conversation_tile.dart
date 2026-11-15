@@ -44,7 +44,7 @@ class ConversationTileController extends StatefulController {
   });
 
   void onTap(BuildContext context) {
-    if ((inSelectMode || listController.selectedChats.isNotEmpty) && onSelect != null) {
+    if (inSelectMode || listController.selectedChats.isNotEmpty) {
       onLongPress();
     } else if ((!kIsDesktop && !kIsWeb) || ChatsSvc.activeChat?.chat.guid != chat.guid) {
       NavigationSvc.pushAndRemoveUntil(
@@ -84,7 +84,19 @@ class ConversationTileController extends StatefulController {
   }
 
   void onSelected() {
-    onSelect?.call(!isSelected);
+    final select = onSelect;
+    if (select != null) {
+      select(!isSelected);
+    } else {
+      // The controller outlives the list that built it (a skin switch keeps the iOS list's, which passes no onSelect),
+      // so selecting falls back to the list's own selection.
+      if (isSelected) {
+        listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
+      } else {
+        listController.selectedChats.add(chat);
+      }
+      listController.updateSelectedChats();
+    }
     if (SettingsSvc.settings.skin.value == Skins.Material) {
       updateWidgets<MaterialConversationTile>(null);
     }
