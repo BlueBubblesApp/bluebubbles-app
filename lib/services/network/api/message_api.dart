@@ -10,6 +10,12 @@ class MessageApi {
 
   MessageApi(this._svc);
 
+  /// How long to wait on a route that answers only once iMessage has acted: v2 cuts them off at 300s, 1.x worst
+  /// case is ~3 min. `chat/new` (which sends the first message) waits the same way.
+  static const awaitsIMessageTimeout = Duration(minutes: 5, seconds: 15);
+
+  Options get _awaitsIMessage => Options(receiveTimeout: awaitsIMessageTimeout);
+
   /// Get the number of messages in the server iMessage DB
   Future<Response> getCount({
     bool updated = false,
@@ -39,12 +45,15 @@ class MessageApi {
   /// [withQuery] options: `"chats"` / `"chat"`, `"attachment"` / `"attachments"`,
   /// `"handle"`, `"chats.participants"` / `"chat.participants"`,
   /// `"attachment.metadata"`, `"attributedBody"`
+  /// [dateField] selects the date compared with [after]/[before] on v2 servers.
+  /// Leave it null for v1 servers.
   Future<Response> query({
     List<String> withQuery = const [],
     List<dynamic> where = const [],
     String sort = "DESC",
     int? before,
     int? after,
+    String? dateField,
     String? chatGuid,
     int offset = 0,
     int limit = 100,
@@ -61,6 +70,7 @@ class MessageApi {
           "sort": sort,
           "before": before,
           "after": after,
+          if (dateField != null) "dateField": dateField,
           "chatGuid": chatGuid,
           "offset": offset,
           "limit": limit,
@@ -153,6 +163,7 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
+        options: _awaitsIMessage,
       );
       return _svc.returnSuccessOrError(response);
     });
@@ -207,7 +218,7 @@ class MessageApi {
         onSendProgress: onSendProgress,
         options: Options(
           sendTimeout: _svc.dio.options.sendTimeout! * 12,
-          receiveTimeout: _svc.dio.options.receiveTimeout! * 12,
+          receiveTimeout: _awaitsIMessage.receiveTimeout,
           headers: _svc.headers,
         ),
       );
@@ -227,7 +238,6 @@ class MessageApi {
     String? selectedMessageGuid,
     int? partIndex,
     bool? ddScan,
-    bool hasAttachments = false,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -250,8 +260,7 @@ class MessageApi {
         queryParameters: _svc.buildQueryParams(),
         data: data,
         cancelToken: cancelToken,
-        // As with sendAttachment, the server answers once iMessage has sent the media
-        options: hasAttachments ? Options(receiveTimeout: _svc.dio.options.receiveTimeout! * 12) : null,
+        options: _awaitsIMessage,
       );
       return _svc.returnSuccessOrError(response);
     });
@@ -306,6 +315,7 @@ class MessageApi {
           "tempGuid": tempGuid,
           "liveLayout": liveLayout,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -337,6 +347,7 @@ class MessageApi {
           // Required with reaction "emoji" / "-emoji"
           "emoji": ?emoji,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -350,6 +361,7 @@ class MessageApi {
         "${_svc.apiRoot}/message/$selectedMessageGuid/unsend",
         queryParameters: _svc.buildQueryParams(),
         data: {"partIndex": partIndex ?? 0},
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -373,6 +385,7 @@ class MessageApi {
           "backwardsCompatibilityMessage": backwardsCompatText,
           "partIndex": partIndex ?? 0,
         },
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);
@@ -385,6 +398,7 @@ class MessageApi {
       final response = await _svc.dio.post(
         "${_svc.apiRoot}/message/$selectedMessageGuid/notify",
         queryParameters: _svc.buildQueryParams(),
+        options: _awaitsIMessage,
         cancelToken: cancelToken,
       );
       return _svc.returnSuccessOrError(response);

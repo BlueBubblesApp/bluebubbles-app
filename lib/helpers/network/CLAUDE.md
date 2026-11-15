@@ -24,4 +24,4 @@ Pure helpers for network operations. No UI dependencies.
 
 **Never use `HttpSvc.dio` for third-party URLs.** It carries the user's `customHeaders` (server auth secrets) as defaults and an interceptor that converts HTTP errors into fake successes. `metadata/network/metadata_http_client.dart` exists for outbound requests to sites the user did not configure.
 
-**Network reconnect** — `onConnect()` in `network_tasks.dart` is the entry point wired to connectivity change events. Don't call sync or socket logic directly from connectivity listeners; call `onConnect()` instead.
+**Network reconnect** — `onConnect()` in `network_tasks.dart` is the entry point wired to connectivity change events. Don't call sync or socket logic directly from connectivity listeners; call `onConnect()` instead. After incremental sync, it also retries unfinished v2 migrations.

@@ -42,12 +42,8 @@ Keyboard shortcut bindings used primarily on Desktop. Each `Intent` has a corres
 | `OpenNewChatCreatorIntent` | Open chat creator |
 | `OpenSearchIntent` | Open search view |
 | `ReplyRecentIntent` | Reply to most recent received message |
-| `HeartRecentIntent` | Heart (love) most recent message |
-| `LikeRecentIntent` | Like most recent message |
 | `OpenNextChatIntent` | Cycle to next chat |
 | `OpenPreviousChatIntent` | Cycle to previous chat |
-| `OpenChatDetailsIntent` | Open conversation details |
-| `StartIncrementalSyncIntent` | Trigger incremental sync |
 | `GoBackIntent` | Navigate back |
 
 Intents are registered in the widget tree via `Shortcuts` + `Actions` widgets. To add a new shortcut, add an `Intent` + `Action` pair here and register the key binding in the appropriate widget.

@@ -472,7 +472,8 @@ class OutgoingMessageHandler {
   }
 
   /// Fires [httpCall] and races the response against the socket echo for
-  /// [tempGuid].  Whichever arrives first unblocks the queue; the HTTP work
+  /// [tempGuid], and against the usual request timeout (`apiTimeout`), since
+  /// send routes wait minutes for iMessage.  Whichever comes first unblocks the queue; the HTTP work
   /// (GUID replacement, error marking, etc.) still runs to completion
   /// afterwards in the background.
   ///
@@ -493,7 +494,17 @@ class OutgoingMessageHandler {
     final race = Completer<void>();
     registerSendProgressTracker(tempGuid, chat, race);
 
+    // The server holds a send's response until iMessage has acted, which can take minutes. The queue is shared by
+    // every chat, so it doesn't wait that long behind one message: after the usual request timeout (what it waited
+    // before send routes got a longer one) the next send goes, and this one's result still lands when it comes.
+    final moveOn = Timer(Duration(milliseconds: SettingsSvc.settings.apiTimeout.value), () {
+      if (race.isCompleted) return;
+      Logger.info('Send $tempGuid is still waiting on the server; sending what is queued after it', tag: _tag);
+      race.complete();
+    });
+
     httpCall().then((data) async {
+      moveOn.cancel();
       completeSendProgressIfExists(tempGuid, Origin.outgoingMessageHandler);
       try {
         await onSuccess(data);
@@ -502,6 +513,7 @@ class OutgoingMessageHandler {
       }
       if (!race.isCompleted) race.complete();
     }, onError: (Object error, StackTrace stack) async {
+      moveOn.cancel();
       completeSendProgressIfExists(
         tempGuid,
         Origin.outgoingMessageHandler,
@@ -857,13 +869,20 @@ class OutgoingMessageHandler {
     }
 
     final tempGuid = m.guid!;
-    final parts = m.attributedBody.first.runs
-        .map((e) => {
-              'text': m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last),
-              'mention': e.attributes!.mention,
-              'partIndex': e.attributes!.messagePart,
-            })
-        .toList();
+    final parts = m.attributedBody.first.runs.map((e) {
+      final text = m.attributedBody.first.string.substring(e.range.first, e.range.first + e.range.last);
+      final styles = e.attributes!.styleNames;
+      final effect = e.attributes!.textEffectName;
+      return {
+        'text': text,
+        'mention': e.attributes!.mention,
+        'partIndex': e.attributes!.messagePart,
+        if (styles.isNotEmpty || effect != null)
+          'textFormatting': [
+            {'start': 0, 'length': text.length, 'styles': styles, 'effect': ?effect},
+          ],
+      };
+    }).toList();
 
     return _sendWithRace(
       tempGuid: tempGuid,

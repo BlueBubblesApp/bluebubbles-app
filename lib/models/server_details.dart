@@ -170,6 +170,11 @@ class ServerDetails {
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
 
+  /// Bold, italic, underline, strikethrough and text effects (`textFormatting` on `/message/text` and
+  /// `/message/multipart`): a v2 server on macOS Sequoia (15.0) or newer, through the Private API. 1.x validated the
+  /// field and never sent it, so its messages went out plain.
+  bool get supportsTextFormatting => isV2Server && isMinSequoia;
+
   /// Generate Genmoji with Apple Intelligence (`/api/v2/genmoji`): a v2 server. Whether the Mac itself can
   /// (macOS release, Apple Intelligence, subscription) is answered by `genmoji/status`.
   bool get supportsGenmoji => isV2Server;
