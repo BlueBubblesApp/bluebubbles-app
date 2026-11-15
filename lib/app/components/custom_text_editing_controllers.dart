@@ -867,6 +867,18 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     final (start, end) = _selectionRange();
     if (start >= end) return;
     final applied = value == null || (toggle && selectionHas(attribute, value)) ? null : value;
+    // iMessage doesn't put styles and effects on the same text: an effect clears the styles under it, and a style
+    // clears every effect it touches, whole
+    if (applied != null && attribute == effectAttribute) {
+      for (final style in styleAttributes.values) {
+        runs = restyle(runs, text.length, start, end, style, null);
+      }
+    } else if (applied != null) {
+      for (final run in runs.where((r) =>
+          r.attributes?.textEffect != null && r.range[0] < end && r.range[0] + r.range[1] > start).toList()) {
+        runs = restyle(runs, text.length, run.range[0], run.range[0] + run.range[1], effectAttribute, null);
+      }
+    }
     runs = restyle(runs, text.length, start, end, attribute, applied);
     // The bar shows the same state once the selection changes
     if (attribute != effectAttribute) applied == null ? activeStyles.remove(attribute) : activeStyles.add(attribute);
