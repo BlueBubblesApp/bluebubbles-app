@@ -78,8 +78,12 @@ Future<void> peekChat(BuildContext context, Chat c, Offset offset) async {
     GestureBinding.instance.pointerRouter.removeGlobalRoute(onPointer);
   }
 
+  // Fingers that touched down after the peek opened; only the one holding the chat ends the hold.
+  final laterPointers = <int>{};
   onPointer = (PointerEvent event) {
+    if (event is PointerDownEvent) laterPointers.add(event.pointer);
     if (event is! PointerUpEvent && event is! PointerCancelEvent) return;
+    if (laterPointers.remove(event.pointer)) return;
     stopListening();
     if (_peekNavigator.currentState == null) return;
     backGuard = PageRouteBuilder<void>(
