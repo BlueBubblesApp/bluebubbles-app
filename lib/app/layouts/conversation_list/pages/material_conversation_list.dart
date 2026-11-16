@@ -91,12 +91,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
 
-                final _chats = controller.pinDrag.withUnpinPreview(ChatsSvc.getFilteredChats(
+                final _chats = ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
                   excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
-                ));
+                );
                 // With every chat pinned, the pins are the list.
                 final noChats = _chats.isEmpty &&
                     ChatsSvc.getFilteredChats(
@@ -149,23 +149,28 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             ),
                           )
                         else
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final chat = _chats[index];
-                                return Container(
-                                    key: ValueKey(chat.guid),
-                                    child: PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
-                                        chat: chat,
-                                        controller: controller,
-                                        update: () {
-                                          setState(() {});
-                                        })));
-                              },
-                              findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
-                              childCount: _chats.length,
-                            ),
-                          ),
+                          // Only the rows watch the drag, for the room a pin dragged over them makes, so a drag
+                          // doesn't refilter the chats.
+                          Obx(() {
+                            final rows = controller.pinDrag.withUnpinPreview(_chats);
+                            return SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final chat = rows[index];
+                                  return Container(
+                                      key: ValueKey(chat.guid),
+                                      child: PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
+                                          chat: chat,
+                                          controller: controller,
+                                          update: () {
+                                            setState(() {});
+                                          })));
+                                },
+                                findChildIndexCallback: (key) => findChildIndexByKey(rows, key, (item) => item.guid),
+                                childCount: rows.length,
+                              ),
+                            );
+                          }),
                       ],
                     ),
                   )),

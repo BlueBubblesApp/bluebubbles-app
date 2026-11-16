@@ -85,11 +85,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       final loaded = ChatsSvc.loadedFirstChatBatch.value;
                       // Observe chat list version to trigger rebuild when order changes
                       final _ = ChatsSvc.chatListVersion.value;
-                      final _chats = controller.pinDrag.withUnpinPreview(ChatsSvc.getFilteredChats(
+                      final _chats = ChatsSvc.getFilteredChats(
                           showArchived: showArchived,
                           showUnknown: showUnknown,
                           excludePinned: true,
-                          filters: ChatsSvc.chatListFilters.value));
+                          filters: ChatsSvc.chatListFilters.value);
                       // With every chat pinned, the pins are the list.
                       final noChats = _chats.isEmpty &&
                           ChatsSvc.getFilteredChats(
@@ -127,66 +127,71 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                         );
                       }
 
-                      return SliverPadding(
-                        // Bottom padding is 20 to account for the bottom pill bar.
-                        padding: const EdgeInsets.only(top: 10, bottom: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = ChatsSvc.findChatByGuid(_chats[index].guid)!;
+                      // Only the rows watch the drag, for the room a pin dragged over them makes, so a drag doesn't
+                      // refilter the chats.
+                      return Obx(() {
+                        final rows = controller.pinDrag.withUnpinPreview(_chats);
+                        return SliverPadding(
+                          // Bottom padding is 20 to account for the bottom pill bar.
+                          padding: const EdgeInsets.only(top: 10, bottom: 20),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = ChatsSvc.findChatByGuid(rows[index].guid)!;
 
-                              // No need for Obx here - ConversationTile handles its own reactivity
-                              final child = ConversationTile(
-                                key: Key(chat.guid),
-                                chat: chat,
-                                controller: controller,
-                              );
+                                // No need for Obx here - ConversationTile handles its own reactivity
+                                final child = ConversationTile(
+                                  key: Key(chat.guid),
+                                  chat: chat,
+                                  controller: controller,
+                                );
 
-                              final separator = Obx(() => !SettingsSvc.settings.hideDividers.value
-                                  ? Padding(
-                                      padding:
-                                          EdgeInsets.only(left: SettingsSvc.settings.denseChatTiles.value ? 70 : 82),
-                                      child: Divider(
-                                        color: context.theme.colorScheme.outline.withValues(alpha: 0.4),
-                                        thickness: 0.5,
-                                        height: 0.5,
-                                      ),
-                                    )
-                                  : const SizedBox.shrink());
+                                final separator = Obx(() => !SettingsSvc.settings.hideDividers.value
+                                    ? Padding(
+                                        padding:
+                                            EdgeInsets.only(left: SettingsSvc.settings.denseChatTiles.value ? 70 : 82),
+                                        child: Divider(
+                                          color: context.theme.colorScheme.outline.withValues(alpha: 0.4),
+                                          thickness: 0.5,
+                                          height: 0.5,
+                                        ),
+                                      )
+                                    : const SizedBox.shrink());
 
-                              final topDivider = index == 0
-                                  ? const SizedBox.shrink()
-                                  : Obx(() => !SettingsSvc.settings.hideDividers.value
-                                      ? Padding(
-                                          padding: EdgeInsets.only(
-                                              left: SettingsSvc.settings.denseChatTiles.value ? 70 : 82),
-                                          child: Divider(
-                                            color: context.theme.colorScheme.outline.withValues(alpha: 0.4),
-                                            thickness: 0.5,
-                                            height: 0.5,
-                                          ),
-                                        )
-                                      : const SizedBox.shrink());
+                                final topDivider = index == 0
+                                    ? const SizedBox.shrink()
+                                    : Obx(() => !SettingsSvc.settings.hideDividers.value
+                                        ? Padding(
+                                            padding: EdgeInsets.only(
+                                                left: SettingsSvc.settings.denseChatTiles.value ? 70 : 82),
+                                            child: Divider(
+                                              color: context.theme.colorScheme.outline.withValues(alpha: 0.4),
+                                              thickness: 0.5,
+                                              height: 0.5,
+                                            ),
+                                          )
+                                        : const SizedBox.shrink());
 
-                              // The dividers are inside the drag source so they collapse with the row when its chat
-                              // is dragged to the pins, rather than stacking up where it was.
-                              return PinDragSource(
-                                drag: controller.pinDrag,
-                                chat: chat,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    topDivider,
-                                    child,
-                                    separator,
-                                  ],
-                                ),
-                              );
-                            },
-                            childCount: _chats.length,
+                                // The dividers are inside the drag source so they collapse with the row when its chat
+                                // is dragged to the pins, rather than stacking up where it was.
+                                return PinDragSource(
+                                  drag: controller.pinDrag,
+                                  chat: chat,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      topDivider,
+                                      child,
+                                      separator,
+                                    ],
+                                  ),
+                                );
+                              },
+                              childCount: rows.length,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      });
                     }),
                   ],
                 )),

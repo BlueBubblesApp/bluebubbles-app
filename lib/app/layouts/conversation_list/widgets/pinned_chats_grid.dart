@@ -145,8 +145,9 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
           final int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
               ? SettingsSvc.settings.pinRowsPortrait.value
               : SettingsSvc.settings.pinRowsLandscape.value;
-          final int colCount =
-              kIsDesktop ? SettingsSvc.settings.pinColumnsLandscape.value : SettingsSvc.settings.pinColumnsPortrait.value;
+          final int colCount = kIsDesktop
+              ? SettingsSvc.settings.pinColumnsLandscape.value
+              : SettingsSvc.settings.pinColumnsPortrait.value;
           // How a drag shows them: its previewed order, without a pin dragged off them.
           return Obx(() => _buildPins(context, pinned, rowCount: rowCount, colCount: colCount));
         }),
