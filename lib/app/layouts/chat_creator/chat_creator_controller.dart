@@ -245,10 +245,22 @@ class ChatCreatorController extends StatefulController {
           : available == false
               ? ChatServiceType.sms
               : null;
+      // The lookup usually lands after findExistingChat ran, so re-resolve against the now-known service
+      if (selectedContacts.contains(contact) && _syncServiceToContacts()) await findExistingChat();
     } catch (e, s) {
       Logger.warn("Failed to check iMessage availability for contact",
           error: e, trace: s, tag: 'ChatCreatorController');
     }
+  }
+
+  /// Any SMS-only recipient makes the whole chat SMS. Returns whether the service changed.
+  bool _syncServiceToContacts() {
+    final service = selectedContacts.any((c) => c.serviceType.value == ChatServiceType.sms)
+        ? ChatServiceType.sms
+        : ChatServiceType.iMessage;
+    if (selectedService.value == service) return false;
+    selectedService.value = service;
+    return true;
   }
 
   Future<void> addSelectedFromChat(List<SelectedContact> contacts) async {
@@ -315,13 +327,7 @@ class ChatCreatorController extends StatefulController {
       return null;
     }
 
-    // Auto-update service type based on selected contact iMessage status
-    final hasSmsContact = selectedContacts.firstWhereOrNull((c) => c.serviceType.value == ChatServiceType.sms) != null;
-    if (hasSmsContact) {
-      selectedService.value = ChatServiceType.sms;
-    } else {
-      selectedService.value = ChatServiceType.iMessage;
-    }
+    _syncServiceToContacts();
     filteredChats.value = _allChats.where(_chatMatchesService).toList();
 
     Chat? existingChat;

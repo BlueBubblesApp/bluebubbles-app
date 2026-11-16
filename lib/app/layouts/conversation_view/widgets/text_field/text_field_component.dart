@@ -41,6 +41,7 @@ class TextFieldComponent extends StatefulWidget {
     this.initialAttachments = const [],
     this.alwaysShowSend = false,
     this.hideMediaPicker = false,
+    this.hintText,
   });
 
   final SpellCheckTextEditingController? subjectTextController;
@@ -59,6 +60,9 @@ class TextFieldComponent extends StatefulWidget {
   /// When true, the camera, attachment picker, and GIF icons are hidden.
   /// Used by the chat creator when no existing chat has been matched yet.
   final bool hideMediaPicker;
+
+  /// Overrides the placeholder, e.g. for the chat creator to name the service it will send with.
+  final String? hintText;
 
   @override
   State<StatefulWidget> createState() => TextFieldComponentState();
@@ -164,6 +168,16 @@ class TextFieldComponentState extends State<TextFieldComponent> {
   Chat? get chat => controller?.chat;
 
   bool get isChatCreator => focusNode != null;
+
+  String _hintText(bool isRecording) {
+    if (widget.hintText != null) return widget.hintText!;
+    if (isChatCreator) return "New Message";
+    if (isRecording) return "";
+    if (SettingsSvc.settings.recipientAsPlaceholder.value) {
+      return ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle();
+    }
+    return chat!.isIMessage ? "iMessage" : "Text Forwarding";
+  }
 
   bool _showAttachmentPickerLocal = false;
   bool _pasteHandledOnKeyDown = false;
@@ -294,8 +308,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                         color: context.theme.colorScheme.surfaceContainerHighest,
                       ),
                     Obx(() {
-                      final chatTitle =
-                          chat == null ? null : (ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle());
                       final field = TextField(
                         textCapitalization: TextCapitalization.sentences,
                         focusNode: controller?.focusNode ?? focusNode,
@@ -320,17 +332,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                           contentPadding: EdgeInsets.all(iOS && !kIsDesktop && !kIsWeb ? 10 : 12.5),
                           isDense: true,
                           isCollapsed: true,
-                          hintText: isChatCreator
-                              ? "New Message"
-                              : SettingsSvc.settings.recipientAsPlaceholder.value == true
-                                  ? isRecording
-                                      ? ""
-                                      : chatTitle ?? ""
-                                  : (chat!.isTextForwarding && !isRecording)
-                                      ? "Text Forwarding"
-                                      : (!isRecording) // Only show iMessage when not recording
-                                          ? "iMessage"
-                                          : "",
+                          hintText: _hintText(isRecording),
                           enabledBorder: InputBorder.none,
                           border: InputBorder.none,
                           focusedBorder: InputBorder.none,
