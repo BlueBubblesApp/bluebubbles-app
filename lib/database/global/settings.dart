@@ -680,14 +680,13 @@ class Settings {
     SettingsSvc.settings.editLastSentMessageOnUpArrow.value =
         map['editLastSentMessageOnUpArrow'] ?? SettingsSvc.settings.editLastSentMessageOnUpArrow.value;
     SettingsSvc.settings.redactedMode.value = map['redactedMode'] ?? SettingsSvc.settings.redactedMode.value;
-    SettingsSvc.settings.hideMessageContent.value =
-        map['hideMessageContent'] ?? SettingsSvc.settings.hideMessageContent.value;
+    SettingsSvc.settings.hideMessageContent.value = map['hideMessageContent'] ??
+        map['generateFakeMessageContent'] ??
+        SettingsSvc.settings.hideMessageContent.value;
     SettingsSvc.settings.hideAttachments.value = map['hideAttachments'] ?? SettingsSvc.settings.hideAttachments.value;
     SettingsSvc.settings.hideContactInfo.value = map['hideContactInfo'] ?? SettingsSvc.settings.hideContactInfo.value;
     SettingsSvc.settings.generateFakeAvatars.value =
         map['generateFakeAvatars'] ?? SettingsSvc.settings.generateFakeAvatars.value;
-    SettingsSvc.settings.hideMessageContent.value =
-        map['generateFakeMessageContent'] ?? SettingsSvc.settings.hideMessageContent.value;
     SettingsSvc.settings.enableUnifiedPush.value =
         map['enableUnifiedPush'] ?? SettingsSvc.settings.enableUnifiedPush.value;
     SettingsSvc.settings.endpointUnifiedPush.value =
@@ -892,11 +891,10 @@ class Settings {
     s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     s.editLastSentMessageOnUpArrow.value = map['editLastSentMessageOnUpArrow'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
-    s.hideMessageContent.value = map['hideMessageContent'] ?? true;
+    s.hideMessageContent.value = map['hideMessageContent'] ?? map['generateFakeMessageContent'] ?? false;
     s.hideAttachments.value = map['hideAttachments'] ?? true;
     s.hideContactInfo.value = map['hideContactInfo'] ?? true;
     s.generateFakeAvatars.value = map['generateFakeAvatars'] ?? false;
-    s.hideMessageContent.value = map['generateFakeMessageContent'] ?? false;
     s.enableUnifiedPush.value = map['enableUnifiedPush'] ?? false;
     s.endpointUnifiedPush.value = map['endpointUnifiedPush'] ?? "";
     s.enableFcm.value = map['enableFcm'] ?? true;
