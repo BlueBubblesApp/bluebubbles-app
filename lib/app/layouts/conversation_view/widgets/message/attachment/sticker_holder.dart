@@ -86,10 +86,15 @@ class StickerHolder extends StatefulWidget {
     );
   }
 
+  /// [p]'s scale on a [bubble] of that size: it was placed on one [StickerPlacement.parentPreviewWidth] wide, and
+  /// grows and shrinks with the bubble as Messages draws it
+  static double drawScale(StickerPlacement p, Size bubble) =>
+      p.parentPreviewWidth > 0 ? p.scale * bubble.width / p.parentPreviewWidth : p.scale;
+
   /// Where a placed sticker draws (its rotated bounding box) relative to a [bubble] of that size
   static Rect placedRect(PlacedSticker sticker, Size bubble, bool isFromMe, bool tailGutter) {
     final p = sticker.placement;
-    final scale = p.scale / _stickerPixelRatio;
+    final scale = drawScale(p, bubble) / _stickerPixelRatio;
     final w = sticker.pixels.width * scale;
     final h = sticker.pixels.height * scale;
     final cosA = cos(p.rotation).abs(), sinA = sin(p.rotation).abs();
@@ -343,7 +348,7 @@ class _StickerHolderState extends State<StickerHolder> {
           angle: p.rotation,
           child: _shrinkable(
             Transform.scale(
-              scale: p.scale,
+              scale: StickerHolder.drawScale(p, bubble),
               // Only a sticker still sending is new here: the one just dropped. It sticks rather than popping in.
               child: _StickIn(
                 play: attachment.guid!.startsWith("temp") && !_shown.contains(_keyOf(attachment)),
