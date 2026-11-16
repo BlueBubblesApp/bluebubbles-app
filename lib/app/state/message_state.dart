@@ -535,6 +535,7 @@ class MessageState extends StatefulController {
 
     if (index >= 0) {
       // Update existing reaction
+      _carryStickerSize(associatedMessages[index], reaction);
       associatedMessages[index] = reaction;
     } else {
       // Check if this replaces a temp reaction
@@ -545,6 +546,7 @@ class MessageState extends StatefulController {
 
       if (tempIndex >= 0) {
         // Replace temp reaction
+        _carryStickerSize(associatedMessages[tempIndex], reaction);
         associatedMessages[tempIndex] = reaction;
       } else {
         // Add new reaction
@@ -555,6 +557,15 @@ class MessageState extends StatefulController {
     // Update underlying message and hasReactions flag
     message.associatedMessages = associatedMessages.toList();
     hasReactions.value = associatedMessages.isNotEmpty;
+  }
+
+  /// The server's copy of a sent sticker has a new attachment guid and no measured size until its file downloads, so
+  /// it takes the sent one's, or [StickerSpace] would resize the bubble in between
+  void _carryStickerSize(Message from, Message to) {
+    if (from.associatedMessageType != "sticker") return;
+    final size = stickerSizes[from.dbAttachments.firstOrNull?.guid];
+    final guid = to.dbAttachments.firstOrNull?.guid;
+    if (size != null && guid != null && !stickerSizes.containsKey(guid)) stickerSizes[guid] = size;
   }
 
   /// Alias for addAssociatedMessageInternal to match controller naming
