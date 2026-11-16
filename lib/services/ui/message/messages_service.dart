@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -761,23 +762,34 @@ class MessagesService extends GetxController {
     await _handleNewMessage(message);
   }
 
-  /// Shows messages another isolate saved while this chat was open, newer than the newest one showing.
-  ///
-  /// Nothing tells this isolate about them: on Android a push is saved by the main or worker engine and never by a
-  /// bubble's, so a bubble misses everything pushed while it was collapsed, and its socket copy of one that was saved
-  /// first only reaches [updateMessage], which skips messages it isn't showing.
+  /// Dates of the loaded messages, leaving out ones being sent: those carry this device's clock, not the server's.
+  Iterable<DateTime> get _loadedDates =>
+      struct.messages.where((m) => !m.isSending).map((m) => m.dateCreated).whereType<DateTime>();
+
+  /// Adds [message], which an update arrived for while this chat isn't showing it, when it falls within the loaded
+  /// range. On Android another engine can save a message first (a push is saved by the main or worker engine, never
+  /// a bubble's), and then this engine's socket copy only reaches [updateMessage], which skips what isn't showing.
+  /// An update to history older than what's loaded, or to a deleted message, is left out.
+  Future<void> addMissedMessage(Message message) async {
+    final date = message.dateCreated;
+    if (date == null || message.dateDeleted != null) return;
+    final oldest = _loadedDates.fold<DateTime?>(null, (o, d) => o == null || d.isBefore(o) ? d : o);
+    if (oldest != null && date.isBefore(oldest)) return;
+    await addNewMessage(message);
+  }
+
+  /// Shows messages another engine saved while this one was away, from the newest one showing onwards. A bubble
+  /// misses everything pushed while it was collapsed: its socket is disconnected and nothing tells it about them.
   Future<void> addMissedFromDb() async {
-    if (kIsWeb || chat.id == null) return;
-    final newest = struct.messages.map((m) => m.dateCreated).whereType<DateTime>().fold<DateTime?>(
-        null, (latest, date) => latest == null || date.isAfter(latest) ? date : latest);
+    if (chat.id == null) return;
+    final newest = _loadedDates.fold<DateTime?>(null, (n, d) => n == null || d.isAfter(n) ? d : n);
     if (newest == null) return;
-    // Pages back from the newest until a page reaches past what's showing, so a gap of any size is covered.
-    final missed = <Message>[];
-    for (var offset = 0;; offset += 25) {
-      final page = Chat.getMessages(chat, offset: offset, limit: 25, getDetails: true);
-      missed.addAll(page.where((m) => m.dateCreated != null && !m.dateCreated!.isBefore(newest)));
-      if (page.isEmpty || page.last.dateCreated?.isBefore(newest) != false) break;
-    }
+    final missed = await ChatInterface.getMessagesAsync(
+      chatId: chat.id!,
+      chatGuid: chat.guid,
+      participantsData: chat.handles.map((e) => e.toMap()).toList(),
+      since: newest.millisecondsSinceEpoch,
+    );
     for (final message in missed.reversed) {
       await addNewMessage(message);
     }

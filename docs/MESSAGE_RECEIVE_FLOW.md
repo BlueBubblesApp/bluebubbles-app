@@ -122,7 +122,7 @@ Routing by `MessageEventType`:
 6. **Persist attachment GUID swaps** — calls `_replaceAttachments()`, which resolves the correct local attachment slot by `temp-` prefix or by index, handles parallel-delivery collisions, and (after all swaps) reloads the message from the DB and calls `MessagesSvc(chat.guid).updateMessage()` once for the whole batch.
 
 7. **Drive UI reactivity — gated on `!isIsolate`:**
-   - Calls `_dispatchUpdatedMessage()` → `MessagesSvc(chat.guid).updateMessage(message, oldGuid: tempGuid)` + `EventDispatcherSvc.emit('updated-message', ...)`.
+   - Calls `_dispatchUpdatedMessage()` → `MessagesSvc(chat.guid).updateMessage(message, oldGuid: tempGuid)` + `EventDispatcherSvc.emit('updated-message', ...)`. If the open view wasn't showing the message, it calls `addMissedMessage(message)`, which adds it unless it's deleted or older than everything loaded. On Android another engine can save a message first (a push is saved by the main or worker engine, never a bubble's), so this engine's socket copy arrives as an update. On resume, Android also calls `addMissedFromDb()` for the active chat, which adds everything saved since the newest message showing, in one query in `GlobalIsolate` (`ChatInterface.getMessagesAsync(since:)`). This covers what a bubble missed while it was collapsed.
    - Calls `ChatsSvc.updateChat(c, override: true)` unconditionally to refresh chat-list ordering.
    - Only calls `ChatsSvc.updateChatLatestMessage(c.guid, m)` if this chat's current `ChatState.latestMessage` already points at the same message GUID — i.e. it re-syncs the latest-message pointer rather than blindly overwriting it.
 

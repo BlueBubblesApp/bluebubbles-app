@@ -21,6 +21,8 @@ One instance per chat GUID. Accessed via `MessagesSvc(chatGuid)`.
 **Key methods:**
 - `updateMessage(Message, {String? oldGuid})` — the main write path; merges changes into `MessageState` and handles tempGuid → realGuid remapping
 - `addMessages(List<Message>)` — bulk-inserts into the struct and creates `MessageState` entries
+- `addNewMessage(Message)` — adds one message to the view if it isn't already there
+- `addMissedMessage(Message)` / `addMissedFromDb()` — catch up on messages another Android engine saved (an update for a message not showing; the active chat on resume). See `docs/MESSAGE_RECEIVE_FLOW.md`
 - `getMessage(String guid)` → `Message?` — fast in-memory lookup
 - `getOrCreateState(Message)` → `MessageState` — lazily creates or retrieves a `MessageState` for a message
 - `getOrCreateMessageState(String guid)` → `MessageState` — same but keyed by GUID

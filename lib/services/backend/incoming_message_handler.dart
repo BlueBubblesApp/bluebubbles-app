@@ -859,11 +859,12 @@ class IncomingMessageHandler {
   void _dispatchUpdatedMessage(Chat chat, Message message, {String? oldGuid}) {
     if (Get.isRegistered<MessagesService>(tag: chat.guid)) {
       final svc = MessagesSvc(chat.guid);
-      // Not showing means another isolate saved it first, e.g. a push while this is a bubble.
       final showing =
           svc.struct.getMessage(oldGuid ?? message.guid!) != null || svc.struct.getMessage(message.guid!) != null;
       svc.updateMessage(message, oldGuid: oldGuid);
-      if (!showing) unawaited(svc.addMissedFromDb());
+      // Not showing: either history older than what's loaded, or another engine saved it first (a push while this is
+      // a bubble), so this engine only sees the update.
+      if (!showing) unawaited(svc.addMissedMessage(message));
     }
 
     EventDispatcherSvc.emit('updated-message', {
