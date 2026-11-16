@@ -103,6 +103,15 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     }
   }
 
+  // How installers (through Restart Manager) close apps. Before plugins, whose close-to-tray would only hide the window
+  // and keep its files locked.
+  if (message == WM_ENDSESSION) {
+    if (wparam) {
+      Destroy();
+    }
+    return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
