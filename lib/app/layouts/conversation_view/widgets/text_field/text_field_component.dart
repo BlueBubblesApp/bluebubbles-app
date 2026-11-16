@@ -176,7 +176,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
     if (SettingsSvc.settings.recipientAsPlaceholder.value) {
       return ChatsSvc.getChatState(chat!.guid)?.title.value ?? chat!.getTitle();
     }
-    return chat!.isIMessage ? "iMessage" : "Text Message";
+    return chat!.isIMessage ? "iMessage" : "Text Forwarding";
   }
 
   bool _showAttachmentPickerLocal = false;

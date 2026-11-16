@@ -214,7 +214,7 @@ class _TextFieldArea extends StatelessWidget {
     return Obx(() {
       final service = controller.selectedService.value;
       final isIMsg = service == ChatServiceType.iMessage;
-      final hint = isIMsg ? "iMessage" : "Text Message";
+      final hint = isIMsg ? "iMessage" : "Text Forwarding";
       final activeCVC = controller.activeController.value;
       final sending = controller.isSending.value;
 
