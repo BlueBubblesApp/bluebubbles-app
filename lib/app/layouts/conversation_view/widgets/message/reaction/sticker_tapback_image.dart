@@ -27,10 +27,19 @@ class _StickerTapbackImageState extends State<StickerTapbackImage> {
   // Not on disk, and auto-download is off (or waiting for wifi): a tap downloads it
   bool _awaitingTap = false;
 
+  /// While this isn't downloading it, joins a download started somewhere else (the chat, say)
+  Worker? _downloadWatch;
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _downloadWatch?.dispose();
+    super.dispose();
   }
 
   @override
@@ -45,11 +54,18 @@ class _StickerTapbackImageState extends State<StickerTapbackImage> {
     if (attachment == null || attachment.guid == _loadedGuid) return;
     _loadedGuid = attachment.guid;
     _awaitingTap = false;
+    _downloadWatch?.dispose();
+    _downloadWatch = null;
     if (await FileSystemEntity.type(attachment.path) == FileSystemEntityType.notFound) {
       if (await AttachmentsSvc.canAutoDownload(requestStoragePermission: false)) {
         _download(attachment);
       } else if (mounted) {
         setState(() => _awaitingTap = true);
+        _downloadWatch = ever(AttachmentDownloader.downloaders, (List<String> guids) {
+          if (!guids.contains(attachment.guid) || !mounted) return;
+          setState(() => _awaitingTap = false);
+          _download(attachment);
+        });
       }
     } else {
       await _show(attachment);
@@ -57,6 +73,8 @@ class _StickerTapbackImageState extends State<StickerTapbackImage> {
   }
 
   void _download(Attachment attachment) {
+    _downloadWatch?.dispose();
+    _downloadWatch = null;
     AttachmentDownloader.startDownload(
       attachment,
       onComplete: (_) => _show(attachment),
