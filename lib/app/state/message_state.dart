@@ -893,14 +893,11 @@ class MessageState extends StatefulController {
         (chatGuid == null ? null : maybeFindMessagesSvc(chatGuid)?.struct.getAttachment(guid));
     // Synchronous on purpose: the caller assigns the parts as soon as this returns, so a part found after an await
     // was lost, and later runs of its part were built without it
-    int? lastPart;
     for (final (i, e) in runs.indexed) {
-      // A run without a part number continues the part before it, as Messages reads it
-      final partNum = e.attributes?.messagePart ?? lastPart ?? 0;
-      lastPart = partNum;
+      if (e.attributes?.messagePart == null) continue;
       final isInline = inlineGuids.contains(e.attributes!.attachmentGuid);
       final attachment = e.isAttachment ? loadedAttachment(e.attributes!.attachmentGuid!) : null;
-      final existingPart = list.firstWhereOrNull((element) => element.part == partNum);
+      final existingPart = list.firstWhereOrNull((element) => element.part == e.attributes!.messagePart!);
       if (existingPart != null) {
         final currentLength = existingPart.text?.length ?? 0;
         // A U+FFFC without its Genmoji would shift the rest, so it's only kept with one
@@ -922,7 +919,7 @@ class MessageState extends StatefulController {
           text: e.isAttachment && !isInline ? null : mainString.substring(e.range.first, e.range.first + e.range.last),
           attachments: attachment != null ? [attachment] : [],
           runs: e.isAttachment && !isInline ? [] : [Run(range: [0, e.range.last], attributes: e.attributes)],
-          part: partNum,
+          part: e.attributes!.messagePart!,
         ));
       }
     }
