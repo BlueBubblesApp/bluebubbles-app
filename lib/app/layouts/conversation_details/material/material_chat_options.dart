@@ -410,11 +410,19 @@ class ExpressiveChatOptions extends StatelessWidget {
         enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
         build: (context) => M3EListTile(
           icon: Icons.person_add,
-          title: "Show hidden contact suggestions",
-          supportingText: "Bring back shared names and photos you dismissed in this chat",
+          // Desktop has no address book, so the share offer is all it hides
+          title: kIsDesktop ? "Show sharing offer again" : "Show hidden contact suggestions",
+          supportingText: kIsDesktop
+              ? "Bring back the offer to share your name and photo in this chat"
+              : "Bring back shared names and photos you dismissed in this chat",
           onTap: () async {
             await NameAndPhotoSharingSvc.unhideAll(chat);
-            showSnackbar("Notice", "Hidden contact suggestions will show again");
+            showSnackbar(
+              "Notice",
+              kIsDesktop
+                  ? "The offer to share your name and photo will show again"
+                  : "Hidden contact suggestions will show again",
+            );
           },
         ),
       ),

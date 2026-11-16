@@ -463,8 +463,11 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
       _OptionRow(
         enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
         build: (context) => SettingsTile(
-          title: "Show Hidden Contact Suggestions",
-          subtitle: "Bring back shared names and photos you dismissed in this chat",
+          // Desktop has no address book, so the share offer is all it hides
+          title: kIsDesktop ? "Show Sharing Offer Again" : "Show Hidden Contact Suggestions",
+          subtitle: kIsDesktop
+              ? "Bring back the offer to share your name and photo in this chat"
+              : "Bring back shared names and photos you dismissed in this chat",
           backgroundColor: tileColor,
           leading: const SettingsLeadingIcon(
             iosIcon: CupertinoIcons.person_crop_circle_badge_plus,
@@ -473,7 +476,12 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
           ),
           onTap: () async {
             await NameAndPhotoSharingSvc.unhideAll(chat);
-            showSnackbar("Notice", "Hidden contact suggestions will show again");
+            showSnackbar(
+              "Notice",
+              kIsDesktop
+                  ? "The offer to share your name and photo will show again"
+                  : "Hidden contact suggestions will show again",
+            );
           },
         ),
       ),
