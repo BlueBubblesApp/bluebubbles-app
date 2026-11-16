@@ -1,4 +1,5 @@
 import 'package:bluebubbles/models/models.dart' show AttachmentUploadProgress;
+import 'package:bluebubbles/models/sticker_placement.dart';
 import 'dart:async';
 import 'dart:collection';
 import 'package:bluebubbles/database/models.dart';
@@ -220,6 +221,41 @@ class OutgoingMessageHandler {
           transferName: fileName,
           totalBytes: bytes.length,
           bytes: bytes,
+        ),
+      ),
+    );
+  }
+
+  /// Places the sticker in [bytes] on [part] of [selected] at [placement], shown there while sending.
+  Future<void> queuePlacedSticker({
+    required Chat chat,
+    required Message selected,
+    required int part,
+    required Uint8List bytes,
+    required String fileName,
+    required StickerPlacement placement,
+  }) {
+    return queue(
+      OutgoingReaction(
+        chat: chat,
+        message: Message(
+          associatedMessageGuid: selected.guid,
+          associatedMessageType: ReactionTypes.PLACED_STICKER,
+          associatedMessagePart: part,
+          dateCreated: DateTime.now(),
+          hasAttachments: true,
+          isFromMe: true,
+          handleId: 0,
+        ),
+        selectedMessage: selected,
+        reaction: ReactionTypes.PLACED_STICKER,
+        sticker: Attachment(
+          isOutgoing: true,
+          mimeType: mime(fileName) ?? 'image/png',
+          transferName: fileName,
+          totalBytes: bytes.length,
+          bytes: bytes,
+          stickerPlacement: placement.toMap(),
         ),
       ),
     );
@@ -862,8 +898,8 @@ class OutgoingMessageHandler {
               partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
               ddScan: SettingsSvc.serverDetails.supportsLinkScan && m.text!.hasUrl,
             )
-          : ReactionTypes.isStickerTapback(r)
-          ? _sendStickerTapback(c, m, selected!, r)
+          : ReactionTypes.sendsSticker(r)
+          ? _sendSticker(c, m, selected!, r)
           : SendMessageInterface.sendTapback(
               chatGuid: c.guid,
               selectedMessageText: selected!.text ?? '',
@@ -873,8 +909,8 @@ class OutgoingMessageHandler {
               emoji: ReactionTypes.isEmojiTapback(r) ? m.associatedMessageEmoji : null,
             ),
       onSuccess: (data) async {
-        // A sticker tapback's attachment takes its real GUID too
-        if (r != null && ReactionTypes.isStickerTapback(r)) {
+        // A sticker's attachment takes its real GUID too
+        if (ReactionTypes.sendsSticker(r)) {
           final attachments = ((data['data']?['attachments'] as List?) ?? const [])
               .whereType<Map>()
               .map((e) => Attachment.fromMap(e.cast<String, dynamic>()));
@@ -890,8 +926,8 @@ class OutgoingMessageHandler {
           onExtra: r != null
               ? (confirmed) async {
                   if (confirmed.isReaction) {
-                    // The saved sticker tapback links its sticker; the server's copy has no dbAttachments
-                    if (ReactionTypes.isStickerTapback(r)) {
+                    // The saved sticker links its image; the server's copy has no dbAttachments
+                    if (ReactionTypes.sendsSticker(r)) {
                       confirmed = Message.findOne(guid: confirmed.guid) ?? confirmed;
                     }
                     final parentState =
@@ -929,19 +965,21 @@ class OutgoingMessageHandler {
     );
   }
 
-  /// A sticker tapback, or its removal, sends the sticker image itself: the temp reaction's attachment.
-  Future<Map<String, dynamic>> _sendStickerTapback(Chat c, Message m, Message selected, String r) async {
+  /// A sticker tapback, its removal, or a placed sticker sends the sticker image itself: the temp reaction's
+  /// attachment, which also carries a placed sticker's placement.
+  Future<Map<String, dynamic>> _sendSticker(Chat c, Message m, Message selected, String r) async {
     final sticker = m.dbAttachments.firstOrNull;
     final file = sticker == null || kIsWeb ? null : File(sticker.path);
-    if (file == null || !await file.exists()) throw Exception('This sticker tapback has no sticker to send');
+    if (file == null || !await file.exists()) throw Exception('This sticker has no image to send');
     final response = await HttpSvc.sticker.send(
       chatGuid: c.guid,
       messageGuid: selected.guid!,
       partIndex: m.associatedMessagePart ?? 0,
       bytes: await file.readAsBytes(),
       fileName: sticker!.transferName ?? 'sticker.png',
-      tapback: true,
+      tapback: ReactionTypes.isStickerTapback(r),
       remove: r == ReactionTypes.REMOVED_STICKER,
+      placement: StickerPlacement.tryParse(sticker.stickerPlacement),
     );
     return (response.data as Map).cast<String, dynamic>();
   }
@@ -1494,6 +1532,9 @@ class OutgoingMessageHandler {
 
   /// Why tapback [type] on [m] can't be sent, or null if it can.
   static String? _unsendableTapbackReason(String type, Message m) {
+    if (type == ReactionTypes.PLACED_STICKER) {
+      return SettingsSvc.serverDetails.supportsStickers ? null : "Stickers need a v2 server";
+    }
     if (ReactionTypes.isStickerTapback(type)) {
       return SettingsSvc.serverDetails.supportsStickerTapbacks
           ? null

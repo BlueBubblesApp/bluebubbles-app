@@ -79,6 +79,13 @@ class ReactionTypes {
 
   static bool isStickerTapback(String? type) => type == STICKER || type == REMOVED_STICKER;
 
+  // A sticker placed on a bubble rather than sent as a tapback
+  // ignore: non_constant_identifier_names
+  static const String PLACED_STICKER = "sticker";
+
+  /// Sent with the sticker image as its attachment, through `message/sticker`
+  static bool sendsSticker(String? type) => isStickerTapback(type) || type == PLACED_STICKER;
+
   /// The tapback a removal takes back ("-love" is "love"), for drawing a failed one in its place
   static String? addedType(String? type) => switch (type) {
         REMOVED_EMOJI => EMOJI,

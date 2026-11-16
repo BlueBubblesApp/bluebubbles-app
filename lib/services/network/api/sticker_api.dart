@@ -1,4 +1,5 @@
 import 'package:bluebubbles/models/library_sticker.dart';
+import 'package:bluebubbles/models/sticker_placement.dart';
 import 'package:bluebubbles/services/network/api/base_api.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -92,7 +93,7 @@ class StickerApi {
     });
   }
 
-  /// `POST message/sticker`: puts the sticker in [bytes] on part [partIndex] of [messageGuid].
+  /// `POST message/sticker`: puts the sticker in [bytes] on part [partIndex] of [messageGuid], at [placement].
   ///
   /// With [tapback] it goes out as a sticker tapback, replacing your previous tapback on that message;
   /// [remove] (with [tapback]) takes it back. The server answers with the sticker's own message.
@@ -104,6 +105,7 @@ class StickerApi {
     int partIndex = 0,
     bool tapback = false,
     bool remove = false,
+    StickerPlacement? placement,
     CancelToken? cancelToken,
   }) async {
     return _svc.runApiGuarded(() async {
@@ -117,6 +119,8 @@ class StickerApi {
           'partIndex': partIndex.toString(),
           if (tapback) 'tapback': 'true',
           if (remove) 'remove': 'true',
+          // Without it the server centers the sticker
+          if (placement != null) ...placement.toMap().map((k, v) => MapEntry(k, v.toString())),
         }),
         cancelToken: cancelToken,
       );

@@ -1,6 +1,7 @@
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/sticker_placement.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -96,8 +97,8 @@ Future<void> retryReaction({
   required Chat chat,
   required Message selected,
 }) async {
-  // A sticker tapback is re-sent with its sticker, read before the failed one (and its file) goes
-  final sticker = ReactionTypes.isStickerTapback(reaction.associatedMessageType)
+  // A sticker is re-sent with its image, read before the failed one (and its file) goes
+  final sticker = ReactionTypes.sendsSticker(reaction.associatedMessageType)
       ? reaction.dbAttachments.firstOrNull
       : null;
   final stickerFile = sticker == null || kIsWeb ? null : File(sticker.path);
@@ -114,6 +115,18 @@ Future<void> retryReaction({
   }
 
   // Re-send
+  final placement = StickerPlacement.tryParse(sticker?.stickerPlacement);
+  if (stickerBytes != null && reaction.associatedMessageType == ReactionTypes.PLACED_STICKER && placement != null) {
+    await OutgoingMsgHandler.queuePlacedSticker(
+      chat: chat,
+      selected: selected,
+      part: reaction.associatedMessagePart ?? 0,
+      bytes: stickerBytes,
+      fileName: sticker!.transferName ?? 'sticker.png',
+      placement: placement,
+    );
+    return;
+  }
   if (stickerBytes != null) {
     await OutgoingMsgHandler.queueStickerTapback(
       chat: chat,
