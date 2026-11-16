@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_it/get_it.dart';
@@ -42,9 +41,20 @@ class SubscriptionService {
 
   Worker? _serverWorker;
   Worker? _socketWorker;
+  Future<void>? _refreshing;
+
+  /// The server last checked, so refreshed details for the same server (every resume) don't check again
+  String? _checkedServer;
+
+  String get _server {
+    final details = SettingsSvc.serverDetails;
+    return "${HttpSvc.origin}|${details.isV2Server}|${details.serverVersion}";
+  }
 
   void init() {
-    _serverWorker = ever(SettingsSvc.serverDetailsChanges, (_) => unawaited(refresh()));
+    _serverWorker = ever(SettingsSvc.serverDetailsChanges, (_) {
+      if (_server != _checkedServer) unawaited(refresh());
+    });
     _socketWorker = ever(SocketSvc.state, (SocketState state) {
       if (state == SocketState.connected && _unreachable.value) unawaited(refresh());
     });
@@ -56,7 +66,11 @@ class SubscriptionService {
     _socketWorker?.dispose();
   }
 
-  Future<void> refresh() async {
+  /// Overlapping calls (resume, a reconnect, Retry) share one request.
+  Future<void> refresh() => _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
+    _checkedServer = _server;
     if (!SettingsSvc.serverDetails.isV2Server) {
       _pro.value = null;
       _unreachable.value = false;
