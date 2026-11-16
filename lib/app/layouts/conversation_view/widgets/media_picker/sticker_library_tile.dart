@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
@@ -10,7 +9,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// Picks an image on this device and adds it to the Mac's sticker library, where it lands in Recents. A refusal shows
@@ -96,8 +94,8 @@ class StickerLibraryTile extends StatefulWidget {
   final LibrarySticker sticker;
   final VoidCallback? onTap;
 
-  /// Lets it be dragged onto a message ([StickerDropTarget]), centered on the pointer: at once with a mouse, where a
-  /// trackpad pinch or Ctrl+scroll scales and rotates it, and after a long press on mobile, where a second finger does.
+  /// Lets it be dragged onto a message ([StickerDropTarget]), centered on the pointer: at once with a mouse, and after
+  /// a long press on mobile, where a second finger scales and rotates it.
   final bool draggable;
   final DragUpdateCallback? onDragUpdate;
   final VoidCallback? onDragEnd;
@@ -123,9 +121,6 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
 
   /// The pinch's start: the fingers' distance and angle, and the sticker's transform then
   ({double distance, double angle, double scale, double rotation})? _pinchStart;
-
-  /// The sticker's transform when a trackpad gesture started, which reports its scale and rotation since then
-  ({double scale, double rotation})? _panZoomStart;
 
   LibrarySticker get sticker => widget.sticker;
 
@@ -154,25 +149,14 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
     _pinching = false;
     _pinchPointer = null;
     _pinchStart = null;
-    _panZoomStart = null;
   }
 
   void _setTransform(double scale, double rotation) =>
       _drag.transform.value = (scale: scale.clamp(0.4, 3.0), rotation: rotation);
 
-  // Sees every pointer on screen while dragging, so a second finger or a trackpad gesture anywhere can pinch the sticker
+  // Sees every pointer on screen while dragging, so a second finger anywhere can pinch the sticker
   void _onPointer(PointerEvent event) {
     final t = _drag.transform.value;
-    if (event is PointerPanZoomStartEvent) {
-      _panZoomStart = t;
-    } else if (event is PointerPanZoomUpdateEvent) {
-      final start = _panZoomStart ?? t;
-      _setTransform(start.scale * event.scale, start.rotation + event.rotation);
-    } else if (event is PointerScrollEvent && HardwareKeyboard.instance.isControlPressed) {
-      // What a trackpad pinch arrives as where Windows doesn't treat it as a precision touchpad
-      _setTransform(t.scale * exp(-event.scrollDelta.dy / 400), t.rotation);
-    }
-    if (kIsDesktop) return;
     if (event.pointer == _dragPointer) {
       if (event is PointerMoveEvent) _dragPosition = event.position;
     } else if (event is PointerDownEvent && _pinchPointer == null) {
@@ -233,15 +217,9 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
       return Draggable<StickerDrag>(
         data: _drag,
         dragAnchorStrategy: pointerDragAnchorStrategy,
-        onDragStarted: () {
-          onStarted();
-          _startPinching();
-        },
+        onDragStarted: onStarted,
         onDragUpdate: onUpdate,
-        onDragEnd: (_) {
-          _stopPinching();
-          widget.onDragEnd?.call();
-        },
+        onDragEnd: (_) => widget.onDragEnd?.call(),
         feedback: feedback,
         childWhenDragging: Opacity(opacity: 0.4, child: tile),
         child: tile,
