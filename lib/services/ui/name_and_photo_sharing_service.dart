@@ -22,8 +22,10 @@ class NameAndPhotoSharingService {
   /// How long a read card is reused, so reopening a chat doesn't ask the server again
   static const Duration _cardTtl = Duration(minutes: 30);
 
-  /// Chats whose add or share offers were dismissed this session
+  /// New contacts hidden this session, by address
   final Set<String> _dismissedAdds = {};
+
+  /// Chats whose share offer was dismissed this session
   final Set<String> _dismissedShares = {};
 
   /// Cards read recently, by address (empty for your own)
@@ -56,7 +58,7 @@ class NameAndPhotoSharingService {
     for (final handle in chat.people) {
       // Photo updates need a native contact to write to
       if (handle.contactsV2.isNotEmpty && !handle.contactsV2.any((c) => c.isNative)) continue;
-      if (handle.contactsV2.isEmpty && _dismissedAdds.contains(chat.guid)) continue;
+      if (handle.contactsV2.isEmpty && _dismissedAdds.contains(handle.address)) continue;
       final card = await _readCard(address: handle.address);
       if (card == null) continue;
       final shared = SharedNameAndPhoto(handle, card.name, card.avatar);
@@ -67,7 +69,7 @@ class NameAndPhotoSharingService {
     }
   }
 
-  void dismissAdds(Chat chat) => _dismissedAdds.add(chat.guid);
+  void dismissAdd(SharedNameAndPhoto shared) => _dismissedAdds.add(shared.handle.address);
 
   void dismissShare(Chat chat) => _dismissedShares.add(chat.guid);
 
