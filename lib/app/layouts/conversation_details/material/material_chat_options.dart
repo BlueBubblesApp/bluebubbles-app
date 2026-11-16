@@ -51,7 +51,8 @@ class ExpressiveChatOptions extends StatelessWidget {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          _buildContentGroup(context),
+          // Reactive for Show Hidden, which goes once nothing in the chat is hidden
+          Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
       ),
@@ -407,7 +408,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         ),
       ),
       _OptionRow(
-        enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
+        enabled: NameAndPhotoSharingSvc.hasHidden(chat),
         build: (context) => M3EListTile(
           icon: Icons.person_add,
           // Desktop has no address book, so the share offer is all it hides

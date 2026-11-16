@@ -56,7 +56,8 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          _buildContentGroup(context),
+          // Reactive for Show Hidden, which goes once nothing in the chat is hidden
+          Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
       ),
@@ -461,7 +462,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         ),
       ),
       _OptionRow(
-        enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
+        enabled: NameAndPhotoSharingSvc.hasHidden(chat),
         build: (context) => SettingsTile(
           // Desktop has no address book, so the share offer is all it hides
           title: kIsDesktop ? "Show Sharing Offer Again" : "Show Hidden Contact Suggestions",

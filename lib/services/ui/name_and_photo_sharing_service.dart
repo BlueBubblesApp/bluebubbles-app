@@ -28,6 +28,9 @@ class NameAndPhotoSharingService {
   /// Chats whose share offer was dismissed this session
   final Set<String> _dismissedShares = {};
 
+  /// Bumped on every hide and unhide, so an Obx reading [hasHidden] rebuilds
+  final RxInt _hiddenChanges = 0.obs;
+
   /// Cards read recently, by address (empty for your own)
   final Map<String, ({DateTime readAt, ({String? name, Uint8List? avatar})? card})> _cards = {};
 
@@ -71,13 +74,30 @@ class NameAndPhotoSharingService {
     }
   }
 
-  void dismissAdd(SharedNameAndPhoto shared) => _dismissedAdds.add(shared.handle.address);
+  void dismissAdd(SharedNameAndPhoto shared) {
+    _dismissedAdds.add(shared.handle.address);
+    _hiddenChanges.value++;
+  }
 
-  void dismissShare(Chat chat) => _dismissedShares.add(chat.guid);
+  void dismissShare(Chat chat) {
+    _dismissedShares.add(chat.guid);
+    _hiddenChanges.value++;
+  }
+
+  /// Whether [unhideAll] would bring anything back in [chat]. Desktop only ever hides the share offer.
+  bool hasHidden(Chat chat) {
+    if (_hiddenChanges.value < 0 || !isAvailableIn(chat)) return false;
+    if (_dismissedShares.contains(chat.guid)) return true;
+    if (kIsDesktop) return false;
+    return chat.people.any(
+        (h) => _dismissedAdds.contains(h.address) || PrefsSvc.messaging.getHiddenSharedPhoto(h.address) != null);
+  }
 
   /// A dismissed photo isn't offered again until they share a different one, or [unhideAll] brings it back
-  Future<void> dismissPhoto(SharedNameAndPhoto shared) =>
-      PrefsSvc.messaging.setHiddenSharedPhoto(shared.handle.address, shared.photoHash!);
+  Future<void> dismissPhoto(SharedNameAndPhoto shared) async {
+    await PrefsSvc.messaging.setHiddenSharedPhoto(shared.handle.address, shared.photoHash!);
+    _hiddenChanges.value++;
+  }
 
   /// Brings back everything hidden in [chat]: its share offer, and its participants' new contacts and photos.
   /// Emits `shared-contacts-unhidden` with the chat's GUID so its banner reloads.
@@ -87,6 +107,7 @@ class NameAndPhotoSharingService {
       _dismissedAdds.remove(handle.address);
       await PrefsSvc.messaging.clearHiddenSharedPhoto(handle.address);
     }
+    _hiddenChanges.value++;
     EventDispatcherSvc.emit('shared-contacts-unhidden', chat.guid);
   }
 
