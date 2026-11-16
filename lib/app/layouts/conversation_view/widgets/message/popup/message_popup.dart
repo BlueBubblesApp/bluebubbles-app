@@ -300,9 +300,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   // The size emoji draw at in the row (_emojiTapbackGlyph)
   Widget _recentStickerGlyph(LibrarySticker sticker) => SizedBox.square(
         dimension: 26,
-        child: StickerLibrarySvc.cachedThumbnails.contains(sticker.identifier)
-            ? Image.file(StickerLibrarySvc.thumbnailFile(sticker.identifier), fit: BoxFit.contain)
-            : Icon(Icons.sticky_note_2_outlined, size: 20, color: context.theme.colorScheme.outline),
+        child: Obx(
+          () => StickerLibrarySvc.cachedThumbnails.contains(sticker.identifier)
+              ? Image.file(StickerLibrarySvc.thumbnailFile(sticker.identifier), fit: BoxFit.contain)
+              : Icon(Icons.sticky_note_2_outlined, size: 20, color: context.theme.colorScheme.outline),
+        ),
       );
 
   /// Reacts with [sticker], replacing your current tapback, and shows it while sending like any tapback.
