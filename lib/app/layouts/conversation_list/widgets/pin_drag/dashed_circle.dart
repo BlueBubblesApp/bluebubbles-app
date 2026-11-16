@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-/// A dashed circle filling its box: the outline of an empty pin.
 class DashedCirclePainter extends CustomPainter {
   const DashedCirclePainter(this.color);
 

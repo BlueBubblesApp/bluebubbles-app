@@ -133,7 +133,6 @@ class PinDragController {
     return ++_generation;
   }
 
-  /// The drag has moved past its hold: it is a drag now.
   void markMoved() {
     if (_closed) return;
     _moved.value = true;
@@ -287,7 +286,6 @@ class PinDragController {
     if (_unpinSlotContext == context) _unpinSlotContext = null;
   }
 
-  /// Records the pins' avatar size after a layout, so a pin dragged next matches them.
   void reportPinAvatarSize(double size) => _pinAvatarSize = size;
 
   void dispose() {

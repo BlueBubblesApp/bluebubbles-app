@@ -83,7 +83,6 @@ class ConversationTileController extends StatefulController {
     HapticFeedback.lightImpact();
   }
 
-  /// Adds this chat to its list's selection, or takes it out.
   void toggleListSelection() {
     if (isSelected) {
       listController.selectedChats.removeWhere((c) => c.guid == chat.guid);

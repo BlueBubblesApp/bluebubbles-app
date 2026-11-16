@@ -50,7 +50,6 @@ class ChatDragFeedback extends StatelessWidget {
               final asPin = look?.value ?? (drag.overPinArea || alwaysPin);
               return AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
-                // The new look grows out of the old one's center rather than appearing at full size.
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: ScaleTransition(
@@ -74,7 +73,6 @@ class ChatDragFeedback extends StatelessWidget {
   }
 }
 
-/// A dragged chat as a pin: its avatar and title, sized like the pins.
 class _PinLook extends StatelessWidget {
   const _PinLook({super.key, required this.chat, required this.avatarSize});
 
@@ -105,7 +103,6 @@ class _PinLook extends StatelessWidget {
   }
 }
 
-/// A dragged chat as a list tile: avatar, title and latest message on a card.
 class _ListTileLook extends StatelessWidget {
   const _ListTileLook({required this.chat, required this.width});
 

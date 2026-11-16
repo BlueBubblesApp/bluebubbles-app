@@ -77,7 +77,6 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     // Extra per-row safety margin so real-device font/DPI variance can't make the
     // estimate come in short and let the last row bleed into the space below it.
     const double tileVSafetyBuffer = 4.0;
-    // Derive a clean, capped avatar size from the actual available width
     final double avatar = min((maxWidth - _pageHPadding - colCount * tileHOverhead) / colCount, 120.0);
     final TextStyle style = context.theme.textTheme.bodyMedium!;
     final double textHeight = (style.height ?? 1.2) * (style.fontSize ?? 14);
@@ -288,7 +287,6 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
     );
   }
 
-  /// The pins as a column of avatars, for the avatar-only layout.
   Widget _buildAvatarOnly(BuildContext context, List<Chat> chats) {
     return Column(
       mainAxisSize: MainAxisSize.min,
