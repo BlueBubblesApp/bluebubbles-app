@@ -28,8 +28,8 @@ class NameAndPhotoSharingService {
   /// Chats whose share offer was dismissed this session
   final Set<String> _dismissedShares = {};
 
-  /// Bumped on every hide and unhide, so an Obx reading [hasHidden] rebuilds
-  final RxInt _hiddenChanges = 0.obs;
+  /// Bumped whenever a photo is applied, dismissed or offered again, so an Obx reading [hasSeenPhotos] rebuilds
+  final RxInt _photoChanges = 0.obs;
 
   /// Cards read recently, by address (empty for your own)
   final Map<String, ({DateTime readAt, ({String? name, Uint8List? avatar})? card})> _cards = {};
@@ -67,47 +67,34 @@ class NameAndPhotoSharingService {
       final shared = SharedNameAndPhoto(handle, card.name, card.avatar);
       if (shared.isNewContact ||
           (shared.photoHash != null &&
-              PrefsSvc.messaging.getAppliedSharedPhoto(handle.address) != shared.photoHash &&
-              PrefsSvc.messaging.getHiddenSharedPhoto(handle.address) != shared.photoHash)) {
+              PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash)) {
         yield shared;
       }
     }
   }
 
-  void dismissAdd(SharedNameAndPhoto shared) {
-    _dismissedAdds.add(shared.handle.address);
-    _hiddenChanges.value++;
+  void dismissAdd(SharedNameAndPhoto shared) => _dismissedAdds.add(shared.handle.address);
+
+  void dismissShare(Chat chat) => _dismissedShares.add(chat.guid);
+
+  /// Whether any participant in [chat] has a photo that was applied or dismissed, for [offerPhotosAgain]. Desktop
+  /// never offers photos.
+  bool hasSeenPhotos(Chat chat) {
+    if (_photoChanges.value < 0 || kIsDesktop || !isAvailableIn(chat)) return false;
+    return chat.people.any((h) => PrefsSvc.messaging.getSeenSharedPhoto(h.address) != null);
   }
 
-  void dismissShare(Chat chat) {
-    _dismissedShares.add(chat.guid);
-    _hiddenChanges.value++;
-  }
-
-  /// Whether [unhideAll] would bring anything back in [chat]. Desktop only ever hides the share offer.
-  bool hasHidden(Chat chat) {
-    if (_hiddenChanges.value < 0 || !isAvailableIn(chat)) return false;
-    if (_dismissedShares.contains(chat.guid)) return true;
-    if (kIsDesktop) return false;
-    return chat.people.any(
-        (h) => _dismissedAdds.contains(h.address) || PrefsSvc.messaging.getHiddenSharedPhoto(h.address) != null);
-  }
-
-  /// A dismissed photo isn't offered again until they share a different one, or [unhideAll] brings it back
+  /// A dismissed photo isn't offered again until they share a different one, or [offerPhotosAgain]
   Future<void> dismissPhoto(SharedNameAndPhoto shared) async {
-    await PrefsSvc.messaging.setHiddenSharedPhoto(shared.handle.address, shared.photoHash!);
-    _hiddenChanges.value++;
+    await PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+    _photoChanges.value++;
   }
 
-  /// Brings back everything hidden in [chat]: its share offer, and its participants' new contacts and photos.
-  /// Emits `shared-contacts-unhidden` with the chat's GUID so its banner reloads.
-  Future<void> unhideAll(Chat chat) async {
-    _dismissedShares.remove(chat.guid);
-    for (final handle in chat.people) {
-      _dismissedAdds.remove(handle.address);
-      await PrefsSvc.messaging.clearHiddenSharedPhoto(handle.address);
-    }
-    _hiddenChanges.value++;
+  /// Offers [chat]'s participants' applied and dismissed photos again. Emits `shared-contacts-unhidden` with the
+  /// chat's GUID so its banner reloads.
+  Future<void> offerPhotosAgain(Chat chat) async {
+    await Future.wait(chat.people.map((h) => PrefsSvc.messaging.clearSeenSharedPhoto(h.address)));
+    _photoChanges.value++;
     EventDispatcherSvc.emit('shared-contacts-unhidden', chat.guid);
   }
 
@@ -137,9 +124,7 @@ class NameAndPhotoSharingService {
   /// Saves the photo [shared] shared to their device contact. Once saved, that photo isn't offered again.
   Future<ContactPhotoUpdate> savePhoto(SharedNameAndPhoto shared) async {
     final result = await ContactsSvcV2.setNativeContactPhoto(shared.contact!.nativeContactId, shared.avatar!);
-    if (result == ContactPhotoUpdate.updated) {
-      await PrefsSvc.messaging.setAppliedSharedPhoto(shared.handle.address, shared.photoHash!);
-    }
+    if (result == ContactPhotoUpdate.updated) await dismissPhoto(shared);
     return result;
   }
 

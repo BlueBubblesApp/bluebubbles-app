@@ -56,7 +56,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          // Reactive for Show Hidden, which goes once nothing in the chat is hidden
+          // Reactive for Show Shared Photos Again, which goes once no photo in the chat is applied or dismissed
           Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
@@ -462,13 +462,10 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         ),
       ),
       _OptionRow(
-        enabled: NameAndPhotoSharingSvc.hasHidden(chat),
+        enabled: NameAndPhotoSharingSvc.hasSeenPhotos(chat),
         build: (context) => SettingsTile(
-          // Desktop has no address book, so the share offer is all it hides
-          title: kIsDesktop ? "Show Sharing Offer Again" : "Show Hidden Contact Suggestions",
-          subtitle: kIsDesktop
-              ? "Bring back the offer to share your name and photo in this chat"
-              : "Bring back shared names and photos you dismissed in this chat",
+          title: "Show Shared Photos Again",
+          subtitle: "Offer photos you already saved or dismissed in this chat again",
           backgroundColor: tileColor,
           leading: const SettingsLeadingIcon(
             iosIcon: CupertinoIcons.person_crop_circle_badge_plus,
@@ -476,13 +473,7 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
             containerColor: Colors.blue,
           ),
           onTap: () async {
-            await NameAndPhotoSharingSvc.unhideAll(chat);
-            showSnackbar(
-              "Notice",
-              kIsDesktop
-                  ? "The offer to share your name and photo will show again"
-                  : "Hidden contact suggestions will show again",
-            );
+            await NameAndPhotoSharingSvc.offerPhotosAgain(chat);
           },
         ),
       ),

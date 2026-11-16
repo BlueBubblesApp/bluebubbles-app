@@ -51,7 +51,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          // Reactive for Show Hidden, which goes once nothing in the chat is hidden
+          // Reactive for Show Shared Photos Again, which goes once no photo in the chat is applied or dismissed
           Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
@@ -408,22 +408,13 @@ class ExpressiveChatOptions extends StatelessWidget {
         ),
       ),
       _OptionRow(
-        enabled: NameAndPhotoSharingSvc.hasHidden(chat),
+        enabled: NameAndPhotoSharingSvc.hasSeenPhotos(chat),
         build: (context) => M3EListTile(
           icon: Icons.person_add,
-          // Desktop has no address book, so the share offer is all it hides
-          title: kIsDesktop ? "Show sharing offer again" : "Show hidden contact suggestions",
-          supportingText: kIsDesktop
-              ? "Bring back the offer to share your name and photo in this chat"
-              : "Bring back shared names and photos you dismissed in this chat",
+          title: "Show shared photos again",
+          supportingText: "Offer photos you already saved or dismissed in this chat again",
           onTap: () async {
-            await NameAndPhotoSharingSvc.unhideAll(chat);
-            showSnackbar(
-              "Notice",
-              kIsDesktop
-                  ? "The offer to share your name and photo will show again"
-                  : "Hidden contact suggestions will show again",
-            );
+            await NameAndPhotoSharingSvc.offerPhotosAgain(chat);
           },
         ),
       ),

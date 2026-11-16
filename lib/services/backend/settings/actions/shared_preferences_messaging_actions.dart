@@ -27,8 +27,7 @@ class SharedPreferencesMessagingActions {
   // Enough for a chat's own favourites; kept short since there's one list per chat
   static const int _chatTapbackEmojiLimit = 8;
   // Keeps the key photos were dismissed under before applied ones were split out, so those can be unhidden
-  static const String _hiddenSharedPhotoPrefix = 'seen-shared-photo';
-  static const String _appliedSharedPhotoPrefix = 'applied-shared-photo';
+  static const String _seenSharedPhotoPrefix = 'seen-shared-photo';
 
   final SharedPreferencesService service;
 
@@ -120,23 +119,15 @@ class SharedPreferencesMessagingActions {
 
   String _replyMessagePartKey(String chatGuid) => '${_replyToMessagePartPrefix}_$chatGuid';
 
-  /// Hash of the last photo [address] shared that the user hid. Before applied photos got their own key, applying
-  /// one was recorded here too, so clearing this may offer one of those again.
-  String? getHiddenSharedPhoto(String address) => service.i.getString('${_hiddenSharedPhotoPrefix}_$address');
+  /// Hash of the last photo [address] shared that the user updated their contact with or dismissed.
+  String? getSeenSharedPhoto(String address) => service.i.getString('${_seenSharedPhotoPrefix}_$address');
 
-  Future<void> setHiddenSharedPhoto(String address, String hash) async {
-    await service.i.setString('${_hiddenSharedPhotoPrefix}_$address', hash);
+  Future<void> setSeenSharedPhoto(String address, String hash) async {
+    await service.i.setString('${_seenSharedPhotoPrefix}_$address', hash);
   }
 
-  Future<void> clearHiddenSharedPhoto(String address) async {
-    await service.i.remove('${_hiddenSharedPhotoPrefix}_$address');
-  }
-
-  /// Hash of the last photo [address] shared that the user updated their contact with. Unhiding never clears it.
-  String? getAppliedSharedPhoto(String address) => service.i.getString('${_appliedSharedPhotoPrefix}_$address');
-
-  Future<void> setAppliedSharedPhoto(String address, String hash) async {
-    await service.i.setString('${_appliedSharedPhotoPrefix}_$address', hash);
+  Future<void> clearSeenSharedPhoto(String address) async {
+    await service.i.remove('${_seenSharedPhotoPrefix}_$address');
   }
 
   String? getLastOpenedChat() => service.i.getString(_lastOpenedChatKey);
