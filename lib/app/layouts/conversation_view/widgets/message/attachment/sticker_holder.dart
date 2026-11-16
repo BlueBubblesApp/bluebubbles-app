@@ -17,17 +17,13 @@ class PlacedSticker {
   final StickerPlacement placement;
   final Size pixels;
 
-  /// [attachment] as placed, or null when it has no placement. [decoded] is its image's size once that has loaded,
-  /// which wins over the attachment's dimensions: it's what draws.
-  static PlacedSticker? of(Attachment attachment, [Size? decoded]) {
+  /// [attachment] as placed, or null when it has no placement or its image hasn't downloaded and decoded yet, so the
+  /// bubble doesn't move for a sticker that isn't drawing
+  static PlacedSticker? of(Attachment attachment, Size? decoded) {
     final placement = StickerPlacement.tryParse(attachment.stickerPlacement);
-    if (placement == null) return null;
-    return PlacedSticker(placement, decoded ?? Size(_known(attachment.width), _known(attachment.height)));
+    if (placement == null || decoded == null) return null;
+    return PlacedSticker(placement, decoded);
   }
-
-  // The server sends 0 for dimensions it didn't read, and sync doesn't ask for them
-  static double _known(int? pixels) =>
-      pixels != null && pixels > 0 ? pixels.toDouble() : StickerHolder.fallbackPixels;
 
   @override
   bool operator ==(Object other) => other is PlacedSticker && other.placement == placement && other.pixels == pixels;
