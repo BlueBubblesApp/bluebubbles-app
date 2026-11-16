@@ -499,11 +499,14 @@ jobs:
           m = yaml.load(open('flathub/app.bluebubbles.BlueBubbles.yml'))
           m['modules'] = ['flathub/' + x if isinstance(x, str) else x for x in m['modules']]
           bb = next(x for x in m['modules'] if isinstance(x, dict) and x['name'] == 'bluebubbles')
+          # Only the release downloads are swapped; files the Flathub repo keeps (path sources) still go in
+          flathub_files = [dict(x, path='flathub/' + x['path']) for x in bb['sources'] if 'path' in x]
           bb['sources'] = [
               {'type': 'archive', 'path': tarball, 'sha256': sha256, 'dest': 'bluebubbles'},
               {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.metainfo.xml'},
               {'type': 'file', 'path': 'flatpak/icon/128x128.png'},
               {'type': 'file', 'path': 'flatpak/app.bluebubbles.BlueBubbles.desktop'},
+              *flathub_files,
           ]
           yaml.dump(m, open('app.bluebubbles.BlueBubbles.yml', 'w'))
           EOF
