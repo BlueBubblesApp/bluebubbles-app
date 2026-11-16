@@ -5,7 +5,6 @@ import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';

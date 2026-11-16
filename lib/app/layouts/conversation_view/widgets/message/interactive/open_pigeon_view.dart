@@ -9,7 +9,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// A game bubble: [card], drawn from the image the sender attached, or the compact form once a later turn of the same
 /// game has arrived, as Messages shows earlier turns. GamePigeon only attaches an image to a game's opening message,
