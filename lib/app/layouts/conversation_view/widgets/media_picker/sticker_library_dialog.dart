@@ -1,94 +1,73 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:bluebubbles/app/components/subscription_required.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/composer_popover.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Shows the server Mac's sticker library ([StickerLibrarySvc]), with a button to add an image from this device to it.
-///
-/// The desktop composer's Stickers button. In tablet mode it's a panel over the chat list rather than a dialog, so the
-/// conversation stays in view and usable; pressing the button again closes it. Only open this when
-/// `ServerDetails.supportsStickers`.
-Future<void> showStickerLibrary(BuildContext context) async {
+/// The desktop composer's Stickers button: the Mac's sticker library as a popover above [anchorContext]. Drag a sticker
+/// out onto a message to place it there; the popover hides once the drag leaves it and closes when it ends. Only open
+/// this when `ServerDetails.supportsStickers`.
+Future<void> showStickerLibraryPopover(BuildContext anchorContext, ConversationViewController controller) async {
   if (SubscriptionSvc.locked) {
     return showSubscriptionRequired(
-      context,
+      anchorContext,
       feature: ProFeature.stickers,
-      onUnlocked: () => context.mounted ? showStickerLibrary(context) : null,
+      onUnlocked: () => anchorContext.mounted ? showStickerLibraryPopover(anchorContext, controller) : null,
     );
   }
-  if (_sidePanel != null) return _closeSidePanel();
   // The cached library draws at once; this brings it up to date behind it
   unawaited(StickerLibrarySvc.sync());
-  if (kIsDesktop && NavigationSvc.widthChatListLeft(context) >= _sidePanelMinPane) return _openSidePanel(context);
-  final colors = context.theme.colorScheme;
-  final height = min(460.0, MediaQuery.sizeOf(context).height - MediaQuery.paddingOf(context).vertical - 48);
-  return showDialog<void>(
-    context: context,
-    builder: (dialogContext) => Dialog(
-      backgroundColor: colors.surfaceContainerHighest,
-      surfaceTintColor: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        width: 360,
-        height: height,
-        child: const StickerLibraryView(),
+  await showComposerPopover(
+    anchorContext,
+    controller,
+    builder: (context) => ComposerPopoverCard(
+      child: StickerLibraryView(
+        onClose: () => Navigator.of(context).pop(),
+        draggable: true,
+        // Hidden rather than closed while the drag is out: closing would cancel it
+        onDragUpdate: (details) {
+          final hidden = ComposerPopoverScope.of(context);
+          // `context` is the popover's own box
+          final box = context.findRenderObject() as RenderBox?;
+          if (hidden == null || hidden.value || box == null || !box.attached) return;
+          if (!(box.localToGlobal(Offset.zero) & box.size).contains(details.globalPosition)) hidden.value = true;
+        },
+        // Escape closes the popover mid-drag, which cancels the drag (navigating cancels pointers): then it's no
+        // longer the current route, and popping again would close the conversation
+        onDragEnd: () {
+          if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) return;
+          if (ComposerPopoverScope.of(context)?.value ?? false) Navigator.of(context).pop();
+        },
       ),
     ),
   );
-}
-
-OverlayEntry? _sidePanel;
-
-/// The narrowest chat list pane the panel goes over; a narrower one (avatars only) gets the dialog.
-const double _sidePanelMinPane = 240;
-const double _sidePanelMargin = 12;
-
-void _openSidePanel(BuildContext context) {
-  final overlay = Overlay.of(context, rootOverlay: true);
-  // The root overlay doesn't carry the conversation's theme
-  final themes = InheritedTheme.capture(from: context, to: overlay.context);
-  final paneWidth = NavigationSvc.widthChatListLeft(context);
-  final colors = context.theme.colorScheme;
-  _sidePanel = OverlayEntry(
-    builder: (overlayContext) => Positioned(
-      left: _sidePanelMargin,
-      bottom: _sidePanelMargin,
-      width: min(420.0, paneWidth - _sidePanelMargin * 2),
-      height: min(520.0, MediaQuery.sizeOf(overlayContext).height - 80),
-      child: themes.wrap(
-        Material(
-          color: colors.surfaceContainerHighest,
-          elevation: 8,
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: const StickerLibraryView(onClose: _closeSidePanel),
-        ),
-      ),
-    ),
-  );
-  overlay.insert(_sidePanel!);
-}
-
-void _closeSidePanel() {
-  _sidePanel?.remove();
-  _sidePanel = null;
 }
 
 /// The library itself: saved stickers then recents, with an add button. [onPicked], when set, makes stickers tappable.
 /// Without [title] it leaves the heading to its container (the emoji tapback picker's Stickers tab). [onClose] adds a
-/// close button, for the desktop panel.
+/// close button. [draggable] lets stickers be dragged onto messages ([StickerDropTarget]), calling [onDragUpdate] and
+/// [onDragEnd].
 class StickerLibraryView extends StatefulWidget {
-  const StickerLibraryView({super.key, this.onPicked, this.title = true, this.onClose});
+  const StickerLibraryView({
+    super.key,
+    this.onPicked,
+    this.title = true,
+    this.onClose,
+    this.draggable = false,
+    this.onDragUpdate,
+    this.onDragEnd,
+  });
 
   final ValueChanged<LibrarySticker>? onPicked;
   final bool title;
   final VoidCallback? onClose;
+  final bool draggable;
+  final DragUpdateCallback? onDragUpdate;
+  final VoidCallback? onDragEnd;
 
   @override
   State<StickerLibraryView> createState() => _StickerLibraryViewState();
@@ -101,12 +80,7 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
     return Column(
       children: [
         Obx(
-          () =>
-              widget.title ||
-                  widget.onClose != null ||
-                  (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
-              ? _header()
-              : const SizedBox.shrink(),
+          () => widget.title || widget.onClose != null || !SubscriptionSvc.locked ? _header() : const SizedBox.shrink(),
         ),
         Expanded(
           child: Obx(() {
@@ -161,6 +135,15 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
     child: Row(
       children: [
         Expanded(child: widget.title ? Text("Stickers", style: context.textTheme.titleMedium) : const SizedBox()),
+        if (!SubscriptionSvc.locked)
+          Obx(
+            () => StickerLibrarySvc.syncing.value
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : IconButton(icon: const Icon(Icons.refresh), tooltip: "Refresh", onPressed: StickerLibrarySvc.sync),
+          ),
         // Adding goes through the server's Private API helper
         if (SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked)
           Obx(
@@ -219,6 +202,9 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
           child: StickerLibraryTile(
             sticker: stickers[i],
             onTap: widget.onPicked == null ? null : () => widget.onPicked!(stickers[i]),
+            draggable: widget.draggable,
+            onDragUpdate: widget.onDragUpdate,
+            onDragEnd: widget.onDragEnd,
           ),
         ),
       ),

@@ -630,7 +630,11 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
             (context, index) {
               if (index < leading.length) return leading[index];
               final sticker = entries[index - leading.length];
-              return StickerLibraryTile(key: ValueKey("sticker-${sticker.identifier}"), sticker: sticker);
+              return StickerLibraryTile(
+                key: ValueKey("sticker-${sticker.identifier}"),
+                sticker: sticker,
+                draggable: true,
+              );
             },
             childCount: leading.length + entries.length,
           ),

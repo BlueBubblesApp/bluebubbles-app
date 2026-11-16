@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/emoji_picker_popover.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_dialog.dart';
@@ -66,18 +67,13 @@ class AttachmentActions {
       switch (button) {
         TextFieldButton.Files => pickFiles(controller),
         TextFieldButton.Genmoji => showGenmojiLibraryPopover(context, controller),
-        TextFieldButton.Stickers => showStickerLibrary(context),
+        TextFieldButton.Stickers => showStickerLibraryPopover(context, controller),
         TextFieldButton.Handwritten => handwritten(context, controller),
         TextFieldButton.Schedule => schedule(context, controller),
         TextFieldButton.Location => shareLocation(controller),
         TextFieldButton.Gif => pickGif(context, controller),
-        TextFieldButton.Emoji => toggleEmojiPicker(controller),
+        TextFieldButton.Emoji => showEmojiPickerPopover(context, controller),
       };
-
-  static Future<void> toggleEmojiPicker(ConversationViewController controller) async {
-    controller.showEmojiPicker.value = !controller.showEmojiPicker.value;
-    (controller.editing.lastOrNull?.controller.focusNode ?? controller.lastFocusedNode).requestFocus();
-  }
 
   static Future<void> pickGif(BuildContext context, ConversationViewController controller) async {
     if (kIsDesktop || kIsWeb) {

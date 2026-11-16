@@ -112,7 +112,6 @@ class ConversationViewController extends StatefulController with GetSingleTicker
 
   /// The same, for the Mac's sticker library. At most one of the two is set.
   final RxBool showStickerLibrary = false.obs;
-  RxBool showEmojiPicker = false.obs;
   final GlobalKey textFieldKey = GlobalKey();
   final RxList<PlatformFile> pickedAttachments = <PlatformFile>[].obs;
 
