@@ -22,9 +22,6 @@ class NameAndPhotoSharingService {
   /// How long a read card is reused, so reopening a chat doesn't ask the server again
   static const Duration _cardTtl = Duration(minutes: 30);
 
-  /// Each participant's card is a Private API call, so larger groups aren't looked up
-  static const int _maxLookedUpParticipants = 10;
-
   /// Chats whose add or share offers were dismissed this session
   final Set<String> _dismissedAdds = {};
   final Set<String> _dismissedShares = {};
@@ -55,9 +52,8 @@ class NameAndPhotoSharingService {
   Stream<SharedNameAndPhoto> sharedWithYouIn(Chat chat) async* {
     // Desktop has no address book to add to or update
     if (kIsDesktop || !isAvailableIn(chat)) return;
-    final participants = chat.participants.isNotEmpty ? chat.participants : chat.handles.toList();
-    if (participants.length > _maxLookedUpParticipants) return;
-    for (final handle in participants) {
+    // One per address: a merged iMessage/SMS chat has two handles for the same person (#3448)
+    for (final handle in chat.people) {
       // Photo updates need a native contact to write to
       if (handle.contactsV2.isNotEmpty && !handle.contactsV2.any((c) => c.isNative)) continue;
       if (handle.contactsV2.isEmpty && _dismissedAdds.contains(chat.guid)) continue;
