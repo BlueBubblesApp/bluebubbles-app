@@ -60,8 +60,8 @@ class PinnedConversationTile extends CustomStateful<ConversationTileController> 
 }
 
 class _PinnedConversationTileState extends CustomState<PinnedConversationTile, void, ConversationTileController> {
-  /// How far a text bubble may reach past the avatar. The tile's margin (4) and padding (6) leave 10 beside it, so
-  /// neighbors' bubbles stay at least 6 apart.
+  /// How far a text bubble may reach past the avatar. The tile's margin (4) and padding (8) leave at least 12 beside
+  /// it, so neighbors' bubbles stay at least 10 apart.
   static const double _bubbleReach = 7;
 
   ConversationListController get listController => controller.listController;
@@ -175,8 +175,8 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                 child: Padding(
                   padding: const EdgeInsets.only(
                     top: 4,
-                    left: 6,
-                    right: 6,
+                    left: 8,
+                    right: 8,
                     bottom: 2,
                   ),
                   child: ConstrainedBox(

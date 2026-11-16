@@ -69,8 +69,8 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
 
   /// A pin tile's avatar size and footprint for [colCount] columns across [maxWidth].
   static ({double avatar, double width, double height}) _tileSize(BuildContext context, double maxWidth, int colCount) {
-    // Horizontal overhead per tile: margins (4+4) + padding (6+6)
-    const double tileHOverhead = 20.0;
+    // Horizontal overhead per tile: margins (4+4) + padding (8+8) + extra gap
+    const double tileHOverhead = 30.0;
     // Vertical overhead per tile: AnimatedContainer margins (top:1) + padding (4+2)
     //   + ChatTitle fixed padding (top:6 + bottom:4)
     const double tileVOverhead = 17.0;
