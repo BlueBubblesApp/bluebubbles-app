@@ -32,10 +32,12 @@ class PendingToastItem {
   final String text;
   final bool isReaction;
   final bool isGroupEvent;
+  final DateTime? date;
 
   String get senderText => sender == null ? text : "$sender: $text";
 
-  PendingToastItem({required this.sender, required this.text, required this.isReaction, required this.isGroupEvent});
+  PendingToastItem(
+      {required this.sender, required this.text, required this.isReaction, required this.isGroupEvent, this.date});
 }
 
 class NotificationsService {
@@ -419,6 +421,7 @@ class NotificationsService {
         text: text,
         isReaction: isReaction,
         isGroupEvent: isGroupEvent,
+        date: message.dateCreated,
     ));
 
     // Cancel and clean up old timer
@@ -774,8 +777,14 @@ class NotificationsService {
     await flnp.cancel(id: id);
   }
 
-  Future<void> clearDesktopNotificationsForChat(String chatGuid) async {
+  Future<void> clearDesktopNotificationsForChat(String chatGuid, {int? readBefore}) async {
     await _lock.synchronized(() async {
+      if (readBefore != null) {
+        // Messages newer than the read keep the toast up; the read ones drop out on its next rebuild.
+        final pending = pendingMessages[chatGuid];
+        pending?.removeWhere((p) => p.date == null || p.date!.millisecondsSinceEpoch <= readBefore);
+        if (pending?.isNotEmpty ?? false) return;
+      }
       final int? toastId = activeToasts[chatGuid];
       if (toastId != null) await DesktopNotifications.cancel(toastId);
       await DesktopNotifications.cancelGroup(chatGuid);

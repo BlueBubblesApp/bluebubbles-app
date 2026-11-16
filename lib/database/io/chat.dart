@@ -376,12 +376,28 @@ class Chat {
         message != null && ReactionTypes.isTapbackType(message.associatedMessageType);
   }
 
+  /// A remote read through [readBefore] (epoch ms) that missed a newer incoming message leaves the chat unread, so
+  /// this only clears the read messages' notifications. Returns false when the read covers the latest message.
+  Future<bool> clearNotificationsForPartialRead(int? readBefore) async {
+    final latest = dbLatestMessage.target;
+    if (readBefore == null || latest == null || (latest.isFromMe ?? false)) return false;
+    if ((latest.dateCreated?.millisecondsSinceEpoch ?? 0) <= readBefore) return false;
+
+    if (kIsDesktop) {
+      await NotificationsSvc.clearDesktopNotificationsForChat(guid, readBefore: readBefore);
+    } else {
+      await ChatInterface.clearNotificationForChat(chatId: id!, chatGuid: guid, readBefore: readBefore);
+    }
+    return true;
+  }
+
   /// Toggle unread status - pure DB operation
   /// Note: For full unread toggle with active chat awareness, use ChatsSvc.toggleChatHasUnread
+  /// [readBefore] (epoch ms) limits notification clearing to messages dated at or before it.
   Future<Chat> toggleHasUnreadAsync(bool hasUnread,
-      {bool force = false, bool clearLocalNotifications = true, bool privateMark = true}) async {
+      {bool force = false, bool clearLocalNotifications = true, bool privateMark = true, int? readBefore}) async {
     if (kIsDesktop && !hasUnread) {
-      NotificationsSvc.clearDesktopNotificationsForChat(guid);
+      NotificationsSvc.clearDesktopNotificationsForChat(guid, readBefore: readBefore);
     }
 
     if (hasUnreadMessage == hasUnread && !force) return this;
@@ -390,9 +406,10 @@ class Chat {
 
     try {
       if (clearLocalNotifications && !hasUnread) {
-        ChatInterface.clearNotificationForChat(
+        await ChatInterface.clearNotificationForChat(
           chatId: id!,
           chatGuid: guid,
+          readBefore: readBefore,
         );
       }
       if (privateMark && (autoSendReadReceipts ?? SettingsSvc.settings.privateMarkChatAsRead.value)) {

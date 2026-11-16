@@ -83,10 +83,11 @@ class MethodChannelActions {
     return raw.map((key, value) => MapEntry(key.toString(), value is num ? value.toInt() : 0));
   }
 
-  Future<void> deleteNotification({required int notificationId, String? tag}) async {
+  Future<void> deleteNotification({required int notificationId, String? tag, int? readBefore}) async {
     await service.invokeMethod('delete-notification', {
       'notification_id': notificationId,
       'tag': ?tag,
+      'read_before': ?readBefore,
     });
   }
 

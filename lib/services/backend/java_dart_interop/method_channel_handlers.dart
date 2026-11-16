@@ -315,7 +315,6 @@ class MethodChannelHandlers {
   Future<bool> _handleChatReadStatusChanged(MethodCall _, Map<String, dynamic>? arguments) async {
     if (!service.headless && LifecycleSvc.isAlive) return _ok();
     await Database.waitForInit();
-    Logger.info('Received chat status change from FCM');
 
     try {
       final Map<String, dynamic>? data = arguments;
@@ -326,7 +325,11 @@ class MethodChannelHandlers {
           return await _retry();
         }
 
-        chat.toggleHasUnreadAsync(!payload.data['read']!, privateMark: false);
+        final int? readBefore = (payload.data['lastReadMessageTimestamp'] as num?)?.toInt();
+        Logger.info('Received chat status change from FCM (read: ${payload.data['read']}, readBefore: $readBefore)');
+        if (payload.data['read'] == true && await chat.clearNotificationsForPartialRead(readBefore)) return await _ok();
+        await chat.toggleHasUnreadAsync(!payload.data['read']!,
+            force: payload.data['read'] == true, privateMark: false, readBefore: readBefore);
         return await _ok();
       }
 

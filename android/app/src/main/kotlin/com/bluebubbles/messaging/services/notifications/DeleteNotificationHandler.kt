@@ -2,6 +2,7 @@ package com.bluebubbles.messaging.services.notifications
 
 import android.app.NotificationManager
 import android.content.Context
+import androidx.core.app.NotificationCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
 import com.bluebubbles.messaging.utils.PersistentLog
@@ -20,12 +21,36 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
     ) {
         val notificationId: Int = call.argument("notification_id")!!
         val tag: String? = call.argument("tag")
+        val readBefore: Long? = call.argument<Number>("read_before")?.toLong()
+        if (readBefore != null && trimReadMessages(context, notificationId, readBefore)) {
+            return result.success(null)
+        }
         val success = deleteNotification(context, notificationId, tag)
         if (success) {
             result.success(null)
         } else {
             result.error("500", "Failed to cancel notification!", null)
         }
+    }
+
+    // Drops messages dated at or before [readBefore] from the chat notification and reposts it silently.
+    // Returns false when nothing newer is left, so the caller deletes the whole notification.
+    private fun trimReadMessages(context: Context, notificationId: Int, readBefore: Long): Boolean {
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        val active = notificationManager.activeNotifications.firstOrNull { it.id == notificationId } ?: return false
+        val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(active.notification)
+            ?: return false
+        PersistentLog.d(context, Constants.logTag, "Trimming notification $notificationId through $readBefore: ${style.messages.map { it.timestamp }}")
+        if (style.messages.none { it.timestamp > readBefore }) return false
+        if (style.messages.none { it.timestamp <= readBefore }) return true
+
+        style.messages.removeAll { it.timestamp <= readBefore }
+        val notification = NotificationCompat.Builder(context, active.notification)
+            .setStyle(style)
+            .setSilent(true)
+            .build()
+        notificationManager.notify(active.tag, notificationId, notification)
+        return true
     }
 
     fun deleteNotification(context: Context, notificationId: Int, tag: String?): Boolean {
