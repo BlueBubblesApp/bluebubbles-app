@@ -80,14 +80,15 @@ class SubscriptionService {
     try {
       response = await HttpSvc.server.subscription();
     } catch (e) {
-      // A 4xx is the server's answer. Anything else (a timeout, no connection, a 5xx) says nothing about the
-      // subscription, so the last answer stands rather than locking features every time a resume beats the network
+      // A 4xx is the server's answer. Anything else (a timeout, no connection, a 5xx) leaves it unknown: every paid
+      // feature needs the server anyway, and an earlier answer may be another server's
       final status = switch (e) {
         Response() => e.statusCode,
         DioException() => e.response?.statusCode,
         _ => null,
       };
       _unreachable.value = status == null || status >= 500;
+      if (_unreachable.value) _pro.value = null;
       if (status != null && status >= 400 && status < 500) {
         // A token without `server:admin` can't ask: that's no answer, and a 402 from a paid route will give one
         if (status == 401 || status == 403) return;
