@@ -407,6 +407,18 @@ class ExpressiveChatOptions extends StatelessWidget {
         ),
       ),
       _OptionRow(
+        enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
+        build: (context) => M3EListTile(
+          icon: Icons.person_add,
+          title: "Show hidden contact suggestions",
+          supportingText: "Bring back shared names and photos you dismissed in this chat",
+          onTap: () async {
+            await NameAndPhotoSharingSvc.unhideAll(chat);
+            showSnackbar("Notice", "Hidden contact suggestions will show again");
+          },
+        ),
+      ),
+      _OptionRow(
         enabled: true,
         build: (context) => M3EListTile(
           icon: Icons.sms,

@@ -29,10 +29,26 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   bool _expanded = false;
   Uint8List? _myAvatar;
   StreamSubscription<SharedNameAndPhoto>? _sharedSub;
+  late final StreamSubscription<DispatchedEvent> _unhideSub;
 
   @override
   void initState() {
     super.initState();
+    _load();
+    _unhideSub = EventDispatcherSvc.stream.listen((e) {
+      if (e.type != 'shared-contacts-unhidden' || e.data != chat.guid || !mounted) return;
+      setState(() {
+        _adds.clear();
+        _updates.clear();
+        _offerShare = false;
+        _expanded = false;
+      });
+      _load();
+    });
+  }
+
+  void _load() {
+    _sharedSub?.cancel();
     if (!NameAndPhotoSharingSvc.isAvailableIn(chat)) return;
     _loadOffer();
     _sharedSub = NameAndPhotoSharingSvc.sharedWithYouIn(chat).listen((shared) {
@@ -44,6 +60,7 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   void dispose() {
     // Stops looking up the rest of the participants
     _sharedSub?.cancel();
+    _unhideSub.cancel();
     super.dispose();
   }
 

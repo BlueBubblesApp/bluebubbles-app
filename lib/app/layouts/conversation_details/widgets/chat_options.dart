@@ -461,6 +461,23 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         ),
       ),
       _OptionRow(
+        enabled: NameAndPhotoSharingSvc.isAvailableIn(chat),
+        build: (context) => SettingsTile(
+          title: "Show Hidden Contact Suggestions",
+          subtitle: "Bring back shared names and photos you dismissed in this chat",
+          backgroundColor: tileColor,
+          leading: const SettingsLeadingIcon(
+            iosIcon: CupertinoIcons.person_crop_circle_badge_plus,
+            materialIcon: Icons.person_add,
+            containerColor: Colors.blue,
+          ),
+          onTap: () async {
+            await NameAndPhotoSharingSvc.unhideAll(chat);
+            showSnackbar("Notice", "Hidden contact suggestions will show again");
+          },
+        ),
+      ),
+      _OptionRow(
         enabled: true,
         build: (context) => SettingsTile(
           title: "Fetch Chat Details",

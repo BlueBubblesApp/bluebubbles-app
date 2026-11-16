@@ -63,7 +63,9 @@ class NameAndPhotoSharingService {
       if (card == null) continue;
       final shared = SharedNameAndPhoto(handle, card.name, card.avatar);
       if (shared.isNewContact ||
-          (shared.photoHash != null && PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash)) {
+          (shared.photoHash != null &&
+              PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash &&
+              PrefsSvc.messaging.getHiddenSharedPhoto(handle.address) != shared.photoHash)) {
         yield shared;
       }
     }
@@ -73,9 +75,20 @@ class NameAndPhotoSharingService {
 
   void dismissShare(Chat chat) => _dismissedShares.add(chat.guid);
 
-  /// A dismissed photo isn't offered again until they share a different one
+  /// A dismissed photo isn't offered again until they share a different one, or [unhideAll] brings it back
   Future<void> dismissPhoto(SharedNameAndPhoto shared) =>
-      PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+      PrefsSvc.messaging.setHiddenSharedPhoto(shared.handle.address, shared.photoHash!);
+
+  /// Brings back everything hidden in [chat]: its share offer, and its participants' new contacts and photos.
+  /// Emits `shared-contacts-unhidden` with the chat's GUID so its banner reloads.
+  Future<void> unhideAll(Chat chat) async {
+    _dismissedShares.remove(chat.guid);
+    for (final handle in chat.people) {
+      _dismissedAdds.remove(handle.address);
+      await PrefsSvc.messaging.clearHiddenSharedPhoto(handle.address);
+    }
+    EventDispatcherSvc.emit('shared-contacts-unhidden', chat.guid);
+  }
 
   /// Shares your name and photo with [chat]. Returns whether the server accepted it.
   Future<bool> shareYours(Chat chat) async {
@@ -102,7 +115,9 @@ class NameAndPhotoSharingService {
   /// Saves the photo [shared] shared to their device contact. Once saved, that photo isn't offered again.
   Future<ContactPhotoUpdate> savePhoto(SharedNameAndPhoto shared) async {
     final result = await ContactsSvcV2.setNativeContactPhoto(shared.contact!.nativeContactId, shared.avatar!);
-    if (result == ContactPhotoUpdate.updated) await dismissPhoto(shared);
+    if (result == ContactPhotoUpdate.updated) {
+      await PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+    }
     return result;
   }
 
