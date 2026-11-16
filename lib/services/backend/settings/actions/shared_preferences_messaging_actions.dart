@@ -26,7 +26,6 @@ class SharedPreferencesMessagingActions {
   static const int _tapbackEmojiLimit = 28;
   // Enough for a chat's own favourites; kept short since there's one list per chat
   static const int _chatTapbackEmojiLimit = 8;
-  // Keeps the key photos were dismissed under before applied ones were split out, so those can be unhidden
   static const String _seenSharedPhotoPrefix = 'seen-shared-photo';
 
   final SharedPreferencesService service;

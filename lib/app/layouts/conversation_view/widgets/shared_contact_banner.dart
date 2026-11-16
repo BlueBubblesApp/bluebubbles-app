@@ -162,7 +162,6 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
             action: _expanded ? "Hide" : "View",
             onAction: () => setState(() => _expanded = !_expanded),
           ),
-        // Each person's banner reads as it would on its own
         if (people.length == 1 || _expanded) ...people,
         if (_offerShare)
           _BannerCard(
@@ -184,7 +183,6 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            // View drops each person's banner in below the summary, and Hide folds them back
             child: AnimatedSize(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOutCubic,
@@ -317,7 +315,6 @@ class _BannerCard extends StatelessWidget {
   }
 }
 
-/// A small text button that sits on a line of text, sized to match it
 class _InlineAction extends StatelessWidget {
   const _InlineAction(this.text, this.onPressed);
 

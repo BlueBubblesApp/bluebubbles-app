@@ -56,7 +56,6 @@ class _ChatOptionsState extends State<ChatOptions> with ThemeHelpers {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          // Reactive for Show Shared Photos Again, which goes once no photo in the chat is applied or dismissed
           Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
