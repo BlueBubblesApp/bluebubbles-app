@@ -87,13 +87,19 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
     }
   }
 
+  /// Folds the list back up once one person or none is left, so later arrivals start behind View
+  void _remove(List<SharedNameAndPhoto> list, SharedNameAndPhoto shared) {
+    list.remove(shared);
+    if (_adds.length + _updates.length <= 1) _expanded = false;
+  }
+
   Future<void> _addContact(SharedNameAndPhoto shared) async {
-    setState(() => _adds.remove(shared));
+    setState(() => _remove(_adds, shared));
     await NameAndPhotoSharingSvc.openAddContactForm(shared);
   }
 
   Future<void> _updatePhoto(SharedNameAndPhoto shared) async {
-    setState(() => _updates.remove(shared));
+    setState(() => _remove(_updates, shared));
     switch (await NameAndPhotoSharingSvc.savePhoto(shared)) {
       case ContactPhotoUpdate.updated:
         showSnackbar("Photo Updated", "${shared.label}'s photo was updated");
@@ -110,12 +116,12 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
       chat.isGroup ? "New photo available from ${shared.handle.reactionDisplayName}" : "New contact photo available";
 
   Future<void> _ignorePhoto(SharedNameAndPhoto shared) async {
-    setState(() => _updates.remove(shared));
+    setState(() => _remove(_updates, shared));
     await NameAndPhotoSharingSvc.dismissPhoto(shared);
   }
 
   void _ignoreAdd(SharedNameAndPhoto shared) {
-    setState(() => _adds.remove(shared));
+    setState(() => _remove(_adds, shared));
     NameAndPhotoSharingSvc.dismissAdd(shared);
   }
 
