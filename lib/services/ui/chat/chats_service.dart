@@ -259,18 +259,45 @@ class ChatsService {
     final ordered = [
       for (final chat in pinnedChats) visibleGuids.contains(chat.guid) ? (reordered..moveNext()).current : chat,
     ];
-    final changed = <Chat>[];
+    // Each changed chat's index before this reorder, to put back if the save fails.
+    final previous = <Chat, int?>{};
     ordered.forEachIndexed((i, chat) {
       if (chat.pinIndex == i) return;
-      chat.pinIndex = i;
-      chatStates[chat.guid]?.updatePinIndexInternal(i);
-      changed.add(chat);
+      previous[chat] = chat.pinIndex;
+      _setPinIndex(chat, i);
     });
-    if (changed.isEmpty) return;
+    if (previous.isEmpty) return;
     // Re-sort before saving so the grid shows the new order without waiting on the DB.
     refreshSortOrder();
     // All of them, even past a failure, so one bad write doesn't leave the rest of the order unsaved.
-    await Future.wait(changed.map((chat) => chat.saveAsync(updatePinIndex: true)));
+    final saved = <Chat>[];
+    Object? error;
+    StackTrace? trace;
+    await Future.wait(previous.keys.map((chat) async {
+      try {
+        await chat.saveAsync(updatePinIndex: true);
+        saved.add(chat);
+      } catch (e, s) {
+        error ??= e;
+        trace ??= s;
+      }
+    }));
+    if (error == null) return;
+
+    Logger.error("Failed to save the pin order", error: error, trace: trace, tag: "ChatsService");
+    showToast("Failed to save the pin order!", isError: true);
+    // Back to the order before the drag, so the pins show what the database has: the writes that did land are
+    // written back too.
+    previous.forEach(_setPinIndex);
+    refreshSortOrder();
+    await Future.wait(saved.map((chat) => chat.saveAsync(updatePinIndex: true).then<void>((_) {}, onError: (e, s) {
+          Logger.error("Failed to restore a pin's index", error: e, trace: s, tag: "ChatsService");
+        })));
+  }
+
+  void _setPinIndex(Chat chat, int? index) {
+    chat.pinIndex = index;
+    chatStates[chat.guid]?.updatePinIndexInternal(index);
   }
 
   int get _nextPinIndex => pinnedChats.fold<int>(-1, (m, c) => max(m, c.pinIndex ?? -1)) + 1;
