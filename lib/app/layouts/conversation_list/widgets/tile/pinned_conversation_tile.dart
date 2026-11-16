@@ -5,7 +5,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/chat_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
@@ -34,15 +35,16 @@ String pinnedChatTitle(Chat chat) {
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   final double avatarSize;
 
-  /// Makes the tile draggable for [PinnedChatsGrid]: hold then drag on touch, click and drag with a mouse.
-  final bool draggable;
+  /// Makes the tile draggable in the pinned grid, with this drag state: hold then drag on touch, click and drag with
+  /// a mouse.
+  final PinDragController? pinDrag;
 
   PinnedConversationTile({
     super.key,
     required Chat chat,
     required ConversationListController controller,
     required this.avatarSize,
-    this.draggable = false,
+    this.pinDrag,
   }) : super(
             parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
                 ? Get.find<ConversationTileController>(tag: chat.guid)
@@ -132,10 +134,12 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
 
   @override
   Widget build(BuildContext context) {
-    final tile = _buildTile(context, holdHandledByDrag: widget.draggable);
-    if (!widget.draggable) return tile;
+    final drag = widget.pinDrag;
+    final tile = _buildTile(context, holdHandledByDrag: drag != null);
+    if (drag == null) return tile;
     return ChatDragSource(
       key: ValueKey(controller.chat.guid),
+      drag: drag,
       chat: controller.chat,
       startsInPinArea: true,
       onHold: _holdForDrag,

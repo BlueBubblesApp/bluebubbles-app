@@ -4,6 +4,8 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_l
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/unpin_drop_target.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -89,7 +91,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
 
-                final _chats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
+                final _chats = controller.pinDrag.withUnpinPreview(ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
                   excludePinned: true,
@@ -111,7 +113,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     }
                     return true;
                   },
-                  child: UnpinDropTarget(child: ScrollbarWrapper(
+                  child: UnpinDropTarget(drag: controller.pinDrag, child: ScrollbarWrapper(
                     showScrollbar: true,
                     controller: controller.materialScrollController,
                     child: CustomScrollView(
@@ -153,7 +155,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                 final chat = _chats[index];
                                 return Container(
                                     key: ValueKey(chat.guid),
-                                    child: PinDragSource(chat: chat, child: ListItem(
+                                    child: PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
                                         chat: chat,
                                         controller: controller,
                                         update: () {

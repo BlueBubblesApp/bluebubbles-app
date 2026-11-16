@@ -6,6 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_l
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/cupertino_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/unpin_drop_target.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
@@ -67,7 +69,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
           : null,
       body: Stack(
         children: [
-          UnpinDropTarget(child: ScrollbarWrapper(
+          UnpinDropTarget(drag: controller.pinDrag, child: ScrollbarWrapper(
             showScrollbar: true,
             controller: controller.iosScrollController,
             child: Obx(() => CustomScrollView(
@@ -83,7 +85,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                       final loaded = ChatsSvc.loadedFirstChatBatch.value;
                       // Observe chat list version to trigger rebuild when order changes
                       final _ = ChatsSvc.chatListVersion.value;
-                      final _chats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
+                      final _chats = controller.pinDrag.withUnpinPreview(ChatsSvc.getFilteredChats(
                           showArchived: showArchived,
                           showUnknown: showUnknown,
                           excludePinned: true,
@@ -169,6 +171,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> wi
                               // The dividers are inside the drag source so they collapse with the row when its chat
                               // is dragged to the pins, rather than stacking up where it was.
                               return PinDragSource(
+                                drag: controller.pinDrag,
                                 chat: chat,
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,

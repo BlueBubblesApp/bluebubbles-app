@@ -6,6 +6,8 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/samsung_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/unpin_drop_target.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -85,7 +87,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               }
               return false;
             },
-            child: UnpinDropTarget(child: ScrollbarWrapper(
+            child: UnpinDropTarget(drag: controller.pinDrag, child: ScrollbarWrapper(
               showScrollbar: true,
               controller: controller.samsungScrollController,
               child: Obx(() {
@@ -93,7 +95,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final loaded = ChatsSvc.loadedFirstChatBatch.value;
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
-                final _unpinnedChats = chatsWithUnpinPreview(ChatsSvc.getFilteredChats(
+                final _unpinnedChats = controller.pinDrag.withUnpinPreview(ChatsSvc.getFilteredChats(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
                   excludePinned: true,
@@ -153,7 +155,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final chat = _unpinnedChats[index];
-                              return PinDragSource(chat: chat, child: ListItem(
+                              return PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
                                   chat: chat,
                                   controller: controller,
                                   update: () {
