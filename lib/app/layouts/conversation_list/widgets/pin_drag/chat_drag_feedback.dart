@@ -38,7 +38,8 @@ class ChatDragFeedback extends StatelessWidget {
     // A zero-size box at the pointer with the content centered on it, so whichever look is showing (and both,
     // mid-switch) sits under the finger.
     return Obx(() {
-      if (look == null && !drag.moved) return const SizedBox.shrink();
+      // drag.moved first: a flight's look would otherwise short-circuit the only observable read here
+      if (!drag.moved && look == null) return const SizedBox.shrink();
       return SizedBox.shrink(
         child: OverflowBox(
           maxWidth: double.infinity,
