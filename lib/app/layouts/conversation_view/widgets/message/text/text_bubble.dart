@@ -93,7 +93,7 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
         runs: _hasRunEffects ? part.runs : const [],
         animation: _runAnimation,
         textOffset: isNullOrEmpty(part.subject) ? 0 : part.displaySubject!.length + 1,
-        child: RichText(text: TextSpan(children: spans)),
+        child: RichText(text: TextSpan(children: spans), textWidthBasis: TextWidthBasis.longestLine),
       );
 
   @override
