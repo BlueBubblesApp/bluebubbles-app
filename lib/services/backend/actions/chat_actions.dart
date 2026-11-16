@@ -743,6 +743,7 @@ class ChatActions {
     final limit = data['limit'] as int? ?? 25;
     final includeDeleted = data['includeDeleted'] as bool? ?? false;
     final searchAround = data['searchAround'] as int?;
+    final since = data['since'] as int?;
 
     return Database.runInTransaction(TxMode.read, () {
       final participants = participantsData.map((e) => Handle.fromMap(e)).toList();
@@ -750,14 +751,16 @@ class ChatActions {
       final messages = <Message>[];
 
       if (searchAround == null) {
-        final query = (messageBox.query(includeDeleted
-                ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
-                : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull()))
+        final dated = includeDeleted
+            ? Message_.dateCreated.notNull().and(Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()))
+            : Message_.dateDeleted.isNull().and(Message_.dateCreated.notNull());
+        final query = (messageBox.query(since == null ? dated : dated.and(Message_.dateCreated.greaterOrEqual(since)))
               ..link(Message_.chat, Chat_.id.equals(chatId))
               ..order(Message_.dateCreated, flags: Order.descending))
             .build();
+        // Everything since a date is one result: a page of it would leave a gap
         query
-          ..limit = limit
+          ..limit = since == null ? limit : 0
           ..offset = offset;
         messages.addAll(query.find());
         query.close();

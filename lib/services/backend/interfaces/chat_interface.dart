@@ -243,6 +243,8 @@ class ChatInterface {
     return (chats: chats, affectedHandleIds: affectedHandleIds);
   }
 
+  /// The chat's messages: a page at [offset], newest first; [limit] either side of [searchAround]; or, with [since]
+  /// (milliseconds since epoch), every message created at or after it, newest first.
   static Future<List<Message>> getMessagesAsync({
     required int chatId,
     required String chatGuid,
@@ -251,6 +253,7 @@ class ChatInterface {
     int limit = 25,
     bool includeDeleted = false,
     int? searchAround,
+    int? since,
     bool hydrateAttachments = true,
   }) async {
     final data = {
@@ -261,6 +264,7 @@ class ChatInterface {
       'limit': limit,
       'includeDeleted': includeDeleted,
       'searchAround': searchAround,
+      'since': since,
     };
 
     late List<int> messageIds;

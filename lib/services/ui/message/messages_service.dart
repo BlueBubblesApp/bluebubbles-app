@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/types/constants.dart';
 import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/services/backend/interfaces/chat_interface.dart';
 import 'package:bluebubbles/services/backend/interfaces/sync_interface.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:collection/collection.dart';
@@ -759,6 +760,37 @@ class MessagesService extends GetxController {
     if (message.guid == null) return;
     if (struct.getMessage(message.guid!) != null) return;
     await _handleNewMessage(message);
+  }
+
+  /// Dates of the loaded messages, leaving out ones being sent: those carry this device's clock, not the server's.
+  Iterable<DateTime> get _loadedDates =>
+      struct.messages.where((m) => !m.isSending).map((m) => m.dateCreated).whereType<DateTime>();
+
+  /// Adds [message], which an update arrived for while this chat isn't showing it, if it falls within the loaded
+  /// range: another engine may have saved it first, leaving this one only the update, which [updateMessage] skips.
+  Future<void> addMissedMessage(Message message) async {
+    final date = message.dateCreated;
+    if (date == null || message.dateDeleted != null) return;
+    final oldest = _loadedDates.fold<DateTime?>(null, (o, d) => o == null || d.isBefore(o) ? d : o);
+    if (oldest != null && date.isBefore(oldest)) return;
+    await addNewMessage(message);
+  }
+
+  /// Shows messages another engine saved while this one was away, from the newest one showing onwards. A bubble
+  /// misses everything pushed while it was collapsed: its socket is disconnected and nothing tells it about them.
+  Future<void> addMissedFromDb() async {
+    if (chat.id == null) return;
+    final newest = _loadedDates.fold<DateTime?>(null, (n, d) => n == null || d.isAfter(n) ? d : n);
+    if (newest == null) return;
+    final missed = await ChatInterface.getMessagesAsync(
+      chatId: chat.id!,
+      chatGuid: chat.guid,
+      participantsData: chat.handles.map((e) => e.toMap()).toList(),
+      since: newest.millisecondsSinceEpoch,
+    );
+    for (final message in missed.reversed) {
+      await addNewMessage(message);
+    }
   }
 
   /// The on-screen half of [MessageActions.retireEarlierTurns]: a turn that arrives while this chat is open, live, by

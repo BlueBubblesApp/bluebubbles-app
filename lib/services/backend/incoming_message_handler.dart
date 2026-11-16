@@ -858,7 +858,13 @@ class IncomingMessageHandler {
   /// Notifies the UI layer about an update to an existing message.
   void _dispatchUpdatedMessage(Chat chat, Message message, {String? oldGuid}) {
     if (Get.isRegistered<MessagesService>(tag: chat.guid)) {
-      MessagesSvc(chat.guid).updateMessage(message, oldGuid: oldGuid);
+      final svc = MessagesSvc(chat.guid);
+      final showing =
+          svc.struct.getMessage(oldGuid ?? message.guid!) != null || svc.struct.getMessage(message.guid!) != null;
+      svc.updateMessage(message, oldGuid: oldGuid);
+      // Not showing: either history older than what's loaded, or another engine saved it first (a push while this is
+      // a bubble), so this engine only sees the update.
+      if (!showing) unawaited(svc.addMissedMessage(message));
     }
 
     EventDispatcherSvc.emit('updated-message', {

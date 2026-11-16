@@ -563,6 +563,10 @@ class StartupTasks {
           ChatsSvc.setChatHasUnread(activeChat.chat, false);
         }
 
+        // Another Android engine may have saved messages for this chat while this one was away: a collapsed bubble's
+        // are all pushed to the main or worker engine. Desktop runs one engine, and its syncs dispatch what they save.
+        if (!kIsDesktop) unawaited(maybeFindMessagesSvc(activeChat.chat.guid)?.addMissedFromDb());
+
         // On desktop, always restore focus when the app is resumed (window regains focus).
         // On mobile, only refocus if the user has auto-open keyboard enabled AND the
         // conversation view is the active route (not obscured by ConversationDetails etc.).
