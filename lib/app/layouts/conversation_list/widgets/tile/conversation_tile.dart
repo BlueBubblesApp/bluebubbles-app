@@ -83,6 +83,16 @@ class ConversationTileController extends StatefulController {
     HapticFeedback.lightImpact();
   }
 
+  /// Adds this chat to its list's selection, or takes it out.
+  void toggleListSelection() {
+    if (isSelected) {
+      listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
+    } else {
+      listController.selectedChats.add(chat);
+    }
+    listController.updateSelectedChats();
+  }
+
   void onSelected() {
     final select = onSelect;
     if (select != null) {
@@ -90,12 +100,7 @@ class ConversationTileController extends StatefulController {
     } else {
       // The controller outlives the list that built it (a skin switch keeps the iOS list's, which passes no onSelect),
       // so selecting falls back to the list's own selection.
-      if (isSelected) {
-        listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
-      } else {
-        listController.selectedChats.add(chat);
-      }
-      listController.updateSelectedChats();
+      toggleListSelection();
     }
     if (SettingsSvc.settings.skin.value == Skins.Material) {
       updateWidgets<MaterialConversationTile>(null);

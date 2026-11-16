@@ -120,13 +120,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
   }
 
   void _toggleSelected({bool haptic = true}) {
-    final chat = controller.chat;
-    if (controller.isSelected) {
-      listController.selectedChats.removeWhere((c) => c.guid == chat.guid);
-    } else {
-      listController.selectedChats.add(chat);
-    }
-    listController.updateSelectedChats();
+    controller.toggleListSelection();
     if (haptic) HapticFeedback.lightImpact();
     // The drag can move this tile to another row mid-hold, disposing this state before the undo runs.
     controller.updateWidgets<PinnedConversationTile>(null);
