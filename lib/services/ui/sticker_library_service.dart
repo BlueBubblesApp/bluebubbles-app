@@ -38,7 +38,6 @@ class StickerLibraryService {
   final RxBool loaded = false.obs;
   final RxBool syncing = false.obs;
 
-  /// An upload from this device is in flight
   final RxBool adding = false.obs;
 
   /// The sentence to show for the last failed sync, cleared when one succeeds. A `402` locks [SubscriptionSvc] instead.
@@ -136,7 +135,6 @@ class StickerLibraryService {
     }
   }
 
-  /// Removes cached images for stickers the library no longer lists.
   Future<void> _pruneFiles() async {
     final keep = entries.map((e) => _fileName(e.identifier)).toSet();
     for (final dir in [_thumbnailDir, _fullDir]) {

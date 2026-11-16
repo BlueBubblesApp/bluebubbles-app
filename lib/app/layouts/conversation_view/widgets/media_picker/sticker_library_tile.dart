@@ -292,7 +292,6 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
   }
 }
 
-/// Adds an image from this device to the library ([pickAndAddSticker]), with a spinner while it uploads.
 class StickerAddTile extends StatelessWidget {
   const StickerAddTile({super.key});
 

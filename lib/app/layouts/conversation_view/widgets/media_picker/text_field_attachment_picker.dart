@@ -43,7 +43,6 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   /// `ConversationViewController.showGenmojiLibrary`, which the back button also clears).
   bool get _showGenmoji => controller.showGenmojiLibrary.value;
 
-  /// The same, for the Mac's sticker library (`ConversationViewController.showStickerLibrary`).
   bool get _showStickers => controller.showStickerLibrary.value;
   late final Worker _genmojiWorker;
   late final Worker _stickerWorker;
@@ -297,7 +296,6 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                   selected: _showGenmoji,
                   onTap: _toggleGenmoji,
                 ),
-              // v2 server only. Switches the grid to the Mac's sticker library (and back)
               if (SettingsSvc.getServerDetails().supportsStickers)
                 _QuickActionItem(
                   icon: Icons.sticky_note_2_rounded,
@@ -604,7 +602,6 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     controller.showStickerLibrary.value = false;
   }
 
-  /// "Photos" and, with the Private API, "Add": the first column of the sticker grid.
   List<Widget> get _stickerLeadingTiles => [
         _BackToPhotosTile(onTap: () => controller.showStickerLibrary.value = false),
         if (SettingsSvc.settings.enablePrivateAPI.value) const StickerAddTile(),
