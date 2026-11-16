@@ -123,7 +123,6 @@ class _DesktopAttachmentMenuState extends State<DesktopAttachmentMenu> {
     _leaveTimer = Timer(const Duration(milliseconds: 250), TextFieldButtonDrag.leaveMenu);
   }
 
-  /// `+` and every menu item take a dragged row button into the menu
   Widget _target(Widget child) => !widget.arrangeable ? child : DragTarget<TextFieldButton>(
     onWillAcceptWithDetails: (_) {
       _enter();

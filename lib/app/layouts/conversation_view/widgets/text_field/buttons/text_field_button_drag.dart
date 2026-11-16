@@ -242,7 +242,6 @@ class _FlightState extends State<_Flight> with SingleTickerProviderStateMixin {
       type: MaterialType.transparency,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 280),
-        // Landing in the menu, the tile grows out of the dragged icon's center
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: ScaleTransition(
