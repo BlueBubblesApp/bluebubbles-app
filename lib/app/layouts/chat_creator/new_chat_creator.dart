@@ -214,6 +214,7 @@ class _TextFieldArea extends StatelessWidget {
     return Obx(() {
       final service = controller.selectedService.value;
       final isIMsg = service == ChatServiceType.iMessage;
+      final hint = isIMsg ? "iMessage" : "Text Message";
       final activeCVC = controller.activeController.value;
       final sending = controller.isSending.value;
 
@@ -249,6 +250,7 @@ class _TextFieldArea extends StatelessWidget {
                     controller: activeCVC,
                     recorderController: null,
                     alwaysShowSend: true,
+                    hintText: hint,
                     sendMessage: ({String? effect}) => controller.sendMessage(context, effectId: effect),
                   )
                 // New contact: isChatCreator = true → initialAttachments only (no controller)
@@ -259,6 +261,7 @@ class _TextFieldArea extends StatelessWidget {
                     controller: null,
                     recorderController: null,
                     initialAttachments: controller.initialAttachments,
+                    hintText: hint,
                     sendMessage: sending
                         ? ({String? effect}) async {}
                         : ({String? effect}) => controller.sendMessage(context, effectId: effect),
