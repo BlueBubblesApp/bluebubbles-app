@@ -52,8 +52,8 @@ permissions:
 
 env:
   # Matches the pin in windows/build.ps1 and linux/build.sh.
-  FLUTTER_VERSION: "3.47.8"
-  FVM_VERSION: "4.3.1"
+  FLUTTER_VERSION: "3.50.0"
+  FVM_VERSION: "4.3.2"
   # Android toolchain, mirroring android-builds.yml and android/app/build.gradle.
   ANDROID_NDK_VERSION: "28.2.13676358"
   ANDROID_COMPILE_SDK: "36"

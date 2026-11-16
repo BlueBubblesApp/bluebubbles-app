@@ -67,7 +67,7 @@ Add-Type -Name Ctrl -Namespace Build -MemberDefinition @'
 [Build.Ctrl]::KillTreeOnCtrlC()
 
 # Flutter version to build with; override with the FLUTTER_VERSION env var.
-$flutterVersion = if ($env:FLUTTER_VERSION) { $env:FLUTTER_VERSION } else { '3.47.8' }
+$flutterVersion = if ($env:FLUTTER_VERSION) { $env:FLUTTER_VERSION } else { '3.50.0' }
 
 Set-Location (Join-Path $PSScriptRoot '..')
 
