@@ -36,6 +36,7 @@
 `ConversationListController.pinDrag` (a `PinDragController`), passed down to every piece below, never looked up globally.
 - `pin_drag_controller.dart` — `PinDragController`: drag state, derived values for narrow `Obx` scopes, pin order preview and commit
 - `chat_drag_source.dart` — `ChatDragSource`: makes a pin or list row draggable; hold on touch, click and drag with a mouse
+- `chat_draggables.dart` — `TouchChatDraggable` (hold then drag; touch, stylus) and `MouseChatDraggable` (click and drag; on a row only a mostly horizontal move starts it where a mouse drag scrolls the list). Chosen per pointer, not per platform
 - `pin_drag_source.dart` — `PinDragSource`: wraps a list row in `ChatDragSource`, or shows the room made for an unpin
 - `unpin_drop_target.dart` — `UnpinDropTarget`: the list below the grid; unpins a pin dropped on it
 - `chat_drag_feedback.dart` — `ChatDragFeedback`: what follows the pointer, a pin or a list tile

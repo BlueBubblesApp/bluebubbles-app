@@ -2,11 +2,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/chat_drag_feedback.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/chat_draggables.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/drop_flight.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_controller.dart';
 import 'package:bluebubbles/database/models.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,9 +13,11 @@ import 'package:get/get.dart';
 
 /// Drags a chat (a pin or a list tile) for the pinned grid and [UnpinDropTarget].
 ///
-/// On touch the drag starts on the hold, so [onHold] runs right then (opening the peek, say) and returns how to
-/// undo it; the undo runs once the finger moves, which is what turns the hold into a drag. With a mouse a plain
-/// click and drag starts it and there is no hold.
+/// The gesture follows the pointer, not the platform, since desktop has both. On touch (or a stylus) the drag starts
+/// on the hold, so [onHold] runs right then (opening the peek, say) and returns how to undo it; the undo runs once
+/// the finger moves, which is what turns the hold into a drag. With a mouse a click and drag starts it and there is
+/// no hold; on a list row, where dragging the mouse scrolls the list, only a mostly horizontal move starts it (see
+/// [MouseChatDraggable]).
 class ChatDragSource extends StatefulWidget {
   const ChatDragSource({
     super.key,
@@ -52,12 +53,11 @@ class _ChatDragSourceState extends State<ChatDragSource> {
 
   PinDragController get drag => widget.drag;
 
-  void _onStart() {
+  void _onStart({required bool touch}) {
     // A mouse drag only starts once it has moved.
-    final mouse = kIsDesktop || kIsWeb;
-    _generation = drag.start(widget.chat.guid, fromPins: widget.startsInPinArea, moved: mouse);
+    _generation = drag.start(widget.chat.guid, fromPins: widget.startsInPinArea, moved: !touch);
     _moved = false;
-    if (mouse) return;
+    if (!touch) return;
     _undoHold = widget.onHold(_downPosition);
     final peeking = _undoHold == closeChatPeek;
     // The peek buzzes on its own.
@@ -121,33 +121,34 @@ class _ChatDragSourceState extends State<ChatDragSource> {
     final Widget child = widget.startsInPinArea ? widget.child : _listLook(dragging: false);
     final Widget whileDragging = widget.startsInPinArea ? widget.child : _listLook(dragging: true);
     final data = widget.chat.guid;
-    final Widget draggable = kIsDesktop || kIsWeb
-        ? Draggable<String>(
-            data: data,
-            feedback: feedback,
-            childWhenDragging: whileDragging,
-            dragAnchorStrategy: pointerDragAnchorStrategy,
-            onDragStarted: _onStart,
-            // Not onDragEnd: Flutter skips it once the source is unmounted, which a pin is as soon as hovering the
-            // list takes it out of the grid. These two always run.
-            onDragCompleted: _onEnd,
-            onDraggableCanceled: (_, offset) => _onCanceled(offset),
-            child: child,
-          )
-        : LongPressDraggable<String>(
-            data: data,
-            feedback: feedback,
-            childWhenDragging: whileDragging,
-            dragAnchorStrategy: pointerDragAnchorStrategy,
-            // Beats the tile's own long press to the gesture; the hold action runs from here instead.
-            delay: kLongPressTimeout - const Duration(milliseconds: 100),
-            hapticFeedbackOnStart: false,
-            onDragStarted: _onStart,
-            onDragUpdate: _onUpdate,
-            onDragCompleted: _onEnd,
-            onDraggableCanceled: (_, offset) => _onCanceled(offset),
-            child: child,
-          );
+    // Each takes only its own pointer kinds, so nesting them gives each pointer its own gesture.
+    final Widget draggable = TouchChatDraggable(
+      data: data,
+      feedback: feedback,
+      childWhenDragging: whileDragging,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      // Beats the tile's own long press to the gesture; the hold action runs from here instead.
+      delay: kLongPressTimeout - const Duration(milliseconds: 100),
+      hapticFeedbackOnStart: false,
+      onDragStarted: () => _onStart(touch: true),
+      onDragUpdate: _onUpdate,
+      // Not onDragEnd: Flutter skips it once the source is unmounted, which a pin is as soon as hovering the list
+      // takes it out of the grid. These two always run.
+      onDragCompleted: _onEnd,
+      onDraggableCanceled: (_, offset) => _onCanceled(offset),
+      child: MouseChatDraggable(
+        data: data,
+        feedback: feedback,
+        childWhenDragging: whileDragging,
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        anyDirection: widget.startsInPinArea,
+        scrolls: (kind) => ScrollConfiguration.of(context).dragDevices.contains(kind),
+        onDragStarted: () => _onStart(touch: false),
+        onDragCompleted: _onEnd,
+        onDraggableCanceled: (_, offset) => _onCanceled(offset),
+        child: child,
+      ),
+    );
     return Listener(
       onPointerDown: (event) => _downPosition = event.position,
       child: widget.startsInPinArea
