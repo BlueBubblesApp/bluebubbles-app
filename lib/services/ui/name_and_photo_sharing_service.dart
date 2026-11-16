@@ -64,7 +64,7 @@ class NameAndPhotoSharingService {
       final shared = SharedNameAndPhoto(handle, card.name, card.avatar);
       if (shared.isNewContact ||
           (shared.photoHash != null &&
-              PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash &&
+              PrefsSvc.messaging.getAppliedSharedPhoto(handle.address) != shared.photoHash &&
               PrefsSvc.messaging.getHiddenSharedPhoto(handle.address) != shared.photoHash)) {
         yield shared;
       }
@@ -117,7 +117,7 @@ class NameAndPhotoSharingService {
   Future<ContactPhotoUpdate> savePhoto(SharedNameAndPhoto shared) async {
     final result = await ContactsSvcV2.setNativeContactPhoto(shared.contact!.nativeContactId, shared.avatar!);
     if (result == ContactPhotoUpdate.updated) {
-      await PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+      await PrefsSvc.messaging.setAppliedSharedPhoto(shared.handle.address, shared.photoHash!);
     }
     return result;
   }

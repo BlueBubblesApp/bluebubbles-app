@@ -26,8 +26,9 @@ class SharedPreferencesMessagingActions {
   static const int _tapbackEmojiLimit = 28;
   // Enough for a chat's own favourites; kept short since there's one list per chat
   static const int _chatTapbackEmojiLimit = 8;
-  static const String _seenSharedPhotoPrefix = 'seen-shared-photo';
-  static const String _hiddenSharedPhotoPrefix = 'hidden-shared-photo';
+  // Keeps the key photos were dismissed under before applied ones were split out, so those can be unhidden
+  static const String _hiddenSharedPhotoPrefix = 'seen-shared-photo';
+  static const String _appliedSharedPhotoPrefix = 'applied-shared-photo';
 
   final SharedPreferencesService service;
 
@@ -119,15 +120,8 @@ class SharedPreferencesMessagingActions {
 
   String _replyMessagePartKey(String chatGuid) => '${_replyToMessagePartPrefix}_$chatGuid';
 
-  /// Hash of the last photo [address] shared that the user updated their contact with.
-  String? getSeenSharedPhoto(String address) => service.i.getString('${_seenSharedPhotoPrefix}_$address');
-
-  Future<void> setSeenSharedPhoto(String address, String hash) async {
-    await service.i.setString('${_seenSharedPhotoPrefix}_$address', hash);
-  }
-
-  /// Hash of the last photo [address] shared that the user hid. Kept apart from [getSeenSharedPhoto] so unhiding
-  /// doesn't offer a photo already saved to the contact.
+  /// Hash of the last photo [address] shared that the user hid. Before applied photos got their own key, applying
+  /// one was recorded here too, so clearing this may offer one of those again.
   String? getHiddenSharedPhoto(String address) => service.i.getString('${_hiddenSharedPhotoPrefix}_$address');
 
   Future<void> setHiddenSharedPhoto(String address, String hash) async {
@@ -136,6 +130,13 @@ class SharedPreferencesMessagingActions {
 
   Future<void> clearHiddenSharedPhoto(String address) async {
     await service.i.remove('${_hiddenSharedPhotoPrefix}_$address');
+  }
+
+  /// Hash of the last photo [address] shared that the user updated their contact with. Unhiding never clears it.
+  String? getAppliedSharedPhoto(String address) => service.i.getString('${_appliedSharedPhotoPrefix}_$address');
+
+  Future<void> setAppliedSharedPhoto(String address, String hash) async {
+    await service.i.setString('${_appliedSharedPhotoPrefix}_$address', hash);
   }
 
   String? getLastOpenedChat() => service.i.getString(_lastOpenedChatKey);
