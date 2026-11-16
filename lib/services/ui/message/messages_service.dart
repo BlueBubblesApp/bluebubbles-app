@@ -766,10 +766,8 @@ class MessagesService extends GetxController {
   Iterable<DateTime> get _loadedDates =>
       struct.messages.where((m) => !m.isSending).map((m) => m.dateCreated).whereType<DateTime>();
 
-  /// Adds [message], which an update arrived for while this chat isn't showing it, when it falls within the loaded
-  /// range. On Android another engine can save a message first (a push is saved by the main or worker engine, never
-  /// a bubble's), and then this engine's socket copy only reaches [updateMessage], which skips what isn't showing.
-  /// An update to history older than what's loaded, or to a deleted message, is left out.
+  /// Adds [message], which an update arrived for while this chat isn't showing it, if it falls within the loaded
+  /// range: another engine may have saved it first, leaving this one only the update, which [updateMessage] skips.
   Future<void> addMissedMessage(Message message) async {
     final date = message.dateCreated;
     if (date == null || message.dateDeleted != null) return;
