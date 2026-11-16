@@ -17,10 +17,18 @@ class MethodChannelActions {
     await service.invokeMethod('open-browser', {'link': link});
   }
 
-  Future<void> openContactForm({required String address, required bool isEmail, String? name, Uint8List? avatar}) async {
+  /// [newContact] opens a blank new contact instead of offering to add [address] to an existing one.
+  Future<void> openContactForm({
+    required String address,
+    required bool isEmail,
+    String? name,
+    Uint8List? avatar,
+    bool newContact = false,
+  }) async {
     await service.invokeMethod('open-contact-form', {
       'address': address,
       'address_type': isEmail ? 'email' : 'phone',
+      'new_contact': newContact,
       'name': ?name,
       'avatar': ?avatar,
     });

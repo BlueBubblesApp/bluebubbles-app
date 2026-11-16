@@ -109,6 +109,7 @@ class NameAndPhotoSharingService {
       isEmail: address.isEmail,
       name: shared.name,
       avatar: shared.avatar,
+      newContact: true,
     );
   }
 

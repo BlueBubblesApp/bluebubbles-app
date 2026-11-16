@@ -26,9 +26,10 @@ class NewContactFormRequestHandler: MethodCallHandlerImpl() {
         val addressType: String = call.argument("address_type")!!
         val name: String? = call.argument("name")
 
-        // A shared name means a new person: insert-or-edit opens a contact picker first, and some contacts apps drop
-        // the extras when "create new" is picked from it
-        val intent = (if (name != null) Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI)
+        // Insert-or-edit opens a contact picker first, and some contacts apps drop the extras when "create new" is
+        // picked from it
+        val newContact = call.argument<Boolean>("new_contact") == true
+        val intent = (if (newContact) Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI)
             else Intent(Intent.ACTION_INSERT_OR_EDIT).setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE))
             // Problem in Android 4.0+ (https://developer.android.com/training/contacts-provider/modify-data#add-the-navigation-flag)
             .putExtra("finishActivityOnSaveCompleted", true)
