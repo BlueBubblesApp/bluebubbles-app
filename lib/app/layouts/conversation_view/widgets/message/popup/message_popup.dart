@@ -177,12 +177,17 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
               (e.associatedMessagePart ?? 0) == part.part)
           .toList());
       final selfMessage = reactions.firstWhereOrNull((e) => e.isFromMe!);
-      final self = selfMessage?.associatedMessageType;
-      if (self != null && !ReactionTypes.isRemoval(self)) {
+      final selfType = selfMessage?.associatedMessageType;
+      // A removal is only listed when it failed, standing in for the tapback it was taking back: that one is still
+      // yours, so choosing it again retries the removal
+      final self = ReactionTypes.addedType(selfType);
+      if (self != null) {
         selfReaction = self;
         selfEmoji = selfMessage!.associatedMessageEmoji;
         if (self == ReactionTypes.STICKER) {
-          selfSticker = selfMessage;
+          selfSticker = selfType == ReactionTypes.STICKER
+              ? selfMessage
+              : Message.findRemovedStickerTapback(selfMessage) ?? selfMessage;
           unawaited(_matchSelfSticker());
         }
         currentlySelectedReaction = selfReaction;
