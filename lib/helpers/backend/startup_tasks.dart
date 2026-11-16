@@ -574,7 +574,11 @@ class StartupTasks {
         // On mobile, only refocus if the user has auto-open keyboard enabled AND the
         // conversation view is the active route (not obscured by ConversationDetails etc.).
         ConversationViewController _cvc = cvc(activeChat.chat);
-        if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+        // The attachment picker closes when the field takes focus, and system pickers it opens resume the app
+        if (!_cvc.showingOverlays &&
+            !_cvc.showingSubRoute &&
+            _cvc.editing.isEmpty &&
+            !_cvc.showAttachmentPicker.value) {
           if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
             _cvc.lastFocusedNode.requestFocus();
           } else if (_cvc.lastFocusedNode.hasFocus) {
