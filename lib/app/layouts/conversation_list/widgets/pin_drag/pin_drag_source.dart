@@ -48,7 +48,7 @@ class PinDragSource extends StatelessWidget {
       chat: chat,
       startsInPinArea: false,
       onHold: (position) {
-        if (SettingsSvc.settings.skin.value == Skins.iOS) {
+        if (context.iOS) {
           if (NavigationSvc.isTabletMode(context)) return null;
           peekChat(context, chat, position);
           return closeChatPeek;
