@@ -304,17 +304,18 @@ class Database {
             final query = Database.chats.query(Chat_.isPinned.equals(true).or(Chat_.pinIndex.notNull())).build();
             final chats = query.find();
             query.close();
-            final epoch = DateTime.fromMillisecondsSinceEpoch(0);
-            final pinned = chats.where((c) => c.isPinned ?? false).toList()
-              ..sort((a, b) {
-                if ((a.pinIndex == null) != (b.pinIndex == null)) return a.pinIndex == null ? 1 : -1;
-                if (a.pinIndex != null) return a.pinIndex!.compareTo(b.pinIndex!);
-                return (b.dbOnlyLatestMessageDate ?? epoch).compareTo(a.dbOnlyLatestMessageDate ?? epoch);
-              });
+            final indexes = migratePinIndexes([
+              for (final c in chats)
+                (
+                  guid: c.guid,
+                  isPinned: c.isPinned ?? false,
+                  pinIndex: c.pinIndex,
+                  latestMessageDate: c.dbOnlyLatestMessageDate,
+                ),
+            ]);
             for (final chat in chats) {
-              chat.pinIndex = null;
+              chat.pinIndex = indexes[chat.guid];
             }
-            pinned.forEachIndexed((i, chat) => chat.pinIndex = i);
             Database.chats.putMany(chats);
           });
           break;

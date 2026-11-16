@@ -246,19 +246,15 @@ class ChatsService {
   /// Pinned chats in pin order ([getSortedChats] already puts them first, ordered).
   List<Chat> get pinnedChats => getSortedChats().where((c) => c.isPinned ?? false).toList();
 
-  /// Sorts a pin that somehow lacks an index after every indexed one, so it still shows instead of jumping
-  /// to the front.
-  static const int _unindexedPin = 1 << 30;
-
   /// Saves a new pin order. [visible] may be a filtered subset of the pins: the pins it leaves out keep their
   /// positions, and the visible ones fill the remaining positions in the new order.
   Future<void> reorderPins(List<Chat> visible) async {
-    visible = visible.where((c) => c.isPinned ?? false).toList();
-    final visibleGuids = visible.map((c) => c.guid).toSet();
-    final reordered = visible.iterator;
-    final ordered = [
-      for (final chat in pinnedChats) visibleGuids.contains(chat.guid) ? (reordered..moveNext()).current : chat,
-    ];
+    final pins = pinnedChats;
+    final byGuid = {for (final chat in pins) chat.guid: chat};
+    final ordered = mergePinOrder(
+      pins.map((c) => c.guid).toList(),
+      visible.where((c) => c.isPinned ?? false).map((c) => c.guid).toList(),
+    ).map((guid) => byGuid[guid]!).toList();
     // Each changed chat's index before this reorder, to put back if the save fails.
     final previous = <Chat, int?>{};
     ordered.forEachIndexed((i, chat) {
@@ -709,13 +705,13 @@ class ChatsService {
   /// [chatStates] rather than [Chat.dbOnlyLatestMessageDate], because the DB write for a new message may not
   /// have landed yet when the list is repositioned.
   int _sortCompare(Chat a, Chat b) {
-    final aIsPinned = a.isPinned ?? false;
-    final bIsPinned = b.isPinned ?? false;
-    if (aIsPinned != bIsPinned) return aIsPinned ? -1 : 1;
-    if (aIsPinned) {
-      final byIndex = (a.pinIndex ?? _unindexedPin).compareTo(b.pinIndex ?? _unindexedPin);
-      if (byIndex != 0) return byIndex;
-    }
+    final byPin = comparePinOrder(
+      aPinned: a.isPinned ?? false,
+      aIndex: a.pinIndex,
+      bPinned: b.isPinned ?? false,
+      bIndex: b.pinIndex,
+    );
+    if (byPin != 0) return byPin;
 
     final aDate = chatStates[a.guid]?.latestMessage.value?.dateCreated ??
         a.dbOnlyLatestMessageDate ??
