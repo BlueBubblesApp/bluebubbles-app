@@ -965,7 +965,7 @@ class _AddAction extends StatelessWidget {
         (
           Icon(Icons.add_reaction_outlined, size: glyphSize * 1.15, color: toast.text),
           () async {
-            final emoji = await showEmojiTapbackPicker(context);
+            final emoji = (await showEmojiTapbackPicker(context) as EmojiTapbackPick?)?.emoji;
             if (emoji != null && !actions.contains(emoji)) _add(emoji);
           },
         ),
