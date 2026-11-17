@@ -259,6 +259,7 @@ class _PrivateAPIPanelState extends CustomState<PrivateAPIPanel, void, PrivateAP
                                     title: "Quick Tapback",
                                     currentValue: SettingsSvc.settings.quickTapbackType.value,
                                     reactions: ReactionTypes.toList(),
+                                    allowEmoji: SettingsSvc.serverDetails.supportsEmojiTapbacks,
                                     onChanged: (val) async {
                                       if (val == null) return;
                                       SettingsSvc.settings.quickTapbackType.value = val;
