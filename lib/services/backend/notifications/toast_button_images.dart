@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/tapback_icon.dart';
@@ -17,7 +18,7 @@ class ToastButtonImages {
   static const int _size = 64;
 
   /// Bump when the drawing changes, so images cached by an older version are drawn again
-  static const int _version = 2;
+  static const int _version = 3;
 
   static bool _prunedOldVersions = false;
 
@@ -49,21 +50,10 @@ class ToastButtonImages {
     if (await file.exists()) return file.path;
 
     try {
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-      final bounds = Offset.zero & const Size.square(_size + 0.0);
-      // Named tapbacks are their icons, as on messages, so they don't look like the same emoji
-      if (named) {
-        await _paintTapback(canvas, bounds, action);
-      } else {
-        _paintText(canvas, action, emojiFont);
-      }
-      final image = await _lightened(await _trimmed(await recorder.endRecording().toImage(_size, _size)));
-      final png = await image.toByteData(format: ui.ImageByteFormat.png);
-      image.dispose();
+      final png = await draw(action, appleFont: emojiFont);
       if (png == null) return null;
       await file.create(recursive: true);
-      await file.writeAsBytes(png.buffer.asUint8List());
+      await file.writeAsBytes(png);
       return file.path;
     } catch (e, s) {
       Logger.warn('Failed to draw toast button image for $action', error: e, trace: s, tag: 'ToastButtonImages');
@@ -71,40 +61,56 @@ class ToastButtonImages {
     }
   }
 
-  /// Windows themes button images it takes for glyphs, inverting them against the notification's background, and
-  /// darker images get taken for glyphs. Tested on real notifications: emphasize (luminance 121) was inverted on
-  /// light and accent backgrounds, and was left alone from 145 in light, dark and accent alike, as love, laugh and
-  /// like (139+) are. So a darker image is blended toward white until it reaches 145, which keeps its hue. Images of
-  /// one flat color are themed regardless, so emoji drawn that way can still be inverted.
-  static const double _minLuminance = 145;
-
-  static Future<ui.Image> _lightened(ui.Image image) async {
-    final pixels = await image.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
-    if (pixels == null) return image;
-    double sum = 0, weight = 0;
-    for (int i = 0; i < pixels.lengthInBytes; i += 4) {
-      final alpha = pixels.getUint8(i + 3) / 255;
-      if (alpha == 0) continue;
-      sum += alpha *
-          (0.2126 * pixels.getUint8(i) + 0.7152 * pixels.getUint8(i + 1) + 0.0722 * pixels.getUint8(i + 2));
-      weight += alpha;
-    }
-    final luminance = weight == 0 ? 255.0 : sum / weight;
-    if (luminance >= _minLuminance) return image;
+  /// The PNG [forAction] caches for [action], drawn with the Apple emoji font when [appleFont]
+  static Future<Uint8List?> draw(String action, {required bool appleFont}) async {
     final recorder = ui.PictureRecorder();
-    final bounds = Offset.zero & Size(image.width.toDouble(), image.height.toDouble());
-    Canvas(recorder)
-      ..drawImage(image, Offset.zero, Paint())
-      // srcATop: only over what's drawn, so the shape and its edges stay as they were
-      ..drawRect(
-        bounds,
-        Paint()
-          ..blendMode = BlendMode.srcATop
-          ..color = Colors.white.withValues(alpha: (_minLuminance - luminance) / (255 - luminance)),
-      );
-    final lightened = await recorder.endRecording().toImage(image.width, image.height);
+    final canvas = Canvas(recorder);
+    final bounds = Offset.zero & const Size.square(_size + 0.0);
+    // Named tapbacks are their icons, as on messages, so they don't look like the same emoji
+    final named = ReactionTypes.toList().contains(action);
+    if (named) {
+      await _paintTapback(canvas, bounds, action);
+    } else {
+      _paintText(canvas, action, appleFont);
+    }
+    var image = await _trimmed(await recorder.endRecording().toImage(_size, _size));
+    // Segoe UI Emoji has no flags and draws their letters as a white glyph, which Windows should theme for contrast
+    final letterFlag =
+        !appleFont && action.runes.length == 2 && action.runes.every((r) => r >= 0x1F1E6 && r <= 0x1F1FF);
+    if (!letterFlag) image = await _withBackdrop(image);
+    final png = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
-    return lightened;
+    return png?.buffer.asUint8List();
+  }
+
+  /// [image] at 58px over a near-invisible backdrop filling the 64px image: a checkerboard of black and white pixels
+  /// at 2/255 alpha. Windows themes images it takes for glyphs, inverting them against the notification's background:
+  /// flat emoji (♥ 🔵 ⬛) and darker ones (emphasize) on light and accent backgrounds. It stops once enough backdrop
+  /// shows around them. Tested on real notifications: at 60px ⬛ and 📈 were inverted, and 59px can't be centered on
+  /// whole pixels. Both colors because each alone failed somewhere: over white, light emoji (☁ 🐰) were still
+  /// inverted on light backgrounds; over black, 🚴 and 🍭 were on accent ones.
+  static Future<ui.Image> _withBackdrop(ui.Image image) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..drawColor(const Color.fromARGB(2, 0, 0, 0), BlendMode.src);
+    final white = Paint()
+      ..color = const Color.fromARGB(2, 255, 255, 255)
+      ..blendMode = BlendMode.src
+      ..isAntiAlias = false;
+    for (int y = 0; y < _size; y++) {
+      for (int x = (y + 1) % 2; x < _size; x += 2) {
+        canvas.drawRect(Rect.fromLTWH(x + 0.0, y + 0.0, 1, 1), white);
+      }
+    }
+    canvas.drawImageRect(
+      image,
+      Offset.zero & Size(image.width.toDouble(), image.height.toDouble()),
+      // Whole pixels: a half-covered edge column was enough to get a flat black square (Apple ◼) inverted in dark mode
+      const Rect.fromLTWH(3, 3, 58, 58),
+      Paint()..filterQuality = FilterQuality.high,
+    );
+    final backed = await recorder.endRecording().toImage(_size, _size);
+    image.dispose();
+    return backed;
   }
 
   /// [image] cropped to what's drawn and scaled back up to fill it. Windows draws button images at a fixed size, so
