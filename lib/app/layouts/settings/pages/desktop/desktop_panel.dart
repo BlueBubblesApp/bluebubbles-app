@@ -978,7 +978,10 @@ class _AddAction extends StatelessWidget {
         full,
         SettingsTile(
           title: "Add Action",
-          subtitle: fullMessage ?? "A tapback, Mark Read, or an emoji",
+          subtitle: fullMessage ??
+              (SettingsSvc.serverDetails.supportsEmojiTapbacks
+                  ? "A tapback, Mark Read, or an emoji"
+                  : "A tapback or Mark Read"),
           onTap: options.isEmpty ? null : showMenu,
           leading: const SettingsLeadingIcon(
             iosIcon: CupertinoIcons.add,
