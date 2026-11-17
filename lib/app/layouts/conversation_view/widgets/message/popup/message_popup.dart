@@ -408,9 +408,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   /// The tapback panel with the add-emoji circle beside it, on the side away from the screen edge it's pinned to.
   Widget _withAddEmojiCircle(Widget panel) {
     if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return panel;
-    // Level with the panel's pill; ReactionPickerClipper keeps its bottom 15 for the thought-bubble dots
+    // Centered on the panel's pill (its items plus 5 around them; ReactionPickerClipper keeps the bottom 15 for the
+    // thought-bubble dots). Only iOS pads the items vertically, so the pill is 55 tall there and 44 elsewhere.
     final circle = Padding(
-      padding: const EdgeInsets.only(top: 5),
+      padding: EdgeInsets.only(top: max(0, ((iOS ? 55 : 44) - _addEmojiCircleSize) / 2)),
       child: _addEmojiCircle(context),
     );
     const gap = SizedBox(width: _addEmojiCircleGap);
