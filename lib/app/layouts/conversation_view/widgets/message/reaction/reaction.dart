@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/widgets/reaction_details.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/state/message_state_scope.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/ink_fitted_emoji.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction_clipper.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/sticker_tapback_image.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/shared/message_error_helper.dart';
@@ -111,6 +110,23 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
 
   double get _clipHeight => widget.tailType == ReactionTailType.inside ? iosClipHeight : iosSize;
 
+  /// Around the glyph in the iOS bubble. Emoji are fitted by what they draw, so the same padding draws them at the
+  /// SVGs' size (which fill their box); stickers get less, as their images have margins of their own.
+  static EdgeInsetsGeometry _glyphPadding(String type) => ReactionTypes.toList().contains(type)
+      ? const EdgeInsets.all(6.5).add(EdgeInsets.only(right: type == "emphasize" ? 1 : 0))
+      : ReactionTypes.isEmojiTapback(type)
+          ? const EdgeInsets.all(6.5)
+          : const EdgeInsets.all(3);
+
+  // Named tapbacks are their icons on every skin, so they don't look like the same emoji sent as an emoji tapback
+  Widget _circleGlyph(Message reaction, String type) =>
+      SizedBox.square(dimension: _circleGlyphSize, child: _customGlyph(reaction) ?? TapbackIcon(type));
+
+  // The same share of the 30px circle as the iOS bubble's glyph takes of its round part (15 of 28)
+  static const double _circleGlyphSize = 30 * 15 / 28;
+
+  static Widget _fittedEmoji(Message reaction) => InkFittedEmoji(ReactionTypes.emojiFor(reaction));
+
   /// Emoji and sticker tapbacks have no SVG, so they're drawn from the reaction itself.
   Widget? _customGlyph(Message reaction) {
     final type = reaction.associatedMessageType;
@@ -118,11 +134,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
       return StickerTapbackImage(attachment: reaction.dbAttachments.firstOrNull);
     }
     if (!ReactionTypes.isEmojiTapback(type)) return null;
-    return FittedBox(
-      child: Text(ReactionTypes.emojiFor(reaction),
-          style: const TextStyle(
-              height: 1, leadingDistribution: TextLeadingDistribution.even, fontFamily: 'Apple Color Emoji')),
-    );
+    return _fittedEmoji(reaction);
   }
 
   @override
@@ -208,25 +220,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                   ),
                 );
               },
-              child: Center(
-                child: Builder(builder: (context) {
-                  if (ReactionTypes.isStickerTapback(reactionType)) return _customGlyph(reaction)!;
-                  final text = Text(
-                    ReactionTypes.emojiFor(reaction),
-                    style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
-                    textAlign: TextAlign.center,
-                  );
-                  // rotate thumbs down to match iOS
-                  if (reactionType == "dislike") {
-                    return Transform(
-                      transform: Matrix4.identity()..rotateY(pi),
-                      alignment: FractionalOffset.center,
-                      child: text,
-                    );
-                  }
-                  return text;
-                }),
-              ),
+              child: Center(child: _circleGlyph(reaction, reactionType)),
             ));
       }
       return Stack(
@@ -273,10 +267,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                       height: iosSize * 0.8,
                       child: Center(
                           child: Padding(
-                        // The SVGs are drawn inset; emoji and stickers would look shrunken with the same padding
-                        padding: ReactionTypes.toList().contains(reactionType)
-                            ? const EdgeInsets.all(6.5).add(EdgeInsets.only(right: reactionType == "emphasize" ? 1 : 0))
-                            : const EdgeInsets.all(3),
+                        padding: _glyphPadding(reactionType),
                         child: _customGlyph(reaction) ?? TapbackIcon(reactionType),
                       )),
                     ));
@@ -372,24 +363,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
             ),
           ],
         ),
-        child: Center(
-          child: Builder(builder: (ctx) {
-            if (ReactionTypes.isStickerTapback(rType)) return _customGlyph(reaction)!;
-            final text = Text(
-              ReactionTypes.emojiFor(reaction),
-              style: const TextStyle(fontSize: 15, fontFamily: 'Apple Color Emoji'),
-              textAlign: TextAlign.center,
-            );
-            if (rType == "dislike") {
-              return Transform(
-                transform: Matrix4.identity()..rotateY(pi),
-                alignment: FractionalOffset.center,
-                child: text,
-              );
-            }
-            return text;
-          }),
-        ),
+        child: Center(child: _circleGlyph(reaction, rType)),
       );
     }
 
@@ -447,9 +421,7 @@ class ReactionWidgetState extends State<ReactionWidget> with ThemeHelpers {
                 height: iosSize * 0.8,
                 child: Center(
                   child: Padding(
-                    padding: ReactionTypes.toList().contains(rType)
-                        ? const EdgeInsets.all(6.5).add(EdgeInsets.only(right: rType == "emphasize" ? 1 : 0))
-                        : const EdgeInsets.all(3),
+                    padding: _glyphPadding(rType),
                     child: _customGlyph(reaction) ?? TapbackIcon(rType),
                   ),
                 ),

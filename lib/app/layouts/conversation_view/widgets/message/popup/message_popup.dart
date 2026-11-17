@@ -724,9 +724,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                         ? context.theme.colorScheme.primary
                                                         : Colors.transparent,
                                                     borderRadius: BorderRadius.circular(20),
+                                                    // reactionItemWidth less the item's padding
                                                     child: SizedBox(
-                                                      width: iOS ? 35 : null,
-                                                      height: iOS ? 35 : null,
+                                                      width: iOS ? 35 : 34,
+                                                      height: iOS ? 35 : 34,
                                                       child: InkWell(
                                                         borderRadius: BorderRadius.circular(20),
                                                         onTap: () async {
@@ -765,28 +766,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                               ? Center(child: _recentStickerGlyph(recentSticker))
                                                               : isEmoji
                                                               ? Center(child: _emojiTapbackGlyph(e))
-                                                              : iOS
-                                                              ? TapbackIcon(e)
-                                                              : Center(
-                                                                  child: Builder(builder: (context) {
-                                                                    final text = Text(
-                                                                      ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                                      style: const TextStyle(
-                                                                          fontSize: 18,
-                                                                          fontFamily: 'Apple Color Emoji'),
-                                                                      textAlign: TextAlign.center,
-                                                                    );
-                                                                    // rotate thumbs down to match iOS
-                                                                    if (e == "dislike") {
-                                                                      return Transform(
-                                                                        transform: Matrix4.identity()..rotateY(pi),
-                                                                        alignment: FractionalOffset.center,
-                                                                        child: text,
-                                                                      );
-                                                                    }
-                                                                    return text;
-                                                                  }),
-                                                                ),
+                                                              : TapbackIcon(e),
                                                         ),
                                                       ),
                                                     ),
