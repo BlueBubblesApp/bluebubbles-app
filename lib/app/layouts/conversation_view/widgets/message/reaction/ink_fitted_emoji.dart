@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 
 /// [emoji] sized and centered by what it draws, filling the largest square it's given. Its text box is wider than the
@@ -17,8 +16,10 @@ class InkFittedEmoji extends StatefulWidget {
 class _InkFittedEmojiState extends State<InkFittedEmoji> {
   static const double _measureSize = 100;
 
-  /// Where each emoji draws relative to its text box at [_measureSize], per emoji font
+  /// Where each emoji draws relative to its text box at [_measureSize]. Emptied when fonts change (a font loaded at
+  /// runtime, like the Apple emoji font, finishing its load), so no measurement outlives the fonts it was taken with.
   static final Map<String, Future<Rect?>> _inkCache = {};
+  static bool _clearsOnFontChange = false;
   Rect? _ink;
 
   static TextStyle _style(double fontSize) => TextStyle(
@@ -31,7 +32,19 @@ class _InkFittedEmojiState extends State<InkFittedEmoji> {
   @override
   void initState() {
     super.initState();
+    // Added before any widget's own listener, so the cache is empty by the time they measure again
+    if (!_clearsOnFontChange) {
+      _clearsOnFontChange = true;
+      PaintingBinding.instance.systemFonts.addListener(_inkCache.clear);
+    }
+    PaintingBinding.instance.systemFonts.addListener(_load);
     _load();
+  }
+
+  @override
+  void dispose() {
+    PaintingBinding.instance.systemFonts.removeListener(_load);
+    super.dispose();
   }
 
   @override
@@ -42,7 +55,7 @@ class _InkFittedEmojiState extends State<InkFittedEmoji> {
 
   void _load() {
     final emoji = widget.emoji;
-    _inkCache.putIfAbsent("$emoji|${FilesystemSvc.fontExistsOnDisk.value}", () => _measure(emoji)).then((ink) {
+    _inkCache.putIfAbsent(emoji, () => _measure(emoji)).then((ink) {
       if (mounted && widget.emoji == emoji) setState(() => _ink = ink);
     });
   }
