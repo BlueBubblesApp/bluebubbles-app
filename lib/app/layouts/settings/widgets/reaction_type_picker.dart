@@ -60,7 +60,7 @@ class _ReactionTypePickerState extends State<ReactionTypePicker> {
 
   Future<void> _select(String? val) async {
     if (val == _emojiOption) {
-      val = await showEmojiTapbackPicker(context);
+      val = (await showEmojiTapbackPicker(context) as EmojiTapbackPick?)?.emoji;
       if (val == null || !mounted) return;
     }
     setState(() => selectedValue = val!);
