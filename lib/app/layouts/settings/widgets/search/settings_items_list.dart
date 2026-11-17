@@ -420,8 +420,9 @@ List<Widget> buildSettingItemList({
               "Close to Tray",
               "Desktop Notifications",
               "Notification Sound Volume",
-              "Actions",
-              "Show Reply Field",
+              "Notification Layout",
+              "Notification Actions",
+              "Reply Field",
             ],
             onTap: () {
               ns.pushAndRemoveSettingsUntil(context, const DesktopPanel(), (Route route) => route.isFirst);

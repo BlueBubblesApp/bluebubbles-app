@@ -7,7 +7,7 @@ class TapbackIcon extends StatelessWidget {
   final String type;
 
   // Fixed like Messages' own, not theme colours: they read on both bubble colours
-  static const Map<String, List<Color>> _gradients = {
+  static const Map<String, List<Color>> gradients = {
     "love": [Color(0xFFFF8AC0), Color(0xFFF0479A)],
     "like": [Color(0xFFFFD84A), Color(0xFFF39A1E)],
     "dislike": [Color(0xFFFFD84A), Color(0xFFF39A1E)],
@@ -23,9 +23,10 @@ class TapbackIcon extends StatelessWidget {
       shaderCallback: (bounds) => LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: _gradients[type] ?? const [Colors.grey, Colors.grey],
+        colors: gradients[type] ?? const [Colors.grey, Colors.grey],
       ).createShader(bounds),
       child: SvgPicture.asset('assets/reactions/$type-black.svg'),
     );
   }
 }
+

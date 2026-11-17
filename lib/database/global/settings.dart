@@ -227,16 +227,17 @@ class Settings {
 
   // Notification actions
   final RxBool showReplyField = true.obs;
-  final RxList<int> selectedActionIndices = Platform.isWindows ? [0, 1, 2, 3].obs : [0, 1, 2].obs;
-  final RxList<String> actionList = RxList.from([
-    "Mark Read",
-    ReactionTypes.LOVE,
-    ReactionTypes.LIKE,
-    ReactionTypes.LAUGH,
-    ReactionTypes.EMPHASIZE,
-    ReactionTypes.DISLIKE,
-    ReactionTypes.QUESTION
-  ]);
+
+  /// The desktop notification's buttons, in order: "Mark Read", named tapbacks, and emoji (emoji tapbacks)
+  final RxList<String> actionList = RxList.from(_defaultActionList);
+
+  /// Always every index of [actionList]. Versions before it held only the chosen actions read the chosen ones from
+  /// here, so it's still saved for a backup they restore.
+  final RxList<int> selectedActionIndices = List.generate(_defaultActionList.length, (i) => i).obs;
+
+  /// How many buttons a desktop notification can have: Windows has room for 5, one of them the reply field's. Null on
+  /// Linux, where the notification server decides: GNOME Shell shows 3, KDE Plasma, Cinnamon and XFCE show them all.
+  static int? maxNotificationActions(bool showReplyField) => Platform.isWindows ? (showReplyField ? 4 : 5) : null;
 
   // Text field buttons — enabled buttons, in display order. Absent = hidden.
   final RxList<TextFieldButton> textFieldButtons = RxList.from(defaultTextFieldButtons);
@@ -740,12 +741,12 @@ class Settings {
             : SettingsSvc.settings.titleBarStyle.value;
 
     SettingsSvc.settings.showReplyField.value = map['showReplyField'] ?? SettingsSvc.settings.showReplyField.value;
-    if (map.containsKey('selectedActionIndices')) {
+    if (map.containsKey('actionList')) {
+      SettingsSvc.settings.actionList.value = _processActionList(
+          map['actionList'], map['selectedActionIndices'], SettingsSvc.settings.showReplyField.value);
       SettingsSvc.settings.selectedActionIndices.value =
-          _processSelectedActionIndices(map['selectedActionIndices'], SettingsSvc.settings.showReplyField.value);
+          List.generate(SettingsSvc.settings.actionList.length, (i) => i);
     }
-    SettingsSvc.settings.actionList.value =
-        _processActionList(map['actionList'] ?? jsonEncode(List<String>.from(SettingsSvc.settings.actionList)));
     if (map.containsKey('detailsMenuActions')) {
       SettingsSvc.settings._detailsMenuActions.value =
           _processDetailsMenuActions(map['detailsMenuActions'], SettingsSvc.settings.detailsMenuActions);
@@ -935,8 +936,8 @@ class Settings {
             : BBTitleBarStyle.custom;
 
     s.showReplyField.value = map['showReplyField'] ?? true;
-    s.selectedActionIndices.value = _processSelectedActionIndices(map['selectedActionIndices'], s.showReplyField.value);
-    s.actionList.value = _processActionList(map['actionList']);
+    s.actionList.value = _processActionList(map['actionList'], map['selectedActionIndices'], s.showReplyField.value);
+    s.selectedActionIndices.value = List.generate(s.actionList.length, (i) => i);
     s._detailsMenuActions.value = _processDetailsMenuActions(map['detailsMenuActions'], DetailsMenuAction.values);
     s.textFieldButtons.value = _processTextFieldButtons(map['textFieldButtons']);
 
@@ -965,6 +966,12 @@ class Settings {
     // saveOneAsync (not save()) so the GlobalIsolate's copy is synced too, else it
     // overwrites this on its next background settings write.
     unawaited(SettingsSvc.settings.saveOneAsync('detailsMenuActions'));
+  }
+
+  Future<void> setNotificationActions(List<String> actions) async {
+    SettingsSvc.settings.actionList.value = actions;
+    SettingsSvc.settings.selectedActionIndices.value = List.generate(actions.length, (i) => i);
+    await SettingsSvc.settings.saveManyAsync(['actionList', 'selectedActionIndices']);
   }
 
   /// Set the enabled text field buttons, in display order
@@ -1000,32 +1007,32 @@ Map<String, String> _processSavedChatFilters(dynamic rawJson) {
   }
 }
 
-List<int> _processSelectedActionIndices(dynamic rawJson, bool showReplyField) {
-  try {
-    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List)
-        .cast<int>()
-        .take(Platform.isWindows ? (showReplyField ? 4 : 5) : 3)
-        .sorted(Comparable.compare);
-  } catch (e) {
-    debugPrint("Using default selectedActionIndices");
-    return [0, 1, 2, 3, 4].take(Platform.isWindows ? (showReplyField ? 4 : 5) : 3).sorted(Comparable.compare);
-  }
-}
+final List<String> _defaultActionList = [
+  "Mark Read",
+  ReactionTypes.LOVE,
+  ReactionTypes.LIKE,
+  if (Platform.isWindows) ReactionTypes.LAUGH,
+];
 
-List<String> _processActionList(dynamic rawJson) {
+/// The chosen notification actions. Versions before multiple emoji saved every action in [rawActions] and the chosen
+/// ones' indices in [rawIndices], with an "Emoji" placeholder for their one emoji slot.
+List<String> _processActionList(dynamic rawActions, dynamic rawIndices, bool showReplyField) {
   try {
-    return (rawJson is List ? rawJson : jsonDecode(rawJson) as List).cast<String>();
+    final actions = (rawActions is List ? rawActions : jsonDecode(rawActions) as List).cast<String>().toList();
+    List<int>? indices;
+    try {
+      indices =
+          rawIndices == null ? null : (rawIndices is List ? rawIndices : jsonDecode(rawIndices) as List).cast<int>();
+    } catch (_) {}
+    final chosen = indices == null
+        ? actions
+        : indices.sorted(Comparable.compare).where((i) => i >= 0 && i < actions.length).map((i) => actions[i]);
+    final unique = chosen.where((a) => a != "Emoji").toSet().toList();
+    final max = Settings.maxNotificationActions(showReplyField);
+    return max == null ? unique : unique.take(max).toList();
   } catch (e) {
     debugPrint("Using default actionList");
-    return [
-      "Mark Read",
-      ReactionTypes.LOVE,
-      ReactionTypes.LIKE,
-      ReactionTypes.LAUGH,
-      ReactionTypes.EMPHASIZE,
-      ReactionTypes.DISLIKE,
-      ReactionTypes.QUESTION
-    ];
+    return List.of(_defaultActionList);
   }
 }
 
