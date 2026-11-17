@@ -1,8 +1,7 @@
 #include "d3d11_multithread.h"
 
 #include <windows.h>
-#include <d3d10.h>
-#include <d3d11.h>
+#include <d3d11_4.h>
 
 #include <cstring>
 
@@ -24,8 +23,8 @@ HRESULT WINAPI CreateDeviceProtected(IDXGIAdapter* adapter, D3D_DRIVER_TYPE driv
   ID3D11DeviceContext* context = nullptr;
   (*device)->GetImmediateContext(&context);
   if (context == nullptr) return result;
-  ID3D10Multithread* multithread = nullptr;
-  if (SUCCEEDED(context->QueryInterface(__uuidof(ID3D10Multithread), reinterpret_cast<void**>(&multithread)))) {
+  ID3D11Multithread* multithread = nullptr;
+  if (SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
     multithread->SetMultithreadProtected(TRUE);
     multithread->Release();
   }
