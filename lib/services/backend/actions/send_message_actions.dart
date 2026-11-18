@@ -164,8 +164,9 @@ class SendMessageActions {
     final selectedMessageGuid = map['selectedMessageGuid'] as String?;
     final partIndex = map['partIndex'] as int?;
     final isAudioMessage = map['isAudioMessage'] as bool? ?? false;
+    final chunked = map['chunked'] as bool? ?? false;
 
-    final response = await HttpSvc.message.sendAttachment(
+    final response = await (chunked ? HttpSvc.message.sendAttachmentChunked : HttpSvc.message.sendAttachment)(
       chatGuid,
       tempGuid,
       PlatformFile(
