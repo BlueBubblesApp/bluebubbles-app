@@ -51,7 +51,7 @@ class ExpressiveChatOptions extends StatelessWidget {
         children: [
           _buildAppearanceGroup(context),
           Obx(() => _buildConversationGroup(context)),
-          _buildContentGroup(context),
+          Obx(() => _buildContentGroup(context)),
           Obx(() => _buildDangerZoneGroup(context)),
         ],
       ),
@@ -404,6 +404,17 @@ class ExpressiveChatOptions extends StatelessWidget {
           title: "View bookmarks",
           supportingText: "Your bookmarked messages",
           onTap: () => showBookmarksThread(cvc(chat), context),
+        ),
+      ),
+      _OptionRow(
+        enabled: NameAndPhotoSharingSvc.hasSeenPhotos(chat),
+        build: (context) => M3EListTile(
+          icon: Icons.person_add,
+          title: "Show shared photos again",
+          supportingText: "Offer photos you already saved or dismissed in this chat again",
+          onTap: () async {
+            await NameAndPhotoSharingSvc.offerPhotosAgain(chat);
+          },
         ),
       ),
       _OptionRow(

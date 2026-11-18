@@ -22,12 +22,14 @@ class NameAndPhotoSharingService {
   /// How long a read card is reused, so reopening a chat doesn't ask the server again
   static const Duration _cardTtl = Duration(minutes: 30);
 
-  /// Each participant's card is a Private API call, so larger groups aren't looked up
-  static const int _maxLookedUpParticipants = 10;
-
-  /// Chats whose add or share offers were dismissed this session
+  /// New contacts hidden this session, by address
   final Set<String> _dismissedAdds = {};
+
+  /// Chats whose share offer was dismissed this session
   final Set<String> _dismissedShares = {};
+
+  /// Bumped whenever a photo is applied, dismissed or offered again, so an Obx reading [hasSeenPhotos] rebuilds
+  final RxInt _photoChanges = 0.obs;
 
   /// Cards read recently, by address (empty for your own)
   final Map<String, ({DateTime readAt, ({String? name, Uint8List? avatar})? card})> _cards = {};
@@ -55,29 +57,46 @@ class NameAndPhotoSharingService {
   Stream<SharedNameAndPhoto> sharedWithYouIn(Chat chat) async* {
     // Desktop has no address book to add to or update
     if (kIsDesktop || !isAvailableIn(chat)) return;
-    final participants = chat.participants.isNotEmpty ? chat.participants : chat.handles.toList();
-    if (participants.length > _maxLookedUpParticipants) return;
-    for (final handle in participants) {
+    // One per address: a merged iMessage/SMS chat has two handles for the same person (#3448)
+    for (final handle in chat.people) {
       // Photo updates need a native contact to write to
       if (handle.contactsV2.isNotEmpty && !handle.contactsV2.any((c) => c.isNative)) continue;
-      if (handle.contactsV2.isEmpty && _dismissedAdds.contains(chat.guid)) continue;
+      if (handle.contactsV2.isEmpty && _dismissedAdds.contains(handle.address)) continue;
       final card = await _readCard(address: handle.address);
       if (card == null) continue;
       final shared = SharedNameAndPhoto(handle, card.name, card.avatar);
       if (shared.isNewContact ||
-          (shared.photoHash != null && PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash)) {
+          (shared.photoHash != null &&
+              PrefsSvc.messaging.getSeenSharedPhoto(handle.address) != shared.photoHash)) {
         yield shared;
       }
     }
   }
 
-  void dismissAdds(Chat chat) => _dismissedAdds.add(chat.guid);
+  void dismissAdd(SharedNameAndPhoto shared) => _dismissedAdds.add(shared.handle.address);
 
   void dismissShare(Chat chat) => _dismissedShares.add(chat.guid);
 
-  /// A dismissed photo isn't offered again until they share a different one
-  Future<void> dismissPhoto(SharedNameAndPhoto shared) =>
-      PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+  /// Whether any participant in [chat] has a photo that was applied or dismissed, for [offerPhotosAgain]. Desktop
+  /// never offers photos.
+  bool hasSeenPhotos(Chat chat) {
+    if (_photoChanges.value < 0 || kIsDesktop || !isAvailableIn(chat)) return false;
+    return chat.people.any((h) => PrefsSvc.messaging.getSeenSharedPhoto(h.address) != null);
+  }
+
+  /// A dismissed photo isn't offered again until they share a different one, or [offerPhotosAgain]
+  Future<void> dismissPhoto(SharedNameAndPhoto shared) async {
+    await PrefsSvc.messaging.setSeenSharedPhoto(shared.handle.address, shared.photoHash!);
+    _photoChanges.value++;
+  }
+
+  /// Offers [chat]'s participants' applied and dismissed photos again. Emits `shared-contacts-unhidden` with the
+  /// chat's GUID so its banner reloads.
+  Future<void> offerPhotosAgain(Chat chat) async {
+    await Future.wait(chat.people.map((h) => PrefsSvc.messaging.clearSeenSharedPhoto(h.address)));
+    _photoChanges.value++;
+    EventDispatcherSvc.emit('shared-contacts-unhidden', chat.guid);
+  }
 
   /// Shares your name and photo with [chat]. Returns whether the server accepted it.
   Future<bool> shareYours(Chat chat) async {
@@ -98,6 +117,7 @@ class NameAndPhotoSharingService {
       isEmail: address.isEmail,
       name: shared.name,
       avatar: shared.avatar,
+      newContact: true,
     );
   }
 

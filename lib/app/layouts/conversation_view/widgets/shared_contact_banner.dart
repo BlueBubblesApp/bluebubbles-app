@@ -26,12 +26,29 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   final List<SharedNameAndPhoto> _adds = [];
   final List<SharedNameAndPhoto> _updates = [];
   bool _offerShare = false;
+  bool _expanded = false;
   Uint8List? _myAvatar;
   StreamSubscription<SharedNameAndPhoto>? _sharedSub;
+  late final StreamSubscription<DispatchedEvent> _unhideSub;
 
   @override
   void initState() {
     super.initState();
+    _load();
+    _unhideSub = EventDispatcherSvc.stream.listen((e) {
+      if (e.type != 'shared-contacts-unhidden' || e.data != chat.guid || !mounted) return;
+      setState(() {
+        _adds.clear();
+        _updates.clear();
+        _offerShare = false;
+        _expanded = false;
+      });
+      _load();
+    });
+  }
+
+  void _load() {
+    _sharedSub?.cancel();
     if (!NameAndPhotoSharingSvc.isAvailableIn(chat)) return;
     _loadOffer();
     _sharedSub = NameAndPhotoSharingSvc.sharedWithYouIn(chat).listen((shared) {
@@ -43,6 +60,7 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
   void dispose() {
     // Stops looking up the rest of the participants
     _sharedSub?.cancel();
+    _unhideSub.cancel();
     super.dispose();
   }
 
@@ -53,18 +71,6 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
       _offerShare = true;
       _myAvatar = offer.avatar;
     });
-  }
-
-  void _dismissAdds() {
-    NameAndPhotoSharingSvc.dismissAdds(chat);
-    setState(() => _adds.clear());
-  }
-
-  void _dismissUpdates() {
-    for (final shared in _updates) {
-      NameAndPhotoSharingSvc.dismissPhoto(shared);
-    }
-    setState(() => _updates.clear());
   }
 
   void _dismissShare() {
@@ -81,13 +87,19 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
     }
   }
 
+  /// Folds the list back up once one person or none is left, so later arrivals start behind View
+  void _remove(List<SharedNameAndPhoto> list, SharedNameAndPhoto shared) {
+    list.remove(shared);
+    if (_adds.length + _updates.length <= 1) _expanded = false;
+  }
+
   Future<void> _addContact(SharedNameAndPhoto shared) async {
-    setState(() => _adds.remove(shared));
+    setState(() => _remove(_adds, shared));
     await NameAndPhotoSharingSvc.openAddContactForm(shared);
   }
 
   Future<void> _updatePhoto(SharedNameAndPhoto shared) async {
-    setState(() => _updates.remove(shared));
+    setState(() => _remove(_updates, shared));
     switch (await NameAndPhotoSharingSvc.savePhoto(shared)) {
       case ContactPhotoUpdate.updated:
         showSnackbar("Photo Updated", "${shared.label}'s photo was updated");
@@ -100,71 +112,57 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
     }
   }
 
-  /// Lists several people, each with its own button
-  Future<void> _showList(List<SharedNameAndPhoto> cards, String action, Future<void> Function(SharedNameAndPhoto) onAction) {
-    return showBBDialog(
-      context: context,
-      title: "Shared Names and Photos",
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: cards
-            .map((card) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: _SharedAvatar(card.avatar),
-                  title: Text(card.label),
-                  subtitle: card.contact == null ? Text(card.handle.displayName) : null,
-                  trailing: TextButton(
-                    onPressed: () {
-                      Navigator.of(context, rootNavigator: true).pop();
-                      onAction(card);
-                    },
-                    child: Text(action),
-                  ),
-                ))
-            .toList(),
-      ),
-      actions: [BBDialogAction(text: "Close", onPressed: () => Navigator.of(context, rootNavigator: true).pop())],
-    );
+  String _photoTitle(SharedNameAndPhoto shared) =>
+      chat.isGroup ? "New photo available from ${shared.handle.reactionDisplayName}" : "New contact photo available";
+
+  Future<void> _ignorePhoto(SharedNameAndPhoto shared) async {
+    setState(() => _remove(_updates, shared));
+    await NameAndPhotoSharingSvc.dismissPhoto(shared);
   }
+
+  void _ignoreAdd(SharedNameAndPhoto shared) {
+    setState(() => _remove(_adds, shared));
+    NameAndPhotoSharingSvc.dismissAdd(shared);
+  }
+
+  Widget _addCard(SharedNameAndPhoto shared) => _BannerCard(
+        key: ValueKey('add ${shared.handle.address}'),
+        avatars: [shared.avatar],
+        text: "New contact information",
+        subtitle: shared.name ?? shared.handle.displayName,
+        actionBelow: true,
+        action: "Add to Contacts",
+        onAction: () => _addContact(shared),
+        onDismiss: () => _ignoreAdd(shared),
+      );
+
+  Widget _updateCard(SharedNameAndPhoto shared) => _BannerCard(
+        key: ValueKey('update ${shared.handle.address}'),
+        avatars: [shared.avatar],
+        text: _photoTitle(shared),
+        actionBelow: true,
+        action: "Update Contact",
+        onAction: () => _updatePhoto(shared),
+        onDismiss: () => _ignorePhoto(shared),
+      );
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final redacted = SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideContactInfo.value;
       if (redacted || (_adds.isEmpty && _updates.isEmpty && !_offerShare)) return const SizedBox.shrink();
+      final people = [..._adds.map(_addCard), ..._updates.map(_updateCard)];
       final cards = <Widget>[
-        if (_adds.length == 1)
+        if (people.length > 1)
           _BannerCard(
-            avatars: [_adds.single.avatar],
-            text: "${_adds.single.name ?? _adds.single.handle.displayName} shared their name and photo",
-            action: "Add to Contacts",
-            onAction: () => _addContact(_adds.single),
-            onDismiss: _dismissAdds,
+            key: const ValueKey('people'),
+            avatars: [..._adds.map((c) => c.avatar), ..._updates.map((c) => c.avatar)],
+            text: "${people.length} people updated contact information",
+            actionBelow: true,
+            action: _expanded ? "Hide" : "View",
+            onAction: () => setState(() => _expanded = !_expanded),
           ),
-        if (_adds.length > 1)
-          _BannerCard(
-            avatars: _adds.map((c) => c.avatar).toList(),
-            text: "${_adds.length} people shared their name and photo",
-            action: "View",
-            onAction: () => _showList(_adds, "Add", _addContact),
-            onDismiss: _dismissAdds,
-          ),
-        if (_updates.length == 1)
-          _BannerCard(
-            avatars: [_updates.single.avatar],
-            text: "New contact photo available",
-            action: "Update",
-            onAction: () => _updatePhoto(_updates.single),
-            onDismiss: _dismissUpdates,
-          ),
-        if (_updates.length > 1)
-          _BannerCard(
-            avatars: _updates.map((c) => c.avatar).toList(),
-            text: "${_updates.length} people updated contact information",
-            action: "View",
-            onAction: () => _showList(_updates, "Update", _updatePhoto),
-            onDismiss: _dismissUpdates,
-          ),
+        if (people.length == 1 || _expanded) ...people,
         if (_offerShare)
           _BannerCard(
             avatars: [_myAvatar],
@@ -185,7 +183,12 @@ class _SharedContactBannerState extends State<SharedContactBanner> {
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Column(mainAxisSize: MainAxisSize.min, children: cards),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: Column(mainAxisSize: MainAxisSize.min, children: cards),
+            ),
           ),
         ),
       );
@@ -211,18 +214,25 @@ class _SharedAvatar extends StatelessWidget {
 
 class _BannerCard extends StatelessWidget {
   const _BannerCard({
+    super.key,
     this.avatars = const [null],
     required this.text,
+    this.subtitle,
+    this.actionBelow = false,
     required this.action,
     required this.onAction,
-    required this.onDismiss,
+    this.onDismiss,
   });
 
   final List<Uint8List?> avatars;
   final String text;
+  final String? subtitle;
+
+  /// Bolds [text] and moves the action under it, after [subtitle]
+  final bool actionBelow;
   final String action;
   final VoidCallback onAction;
-  final VoidCallback onDismiss;
+  final VoidCallback? onDismiss;
 
   Widget _avatarStack(BuildContext context) {
     final shown = avatars.take(3).toList();
@@ -257,10 +267,75 @@ class _BannerCard extends StatelessWidget {
           children: [
             _avatarStack(context),
             const SizedBox(width: 12),
-            Expanded(child: Text(text, style: context.theme.textTheme.bodyMedium)),
-            TextButton(onPressed: onAction, child: Text(action)),
-            IconButton(icon: const Icon(Icons.close_rounded, size: 20), onPressed: onDismiss),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    text,
+                    style: actionBelow
+                        ? context.theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold)
+                        : context.theme.textTheme.bodyMedium,
+                  ),
+                  if (actionBelow)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        if (subtitle != null) ...[
+                          Flexible(
+                            child: Text(
+                              subtitle!,
+                              style: context.theme.textTheme.bodySmall!.copyWith(
+                                color: context.theme.colorScheme.outline,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        _InlineAction(action, onAction),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            if (!actionBelow) TextButton(onPressed: onAction, child: Text(action)),
+            if (onDismiss != null)
+              IconButton(icon: const Icon(Icons.close_rounded, size: 20), onPressed: onDismiss)
+            else
+              // Holds the close button's space, so every banner is the same height and width
+              const SizedBox.square(dimension: kMinInteractiveDimension),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineAction extends StatelessWidget {
+  const _InlineAction(this.text, this.onPressed);
+
+  final String text;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      ),
+      child: Text(
+        text,
+        style: context.theme.textTheme.bodySmall!.copyWith(
+          color: context.theme.colorScheme.primary,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

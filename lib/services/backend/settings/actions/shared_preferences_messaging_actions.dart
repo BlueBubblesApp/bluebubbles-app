@@ -131,6 +131,10 @@ class SharedPreferencesMessagingActions {
     await service.i.setString('${_seenSharedPhotoPrefix}_$address', hash);
   }
 
+  Future<void> clearSeenSharedPhoto(String address) async {
+    await service.i.remove('${_seenSharedPhotoPrefix}_$address');
+  }
+
   String? getLastOpenedChat() => service.i.getString(_lastOpenedChatKey);
 
   Future<void> setLastOpenedChat(String chatGuid) async {
