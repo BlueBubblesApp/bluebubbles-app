@@ -5,7 +5,6 @@ import 'package:bluebubbles/app/state/message_state_scope.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/models/models.dart' show StickerPlacement;
 import 'package:bluebubbles/services/services.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
@@ -145,21 +144,14 @@ class _StickerHolderState extends State<StickerHolder> {
   /// This holder's sticker attachments, in the order their messages were sent, so later stickers draw on top
   List<Attachment> _stickers = const [];
 
-  /// Guids of the stickers whose image is on disk, ready to draw
-  final Set<String> _ready = {};
+  /// Keys ([_keyOf]) of the stickers whose image is on disk, ready to draw
+  final Set<Object> _ready = {};
 
   /// Guids being downloaded, so an update doesn't add another callback to the same download
   final Set<String> _downloading = {};
 
-  /// The key each sticker draws under. A sent sticker swaps its temp guid for the real one (and its file moves with
-  /// it); it keeps the temp one's key, so it stays put instead of vanishing and popping back in.
-  final Map<String, String> _keys = {};
-
   /// Keys whose image has drawn, so a new provider for the same sticker (its moved file) doesn't pop it in again
-  final Set<String> _shown = {};
-
-  /// The temp sticker drawn in place of the server's copy of it until that one's file is on disk
-  final Map<String, Attachment> _standIns = {};
+  final Set<Object> _shown = {};
 
   /// Where [_measure] reports each placed sticker's decoded size, for [StickerSpace]
   MessageState? _state;
@@ -194,45 +186,30 @@ class _StickerHolderState extends State<StickerHolder> {
       });
     // Rebuilt from the current messages each time, so a sticker that left (unsent, or moved to the other holder once
     // its placement arrived) stops drawing here
-    final previous = _stickers;
-    // One per guid: the server can echo a sent sticker more than once
-    final byGuid = <String, Attachment>{
+    _stickers = [
       for (final message in messages)
         for (final attachment in message.dbAttachments)
           if (attachment.guid != null &&
               (!widget.placed || StickerPlacement.tryParse(attachment.stickerPlacement) != null))
-            attachment.guid!: attachment,
-    };
-    _stickers = byGuid.values.toList();
-    final guids = byGuid.keys.toSet();
-    // A sent sticker's echo can replace it before the send answers, under the server's guid and file name
-    final replaced = previous.where((a) => a.guid!.startsWith("temp") && !guids.contains(a.guid)).toList();
-    for (final attachment in _stickers) {
-      if (_keys.containsKey(attachment.guid) || attachment.guid!.startsWith("temp")) continue;
-      final temp = replaced.firstWhereOrNull((t) => _samePlace(t, attachment));
-      if (temp == null) continue;
-      replaced.remove(temp);
-      _keys[attachment.guid!] = _keyOf(temp);
-      if (_ready.contains(temp.guid)) _standIns[attachment.guid!] = temp;
-    }
-    _ready.retainAll(guids);
-    _keys.removeWhere((guid, _) => !guids.contains(guid));
-    _standIns.removeWhere((guid, _) => !guids.contains(guid));
+            attachment,
+    ];
+    _ready.retainAll(_stickers.map(_keyOf));
 
     for (final attachment in List.of(_stickers)) {
       final guid = attachment.guid!;
-      if (_ready.contains(guid) || _downloading.contains(guid)) continue;
+      final key = _keyOf(attachment);
+      if (_ready.contains(key) || _downloading.contains(guid)) continue;
       final exists = await FileSystemEntity.type(attachment.path) != FileSystemEntityType.notFound;
-      if (!mounted || _ready.contains(guid) || _downloading.contains(guid)) continue;
+      if (!mounted || _ready.contains(key) || _downloading.contains(guid)) continue;
       if (exists) {
-        _markReady(guid, attachment);
+        _markReady(key, attachment);
       } else {
         _downloading.add(guid);
         AttachmentDownloader.startDownload(
           attachment,
           onComplete: (_) {
             _downloading.remove(guid);
-            _markReady(guid, attachment);
+            _markReady(key, attachment);
           },
           onError: () => _downloading.remove(guid),
         );
@@ -240,23 +217,12 @@ class _StickerHolderState extends State<StickerHolder> {
     }
   }
 
-  String _keyOf(Attachment attachment) => _keys[attachment.guid] ?? attachment.guid!;
+  /// A sent sticker keeps its attachment row when the server's copy replaces it, but not its guid or file
+  Object _keyOf(Attachment attachment) => attachment.id ?? attachment.guid!;
 
-  /// Whether [real] can be the server's copy of the sticker [temp] sent: placed in the same spot
-  static bool _samePlace(Attachment temp, Attachment real) {
-    final a = StickerPlacement.tryParse(temp.stickerPlacement), b = StickerPlacement.tryParse(real.stickerPlacement);
-    if (a == null || b == null) return a == b;
-    bool near(double x, double y) => (x - y).abs() < 0.02;
-    return near(a.xScalar, b.xScalar) && near(a.yScalar, b.yScalar) && near(a.scale, b.scale) &&
-        near(a.rotation, b.rotation);
-  }
-
-  void _markReady(String guid, Attachment attachment) {
+  void _markReady(Object key, Attachment attachment) {
     if (!mounted) return;
-    setState(() {
-      _ready.add(guid);
-      _standIns.remove(guid);
-    });
+    setState(() => _ready.add(key));
     _measure(attachment);
   }
 
@@ -291,10 +257,7 @@ class _StickerHolderState extends State<StickerHolder> {
 
   @override
   Widget build(BuildContext context) {
-    final ready = [
-      for (final a in _stickers)
-        if (_ready.contains(a.guid)) a else ?_standIns[a.guid],
-    ];
+    final ready = _stickers.where((a) => _ready.contains(_keyOf(a))).toList();
     if (ready.isEmpty) return const SizedBox.shrink();
     if (widget.placed) return _buildPlaced(ready);
 
@@ -374,7 +337,7 @@ class _StickerHolderState extends State<StickerHolder> {
         gaplessPlayback: true,
         filterQuality: quality,
         // Pops in once it has loaded; a sticker already in the image cache is just drawn, so scrolling doesn't replay
-        // it, and one that has drawn before under another file (see [_keys]) keeps showing
+        // it, and one that has drawn before under another file (see [_keyOf]) keeps showing
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
           final key = _keyOf(attachment);
           if (frame != null) _shown.add(key);

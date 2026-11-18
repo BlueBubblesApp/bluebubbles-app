@@ -538,8 +538,10 @@ class MessageState extends StatefulController {
       _carryStickerSize(associatedMessages[index], reaction);
       associatedMessages[index] = reaction;
     } else {
-      // Check if this replaces a temp reaction
-      final tempIndex = associatedMessages.indexWhere((e) =>
+      // Check if this replaces a temp reaction. Stickers send their temp GUID, so they match above.
+      final tempIndex = ReactionTypes.sendsSticker(reaction.associatedMessageType)
+          ? -1
+          : associatedMessages.indexWhere((e) =>
           (e.guid?.startsWith('temp') == true || e.guid?.startsWith('error') == true) &&
           e.associatedMessageType == reaction.associatedMessageType &&
           (e.associatedMessagePart ?? 0) == (reaction.associatedMessagePart ?? 0));
