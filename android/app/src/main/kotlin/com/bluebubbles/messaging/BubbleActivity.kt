@@ -15,33 +15,16 @@ class BubbleActivity : FlutterFragmentActivity() {
 
         private const val KEPT_ENGINE_ID = "bubble"
 
-        private val engineLock = Any()
-        @Volatile private var _engine: FlutterEngine? = null
-
         private var keptEngineHost: BubbleActivity? = null
-        
-        fun getEngine(): FlutterEngine? {
-            synchronized(engineLock) {
-                return _engine
-            }
-        }
-        
-        fun setEngine(newEngine: FlutterEngine?) {
-            synchronized(engineLock) {
-                _engine = newEngine
-            }
-        }
     }
 
     private var usesKeptEngine = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        synchronized(engineLock) {
-            if (keptEngineHost == null) {
-                keptEngineHost = this
-                usesKeptEngine = true
-                startKeptEngine()
-            }
+        if (keptEngineHost == null) {
+            keptEngineHost = this
+            usesKeptEngine = true
+            startKeptEngine()
         }
         super.onCreate(savedInstanceState)
     }
@@ -63,7 +46,6 @@ class BubbleActivity : FlutterFragmentActivity() {
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        setEngine(flutterEngine)
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
                 call, result -> MethodCallHandler().methodCallHandler(call, result, this)
@@ -81,14 +63,11 @@ class BubbleActivity : FlutterFragmentActivity() {
     }
 
     override fun onDestroy() {
-        setEngine(null)
         super.onDestroy()
         releaseKeptEngine()
     }
 
     private fun releaseKeptEngine() {
-        synchronized(engineLock) {
-            if (keptEngineHost === this) keptEngineHost = null
-        }
+        if (keptEngineHost === this) keptEngineHost = null
     }
 }
