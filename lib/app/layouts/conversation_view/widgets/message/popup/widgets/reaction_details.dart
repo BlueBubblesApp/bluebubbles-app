@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
@@ -46,7 +45,7 @@ class ReactionDetails extends StatelessWidget {
                   final handle = message.handleRelation.target;
                   // A failed removal is drawn as the tapback it was taking back
                   final type = ReactionTypes.addedType(message.associatedMessageType);
-                  final svg = SettingsSvc.settings.skin.value == Skins.iOS && ReactionTypes.toList().contains(type);
+                  final svg = ReactionTypes.toList().contains(type);
                   String? reactionName;
                   if (!SettingsSvc.settings.hideNamesForReactions.value) {
                     if (message.isFromMe!) {
@@ -106,19 +105,11 @@ class ReactionDetails extends StatelessWidget {
                                     if (ReactionTypes.isStickerTapback(message.associatedMessageType)) {
                                       return StickerTapbackImage(attachment: message.dbAttachments.firstOrNull);
                                     }
-                                    final text = Text(
+                                    return Text(
                                       ReactionTypes.emojiFor(message),
                                       style: const TextStyle(fontSize: 18, fontFamily: 'Apple Color Emoji'),
                                       textAlign: TextAlign.center,
                                     );
-                                    if (type == "dislike") {
-                                      return Transform(
-                                        transform: Matrix4.identity()..rotateY(pi),
-                                        alignment: FractionalOffset.center,
-                                        child: text,
-                                      );
-                                    }
-                                    return text;
                                   }),
                                 ),
                         ),

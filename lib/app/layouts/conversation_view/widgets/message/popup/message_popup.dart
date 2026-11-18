@@ -408,9 +408,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
   /// The tapback panel with the add-emoji circle beside it, on the side away from the screen edge it's pinned to.
   Widget _withAddEmojiCircle(Widget panel) {
     if (!SettingsSvc.serverDetails.supportsEmojiTapbacks) return panel;
-    // Level with the panel's pill; ReactionPickerClipper keeps its bottom 15 for the thought-bubble dots
+    // Centered on the panel's pill (its items plus 5 around them; ReactionPickerClipper keeps the bottom 15 for the
+    // thought-bubble dots). Only iOS pads the items vertically, so the pill is 55 tall there and 44 elsewhere.
     final circle = Padding(
-      padding: const EdgeInsets.only(top: 5),
+      padding: EdgeInsets.only(top: max(0, ((iOS ? 55 : 44) - _addEmojiCircleSize) / 2)),
       child: _addEmojiCircle(context),
     );
     const gap = SizedBox(width: _addEmojiCircleGap);
@@ -724,9 +725,10 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                         ? context.theme.colorScheme.primary
                                                         : Colors.transparent,
                                                     borderRadius: BorderRadius.circular(20),
+                                                    // reactionItemWidth less the item's padding
                                                     child: SizedBox(
-                                                      width: iOS ? 35 : null,
-                                                      height: iOS ? 35 : null,
+                                                      width: iOS ? 35 : 34,
+                                                      height: iOS ? 35 : 34,
                                                       child: InkWell(
                                                         borderRadius: BorderRadius.circular(20),
                                                         onTap: () async {
@@ -765,28 +767,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
                                                               ? Center(child: _recentStickerGlyph(recentSticker))
                                                               : isEmoji
                                                               ? Center(child: _emojiTapbackGlyph(e))
-                                                              : iOS
-                                                              ? TapbackIcon(e)
-                                                              : Center(
-                                                                  child: Builder(builder: (context) {
-                                                                    final text = Text(
-                                                                      ReactionTypes.reactionToEmoji[e] ?? "X",
-                                                                      style: const TextStyle(
-                                                                          fontSize: 18,
-                                                                          fontFamily: 'Apple Color Emoji'),
-                                                                      textAlign: TextAlign.center,
-                                                                    );
-                                                                    // rotate thumbs down to match iOS
-                                                                    if (e == "dislike") {
-                                                                      return Transform(
-                                                                        transform: Matrix4.identity()..rotateY(pi),
-                                                                        alignment: FractionalOffset.center,
-                                                                        child: text,
-                                                                      );
-                                                                    }
-                                                                    return text;
-                                                                  }),
-                                                                ),
+                                                              : TapbackIcon(e),
                                                         ),
                                                       ),
                                                     ),
