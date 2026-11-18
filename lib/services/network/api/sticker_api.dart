@@ -99,6 +99,7 @@ class StickerApi {
   /// [remove] (with [tapback]) takes it back. The server answers with the sticker's own message.
   Future<Response> send({
     required String chatGuid,
+    required String tempGuid,
     required String messageGuid,
     required Uint8List bytes,
     required String fileName,
@@ -115,6 +116,8 @@ class StickerApi {
         data: FormData.fromMap({
           'attachment': MultipartFile.fromBytes(bytes, filename: fileName),
           'chatGuid': chatGuid,
+          // Tags the socket's new-message so it updates the temp sticker instead of arriving as a new one
+          'tempGuid': tempGuid,
           'selectedMessageGuid': messageGuid,
           'partIndex': partIndex.toString(),
           if (tapback) 'tapback': 'true',

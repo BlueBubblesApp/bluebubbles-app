@@ -973,6 +973,7 @@ class OutgoingMessageHandler {
     if (file == null || !await file.exists()) throw Exception('This sticker has no image to send');
     final response = await HttpSvc.sticker.send(
       chatGuid: c.guid,
+      tempGuid: m.guid!,
       messageGuid: selected.guid!,
       partIndex: m.associatedMessagePart ?? 0,
       bytes: await file.readAsBytes(),
