@@ -953,7 +953,6 @@ class OutgoingMessageHandler {
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
         isAudioMessage: isAudioMessage,
-        // v2 servers give an upload 60s to arrive, so a large file goes a slice at a time
         chunked: SettingsSvc.serverDetails.isV2Server && fileSize > MessageApi.attachmentChunkSize,
       ),
       onSuccess: (Map<String, dynamic> data) async {

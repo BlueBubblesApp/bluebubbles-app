@@ -230,13 +230,11 @@ class MessageApi {
     });
   }
 
-  /// Slice size for [sendAttachmentChunked]. v2 servers give each request 60s to arrive, so a slice this size
-  /// only needs ~140 kbps where a whole large file would time out.
+  /// v2 servers give each request 60s to arrive, which 1 MB makes at ~140 kbps.
   static const attachmentChunkSize = 1024 * 1024;
   static const maxChunkAttempts = 3;
 
-  /// Sends a file to `message/attachment/chunk` a slice at a time; the last slice sends the message and its
-  /// response is returned. v2 servers only. [tempGuid] is the transfer's id, as `attachmentGuid`.
+  /// v2 servers only. The last slice sends the message.
   Future<Response> sendAttachmentChunked(
     String chatGuid,
     String tempGuid,
@@ -298,8 +296,7 @@ class MessageApi {
             });
             break;
           } catch (e) {
-            // The server stores slices by index, so resending one is safe. The last one sends the message, and a
-            // 4xx is a refusal that won't change.
+            // A resent slice overwrites the stored one, but retrying the last could send the message twice
             final status = e is Response ? e.statusCode ?? 0 : 0;
             if (isLast || (status >= 400 && status < 500) || attempt == maxChunkAttempts) rethrow;
             Logger.warn("Attachment slice ${i + 1}/$totalChunks failed (attempt $attempt), retrying",
