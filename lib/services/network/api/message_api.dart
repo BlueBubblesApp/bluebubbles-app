@@ -230,8 +230,7 @@ class MessageApi {
     });
   }
 
-  /// v2 servers give each request 60s to arrive, which 1 MB makes at ~140 kbps.
-  static const attachmentChunkSize = 1024 * 1024;
+  static const attachmentChunkSize = 20 * 1024 * 1024;
   static const maxChunkAttempts = 3;
 
   /// v2 servers only. The last slice sends the message.
