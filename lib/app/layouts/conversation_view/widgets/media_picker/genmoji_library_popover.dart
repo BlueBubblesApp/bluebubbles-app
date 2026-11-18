@@ -1,18 +1,14 @@
 import 'dart:async';
-import 'dart:math' as math;
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/composer_popover.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_tile.dart';
 import 'package:bluebubbles/models/genmoji.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-
-const double _popoverWidth = 380;
-const double _popoverHeight = 460;
-const double _margin = 12;
 
 /// Opens the desktop Genmoji library as a popover above [anchorContext] (the composer's `+`
 /// button): a searchable grid of the Mac's Genmoji with a "New" button to create one.
@@ -20,58 +16,15 @@ const double _margin = 12;
 /// Clicking a Genmoji attaches it and closes the popover; right-clicking offers Delete. Click
 /// outside or press Escape to dismiss. Only open this when `ServerDetails.supportsGenmoji`.
 Future<void> showGenmojiLibraryPopover(BuildContext anchorContext, ConversationViewController controller) async {
-  final navigator = Navigator.of(anchorContext, rootNavigator: true);
-  final overlayBox = navigator.overlay!.context.findRenderObject() as RenderBox;
-  final anchorBox = anchorContext.findRenderObject() as RenderBox?;
-  final anchor = anchorBox == null || !anchorBox.attached
-      ? Rect.fromLTWH(_margin, overlayBox.size.height - _margin, 0, 0)
-      : anchorBox.localToGlobal(Offset.zero, ancestor: overlayBox) & anchorBox.size;
-
-  // showGeneralDialog doesn't carry the conversation's Theme to the root navigator like showDialog does
-  final themes = InheritedTheme.capture(from: anchorContext, to: navigator.context);
-  unawaited(GenmojiLibrarySvc.sync());
-  controller.showingOverlays = true;
-  try {
-    await showGeneralDialog(
-      context: anchorContext,
-      barrierDismissible: true,
-      barrierLabel: "Dismiss",
-      barrierColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 160),
-      pageBuilder: (context, _, _) {
-        final size = MediaQuery.sizeOf(context);
-        final width = math.min(_popoverWidth, size.width - _margin * 2);
-        // Above the button, as tall as fits between it and the top of the window.
-        final height = math.min(_popoverHeight, anchor.top - _margin * 2).clamp(200.0, _popoverHeight);
-        final left = anchor.left.clamp(_margin, math.max(_margin, size.width - width - _margin)).toDouble();
-        final bottom = math.max(_margin, size.height - anchor.top + 8);
-        return Stack(
-          children: [
-            Positioned(
-              left: left,
-              bottom: bottom,
-              width: width,
-              height: height,
-              child: themes.wrap(_GenmojiLibraryPopover(controller: controller)),
-            ),
-          ],
-        );
-      },
-      transitionBuilder: (context, animation, _, child) {
-        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween(begin: 0.96, end: 1.0).animate(curved),
-            alignment: Alignment.bottomLeft,
-            child: child,
-          ),
-        );
-      },
+  if (SubscriptionSvc.locked) {
+    return showSubscriptionRequired(
+      anchorContext,
+      feature: ProFeature.genmoji,
+      onUnlocked: () => anchorContext.mounted ? showGenmojiLibraryPopover(anchorContext, controller) : null,
     );
-  } finally {
-    controller.showingOverlays = false;
   }
+  unawaited(GenmojiLibrarySvc.sync());
+  await showComposerPopover(anchorContext, controller, builder: (_) => _GenmojiLibraryPopover(controller: controller));
 }
 
 class _GenmojiLibraryPopover extends StatefulWidget {
@@ -151,74 +104,64 @@ class _GenmojiLibraryPopoverState extends State<_GenmojiLibraryPopover> {
   Widget build(BuildContext context) {
     final scheme = context.theme.colorScheme;
     final textTheme = context.theme.textTheme;
-    return Material(
-      color: scheme.surfaceContainerHigh,
-      elevation: 10,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: scheme.outline.withValues(alpha: 0.15)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: CallbackShortcuts(
-        bindings: {const SingleActivator(LogicalKeyboardKey.escape): _close},
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 10, 6),
-              child: Row(
-                children: [
-                  Text("Genmoji", style: textTheme.titleMedium!.copyWith(fontWeight: FontWeight.w600)),
-                  const Spacer(),
-                  Obx(
-                    () => GenmojiLibrarySvc.syncing.value
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: CupertinoActivityIndicator(radius: 8),
-                          )
-                        : IconButton(
-                            tooltip: "Refresh",
-                            visualDensity: VisualDensity.compact,
-                            icon: Icon(Icons.refresh_rounded, size: 20, color: scheme.outline),
-                            onPressed: () => GenmojiLibrarySvc.sync(force: true),
-                          ),
-                  ),
-                  const SizedBox(width: 4),
-                  FilledButton.tonalIcon(
-                    onPressed: _create,
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                    label: const Text("New"),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TextField(
-                controller: _search,
-                focusNode: _searchFocus,
-                style: textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: "Search Genmoji",
-                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: scheme.outline),
-                  isDense: true,
-                  filled: true,
-                  fillColor: scheme.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+    return ComposerPopoverCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 10, 6),
+            child: Row(
+              children: [
+                Text("Genmoji", style: textTheme.titleMedium!.copyWith(fontWeight: FontWeight.w600)),
+                const Spacer(),
+                Obx(
+                  () => GenmojiLibrarySvc.syncing.value
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: CupertinoActivityIndicator(radius: 8),
+                        )
+                      : IconButton(
+                          tooltip: "Refresh",
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(Icons.refresh_rounded, size: 20, color: scheme.outline),
+                          onPressed: () => GenmojiLibrarySvc.sync(force: true),
+                        ),
                 ),
+                const SizedBox(width: 4),
+                FilledButton.tonalIcon(
+                  onPressed: _create,
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: const Text("New"),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextField(
+              controller: _search,
+              focusNode: _searchFocus,
+              style: textTheme.bodyMedium,
+              decoration: InputDecoration(
+                hintText: "Search Genmoji",
+                prefixIcon: Icon(Icons.search_rounded, size: 20, color: scheme.outline),
+                isDense: true,
+                filled: true,
+                fillColor: scheme.surface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
               ),
             ),
-            const SizedBox(height: 8),
-            Expanded(child: Obx(() => _buildBody(context))),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-              child: Text(
-                "Right-click a Genmoji to delete it",
-                style: textTheme.bodySmall!.copyWith(color: scheme.outline),
-              ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(child: Obx(() => _buildBody(context))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+            child: Text(
+              "Right-click a Genmoji to delete it",
+              style: textTheme.bodySmall!.copyWith(color: scheme.outline),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

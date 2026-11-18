@@ -16,6 +16,7 @@ Handles the action sheet / context menu shown when the user long-presses (or rig
 | `actions/navigation_actions.dart` | Navigation actions (reply/thread/DM/forward/new conversation) |
 | `actions/message_actions.dart` | Message lifecycle actions (edit/unsend/delete/bookmark/remind/info/etc.) |
 | `widgets/reaction_details.dart` | Reactions preview widget rendered at top of popup |
+| `widgets/emoji_tapback_picker.dart` | The tapback row's `+`: an emoji picker, with a Stickers tab (`StickerLibraryView`) where sticker tapbacks are supported. Resolves to a `TapbackPick`; a sticker goes out through `OutgoingMsgHandler.queueStickerTapback`, and your own sticker tapback shows in the tapback row, where tapping it takes it back |
 
 ## MessagePopupActionContext Contract
 

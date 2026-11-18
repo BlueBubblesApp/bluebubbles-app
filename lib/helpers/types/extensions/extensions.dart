@@ -382,15 +382,29 @@ extension MessageNotificationExtension on Message {
     return rest.isEmpty ? dbAttachments.toList() : rest;
   }
 
-  /// The Genmoji a preview of this message draws: its own, or a tapback's reacted part's. Hits the DB for tapbacks.
+  /// The images a preview of this message draws in its text: its own Genmoji, or for a tapback the reacted part's,
+  /// after a sticker tapback's sticker ("reacted U+FFFC to" comes before the reacted text). Hits the DB for tapbacks.
   List<Attachment?> get previewInlineAttachments {
     final own = inlineAttachments;
     if (own.isNotEmpty || associatedMessageGuid == null) return own;
+    final sticker = previewSticker;
     final reacted = Message.findOne(guid: associatedMessageGuid);
-    if (reacted == null) return const [];
-    return associatedMessagePart != null && reacted.attributedBody.isNotEmpty
-        ? reacted.inlineAttachmentsIn(associatedMessagePart)
-        : reacted.inlineAttachments;
+    if (reacted == null) return [?sticker];
+    return [
+      ?sticker,
+      ...(associatedMessagePart != null && reacted.attributedBody.isNotEmpty
+          ? reacted.inlineAttachmentsIn(associatedMessagePart)
+          : reacted.inlineAttachments),
+    ];
+  }
+
+  /// A sticker tapback's sticker, which a preview draws in its text. A removal's is the removed tapback's when it came
+  /// without one.
+  Attachment? get previewSticker {
+    if (!ReactionTypes.isStickerTapback(associatedMessageType)) return null;
+    final own = dbAttachments.firstOrNull;
+    if (own != null || associatedMessageType != ReactionTypes.REMOVED_STICKER) return own;
+    return Message.findRemovedStickerTapback(this)?.dbAttachments.firstOrNull;
   }
 
   /// The text of a message whose only attachments are Genmoji, keeping their U+FFFC when [keepPlaceholders].
@@ -478,7 +492,7 @@ extension MessageNotificationExtension on Message {
         // fetch the associated message object
         Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
         if (associatedMessage != null) {
-          String? verb = ReactionTypes.verbFor(this);
+          String? verb = ReactionTypes.verbFor(this, inlineSticker: keepInlineAttachments && previewSticker != null);
           // we need to check balloonBundleId first because for some reason
           // game pigeon messages have the text "�"
           if (associatedMessage.isInteractive) {

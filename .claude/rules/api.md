@@ -21,6 +21,7 @@ call through `HttpSvc.<domain>.<method>()`.
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` |
 | `firebase` | `FirebaseApi` | `api/firebase_api.dart` |
 | `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` (v2) |
+| `sticker` | `StickerApi` | `api/sticker_api.dart` (v2) |
 
 Full method-level reference: `lib/services/network/CLAUDE.md` and `lib/services/network/api/CLAUDE.md`.
 

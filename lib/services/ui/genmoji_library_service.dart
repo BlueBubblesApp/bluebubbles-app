@@ -115,7 +115,7 @@ class GenmojiLibraryService {
   Future<void> sync({bool force = false}) => _syncing ??= _sync(force).whenComplete(() => _syncing = null);
 
   Future<void> _sync(bool force) async {
-    if (kIsWeb) return;
+    if (kIsWeb || SubscriptionSvc.locked) return;
     await load();
     syncing.value = true;
     try {

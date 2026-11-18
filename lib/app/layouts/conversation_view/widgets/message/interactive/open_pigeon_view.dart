@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// A game bubble: [card], drawn from the image the sender attached, or the compact form once a later turn of the same
 /// game has arrived, as Messages shows earlier turns. GamePigeon only attaches an image to a game's opening message,
@@ -55,7 +55,7 @@ class _OpenPigeonGameBubbleState extends State<OpenPigeonGameBubble> {
     if (chat == null) return compact;
     return Obx(() {
       // Both read, unlike canDraw on its own, which stops at the platform check and leaves this Obx observing nothing
-      final drawable = OpenPigeon.licensed.value & OpenPigeon.installed.value & OpenPigeon.canDraw;
+      final drawable = OpenPigeon.licensed & OpenPigeon.installed.value & OpenPigeon.canDraw;
       return drawable ? _drawnCard(context, chat, compact) : compact;
     });
   }
@@ -211,7 +211,13 @@ class _OpenPigeonEarlierTurnState extends State<OpenPigeonEarlierTurn> {
 /// What tapping a game does when OpenPigeon isn't drawing it: explain the subscription, offer the install, or open
 /// the game.
 Future<void> openOpenPigeonGame(BuildContext context, Message message, Chat chat) async {
-  if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
+  if (!OpenPigeon.licensed) {
+    return showSubscriptionRequired(
+      context,
+      feature: ProFeature.games,
+      onUnlocked: () => context.mounted ? openOpenPigeonGame(context, message, chat) : null,
+    );
+  }
   if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
   final payload = await OpenPigeon.payloadFor(message);
   if (payload == null || !await OpenPigeon.open(payload, chat)) {
@@ -263,7 +269,13 @@ class _OpenPigeonViewState extends State<_OpenPigeonView> {
 
 /// Opens OpenPigeon's game picker in the keyboard's place. A picked game waits in the composer until the user sends it.
 Future<void> showOpenPigeonPicker(BuildContext context, ConversationViewController controller) async {
-  if (!OpenPigeon.licensed.value) return _showSubscriptionRequired(context);
+  if (!OpenPigeon.licensed) {
+    return showSubscriptionRequired(
+      context,
+      feature: ProFeature.games,
+      onUnlocked: () => context.mounted ? showOpenPigeonPicker(context, controller) : null,
+    );
+  }
   if (!OpenPigeon.installed.value) return OpenPigeon.openStore();
   controller.focusNode.unfocus();
   controller.subjectFocusNode.unfocus();
@@ -396,25 +408,4 @@ class OpenPigeonPendingGame extends StatelessWidget {
       );
     });
   }
-}
-
-Future<void> _showSubscriptionRequired(BuildContext context) async {
-  final url = OpenPigeon.purchaseUrl;
-  await showBBDialog(
-    context: context,
-    title: "Subscription Required",
-    body: "Playing games needs a BlueBubbles subscription on your server.",
-    actions: [
-      BBDialogAction(text: "Close", onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
-      if (url != null)
-        BBDialogAction(
-          text: "Learn More",
-          isDefault: true,
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).pop();
-            launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-          },
-        ),
-    ],
-  );
 }

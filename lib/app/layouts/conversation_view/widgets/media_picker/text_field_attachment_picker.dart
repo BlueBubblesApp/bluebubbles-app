@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_picker_file.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_tile.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/interactive/open_pigeon_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
@@ -40,7 +42,10 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   /// The grid shows the Mac's Genmoji library instead of the photo library (see
   /// `ConversationViewController.showGenmojiLibrary`, which the back button also clears).
   bool get _showGenmoji => controller.showGenmojiLibrary.value;
+
+  bool get _showStickers => controller.showStickerLibrary.value;
   late final Worker _genmojiWorker;
+  late final Worker _stickerWorker;
 
   ConversationViewController get controller => widget.controller;
 
@@ -49,7 +54,11 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
     super.initState();
     // Every opening starts on photos.
     controller.showGenmojiLibrary.value = false;
+    controller.showStickerLibrary.value = false;
     _genmojiWorker = ever<bool>(controller.showGenmojiLibrary, (_) {
+      if (mounted) setState(() {});
+    });
+    _stickerWorker = ever<bool>(controller.showStickerLibrary, (_) {
       if (mounted) setState(() {});
     });
     getAttachments();
@@ -58,6 +67,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   @override
   void dispose() {
     _genmojiWorker.dispose();
+    _stickerWorker.dispose();
     super.dispose();
   }
 
@@ -164,6 +174,8 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
           onRefresh: () async {
             if (_showGenmoji) {
               await GenmojiLibrarySvc.sync(force: true);
+            } else if (_showStickers) {
+              await StickerLibrarySvc.sync();
             } else {
               await getAttachments();
             }
@@ -284,6 +296,14 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
                   selected: _showGenmoji,
                   onTap: _toggleGenmoji,
                 ),
+              if (SettingsSvc.getServerDetails().supportsStickers)
+                _QuickActionItem(
+                  icon: Icons.sticky_note_2_rounded,
+                  label: 'Stickers',
+                  color: const Color(0xFF5856D6),
+                  selected: _showStickers,
+                  onTap: _toggleStickers,
+                ),
             ],
           ),
         ),
@@ -310,8 +330,15 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   }
 
   void _toggleGenmoji() {
+    controller.showStickerLibrary.value = false;
     controller.showGenmojiLibrary.value = !_showGenmoji;
     if (_showGenmoji) unawaited(GenmojiLibrarySvc.sync());
+  }
+
+  void _toggleStickers() {
+    controller.showGenmojiLibrary.value = false;
+    controller.showStickerLibrary.value = !_showStickers;
+    if (_showStickers) unawaited(StickerLibrarySvc.sync());
   }
 
   Widget _buildStatusSliver({
@@ -368,6 +395,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
 
   Widget _buildImageGrid() {
     if (_showGenmoji) return _buildGenmojiGrid();
+    if (_showStickers) return _buildStickerGrid();
 
     if (_isLoadingImages) {
       return const SliverToBoxAdapter(
@@ -481,33 +509,13 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   Widget _buildGenmojiGrid() => Obx(() => _buildGenmojiContent());
 
   Widget _buildGenmojiContent() {
+    if (SubscriptionSvc.locked) return _subscriptionRequired(ProFeature.genmoji);
     final svc = GenmojiLibrarySvc;
     final entries = svc.entries.toList();
     final leading = _genmojiLeadingTiles;
 
     if (entries.isEmpty) {
-      return SliverMainAxisGroup(
-        slivers: [
-          // The same column the grid starts with, at the size the grid would give it.
-          SliverToBoxAdapter(
-            child: LayoutBuilder(builder: (context, constraints) {
-              final extent = (constraints.maxHeight - _genmojiSpacing * (_genmojiRows - 1)) / _genmojiRows;
-              return SizedBox(
-                width: extent,
-                child: Column(
-                  children: [
-                    for (final (i, tile) in leading.indexed) ...[
-                      if (i > 0) const SizedBox(height: _genmojiSpacing),
-                      SizedBox.square(dimension: extent, child: tile),
-                    ],
-                  ],
-                ),
-              );
-            }),
-          ),
-          _buildGenmojiStatus(svc),
-        ],
-      );
+      return SliverMainAxisGroup(slivers: [_leadingColumn(leading), _buildGenmojiStatus(svc)]);
     }
 
     return SliverGrid(
@@ -530,6 +538,131 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
         },
         childCount: leading.length + entries.length,
       ),
+    );
+  }
+
+  /// The column a library grid starts with, at the size the grid would give it, for when the grid itself is empty.
+  Widget _leadingColumn(List<Widget> leading) => SliverToBoxAdapter(
+        child: LayoutBuilder(builder: (context, constraints) {
+          final extent = (constraints.maxHeight - _genmojiSpacing * (_genmojiRows - 1)) / _genmojiRows;
+          return SizedBox(
+            width: extent,
+            child: Column(
+              children: [
+                for (final (i, tile) in leading.indexed) ...[
+                  if (i > 0) const SizedBox(height: _genmojiSpacing),
+                  SizedBox.square(dimension: extent, child: tile),
+                ],
+              ],
+            ),
+          );
+        }),
+      );
+
+  /// A library grid on a server without the subscription: Photos, and the feature's locked badge and reason (as the
+  /// dialog draws them) with Learn More.
+  Widget _subscriptionRequired(ProFeature feature) {
+    // Offline, Retry rechecks: there's nothing to buy until the server says what it has
+    final url = SubscriptionSvc.offline ? null : SubscriptionSvc.purchaseUrl.value;
+    return SliverMainAxisGroup(
+      slivers: [
+        _leadingColumn([_BackToPhotosTile(onTap: _backToPhotos)]),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            width: 220,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SubscriptionRequiredCard(feature: feature),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: context.theme.colorScheme.primary,
+                        foregroundColor: context.theme.colorScheme.onPrimary,
+                      ),
+                      onPressed: url != null ? openSubscriptionPage : retrySubscriptionCheck,
+                      child: Text(url != null ? "Learn More" : "Retry"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _backToPhotos() {
+    controller.showGenmojiLibrary.value = false;
+    controller.showStickerLibrary.value = false;
+  }
+
+  List<Widget> get _stickerLeadingTiles => [
+        _BackToPhotosTile(onTap: () => controller.showStickerLibrary.value = false),
+        if (SettingsSvc.settings.enablePrivateAPI.value) const StickerAddTile(),
+      ];
+
+  /// The Mac's sticker library in the photo grid's place, laid out like the Genmoji grid: saved stickers, then
+  /// recents.
+  Widget _buildStickerGrid() => Obx(() {
+        if (SubscriptionSvc.locked) return _subscriptionRequired(ProFeature.stickers);
+        final svc = StickerLibrarySvc;
+        final entries = [...svc.entries.where((e) => e.isSaved), ...svc.entries.where((e) => !e.isSaved)];
+        final leading = _stickerLeadingTiles;
+        if (entries.isEmpty) {
+          return SliverMainAxisGroup(slivers: [_leadingColumn(leading), _buildStickerStatus(svc)]);
+        }
+        return SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: _genmojiRows,
+            crossAxisSpacing: _genmojiSpacing,
+            mainAxisSpacing: _genmojiSpacing,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index < leading.length) return leading[index];
+              final sticker = entries[index - leading.length];
+              return StickerLibraryTile(
+                key: ValueKey("sticker-${sticker.identifier}"),
+                sticker: sticker,
+                draggable: true,
+              );
+            },
+            childCount: leading.length + entries.length,
+          ),
+        );
+      });
+
+  Widget _buildStickerStatus(StickerLibraryService svc) {
+    if (!svc.loaded.value || svc.syncing.value) {
+      return const SliverToBoxAdapter(
+        child: SizedBox(width: 220, child: Center(child: CupertinoActivityIndicator())),
+      );
+    }
+    final error = svc.syncError.value;
+    if (error != null) {
+      return _buildStatusSliver(
+        icon: Icons.cloud_off_rounded,
+        title: "Couldn't Load Stickers",
+        message: error,
+        buttonLabel: "Retry",
+        onPressed: svc.sync,
+        width: 220,
+      );
+    }
+    final canAdd = SettingsSvc.settings.enablePrivateAPI.value;
+    return _buildStatusSliver(
+      icon: Icons.sticky_note_2_rounded,
+      title: svc.unavailableReason.value != null ? "Library Unavailable" : "No Stickers Yet",
+      message: svc.unavailableReason.value ?? "Stickers you use or add on your Mac will show up here.",
+      buttonLabel: canAdd ? "Add Sticker" : "Refresh",
+      onPressed: canAdd ? pickAndAddSticker : svc.sync,
+      width: 220,
     );
   }
 
@@ -566,7 +699,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
   }
 }
 
-/// Leaves the Genmoji library for the photo grid the picker opens with.
+/// Leaves the Genmoji or sticker library for the photo grid the picker opens with.
 class _BackToPhotosTile extends StatelessWidget {
   const _BackToPhotosTile({required this.onTap});
 
@@ -619,7 +752,7 @@ class _QuickActionItem extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  /// Drawn as the active mode (the Genmoji grid is showing).
+  /// Drawn as the active mode (the Genmoji or sticker grid is showing).
   final bool selected;
 
   @override

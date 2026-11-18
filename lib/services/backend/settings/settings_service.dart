@@ -329,6 +329,9 @@ class SettingsService {
   /// Returns the current cached [ServerDetails].
   ServerDetails get serverDetails => _serverDetails.value;
 
+  /// [serverDetails] to listen to (with `ever`), e.g. to recheck something whenever the server changes
+  Rx<ServerDetails> get serverDetailsChanges => _serverDetails;
+
   /// Several attachments can go as one message: the server takes attachment parts, and they need the Private API.
   bool get canSendAttachmentsTogether =>
       serverDetails.supportsMultiAttachmentSend &&

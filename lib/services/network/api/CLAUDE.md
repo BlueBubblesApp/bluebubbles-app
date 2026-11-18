@@ -18,6 +18,7 @@ One file per server API domain. Each class implements `BaseApi` and is exposed o
 | `icloud_api.dart` | `iCloudApi` | `icloud` |
 | `firebase_api.dart` | `FirebaseApi` | `firebase` |
 | `genmoji_api.dart` | `GenmojiApi` | `genmoji` (v2 only — `_svc.apiRootV2`) |
+| `sticker_api.dart` | `StickerApi` | `sticker` (v2 only, `_svc.apiRootV2`) |
 
 ## `BaseApi`
 `base_api.dart` defines the minimal interface (`dio`, `origin`, `apiRoot`, `apiRootV2`, `headers`, `buildQueryParams()`, `runApiGuarded()`, `returnSuccessOrError()`) that `HttpService` implements. Every sub-service is constructed with a `BaseApi` reference (`HttpService` itself) rather than importing it directly — this avoids a circular import between `HttpService` and the sub-services it owns.

@@ -5,7 +5,6 @@ import 'package:bluebubbles/database/models.dart' hide PayloadType;
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -25,10 +24,7 @@ class OpenPigeon {
   static final RxBool installed = false.obs;
 
   /// The server has a subscription; the app-message routes refuse (402) without one.
-  static final RxBool licensed = false.obs;
-
-  /// Where the server says a subscription can be bought.
-  static String? purchaseUrl;
+  static bool get licensed => SubscriptionSvc.hasPro;
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
   static ({String chatGuid, ValueChanged<Map<String, dynamic>> callback})? _keyboard;
 
@@ -43,10 +39,10 @@ class OpenPigeon {
   static bool get offered => _onV2 && SettingsSvc.settings.serverPrivateAPI.value == true;
 
   /// The server can send games; OpenPigeon may still need installing.
-  static bool get supported => offered && licensed.value;
+  static bool get supported => offered && licensed;
 
   /// OpenPigeon can draw games: it's installed and the server hands out their payloads.
-  static bool get canDraw => _onV2 && licensed.value && installed.value;
+  static bool get canDraw => _onV2 && licensed && installed.value;
 
   /// Snapshots by message guid, least recently used first (a Dart map keeps insertion order), capped at
   /// [_maxSnapshots] so scrolling a long chat doesn't keep every PNG.
@@ -109,7 +105,7 @@ class OpenPigeon {
     });
   }
 
-  /// Re-checks the install and the server's license, either of which can change while the app is in the background.
+  /// Re-checks the install, which can change while the app is in the background. The license is [SubscriptionSvc]'s.
   static Future<void> refresh() async {
     if (kIsWeb || !Platform.isAndroid) return;
     try {
@@ -119,43 +115,6 @@ class OpenPigeon {
     } on MissingPluginException {
       // Engines other than MainActivity's have no OpenPigeon channel
       return;
-    }
-    if (!SettingsSvc.serverDetails.isV2Server) {
-      licensed.value = false;
-      return;
-    }
-    final dio.Response response;
-    try {
-      response = await HttpSvc.server.subscription();
-    } catch (e) {
-      // A 4xx is the server's answer. Anything else (a timeout, no connection, a 5xx) says nothing about the license,
-      // so the last answer stands rather than locking games every time a resume beats the network
-      final status = switch (e) {
-        dio.Response() => e.statusCode,
-        dio.DioException() => e.response?.statusCode,
-        _ => null,
-      };
-      if (status != null && status >= 400 && status < 500) {
-        Logger.warn('The server refused the subscription check ($status)', tag: 'OpenPigeon');
-        licensed.value = false;
-      } else {
-        Logger.warn('Could not check the server subscription', error: e, tag: 'OpenPigeon');
-      }
-      return;
-    }
-    try {
-      final data = response.data['data'] as Map<String, dynamic>;
-      final tiers = (data['available_tiers'] as List? ?? const []).whereType<Map>().toList();
-      final pro = tiers.firstWhereOrNull((t) => t['id'] == 'pro');
-      final held = tiers.firstWhereOrNull((t) => t['id'] == data['tier']);
-      purchaseUrl = pro?['purchase_url'] as String?;
-      // The app-message routes need Pro or above, compared by rank. A tier the server doesn't list is newer than its
-      // build, and the server still ranks it from the license, so only a listed tier below Pro is refused.
-      licensed.value = data['tier'] != null &&
-          (held == null || pro == null || (held['rank'] as int) >= (pro['rank'] as int));
-    } catch (e) {
-      // A reply this build can't read isn't an answer either
-      Logger.warn('Could not read the server subscription', error: e, tag: 'OpenPigeon');
     }
   }
 

@@ -275,13 +275,15 @@ class StartupTasks {
     GetIt.I.registerSingleton<ChatsService>(ChatsService());
     GetIt.I.registerSingleton<TypingIndicatorService>(TypingIndicatorService());
     GetIt.I.registerSingleton<NameAndPhotoSharingService>(NameAndPhotoSharingService());
-    // Lazy: reads nothing from disk until a picker first opens the Genmoji library.
+    // Lazy: read nothing from disk until a picker first opens the Genmoji or sticker library.
     GetIt.I.registerLazySingleton<GenmojiLibraryService>(GenmojiLibraryService.new);
+    GetIt.I.registerLazySingleton<StickerLibraryService>(StickerLibraryService.new);
     GetIt.I.registerSingleton<SocketService>(SocketService());
     Logger.info("Waiting on NotificationsService...");
     await _waitForInterop(notifications: true);
 
     GetIt.I.registerSingleton<EventDispatcher>(EventDispatcher());
+    GetIt.I.registerSingleton<SubscriptionService>(SubscriptionService()..init());
     if (!kIsWeb && !kIsDesktop && !isBubble) unawaited(OpenPigeon.init());
 
     Logger.info("Registering CustomGroupsService...");
@@ -538,6 +540,7 @@ class StartupTasks {
   static Future<void> onAppResume() async {
     // OpenPigeon may have just been installed, or the server licensed
     unawaited(OpenPigeon.refresh());
+    if (GetIt.I.isRegistered<SubscriptionService>()) unawaited(SubscriptionSvc.refresh());
     final LifecycleService? lifecycle =
         (GetIt.I.isRegistered<LifecycleService>() && GetIt.I.isReadySync<LifecycleService>())
             ? GetIt.I<LifecycleService>()
@@ -571,7 +574,11 @@ class StartupTasks {
         // On mobile, only refocus if the user has auto-open keyboard enabled AND the
         // conversation view is the active route (not obscured by ConversationDetails etc.).
         ConversationViewController _cvc = cvc(activeChat.chat);
-        if (!_cvc.showingOverlays && !_cvc.showingSubRoute && _cvc.editing.isEmpty) {
+        // The attachment picker closes when the field takes focus, and system pickers it opens resume the app
+        if (!_cvc.showingOverlays &&
+            !_cvc.showingSubRoute &&
+            _cvc.editing.isEmpty &&
+            !_cvc.showAttachmentPicker.value) {
           if (kIsDesktop || SettingsSvc.settings.autoOpenKeyboard.value) {
             _cvc.lastFocusedNode.requestFocus();
           } else if (_cvc.lastFocusedNode.hasFocus) {

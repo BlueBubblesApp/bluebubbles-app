@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_details/dialogs/timeframe_picker.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/emoji_picker_popover.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/genmoji_library_popover.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_dialog.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/text_field/buttons/text_field_button.dart';
 import 'package:bluebubbles/database/io/klipy.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
@@ -64,17 +67,13 @@ class AttachmentActions {
       switch (button) {
         TextFieldButton.Files => pickFiles(controller),
         TextFieldButton.Genmoji => showGenmojiLibraryPopover(context, controller),
+        TextFieldButton.Stickers => showStickerLibraryPopover(context, controller),
         TextFieldButton.Handwritten => handwritten(context, controller),
         TextFieldButton.Schedule => schedule(context, controller),
         TextFieldButton.Location => shareLocation(controller),
         TextFieldButton.Gif => pickGif(context, controller),
-        TextFieldButton.Emoji => toggleEmojiPicker(controller),
+        TextFieldButton.Emoji => showEmojiPickerPopover(context, controller),
       };
-
-  static Future<void> toggleEmojiPicker(ConversationViewController controller) async {
-    controller.showEmojiPicker.value = !controller.showEmojiPicker.value;
-    (controller.editing.lastOrNull?.controller.focusNode ?? controller.lastFocusedNode).requestFocus();
-  }
 
   static Future<void> pickGif(BuildContext context, ConversationViewController controller) async {
     if (kIsDesktop || kIsWeb) {
@@ -326,6 +325,14 @@ class AttachmentActions {
   /// was attached. The library is re-synced afterwards either way, since the Mac files what
   /// it draws there (macOS 27's Image Playground always does).
   static Future<bool> createGenmoji(BuildContext context, ConversationViewController controller) async {
+    if (SubscriptionSvc.locked) {
+      await showSubscriptionRequired(
+        context,
+        feature: ProFeature.genmoji,
+        onUnlocked: () => context.mounted ? createGenmoji(context, controller) : null,
+      );
+      return false;
+    }
     final image = await showGenmojiDialog(context, isIMessage: controller.chat.isIMessage);
     unawaited(GenmojiLibrarySvc.sync());
     if (image == null) return false;

@@ -170,6 +170,13 @@ class ServerDetails {
   /// Send emoji tapbacks (`reaction: "emoji"`): a v2 server on macOS Sequoia (15.0) or newer.
   bool get supportsEmojiTapbacks => isV2Server && isMinSequoia;
 
+  /// Browse the Mac's sticker library and add to it (`/api/v2/sticker`): a v2 server. Adding needs the Private API.
+  bool get supportsStickers => isV2Server;
+
+  /// React with a sticker from the Mac's library (`/api/v2/sticker`, `message/sticker` with `tapback`): a v2 server
+  /// on macOS Sequoia (15.0) or newer, which is where `IMStickerTapback` arrived.
+  bool get supportsStickerTapbacks => isV2Server && isMinSequoia;
+
   /// Bold, italic, underline, strikethrough and text effects (`textFormatting` on `/message/text` and
   /// `/message/multipart`): a v2 server on macOS Sequoia (15.0) or newer, through the Private API. 1.x validated the
   /// field and never sent it, so its messages went out plain.

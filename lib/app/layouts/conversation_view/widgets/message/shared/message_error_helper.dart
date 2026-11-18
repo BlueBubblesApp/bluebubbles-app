@@ -1,9 +1,12 @@
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/models/sticker_placement.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 /// Helper class for getting error display information
 class ErrorHelper {
@@ -35,6 +38,8 @@ class MessageErrorDialog extends StatelessWidget {
     required this.onRetry,
     required this.onRemove,
     required this.chatId,
+    this.removeLabel = "Remove",
+    this.title,
   });
 
   final int errorCode;
@@ -43,11 +48,17 @@ class MessageErrorDialog extends StatelessWidget {
   final VoidCallback onRemove;
   final int chatId;
 
+  /// [onRemove]'s button. A failed tapback removal's just dismisses it (the tapback stays), so it reads "OK"
+  final String removeLabel;
+
+  /// In place of the error code's title, for an error that's better named by what failed
+  final String? title;
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
-      title: Text(ErrorHelper.getErrorTitle(errorCode), style: context.theme.textTheme.titleLarge),
+      title: Text(title ?? ErrorHelper.getErrorTitle(errorCode), style: context.theme.textTheme.titleLarge),
       content: Text(errorText, style: context.theme.textTheme.bodyLarge),
       actions: <Widget>[
         TextButton(
@@ -59,7 +70,7 @@ class MessageErrorDialog extends StatelessWidget {
           },
         ),
         TextButton(
-          child: Text("Remove",
+          child: Text(removeLabel,
               style: context.theme.textTheme.bodyLarge!.copyWith(color: Get.context!.theme.colorScheme.primary)),
           onPressed: () async {
             Navigator.of(context).pop();
@@ -86,6 +97,13 @@ Future<void> retryReaction({
   required Chat chat,
   required Message selected,
 }) async {
+  // A sticker is re-sent with its image, read before the failed one (and its file) goes
+  final sticker = ReactionTypes.sendsSticker(reaction.associatedMessageType)
+      ? reaction.dbAttachments.firstOrNull
+      : null;
+  final stickerFile = sticker == null || kIsWeb ? null : File(sticker.path);
+  final stickerBytes = stickerFile != null && await stickerFile.exists() ? await stickerFile.readAsBytes() : null;
+
   // Remove the original message and notification
   await MessagesSvc(chat.guid).deleteMessage(reaction);
   await NotificationsSvc.clearFailedToSend(chat.id!);
@@ -97,6 +115,29 @@ Future<void> retryReaction({
   }
 
   // Re-send
+  final placement = StickerPlacement.tryParse(sticker?.stickerPlacement);
+  if (stickerBytes != null && reaction.associatedMessageType == ReactionTypes.PLACED_STICKER && placement != null) {
+    await OutgoingMsgHandler.queuePlacedSticker(
+      chat: chat,
+      selected: selected,
+      part: reaction.associatedMessagePart ?? 0,
+      bytes: stickerBytes,
+      fileName: sticker!.transferName ?? 'sticker.png',
+      placement: placement,
+    );
+    return;
+  }
+  if (stickerBytes != null) {
+    await OutgoingMsgHandler.queueStickerTapback(
+      chat: chat,
+      selected: selected,
+      part: reaction.associatedMessagePart ?? 0,
+      bytes: stickerBytes,
+      fileName: sticker!.transferName ?? 'sticker.png',
+      remove: reaction.associatedMessageType == ReactionTypes.REMOVED_STICKER,
+    );
+    return;
+  }
   OutgoingMsgHandler.queue(
     OutgoingReaction(
       chat: chat,

@@ -289,6 +289,8 @@ class Message {
     return null;
   }
 
+  static Message? findRemovedStickerTapback(Message removal) => null;
+
   static List<Message> find() {
     return [];
   }

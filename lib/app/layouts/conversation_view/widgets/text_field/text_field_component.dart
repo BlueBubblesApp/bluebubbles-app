@@ -566,8 +566,9 @@ class TextFieldComponentState extends State<TextFieldComponent> {
               if (kIsDesktop) {
                 return DesktopAttachmentMenu(
                   controller: controller!,
-                  // The chat creator has no button row; this keeps GIF and emoji out of its menu
-                  inRow: const [TextFieldButton.Gif, TextFieldButton.Emoji],
+                  // The chat creator has no button row, and no messages to drop stickers on; this keeps these out of its
+                  // menu
+                  inRow: const [TextFieldButton.Gif, TextFieldButton.Emoji, TextFieldButton.Stickers],
                   builder: (_, toggle) => button(toggle),
                 );
               }
@@ -712,10 +713,6 @@ class TextFieldComponentState extends State<TextFieldComponent> {
       final ctrl = controller;
       if (ctrl == null) return KeyEventResult.ignored;
 
-      if (ctrl.showEmojiPicker.value) {
-        ctrl.showEmojiPicker.value = false;
-        return KeyEventResult.handled;
-      }
       if (ctrl.replyToMessage != null) {
         ctrl.replyToMessage = null;
         return KeyEventResult.handled;

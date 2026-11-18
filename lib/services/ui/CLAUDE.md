@@ -23,6 +23,7 @@ All are GetX singletons. Shorthand getters live in `lib/services/services.dart`.
 - `attachments_service.dart` — tracks file attachments in the composer + send progress state
 - `unifiedpush.dart` — push notification provider abstraction (UnifiedPush protocol)
 - `genmoji_library_service.dart` (`GenmojiLibrarySvc`, lazy) — mirror of the server Mac's Genmoji library (v2). `<appDocDir>/genmoji/`: `library.json` (listing + ETag), `thumbnails/<id>.png` (320px, batch-fetched only when missing), `full/<id>.png` (512px send copy). `sync()` revalidates with `If-None-Match`, fetches new thumbnails, prunes files for removed Genmoji; `delete()` removes from the Mac (needs Private API) and the cache
+- `sticker_library_service.dart` (`StickerLibrarySvc`, lazy) — mirror of the server Mac's sticker library (v2). `<appDocDir>/stickers/`: `library.json` (listing; the route has no ETag, so every sync re-reads it), `thumbnails/<id>` (fetched only when missing), `full/<id>` (send copy, fetched on first send). `sync()` refreshes and prunes files for removed stickers; `add()` uploads to the Mac (needs Private API) then syncs
 - `cache/cache_service.dart` (`CacheSvc`) — registry of clearable in-memory caches plus per-level purge policies; `LifecycleService` purges on background and on memory pressure → `cache/CLAUDE.md`
 
 ## Key Separation Rule
