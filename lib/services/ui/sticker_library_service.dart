@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/network/api/sticker_api.dart';
@@ -9,7 +8,6 @@ import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
-import 'package:image/image.dart' as img;
 import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
@@ -29,9 +27,6 @@ StickerLibraryService get StickerLibrarySvc => GetIt.I<StickerLibraryService>();
 class StickerLibraryService {
   /// Thumbnails fetched at once
   static const int _parallel = 6;
-
-  /// Longest side a sent sticker keeps: placed stickers draw at most 200 points at 3 pixels a point
-  static const int maxSendPixels = 600;
 
   /// Every sticker in the library, newest first.
   final RxList<LibrarySticker> entries = <LibrarySticker>[].obs;
@@ -163,32 +158,11 @@ class StickerLibraryService {
   /// The full-size image of [sticker], to send. Downloaded once and kept.
   Future<Uint8List> imageForSending(LibrarySticker sticker) async {
     final file = _fullFile(sticker.identifier);
-    final cached = await file.exists();
-    final bytes = cached ? await file.readAsBytes() : await HttpSvc.sticker.image(sticker.identifier);
-    // Read from the header, so a sticker already small enough isn't decoded. Only still PNGs are re-encoded, so
-    // nothing loses its animation or its file type.
-    final info = img.PngDecoder().startDecode(bytes);
-    final smaller = info != null && info.numFrames <= 1 && max(info.width, info.height) > maxSendPixels
-        ? await compute(_downscaled, bytes)
-        : null;
-    // The cached copy is what gets sent, so [identifierOfImage] still recognises it coming back
-    if (!cached || smaller != null) {
-      await _fullDir.create(recursive: true);
-      await file.writeAsBytes(smaller ?? bytes, flush: true);
-    }
-    return smaller ?? bytes;
-  }
-
-  static Uint8List? _downscaled(Uint8List bytes) {
-    final image = img.decodePng(bytes);
-    if (image == null) return null;
-    final wide = image.width >= image.height;
-    return img.encodePng(img.copyResize(
-      image,
-      width: wide ? maxSendPixels : null,
-      height: wide ? null : maxSendPixels,
-      interpolation: img.Interpolation.cubic,
-    ));
+    if (await file.exists()) return file.readAsBytes();
+    final bytes = await HttpSvc.sticker.image(sticker.identifier);
+    await _fullDir.create(recursive: true);
+    await file.writeAsBytes(bytes, flush: true);
+    return bytes;
   }
 
   /// The library sticker whose image [file] is, matched against the full-size copies kept for sending, so a sticker
