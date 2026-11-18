@@ -93,6 +93,7 @@ class _MaterialHeaderState extends CustomState<MaterialHeader, void, Conversatio
                                         color: context.theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
+                                    const PreviewToggleButton(),
                                     Padding(
                                         padding: const EdgeInsets.only(left: 2),
                                         child: IconButton(

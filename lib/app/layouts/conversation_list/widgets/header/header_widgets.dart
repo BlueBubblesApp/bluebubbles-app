@@ -63,6 +63,50 @@ class SyncIndicator extends StatelessWidget {
   }
 }
 
+/// Circular icon button used throughout the Cupertino conversation list header
+/// (search, filter, preview toggle, compose, camera, overflow menu).
+class CupertinoHeaderButton extends StatelessWidget {
+  const CupertinoHeaderButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.iconSize = 18,
+    this.iconColor,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final double iconSize;
+
+  /// Defaults to [ColorScheme.onSurfaceVariant].
+  final Color? iconColor;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = ClipOval(
+      child: Material(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: InkWell(
+            onTap: onTap,
+            child: Icon(
+              icon,
+              color: iconColor ?? context.theme.colorScheme.onSurfaceVariant,
+              size: iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null) return button;
+    return Tooltip(message: tooltip!, child: button);
+  }
+}
+
 /// Header "Filter Chats" shortcut button — Material/Samsung style, matching
 /// the existing search/camera [IconButton]s in those headers. Highlighted in
 /// [ColorScheme.primary] whenever a chat list filter is active; hidden
@@ -110,26 +154,67 @@ class CupertinoChatListFilterButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 10.0),
-          ClipOval(
-            child: Material(
-              color: context.theme.colorScheme.surfaceContainerHighest,
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: InkWell(
-                  child: Icon(
-                    hasActiveFilter
-                        ? CupertinoIcons.line_horizontal_3_decrease_circle_fill
-                        : CupertinoIcons.line_horizontal_3_decrease_circle,
-                    color:
-                        hasActiveFilter ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
-                    size: 18,
-                  ),
-                  onTap: () => openChatListFilterSheet(context),
-                ),
-              ),
-            ),
+          CupertinoHeaderButton(
+            icon: hasActiveFilter
+                ? CupertinoIcons.line_horizontal_3_decrease_circle_fill
+                : CupertinoIcons.line_horizontal_3_decrease_circle,
+            iconColor: hasActiveFilter ? context.theme.colorScheme.primary : null,
+            onTap: () => openChatListFilterSheet(context),
           ),
+        ],
+      );
+    });
+  }
+}
+
+Future<void> _toggleChatListPreviews() =>
+    SettingsSvc.settings.setHideChatListPreviews(!SettingsSvc.settings.hideChatListPreviews.value);
+
+String _previewToggleTooltip(bool hidden) => hidden ? 'Show message previews' : 'Hide message previews';
+
+/// Header shortcut that toggles [Settings.hideChatListPreviews]. Shown when
+/// [Settings.showPreviewToggleInHeader] is on; highlighted while previews are hidden.
+class PreviewToggleButton extends StatelessWidget {
+  const PreviewToggleButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!SettingsSvc.settings.showPreviewToggleInHeader.value) return const SizedBox.shrink();
+      final hidden = SettingsSvc.settings.hideChatListPreviews.value;
+      return IconButton(
+        tooltip: _previewToggleTooltip(hidden),
+        onPressed: _toggleChatListPreviews,
+        icon: Icon(
+          hidden ? Icons.visibility_off : Icons.visibility_outlined,
+          color: hidden ? context.theme.colorScheme.primary : context.theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    });
+  }
+}
+
+/// iOS-style [PreviewToggleButton], matching the circular search/filter buttons
+/// in the Cupertino header. Includes its own trailing gap so nothing is left
+/// behind when hidden.
+class CupertinoPreviewToggleButton extends StatelessWidget {
+  const CupertinoPreviewToggleButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!SettingsSvc.settings.showPreviewToggleInHeader.value) return const SizedBox.shrink();
+      final hidden = SettingsSvc.settings.hideChatListPreviews.value;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CupertinoHeaderButton(
+            icon: hidden ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye,
+            iconColor: hidden ? context.theme.colorScheme.primary : null,
+            tooltip: _previewToggleTooltip(hidden),
+            onTap: _toggleChatListPreviews,
+          ),
+          const SizedBox(width: 10.0),
         ],
       );
     });
@@ -425,23 +510,7 @@ class CupertinoOverflowMenu extends StatelessWidget {
           ),
       ],
       buttonBuilder: (context, showMenu) => ThemeSwitcher(
-          iOSSkin: ClipOval(
-            child: Material(
-              color: context.theme.colorScheme.surfaceContainerHighest,
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: InkWell(
-                  onTap: showMenu,
-                  child: Icon(
-                    Icons.more_horiz,
-                    color: context.theme.colorScheme.onSurfaceVariant,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          iOSSkin: CupertinoHeaderButton(icon: Icons.more_horiz, iconSize: 20, onTap: showMenu),
           materialSkin: const SizedBox.shrink(),
           samsungSkin: const SizedBox.shrink()),
       );
