@@ -60,11 +60,7 @@ class IntentsService {
   }
 
   /// Android keeps the bubble's engine for the next bubble, which must not start on this chat.
-  void leaveBubbleChat() {
-    final context = Get.context;
-    if (context == null) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
+  void leaveBubbleChat() => Get.until((route) => route.isFirst);
 
   void handleIntent(Intent? intent, {required bool isInitialIntent}) async {
     if (intent == null) return;
