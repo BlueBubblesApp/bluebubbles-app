@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/network/api/base_api.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -232,6 +233,7 @@ class MessageApi {
   /// Slice size for [sendAttachmentChunked]. v2 servers give each request 60s to arrive, so a slice this size
   /// only needs ~140 kbps where a whole large file would time out.
   static const attachmentChunkSize = 1024 * 1024;
+  static const maxChunkAttempts = 3;
 
   /// Sends a file to `message/attachment/chunk` a slice at a time; the last slice sends the message and its
   /// response is returned. v2 servers only. [tempGuid] is the transfer's id, as `attachmentGuid`.
@@ -272,26 +274,39 @@ class MessageApi {
         await raf.setPosition(start);
         final bytes = await raf.read(min(attachmentChunkSize, total - start));
         final isLast = i == totalChunks - 1;
-        response = await _svc.runApiGuarded(() async {
-          final formData = FormData.fromMap({
-            ...fields,
-            "chunkIndex": i,
-            if (isLast) "isComplete": true,
-            "chunk": MultipartFile.fromBytes(bytes, filename: file.name),
-          });
-          final response = await _svc.dio.post(
-            "${_svc.apiRoot}/message/attachment/chunk",
-            queryParameters: _svc.buildQueryParams(),
-            data: formData,
-            onSendProgress: onSendProgress == null ? null : (count, _) => onSendProgress(start + count, total),
-            options: Options(
-              // The last slice answers once iMessage has sent the file
-              receiveTimeout: isLast ? awaitsIMessageTimeout : null,
-              headers: _svc.headers,
-            ),
-          );
-          return _svc.returnSuccessOrError(response);
-        });
+        for (var attempt = 1;; attempt++) {
+          try {
+            response = await _svc.runApiGuarded(() async {
+              final formData = FormData.fromMap({
+                ...fields,
+                "chunkIndex": i,
+                if (isLast) "isComplete": true,
+                "chunk": MultipartFile.fromBytes(bytes, filename: file.name),
+              });
+              final response = await _svc.dio.post(
+                "${_svc.apiRoot}/message/attachment/chunk",
+                queryParameters: _svc.buildQueryParams(),
+                data: formData,
+                onSendProgress: onSendProgress == null ? null : (count, _) => onSendProgress(start + count, total),
+                options: Options(
+                  // The last slice answers once iMessage has sent the file
+                  receiveTimeout: isLast ? awaitsIMessageTimeout : null,
+                  headers: _svc.headers,
+                ),
+              );
+              return _svc.returnSuccessOrError(response);
+            });
+            break;
+          } catch (e) {
+            // The server stores slices by index, so resending one is safe. The last one sends the message, and a
+            // 4xx is a refusal that won't change.
+            final status = e is Response ? e.statusCode ?? 0 : 0;
+            if (isLast || (status >= 400 && status < 500) || attempt == maxChunkAttempts) rethrow;
+            Logger.warn("Attachment slice ${i + 1}/$totalChunks failed (attempt $attempt), retrying",
+                error: e, tag: "MessageApi");
+            await Future.delayed(Duration(seconds: attempt));
+          }
+        }
       }
       return response;
     } finally {
