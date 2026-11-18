@@ -6,6 +6,7 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/backend/interfaces/send_message_interface.dart';
 import 'package:bluebubbles/services/isolates/global_isolate.dart';
+import 'package:bluebubbles/services/network/api/message_api.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/file_utils.dart';
 import 'package:path/path.dart';
@@ -1057,10 +1058,12 @@ class OutgoingMessageHandler {
     if (kIsWeb) return;
 
     // Fail fast if the file was not staged correctly during prepAttachments.
-    if (!File(attachment.path).existsSync()) {
+    final file = File(attachment.path);
+    if (!file.existsSync()) {
       Logger.error('Attachment file not found at ${attachment.path}', tag: _tag);
       return;
     }
+    final fileSize = file.lengthSync();
 
     return _sendWithRace(
       tempGuid: tempGuid,
@@ -1070,12 +1073,13 @@ class OutgoingMessageHandler {
         tempGuid: attachment.guid!,
         filePath: attachment.path,
         fileName: attachment.transferName!,
-        fileSize: attachment.totalBytes ?? 0,
+        fileSize: fileSize,
         method: _resolveMethod(m, forAttachment: true),
         selectedMessageGuid: m.threadOriginatorGuid,
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
         isAudioMessage: isAudioMessage,
+        chunked: SettingsSvc.serverDetails.isV2Server && fileSize > MessageApi.attachmentChunkSize,
       ),
       onSuccess: (Map<String, dynamic> data) async {
         final newMessage = Message.fromMap(data['data']);

@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/network/api/base_api.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
@@ -224,6 +228,86 @@ class MessageApi {
       );
       return _svc.returnSuccessOrError(response);
     });
+  }
+
+  static const attachmentChunkSize = 20 * 1024 * 1024;
+  static const maxChunkAttempts = 3;
+
+  /// v2 servers only. The last slice sends the message.
+  Future<Response> sendAttachmentChunked(
+    String chatGuid,
+    String tempGuid,
+    PlatformFile file, {
+    void Function(int, int)? onSendProgress,
+    String? method,
+    String? effectId,
+    String? subject,
+    String? selectedMessageGuid,
+    int? partIndex,
+    bool? isAudioMessage,
+  }) async {
+    final total = file.size;
+    final totalChunks = (total / attachmentChunkSize).ceil();
+    final fields = <String, dynamic>{
+      "attachmentGuid": tempGuid,
+      "chatGuid": chatGuid,
+      "name": file.name,
+      "method": method,
+      "totalChunks": totalChunks,
+      if (SettingsSvc.settings.enablePrivateAPI.value && SettingsSvc.settings.privateAPIAttachmentSend.value) ...{
+        "effectId": effectId,
+        "subject": subject,
+        "selectedMessageGuid": selectedMessageGuid,
+        "partIndex": partIndex,
+        "isAudioMessage": isAudioMessage,
+      },
+    }..removeWhere((key, value) => value == null);
+
+    final raf = await File(file.path!).open();
+    try {
+      late Response response;
+      for (var i = 0; i < totalChunks; i++) {
+        final start = i * attachmentChunkSize;
+        await raf.setPosition(start);
+        final bytes = await raf.read(min(attachmentChunkSize, total - start));
+        final isLast = i == totalChunks - 1;
+        for (var attempt = 1;; attempt++) {
+          try {
+            response = await _svc.runApiGuarded(() async {
+              final formData = FormData.fromMap({
+                ...fields,
+                "chunkIndex": i,
+                if (isLast) "isComplete": true,
+                "chunk": MultipartFile.fromBytes(bytes, filename: file.name),
+              });
+              final response = await _svc.dio.post(
+                "${_svc.apiRoot}/message/attachment/chunk",
+                queryParameters: _svc.buildQueryParams(),
+                data: formData,
+                onSendProgress: onSendProgress == null ? null : (count, _) => onSendProgress(start + count, total),
+                options: Options(
+                  // The last slice answers once iMessage has sent the file
+                  receiveTimeout: isLast ? awaitsIMessageTimeout : null,
+                  headers: _svc.headers,
+                ),
+              );
+              return _svc.returnSuccessOrError(response);
+            });
+            break;
+          } catch (e) {
+            // A resent slice overwrites the stored one, but retrying the last could send the message twice
+            final status = e is Response ? e.statusCode ?? 0 : 0;
+            if (isLast || (status >= 400 && status < 500) || attempt == maxChunkAttempts) rethrow;
+            Logger.warn("Attachment slice ${i + 1}/$totalChunks failed (attempt $attempt), retrying",
+                error: e, tag: "MessageApi");
+            await Future.delayed(Duration(seconds: attempt));
+          }
+        }
+      }
+      return response;
+    } finally {
+      await raf.close();
+    }
   }
 
   /// Send a multipart message. [chatGuid] specifies the chat, [tempGuid] specifies a

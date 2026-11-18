@@ -166,6 +166,7 @@ class SendMessageInterface {
     String? selectedMessageGuid,
     int? partIndex,
     bool? isAudioMessage,
+    bool chunked = false,
   }) async {
     final data = {
       'chatGuid': chatGuid,
@@ -179,6 +180,7 @@ class SendMessageInterface {
       'selectedMessageGuid': selectedMessageGuid,
       'partIndex': partIndex,
       'isAudioMessage': isAudioMessage ?? false,
+      'chunked': chunked,
     };
     if (isIsolate) {
       return await SendMessageActions.sendAttachmentMessage(data);
