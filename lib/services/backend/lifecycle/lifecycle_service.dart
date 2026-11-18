@@ -132,7 +132,6 @@ class LifecycleService with WidgetsBindingObserver {
     } else if (state != AppLifecycleState.inactive) {
       if (isBubble) {
         closeBubble();
-        // The bubble's screen is gone but its engine is kept for the next one.
         if (state == AppLifecycleState.detached && GetIt.I.isRegistered<IntentsService>()) {
           GetIt.I<IntentsService>().leaveBubbleChat();
         }

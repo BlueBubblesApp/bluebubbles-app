@@ -59,9 +59,7 @@ class IntentsService {
     await sub.cancel();
   }
 
-  /// On Android a bubble's engine is kept for the next bubble (see BubbleActivity), so
-  /// its widget tree outlives the screen it was drawn on. Leave it on the root route:
-  /// the next bubble then starts where a new engine would, never on this bubble's chat.
+  /// Android keeps the bubble's engine for the next bubble, which must not start on this chat.
   void leaveBubbleChat() {
     final context = Get.context;
     if (context == null) return;
