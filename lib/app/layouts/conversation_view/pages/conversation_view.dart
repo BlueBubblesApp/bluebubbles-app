@@ -110,6 +110,26 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   }
 
   Widget _buildBodyContent() {
+    // Built once so keyboard animation frames only rebuild the padding
+    final messages = Expanded(
+      child: Stack(
+        children: [
+          MessagesView(
+            key: Key(chat.guid),
+            customService: widget.customService,
+            initialScrollToGuid: widget.initialScrollToGuid,
+            controller: controller,
+          ),
+          ScrollDownButton(controller: controller),
+        ],
+      ),
+    );
+    final composer = GestureDetector(
+      onPanUpdate: _onPanUpdate,
+      child: ConversationTextField(
+        parentController: controller,
+      ),
+    );
     return GradientBackground(
       controller: controller,
       child: Stack(
@@ -137,32 +157,13 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
           ),
           Builder(
             builder: (context) {
-              final bottomInset = MediaQuery.paddingOf(context).bottom;
+              // padding.bottom reads 0 while the keyboard covers the nav bar
+              final bottomInset = MediaQuery.paddingOf(context).bottom + MediaQuery.viewInsetsOf(context).bottom;
               return Padding(
                 padding: EdgeInsets.only(bottom: bottomInset),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          MessagesView(
-                            key: Key(chat.guid),
-                            customService: widget.customService,
-                            initialScrollToGuid: widget.initialScrollToGuid,
-                            controller: controller,
-                          ),
-                          ScrollDownButton(controller: controller),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onPanUpdate: _onPanUpdate,
-                      child: ConversationTextField(
-                        parentController: controller,
-                      ),
-                    ),
-                  ],
+                  children: [messages, composer],
                 ),
               );
             },
@@ -294,6 +295,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
             child: BBScaffold(
               backgroundColor: windowEffect != WindowEffect.disabled ? Colors.transparent : colorScheme.surface,
               extendBodyBehindAppBar: true,
+              resizeToAvoidBottomInset: false,
               appBar: _appBar,
               body: Actions(
                 actions: _actionsMap,
