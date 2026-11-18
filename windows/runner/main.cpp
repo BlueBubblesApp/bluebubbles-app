@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "d3d11_multithread.h"
 #include "flutter_window.h"
 #include "gpu_watchdog.h"
 #include "splash_screen.h"
@@ -34,6 +35,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+  EnableEngineD3D11MultithreadProtection();
 
   flutter::DartProject project(L"data");
   // Skia: Impeller (the default since Flutter 3.47) idles at ~3x the memory on Windows.

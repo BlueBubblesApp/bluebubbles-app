@@ -7,6 +7,7 @@
 - `utils.cpp/h` — UTF-8 / UTF-16 helpers
 - `splash_screen.cpp/h` — native splash screen shown before the Flutter engine attaches
 - `gpu_watchdog.cpp/h` — workaround for flutter#124194 (window goes white after the GPU device is lost on sleep, TDR or driver update). A thread polls an idle D3D11 device on the default adapter; on removal it relaunches the exe (`minimized` if hidden to tray or minimized) and terminates the old process (a failed relaunch is retried, then it goes back to watching), which the child waits out (env `BLUEBUBBLES_GPU_RECOVERY_PARENT`) before opening the DB. Release/profile only, off under a debugger. Test with `dxcap -forcetdr` (admin) on a release build
+- `d3d11_multithread.cpp/h` — workaround for flutter#196618 (3.50 crashes in the GPU driver: the raster and IO threads can use ANGLE's D3D11 immediate context at once). Patches the engine DLL's `GetProcAddress` import so the `D3D11CreateDevice` ANGLE looks up turns on `ID3D11Multithread` protection for each device. Called in `main.cpp` before the engine starts. Drop it once the engine fixes the race
 - `store_update.cpp/h` — `bluebubbles/store` channel: Microsoft Store in-app updates via `StoreContext` (`checkUpdate`, `installUpdate`). Only finds updates on the Store-signed install; `installUpdate` runs from the in-app update dialog's Install button. Needs C++20 (coroutines) + `windowsapp.lib`
 
 ## Installer
