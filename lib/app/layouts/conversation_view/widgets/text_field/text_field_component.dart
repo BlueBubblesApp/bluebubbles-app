@@ -219,7 +219,11 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                 borderRadius: BorderRadius.circular(20),
               ),
               clipBehavior: Clip.antiAlias,
-              child: AnimatedSize(
+              // Fills its width so only height animates: the Stack above loosens it, and an animated width trailed the
+              // buttons beside it. The TextField inside already needs a bounded width
+              child: SizedBox(
+                width: double.infinity,
+                child: AnimatedSize(
                 duration: const Duration(milliseconds: 400),
                 alignment: Alignment.bottomCenter,
                 // easeOutBack overshoots its target size, which works fine in the full
@@ -506,7 +510,7 @@ class TextFieldComponentState extends State<TextFieldComponent> {
                     }),
                   ],
                 ),
-              ),
+              )),
             );
           }),
     );
