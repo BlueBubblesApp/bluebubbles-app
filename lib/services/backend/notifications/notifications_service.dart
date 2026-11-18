@@ -62,6 +62,7 @@ class NotificationsService {
   static int? aliasesToast;
   static String? aliasesToastText;
   static Map<String, int> facetimeNotifications = {};
+  static Map<String, Timer> facetimeTimeouts = {};
   static Map<String, int> activeToasts = {};
   static Map<String, Timer> debounceTimers = {};
   static Map<String, List<PendingToastItem>> pendingMessages = {};
@@ -375,6 +376,7 @@ class NotificationsService {
       }
     }
 
+    facetimeTimeouts.remove(key)?.cancel();
     final int? existing = facetimeNotifications.remove(key);
     if (existing != null) {
       await DesktopNotifications.cancel(existing);
@@ -401,10 +403,19 @@ class NotificationsService {
             },
     );
 
-    if (id != null) facetimeNotifications[key] = id;
+    if (id != null) {
+      facetimeNotifications[key] = id;
+      // A call without a UUID came from a server with FaceTime calling off, which never reports that
+      // the call was answered elsewhere or ended. Clear it after 30 seconds, as Android does, instead
+      // of ringing until dismissed by hand.
+      if (callUuid == null) {
+        facetimeTimeouts[key] = Timer(const Duration(seconds: 30), () => clearDesktopFaceTimeNotif(key));
+      }
+    }
   }
 
   Future<void> clearDesktopFaceTimeNotif(String callerUuid) async {
+    facetimeTimeouts.remove(callerUuid)?.cancel();
     final int? id = facetimeNotifications.remove(callerUuid);
     if (id != null) await DesktopNotifications.cancel(id);
   }
