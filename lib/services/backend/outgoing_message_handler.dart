@@ -169,7 +169,7 @@ class OutgoingMessageHandler {
 
   // ── Per-chat outgoing queues ─────────────────────────────────────────────
 
-  /// Keyed by chat GUID; a queue is removed once drained.
+  /// A chat's queue exists only while its drain loop runs.
   final Map<String, Queue<_OutgoingEntry>> _queues = {};
 
   Iterable<_OutgoingEntry> get _allEntries => _queues.values.expand((q) => q);
@@ -379,7 +379,6 @@ class OutgoingMessageHandler {
     throw StateError('Unsupported outgoing item type: ${item.runtimeType}');
   }
 
-  /// Drains [q], the queue for [chatGuid]; one runs per chat while its queue exists.
   Future<void> _processChat(String chatGuid, Queue<_OutgoingEntry> q) async {
     while (q.isNotEmpty) {
       final entry = q.removeFirst();
