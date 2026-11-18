@@ -42,8 +42,9 @@ class _OutgoingEntry {
 ///
 /// ## Responsibilities
 ///
-/// 1. **Serial send queue** — all sends are queued and processed one at a time
-///    so messages always arrive in the order the user sent them.
+/// 1. **Per-chat send queues** — each chat's sends are processed one at a time
+///    so messages arrive in the order the user sent them, while different chats
+///    send in parallel (a slow upload in one chat doesn't hold up another).
 ///
 /// 2. **Pre-send preparation** — `_buildOutgoingMessages` / `_persistOutgoingMessages`
 ///    / `prepAttachments` write the temp message/attachment to the DB and the
@@ -166,10 +167,12 @@ class OutgoingMessageHandler {
     }
   }
 
-  // ── Serial outgoing queue ────────────────────────────────────────────────
+  // ── Per-chat outgoing queues ─────────────────────────────────────────────
 
-  final Queue<_OutgoingEntry> _queue = Queue();
-  bool _isProcessing = false;
+  /// A chat's queue exists only while its drain loop runs.
+  final Map<String, Queue<_OutgoingEntry>> _queues = {};
+
+  Iterable<_OutgoingEntry> get _allEntries => _queues.values.expand((q) => q);
 
   /// Reactive set of chat GUIDs that currently have one or more items waiting
   /// in the queue.  Widgets can wrap reads of this inside [Obx] to show or
@@ -207,19 +210,22 @@ class OutgoingMessageHandler {
     if (!prep.ok) return;
     final returned = prep.result;
 
+    final chatGuid = item.chat.guid;
+    final isNew = !_queues.containsKey(chatGuid);
+    final q = _queues.putIfAbsent(chatGuid, Queue.new);
     if (returned is List<Message>) {
       // _persistOutgoingMessages already saved each message to the DB; create a queue
       // entry for each one with the message that was actually saved.
       for (final m in returned) {
-        _queue.add(_OutgoingEntry(_copyWithMessage(item, m)));
+        q.add(_OutgoingEntry(_copyWithMessage(item, m)));
       }
     } else {
       // Attachment: prepAttachments already saved it; keep the original item.
-      _queue.add(_OutgoingEntry(item));
+      q.add(_OutgoingEntry(item));
     }
 
-    pendingChatGuids.add(item.chat.guid);
-    unawaited(_processNext());
+    pendingChatGuids.add(chatGuid);
+    if (isNew) unawaited(_processChat(chatGuid, q));
   }
 
   /// Ensures [item.message] has a stable temp GUID before prep/retry begins.
@@ -373,21 +379,18 @@ class OutgoingMessageHandler {
     throw StateError('Unsupported outgoing item type: ${item.runtimeType}');
   }
 
-  Future<void> _processNext() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    while (_queue.isNotEmpty) {
-      final entry = _queue.removeFirst();
+  Future<void> _processChat(String chatGuid, Queue<_OutgoingEntry> q) async {
+    while (q.isNotEmpty) {
+      final entry = q.removeFirst();
       final item = entry.item;
 
       try {
         await _handleSend(() => _dispatchItem(item), item.chat).catchError((err) async {
           if (SettingsSvc.settings.cancelQueuedMessages.value) {
             // Cancel all subsequent messages for the same chat.
-            final toCancel = _queue.where((e) => e.item.chat.guid == item.chat.guid).map((e) => e.item).toList();
+            final toCancel = q.map((e) => e.item).toList();
             for (final pending in toCancel) {
-              _queue.removeWhere((e) => e.item == pending);
+              q.removeWhere((e) => e.item == pending);
               final m = pending.message;
               final tempGuid = m.guid!;
               m.error = MessageError.BAD_REQUEST.code;
@@ -402,16 +405,16 @@ class OutgoingMessageHandler {
         item.completer?.completeError(ex);
       }
 
-      // Recompute the reactive pending set after each item is fully processed.
-      pendingChatGuids.assignAll(_queue.map((e) => e.item.chat.guid).toSet());
+      if (q.isEmpty) pendingChatGuids.remove(chatGuid);
     }
 
-    _isProcessing = false;
+    // dispose() may have replaced the map entry; only remove our own queue
+    if (identical(_queues[chatGuid], q)) _queues.remove(chatGuid);
   }
 
   /// Returns `true` if the message with [tempGuid] is currently waiting in the
   /// queue and has not yet been handed off to the HTTP dispatch layer.
-  bool hasPendingMessage(String tempGuid) => _queue.any((e) => e.item.message.guid == tempGuid);
+  bool hasPendingMessage(String tempGuid) => _allEntries.any((e) => e.item.message.guid == tempGuid);
 
   /// Removes [entries] from the queue, marks each message with
   /// [ClientMessageError.userCanceled], finalizes them via
@@ -422,28 +425,29 @@ class OutgoingMessageHandler {
   Future<void> _cancelEntries(Iterable<_OutgoingEntry> entries) async {
     final toCancel = entries.map((e) => e.item).toList();
     for (final pending in toCancel) {
-      _queue.removeWhere((e) => e.item == pending);
+      _queues[pending.chat.guid]?.removeWhere((e) => e.item == pending);
       final m = pending.message;
       m.error = ClientMessageError.userCanceled.code;
       m.errorMessage = 'Canceled by user';
       await _finalizeOutgoingFailure(pending.chat, m, m.guid!);
     }
     if (toCancel.isNotEmpty) {
-      pendingChatGuids.assignAll(_queue.map((e) => e.item.chat.guid).toSet());
+      pendingChatGuids.assignAll(_queues.entries.where((e) => e.value.isNotEmpty).map((e) => e.key));
     }
   }
 
   /// Cancels the single queued message identified by [tempGuid].
   ///
   /// If the message has already been dequeued for dispatch this is a no-op.
-  Future<void> cancelMessage(String tempGuid) => _cancelEntries(_queue.where((e) => e.item.message.guid == tempGuid));
+  Future<void> cancelMessage(String tempGuid) =>
+      _cancelEntries(_allEntries.where((e) => e.item.message.guid == tempGuid));
 
   /// Cancels all pending (not-yet-dispatched) outgoing messages for [chatGuid].
   ///
   /// The currently-dispatching item (if any) is left to complete on its own —
   /// only items still waiting in the queue are affected.
   Future<void> cancelPendingForChat(String chatGuid) =>
-      _cancelEntries(_queue.where((e) => e.item.chat.guid == chatGuid));
+      _cancelEntries(_queues[chatGuid] ?? const []);
 
   /// Wraps a send [process] with the send-progress animation:
   ///
@@ -494,9 +498,9 @@ class OutgoingMessageHandler {
     final race = Completer<void>();
     registerSendProgressTracker(tempGuid, chat, race);
 
-    // The server holds a send's response until iMessage has acted, which can take minutes. The queue is shared by
-    // every chat, so it doesn't wait that long behind one message: after the usual request timeout (what it waited
-    // before send routes got a longer one) the next send goes, and this one's result still lands when it comes.
+    // The server holds a send's response until iMessage has acted, which can take minutes. The chat's queue doesn't
+    // wait that long behind one message: after the usual request timeout (what it waited before send routes got a
+    // longer one) the next send goes, and this one's result still lands when it comes.
     final moveOn = Timer(Duration(milliseconds: SettingsSvc.settings.apiTimeout.value), () {
       if (race.isCompleted) return;
       Logger.info('Send $tempGuid is still waiting on the server; sending what is queued after it', tag: _tag);
@@ -643,7 +647,7 @@ class OutgoingMessageHandler {
       final msgSvcRegistered = Get.isRegistered<MessagesService>(tag: c.guid);
       if (r != null && message.isReaction && msgSvcRegistered) {
         // Add temp reaction to UI immediately during prep so it appears without
-        // waiting for the serial queue (fixes back-to-back text+reaction send delay).
+        // waiting for the chat's send queue (fixes back-to-back text+reaction send delay).
         final parentState = MessagesSvc(c.guid).getMessageStateIfExists(message.associatedMessageGuid!);
         parentState?.addAssociatedMessageInternal(hydrated);
       } else if (!message.isReaction && msgSvcRegistered) {
@@ -1393,14 +1397,15 @@ class OutgoingMessageHandler {
     latestCancelToken = null;
     _sendProgressTrackers.clear();
 
-    while (_queue.isNotEmpty) {
-      final entry = _queue.removeFirst();
+    for (final entry in _allEntries) {
       entry.item.completer?.completeError(
         StateError('OutgoingMessageHandler disposed before item was processed'),
       );
     }
-
-    _isProcessing = false;
+    for (final q in _queues.values) {
+      q.clear();
+    }
+    _queues.clear();
   }
 
   /// Why tapback [type] on [m] can't be sent, or null if it can.
