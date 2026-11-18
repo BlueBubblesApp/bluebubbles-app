@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
 /// One sticker in the server Mac's sticker library (`GET /api/v2/sticker`), metadata only.
@@ -13,12 +15,17 @@ class LibrarySticker {
   /// MIME type of the full-size image, which is what gets sent
   final String mimeType;
 
+  /// Longest side of the full-size image in pixels, from the server's metadata: measuring the image itself fails for
+  /// formats this platform can't decode, like HEIC on desktop
+  final double longestSide;
+
   const LibrarySticker({
     required this.identifier,
     required this.shelf,
     this.name,
     this.accessibilityName,
     this.mimeType = 'image/png',
+    required this.longestSide,
   });
 
   bool get isSaved => shelf == 'saved';
@@ -34,13 +41,14 @@ class LibrarySticker {
 
   factory LibrarySticker.fromMap(Map<String, dynamic> json) {
     final reps = ((json['representations'] as List?) ?? const []).whereType<Map>();
-    final preferred = reps.where((r) => r['is_preferred'] == true).firstOrNull ?? reps.firstOrNull;
+    final preferred = reps.where((r) => r['is_preferred'] == true).firstOrNull ?? reps.first;
     return LibrarySticker(
       identifier: json['identifier'] as String,
       shelf: json['shelf'] as String? ?? 'recent',
       name: json['name'] as String?,
       accessibilityName: json['accessibility_name'] as String?,
-      mimeType: preferred?['mime_type'] as String? ?? 'image/png',
+      mimeType: preferred['mime_type'] as String? ?? 'image/png',
+      longestSide: max(preferred['width'] as num, preferred['height'] as num).toDouble(),
     );
   }
 
@@ -51,7 +59,7 @@ class LibrarySticker {
     'name': name,
     'accessibility_name': accessibilityName,
     'representations': [
-      {'mime_type': mimeType, 'is_preferred': true},
+      {'mime_type': mimeType, 'is_preferred': true, 'width': longestSide, 'height': longestSide},
     ],
   };
 }
