@@ -339,6 +339,7 @@ class DesktopNotifications {
     required String body,
     String? attributionText,
     List<String> actionLabels = const [],
+    List<String?> actionImagePaths = const [],
     bool replyInput = false,
     bool silent = false,
     DesktopMessageData? messageData,
@@ -384,7 +385,11 @@ class DesktopNotifications {
               inputId: _replyId,
             ),
           for (int i = 0; i < labels.length; i++)
-            WindowsAction(content: labels[i], arguments: messageData?.actionPayload('action:$i') ?? '$_prefix:$id:$i'),
+            _windowsButton(
+              labels[i],
+              actionImagePaths.elementAtOrNull(i),
+              arguments: messageData?.actionPayload('action:$i') ?? '$_prefix:$id:$i',
+            ),
         ],
         audio: silent
             ? WindowsNotificationAudio.silent()
@@ -520,6 +525,17 @@ class DesktopNotifications {
   /// that ArgumentError takes down the entire toast: the user silently stops
   /// getting notifications from whoever owns the bad avatar. A toast without a
   /// picture is a far better failure.
+  /// A button that's only its image when it has one, with [label] as its tooltip
+  static WindowsAction _windowsButton(String label, String? imagePath, {required String arguments}) {
+    final Uri? image = _windowsFileUri(imagePath);
+    return WindowsAction(
+      content: image == null ? label : '',
+      imageUri: image,
+      tooltip: image == null ? null : label,
+      arguments: arguments,
+    );
+  }
+
   static Uri? _windowsFileUri(String? path) {
     if (path == null) return null;
     try {

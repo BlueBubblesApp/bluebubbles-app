@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:get/get.dart';
 import 'package:bluebubbles/services/backend/notifications/desktop_notification.dart';
+import 'package:bluebubbles/services/backend/notifications/toast_button_images.dart';
 import 'package:path/path.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:timezone/timezone.dart';
@@ -476,13 +477,13 @@ class NotificationsService {
     final (String path, bool isTemporaryFile) = await _chatAvatarPath(chat);
 
     final papi = SettingsSvc.settings.enablePrivateAPI.value;
-    final List<int> selectedIndices = SettingsSvc.settings.selectedActionIndices;
     final List<String> actionValues = SettingsSvc.settings.actionList
-        .whereIndexed((i, e) => selectedIndices.contains(i))
         .map(
           (action) => action == "Mark Read"
               ? 'mark-read'
-              : !lastItem.isReaction && !lastItem.isGroupEvent && papi
+              : lastItem.isReaction || lastItem.isGroupEvent || !papi
+              ? null
+              : ReactionTypes.toList().contains(action) || SettingsSvc.serverDetails.supportsEmojiTapbacks
               ? action
               : null,
         )
@@ -495,9 +496,19 @@ class NotificationsService {
               ? ["Mark $numMessages Messages Read"]
               : const []
         : actionValues
-              .map((action) => action == 'mark-read' ? 'Mark Read' : ReactionTypes.reactionToEmoji[action]!)
+              .map((action) => action == 'mark-read' ? 'Mark Read' : ReactionTypes.reactionToEmoji[action] ?? action)
               .toList();
     final List<String> toastActions = multipleMessages && showMarkRead ? const ['mark-read'] : actionValues;
+    // Tapbacks as images, so they look as they do in the app; Mark Read stays text
+    List<String?> actionImages = const [];
+    if (Platform.isWindows) {
+      actionImages = await Future.wait(
+          toastActions.map((action) async => action == 'mark-read' ? null : await ToastButtonImages.forAction(action)));
+      // All of the tapbacks or none, so a failed image doesn't leave one button looking different
+      if (actionImages.whereIndexed((i, image) => image == null && toastActions[i] != 'mark-read').isNotEmpty) {
+        actionImages = const [];
+      }
+    }
     final DesktopMessageData messageData = DesktopMessageData(
       chatGuid: guid,
       messageGuid: message.guid,
@@ -524,6 +535,7 @@ class NotificationsService {
       body: body,
       attributionText: attribution,
       actionLabels: actionLabels,
+      actionImagePaths: actionImages,
       replyInput: SettingsSvc.settings.showReplyField.value,
       silent: SettingsSvc.settings.desktopNotificationSoundPath.value != null,
       messageData: messageData,
@@ -617,10 +629,14 @@ class NotificationsService {
         );
         return;
       }
-      final String reaction = interaction.action!;
+      final String action = interaction.action!;
+      // Anything but a classic tapback is the emoji of an emoji tapback
+      final bool emoji = !ReactionTypes.toList().contains(action);
+      final String reaction = emoji ? ReactionTypes.EMOJI : action;
       final Message reactionMessage = Message(
         associatedMessageGuid: selectedMessage.guid!,
         associatedMessageType: reaction,
+        associatedMessageEmoji: emoji ? action : null,
         associatedMessagePart: 0,
         dateCreated: DateTime.now(),
         handleId: 0,
