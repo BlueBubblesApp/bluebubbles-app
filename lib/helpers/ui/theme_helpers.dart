@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/system_ui_overlay_style_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/linux_emoji_font.dart';
 import 'package:bluebubbles/utils/window_effects.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -112,16 +113,22 @@ class BubbleText extends ThemeExtension<BubbleText> {
 }
 
 extension EmojiFontFallback on ThemeData {
-  /// Windows' own font fallback misses newer emoji (e.g. U+1FAEA), so name the emoji font explicitly. Apply to every
-  /// theme handed to a [Theme] widget, including per-chat themes resolved from [ThemeStruct]. No-op elsewhere.
-  ThemeData get withEmojiFallback => !Platform.isWindows
-      ? this
-      : copyWith(
-          textTheme: textTheme.apply(fontFamilyFallback: const ["Segoe UI Emoji"]),
-          extensions: extensions.values.map((e) => e is BubbleText
-              ? e.copyWith(bubbleText: e.bubbleText.apply(fontFamilyFallback: const ["Segoe UI Emoji"]))
-              : e),
-        );
+  /// Windows' own font fallback misses newer emoji (e.g. U+1FAEA), and Linux's never reaches fontconfig at all, so
+  /// name the emoji font explicitly. Apply to every theme handed to a [Theme] widget, including per-chat themes
+  /// resolved from [ThemeStruct]. No-op elsewhere.
+  ThemeData get withEmojiFallback {
+    final family = Platform.isWindows
+        ? "Segoe UI Emoji"
+        : Platform.isLinux
+            ? linuxEmojiFont?.family
+            : null;
+    if (family == null) return this;
+    return copyWith(
+      textTheme: textTheme.apply(fontFamilyFallback: [family]),
+      extensions: extensions.values
+          .map((e) => e is BubbleText ? e.copyWith(bubbleText: e.bubbleText.apply(fontFamilyFallback: [family])) : e),
+    );
+  }
 }
 
 /// Mixin to provide settings widgets with easy access to the commonly used

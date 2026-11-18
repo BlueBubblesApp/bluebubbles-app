@@ -25,4 +25,5 @@ Advanced color space math for theme generation — not for direct use in widgets
 - `share.dart` — system share sheet wrapper
 - `window_effects.dart` — desktop window transparency (Mica, acrylic) via `flutter_acrylic`
 - `linux_launcher_badge.dart` / `linux_launcher_badge_web.dart` — Linux unread badge on dock/launcher icons via the Unity LauncherEntry D-Bus signal (Plank, KDE, Dash to Dock)
+- `linux_emoji_font.dart` — finds the system emoji font via libfontconfig FFI and registers it under its own family name as the Linux emoji fallback (the embedder does no per-character fallback)
 - `media_kit_hot_restart_fix.dart` / `media_kit_hot_restart_fix_web.dart` — workaround for `media_kit` player state surviving Flutter hot restart
