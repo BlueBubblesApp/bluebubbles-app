@@ -1,8 +1,6 @@
 import 'dart:math';
 
-import 'package:bluebubbles/app/layouts/settings/widgets/content/next_button.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
-import 'package:bluebubbles/app/layouts/settings/pages/conversation_list/pinned_order_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -132,13 +130,13 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           isThreeLine: true,
                         )),
                     const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb)
                       const SettingsTile(
                         title: "Pin Configuration",
                         subtitle: "The row and column count of the pin grid. ",
                         isThreeLine: true,
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -165,7 +163,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           const SizedBox(width: 20),
                         ],
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -192,7 +190,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                           const SizedBox(width: 20),
                         ],
                       ),
-                    if (!kIsDesktop && !kIsWeb && iOS)
+                    if (!kIsDesktop && !kIsWeb)
                       Row(
                         children: <Widget>[
                           const Padding(
@@ -220,14 +218,14 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                         ],
                       ),
                     if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (kIsDesktop && iOS)
+                    if (kIsDesktop)
                       SettingsTile(
                         title:
                             "Pinned Chat Configuration (${SettingsSvc.settings.pinRowsPortrait.value} row${SettingsSvc.settings.pinRowsPortrait.value > 1 ? "s" : ""} of ${SettingsSvc.settings.pinColumnsLandscape})",
                         subtitle:
                             "Pinned chats will overflow onto multiple pages if they do not fit in this configuration.",
                       ),
-                    if (kIsDesktop && iOS)
+                    if (kIsDesktop)
                       Row(
                             children: <Widget>[
                               Flexible(
@@ -399,20 +397,7 @@ class _ChatListPanelState extends State<ChatListPanel> with ThemeHelpers {
                               }),
                             ],
                           ),
-                    if (kIsDesktop && iOS) const SizedBox(height: 24),
-                    if (!kIsWeb) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
-                    if (!kIsWeb)
-                      SettingsTile(
-                        title: "Pinned Order",
-                        subtitle: "Set the order for your pinned chats",
-                        onTap: () {
-                          NavigationSvc.pushSettings(
-                            context,
-                            const PinnedOrderPanel(),
-                          );
-                        },
-                        trailing: const NextButton(),
-                      ),
+                    if (kIsDesktop) const SizedBox(height: 24),
                   ],
                 )),
                 if (!kIsWeb && !kIsDesktop && !iOS)

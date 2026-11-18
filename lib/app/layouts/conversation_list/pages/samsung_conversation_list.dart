@@ -5,6 +5,9 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_l
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung_footer.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/samsung_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/unpin_drop_target.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -84,7 +87,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               }
               return false;
             },
-            child: ScrollbarWrapper(
+            child: UnpinDropTarget(drag: controller.pinDrag, child: ScrollbarWrapper(
               showScrollbar: true,
               controller: controller.samsungScrollController,
               child: Obx(() {
@@ -92,13 +95,20 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final loaded = ChatsSvc.loadedFirstChatBatch.value;
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
-                final _chats = ChatsSvc.getFilteredChats(
+                final _unpinnedChats = ChatsSvc.getFilteredChats(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
+                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
-                final _pinnedChats = _chats.where((e) => e.isPinned ?? false).toList();
-                final _unpinnedChats = _chats.where((e) => !(e.isPinned ?? false)).toList();
+                // With every chat pinned, the pins are the list.
+                final noChats = _unpinnedChats.isEmpty &&
+                    ChatsSvc.getFilteredChats(
+                      showArchived: controller.showArchivedChats,
+                      showUnknown: controller.showUnknownSenders,
+                      pinnedOnly: true,
+                      filters: ChatsSvc.chatListFilters.value,
+                    ).isEmpty;
 
                 return CustomScrollView(
                   physics: ThemeSwitcher.getScrollPhysics(),
@@ -111,7 +121,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           padding: EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 16),
                         ),
                       ),
-                    if (!loaded || _unpinnedChats.isEmpty)
+                    PinnedChatsGrid(controller: controller),
+                    if (!loaded || noChats)
                       SliverToBoxAdapter(
                         child: Center(
                           child: Padding(
@@ -135,52 +146,36 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           ),
                         ),
                       ),
-                    if (_pinnedChats.isNotEmpty)
-                      SliverPadding(
-                        padding: const EdgeInsets.only(bottom: 15),
-                        sliver: SliverDecoration(
-                          color: _tileColor,
-                          borderRadius: BorderRadius.circular(25),
-                          sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = _pinnedChats[index];
-                              return ListItem(
-                                  chat: chat,
-                                  controller: controller,
-                                  update: () {
-                                    setState(() {});
-                                  });
-                            },
-                            childCount: _pinnedChats.length,
-                          )),
-                        ),
-                      ),
                     SliverPadding(
                       padding: const EdgeInsets.only(bottom: 15),
                       sliver: SliverDecoration(
                         color: _tileColor,
                         borderRadius: BorderRadius.circular(25),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final chat = _unpinnedChats[index];
-                              return ListItem(
-                                  chat: chat,
-                                  controller: controller,
-                                  update: () {
-                                    setState(() {});
-                                  });
-                            },
-                            childCount: _unpinnedChats.length,
-                          ),
-                        ),
+                        // Only the rows watch the drag, for the room a pin dragged over them makes, so a drag doesn't
+                        // refilter the chats.
+                        sliver: Obx(() {
+                          final rows = controller.pinDrag.withUnpinPreview(_unpinnedChats);
+                          return SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final chat = rows[index];
+                                return PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
+                                    chat: chat,
+                                    controller: controller,
+                                    update: () {
+                                      setState(() {});
+                                    }));
+                              },
+                              childCount: rows.length,
+                            ),
+                          );
+                        }),
                       ),
                     ),
                   ],
                 );
               }),
-            ),
+            )),
           ),
         ),
         bottomNavigationBar: SamsungFooter(parentController: controller),

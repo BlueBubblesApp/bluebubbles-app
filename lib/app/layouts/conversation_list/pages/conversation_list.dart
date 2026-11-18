@@ -8,9 +8,11 @@ import 'package:bluebubbles/app/layouts/conversation_list/widgets/footer/samsung
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/samsung_header.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/initial_widget_right.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/material_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/samsung_conversation_tile.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
@@ -41,7 +43,16 @@ class ConversationListController extends StatefulController {
   bool showMaterialFABText = true;
   double materialScrollStartPosition = 0;
 
+  /// This list's pin drag: one per list, so a list pushed over another (Archived, Unknown Senders) drags on its own.
+  final PinDragController pinDrag = PinDragController();
+
   ConversationListController({required this.showArchivedChats, required this.showUnknownSenders});
+
+  @override
+  void onClose() {
+    pinDrag.dispose();
+    super.onClose();
+  }
 
   void updateSelectedChats() {
     if (SettingsSvc.settings.skin.value == Skins.Material) {
@@ -57,8 +68,14 @@ class ConversationListController extends StatefulController {
     final copy = List.from(selectedChats);
     for (Chat c in copy) {
       selectedChats.removeWhere((element) => element.guid == c.guid);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<MaterialConversationTile>(null);
-      Get.find<ConversationTileController>(tag: c.guid).updateWidgets<SamsungConversationTile>(null);
+      // A pin has no list tile, so its only controller may be the pinned grid's.
+      for (final tag in [c.guid, "${c.guid}-pinned"]) {
+        if (!Get.isRegistered<ConversationTileController>(tag: tag)) continue;
+        Get.find<ConversationTileController>(tag: tag)
+          ..updateWidgets<MaterialConversationTile>(null)
+          ..updateWidgets<SamsungConversationTile>(null)
+          ..updateWidgets<PinnedConversationTile>(null);
+      }
     }
     updateSelectedChats();
   }

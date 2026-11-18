@@ -3,6 +3,9 @@ import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_lis
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/conversation_list_fab.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/custom_group_filter_chip_row.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/header/material_header.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pinned_chats_grid.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/unpin_drop_target.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/list_item.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
@@ -91,64 +94,87 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 final _chats = ChatsSvc.getFilteredChats(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
+                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
+                // With every chat pinned, the pins are the list.
+                final noChats = _chats.isEmpty &&
+                    ChatsSvc.getFilteredChats(
+                      showArchived: showArchived,
+                      showUnknown: showUnknown,
+                      pinnedOnly: true,
+                      filters: ChatsSvc.chatListFilters.value,
+                    ).isEmpty;
 
-                final Widget content;
-                if (!loaded || _chats.isEmpty) {
-                  content = Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 100),
-                      child: loaded
-                          ? buildEmptyChatListState(context,
-                              showArchived: showArchived, showUnknown: showUnknown, filters: ChatsSvc.chatListFilters.value)
-                          : Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    "Loading chats...",
-                                    style: context.theme.textTheme.labelLarge,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                buildProgressIndicator(context, size: 15),
-                              ],
-                            ),
-                    ),
-                  );
-                } else {
-                  content = NotificationListener(
-                    onNotification: (notif) {
-                      if (notif is ScrollStartNotification) {
-                        controller.materialScrollStartPosition = controller.materialScrollController.offset;
-                      }
-                      return true;
-                    },
-                    child: ScrollbarWrapper(
-                      showScrollbar: true,
+                final content = NotificationListener(
+                  onNotification: (notif) {
+                    if (notif is ScrollStartNotification) {
+                      controller.materialScrollStartPosition = controller.materialScrollController.offset;
+                    }
+                    return true;
+                  },
+                  child: UnpinDropTarget(drag: controller.pinDrag, child: ScrollbarWrapper(
+                    showScrollbar: true,
+                    controller: controller.materialScrollController,
+                    child: CustomScrollView(
                       controller: controller.materialScrollController,
-                      child: Obx(() => ListView.builder(
-                            controller: controller.materialScrollController,
-                            physics: ThemeSwitcher.getScrollPhysics(),
-                            padding: const EdgeInsets.only(top: 8),
-                            findChildIndexCallback: (key) => findChildIndexByKey(_chats, key, (item) => item.guid),
-                            itemBuilder: (context, index) {
-                              final chat = _chats[index];
-                              return Container(
-                                  key: ValueKey(chat.guid),
-                                  child: ListItem(
-                                      chat: chat,
-                                      controller: controller,
-                                      update: () {
-                                        setState(() {});
-                                      }));
-                            },
-                            itemCount: _chats.length,
-                          )),
+                      physics: ThemeSwitcher.getScrollPhysics(),
+                      slivers: [
+                        const SliverPadding(padding: EdgeInsets.only(top: 8)),
+                        PinnedChatsGrid(controller: controller),
+                        if (!loaded || noChats)
+                          SliverToBoxAdapter(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 100),
+                                child: loaded
+                                    ? buildEmptyChatListState(context,
+                                        showArchived: showArchived,
+                                        showUnknown: showUnknown,
+                                        filters: ChatsSvc.chatListFilters.value)
+                                    : Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              "Loading chats...",
+                                              style: context.theme.textTheme.labelLarge,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          buildProgressIndicator(context, size: 15),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          )
+                        else
+                          // Only the rows watch the drag, for the room a pin dragged over them makes, so a drag
+                          // doesn't refilter the chats.
+                          Obx(() {
+                            final rows = controller.pinDrag.withUnpinPreview(_chats);
+                            return SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final chat = rows[index];
+                                  return Container(
+                                      key: ValueKey(chat.guid),
+                                      child: PinDragSource(drag: controller.pinDrag, chat: chat, child: ListItem(
+                                          chat: chat,
+                                          controller: controller,
+                                          update: () {
+                                            setState(() {});
+                                          })));
+                                },
+                                findChildIndexCallback: (key) => findChildIndexByKey(rows, key, (item) => item.guid),
+                                childCount: rows.length,
+                              ),
+                            );
+                          }),
+                      ],
                     ),
-                  );
-                }
+                  )),
+                );
 
                 return Column(
                   children: [

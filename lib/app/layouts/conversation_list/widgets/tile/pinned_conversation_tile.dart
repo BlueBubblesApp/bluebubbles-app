@@ -5,6 +5,8 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/typing
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/dialogs/conversation_peek_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/chat_drag_source.dart';
+import 'package:bluebubbles/app/layouts/conversation_list/widgets/pin_drag/pin_drag_controller.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/conversation_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/tile/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reaction/reaction.dart';
@@ -17,16 +19,32 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
+/// A pin's title: for a DM, the nickname if set, otherwise the first name, like iOS. ChatState handles redacted mode.
+String pinnedChatTitle(Chat chat) {
+  final chatState = ChatsSvc.getChatState(chat.guid);
+  final isDm = !chat.isGroup && isNullOrEmpty(chat.displayName);
+  if (isDm && chatState != null && chatState.participants.isNotEmpty) {
+    return chatState.participants.first.reactionDisplayName.value ?? chatState.title.value ?? chat.getTitle();
+  }
+  return chatState?.title.value ?? chat.getTitle();
+}
 
 class PinnedConversationTile extends CustomStateful<ConversationTileController> {
   final double avatarSize;
+
+  /// Makes the tile draggable in the pinned grid, with this drag state: hold then drag on touch, click and drag with
+  /// a mouse.
+  final PinDragController? pinDrag;
 
   PinnedConversationTile({
     super.key,
     required Chat chat,
     required ConversationListController controller,
     required this.avatarSize,
+    this.pinDrag,
   }) : super(
             parentController: Get.isRegistered<ConversationTileController>(tag: chat.guid)
                 ? Get.find<ConversationTileController>(tag: chat.guid)
@@ -42,6 +60,10 @@ class PinnedConversationTile extends CustomStateful<ConversationTileController> 
 }
 
 class _PinnedConversationTileState extends CustomState<PinnedConversationTile, void, ConversationTileController> {
+  /// How far a text bubble may reach past the avatar. The tile's margin (4) and padding (8) leave at least 12 beside
+  /// it, so neighbors' bubbles stay at least 10 apart.
+  static const double _bubbleReach = 7;
+
   ConversationListController get listController => controller.listController;
   Offset? longPressPosition;
   StreamSubscription? _activeSub;
@@ -75,23 +97,69 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
     super.dispose();
   }
 
+  /// Material and Samsung select on long press, like their list tiles, so the header actions apply to pins.
+  bool get _selectable => !iOS;
+
+  bool get _touch => !kIsDesktop && !kIsWeb;
+
+  /// A hold on touch: peek on iOS, select on Material and Samsung.
+  Future<void> _onHold() async {
+    if (_selectable) return _toggleSelected();
+    await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
+  }
+
+  /// The hold a drag starts with, and how to undo it once the finger moves.
+  VoidCallback? _holdForDrag(Offset position) {
+    if (_selectable) {
+      _toggleSelected(haptic: false);
+      return () => _toggleSelected(haptic: false);
+    }
+    if (NavigationSvc.isTabletMode(context)) return null;
+    peekChat(context, controller.chat, position);
+    return closeChatPeek;
+  }
+
+  void _toggleSelected({bool haptic = true}) {
+    controller.toggleListSelection();
+    if (haptic) HapticFeedback.lightImpact();
+    // The drag can move this tile to another row mid-hold, disposing this state before the undo runs.
+    controller.updateWidgets<PinnedConversationTile>(null);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final drag = widget.pinDrag;
+    final tile = _buildTile(context, holdHandledByDrag: drag != null);
+    if (drag == null) return tile;
+    return ChatDragSource(
+      key: ValueKey(controller.chat.guid),
+      drag: drag,
+      chat: controller.chat,
+      startsInPinArea: true,
+      onHold: _holdForDrag,
+      child: tile,
+    );
+  }
+
+  Widget _buildTile(BuildContext context, {required bool holdHandledByDrag}) {
     return Container(
       margin: const EdgeInsets.only(left: 4, right: 4, top: 1),
       child: Obx(() {
         NavigationSvc.listener.value;
+        final selected = _selectable && controller.isSelected;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           clipBehavior: Clip.none,
           decoration: BoxDecoration(
-            color: controller.shouldPartialHighlight.value
-                ? context.theme.colorScheme.surfaceContainerHighest.lightenOrDarken(10)
-                : controller.shouldHighlight.value
-                    ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
-                    : Colors.transparent,
+            color: selected
+                ? context.theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                : controller.shouldPartialHighlight.value
+                    ? context.theme.colorScheme.surfaceContainerHighest.lightenOrDarken(10)
+                    : controller.shouldHighlight.value
+                        ? context.theme.colorScheme.bubble(context, controller.chat.isIMessage)
+                        : Colors.transparent,
             borderRadius: BorderRadius.circular(
-                controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? 8 : 0),
+                selected || controller.shouldHighlight.value || controller.shouldPartialHighlight.value ? 8 : 0),
           ),
           child: Material(
             type: MaterialType.transparency,
@@ -99,18 +167,16 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
               onPointerDown: (event) => longPressPosition = event.position,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () => controller.onTap(context),
-                onLongPress: kIsDesktop || kIsWeb
-                    ? null
-                    : () async {
-                        await peekChat(context, controller.chat, longPressPosition ?? Offset.zero);
-                      },
+                onTap: () => _selectable && listController.selectedChats.isNotEmpty
+                    ? _toggleSelected()
+                    : controller.onTap(context),
+                onLongPress: _touch && !holdHandledByDrag ? _onHold : null,
                 onSecondaryTapUp: (details) => controller.onSecondaryTap(context, details),
                 child: Padding(
                   padding: const EdgeInsets.only(
                     top: 4,
-                    left: 11,
-                    right: 11,
+                    left: 8,
+                    right: 8,
                     bottom: 2,
                   ),
                   child: ConstrainedBox(
@@ -135,13 +201,29 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                                 // coordinates are unambiguously relative to the avatar bounds.
                                 SenderIcon(width: widget.avatarSize, parentController: controller),
                                 ReactionIcon(width: widget.avatarSize, parentController: controller),
+                                if (selected)
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: widget.avatarSize * 0.3,
+                                      height: widget.avatarSize * 0.3,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: context.theme.colorScheme.primary,
+                                        border: Border.all(color: context.theme.colorScheme.surface, width: 2),
+                                      ),
+                                      child: Icon(Icons.check,
+                                          size: widget.avatarSize * 0.2, color: context.theme.colorScheme.onPrimary),
+                                    ),
+                                  ),
                                 // Group bubble: anchored so its bottom aligns with the
                                 // sender avatar bottom (senderSize=0.25w, top=0.375w, bottom=0.625w).
                                 if (controller.chat.isGroup)
                                   Positioned(
                                     bottom: widget.avatarSize * 0.575,
                                     left: widget.avatarSize * 0.05,
-                                    width: widget.avatarSize * 1.15,
+                                    width: widget.avatarSize * 0.95 + _bubbleReach,
                                     child: PinnedTileTextBubble(
                                       chat: controller.chat,
                                       size: widget.avatarSize,
@@ -157,7 +239,7 @@ class _PinnedConversationTileState extends CustomState<PinnedConversationTile, v
                         if (!controller.chat.isGroup)
                           Positioned(
                             top: 0,
-                            width: widget.avatarSize * 1.35,
+                            width: widget.avatarSize + 2 * _bubbleReach,
                             child: PinnedTileTextBubble(
                               chat: controller.chat,
                               size: widget.avatarSize,
@@ -302,18 +384,8 @@ class _ChatTitleState extends CustomState<ChatTitle, void, ConversationTileContr
           fontSizeFactor: isPinned ? 0.95 : 1,
         );
 
-        // Get title from ChatState - it handles all title logic including redacted mode
         final chatState = ChatsSvc.getChatState(controller.chat.guid);
-        final String _title;
-        final isDm = !controller.chat.isGroup && isNullOrEmpty(controller.chat.displayName);
-        if (isDm && chatState != null && chatState.participants.isNotEmpty) {
-          // Match iOS pinned tile: nickname if set, otherwise first name
-          _title = chatState.participants.first.reactionDisplayName.value ??
-              chatState.title.value ??
-              controller.chat.getTitle();
-        } else {
-          _title = chatState?.title.value ?? controller.chat.getTitle();
-        }
+        final _title = pinnedChatTitle(controller.chat);
         final unread = chatState?.hasUnreadMessage.value ?? false;
 
         // Reserve equal horizontal space on both sides so the text stays

@@ -29,10 +29,6 @@ class PinnedChatsBackup {
     final restored = <String>[];
     final skipped = <String>[];
 
-    final currentMaxPinIndex =
-        ChatsSvc.pinnedChats.fold<int>(-1, (max, c) => (c.pinIndex ?? -1) > max ? (c.pinIndex ?? -1) : max);
-    var nextPinIndex = currentMaxPinIndex + 1;
-
     final sortedEntries = List<Map<String, dynamic>>.from(entries)
       ..sort((a, b) => ((a["pinIndex"] as int?) ?? 0).compareTo((b["pinIndex"] as int?) ?? 0));
 
@@ -45,14 +41,8 @@ class PinnedChatsBackup {
 
       if (result.match != null) {
         final match = result.match!;
-        // Leave the pin order of chats that are already pinned untouched so
-        // re-importing the same backup doesn't reshuffle existing pins.
-        final alreadyPinned = match.isPinned ?? false;
+        // New pins append in backup order; ones already pinned keep their place.
         await ChatsSvc.setChatPinned(match, true);
-        if (!alreadyPinned) {
-          await ChatsSvc.setChatPinIndex(match, nextPinIndex);
-          nextPinIndex++;
-        }
         restored.add(label);
       } else {
         skipped.add("$label (${result.skipReason})");

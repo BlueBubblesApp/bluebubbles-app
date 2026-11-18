@@ -699,10 +699,12 @@ class Chat {
 
   /// Toggle pin status - pure DB operation
   /// Note: For full pin toggle with service updates, use ChatsSvc.toggleChatPin
-  Future<Chat> togglePinAsync(bool isPinned) async {
+  /// A pinned chat always has a [pinIndex]; unpinning clears it.
+  Future<Chat> togglePinAsync(bool isPinned, {int? pinIndex}) async {
     if (id == null) return this;
+    assert(!isPinned || pinIndex != null);
     this.isPinned = isPinned;
-    _pinIndex.value = null;
+    _pinIndex.value = isPinned ? pinIndex : null;
     await saveAsync(updateIsPinned: true, updatePinIndex: true);
     return this;
   }
@@ -720,8 +722,9 @@ class Chat {
   Future<Chat> toggleArchivedAsync(bool isArchived) async {
     if (id == null) return this;
     isPinned = false;
+    _pinIndex.value = null;
     this.isArchived = isArchived;
-    await saveAsync(updateIsPinned: true, updateIsArchived: true);
+    await saveAsync(updateIsPinned: true, updatePinIndex: true, updateIsArchived: true);
     return this;
   }
 
@@ -883,35 +886,6 @@ class Chat {
     dynamicWallpaperConfig ??= other.dynamicWallpaperConfig;
     knownGroupPhotoGuid ??= other.knownGroupPhotoGuid;
     return this;
-  }
-
-  static int sort(Chat? a, Chat? b) {
-    // If they both are pinned & ordered, reflect the order
-    if (a!.isPinned! && b!.isPinned! && a.pinIndex != null && b.pinIndex != null) {
-      return a.pinIndex!.compareTo(b.pinIndex!);
-    }
-
-    // If b is pinned & ordered, but a isn't either pinned or ordered, return accordingly
-    if (b!.isPinned! && b.pinIndex != null && (!a.isPinned! || a.pinIndex == null)) {
-      return 1;
-    }
-    // If a is pinned & ordered, but b isn't either pinned or ordered, return accordingly
-    if (a.isPinned! && a.pinIndex != null && (!b.isPinned! || b.pinIndex == null)) {
-      return -1;
-    }
-
-    // Compare when one is pinned and the other isn't
-    if (!a.isPinned! && b.isPinned!) {
-      return 1;
-    }
-    if (a.isPinned! && !b.isPinned!) {
-      return -1;
-    }
-
-    // Compare the last message dates (negate to sort newest first)
-    final aDate = a.dbOnlyLatestMessageDate ?? DateTime.fromMillisecondsSinceEpoch(0);
-    final bDate = b.dbOnlyLatestMessageDate ?? DateTime.fromMillisecondsSinceEpoch(0);
-    return -aDate.compareTo(bDate);
   }
 
   static Future<void> getIcon(Chat c, {bool force = false}) async {

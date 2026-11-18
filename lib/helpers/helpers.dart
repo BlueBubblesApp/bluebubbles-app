@@ -10,6 +10,7 @@ export 'types/helpers/date_helpers.dart';
 export 'types/helpers/group_photo_helpers.dart';
 export 'types/helpers/message_helper.dart';
 export 'types/helpers/misc_helpers.dart';
+export 'types/helpers/pin_order_helpers.dart';
 export 'types/helpers/string_helpers.dart';
 export 'types/constants.dart';
 export 'ui/async_task.dart';
