@@ -18,7 +18,6 @@ class BubbleActivity : FlutterFragmentActivity() {
         private val engineLock = Any()
         @Volatile private var _engine: FlutterEngine? = null
 
-        // An engine draws for one activity at a time; other bubbles get their own.
         private var keptEngineHost: BubbleActivity? = null
         
         fun getEngine(): FlutterEngine? {
@@ -47,7 +46,6 @@ class BubbleActivity : FlutterFragmentActivity() {
         super.onCreate(savedInstanceState)
     }
 
-    // The embedding does not run a cached engine's entrypoint.
     private fun startKeptEngine() {
         if (FlutterEngineCache.getInstance().contains(KEPT_ENGINE_ID)) return
         val engine = FlutterEngine(applicationContext)
