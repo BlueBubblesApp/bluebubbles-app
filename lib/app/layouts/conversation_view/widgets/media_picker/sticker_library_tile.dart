@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/network/api/sticker_api.dart';
@@ -151,8 +152,9 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
     _pinchStart = null;
   }
 
-  void _setTransform(double scale, double rotation) =>
-      _drag.transform.value = (scale: scale.clamp(0.4, 3.0), rotation: rotation);
+  // No larger than placed stickers draw, so it lands as it looked, on every device
+  void _setTransform(double scale, double rotation) => _drag.transform.value =
+      (scale: scale.clamp(0.4, StickerHolder.maxPoints / StickerLibraryTile.dragSize), rotation: rotation);
 
   // Sees every pointer on screen while dragging, so a second finger anywhere can pinch the sticker
   void _onPointer(PointerEvent event) {

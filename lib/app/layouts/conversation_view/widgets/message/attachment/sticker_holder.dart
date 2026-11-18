@@ -91,8 +91,9 @@ class StickerHolder extends StatefulWidget {
   static Rect placedRect(PlacedSticker sticker, Size bubble, bool isFromMe, bool tailGutter) {
     final p = sticker.placement;
     final scale = drawScale(p, bubble) / _stickerPixelRatio;
-    final w = sticker.pixels.width * scale;
-    final h = sticker.pixels.height * scale;
+    final cap = min(1.0, maxPoints / max(1.0, max(sticker.pixels.width, sticker.pixels.height) * scale));
+    final w = sticker.pixels.width * scale * cap;
+    final h = sticker.pixels.height * scale * cap;
     final cosA = cos(p.rotation).abs(), sinA = sin(p.rotation).abs();
     return Rect.fromCenter(
       center: placedCenter(p, bubble, isFromMe, tailGutter),
@@ -126,6 +127,9 @@ class StickerHolder extends StatefulWidget {
 
   /// Size assumed for a sticker image whose dimensions the server didn't send
   static const double fallbackPixels = 300;
+
+  /// Longest side a placed sticker draws at, however large its image or placement scale
+  static const double maxPoints = 200;
 
   /// Pixels per point of a sticker image at scale 1, as Messages draws it on an iPhone
   static const double _stickerPixelRatio = 3;
@@ -345,14 +349,19 @@ class _StickerHolderState extends State<StickerHolder> {
           child: _shrinkable(
             Transform.scale(
               scale: StickerHolder.drawScale(p, bubble),
-              // Only a sticker still sending is new here: the one just dropped. It sticks rather than popping in.
-              child: _StickIn(
-                play: attachment.guid!.startsWith("temp") && !_shown.contains(_keyOf(attachment)),
-                child: _image(
-                  attachment,
-                  FilterQuality.medium,
-                  StickerHolder._stickerPixelRatio,
-                  !attachment.guid!.startsWith("temp"),
+              // Before the scale, so the cap is what draws
+              child: ConstrainedBox(
+                constraints: BoxConstraints.loose(
+                    Size.square(StickerHolder.maxPoints / max(0.01, StickerHolder.drawScale(p, bubble)))),
+                // Only a sticker still sending is new here: the one just dropped. It sticks rather than popping in.
+                child: _StickIn(
+                  play: attachment.guid!.startsWith("temp") && !_shown.contains(_keyOf(attachment)),
+                  child: _image(
+                    attachment,
+                    FilterQuality.medium,
+                    StickerHolder._stickerPixelRatio,
+                    !attachment.guid!.startsWith("temp"),
+                  ),
                 ),
               ),
             ),
