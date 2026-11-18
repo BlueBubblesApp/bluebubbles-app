@@ -30,6 +30,17 @@ registrars whenever any engine detaches. DartWorker registers the wrapper direct
 automatically registered engines use the wrapper too; it does not modify generated or
 plugin source files. Revisit this workaround when the upstream registration lifecycle changes.
 
+## The bubble's engine is kept between bubbles
+
+`BubbleActivity` keeps one engine in `FlutterEngineCache` and hands it to the next bubble, so
+a bubble opened after the first skips the `bubble` entrypoint's startup. Only one activity
+draws on it at a time: a bubble opened while another still exists starts its own engine,
+destroyed with it. A closing bubble gives the engine up in `onPause`, because `onDestroy`
+comes after the next activity has drawn. Don't return it from `provideFlutterEngine`: the
+embedding destroys a provided engine with the first bubble. Dart leaves the chat when the
+lifecycle reaches `detached` (`IntentsService.leaveBubbleChat`), so the next bubble starts on
+the root route and opens its chat from the intent.
+
 ## Build Config
 
 - Compile/Target SDK: 36 | Min SDK: 26 | NDK: 28.2 | Java/Kotlin compat: version 21
