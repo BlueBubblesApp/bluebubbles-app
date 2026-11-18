@@ -116,7 +116,6 @@ class StickerApi {
         data: FormData.fromMap({
           'attachment': MultipartFile.fromBytes(bytes, filename: fileName),
           'chatGuid': chatGuid,
-          // Tags the socket's new-message so it updates the temp sticker instead of arriving as a new one
           'tempGuid': tempGuid,
           'selectedMessageGuid': messageGuid,
           'partIndex': partIndex.toString(),
