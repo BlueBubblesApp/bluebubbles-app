@@ -648,6 +648,10 @@ class Chat {
     return messages;
   }
 
+  /// Loads [messages]' reactions into them in the background, then calls [onComplete].
+  static void loadReactionsAsync(List<Message> messages, Function? onComplete) => unawaited(
+      _loadSupplementalDataAsync(messages, messages.map((e) => e.guid!).toList(), Stopwatch()..start(), onComplete));
+
   /// Load reactions in background and append to messages
   static Future<void> _loadSupplementalDataAsync(
     List<Message> messages,

@@ -1549,39 +1549,37 @@ class MessagesService extends GetxController {
     // Adjust offset because reactions _are_ messages. We just separate them out in the struct.
     offset = offset + struct.reactions.length;
 
+    // Phase 2 complete - reactions have been loaded into message.associatedMessages
+    void syncReactions() {
+      Logger.info("[loadChunk] Supplemental data loaded, syncing MessageStates for ${_messages.length} messages",
+          tag: "MessageReactivity");
+
+      // Ensure MessageStates exist first (in case they weren't created yet)
+      _ensureMessageStates(_messages);
+
+      // Sync associatedMessages into MessageState observables
+      for (final message in _messages) {
+        if (message.guid != null && message.associatedMessages.isNotEmpty) {
+          final messageState = messageStates[message.guid];
+          if (messageState != null) {
+            // Clear and repopulate the observable list to trigger reactivity
+            messageState.associatedMessages.clear();
+            messageState.associatedMessages.addAll(message.associatedMessages);
+            messageState.hasReactions.value = message.associatedMessages.isNotEmpty;
+
+            Logger.debug(
+                "[loadChunk] Synced ${message.associatedMessages.length} reactions into MessageState for ${message.guid}",
+                tag: "MessageReactivity");
+          }
+        }
+      }
+    }
+
     try {
       Logger.debug("[loadChunk] Starting to load messages (offset: $offset, limit: $limit)", tag: "MessageReactivity");
 
-      _messages = await Chat.getMessagesAsync(
-        chat,
-        offset: offset,
-        limit: limit,
-        onSupplementalDataLoaded: () {
-          // Phase 2 complete - reactions have been loaded into message.associatedMessages
-          Logger.info("[loadChunk] Supplemental data loaded, syncing MessageStates for ${_messages.length} messages",
-              tag: "MessageReactivity");
-
-          // Ensure MessageStates exist first (in case they weren't created yet)
-          _ensureMessageStates(_messages);
-
-          // Sync associatedMessages into MessageState observables
-          for (final message in _messages) {
-            if (message.guid != null && message.associatedMessages.isNotEmpty) {
-              final messageState = messageStates[message.guid];
-              if (messageState != null) {
-                // Clear and repopulate the observable list to trigger reactivity
-                messageState.associatedMessages.clear();
-                messageState.associatedMessages.addAll(message.associatedMessages);
-                messageState.hasReactions.value = message.associatedMessages.isNotEmpty;
-
-                Logger.debug(
-                    "[loadChunk] Synced ${message.associatedMessages.length} reactions into MessageState for ${message.guid}",
-                    tag: "MessageReactivity");
-              }
-            }
-          }
-        },
-      );
+      _messages =
+          await Chat.getMessagesAsync(chat, offset: offset, limit: limit, onSupplementalDataLoaded: syncReactions);
 
       Logger.debug("[loadChunk] Loaded ${_messages.length} messages from local DB");
       if (_messages.isEmpty) {
@@ -1599,8 +1597,10 @@ class MessagesService extends GetxController {
           // If temp is empty (bulk add found nothing new) fall back to the link query.
           if (syncResult.messages.isNotEmpty) {
             _messages = syncResult.messages;
+            Chat.loadReactionsAsync(_messages, syncReactions);
           } else {
-            _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
+            _messages = await Chat.getMessagesAsync(chat,
+                offset: offset, limit: limit, onSupplementalDataLoaded: syncReactions);
           }
 
           // Sync the chat's latestMessage into ChatState after the server fetch.
