@@ -41,7 +41,7 @@ class InternalIntentReceiver: BroadcastReceiver() {
                 val notificationId: Int = intent.getIntExtra("notificationId", 0)
                 val chatGuid: String? = intent.getStringExtra("chatGuid")
                 val tag: String? = intent.getStringExtra("tag")
-                DeleteNotificationHandler().deleteNotification(context, notificationId, tag)
+                DeleteNotificationHandler().deleteNotification(context, notificationId, tag, keepBubble = true)
                 DartWorkManager.createWorker(context, intent.type!!, hashMapOf("chatGuid" to chatGuid)) {}
             }
             "ReplyChat" -> {
