@@ -122,6 +122,8 @@ class _ComposerSuggestionsState extends State<ComposerSuggestions> {
     return OverlayPortal.overlayChildLayoutBuilder(
       controller: _portal,
       overlayChildBuilder: (context, info) {
+        // The composer has no width for a frame when the layout switches, and the tiles can't lay out in that
+        if (info.childSize.width < kMinInteractiveDimension) return const SizedBox.shrink();
         final origin = MatrixUtils.transformPoint(info.childPaintTransform, Offset.zero);
         return Stack(
           children: [

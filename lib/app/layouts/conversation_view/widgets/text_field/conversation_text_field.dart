@@ -79,6 +79,14 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
 
     controller.textController.addListener(_onTextChange);
     controller.subjectTextController.addListener(_onSubjectTextChange);
+    _matchDraft();
+  }
+
+  /// Suggests for a draft's partial :emoji or @mention, which loads before the text listener that normally does it
+  void _matchDraft() {
+    final text = controller.textController;
+    if (text.text.contains(":")) TextFieldMatchHelper.processEmojiMatches(controller, text, false);
+    if (SettingsSvc.settings.enablePrivateAPI.value) TextFieldMatchHelper.processMentionMatches(controller, text, false);
   }
 
   void getDrafts() async {
