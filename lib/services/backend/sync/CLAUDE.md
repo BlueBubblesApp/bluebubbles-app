@@ -27,6 +27,10 @@ The historical changes-only replay updates existing local message GUIDs only; it
 It queries batches of up to 1,000 locally stored GUIDs using `message.guid IN (:guids)` with no `dateField`: date
 modes skip rows whose date is zero (never delivered, read, edited, or unsent). `Message.merge` applies each change.
 Missing server messages naturally return no rows; missing local ROWIDs do not require a separate repair pass.
+Each page's local-existence check is one `Message_.guid.oneOf` query, and the replay skips the snapshot deduplicator
+(its GUID batches are disjoint, and snapshots would hold a copy of every replayed message). It still runs
+`IncrementalSyncManager` on the main isolate: the isolate path (`performIncrementalSync`) takes no parameters
+and reports no progress.
 Counts report local GUIDs checked, including GUIDs with no changes.
 `ServerV2Migrations.progress` exposes four numbered steps, per-step progress, and processed/total counts to the chat-list banner.
 Incomplete migrations retry after reconnect; concurrent calls join the active pass.

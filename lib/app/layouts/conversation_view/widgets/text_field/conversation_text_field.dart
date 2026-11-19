@@ -108,9 +108,21 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
       // Drafts saved before runs existed hold mentions as escape sequences in the text itself
       final (draft, runs) = storedRuns == null
           ? MentionTextEditingController.parseLegacyDraft(incomingText, controller.textController.mentionables)
-          : (incomingText, (jsonDecode(storedRuns) as List).map((r) => Run.fromMap((r as Map).cast())).toList());
+          : (incomingText, _decodeDraftRuns(storedRuns));
       controller.textController.setTextAndRuns(draft, runs);
     }
+  }
+
+  /// The stored draft's runs. Unreadable ones are dropped rather than losing the draft: its text is kept, plain.
+  List<Run> _decodeDraftRuns(String storedRuns) {
+    try {
+      return (jsonDecode(storedRuns) as List).map((r) => Run.fromMap((r as Map).cast())).toList();
+    } on FormatException catch (e) {
+      Logger.warn("Dropping unreadable draft formatting for $chatGuid", error: e, tag: "ConversationTextField");
+    } on TypeError catch (e) {
+      Logger.warn("Dropping malformed draft formatting for $chatGuid", error: e, tag: "ConversationTextField");
+    }
+    return const [];
   }
 
   Future<void> getAttachmentDrafts({List<String> attachments = const []}) async {

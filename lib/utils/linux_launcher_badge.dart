@@ -15,12 +15,17 @@ class LinuxLauncherBadge {
   static const String _interface = 'com.canonical.Unity.LauncherEntry';
 
   static DBusClient? _client;
-  static bool _warned = false;
+
+  /// Whether the current [_client] has delivered a signal. A client that never did means there is no usable
+  /// session bus (or the sandbox blocks it), which a retry on every unread change won't fix.
+  static bool _connected = false;
+  static bool _unavailable = false;
 
   /// Desktop file ID for the current packaging: the Snap ships `<snap>_bluebubbles.desktop`;
   /// Flatpak and everything else use the application ID (`linux/CMakeLists.txt`).
+  /// A parallel Snap install (`bluebubbles_foo`) is exported by snapd as `bluebubbles+foo_bluebubbles.desktop`.
   static String get desktopId {
-    if (isSnap) return '${snapInstanceName ?? 'bluebubbles'}_bluebubbles.desktop';
+    if (isSnap) return '${(snapInstanceName ?? 'bluebubbles').replaceFirst('_', '+')}_bluebubbles.desktop';
     return 'app.bluebubbles.BlueBubbles.desktop';
   }
 
@@ -37,6 +42,7 @@ class LinuxLauncherBadge {
 
   /// Shows [count] on the launcher icon, or hides the badge when [count] is 0.
   static Future<void> update(int count) async {
+    if (_unavailable) return;
     final appUri = 'application://$desktopId';
     try {
       _client ??= DBusClient.session();
@@ -49,15 +55,20 @@ class LinuxLauncherBadge {
           DBusDict.stringVariant({'count': DBusInt64(count), 'count-visible': DBusBoolean(count > 0)}),
         ],
       );
-      _warned = false;
+      _connected = true;
     } catch (e) {
-      // A failed connect leaves the client unusable, so start fresh on the next update.
+      // A failed client is unusable either way. One that had worked lost its connection, so reconnect on the next
+      // update; one that never worked won't start working, so stop until restart.
       final client = _client;
+      final wasConnected = _connected;
       _client = null;
+      _connected = false;
       unawaited(client?.close().catchError((_) {}));
-      if (!_warned) {
-        _warned = true;
-        Logger.warn('Failed to update launcher badge: $e', tag: 'LinuxLauncherBadge');
+      if (wasConnected) {
+        Logger.warn('Lost the session bus, reconnecting on the next update: $e', tag: 'LinuxLauncherBadge');
+      } else {
+        _unavailable = true;
+        Logger.warn('Launcher badge unavailable, disabled until restart: $e', tag: 'LinuxLauncherBadge');
       }
     }
   }

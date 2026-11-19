@@ -1,6 +1,13 @@
 # services/backend/notifications/ — Local Notifications
 
 `notifications_service.dart` — dispatches local notifications across all platforms.
+`desktop_notification.dart` — `DesktopNotifications` adapter over `flutter_local_notifications` for Windows/Linux.
+`toast_button_images.dart` — `ToastButtonImages`: draws tapback/emoji action buttons as PNGs (cached on disk, keyed
+by `_version`) so Windows toasts show the app's glyphs; the desktop settings preview draws the same images. It borrows
+`TapbackIcon.asset` from the message UI for the SVG paths.
+
+The desktop settings' toast preview colors (`ToastPreviewTheme`, formerly `WindowsToastTheme`) and preview widgets live
+with the panel in `lib/app/layouts/settings/pages/desktop/widgets/`, not here.
 
 ## Notification Channels
 | Channel | Purpose |

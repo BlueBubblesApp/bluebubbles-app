@@ -53,7 +53,9 @@ class ChatApi {
 - Return `Future<Response>` for raw endpoints; typed futures when you parse the response.
 - `runApiGuarded()` handles retries on 502 and propagates all other errors via `Future.error(e, s)`.
 - Accept a `CancelToken? cancelToken` param on requests that may need to be cancelled.
-- Timeouts are configured globally from settings (`apiTimeout`) — don't set per-request timeouts.
+- Timeouts are configured globally from settings (`apiTimeout`) — don't set per-request timeouts, except the
+  existing ones for requests that can't fit in it: routes that answer only once iMessage has acted use
+  `MessageApi._awaitsIMessage`, and uploads (including each chunked-upload slice) use `sendTimeout * 12`.
 
 **Adding a new endpoint:**
 1. Find the right domain file in `api/` and add the method there.

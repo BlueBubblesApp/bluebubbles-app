@@ -160,12 +160,13 @@ class AppSessionTypes {
   /// In the balloon bundle id of every iMessage app message, and of no built-in balloon
   static const String extensionBalloonPlugin = "MSMessageExtensionBalloonPlugin";
 
-  /// Matched on the suffix: the team id in the middle belongs to the developer and can change.
-  static const String _gamePigeonSuffix = ":com.gamerdelights.gamepigeon.ext";
+  /// Matched on the suffix: the team id in the middle belongs to the developer and can change. OpenPigeon's
+  /// `balloonBundleId` is built from it.
+  static const String gamePigeonSuffix = ":com.gamerdelights.gamepigeon.ext";
 
   static bool isAppBalloon(String? balloonBundleId) => balloonBundleId?.contains(extensionBalloonPlugin) ?? false;
 
-  static bool isGamePigeon(String? balloonBundleId) => balloonBundleId?.endsWith(_gamePigeonSuffix) ?? false;
+  static bool isGamePigeon(String? balloonBundleId) => balloonBundleId?.endsWith(gamePigeonSuffix) ?? false;
 
   /// GamePigeon's App Store id, sent as a game balloon's app id
   static const int gamePigeonAppId = 1124197642;

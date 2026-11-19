@@ -57,7 +57,7 @@ class BackButton extends StatelessWidget {
               if (Get.isSnackbarOpen) {
                 Get.closeAllSnackbars();
               }
-              Navigator.of(context).pop();
+              NavigationSvc.pop(context);
             }
           },
         ),

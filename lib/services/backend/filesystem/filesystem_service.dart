@@ -69,6 +69,10 @@ class FilesystemService {
   String get customBackgroundsPath => join(appDocDir.path, 'custom_backgrounds');
   String get urlPreviewsPath => join(appDocDir.path, 'url_previews');
 
+  /// Mirrors of the server Mac's libraries; see `RemoteLibraryCache`
+  String get stickerLibraryPath => join(appDocDir.path, 'stickers');
+  String get genmojiLibraryPath => join(appDocDir.path, 'genmoji');
+
   /// Returns the path for a cached URL preview image identified by its content
   /// hash. Accepts hashes written by older versions too, since the filename is
   /// whatever was persisted on the message.
@@ -220,10 +224,20 @@ class FilesystemService {
 
   /// Deletes all on-disk cache directories: attachments (originals/thumbnails/live-photo
   /// .mov), per-chat avatars, per-chat custom backgrounds, per-message balloon bundle
-  /// directories, cached URL preview images, and cached contact avatars.
+  /// directories, cached URL preview images, cached contact avatars, and the sticker and
+  /// Genmoji library mirrors (whose in-memory copies `clearRemoteLibraryCaches` drops).
   Future<void> deleteCacheDirectories() async {
     if (kIsWeb) return;
-    final paths = [attachmentsPath, avatarsPath, customBackgroundsPath, messagesPath, urlPreviewsPath, contactAvatarsPath];
+    final paths = [
+      attachmentsPath,
+      avatarsPath,
+      customBackgroundsPath,
+      messagesPath,
+      urlPreviewsPath,
+      contactAvatarsPath,
+      stickerLibraryPath,
+      genmojiLibraryPath,
+    ];
     for (final path in paths) {
       final dir = Directory(path);
       if (await dir.exists()) await dir.delete(recursive: true);

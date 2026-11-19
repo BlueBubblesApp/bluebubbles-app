@@ -131,7 +131,7 @@ class LifecycleService with WidgetsBindingObserver {
       open();
     } else if (state != AppLifecycleState.inactive) {
       if (isBubble) {
-        closeBubble();
+        closeBubble(state);
         if (state == AppLifecycleState.detached && GetIt.I.isRegistered<IntentsService>()) {
           GetIt.I<IntentsService>().leaveBubbleChat();
         }
@@ -279,13 +279,19 @@ class LifecycleService with WidgetsBindingObserver {
     }
   }
 
-  void closeBubble() {
+  void closeBubble(AppLifecycleState state) {
     if (GetIt.I.isRegistered<ChatsService>()) {
       GetIt.I<ChatsService>().setActiveToDead();
     }
 
     if (GetIt.I.isRegistered<SocketService>()) {
       GetIt.I<SocketService>().disconnect();
+    }
+
+    // The bubble's engine is kept idle for the next bubble (android/CLAUDE.md), holding its caches until then.
+    final backgrounded = state == AppLifecycleState.paused || state == AppLifecycleState.detached;
+    if (backgrounded && GetIt.I.isRegistered<CacheService>()) {
+      unawaited(CacheSvc.onAppBackgrounded());
     }
   }
 }

@@ -1,74 +1,13 @@
-import 'dart:async';
 
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
-import 'package:bluebubbles/services/network/api/sticker_api.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-/// Picks an image on this device and adds it to the Mac's sticker library, where it lands in Recents. A refusal shows
-/// the server's reason.
-Future<void> pickAndAddSticker() async {
-  final file = await FilePicker.pickFile(type: FileType.image);
-  if (file == null) return;
-  try {
-    await StickerLibrarySvc.add(await file.readAsBytes(), file.name);
-  } catch (e, s) {
-    Logger.warn("Failed to add a sticker to the library", error: e, trace: s, tag: "StickerLibrary");
-    showSnackbar("Error", stickerRefusal(e).message ?? "Couldn't add the sticker", type: SnackbarType.error);
-  }
-}
-
-/// Whether stickers can be removed from the Mac's library here: the server's Private API does it.
-bool get canRemoveStickers => SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked;
-
-/// Asks, then removes [sticker] from the Mac's library. A refusal shows the server's reason.
-Future<void> confirmRemoveSticker(BuildContext context, LibrarySticker sticker) async {
-  final confirmed = Completer<bool>();
-  await showAreYouSure(
-    context,
-    title: "Remove Sticker?",
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (StickerLibrarySvc.cachedThumbnails.contains(sticker.identifier)) ...[
-          Image.file(StickerLibrarySvc.thumbnailFile(sticker.identifier), width: 88, height: 88),
-          const SizedBox(height: 12),
-        ],
-        const Text("This sticker will be removed from your Mac's stickers.", textAlign: TextAlign.center),
-      ],
-    ),
-    noText: "Cancel",
-    yesText: "Remove",
-    yesIsDestructive: true,
-    yesColor: context.theme.colorScheme.error,
-    onNo: () {
-      Navigator.of(context, rootNavigator: true).pop();
-      confirmed.complete(false);
-    },
-    onYes: () {
-      Navigator.of(context, rootNavigator: true).pop();
-      confirmed.complete(true);
-    },
-  );
-  // Dismissed by tapping outside: neither button ran
-  if (!confirmed.isCompleted || !await confirmed.future) return;
-  try {
-    await StickerLibrarySvc.delete(sticker);
-  } catch (e, s) {
-    Logger.warn("Failed to remove a sticker from the library", error: e, trace: s, tag: "StickerLibrary");
-    showSnackbar("Couldn't Remove Sticker", stickerRefusal(e).message ?? "Couldn't reach your server to remove it.",
-        type: SnackbarType.error);
-    // The listing may be stale, which can be why it failed
-    unawaited(StickerLibrarySvc.sync());
-  }
-}
 
 /// A library sticker being dragged onto a message ([StickerDropTarget]), with the scale and rotation a second finger
 /// has given it on the way.
@@ -81,7 +20,7 @@ class StickerDrag {
 
 /// One sticker from the Mac's library, drawn from the on-disk thumbnail cache ([StickerLibrarySvc]), with a
 /// placeholder until it's there. Right-click, or on mobile a long press released without moving, offers to remove it
-/// ([confirmRemoveSticker]) where that's possible.
+/// ([AttachmentActions.confirmRemoveSticker]) where that's possible.
 class StickerLibraryTile extends StatefulWidget {
   const StickerLibraryTile({
     super.key,
@@ -247,7 +186,9 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
         onDraggableCanceled: (_, _) {
           final t = _drag.transform.value;
           final untouched = _dragDistance < 12 && t.scale == 1 && t.rotation == 0;
-          if (untouched && canRemoveStickers && mounted) confirmRemoveSticker(context, sticker);
+          if (untouched && AttachmentActions.canRemoveFromLibrary && mounted) {
+            AttachmentActions.confirmRemoveSticker(context, sticker);
+          }
         },
         feedback: feedback,
         childWhenDragging: Opacity(opacity: 0.4, child: tile),
@@ -271,10 +212,12 @@ class _StickerLibraryTileState extends State<StickerLibraryTile> {
         child: InkWell(
           onTap: widget.onTap,
           // A draggable tile's long press starts the drag, and offers removal when released in place
-          onLongPress: canRemoveStickers && !kIsDesktop && !widget.draggable
-              ? () => confirmRemoveSticker(context, sticker)
+          onLongPress: AttachmentActions.canRemoveFromLibrary && !kIsDesktop && !widget.draggable
+              ? () => AttachmentActions.confirmRemoveSticker(context, sticker)
               : null,
-          onSecondaryTap: canRemoveStickers ? () => confirmRemoveSticker(context, sticker) : null,
+          onSecondaryTap: AttachmentActions.canRemoveFromLibrary
+              ? () => AttachmentActions.confirmRemoveSticker(context, sticker)
+              : null,
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Obx(
@@ -317,7 +260,7 @@ class StickerAddTile extends StatelessWidget {
           child: Obx(() {
             final adding = StickerLibrarySvc.adding.value;
             return InkWell(
-              onTap: adding ? null : pickAndAddSticker,
+              onTap: adding ? null : AttachmentActions.pickAndAddSticker,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

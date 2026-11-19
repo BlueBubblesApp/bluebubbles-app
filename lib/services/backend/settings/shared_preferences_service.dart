@@ -23,6 +23,12 @@ SharedPreferencesService get PrefsSvc => GetIt.I<SharedPreferencesService>();
 class SharedPreferencesService {
   @Deprecated('Use categorized helpers on PrefsSvc instead of raw i access')
   late final SharedPreferencesWithCache i;
+
+  /// The same store without [i]'s cache. Each engine (the app, a bubble) caches prefs on its own, so a
+  /// read-modify-write of a value another engine also writes must read it from here. Not
+  /// [SharedPreferencesWithCache.reloadCache]: that empties the whole cache until the platform answers, and every
+  /// read in the meantime would find nothing.
+  late final SharedPreferencesAsync platform;
   late final SharedPreferencesAdminActions admin;
   late final SharedPreferencesDatabaseActions database;
   late final SharedPreferencesDesktopActions desktop;
@@ -81,6 +87,7 @@ class SharedPreferencesService {
       sharedPreferencesOptions: _options,
       cacheOptions: const SharedPreferencesWithCacheOptions(),
     );
+    platform = SharedPreferencesAsync(options: _options);
     admin = SharedPreferencesAdminActions(this);
     database = SharedPreferencesDatabaseActions(this);
     desktop = SharedPreferencesDesktopActions(this);

@@ -441,7 +441,8 @@ class AttachmentsService extends GetxService {
     }
 
     final bytes = file.bytes != null && file.bytes!.isNotEmpty ? file.bytes! : await File(file.path!).readAsBytes();
-    await File(join(savePath, file.name)).writeAsBytes(bytes);
+    // Same-named attachments in one batch would otherwise overwrite each other
+    await File(_availablePath(savePath, file.name)).writeAsBytes(bytes);
     return savePath;
   }
 

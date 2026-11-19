@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/services/network/server_refusal.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart';
@@ -116,18 +117,11 @@ class SubscriptionService {
     }
   }
 
-  /// A paid route answered `402`: the server has no subscription after all. [body] is the refusal's JSON, which
-  /// carries where to buy one.
+  /// A paid route answered `402`: the server has no subscription after all. [body] is the refusal's JSON (still
+  /// bytes from an image route), which carries where to buy one.
   void refused(Object? body) {
     _pro.value = false;
     _unreachable.value = false;
-    if (body is! Map) return;
-    final error = body['error'] is Map ? body['error'] as Map : const {};
-    final data = body['data'] is Map
-        ? body['data'] as Map
-        : error['data'] is Map
-        ? error['data'] as Map
-        : const {};
-    purchaseUrl.value = data['purchase_url'] as String? ?? purchaseUrl.value;
+    purchaseUrl.value = ServerRefusal.from(body).purchaseUrl ?? purchaseUrl.value;
   }
 }

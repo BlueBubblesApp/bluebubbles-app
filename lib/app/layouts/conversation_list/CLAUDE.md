@@ -26,11 +26,11 @@
 - `samsung_footer.dart` — bottom nav bar (Samsung skin only)
 
 **Other**
-- `widgets/pinned_chats_grid.dart`: paged pin grid sliver at the top of the list; every skin uses it, and lists below it pass `excludePinned: true`
+- `widgets/pinned_chats_grid.dart`: paged pin grid sliver at the top of the list; every skin uses it. Material and Samsung filter every chat once per `chatListVersion` with `ChatsSvc.getFilteredChatsSplit` and pass the grid its `pinned` half; Cupertino leaves `pinned` null and the grid filters (`pinnedOnly`) while the list below passes `excludePinned: true`
 - `widgets/server_v2_migration_banner.dart` — compact progress overlay inset from the top of the main chat list while v2 backfills run; shows the step, counts, and a horizontal progress bar without changing the list layout; shared by all skins and desktop layouts
 - `conversation_list_fab.dart` — FAB to open `ChatCreator`
 - `initial_widget_right.dart` — empty right-pane placeholder on tablet
-- `dialogs/conversation_peek_view.dart` — hover message preview (desktop)
+- `dialogs/conversation_peek_view.dart` — `peekChat`: hold a chat (a list row or a pin) on touch to preview its messages; let go to close, or drag on to move the chat (`closeChatPeek`). Shown from its own navigator in an overlay entry so the holding finger keeps its drag. Off in tablet mode, where the chat opens beside the list
 
 **Pin drag** (`widgets/pin_drag/`) — dragging chats onto, around and off the pins. State is per list:
 `ConversationListController.pinDrag` (a `PinDragController`), passed down to every piece below, never looked up globally.

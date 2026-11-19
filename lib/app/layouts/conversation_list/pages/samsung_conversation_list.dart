@@ -95,20 +95,15 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 final loaded = ChatsSvc.loadedFirstChatBatch.value;
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
-                final _unpinnedChats = ChatsSvc.getFilteredChats(
+                // One pass for the list and the pinned grid, which takes its half from here
+                final split = ChatsSvc.getFilteredChatsSplit(
                   showArchived: controller.showArchivedChats,
                   showUnknown: controller.showUnknownSenders,
-                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
+                final _unpinnedChats = split.unpinned;
                 // With every chat pinned, the pins are the list.
-                final noChats = _unpinnedChats.isEmpty &&
-                    ChatsSvc.getFilteredChats(
-                      showArchived: controller.showArchivedChats,
-                      showUnknown: controller.showUnknownSenders,
-                      pinnedOnly: true,
-                      filters: ChatsSvc.chatListFilters.value,
-                    ).isEmpty;
+                final noChats = _unpinnedChats.isEmpty && split.pinned.isEmpty;
 
                 return CustomScrollView(
                   physics: ThemeSwitcher.getScrollPhysics(),
@@ -121,7 +116,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                           padding: EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 16),
                         ),
                       ),
-                    PinnedChatsGrid(controller: controller),
+                    PinnedChatsGrid(controller: controller, pinned: split.pinned),
                     if (!loaded || noChats)
                       SliverToBoxAdapter(
                         child: Center(

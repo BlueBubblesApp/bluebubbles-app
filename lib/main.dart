@@ -316,6 +316,9 @@ class DesktopWindowListener extends WindowListener {
     if (await windowManager.isPreventClose()) {
       await windowManager.hide();
     } else if (Platform.isLinux) {
+      // Dart-side quits exit the process directly: the runner has no quit channel, and window_manager can't quit
+      // the GtkApplication. The desktop shell's "Quit" goes through the runner's app.quit action instead
+      // (linux/my_application.cc). Neither path runs Dart cleanup.
       exit(0);
     }
   }
@@ -561,7 +564,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               LinuxLauncherBadge.update(SettingsSvc.settings.windowsTaskbarBadge.value ? count : 0);
 
           unawaited(updateBadge(ChatsSvc.unreadCount.value));
-          ChatsSvc.unreadCount.listen(updateBadge);
+          // Syncs and mark-all-read change the count in bursts; each change is a D-Bus signal.
+          debounce<int>(ChatsSvc.unreadCount, updateBadge, time: const Duration(milliseconds: 250));
         }
 
         if (Platform.isWindows) {
@@ -724,6 +728,8 @@ void initSystemTray() {
   });
   closeItem.addListener((event) async {
     if (event is! MenuItemClickedEvent) return;
+    // windowManager.close() doesn't fire onWindowClose for a hidden GTK window on Wayland, so exit directly
+    // (see onWindowClose for why this isn't the runner's app.quit).
     if (Platform.isLinux) exit(0);
     await windowManager.setPreventClose(false);
     await windowManager.close();

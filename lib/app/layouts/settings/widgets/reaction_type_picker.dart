@@ -42,6 +42,9 @@ class _ReactionTypePickerState extends State<ReactionTypePicker> {
 
   late String selectedValue;
 
+  /// The saved theme's data per brightness, read from the database once rather than on every build
+  final Map<Brightness, ThemeData> _savedThemes = {};
+
   bool get _isEmoji => !widget.reactions.contains(selectedValue);
 
   @override
@@ -73,8 +76,8 @@ class _ReactionTypePickerState extends State<ReactionTypePicker> {
     final options = [...widget.reactions, if (widget.allowEmoji || _isEmoji) _emojiOption];
     // All drawn as received tapbacks, so selecting one doesn't move or recolor it; the highlight shows the selection.
     // The received color comes from the saved theme, as a chat reads it: the app's theme doesn't carry it.
-    final saved =
-        ThemeStruct.resolveByName(null, ThemeSvc.inDarkMode(context) ? Brightness.dark : Brightness.light).data;
+    final brightness = ThemeSvc.inDarkMode(context) ? Brightness.dark : Brightness.light;
+    final saved = _savedThemes[brightness] ??= ThemeStruct.resolveByName(null, brightness).data;
     final chatTheme = Theme.of(context).copyWith(extensions: saved.extensions.values);
     // On the selected emoji, so it can be changed: picking the selected option again doesn't reach onChanged everywhere
     final editPencil = GestureDetector(

@@ -4,6 +4,8 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
 import com.bluebubbles.messaging.utils.PersistentLog
 import io.flutter.FlutterInjector
@@ -19,9 +21,9 @@ class BubbleActivity : FlutterFragmentActivity() {
 
         private const val KEPT_ENGINE_ID = "bubble"
 
-        /// Destroy the kept engine when Android asks the process for memory back, so the next bubble starts cold.
-        /// Set to false to keep it for the life of the process instead.
-        private const val DESTROY_KEPT_ENGINE_ON_TRIM = true
+        /// How long the kept engine may sit unused before it's destroyed. The trim levels that also destroy it may
+        /// never arrive while keepAppAlive's foreground service holds the process at foreground priority.
+        private const val KEPT_ENGINE_IDLE_TIMEOUT_MS = 10 * 60 * 1000L
 
         private var keptEngineHost: BubbleActivity? = null
 
@@ -31,8 +33,27 @@ class BubbleActivity : FlutterFragmentActivity() {
 
         private var trimCallbacks: ComponentCallbacks2? = null
 
+        private val idleHandler = Handler(Looper.getMainLooper())
+        private var idleTimeout: Runnable? = null
+
+        private fun scheduleIdleTimeout(appContext: Context) {
+            cancelIdleTimeout()
+            if (!FlutterEngineCache.getInstance().contains(KEPT_ENGINE_ID)) return
+            val timeout = Runnable {
+                idleTimeout = null
+                destroyIdleKeptEngine(appContext, "idle for ${KEPT_ENGINE_IDLE_TIMEOUT_MS / 60000} min")
+            }
+            idleTimeout = timeout
+            idleHandler.postDelayed(timeout, KEPT_ENGINE_IDLE_TIMEOUT_MS)
+        }
+
+        private fun cancelIdleTimeout() {
+            idleTimeout?.let { idleHandler.removeCallbacks(it) }
+            idleTimeout = null
+        }
+
         private fun watchForTrim(appContext: Context) {
-            if (!DESTROY_KEPT_ENGINE_ON_TRIM || trimCallbacks != null) return
+            if (trimCallbacks != null) return
             val callbacks = object : ComponentCallbacks2 {
                 override fun onTrimMemory(level: Int) {
                     if (isMemoryRequest(level)) destroyIdleKeptEngine(appContext, "trim level $level")
@@ -60,6 +81,7 @@ class BubbleActivity : FlutterFragmentActivity() {
             if (keptEngineHost != null || keptEngineAttachedTo != null) return
             val cache = FlutterEngineCache.getInstance()
             val engine = cache.get(KEPT_ENGINE_ID) ?: return
+            cancelIdleTimeout()
             cache.remove(KEPT_ENGINE_ID)
             engine.destroy()
             trimCallbacks?.let { appContext.unregisterComponentCallbacks(it) }
@@ -74,6 +96,7 @@ class BubbleActivity : FlutterFragmentActivity() {
         if (keptEngineHost == null) {
             keptEngineHost = this
             usesKeptEngine = true
+            cancelIdleTimeout()
             startKeptEngine()
         }
         super.onCreate(savedInstanceState)
@@ -98,14 +121,17 @@ class BubbleActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        if (usesKeptEngine) keptEngineAttachedTo = this
+        if (usesKeptEngine) {
+            keptEngineAttachedTo = this
+            cancelIdleTimeout()
+        }
         setMethodCallHandler(flutterEngine, this)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         super.cleanUpFlutterEngine(flutterEngine)
         if (!usesKeptEngine) return
-        if (keptEngineAttachedTo === this) keptEngineAttachedTo = null
+        detachFromKeptEngine()
         // The kept engine outlives this activity and Dart still calls the channel after detaching
         // (the foreground service), so hand it the application context instead of this activity.
         setMethodCallHandler(flutterEngine, applicationContext)
@@ -130,7 +156,14 @@ class BubbleActivity : FlutterFragmentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         releaseKeptEngine()
-        if (keptEngineAttachedTo === this) keptEngineAttachedTo = null
+        detachFromKeptEngine()
+    }
+
+    private fun detachFromKeptEngine() {
+        if (keptEngineAttachedTo !== this) return
+        keptEngineAttachedTo = null
+        // Re-attaching cancels it, and destroyIdleKeptEngine still skips an engine a newer bubble is hosting.
+        scheduleIdleTimeout(applicationContext)
     }
 
     private fun releaseKeptEngine() {

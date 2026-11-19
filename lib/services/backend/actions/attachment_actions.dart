@@ -129,25 +129,17 @@ class AttachmentActions {
 
     /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
     final attachments = map.values.flattened.toList();
-    moveRekeyedFiles(adoptRekeyedGuids(attachments));
-
-    /// find existing attachments using query descriptor
     final guids = attachments.map((e) => e.guid!).toList();
-    final queryDescriptor = AttachmentQueryDescriptor(
-      conditions: [
-        AttachmentQueryCondition(
-          field: AttachmentQueryField.guid,
-          operator: AttachmentQueryOperator.oneOf,
-          value: guids,
-        ),
-      ],
-    );
 
-    List<Attachment> existingAttachments = await Attachment.findAsync(
-      queryDescriptor: queryDescriptor,
-    );
+    // The rename and the existing-row lookup share the write transaction, so the lookup sees renamed rows and a
+    // rollback can't leave a renamed row behind
+    final moves = Database.runInTransaction(TxMode.write, () {
+      final moves = adoptRekeyedGuids(attachments);
 
-    return Database.runInTransaction(TxMode.write, () {
+      final query = Database.attachments.query(Attachment_.guid.oneOf(guids)).build();
+      final existingAttachments = query.find();
+      query.close();
+
       /// map existing attachment IDs and preserve message relationships
       for (Attachment a in attachments) {
         final existing = existingAttachments.firstWhereOrNull((e) => e.guid == a.guid);
@@ -168,7 +160,9 @@ class AttachmentActions {
           attachments[i].id = ids[i];
         }
       } on UniqueViolationException catch (_) {}
+      return moves;
     });
+    moveRekeyedFiles(moves);
   }
 
   static Future<int> replaceAttachmentAsync(dynamic data) async {

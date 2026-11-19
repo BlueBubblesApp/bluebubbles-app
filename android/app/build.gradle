@@ -51,8 +51,10 @@ android {
     // Already the default on AGP 8, but AGP 9 flips resValues to false. The product flavors
     // below declare resValue entries (app_name_en, ic_launcher_background, file_provider),
     // so stating it explicitly keeps configuration working across that bump.
+    // aidl: the extension interfaces OpenPigeonHost binds to (src/main/aidl).
     buildFeatures {
         resValues = true
+        aidl = true
     }
 
     lintOptions {
@@ -77,10 +79,6 @@ android {
         coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    buildFeatures {
-        aidl true
     }
 
     kotlinOptions {

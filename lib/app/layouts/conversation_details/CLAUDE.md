@@ -43,3 +43,13 @@ of the iOS widgets below based on `SettingsSvc.settings.skin.value`. See
 - `sections/links/` — shared URLs list + search helper
 - `sections/documents/` — shared files list + search helper
 - `sections/locations/` — shared location messages list
+
+## Chat stats (`pages/chat_stats/`)
+`chat_stats_page.dart` + `chat_stats_controller.dart`, with `tabs/` and `widgets/`; the queries and aggregation live in
+`lib/services/ui/chat/chat_stats/`.
+- Who is in the chat now (member counts, lists, avatars): `Chat.people` / `Chat.peopleIn(handles)`, one handle per
+  address, as everywhere else. Don't count `chat.handles`: a merged iMessage/SMS chat links a person twice.
+- Who sent what: `ParticipantResolver` (`chat_stats_queries.dart`). It can't use `people`, because stats cover members
+  who have left, whose handles are no longer in `chat.handles`, and messages that arrived under either of a person's
+  handles. It groups every handle row with the sender's address into one participant id, preferring a handle still
+  linked to the chat, so a current member's id is always in `chat.handles` (the tabs' departed-member check relies on it).

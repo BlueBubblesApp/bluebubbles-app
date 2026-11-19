@@ -20,6 +20,7 @@ Pure helper functions and small utility classes for the UI layer. No service dep
 | `findmy_helpers.dart` | Find My UI helper functions |
 | `redacted_mode_helpers.dart` | Text/name redaction for privacy (Redacted Mode setting) |
 | `system_ui_overlay_style_helpers.dart` | Status bar / system UI overlay styling per skin |
+| `recent_emojis.dart` | `RecentEmojis.add()` — moves emoji to the front of the emoji pickers' Recents (the package's prefs), also fed by emoji in sent messages; updates are queued so overlapping ones don't drop entries. Tapbacks keep their own recents (`PrefsSvc.messaging`). Not exported by `helpers.dart`, import directly |
 
 ## Key Usage Notes
 

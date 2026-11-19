@@ -226,7 +226,7 @@ class ServerV2Migrations {
   /// Fills in `stickerPlacement` on placed stickers synced before the client kept it.
   static Future<int?> _backfillStickerPlacement(ServerV2MigrationProgress? onProgress) async {
     final query = Database.messages
-        .query(Message_.associatedMessageType.equals("sticker").and(Message_.guid.notNull()))
+        .query(Message_.associatedMessageType.equals(ReactionTypes.PLACED_STICKER).and(Message_.guid.notNull()))
         .build();
     final missing = (await runAsync(
       () => query.find(),

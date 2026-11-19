@@ -62,6 +62,8 @@ Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.exp"; DestDir: "{app}
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 // Source: "{#ProjectRoot}\windows\dlls\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ProjectRoot}\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+; LGPL/third-party notices the ffmpeg_kit plugin installs next to the exe (licenses\<package>\).
+Source: "{#ProjectRoot}\build\windows\x64\runner\Release\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ; Wipe all DLLs before install; [Files] re-copies the current set right after.

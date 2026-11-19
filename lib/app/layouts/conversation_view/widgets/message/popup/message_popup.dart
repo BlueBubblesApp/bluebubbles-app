@@ -156,7 +156,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
     super.initState();
     controller.forward();
     // Recent sticker tapbacks draw from, and send, the library's copies
-    if (SettingsSvc.serverDetails.supportsStickerTapbacks) {
+    if (widget.serverDetails.supportsStickerTapbacks) {
       StickerLibrarySvc.load().then((_) {
         if (mounted) setState(() {});
       });
@@ -257,7 +257,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
       .clamp(0, context.height - (narrowScreen ? 200 : 125));
 
   Future<void> _pickEmojiTapback() async {
-    final picked = await showEmojiTapbackPicker(context, stickers: SettingsSvc.serverDetails.supportsStickerTapbacks);
+    final picked = await showEmojiTapbackPicker(context, stickers: widget.serverDetails.supportsStickerTapbacks);
     if (!mounted) return;
     switch (picked) {
       case EmojiTapbackPick(:final emoji):
@@ -282,7 +282,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   Future<void> _matchSelfSticker() async {
     final attachment = selfSticker?.dbAttachments.firstOrNull;
-    if (attachment == null || !SettingsSvc.serverDetails.supportsStickerTapbacks) return;
+    if (attachment == null || !widget.serverDetails.supportsStickerTapbacks) return;
     await StickerLibrarySvc.load();
     final identifier = await StickerLibrarySvc.identifierOfImage(File(attachment.path));
     if (identifier != null && mounted) setState(() => _selfStickerIdentifier = identifier);
@@ -290,11 +290,11 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
 
   /// The library sticker a recent tapback names, or null for an emoji, or a sticker no longer in the library.
   LibrarySticker? _recentSticker(String recent) {
-    if (!_isStickerKey(recent) || !SettingsSvc.serverDetails.supportsStickerTapbacks || SubscriptionSvc.locked) {
+    if (!_isStickerKey(recent) || !widget.serverDetails.supportsStickerTapbacks || SubscriptionSvc.locked) {
       return null;
     }
     final id = recent.substring(SharedPreferencesMessagingActions.stickerTapbackPrefix.length);
-    return StickerLibrarySvc.entries.firstWhereOrNull((s) => s.identifier == id);
+    return StickerLibrarySvc.byIdentifier(id);
   }
 
   // The size emoji draw at in the row (_emojiTapbackGlyph)
@@ -974,8 +974,7 @@ class _MessagePopupState extends State<MessagePopup> with SingleTickerProviderSt
           !widget.controller.isSending.value &&
           SettingsSvc.serverDetails.supportsEditAndUnsend &&
           (part.text?.isNotEmpty ?? false) &&
-          // Its text holds a U+FFFC per Genmoji, which an edit would send as plain text
-          !part.hasInlineAttachments)
+          part.canEditAsPlainText)
         DetailsMenuActionWidget(
           onTap: () => popup_message_actions.edit(_buildActionContext(DetailsMenuAction.Edit)),
           customTitle: canEdit ? 'Edit' : 'Edit (too old)',

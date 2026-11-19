@@ -209,7 +209,7 @@ class MessageState extends StatefulController {
 
   /// Stickers drawn on [part]'s bubble. Same matching rules as [tapbacksForBubble].
   List<Message> stickersForBubble(MessagePart part) =>
-      _associatedForBubble(part, (e) => e.associatedMessageType == "sticker");
+      _associatedForBubble(part, (e) => e.associatedMessageType == ReactionTypes.PLACED_STICKER);
 
   List<Message> _associatedForBubble(MessagePart part, bool Function(Message) test) {
     final matches = associatedMessages.where(test);
@@ -573,7 +573,7 @@ class MessageState extends StatefulController {
   /// The server's copy of a sent sticker has a new attachment guid and no measured size until its file downloads, so
   /// it takes the sent one's, or [StickerSpace] would resize the bubble in between
   void _carryStickerSize(Message from, Message to) {
-    if (from.associatedMessageType != "sticker") return;
+    if (from.associatedMessageType != ReactionTypes.PLACED_STICKER) return;
     final size = stickerSizes[from.dbAttachments.firstOrNull?.guid];
     final guid = to.dbAttachments.firstOrNull?.guid;
     if (size != null && guid != null && !stickerSizes.containsKey(guid)) stickerSizes[guid] = size;

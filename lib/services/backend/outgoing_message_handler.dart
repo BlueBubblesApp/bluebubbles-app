@@ -39,6 +39,14 @@ class _OutgoingEntry {
   _OutgoingEntry(this.item);
 }
 
+/// Attachments of an in-flight send still uploading, and what to start once they're all up.
+class _PendingUpload {
+  final Set<String> remaining;
+  final void Function() onUploaded;
+
+  _PendingUpload(this.remaining, this.onUploaded);
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 /// Processes all outgoing message events — text, multipart, and attachments.
@@ -115,7 +123,18 @@ class OutgoingMessageHandler {
     if (Get.isRegistered<MessagesService>(tag: chatGuid)) {
       MessagesSvc(chatGuid).notifyAttachmentUploadProgress(messageGuid, attachmentGuid, progress);
     }
+
+    if (progress >= 1) {
+      final pending = _pendingUploads[messageGuid];
+      if (pending != null && pending.remaining.remove(attachmentGuid) && pending.remaining.isEmpty) {
+        _pendingUploads.remove(messageGuid);
+        pending.onUploaded();
+      }
+    }
   }
+
+  /// tempGuid → attachments of that send still uploading; see [_sendWithRace]'s `uploads`.
+  final Map<String, _PendingUpload> _pendingUploads = {};
 
   // ── Send-progress trackers ───────────────────────────────────────────────
 
@@ -183,14 +202,9 @@ class OutgoingMessageHandler {
   /// there is actually something pending for a given chat.
   final pendingChatGuids = <String>{}.obs;
 
-  /// Enqueues [item] for sending.  Preparation (DB write / file copy) is
-  /// performed synchronously before the item enters the queue, so the
-  /// outgoing bubble appears in the UI immediately.  The actual HTTP call
-  /// happens when the queue reaches this item.
-  ///
-  /// Returns a [Future] that completes (or errors) when the item's
-  /// [OutgoingQueueItem.completer] resolves — i.e. when the HTTP response arrives
-  /// or an error is surfaced.
+  /// tempGuid → what lets the chat's queue go on to the next item while this one's send is still unresolved.
+  final Map<String, Completer<void>> _queueReleases = {};
+
   /// Reacts to [part] of [selected] with the sticker in [bytes], or with [remove] takes your sticker tapback back.
   /// Shown while sending like any tapback: the temp reaction carries the sticker.
   Future<void> queueStickerTapback({
@@ -262,6 +276,18 @@ class OutgoingMessageHandler {
     );
   }
 
+  /// Enqueues [item] for sending.  Preparation (DB write / file copy) is
+  /// performed before the item enters the queue, so the outgoing bubble
+  /// appears in the UI immediately.  The actual HTTP call happens when the
+  /// queue reaches this item.
+  ///
+  /// The returned [Future] completes once the item is queued (or was refused
+  /// or failed prep), not when it's sent. For the outcome, await
+  /// [OutgoingQueueItem.completer]: it completes once the server's response or
+  /// the socket echo settles the send, even when the queue has moved on to the
+  /// next item first. It completes normally on a send failure (the failure is
+  /// persisted on the message), and with an error only when the item was
+  /// refused, failed prep, or the handler was disposed.
   Future<void> queue(OutgoingQueueItem item) async {
     // Every item must have a stable temp GUID before prep/retry begins — see
     // [_ensureTempGuid]. Centralized here so individual UI call sites can't
@@ -461,32 +487,46 @@ class OutgoingMessageHandler {
       final entry = q.removeFirst();
       final item = entry.item;
 
-      try {
-        await _handleSend(() => _dispatchItem(item), item.chat).catchError((err) async {
-          if (SettingsSvc.settings.cancelQueuedMessages.value) {
-            // Cancel all subsequent messages for the same chat.
-            final toCancel = q.map((e) => e.item).toList();
-            for (final pending in toCancel) {
-              q.removeWhere((e) => e.item == pending);
-              final m = pending.message;
-              final tempGuid = m.guid!;
-              m.error = MessageError.BAD_REQUEST.code;
-              m.errorMessage = 'Canceled due to previous failure';
-              await _finalizeOutgoingFailure(pending.chat, m, tempGuid);
-            }
-          }
-        });
-        item.completer?.complete();
-      } catch (ex, st) {
-        Logger.error('Failed to handle outgoing queue item', error: ex, trace: st, tag: _tag);
-        item.completer?.completeError(ex);
-      }
+      // The queue goes on when the send is settled, or earlier when _sendWithRace releases it for a send stuck
+      // waiting on iMessage; the item's completer still waits for the outcome
+      final release = Completer<void>();
+      _queueReleases[item.message.guid!] = release;
+      await Future.any([_settleItem(chatGuid, item), release.future]);
+      if (identical(_queueReleases[item.message.guid!], release)) _queueReleases.remove(item.message.guid!);
 
       if (q.isEmpty) pendingChatGuids.remove(chatGuid);
     }
 
     // dispose() may have replaced the map entry; only remove our own queue
     if (identical(_queues[chatGuid], q)) _queues.remove(chatGuid);
+  }
+
+  /// Sends [item] and completes its completer once the send is settled. Never throws.
+  Future<void> _settleItem(String chatGuid, OutgoingQueueItem item) async {
+    try {
+      await _handleSend(() => _dispatchItem(item), item.chat).catchError((err) async {
+        if (!SettingsSvc.settings.cancelQueuedMessages.value) return;
+        // Cancel what is still waiting for the same chat. The queue may have moved on before this send failed, so
+        // a later item can already be in flight; only those not dispatched yet are canceled.
+        final q = _queues[chatGuid];
+        if (q == null) return;
+        final toCancel = q.map((e) => e.item).toList();
+        for (final pending in toCancel) {
+          q.removeWhere((e) => e.item == pending);
+          final m = pending.message;
+          m.error = MessageError.BAD_REQUEST.code;
+          m.errorMessage = 'Canceled due to previous failure';
+          await _finalizeOutgoingFailure(pending.chat, m, m.guid!);
+          // A shared completer (a split send's halves) may already be done
+          if (pending.completer?.isCompleted == false) pending.completer!.complete();
+        }
+        if (q.isEmpty) pendingChatGuids.remove(chatGuid);
+      });
+      if (item.completer?.isCompleted == false) item.completer!.complete();
+    } catch (ex, st) {
+      Logger.error('Failed to handle outgoing queue item', error: ex, trace: st, tag: _tag);
+      if (item.completer?.isCompleted == false) item.completer!.completeError(ex);
+    }
   }
 
   /// Returns `true` if the message with [tempGuid] is currently waiting in the
@@ -507,6 +547,7 @@ class OutgoingMessageHandler {
       m.error = ClientMessageError.userCanceled.code;
       m.errorMessage = 'Canceled by user';
       await _finalizeOutgoingFailure(pending.chat, m, m.guid!);
+      if (pending.completer?.isCompleted == false) pending.completer!.complete();
     }
     if (toCancel.isNotEmpty) {
       pendingChatGuids.assignAll(_queues.entries.where((e) => e.value.isNotEmpty).map((e) => e.key));
@@ -552,11 +593,19 @@ class OutgoingMessageHandler {
     return t;
   }
 
-  /// Fires [httpCall] and races the response against the socket echo for
-  /// [tempGuid], and against the usual request timeout (`apiTimeout`), since
-  /// send routes wait minutes for iMessage.  Whichever comes first unblocks the queue; the HTTP work
-  /// (GUID replacement, error marking, etc.) still runs to completion
-  /// afterwards in the background.
+  /// Fires [httpCall] and returns a future that settles with the send: after
+  /// [onSuccess] or [onError] has run for the HTTP result, or as soon as the
+  /// socket echo for [tempGuid] shows it was sent. It errors only on an HTTP
+  /// failure that no echo preceded.
+  ///
+  /// The server holds a send's response until iMessage has acted, which can
+  /// take minutes, so after the usual request timeout (`apiTimeout`) this also
+  /// releases the chat's queue (see [_processChat]) to send what is queued
+  /// after it, while this one keeps waiting for its result. For [uploads]
+  /// (attachment GUIDs whose bytes this send uploads, as named in upload
+  /// progress events) that timer starts once they are all uploaded, because
+  /// a large upload can outlast the timeout, and moving on mid-upload would
+  /// send what follows ahead of it.
   ///
   /// [onSuccess] receives the decoded server response body (the full response
   /// map, i.e. `response.data`). Callers extract a [Message] via
@@ -571,30 +620,52 @@ class OutgoingMessageHandler {
     required Future<Map<String, dynamic>> Function() httpCall,
     required Future<void> Function(Map<String, dynamic> data) onSuccess,
     required Future<void> Function(Object error, StackTrace stack) onError,
+    Set<String> uploads = const {},
   }) {
+    final outcome = Completer<void>();
+    var httpSettled = false;
+
+    // Completed by the socket echo, or by the HTTP result below
     final race = Completer<void>();
     registerSendProgressTracker(tempGuid, chat, race);
+    race.future.then((_) {
+      if (!httpSettled && !outcome.isCompleted) outcome.complete();
+    }, onError: (_) {});
 
-    // The server holds a send's response until iMessage has acted, which can take minutes. The chat's queue doesn't
-    // wait that long behind one message: after the usual request timeout (what it waited before send routes got a
-    // longer one) the next send goes, and this one's result still lands when it comes.
-    final moveOn = Timer(Duration(milliseconds: SettingsSvc.settings.apiTimeout.value), () {
-      if (race.isCompleted) return;
-      Logger.info('Send $tempGuid is still waiting on the server; sending what is queued after it', tag: _tag);
-      race.complete();
-    });
+    Timer? moveOn;
+    void armMoveOn() {
+      if (outcome.isCompleted) return;
+      moveOn = Timer(Duration(milliseconds: SettingsSvc.settings.apiTimeout.value), () {
+        final release = _queueReleases.remove(tempGuid);
+        if (outcome.isCompleted || release == null) return;
+        Logger.info('Send $tempGuid is still waiting on the server; sending what is queued after it', tag: _tag);
+        release.complete();
+      });
+    }
+
+    if (uploads.isEmpty) {
+      armMoveOn();
+    } else {
+      _pendingUploads[tempGuid] = _PendingUpload({...uploads}, armMoveOn);
+    }
+
+    void settleHttp() {
+      httpSettled = true;
+      moveOn?.cancel();
+      _pendingUploads.remove(tempGuid);
+    }
 
     httpCall().then((data) async {
-      moveOn.cancel();
+      settleHttp();
       completeSendProgressIfExists(tempGuid, Origin.outgoingMessageHandler);
       try {
         await onSuccess(data);
       } catch (ex, st) {
         Logger.warn('Send success handler threw for $tempGuid', error: ex, trace: st, tag: _tag);
       }
-      if (!race.isCompleted) race.complete();
+      if (!outcome.isCompleted) outcome.complete();
     }, onError: (Object error, StackTrace stack) async {
-      moveOn.cancel();
+      settleHttp();
       completeSendProgressIfExists(
         tempGuid,
         Origin.outgoingMessageHandler,
@@ -606,10 +677,10 @@ class OutgoingMessageHandler {
       } catch (ex, st) {
         Logger.warn('Send error handler threw for $tempGuid', error: ex, trace: st, tag: _tag);
       }
-      if (!race.isCompleted) race.completeError(error, stack);
+      if (!outcome.isCompleted) outcome.completeError(error, stack);
     });
 
-    return race.future;
+    return outcome.future;
   }
 
   Future<void> _dispatchItem(OutgoingQueueItem item) {
@@ -921,9 +992,8 @@ class OutgoingMessageHandler {
         }
         await _finalizeOutgoingSuccess(
           c, tempGuid, data,
-          // Reactions live in the parent's associatedMessages list, not as
-          // top-level MessagesService entries.  Once the GUID is confirmed,
-          // explicitly update the parent so the badge reflects the real reaction.
+          // updateMessage updates a reaction's parent, but not when the socket won the race and removed the temp
+          // record first, and its copy has no sticker image; swap the temp reaction in the parent here too.
           onExtra: r != null
               ? (confirmed) async {
                   if (confirmed.isReaction) {
@@ -951,17 +1021,7 @@ class OutgoingMessageHandler {
         logMessage: r == null ? 'Failed to send message' : 'Failed to send reaction',
         error: error,
         stack: stack,
-        // Reactions live in the parent's associatedMessages list, not as
-        // top-level MessagesService entries, so the standard updateMessage call
-        // inside _finalizeOutgoingFailure is a no-op for them.  Explicitly
-        // update the parent so the error badge propagates to the UI.
-        onExtra: r != null && m.isReaction
-            ? (errorMsg) async {
-                maybeFindMessagesSvc(c.guid)
-                    ?.getMessageStateIfExists(m.associatedMessageGuid!)
-                    ?.updateAssociatedMessageInternal(errorMsg, tempGuid: tempGuid);
-              }
-            : null,
+        // The error reaction reaches its parent through MessagesService.updateMessage(errorMsg, oldGuid: tempGuid)
       ),
     );
   }
@@ -1058,18 +1118,18 @@ class OutgoingMessageHandler {
     // On web the isolate path is not supported (web is deprecated).
     if (kIsWeb) return;
 
-    // Fail fast if the file was not staged correctly during prepAttachments.
+    // A file prepAttachments didn't stage fails the send through the race, so the bubble shows the error and a retry
+    // instead of staying "sending"
     final file = File(attachment.path);
-    if (!file.existsSync()) {
-      Logger.error('Attachment file not found at ${attachment.path}', tag: _tag);
-      return;
-    }
-    final fileSize = file.lengthSync();
+    final staged = file.existsSync();
+    final fileSize = staged ? file.lengthSync() : 0;
 
     return _sendWithRace(
       tempGuid: tempGuid,
       chat: c,
-      httpCall: () => SendMessageInterface.sendAttachmentMessage(
+      httpCall: () => !staged
+          ? Future.error(Exception('Attachment file not found at ${attachment.path}'))
+          : SendMessageInterface.sendAttachmentMessage(
         chatGuid: c.guid,
         tempGuid: attachment.guid!,
         filePath: attachment.path,
@@ -1082,6 +1142,7 @@ class OutgoingMessageHandler {
         isAudioMessage: isAudioMessage,
         chunked: SettingsSvc.serverDetails.isV2Server && fileSize > MessageApi.attachmentChunkSize,
       ),
+      uploads: staged ? {attachment.guid!} : const {},
       onSuccess: (Map<String, dynamic> data) async {
         final newMessage = Message.fromMap(data['data']);
         final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
@@ -1224,6 +1285,7 @@ class OutgoingMessageHandler {
         effectId: m.expressiveSendStyleId,
         partIndex: int.tryParse(m.threadOriginatorPart?.split(':').firstOrNull ?? ''),
       ),
+      uploads: unsendable != null ? const {} : attachments.map((a) => a.guid!).toSet(),
       onSuccess: (Map<String, dynamic> data) async {
         final newMessage = Message.fromMap(data['data']);
         final responseAttachments = ((data['data']?['attachments'] as List?) ?? <dynamic>[])
@@ -1310,7 +1372,7 @@ class OutgoingMessageHandler {
   /// 3. Replaces the temp DB record with the error-state message.
   /// 4. Propagates the update to [MessagesService] and [ChatState].
   /// 5. Calls [onExtra] for type-specific side-effects (e.g. attachment
-  ///    progress cleanup, reaction parent update).
+  ///    progress cleanup).
   ///
   /// Returns the DB-hydrated error [Message] for callers that need it.
   Future<Message> _finalizeOutgoingFailure(
@@ -1523,6 +1585,12 @@ class OutgoingMessageHandler {
     latestCancelToken?.cancel('OutgoingMessageHandler disposed');
     latestCancelToken = null;
     _sendProgressTrackers.clear();
+    _pendingUploads.clear();
+    // In-flight sends still settle their items' completers when their HTTP calls end
+    for (final release in _queueReleases.values) {
+      if (!release.isCompleted) release.complete();
+    }
+    _queueReleases.clear();
 
     for (final entry in _allEntries) {
       entry.item.completer?.completeError(

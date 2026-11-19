@@ -39,9 +39,9 @@ NavigationSvc.onChatList                                  // nothing open over t
 
 ## Covered chats
 A chat stays mounted under Settings, Find My, details or fullscreen media. `ConversationView` sets
-`ChatState.isCovered` from `openSection` and from opaque pushes over it in the chat pane, and `isChatActive` is false
-while covered. Code that acts on "the chat the user is looking at" should check `isChatActive` or `isCovered`, not
-just `ChatsSvc.activeChat`.
+`ChatState.isCovered` through `ChatsSvc.setChatCovered` (which marks the chat read when it's uncovered) from
+`openSection` and from opaque pushes over it in the chat pane, and `isChatActive` is false while covered. Code that
+acts on "the chat the user is looking at" should check `isChatActive` or `isCovered`, not just `ChatsSvc.activeChat`.
 
 ## Related
 - Route definitions: `lib/main.dart` (Esc is registered above the root navigator there)

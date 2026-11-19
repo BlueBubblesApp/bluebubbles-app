@@ -91,20 +91,15 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 // Observe chat list version to trigger rebuild when order changes
                 final _ = ChatsSvc.chatListVersion.value;
 
-                final _chats = ChatsSvc.getFilteredChats(
+                // One pass for the list and the pinned grid, which takes its half from here
+                final split = ChatsSvc.getFilteredChatsSplit(
                   showArchived: showArchived,
                   showUnknown: showUnknown,
-                  excludePinned: true,
                   filters: ChatsSvc.chatListFilters.value,
                 );
+                final _chats = split.unpinned;
                 // With every chat pinned, the pins are the list.
-                final noChats = _chats.isEmpty &&
-                    ChatsSvc.getFilteredChats(
-                      showArchived: showArchived,
-                      showUnknown: showUnknown,
-                      pinnedOnly: true,
-                      filters: ChatsSvc.chatListFilters.value,
-                    ).isEmpty;
+                final noChats = _chats.isEmpty && split.pinned.isEmpty;
 
                 final content = NotificationListener(
                   onNotification: (notif) {
@@ -121,7 +116,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                       physics: ThemeSwitcher.getScrollPhysics(),
                       slivers: [
                         const SliverPadding(padding: EdgeInsets.only(top: 8)),
-                        PinnedChatsGrid(controller: controller),
+                        PinnedChatsGrid(controller: controller, pinned: split.pinned),
                         if (!loaded || noChats)
                           SliverToBoxAdapter(
                             child: Center(

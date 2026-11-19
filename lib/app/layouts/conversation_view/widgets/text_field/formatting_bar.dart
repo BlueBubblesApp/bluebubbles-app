@@ -6,15 +6,16 @@ import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Formatting controls shown above the composer input while text is selected or formatting is active. Effects are
-/// behind one button: on mobile it swaps the keyboard for [TextFormattingPanel], on desktop it opens a popover.
+/// Formatting controls shown above a conversation's composer input while text is selected or formatting is active.
+/// Effects are behind one button: on mobile it swaps the keyboard for [TextFormattingPanel], on desktop it opens a
+/// popover.
 class FormattingBar extends StatelessWidget {
   const FormattingBar({super.key, required this.controller, required this.focusNode, this.conversation});
 
   final MentionTextEditingController controller;
   final FocusNode focusNode;
 
-  /// Null in the chat creator, which has no keyboard panel and uses the popover.
+  /// Null in the chat creator, where the bar isn't shown: a new chat's first message is sent as plain text.
   final ConversationViewController? conversation;
 
   @override
@@ -29,7 +30,7 @@ class FormattingBar extends StatelessWidget {
         }
         // Also up while a style is toggled on or any of the text is formatted
         if (controller.selection.isCollapsed && !controller.hasActiveFormatting) return const SizedBox.shrink();
-        final usePanel = !kIsDesktop && conversation != null;
+        final usePanel = !kIsDesktop;
         // The selection menu covers the bar here, so its "Text Effects" item opens the panel instead
         if (usePanel && !controller.selection.isCollapsed) return const SizedBox.shrink();
         final colors = context.theme.colorScheme;

@@ -54,6 +54,7 @@ class Attachment {
 
   /// Where the sender put a sticker placed on a message part, as the server's `stickerPlacement`
   /// (`xScalar`, `yScalar`, `scale`, `rotation`, `parentPreviewWidth`). Read it through [StickerPlacement.tryParse].
+  @Property(uid: 5276996574275850643)
   Map<String, dynamic>? stickerPlacement;
 
   Attachment({

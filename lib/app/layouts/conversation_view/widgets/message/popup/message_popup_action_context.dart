@@ -10,11 +10,13 @@ class MessagePopupServerDetails {
   final bool minSierra;
   final bool minBigSur;
   final bool supportsOriginalDownload;
+  final bool supportsStickerTapbacks;
 
   const MessagePopupServerDetails({
     required this.minSierra,
     required this.minBigSur,
     required this.supportsOriginalDownload,
+    required this.supportsStickerTapbacks,
   });
 }
 

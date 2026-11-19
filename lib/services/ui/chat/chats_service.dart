@@ -238,6 +238,21 @@ class ChatsService {
     return chats;
   }
 
+  /// [getFilteredChats] once, split into its pinned and unpinned chats, for a list that draws both: one filtering pass
+  /// instead of one per half.
+  ({List<Chat> pinned, List<Chat> unpinned}) getFilteredChatsSplit({
+    bool? showArchived,
+    bool? showUnknown,
+    ChatListFilters? filters,
+  }) {
+    final pinned = <Chat>[];
+    final unpinned = <Chat>[];
+    for (final chat in getFilteredChats(showArchived: showArchived, showUnknown: showUnknown, filters: filters)) {
+      ((chat.isPinned ?? false) ? pinned : unpinned).add(chat);
+    }
+    return (pinned: pinned, unpinned: unpinned);
+  }
+
   /// Get only group chats
   List<Chat> get groupChats {
     return allChats.where((c) => c.isGroup).toList();
@@ -264,7 +279,7 @@ class ChatsService {
     });
     if (previous.isEmpty) return;
     // Re-sort before saving so the grid shows the new order without waiting on the DB.
-    refreshSortOrder();
+    _refreshPinOrder();
     // All of them, even past a failure, so one bad write doesn't leave the rest of the order unsaved.
     final saved = <Chat>[];
     Object? error;
@@ -285,7 +300,7 @@ class ChatsService {
     // Back to the order before the drag, so the pins show what the database has: the writes that did land are
     // written back too.
     previous.forEach(_setPinIndex);
-    refreshSortOrder();
+    _refreshPinOrder();
     await Future.wait(saved.map((chat) => chat.saveAsync(updatePinIndex: true).then<void>((_) {}, onError: (e, s) {
           Logger.error("Failed to restore a pin's index", error: e, trace: s, tag: "ChatsService");
         })));
@@ -670,12 +685,25 @@ class ChatsService {
 
   /// Re-sort [_sortedChats] in-place and notify the chat list UI.
   ///
-  /// Call this after bulk pin-index changes that were applied outside of the
-  /// normal [updateChat] / [_repositionChat] path (e.g. pinned-order panel).
+  /// Call this after bulk changes to what the list sorts on that were applied outside of the normal [updateChat] /
+  /// [_repositionChat] path. A pin reorder only moves pins, so [reorderPins] re-sorts just them.
   /// The UI notification is deferred to the next frame so this is safe to call
   /// from [State.dispose] (while the widget tree may still be locked).
   void refreshSortOrder() {
     _sortedChats.sort(_sortCompare);
+    _notifySortChanged();
+  }
+
+  /// [refreshSortOrder] for a change of pin indexes alone: pins always lead [_sortedChats], so only that prefix is
+  /// re-sorted.
+  void _refreshPinOrder() {
+    final pinCount = _sortedChats.takeWhile((c) => c.isPinned ?? false).length;
+    final pins = _sortedChats.sublist(0, pinCount)..sort(_sortCompare);
+    _sortedChats.setRange(0, pinCount, pins);
+    _notifySortChanged();
+  }
+
+  void _notifySortChanged() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _scheduleListVersionUpdate(immediate: true);
     });
@@ -1059,7 +1087,22 @@ class ChatsService {
     activeChat?.updateAliveInternal(true);
   }
 
-  /// Check if a chat is currently active (both active and alive)
+  /// Whether Settings, Find My or an opaque page covers the chat's open conversation view.
+  ///
+  /// Messages arriving while covered stay unread, since the user isn't reading them, so the chat is marked read when
+  /// it's uncovered while still active and alive (as resuming the app does).
+  void setChatCovered(Chat chat, bool covered) {
+    final state = getOrCreateChatState(chat);
+    final wasCovered = state.isCovered.value;
+    state.updateCoveredInternal(covered);
+    if (!wasCovered || covered) return;
+    // Route observers can report the uncover mid-frame, and marking read updates observables the list is building from
+    Future.microtask(() {
+      if (state.isChatActive) return setChatHasUnread(state.chat, false);
+    });
+  }
+
+  /// Check if a chat is currently active (active, alive and not covered)
   bool isChatActive(String guid) {
     final state = getChatState(guid);
     return state?.isChatActive ?? false;
@@ -1144,6 +1187,7 @@ class ChatsService {
 
     Database.resetMessagingData();
     await FilesystemSvc.deleteCacheDirectories();
+    await clearRemoteLibraryCaches();
 
     for (final guid in chatGuids) {
       maybeFindMessagesSvc(guid)?.close(force: true);

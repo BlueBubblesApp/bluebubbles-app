@@ -22,9 +22,13 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 /// order while a drag hovers its pins and saves it on drop; hovering a page edge turns the page. The drag's state
 /// is the list's [ConversationListController.pinDrag].
 class PinnedChatsGrid extends StatefulWidget {
-  const PinnedChatsGrid({super.key, required this.controller});
+  const PinnedChatsGrid({super.key, required this.controller, this.pinned});
 
   final ConversationListController controller;
+
+  /// The filtered pins, from a list that already filtered every chat for this [ChatsService.chatListVersion]
+  /// (`ChatsService.getFilteredChatsSplit`), so the grid doesn't filter them again. Null: the grid filters them.
+  final List<Chat>? pinned;
 
   @override
   State<PinnedChatsGrid> createState() => _PinnedChatsGridState();
@@ -135,12 +139,13 @@ class _PinnedChatsGridState extends State<PinnedChatsGrid> {
           // Observe chatListVersion so pinned section rebuilds when a chat is pinned/unpinned
           ChatsSvc.chatListVersion.value;
           NavigationSvc.listener.value;
-          final pinned = ChatsSvc.getFilteredChats(
-            showArchived: controller.showArchivedChats,
-            showUnknown: controller.showUnknownSenders,
-            pinnedOnly: true,
-            filters: ChatsSvc.chatListFilters.value,
-          );
+          final pinned = widget.pinned ??
+              ChatsSvc.getFilteredChats(
+                showArchived: controller.showArchivedChats,
+                showUnknown: controller.showUnknownSenders,
+                pinnedOnly: true,
+                filters: ChatsSvc.chatListFilters.value,
+              );
           final int rowCount = context.mediaQuery.orientation == Orientation.portrait || kIsDesktop
               ? SettingsSvc.settings.pinRowsPortrait.value
               : SettingsSvc.settings.pinRowsLandscape.value;

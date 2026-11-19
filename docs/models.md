@@ -33,7 +33,7 @@ After any `@Entity` annotation change: run `dart run build_runner build`. Never 
 | `autoSendReadReceipts` | `bool?` | Per-chat override of the global setting |
 | `autoSendTypingIndicators` | `bool?` | Per-chat override of the global setting |
 | `textFieldText` | `String?` | Persisted draft text for the compose field |
-| `textFieldRuns` | `String?` | JSON list of the draft's `Run`s (mentions) over `textFieldText`; null when none |
+| `textFieldRuns` | `String?` | JSON list of the draft's `Run`s over `textFieldText` -- mentions, text styles and effects; null when none |
 | `textFieldAttachments` | `List<String>` | Persisted draft attachment paths |
 | `dbOnlyLatestMessageDate` | `DateTime?` | `@Property(uid: 526293286661780207)` -- sort key kept in sync with `dbLatestMessage` via `setLatestMessage()` |
 | `dateDeleted` | `DateTime?` | -- |
@@ -42,7 +42,8 @@ After any `@Entity` annotation change: run `dart run build_runner build`. Never 
 | `lockChatIcon` | `bool` | -- |
 | `lastReadMessageGuid` | `String?` | -- |
 | `customThemeLight` / `customThemeDark` | `String?` | -- |
-| `customAvatarPath` / `customBackgroundPath` / `pinIndex` | `String?` / `String?` / `int?` | Backed by private `Rxn*` fields; getter/setter pairs, not plain fields |
+| `customAvatarPath` / `customBackgroundPath` / `pinIndex` | `String?` / `String?` / `int?` | Backed by private `Rxn*` fields; getter/setter pairs, not plain fields. A pinned chat always has a `pinIndex` (`togglePinAsync` asserts it); unpinning clears it |
+| `knownGroupPhotoGuid` | `String?` | `@Property(uid: 2602396250608668078)` -- the group photo (chat.db's `groupPhotoGuid`) this app last showed an event for; written only when a group-photo message is kept, never from a server chat. See `group_photo_helpers.dart` |
 | `sendProgress` | `RxDouble` | `@Transient()` -- send-progress UI state, not persisted |
 
 Relations:
@@ -72,7 +73,8 @@ Relations:
 | `groupTitle` | `String?` | -- |
 | `groupActionType` | `int?` | -- |
 | `balloonBundleId` | `String?` | iMessage app / interactive-message identifier |
-| `associatedMessageGuid` / `associatedMessagePart` / `associatedMessageType` | `String?` / `int?` / `String?` | Reaction/reply linkage |
+| `associatedMessageGuid` / `associatedMessagePart` / `associatedMessageType` | `String?` / `int?` / `String?` | Reaction/reply linkage. `associatedMessageGuid` is `@Index(value)`: every message's reactions and each app session's turns are looked up by it |
+| `associatedMessageEmoji` | `String?` | `@Property(uid: 4673117792989945365)` -- an emoji tapback's emoji (type 2006/3006), from servers that read chat.db's `associated_message_emoji` |
 | `expressiveSendStyleId` | `String?` | -- |
 | `handle` | `Handle?` | Legacy embedded object; being migrated off in favor of `handleRelation` |
 | `hasAttachments` / `hasReactions` | `bool` | -- |
@@ -116,6 +118,7 @@ Relations:
 | `isDownloaded` | `bool` | -- |
 | `metadata` / `dbMetadata` | `Map<String, dynamic>?` / `String?` | JSON-backed pair |
 | `exif` | `Map<String, dynamic>?` | JSON-encoded on `toMap()`; `null` = never loaded, `{}` = loaded with no EXIF data |
+| `stickerPlacement` | `Map<String, dynamic>?` | `@Property(uid: 5276996574275850643)` -- where the sender placed a sticker on a message part (the server's `stickerPlacement`); read through `StickerPlacement.tryParse` |
 
 Relations:
 - `message` -- `ToOne<Message>` (the owning side; `Message.dbAttachments` is the backlink)

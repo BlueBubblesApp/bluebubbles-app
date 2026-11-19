@@ -161,13 +161,16 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
             builder: (context) {
               // padding.bottom reads 0 while the keyboard covers the nav bar
               final bottomInset = MediaQuery.paddingOf(context).bottom + MediaQuery.viewInsetsOf(context).bottom;
-              return Padding(
-                padding: EdgeInsets.only(bottom: bottomInset),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [messages, composer],
-                ),
+              final column = Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [messages, composer],
               );
+              // The formatting panel takes the keyboard's whole height (nav bar included) and pads its own content
+              // above the nav bar, as it must in the chat creator, so here it reaches the screen's bottom edge too
+              return Obx(() => Padding(
+                    padding: EdgeInsets.only(bottom: controller.showTextFormattingPanel.value ? 0 : bottomInset),
+                    child: column,
+                  ));
             },
           ),
           // The body extends behind the header, whose height is in the top padding
@@ -200,8 +203,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   bool _pageOver = false;
   late final Worker _sectionWorker;
 
-  void _updateCovered() => ChatsSvc.getOrCreateChatState(chat)
-      .updateCoveredInternal(_pageOver || NavigationSvc.openSection.value != null);
+  void _updateCovered() => ChatsSvc.setChatCovered(chat, _pageOver || NavigationSvc.openSection.value != null);
 
   @override
   void didPushNext() {

@@ -115,6 +115,8 @@ static void my_application_activate(GApplication* application) {
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
   // Skia until flutter/flutter#192915 (Impeller flicker on VM/llvmpipe GPUs) is fixed.
   fl_dart_project_set_enable_impeller(project, FALSE);
+  // Keep the default merged UI/platform thread: the tray (tray_manager 0.9 / nativeapi FFI) must run on the
+  // platform thread, so don't set FL_UI_THREAD_POLICY_RUN_ON_SEPARATE_THREAD.
 
   FlView* view = fl_view_new(project);
 
@@ -212,6 +214,8 @@ static void my_application_class_init(MyApplicationClass* klass) {
 // menu activates it when the app exports it, and only falls back to closing the windows when it
 // does not). Without it, "Quit" just closes the window, which Close to Tray turns into a hide, so
 // the app keeps running with no visible way back on desktops without a tray.
+// The tray's "Close App" and the window close button quit from Dart with exit(0) instead (lib/main.dart): this
+// action is only reachable from the shell, and the runner registers no channel Dart could route a quit through.
 static void quit_activated(GSimpleAction* action, GVariant* parameter, gpointer user_data) {
   (void)action;
   (void)parameter;

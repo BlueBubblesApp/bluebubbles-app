@@ -939,7 +939,7 @@ class MentionTextEditingController extends SpellCheckTextEditingController {
     final runs = <Run>[];
     final out = StringBuffer();
     var last = 0;
-    for (final match in RegExp('￼(\\d+)￼').allMatches(draft)) {
+    for (final match in RegExp('$objectReplacementChar(\\d+)$objectReplacementChar').allMatches(draft)) {
       out.write(draft.substring(last, match.start));
       final mention = mentionables.elementAtOrNull(int.parse(match.group(1)!));
       if (mention != null) {

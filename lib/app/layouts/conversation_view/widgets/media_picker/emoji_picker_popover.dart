@@ -1,9 +1,7 @@
+import 'package:bluebubbles/app/components/bb_emoji_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/composer_popover.dart';
-import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' hide Emoji;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -38,53 +36,16 @@ class _EmojiPickerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
-    final outline = context.theme.colorScheme.outline;
     return LayoutBuilder(
       builder: (context, constraints) => Theme(
         data: context.theme.copyWith(canvasColor: Colors.transparent),
-        child: EmojiPicker(
-          onEmojiSelected: (_, emoji) => _insert(emoji.emoji),
-          config: Config(
-            height: constraints.maxHeight,
-            emojiSet: (_) => emojiSetEnglish,
-            checkPlatformCompatibility: true,
-            emojiViewConfig: EmojiViewConfig(
-              emojiSizeMax: 28,
-              backgroundColor: Colors.transparent,
-              columns: (constraints.maxWidth ~/ 44).clamp(5, 12),
-              noRecents: Text("No Recents", style: context.textTheme.titleMedium!.copyWith(color: outline)),
-            ),
-            viewOrderConfig: const ViewOrderConfig(
-              top: EmojiPickerItem.categoryBar,
-              middle: EmojiPickerItem.emojiView,
-              bottom: EmojiPickerItem.searchBar,
-            ),
-            skinToneConfig: const SkinToneConfig(enabled: false),
-            categoryViewConfig: const CategoryViewConfig(
-              backgroundColor: Colors.transparent,
-              dividerColor: Colors.transparent,
-            ),
-            bottomActionBarConfig: BottomActionBarConfig(
-              customBottomActionBar: (config, state, showSearchView) => Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: showSearchView,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Icon(iOS ? CupertinoIcons.search : Icons.search, color: outline),
-                        const SizedBox(width: 8),
-                        Text("Search...", style: context.theme.textTheme.bodyLarge!.copyWith(color: outline)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            searchViewConfig: SearchViewConfig(backgroundColor: Colors.transparent, buttonIconColor: outline),
-          ),
+        child: buildBBEmojiPicker(
+          context,
+          height: constraints.maxHeight,
+          // The popover card draws the surface
+          background: Colors.transparent,
+          columns: (constraints.maxWidth ~/ 44).clamp(5, 12),
+          onPicked: _insert,
         ),
       ),
     );

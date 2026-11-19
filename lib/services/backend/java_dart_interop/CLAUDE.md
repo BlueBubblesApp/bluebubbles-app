@@ -1,6 +1,6 @@
 # services/backend/java_dart_interop/ — Dart ↔ Android Bridge
 
-Three files that form the Dart side of the Android method channel bridge. The Kotlin side lives in `android/app/src/main/kotlin/com/bluebubbles/messaging/`.
+The Dart side of the Android method channel bridges. The Kotlin side lives in `android/app/src/main/kotlin/com/bluebubbles/messaging/`.
 
 For the full Android bridge overview, see `android/CLAUDE.md`.
 
@@ -35,6 +35,21 @@ Listens to `ReceiveIntent.receivedIntentStream` and routes by action:
 - Share intent → pre-fill the chat composer with shared content
 - Notification tap → open the correct conversation
 - Custom deep link → navigate to the specified screen
+
+---
+
+### `open_pigeon_service.dart` — `OpenPigeon`
+
+Static class, Android only. Bridge to the third-party OpenPigeon app (`com.openbubbles.openpigeon`), a GamePigeon
+client that plugs in as a Madrid extension. It has its own channel, `com.bluebubbles.messaging/openpigeon`, whose
+Kotlin side is `services/extensions/OpenPigeonHost.kt`: a singleton that binds OpenPigeon's `MadridExtensionService`
+over AIDL (`android/app/src/main/aidl/`) and hosts its game picker and bubble platform views. OpenPigeon draws games;
+`OpenPigeon` sends the turns it produces through the v2 server's app-message route (`HttpSvc.message`), which needs Pro.
+
+- Only `MainActivity` registers the host (one channel per process), so `offered` is false in a bubble and
+  `OpenPigeon.init()` is skipped there (`StartupTasks`).
+- `installed` is re-checked on resume (`refresh()`); `offered` / `supported` / `canDraw` gate the UI.
+- Payloads, snapshots and opened sessions are small LRU caches (100 / 50 / 100 entries) for the life of the process.
 
 ---
 

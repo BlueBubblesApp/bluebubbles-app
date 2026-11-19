@@ -11,7 +11,7 @@ import 'package:get/get.dart';
 void openTextFormattingPanel(ConversationViewController controller) {
   final view = WidgetsBinding.instance.platformDispatcher.implicitView;
   final keyboard = view == null ? 0.0 : view.viewInsets.bottom / view.devicePixelRatio;
-  // The panel takes the keyboard's height, so the field stays put
+  // The panel takes the keyboard's height, nav bar included (its content keeps clear of that), so the field stays put
   if (keyboard > 100) controller.textFormattingPanelHeight = keyboard;
   SystemChannels.textInput.invokeMethod('TextInput.hide');
   controller.showTextFormattingPanel.value = true;

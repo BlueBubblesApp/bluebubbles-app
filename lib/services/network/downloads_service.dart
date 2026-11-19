@@ -256,7 +256,8 @@ class AttachmentDownloadController extends GetxController {
   }
 
   /// Swaps a stored GUID the server no longer knows for the current one. Messages renames some attachments
-  /// (stickers) after announcing them, keeping the old GUID as `originalGuid`.
+  /// (stickers) after announcing them, keeping the old GUID as `originalGuid`. A download-time fallback for rows a
+  /// sync hasn't already renamed through `AttachmentActions.adoptRekeyedGuids`.
   Future<bool> _repairStaleGuid() async {
     final oldGuid = attachment.guid!;
     final messageGuid = attachment.message.target?.guid;
@@ -272,7 +273,14 @@ class AttachmentDownloadController extends GetxController {
       final newGuid = match?['guid'] as String?;
       if (newGuid == null || newGuid == oldGuid) return false;
 
-      await Attachment.replaceAttachmentAsync(oldGuid, Attachment.fromMap(match!));
+      final fresh = Attachment.fromMap(match!);
+      if (fresh.originalGuid == oldGuid) {
+        // The same rename the sync paths apply: it renames the row and moves its files in the global isolate
+        await fresh.saveAsync(null);
+      } else {
+        // Older rows the server no longer links by originalGuid; matched only as the message's sole attachment
+        await Attachment.replaceAttachmentAsync(oldGuid, fresh);
+      }
       attachment.guid = newGuid;
       Logger.info("Repaired stale attachment GUID $oldGuid -> $newGuid");
       return true;

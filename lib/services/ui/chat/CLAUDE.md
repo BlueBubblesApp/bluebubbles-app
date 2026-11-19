@@ -23,6 +23,7 @@ GetIt singleton. Accessed via `ChatsSvc`.
 - `getChatState(String guid)` → `ChatState?` — the standard way to get reactive state for a chat
 - `setAllInactive()` — marks all chats as not active (called when navigating away)
 - `getActiveChat()` → `ChatState?` — the currently open chat
+- `setChatCovered(Chat, bool)` — `ConversationView` reports Settings/Find My/an opaque page covering it; `isChatActive` is false while covered, so arriving messages stay unread and notify. Uncovering an active, alive chat marks it read, as resuming the app does
 
 **Loading:** Chats are loaded in batches of 100 (`loadChats()`). After the initial load, incremental updates come through `updateChat()`.
 
