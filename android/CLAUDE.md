@@ -37,9 +37,12 @@ a bubble opened after the first skips the `bubble` entrypoint's startup. Only on
 draws on it at a time: a bubble opened while another still exists starts its own engine,
 destroyed with it. A closing bubble gives the engine up in `onPause`, because `onDestroy`
 comes after the next activity has drawn. Don't return it from `provideFlutterEngine`: the
-embedding destroys a provided engine with the first bubble. Dart leaves the chat when the
-lifecycle reaches `detached` (`IntentsService.leaveBubbleChat`), so the next bubble starts on
-the root route and opens its chat from the intent.
+embedding destroys a provided engine with the first bubble. Dart closes and leaves the chat when
+the lifecycle reaches `detached` (`IntentsService.leaveBubbleChat`), so the next bubble starts on
+the root route and opens its chat from the intent. Closing matters, not just popping: the next
+intent arrives on the stream path, where `openChat` skips a chat that is still active. When the
+activity lets go of the kept engine (`cleanUpFlutterEngine`), it re-registers the method channel
+with the application context so the idle engine doesn't keep the destroyed activity alive.
 
 ## Build Config
 

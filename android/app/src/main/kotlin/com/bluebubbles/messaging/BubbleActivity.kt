@@ -1,5 +1,6 @@
 package com.bluebubbles.messaging
 
+import android.content.Context
 import android.os.Bundle
 import com.bluebubbles.messaging.services.backend_ui_interop.MethodCallHandler
 import io.flutter.FlutterInjector
@@ -47,8 +48,19 @@ class BubbleActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        setMethodCallHandler(flutterEngine, this)
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        super.cleanUpFlutterEngine(flutterEngine)
+        // The kept engine outlives this activity and Dart still calls the channel after detaching
+        // (the foreground service), so hand it the application context instead of this activity.
+        if (usesKeptEngine) setMethodCallHandler(flutterEngine, applicationContext)
+    }
+
+    private fun setMethodCallHandler(flutterEngine: FlutterEngine, context: Context) {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, Constants.methodChannel).setMethodCallHandler {
-                call, result -> MethodCallHandler().methodCallHandler(call, result, this)
+                call, result -> MethodCallHandler().methodCallHandler(call, result, context)
         }
     }
 
