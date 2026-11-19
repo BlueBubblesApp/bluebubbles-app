@@ -4,7 +4,9 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:window_manager/window_manager.dart';
@@ -55,12 +57,72 @@ class TitleBar extends StatelessWidget {
     return WindowTitleBarBox(
       child: Row(
         children: [
-          Expanded(
-            child: MoveWindow(),
+          const Expanded(
+            child: _DragStrip(),
           ),
           const WindowButtons()
         ],
       ),
+    );
+  }
+}
+
+/// Drags the window and double-click maximizes it, like bitsdojo's MoveWindow, but from raw pointer events. MoveWindow
+/// is a GestureDetector over the whole top of the window, so it beat every tap under it in the gesture arena: back
+/// buttons, barriers and Flutter's own app bars there didn't respond.
+class _DragStrip extends StatefulWidget {
+  const _DragStrip();
+
+  @override
+  State<_DragStrip> createState() => _DragStripState();
+}
+
+class _DragStripState extends State<_DragStrip> {
+  Offset? _down;
+  Offset? _lastClick;
+  Duration? _lastClickTime;
+
+  /// A click on a control under the strip is that control's, so a double-click there doesn't maximize.
+  bool _onTapTarget(PointerEvent event) {
+    final result = HitTestResult();
+    WidgetsBinding.instance.hitTestInView(result, event.position, event.viewId);
+    return result.path.any((entry) {
+      final target = entry.target;
+      return target is RenderSemanticsGestureHandler && target.onTap != null;
+    });
+  }
+
+  void _onDown(PointerDownEvent event) {
+    if (event.buttons != kPrimaryButton) return;
+    _down = event.position;
+    final last = _lastClick, lastTime = _lastClickTime;
+    final isDouble = last != null &&
+        lastTime != null &&
+        event.timeStamp - lastTime < kDoubleTapTimeout &&
+        (event.position - last).distance < kDoubleTapSlop;
+    _lastClick = event.position;
+    _lastClickTime = event.timeStamp;
+    if (!isDouble) return;
+    _lastClick = null;
+    if (!_onTapTarget(event)) appWindow.maximizeOrRestore();
+  }
+
+  void _onMove(PointerMoveEvent event) {
+    final down = _down;
+    if (down == null || (event.position - down).distance < kTouchSlop) return;
+    _down = null;
+    _lastClick = null;
+    appWindow.startDragging();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: _onDown,
+      onPointerMove: _onMove,
+      onPointerUp: (_) => _down = null,
+      onPointerCancel: (_) => _down = null,
     );
   }
 }
