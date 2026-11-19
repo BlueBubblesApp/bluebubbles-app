@@ -653,12 +653,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
           child: Stack(
             children: [
               Obx(
-                () => AnimatedOpacity(
+                () => Opacity(
                   opacity: _messages.isEmpty && widget.customService == null
                       ? 0
                       : (dropZoneManager.dragging.value ? 0.3 : 1),
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeIn,
                   child: DeferredPointerHandler(
                     child: ScrollbarWrapper(
                       reverse: true,
