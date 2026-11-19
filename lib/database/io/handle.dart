@@ -75,16 +75,13 @@ class Handle {
   String get reactionDisplayName {
     if (address.startsWith("urn:biz")) return "Business";
     if (!kIsWeb && contactsV2.isNotEmpty) {
-      // Prioritize native contacts, but fall back to any contact if no native ones exist (should be rare)
-      // Desktop's contacts all come from the server, so none are native
-      final contact = contactsV2.where((c) => c.isNative).firstOrNull ?? contactsV2.first;
-      final nickname = contact.nickname;
-      if (!isNullOrEmpty(nickname)) return nickname!;
+      // The server can send one person twice, only one copy with a first name
+      for (final contact in contactsV2) {
+        final shortName = isNullOrEmpty(contact.nickname) ? contact.firstName : contact.nickname;
+        if (!isNullOrEmpty(shortName)) return shortName!;
+      }
 
-      final firstName = contact.firstName;
-      if (!isNullOrEmpty(firstName)) return firstName!;
-
-      final computedDisplayName = contact.computedDisplayName;
+      final computedDisplayName = contactsV2.first.computedDisplayName;
       if (!isNullOrEmpty(computedDisplayName)) return computedDisplayName;
     }
 
