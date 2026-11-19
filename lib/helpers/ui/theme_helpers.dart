@@ -117,16 +117,17 @@ extension EmojiFontFallback on ThemeData {
   /// name the emoji font explicitly. Apply to every theme handed to a [Theme] widget, including per-chat themes
   /// resolved from [ThemeStruct]. No-op elsewhere.
   ThemeData get withEmojiFallback {
-    final family = Platform.isWindows
-        ? "Segoe UI Emoji"
-        : Platform.isLinux
-            ? linuxEmojiFont?.family
+    final emoji = linuxEmojiFont?.family;
+    final fallback = Platform.isWindows
+        ? const ["Segoe UI Emoji"]
+        : Platform.isLinux && emoji != null
+            ? [if (linuxSansFamily != null) linuxSansFamily!, emoji]
             : null;
-    if (family == null) return this;
+    if (fallback == null) return this;
     return copyWith(
-      textTheme: textTheme.apply(fontFamilyFallback: [family]),
+      textTheme: textTheme.apply(fontFamilyFallback: fallback),
       extensions: extensions.values
-          .map((e) => e is BubbleText ? e.copyWith(bubbleText: e.bubbleText.apply(fontFamilyFallback: [family])) : e),
+          .map((e) => e is BubbleText ? e.copyWith(bubbleText: e.bubbleText.apply(fontFamilyFallback: fallback)) : e),
     );
   }
 }

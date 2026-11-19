@@ -6,7 +6,11 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 
 /// The system emoji font fontconfig picks, or null if there isn't one. Listed in the theme's font fallback on Linux.
-final ({String path, String family})? linuxEmojiFont = Platform.isLinux ? _findEmojiFont() : null;
+final ({String path, String family})? linuxEmojiFont = Platform.isLinux ? _match('emoji', mustHave: 0x1F600) : null;
+
+/// The system UI font fontconfig picks. Listed ahead of the emoji font: with only the emoji font in the fallback, the
+/// engine draws all text with it and letters come out blank.
+final String? linuxSansFamily = Platform.isLinux ? _match('sans-serif')?.family : null;
 
 typedef _NameParse = Pointer<Void> Function(Pointer<Utf8>);
 typedef _Substitute = Int32 Function(Pointer<Void>, Pointer<Void>, Int32);
@@ -35,7 +39,8 @@ Future<void> loadLinuxEmojiFont() async {
   }
 }
 
-({String path, String family})? _findEmojiFont() {
+/// fontconfig's match for [name], or null if it has no file or lacks the character [mustHave].
+({String path, String family})? _match(String name, {int? mustHave}) {
   try {
     final fc = DynamicLibrary.open('libfontconfig.so.1');
     final nameParse = fc.lookupFunction<_NameParse, _NameParse>('FcNameParse');
@@ -48,7 +53,7 @@ Future<void> loadLinuxEmojiFont() async {
     final destroy = fc.lookupFunction<_DefaultSubstitute, _DefaultSubstituteDart>('FcPatternDestroy');
 
     return using((arena) {
-      final pattern = nameParse('emoji'.toNativeUtf8(allocator: arena));
+      final pattern = nameParse(name.toNativeUtf8(allocator: arena));
       if (pattern == nullptr) return null;
       configSubstitute(nullptr, pattern, 0); // FcMatchPattern
       defaultSubstitute(pattern);
@@ -56,11 +61,13 @@ Future<void> loadLinuxEmojiFont() async {
       destroy(pattern);
       if (match == nullptr) return null;
       try {
-        // fontconfig always returns its best match, so make sure it actually has emoji (U+1F600).
-        final charset = arena<Pointer<Void>>();
-        if (getCharSet(match, 'charset'.toNativeUtf8(allocator: arena), 0, charset) != 0 ||
-            hasChar(charset.value, 0x1F600) == 0) {
-          return null;
+        // fontconfig always returns its best match, whether or not it has what was asked for
+        if (mustHave != null) {
+          final charset = arena<Pointer<Void>>();
+          if (getCharSet(match, 'charset'.toNativeUtf8(allocator: arena), 0, charset) != 0 ||
+              hasChar(charset.value, mustHave) == 0) {
+            return null;
+          }
         }
         final file = arena<Pointer<Utf8>>();
         final family = arena<Pointer<Utf8>>();
@@ -74,7 +81,7 @@ Future<void> loadLinuxEmojiFont() async {
       }
     });
   } catch (e, s) {
-    Logger.warn('fontconfig emoji lookup failed', error: e, trace: s, tag: 'LinuxEmojiFont');
+    Logger.warn('fontconfig lookup for $name failed', error: e, trace: s, tag: 'LinuxEmojiFont');
     return null;
   }
 }
