@@ -112,12 +112,7 @@ class Database {
     await initComplete.future;
   }
 
-  static Future<void> _initDatabaseMobile({bool? storeOpenStatus, ByteData? storeReference}) async {
-    if (storeReference != null) {
-      Logger.info("Attaching to existing ObjectBox store via reference");
-      store = Store.fromReference(getObjectBoxModel(), storeReference);
-      return;
-    }
+  static Future<void> _initDatabaseMobile({bool? storeOpenStatus}) async {
     Directory objectBoxDirectory = Directory(join(FilesystemSvc.appDocDir.path, 'objectbox'));
     final isStoreOpen = storeOpenStatus ?? Store.isOpen(objectBoxDirectory.path);
 
@@ -140,12 +135,7 @@ class Database {
     }
   }
 
-  static Future<void> _initDatabaseDesktop({ByteData? storeReference}) async {
-    if (storeReference != null) {
-      Logger.info("Attaching to existing ObjectBox store via reference");
-      store = Store.fromReference(getObjectBoxModel(), storeReference);
-      return;
-    }
+  static Future<void> _initDatabaseDesktop({bool? storeOpenStatus}) async {
     Directory objectBoxDirectory = Directory(join(FilesystemSvc.appDocDir.path, 'objectbox'));
 
     try {
@@ -160,12 +150,21 @@ class Database {
         await PrefsSvc.database.clearCustomPathConfig();
       }
 
-      Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
-      store = await openStore(directory: objectBoxDirectory.path);
-    } catch (e) {
-      if (e.toString().contains("another store is still open using the same path")) {
-        Logger.debug("Retrying to attach to an existing ObjectBox store");
+      final isStoreOpen = Store.isOpen(objectBoxDirectory.path);
+      if (isStoreOpen) {
+        Logger.info("Attempting to attach to an existing ObjectBox store...");
         store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+        Logger.info("Successfully attached to an existing ObjectBox store");
+      } else {
+        Logger.info("Opening new ObjectBox store from path: ${objectBoxDirectory.path}");
+        store = await openStore(directory: objectBoxDirectory.path);
+      }
+    } catch (e, s) {
+      Logger.error("Failed to open ObjectBox store!", error: e, trace: s);
+
+      if (e.toString().contains("another store is still open using the same path")) {
+        Logger.info("Retrying to attach to an existing ObjectBox store");
+        await _initDatabaseDesktop(storeOpenStatus: true);
       }
     }
   }
