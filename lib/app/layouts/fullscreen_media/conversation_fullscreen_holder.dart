@@ -14,7 +14,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import "package:flutter/material.dart";
-import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:get/get.dart';
 
 class ConversationFullscreenHolder extends StatefulWidget {
@@ -145,21 +144,12 @@ class ConversationFullscreenHolderState extends State<ConversationFullscreenHold
           appBar: !iOS || !showAppBar
               ? null
               : BBAppBar(
-                  leading: XGestureDetector(
-                    supportTouch: true,
-                    onTap: !kIsDesktop
-                        ? null
-                        : (details) {
-                            Navigator.of(context).pop();
-                          },
-                    child: TextButton(
-                      child: Text("Done",
-                          style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
-                      onPressed: () {
-                        if (kIsDesktop) return;
-                        Navigator.of(context).pop();
-                      },
-                    ),
+                  leading: TextButton(
+                    child: Text("Done",
+                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
                   leadingWidth: 75,
                   titleText: kIsWeb || !widget.showInteractions || widget.currentChat == null

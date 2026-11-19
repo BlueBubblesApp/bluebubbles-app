@@ -12,7 +12,6 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -77,83 +76,46 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                           padding: const EdgeInsets.only(top: 5),
                           child: Align(
                             alignment: Alignment.topLeft,
-                            child: XGestureDetector(
-                              supportTouch: true,
-                              onTap: !kIsDesktop
-                                  ? null
-                                  : (details) {
-                                      if (controller.inSelectMode.value) {
-                                        controller.inSelectMode.value = false;
-                                        controller.selected.clear();
-                                        return;
-                                      }
-                                      if (LifecycleSvc.isBubble) {
-                                        SystemNavigator.pop();
-                                        return;
-                                      }
-                                      controller.close();
-                                      if (Get.isSnackbarOpen) {
-                                        Get.closeAllSnackbars();
-                                      }
-                                      Navigator.of(context).pop();
-                                    },
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: () {
-                                  if (kIsDesktop) return;
-                                  if (controller.inSelectMode.value) {
-                                    controller.inSelectMode.value = false;
-                                    controller.selected.clear();
-                                    return;
-                                  }
-                                  if (LifecycleSvc.isBubble) {
-                                    SystemNavigator.pop();
-                                    return;
-                                  }
-                                  controller.close();
-                                  if (Get.isSnackbarOpen) {
-                                    Get.closeAllSnackbars();
-                                  }
-                                  Navigator.of(context).pop();
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(3.0),
-                                  child: _UnreadIcon(controller: controller),
-                                ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () {
+                                if (controller.inSelectMode.value) {
+                                  controller.inSelectMode.value = false;
+                                  controller.selected.clear();
+                                  return;
+                                }
+                                if (LifecycleSvc.isBubble) {
+                                  SystemNavigator.pop();
+                                  return;
+                                }
+                                controller.close();
+                                if (Get.isSnackbarOpen) {
+                                  Get.closeAllSnackbars();
+                                }
+                                Navigator.of(context).pop();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(3.0),
+                                child: _UnreadIcon(controller: controller),
                               ),
                             ),
                           )),
                       Align(
                         alignment: Alignment.center,
-                        child: XGestureDetector(
-                          supportTouch: true,
-                          onTap: !kIsDesktop
-                              ? null
-                              : (details) {
-                                  Navigator.of(context).push(
-                                    ThemeSwitcher.buildPageRoute(
-                                      builder: (context) => ConversationDetails(
-                                        chat: controller.chat,
-                                      ),
-                                    ),
-                                  );
-                                },
-                          child: InkWell(
-                            onTap: () {
-                              if (kIsDesktop) return;
-                              Navigator.of(context).push(
-                                ThemeSwitcher.buildPageRoute(
-                                  builder: (context) => ConversationDetails(
-                                    chat: controller.chat,
-                                  ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              ThemeSwitcher.buildPageRoute(
+                                builder: (context) => ConversationDetails(
+                                  chat: controller.chat,
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: _ChatIconAndTitle(parentController: controller),
-                            ),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: _ChatIconAndTitle(parentController: controller),
                           ),
                         ),
                       ),
