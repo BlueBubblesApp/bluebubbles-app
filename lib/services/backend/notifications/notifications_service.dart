@@ -62,6 +62,7 @@ class NotificationsService {
   static int? aliasesToast;
   static String? aliasesToastText;
   static Map<String, int> facetimeNotifications = {};
+  static Map<String, Timer> facetimeTimeouts = {};
   static Map<String, int> activeToasts = {};
   static Map<String, Timer> debounceTimers = {};
   static Map<String, List<PendingToastItem>> pendingMessages = {};
@@ -70,6 +71,15 @@ class NotificationsService {
 
   static const int maxLines = 4;
   static const int charsPerLineEst = 40;
+
+  /// How long a desktop FaceTime toast can ring before it clears itself. Calls with a UUID are normally cleared by
+  /// the server's `disconnected` status, so this only covers a status event that never arrives.
+  static const Duration faceTimeToastTimeout = Duration(minutes: 2);
+
+  /// Calls without a UUID come from servers with FaceTime calling off, which never report the call being answered
+  /// or ended, so this timeout is the only way the toast closes. Kept short so it stops soon after the call is
+  /// answered elsewhere.
+  static const Duration legacyFaceTimeToastTimeout = Duration(seconds: 30);
 
   /// Windows toast identity. The toast icon is registered under the AUMID but only
   /// resolves when it matches the guid (flutter_local_notifications#2738), so one
@@ -375,6 +385,7 @@ class NotificationsService {
       }
     }
 
+    facetimeTimeouts.remove(key)?.cancel();
     final int? existing = facetimeNotifications.remove(key);
     if (existing != null) {
       await DesktopNotifications.cancel(existing);
@@ -401,10 +412,17 @@ class NotificationsService {
             },
     );
 
-    if (id != null) facetimeNotifications[key] = id;
+    if (id != null) {
+      facetimeNotifications[key] = id;
+      facetimeTimeouts[key] = Timer(
+        callUuid == null ? legacyFaceTimeToastTimeout : faceTimeToastTimeout,
+        () => clearDesktopFaceTimeNotif(key),
+      );
+    }
   }
 
   Future<void> clearDesktopFaceTimeNotif(String callerUuid) async {
+    facetimeTimeouts.remove(callerUuid)?.cancel();
     final int? id = facetimeNotifications.remove(callerUuid);
     if (id != null) await DesktopNotifications.cancel(id);
   }
