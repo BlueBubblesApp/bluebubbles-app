@@ -13,7 +13,7 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 | `chat` | `ChatApi` | `api/chat_api.dart` | `query`, `getMessages`, `modifyParticipant`, `leave`, `setDisplayName`, `create`, `getCount`, `fetchOne`, `markRead`, `markUnread`, `shouldShareContact`, `shareContact`, `getIcon`, `setIcon`, `removeIcon`, `delete`, `deleteMessage` |
 | `message` | `MessageApi` | `api/message_api.dart` | `getCount`, `query`, `fetchOne`, `downloadEmbeddedMedia`, `sendText`, `sendAttachment`, `sendAttachmentChunked` (**v2 only**, files over 20 MB), `sendMultipart`, `getAppMessage`, `sendAppMessage`, `sendTapback`, `unsend`, `edit`, `notify`, `getScheduled`, `createScheduled`, `updateScheduled`, `deleteScheduled` |
 | `handle` | `HandleApi` | `api/handle_api.dart` | `handleCount`, `handles`, `handle`, `handleFocusState`, `handleiMessageState`, `handleFaceTimeState` |
-| `contact` | `ContactApi` | `api/contact_api.dart` | `fetchAll`, `query`, `create` |
+| `contact` | `ContactApi` | `api/contact_api.dart` | `fetchAll`, `fetchAllPages` (pages by 1,000 on v2; throws rather than return a partial list), `query`, `create`, `update` / `delete` (batch, by server `id`) |
 | `backup` | `BackupApi` | `api/backup_api.dart` | `getTheme`, `setTheme`, `deleteTheme`, `getSettings`, `setSettings`, `deleteSettings` |
 | `faceTime` | `FaceTimeApi` | `api/facetime_api.dart` | `answer`, `leave`, `call` (outgoing, **v2 only** — gate on `ServerDetails.supportsFaceTimeCalls`; throws `FaceTimeException`) |
 | `icloud` | `iCloudApi` | `api/icloud_api.dart` | `getDevices`, `refreshDevices`, `getFriends`, `refreshFriends`, `getAccountInfo`, `getAccountContact`, `setAccountAlias` |

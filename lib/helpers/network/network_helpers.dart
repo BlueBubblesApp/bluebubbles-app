@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -45,6 +46,21 @@ Future<int> getOrCreateUniqueId() async {
   }
 
   return uniqueId;
+}
+
+/// This phone's ANDROID_ID, which unlike [getOrCreateUniqueId] survives a reinstall. Android only.
+///
+/// It is not permanent: Android 8+ scopes it to the app's signing key and the Android user, and a factory reset
+/// changes it. Switching between differently signed builds (e.g. a GitHub APK and the Play build) therefore gives a
+/// new id, and contacts uploaded under the old one stay on the server.
+///
+/// Falls back to [getOrCreateUniqueId] on the rare device that reports no ANDROID_ID.
+Future<String> getAndroidId() async {
+  if (kIsWeb || kIsDesktop) throw UnsupportedError('getAndroidId is Android only');
+  final id = await MethodChannelSvc.invokeMethod('get-android-id') as String?;
+  if (id != null && id.isNotEmpty) return id;
+  Logger.warn('Device reports no ANDROID_ID; using the install id instead', tag: 'getAndroidId');
+  return (await getOrCreateUniqueId()).toString();
 }
 
 Future<String> getDeviceName() async {
