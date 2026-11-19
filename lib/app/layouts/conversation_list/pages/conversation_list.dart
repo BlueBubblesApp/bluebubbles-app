@@ -138,9 +138,15 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     with WidgetsBindingObserver {
   Timer? _initTimer;
   bool? _wasAltLayout;
+  Worker? _tabletModeWorker;
+
+  bool get _isMainList => !controller.showArchivedChats && !controller.showUnknownSenders;
 
   /// Folding while Settings or Find My covers the chat closes it, so leaving them lands on the list.
-  void _closeChatIfFoldedBehindSection(bool altLayout) {
+  /// Runs when the window size or the tablet mode setting changes, the two things that switch the layout.
+  void _closeChatIfFoldedBehindSection() {
+    if (!mounted) return;
+    final altLayout = showAltLayout;
     final folded = _wasAltLayout == true && !altLayout;
     _wasAltLayout = altLayout;
     if (!folded || NavigationSvc.openSection.value == null) return;
@@ -163,6 +169,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
 
     if (!kIsWeb && !controller.showArchivedChats && !controller.showUnknownSenders) {
       NavigationSvc.chatPaneObserver.reset();
+      _tabletModeWorker = ever(SettingsSvc.settings.tabletMode, (_) => _closeChatIfFoldedBehindSection());
       WidgetsBinding.instance.addObserver(this);
       ChatsSvc.loadedAllChats.future.then((_) => _precacheAvatars());
     }
@@ -246,8 +253,18 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isMainList) return;
+    // Depend on the size explicitly: showAltLayout skips reading it while tablet mode is off
+    MediaQuery.sizeOf(context);
+    _closeChatIfFoldedBehindSection();
+  }
+
+  @override
   void dispose() {
     _initTimer?.cancel();
+    _tabletModeWorker?.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -260,8 +277,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
       samsungSkin: SamsungConversationList(parentController: controller),
     );
 
-    if (controller.showArchivedChats || controller.showUnknownSenders) return child;
-    _closeChatIfFoldedBehindSection(showAltLayout);
+    if (!_isMainList) return child;
 
     final chatList = Stack(
       fit: StackFit.expand,
