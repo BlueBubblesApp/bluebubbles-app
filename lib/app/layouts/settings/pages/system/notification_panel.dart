@@ -51,6 +51,19 @@ class _NotificationPanelState extends State<NotificationPanel> with SingleTicker
                     child: Text("Notifications".psCapitalize, style: iOS ? iosSubtitle : materialSubtitle),
                   )),
             Obx(() => SettingsSection(backgroundColor: tileColor, children: [
+              if (!kIsWeb && !kIsDesktop)
+                SettingsSwitch(
+                  onChanged: (bool val) async {
+                    SettingsSvc.settings.dndFavoritesOverride.value = val;
+                    await SettingsSvc.settings.saveOneAsync('dndFavoritesOverride');
+                  },
+                  initialVal: SettingsSvc.settings.dndFavoritesOverride.value,
+                  title: "Override DND for Favorites",
+                  subtitle: "Override Do Not Disturb (DND) for Favorite (starred) contacts",
+                  isThreeLine: true,
+                  backgroundColor: tileColor,
+                ),
+              if (!kIsWeb && !kIsDesktop) const SettingsDivider(padding: EdgeInsets.only(left: 16.0)),
               // On desktop this toggle has no effect: notifications there fire
               // regardless of the chat list, so only show it on mobile.
               if (!kIsWeb && !kIsDesktop)
