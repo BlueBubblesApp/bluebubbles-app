@@ -876,6 +876,9 @@ class MessagesService extends GetxController {
   }
 
   void updateMessage(Message updated, {String? oldGuid}) {
+    if (updated.isReaction && updated.associatedMessageGuid != null) {
+      messageStates[updated.associatedMessageGuid!]?.updateAssociatedMessageInternal(updated, tempGuid: oldGuid);
+    }
     // Try to find the message - check oldGuid first, then fallback to updated.guid
     // This handles race conditions where the GUID was already replaced
     Message? toUpdate;
