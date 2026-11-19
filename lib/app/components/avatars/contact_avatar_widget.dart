@@ -188,8 +188,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with ThemeHel
       final colors = colorStr != null
           ? [HexColor(colorStr).lightenAmount(0.02), HexColor(colorStr)]
           : toColorGradient(widget.handle?.address);
-      final cachedAvatarPath = _handleState?.avatarPath.value ?? contactV2?.avatarPath;
-      final cachedInitials = _handleState?.initials.value ?? contactV2?.initials ?? widget.handle?.initials;
+      // HandleState is refreshed from the DB on contact sync; widget.handle can still hold a removed contact.
+      final handleState = _handleState;
+      final cachedAvatarPath = handleState != null ? handleState.avatarPath.value : contactV2?.avatarPath;
+      final cachedInitials =
+          handleState != null ? handleState.initials.value : contactV2?.initials ?? widget.handle?.initials;
       final hideContactInfo = SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.hideContactInfo.value;
       final genAvatars = SettingsSvc.settings.redactedMode.value && SettingsSvc.settings.generateFakeAvatars.value;
       final iOS = SettingsSvc.settings.skin.value == Skins.iOS;
