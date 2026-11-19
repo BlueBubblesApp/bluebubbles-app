@@ -75,7 +75,8 @@ class Handle {
   String get reactionDisplayName {
     if (address.startsWith("urn:biz")) return "Business";
     if (!kIsWeb && contactsV2.isNotEmpty) {
-      // The server can send one person twice, only one copy with a first name
+      // The first linked contact's nickname or first name. On Android that's normally the one address book entry; on
+      // desktop the server can send a person twice (the Mac's card and an Android upload), only one with a first name
       for (final contact in contactsV2) {
         final shortName = isNullOrEmpty(contact.nickname) ? contact.firstName : contact.nickname;
         if (!isNullOrEmpty(shortName)) return shortName!;
