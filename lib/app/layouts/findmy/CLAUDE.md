@@ -1,7 +1,7 @@
 # findmy/ — Find My Device Locator
 
 ## Files
-- `findmy_page.dart` — main screen (map + list tabs)
+- `findmy_page.dart` — `FindMyPage`, opened full-window by `NavigationSvc.openFindMy()`: lists and map in a split of their own, or the map with a sliding list panel on a phone
 - `findmy_controller.dart` — state and logic: location polling, device/friend tracking
 - `findmy_location_clipper.dart` — custom `CustomClipper` for location shape
 - `findmy_pin_clipper.dart` — custom `CustomClipper` for map pin shape
