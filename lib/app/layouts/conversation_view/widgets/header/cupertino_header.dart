@@ -5,7 +5,6 @@ import 'package:bluebubbles/app/layouts/conversation_details/conversation_detail
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -104,13 +103,7 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                         alignment: Alignment.center,
                         child: InkWell(
                           onTap: () {
-                            Navigator.of(context).push(
-                              ThemeSwitcher.buildPageRoute(
-                                builder: (context) => ConversationDetails(
-                                  chat: controller.chat,
-                                ),
-                              ),
-                            );
+                            NavigationSvc.push(context, ConversationDetails(chat: controller.chat));
                           },
                           borderRadius: BorderRadius.circular(10),
                           child: Padding(

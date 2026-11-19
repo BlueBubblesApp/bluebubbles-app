@@ -47,7 +47,7 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
     if (NavigationSvc.isTabletMode(context)) {
       return TabletModeWrapper(
         initialRatio: 0.35,
-        minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.3,
+        minRatio: kIsDesktop ? 0.2 : 0.3,
         maxRatio: 0.5,
         allowResize: true,
         left: _buildScaffold(context, _buildLists(context)),
