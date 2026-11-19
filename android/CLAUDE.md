@@ -44,6 +44,13 @@ intent arrives on the stream path, where `openChat` skips a chat that is still a
 activity lets go of the kept engine (`cleanUpFlutterEngine`), it re-registers the method channel
 with the application context so the idle engine doesn't keep the destroyed activity alive.
 
+The kept engine is destroyed when Android asks for memory back (`onTrimMemory` at
+`TRIM_MEMORY_BACKGROUND` or worse, the pre-Android 14 `RUNNING_LOW`/`RUNNING_CRITICAL`, or
+`onLowMemory`), and only while no activity is attached to it; the next bubble then starts cold,
+as every bubble did before the engine was kept. `TRIM_MEMORY_UI_HIDDEN` is deliberately ignored:
+it fires whenever a closed bubble was the only thing on screen. Set
+`DESTROY_KEPT_ENGINE_ON_TRIM` to false to keep the engine for the life of the process.
+
 ## Build Config
 
 - Compile/Target SDK: 36 | Min SDK: 26 | NDK: 28.2 | Java/Kotlin compat: version 21
