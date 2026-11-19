@@ -1,7 +1,3 @@
-import 'dart:math';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/sticker_holder.dart';
 import 'package:bluebubbles/database/models.dart';
@@ -58,7 +54,7 @@ class StickerDropTarget extends StatelessWidget {
       // As large as it looked while dragged: the drag draws its longest side at dragSize, times the pinch
       final scale = StickerHolder.scaleForPoints(
         StickerLibraryTile.dragSize * transform.scale,
-        await _longestSide(bytes),
+        sticker.longestSide,
       );
       await OutgoingMsgHandler.queuePlacedSticker(
         chat: chat,
@@ -77,21 +73,6 @@ class StickerDropTarget extends StatelessWidget {
     } catch (e, s) {
       Logger.warn("Failed to place a sticker", error: e, trace: s, tag: "StickerDrop");
       showSnackbar("Error", stickerRefusal(e).message ?? "Couldn't send the sticker", type: SnackbarType.error);
-    }
-  }
-
-  /// The image's longest side in pixels, read from its header. A format this platform can't read (HEIC off Apple) is
-  /// assumed the size [StickerHolder] assumes for an image it can't measure.
-  static Future<double> _longestSide(Uint8List bytes) async {
-    try {
-      final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-      final descriptor = await ui.ImageDescriptor.encoded(buffer);
-      final side = max(descriptor.width, descriptor.height).toDouble();
-      descriptor.dispose();
-      buffer.dispose();
-      return side;
-    } catch (_) {
-      return StickerHolder.fallbackPixels;
     }
   }
 }
