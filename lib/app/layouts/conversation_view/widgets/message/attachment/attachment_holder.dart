@@ -457,15 +457,13 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
-        // ColorFiltered is only for standalone selection tinting.
-        // In fill mode the ColorFilter creates a saveLayer bounded by the messages
-        // view repaint boundary; dstOver then fills every transparent pixel in that
-        // large layer with tertiaryContainer (pink/purple flash while downloading).
+        // Only a standalone card gets the selection tint. Media drawn without a card has never been tinted, and in a
+        // collection only the tiles still downloading have a card, so tinting them would mark the message unevenly
         if (!transparentCard && !widget.fill) {
-          content = ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-              selected ? BlendMode.srcOver : BlendMode.dstOver,
+          content = DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              color: selected ? context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5) : null,
             ),
             child: content,
           );

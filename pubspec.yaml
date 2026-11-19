@@ -293,17 +293,12 @@ flutter:
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/reactions/dislike-white.svg
-    - assets/reactions/like-white.svg
-    - assets/reactions/emphasize-white.svg
-    - assets/reactions/question-white.svg
-    - assets/reactions/love-white.svg
-    - assets/reactions/dislike-black.svg
-    - assets/reactions/like-black.svg
-    - assets/reactions/emphasize-black.svg
-    - assets/reactions/laugh-black.svg
-    - assets/reactions/question-black.svg
-    - assets/reactions/love-black.svg
+    - assets/reactions/dislike.svg
+    - assets/reactions/like.svg
+    - assets/reactions/emphasize.svg
+    - assets/reactions/laugh.svg
+    - assets/reactions/question.svg
+    - assets/reactions/love.svg
     - assets/icon/moon.svg
     - assets/icon/bb-icon.svg
     - assets/images/google-sign-in.png
