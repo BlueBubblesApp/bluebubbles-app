@@ -457,6 +457,8 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
             ),
           ),
         );
+        // Only a standalone card gets the selection tint. Media drawn without a card has never been tinted, and in a
+        // collection only the tiles still downloading have a card, so tinting them would mark the message unevenly
         if (!transparentCard && !widget.fill) {
           content = DecoratedBox(
             position: DecorationPosition.foreground,
