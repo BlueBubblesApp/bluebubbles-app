@@ -59,6 +59,23 @@ class IntentsService {
     await sub.cancel();
   }
 
+  /// Android keeps the bubble's engine for the next bubble, which must not start on this chat.
+  ///
+  /// The chat is closed as well as popped: the bubble's header back button leaves it active, and the next
+  /// bubble's intent arrives through [ReceiveIntent.receivedIntentStream], where [openChat] skips navigating
+  /// to a chat that is still active.
+  void leaveBubbleChat() {
+    if (GetIt.I.isRegistered<ChatsService>()) {
+      final controller = ChatsSvc.activeChat?.controller;
+      if (controller != null) {
+        controller.close();
+      } else {
+        ChatsSvc.setAllInactiveSync();
+      }
+    }
+    Get.until((route) => route.isFirst);
+  }
+
   void handleIntent(Intent? intent, {required bool isInitialIntent}) async {
     if (intent == null) return;
 
