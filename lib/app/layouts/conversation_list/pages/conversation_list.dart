@@ -296,6 +296,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     );
 
     return BBScaffold(
+      // BBScaffold doesn't rebuild on a window effect change; Home's background does
+      backgroundColor: Colors.transparent,
       safeAreaLeft: false,
       safeAreaRight: false,
       // Resizing the panes for the keyboard would resize the chat pane's overlay under the composer
