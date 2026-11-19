@@ -5,6 +5,7 @@ import 'package:bluebubbles/app/state/attachment_state.dart';
 import 'package:bluebubbles/app/state/message_state.dart';
 import 'package:bluebubbles/helpers/types/extensions/extensions.dart';
 import 'package:bluebubbles/helpers/types/constants.dart';
+import 'package:bluebubbles/helpers/types/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui/reaction_helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -1555,36 +1556,7 @@ class MessagesService extends GetxController {
     try {
       Logger.debug("[loadChunk] Starting to load messages (offset: $offset, limit: $limit)", tag: "MessageReactivity");
 
-      _messages = await Chat.getMessagesAsync(
-        chat,
-        offset: offset,
-        limit: limit,
-        onSupplementalDataLoaded: () {
-          // Phase 2 complete - reactions have been loaded into message.associatedMessages
-          Logger.info("[loadChunk] Supplemental data loaded, syncing MessageStates for ${_messages.length} messages",
-              tag: "MessageReactivity");
-
-          // Ensure MessageStates exist first (in case they weren't created yet)
-          _ensureMessageStates(_messages);
-
-          // Sync associatedMessages into MessageState observables
-          for (final message in _messages) {
-            if (message.guid != null && message.associatedMessages.isNotEmpty) {
-              final messageState = messageStates[message.guid];
-              if (messageState != null) {
-                // Clear and repopulate the observable list to trigger reactivity
-                messageState.associatedMessages.clear();
-                messageState.associatedMessages.addAll(message.associatedMessages);
-                messageState.hasReactions.value = message.associatedMessages.isNotEmpty;
-
-                Logger.debug(
-                    "[loadChunk] Synced ${message.associatedMessages.length} reactions into MessageState for ${message.guid}",
-                    tag: "MessageReactivity");
-              }
-            }
-          }
-        },
-      );
+      _messages = await Chat.getMessagesAsync(chat, offset: offset, limit: limit);
 
       Logger.debug("[loadChunk] Loaded ${_messages.length} messages from local DB");
       if (_messages.isEmpty) {
@@ -1650,6 +1622,7 @@ class MessagesService extends GetxController {
     // Create MessageStates for all loaded messages
     _ensureMessageStates(_messages);
     Logger.debug("[loadChunk] Created MessageStates for ${_messages.length} messages", tag: "MessageState");
+    unawaited(_loadReactions(_messages));
 
     // Compute initial delivered indicator ownership after messages are loaded.
     _recomputeDeliveredIndicators();
@@ -1711,7 +1684,29 @@ class MessagesService extends GetxController {
       // Create MessageStates for loaded messages
       _ensureMessageStates(_messages);
     }
+    unawaited(_loadReactions(_messages));
     _recomputeDeliveredIndicators();
+  }
+
+  /// Loads the saved reactions on [messages] into their [MessageState]s, in the background. Every page this service
+  /// shows comes through here, wherever it was fetched from: a reaction is a message of its own, often on a different
+  /// page from the message it reacts to, so they're looked up by the messages they target.
+  Future<void> _loadReactions(List<Message> messages) async {
+    if (kIsWeb) return;
+    final guids = messages.where((m) => !m.isReaction && m.guid != null).map((m) => m.guid!).toList();
+    if (guids.isEmpty) return;
+    try {
+      final reactions =
+          MessageHelper.normalizedAssociatedMessages(await ChatInterface.loadSupplementalData(messageGuids: guids));
+      // Merged in rather than replacing the list, so a reaction that came in live while this loaded is kept.
+      for (final reaction in reactions) {
+        getMessageStateIfExists(reaction.associatedMessageGuid!)?.addAssociatedMessageInternal(reaction);
+      }
+      Logger.debug("[loadReactions] Loaded ${reactions.length} reactions for ${guids.length} messages",
+          tag: "MessageReactivity");
+    } catch (e, s) {
+      Logger.error("Failed to load reactions", error: e, trace: s, tag: "MessageReactivity");
+    }
   }
 
   static Future<List<dynamic>> getMessages(

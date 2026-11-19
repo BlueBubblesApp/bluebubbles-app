@@ -392,8 +392,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     // via the SliverAnimatedList API instead of swapping _listKey, which would tear
     // down the whole sliver (and its AutomaticKeepAlive cache of loaded images/url
     // previews), causing them to redecode when scrolling back down.
+    // An empty list needs the setState below anyway: it's what lifts the list's empty-state opacity.
     final addedCount = _messages.length - previousLength;
-    final isSimpleAppend = addedCount > 0 &&
+    final isSimpleAppend = previousLength > 0 &&
+        addedCount > 0 &&
         const ListEquality().equals(_messages.sublist(0, previousLength), previousMessages);
 
     if (isSimpleAppend) {
