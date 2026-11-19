@@ -76,17 +76,15 @@ class Handle {
     if (address.startsWith("urn:biz")) return "Business";
     if (!kIsWeb && contactsV2.isNotEmpty) {
       // Prioritize native contacts, but fall back to any contact if no native ones exist (should be rare)
-      final firstNativeContact = contactsV2.where((c) => c.isNative).firstOrNull;
-      final nativeNickname = firstNativeContact?.nickname;
-      if (!isNullOrEmpty(nativeNickname)) return nativeNickname!;
+      // Desktop's contacts all come from the server, so none are native
+      final contact = contactsV2.where((c) => c.isNative).firstOrNull ?? contactsV2.first;
+      final nickname = contact.nickname;
+      if (!isNullOrEmpty(nickname)) return nickname!;
 
-      final nativeFirstName = firstNativeContact?.firstName;
-      if (!isNullOrEmpty(nativeFirstName)) return nativeFirstName!;
+      final firstName = contact.firstName;
+      if (!isNullOrEmpty(firstName)) return firstName!;
 
-      final nativeComputedDisplayName = firstNativeContact?.computedDisplayName;
-      if (!isNullOrEmpty(nativeComputedDisplayName)) return nativeComputedDisplayName!;
-
-      final computedDisplayName = contactsV2.first.computedDisplayName;
+      final computedDisplayName = contact.computedDisplayName;
       if (!isNullOrEmpty(computedDisplayName)) return computedDisplayName;
     }
 
