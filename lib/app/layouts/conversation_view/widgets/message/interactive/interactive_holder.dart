@@ -56,10 +56,11 @@ class _InteractiveHolderState extends State<InteractiveHolder> with AutomaticKee
       // Observe selection state
       final selected = !iOS && (controller.cvController?.selected.any((m) => m.guid == message.guid) ?? false);
 
-      return ColorFiltered(
-        colorFilter: ColorFilter.mode(
-            !selected ? Colors.transparent : context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-            BlendMode.srcOver),
+      return DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          color: selected ? context.theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5) : null,
+        ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
