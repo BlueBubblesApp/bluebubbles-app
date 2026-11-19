@@ -3,9 +3,7 @@ package com.bluebubbles.messaging
 import com.bluebubbles.messaging.services.backend_ui_interop.DartWorkManager
 import com.bluebubbles.messaging.utils.PersistentLog
 import com.bluebubbles.messaging.utils.Utils
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.reflect.TypeToken
+import com.google.gson.JsonParser
 
 import org.unifiedpush.android.connector.MessagingReceiver
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -44,41 +42,50 @@ class UnifiedPushReceiver : MessagingReceiver() {
         DartWorkManager.createWorker(context, "unifiedpush-settings", data) {}
     }
 
-    inline fun <reified T> Gson.fromJson(json: String) = fromJson<T>(json, object: TypeToken<T>() {}.type)
-
     override fun onMessage(context: Context, payload: ByteArray, instance: String) {
         val applicationContext = context.getApplicationContext()
         val msg = payload.toString(Charsets.UTF_8)
-        val gson: Gson = Gson()
-        val json: Map<String, JsonElement> = gson.fromJson(msg)
-        val type: String
+
         try {
-            type = json.get("type")?.getAsString() ?: return
-        } catch (e: UnsupportedOperationException) {
-            PersistentLog.d(applicationContext, tag, "Invalid message type")
-            return
-        }
+            val json = JsonParser.parseString(msg).asJsonObject
+            val type: String = json.get("type")?.takeIf { it.isJsonPrimitive }?.asString ?: run {
+                PersistentLog.w(applicationContext, tag, "UnifiedPush payload missing type field (${payload.size} bytes)")
+                return
+            }
 
-        PersistentLog.i(applicationContext, tag, "Received new message of type $type from UnifiedPush...")
-        DartWorkManager.createWorker(applicationContext, type, HashMap(json)) {}
+            // Hand Dart the same shape FCM does. The server's webhook body carries `data` as a nested
+            // object, while its FCM payload carries the same data JSON-encoded as a string, which Dart
+            // decodes into the Map<String, dynamic> its parsers expect. A nested object instead crosses
+            // the platform channel as Map<Object?, Object?>, and Attachment.fromMap can't take that as
+            // its metadata, so every message whose attachment had metadata (most images) was dropped.
+            val arguments = hashMapOf<String, Any?>(
+                "type" to type,
+                "data" to json.get("data")?.takeUnless { it.isJsonNull }?.toString(),
+            )
 
-        // check if the user configured "Send Events to Tasker"
-        val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
-        if (prefs.getBoolean("sendEventsToTasker", false)) {
-            Utils.getServerUrl(applicationContext, object : MethodChannel.Result {
-                override fun success(result: Any?) {
-                    PersistentLog.w(applicationContext, tag, "Got URL: $result - sending to Tasker...")
-                    val intent = Intent()
-                    intent.setAction("net.dinglisch.android.taserm.BB_EVENT")
-                    intent.putExtra("url", result.toString())
-                    intent.putExtra("event", type)
-                    intent.putExtras(bundleOf(*json.toList().toTypedArray()))
-                    applicationContext.sendBroadcast(intent)
-                }
+            PersistentLog.i(applicationContext, tag, "Received new message of type $type from UnifiedPush (${payload.size} bytes)")
+            DartWorkManager.createWorker(applicationContext, type, arguments) {}
 
-                override fun error(errorCode: String, errorMesage: String?, errorDetails: Any?) {}
-                override fun notImplemented() {}
-            })
+            // check if the user configured "Send Events to Tasker"
+            val prefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", 0)
+            if (prefs.getBoolean("sendEventsToTasker", false)) {
+                Utils.getServerUrl(applicationContext, object : MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        PersistentLog.w(applicationContext, tag, "Got URL: $result - sending to Tasker...")
+                        val intent = Intent()
+                        intent.setAction("net.dinglisch.android.taskerm.BB_EVENT")
+                        intent.putExtra("url", result.toString())
+                        intent.putExtra("event", type)
+                        intent.putExtras(bundleOf(*arguments.toList().toTypedArray()))
+                        applicationContext.sendBroadcast(intent)
+                    }
+
+                    override fun error(errorCode: String, errorMesage: String?, errorDetails: Any?) {}
+                    override fun notImplemented() {}
+                })
+            }
+        } catch (e: Exception) {
+            PersistentLog.e(applicationContext, tag, "Failed to process UnifiedPush message (${payload.size} bytes)", e)
         }
     }
 }
