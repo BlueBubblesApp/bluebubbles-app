@@ -66,6 +66,7 @@
   </screenshots>
 
   <releases>
+    <release date="2026-11-04" version="2.1.100.0" type="development" />
     <release date="2026-11-03" version="2.1.6.0">
       <url type="details">https://github.com/BlueBubblesApp/bluebubbles-app/releases/tag/v2.1.6%2Bdesktop.96</url>
       <description>

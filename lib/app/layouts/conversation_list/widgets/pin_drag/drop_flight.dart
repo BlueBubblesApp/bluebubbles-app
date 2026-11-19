@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 
 /// A dropped chat flying from [from] to where it lands, as a pin among the pins or turning into a tile for the list.
 /// On landing it is swapped for its own tile in one frame; there is no fade. Without the landing place in view it
-/// changes where it was dropped.
+/// keeps its look and flies off the screen toward it.
 class DropFlight extends StatefulWidget {
   const DropFlight({
     super.key,
@@ -102,7 +102,10 @@ class _DropFlightState extends State<DropFlight> with TickerProviderStateMixin {
   late final AnimationController _move = AnimationController(vsync: this, duration: const Duration(milliseconds: 260));
   Offset? _lastTo;
 
+  Offset? _offScreenTo;
+
   Offset get _to {
+    if (_offScreenTo != null) return _offScreenTo!;
     final slot = widget.slot();
     if (slot != null && slot.attached && slot.hasSize) {
       _lastTo = widget.overlayBox.globalToLocal(slot.localToGlobal(slot.size.center(Offset.zero)));
@@ -115,7 +118,20 @@ class _DropFlightState extends State<DropFlight> with TickerProviderStateMixin {
     super.initState();
     widget.row?.then((image) => mounted ? _row.value = image : image.dispose());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _asPin.value = widget.toPin;
+      if (!mounted) return;
+      final slot = widget.slot();
+      final bounds = Offset.zero & widget.overlayBox.size;
+      final rect = slot != null && slot.attached && slot.hasSize
+          ? MatrixUtils.transformRect(slot.getTransformTo(widget.overlayBox), Offset.zero & slot.size)
+          : null;
+      if (rect != null && bounds.overlaps(rect)) {
+        _asPin.value = widget.toPin;
+      } else {
+        // An unbuilt row is below the list, and the card is centered on its point
+        final above = rect != null ? rect.bottom <= 0 : widget.toPin;
+        final reach = widget.drag.pinAvatarSize;
+        _offScreenTo = Offset(widget.from.dx, above ? -reach : bounds.height + reach);
+      }
       await _move.forward();
       // Swapped for the landing tile in one frame, so it looks like it went there.
       if (mounted) widget.onDone();
