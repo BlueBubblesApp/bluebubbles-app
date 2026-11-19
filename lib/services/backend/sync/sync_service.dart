@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
+import 'package:bluebubbles/helpers/network/network_helpers.dart';
 import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/helpers/ui/async_task.dart';
 import 'package:bluebubbles/helpers/ui/ui_helpers.dart';
@@ -290,12 +291,13 @@ class SyncService {
         final contactUploadStopwatch = Stopwatch()..start();
         // Get all contacts from ContactServiceV2
         final contactsV2 = await ContactsSvcV2.getAllContacts();
+        final deviceId = await getAndroidId();
         final _contacts = <Map<String, dynamic>>[];
         for (final c in contactsV2) {
-          _contacts.add(c.toServerMap());
+          _contacts.add(c.toServerMap(deviceId: deviceId));
         }
 
-        await ContactV2Interface.uploadContacts(_contacts);
+        await ContactV2Interface.uploadContacts(_contacts, deviceId: deviceId);
         contactUploadStopwatch.stop();
         Logger.debug("Contact upload complete in ${contactUploadStopwatch.elapsedMilliseconds}ms",
             tag: "Contact Upload");

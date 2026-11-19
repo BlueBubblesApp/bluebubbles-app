@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/backend/actions/contact_v2_actions.dart';
 import 'package:bluebubbles/services/backend/interfaces/contact_v2_interface.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -429,11 +430,14 @@ class ContactServiceV2 {
     final networkContacts = <ContactV2>[];
     logger?.call("Fetching contacts from server...");
     try {
-      final response = await HttpSvc.contact.fetchAll(withAvatars: true);
+      final serverContacts = await ContactV2Actions.fetchServerContacts(
+        isV2Server: SettingsSvc.serverDetails.isV2Server,
+        withAvatars: true,
+      );
 
-      if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
+      if (serverContacts.isNotEmpty) {
         logger?.call("Found contacts!");
-        for (Map<String, dynamic> map in response.data['data']) {
+        for (final map in serverContacts) {
           final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
           final phones = (map['phoneNumbers'] as List<dynamic>? ?? [])
               .map((e) => ContactPhone(number: e['address'].toString(), label: e['label']?.toString() ?? ''))

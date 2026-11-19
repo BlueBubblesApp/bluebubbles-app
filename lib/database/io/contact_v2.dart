@@ -206,8 +206,12 @@ class ContactV2 {
 
   /// Formats this contact for the server upload API.
   /// Field names match what the server expects (and sends back on fetch).
-  Map<String, dynamic> toServerMap() {
+  /// [deviceId] is the phone's [getAndroidId]: Android contact ids are small per-device integers, so two phones
+  /// uploading to one server would otherwise claim each other's contacts.
+  Map<String, dynamic> toServerMap({required String deviceId}) {
     return {
+      // Lets the server match this contact on later uploads instead of by name.
+      'externalId': '$deviceId:$nativeContactId',
       'displayName': displayName,
       'firstName': firstName,
       'lastName': lastName,

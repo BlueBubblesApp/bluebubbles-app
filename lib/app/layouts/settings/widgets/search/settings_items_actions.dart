@@ -3,6 +3,7 @@ import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/global/settings.dart';
 import 'package:bluebubbles/database/io/fcm_data.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/backend/actions/contact_v2_actions.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:dio/dio.dart';
@@ -52,22 +53,25 @@ class SettingsItemsActions {
 
     final contacts = <Map<String, dynamic>>[];
     final allContacts = await ContactsSvcV2.getAllContacts();
+    final deviceId = await getAndroidId();
     for (final contact in allContacts) {
-      contacts.add(contact.toServerMap());
+      contacts.add(contact.toServerMap(deviceId: deviceId));
     }
 
-    HttpSvc.contact.create(
+    ContactV2Actions.uploadToServer(
       contacts,
+      deviceId: deviceId,
+      isV2Server: SettingsSvc.serverDetails.isV2Server,
       onSendProgress: (count, total) {
         uploadingContacts.value = true;
         progress.value = count / total;
         totalSize.value = total;
-        if (progress.value == 1.0) {
-          uploadingContacts.value = false;
-          showSnackbar("Notice", "Successfully exported contacts to server");
-        }
       },
-    ).catchError((err, stack) {
+    ).then((_) {
+      uploadingContacts.value = false;
+      progress.value = 1.0;
+      showSnackbar("Notice", "Successfully exported contacts to server");
+    }).catchError((err, stack) {
       if (err is Response) {
         Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack);
       } else {
@@ -76,7 +80,6 @@ class SettingsItemsActions {
 
       closeDialog();
       showSnackbar("Error", "Failed to export contacts to server", type: SnackbarType.error);
-      return Response(requestOptions: RequestOptions(path: ''));
     });
   }
 

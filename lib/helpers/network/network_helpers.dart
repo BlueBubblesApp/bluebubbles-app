@@ -47,6 +47,9 @@ Future<int> getOrCreateUniqueId() async {
   return uniqueId;
 }
 
+/// This phone's ANDROID_ID, which unlike [getOrCreateUniqueId] survives a reinstall. Android only.
+Future<String> getAndroidId() async => await MethodChannelSvc.invokeMethod('get-android-id') as String;
+
 Future<String> getDeviceName() async {
   String deviceName = "bluebubbles-client";
 

@@ -17,6 +17,7 @@ import com.bluebubbles.messaging.services.notifications.NotificationChannelHandl
 import com.bluebubbles.messaging.services.notifications.NotificationListenerPermissionRequestHandler
 import com.bluebubbles.messaging.services.notifications.StartNotificationListenerHandler
 import com.bluebubbles.messaging.services.notifications.UnifiedPushHandler
+import com.bluebubbles.messaging.services.system.AndroidIdHandler
 import com.bluebubbles.messaging.services.system.BrowserLaunchRequestHandler
 import com.bluebubbles.messaging.services.system.ClipboardHtmlHandler
 import com.bluebubbles.messaging.services.system.CheckChromeOsHandler
@@ -125,6 +126,7 @@ class MethodCallHandler {
             StartGoogleDuoRequestHandler.tag -> StartGoogleDuoRequestHandler().handleMethodCall(call, result, context)
             SaveFileToDownloadsHandler.tag -> SaveFileToDownloadsHandler().handleMethodCall(call, result, context)
             CheckChromeOsHandler.tag -> CheckChromeOsHandler().handleMethodCall(call, result, context)
+            AndroidIdHandler.tag -> AndroidIdHandler().handleMethodCall(call, result, context)
             NotificationListenerPermissionRequestHandler.tag -> NotificationListenerPermissionRequestHandler().handleMethodCall(call, result, context)
             StartNotificationListenerHandler.tag -> StartNotificationListenerHandler().handleMethodCall(call, result, context)
             OpenConversationNotificationSettingsHandler.tag -> OpenConversationNotificationSettingsHandler().handleMethodCall(call, result, context)

@@ -27,7 +27,7 @@ class ContactV2Interface {
   ///
   /// Returns a list of handle IDs that were affected by the matching
   static Future<List<int>> syncContactsToHandles() async {
-    final data = _accountFilterData();
+    final data = {..._accountFilterData(), 'isV2Server': SettingsSvc.serverDetails.isV2Server};
     if (isIsolate) {
       return await ContactV2Actions.syncContactsToHandles(data);
     } else {
@@ -39,7 +39,7 @@ class ContactV2Interface {
   /// count and matched-contact count for diagnostic display (Contacts
   /// Management page's manual refresh).
   static Future<Map<String, dynamic>> syncContactsToHandlesWithStats() async {
-    final data = _accountFilterData();
+    final data = {..._accountFilterData(), 'isV2Server': SettingsSvc.serverDetails.isV2Server};
     if (isIsolate) {
       return await ContactV2Actions.syncContactsToHandlesWithStats(data);
     } else {
@@ -168,8 +168,8 @@ class ContactV2Interface {
   }
 
   /// Uploads contacts to the server
-  static Future<void> uploadContacts(List<Map<String, dynamic>> contacts) async {
-    final data = {'contacts': contacts};
+  static Future<void> uploadContacts(List<Map<String, dynamic>> contacts, {required String deviceId}) async {
+    final data = {'contacts': contacts, 'deviceId': deviceId, 'isV2Server': SettingsSvc.serverDetails.isV2Server};
 
     if (isIsolate) {
       return await ContactV2Actions.uploadContacts(data);

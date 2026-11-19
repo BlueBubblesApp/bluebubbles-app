@@ -115,14 +115,19 @@ class ContactV2Actions {
       List<fc.Contact> deviceContacts = [];
       List<ContactV2> networkContacts = [];
       final avatarPaths = <String, String?>{};
+      // Set once the source (server on desktop, address book on Android) is read, so a failed read never prunes.
+      bool sourceRead = false;
+      final staleAvatarPaths = <String>[];
 
       if (kIsDesktop) {
         // Step 1: Fetch contacts from server
         Logger.info('[ContactV2] Starting contact fetch from server...');
-        final response = await HttpSvc.contact.fetchAll(withAvatars: true);
+        final serverContacts =
+            await fetchServerContacts(isV2Server: dataMap['isV2Server'] as bool? ?? false, withAvatars: true);
 
-        if (response.statusCode == 200 && !isNullOrEmpty(response.data['data'])) {
-          for (Map<String, dynamic> map in response.data['data']) {
+        sourceRead = true;
+        if (serverContacts.isNotEmpty) {
+          for (final map in serverContacts) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
             final emails = (map['emails'] as List<dynamic>? ?? [])
                 .map((e) => ContactEmail(address: e['address'].toString(), label: e['label']?.toString() ?? ''))
@@ -164,6 +169,8 @@ class ContactV2Actions {
             '${account != null ? ' for account ${account.name} (${account.type})' : ''}...');
         deviceContacts =
             await fc.FlutterContacts.getAll(properties: fc.ContactProperties.allProperties, account: account);
+        // An empty read is likelier a sandboxed provider (see below) than an emptied address book.
+        sourceRead = deviceContacts.isNotEmpty;
         Logger.info('[ContactV2] Fetched ${deviceContacts.length} contacts from device');
         if (deviceContacts.isEmpty) {
           // The OS permission check passed (we only reach this branch with contacts
@@ -243,6 +250,7 @@ class ContactV2Actions {
         Logger.info(
             '[ContactV2] Built lookup maps: ${emailHandleMap.length} email keys, ${phoneHandleMap.length} phone variant keys');
 
+        final keptIds = <String>{};
         for (final rawContact in [...deviceContacts, ...networkContacts]) {
           // Normalize addresses
           final normalizedAddresses = <String>{};
@@ -330,6 +338,8 @@ class ContactV2Actions {
             contactPhones = rawContact.phoneNumbers;
             contactEmails = rawContact.emailAddresses;
           }
+
+          keptIds.add(contactId);
 
           // Get pre-fetched avatar path
           final avatarPath = avatarPaths[contactId];
@@ -464,7 +474,26 @@ class ContactV2Actions {
             }
           }
         }
+
+        // Every stored contact came from this source, so one it no longer returns was deleted there.
+        if (sourceRead) {
+          final stale = contactsBox.getAll().where((c) => !keptIds.contains(c.nativeContactId)).toList();
+          if (stale.isNotEmpty) {
+            for (final c in stale) {
+              affectedHandleIds.addAll(c.handles.map((h) => h.id).whereType<int>());
+              if (c.avatarPath != null) staleAvatarPaths.add(c.avatarPath!);
+            }
+            contactsBox.removeMany(stale.map((c) => c.id).toList());
+            Logger.info('[ContactV2] Removed ${stale.length} contacts the source no longer has');
+          }
+        }
       });
+
+      for (final path in staleAvatarPaths) {
+        try {
+          File(path).deleteSync();
+        } catch (_) {}
+      }
 
       final endTime = DateTime.now().millisecondsSinceEpoch;
       // De-duplicate — a handle can be marked affected by both a name/avatar
@@ -715,13 +744,102 @@ class ContactV2Actions {
     }
   }
 
+  /// Every server contact. Only v2 pages (at 1,000): 1.x ignores paging and returns everything every time.
+  static Future<List<Map<String, dynamic>>> fetchServerContacts({
+    required bool isV2Server,
+    bool withAvatars = false,
+  }) async {
+    const pageSize = 1000;
+    final contacts = <Map<String, dynamic>>[];
+    while (true) {
+      final response = await HttpSvc.contact.fetchAll(
+        withAvatars: withAvatars,
+        limit: isV2Server ? pageSize : null,
+        offset: isV2Server ? contacts.length : null,
+      );
+      final page = (response.data['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+      contacts.addAll(page);
+      if (!isV2Server || page.length < pageSize) return contacts;
+    }
+  }
+
+  /// Uploads [contacts] (from [ContactV2.toServerMap]). Released 1.x servers have no update or delete route, so they
+  /// only get the create, which they merge by name.
+  static Future<void> uploadToServer(
+    List<Map<String, dynamic>> contacts, {
+    required String deviceId,
+    required bool isV2Server,
+    void Function(int, int)? onSendProgress,
+  }) async {
+    if (!isV2Server) {
+      await HttpSvc.contact.create(contacts, onSendProgress: onSendProgress);
+      return;
+    }
+
+    final server = await fetchServerContacts(isV2Server: true);
+    final plan = planContactUpload(server, contacts, deviceId: deviceId);
+
+    if (plan.updates.isNotEmpty) await HttpSvc.contact.update(plan.updates, onSendProgress: onSendProgress);
+    if (plan.creates.isNotEmpty) await HttpSvc.contact.create(plan.creates, onSendProgress: onSendProgress);
+    if (plan.deletes.isNotEmpty) await HttpSvc.contact.delete(plan.deletes);
+    Logger.info('[ContactV2] Uploaded contacts: ${plan.updates.length} updated, ${plan.creates.length} created, '
+        '${plan.deletes.length} deleted');
+  }
+
+  /// Matches by `externalId`, or by name for uploads that predate it; `api` contacts are the Mac's own, never ours.
+  /// An empty [local] is likelier a failed read than an emptied address book, so it deletes nothing.
+  @visibleForTesting
+  static ({List<Map<String, dynamic>> updates, List<Map<String, dynamic>> creates, List<dynamic> deletes})
+      planContactUpload(
+    List<Map<String, dynamic>> server,
+    List<Map<String, dynamic>> local, {
+    required String deviceId,
+  }) {
+    String nameKey(Map c) => [c['firstName'], c['lastName'], c['displayName']].map((e) => e ?? '').join('\u0000');
+
+    final byExternalId = <String, dynamic>{};
+    final byName = <String, List<dynamic>>{};
+    for (final c in server.where((c) => c['sourceType'] == 'db' && c['id'] != null)) {
+      final externalId = c['externalId'] as String?;
+      if (externalId != null && externalId.isNotEmpty) {
+        byExternalId[externalId] = c['id'];
+      } else {
+        byName.putIfAbsent(nameKey(c), () => []).add(c['id']);
+      }
+    }
+
+    final updates = <Map<String, dynamic>>[];
+    final creates = <Map<String, dynamic>>[];
+    for (final c in local) {
+      final legacy = byName[nameKey(c)];
+      final id = byExternalId[c['externalId']] ?? (legacy?.isNotEmpty == true ? legacy!.removeAt(0) : null);
+      if (id != null) {
+        updates.add({...c, 'id': id});
+        byExternalId.remove(c['externalId']);
+      } else {
+        creates.add(c);
+      }
+    }
+
+    final deletes = local.isEmpty
+        ? <dynamic>[]
+        : [
+            for (final e in byExternalId.entries)
+              if (e.key.startsWith('$deviceId:')) e.value
+          ];
+    return (updates: updates, creates: creates, deletes: deletes);
+  }
+
   /// Uploads contacts to the server
   static Future<void> uploadContacts(dynamic data) async {
     final contacts = data['contacts'] as List<Map<String, dynamic>>;
 
     try {
-      await HttpSvc.contact.create(contacts);
-      Logger.info('[ContactV2] Successfully uploaded ${contacts.length} contacts to server');
+      await uploadToServer(
+        contacts,
+        deviceId: data['deviceId'] as String,
+        isV2Server: data['isV2Server'] as bool? ?? false,
+      );
     } catch (err, stack) {
       if (err is Response) {
         Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack, tag: 'ContactV2Actions');
