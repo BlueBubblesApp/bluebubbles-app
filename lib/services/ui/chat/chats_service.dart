@@ -468,7 +468,6 @@ class ChatsService {
 
         final address = uri.path;
         final handle = Handle.findOne(addressAndService: HandleLookupKey(address, "iMessage"));
-        NavigationSvc.closeSettings(Get.context!);
         await NavigationSvc.pushAndRemoveUntil(
           Get.context!,
           NewChatCreator(

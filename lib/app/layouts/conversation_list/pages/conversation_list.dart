@@ -137,6 +137,21 @@ class ConversationList extends CustomStateful<ConversationListController> {
 class _ConversationListState extends CustomState<ConversationList, void, ConversationListController>
     with WidgetsBindingObserver {
   Timer? _initTimer;
+  bool? _wasAltLayout;
+
+  /// Folding while Settings or Find My covers the chat closes the chat, so leaving lands on the list as it always has in
+  /// the phone layout. Folding while the chat is in view keeps it open.
+  void _closeChatIfFoldedBehindSection(bool altLayout) {
+    final folded = _wasAltLayout == true && !altLayout;
+    _wasAltLayout = altLayout;
+    if (!folded || NavigationSvc.openSection.value == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ChatsSvc.activeChat != null) cvc(ChatsSvc.activeChat!.chat).close();
+      NavigationSvc.closeAllConversationView(context);
+      unawaited(ChatsSvc.setAllInactive());
+    });
+  }
 
   @override
   void initState() {
@@ -148,6 +163,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
             : "Messages";
 
     if (!kIsWeb && !controller.showArchivedChats && !controller.showUnknownSenders) {
+      NavigationSvc.chatPaneObserver.reset();
       WidgetsBinding.instance.addObserver(this);
       ChatsSvc.loadedAllChats.future.then((_) => _precacheAvatars());
     }
@@ -159,11 +175,8 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
           return;
         }
 
-        bool notInSettings = NavigationSvc.isTabletMode(context)
-            ? !Get.keys.containsKey(3) || Get.keys[3]?.currentContext == null
-            : Get.rawRoute?.settings.name == "/";
         // This only runs once
-        if (notInSettings) {
+        if (NavigationSvc.openSection.value != AppSection.settings) {
           SettingsSvc.settings.reachedConversationList.value = true;
           SettingsSvc.settings.saveOneAsync('reachedConversationList');
           t.cancel();
@@ -249,6 +262,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     );
 
     if (controller.showArchivedChats || controller.showUnknownSenders) return child;
+    _closeChatIfFoldedBehindSection(showAltLayout);
 
     final chatList = Stack(
       fit: StackFit.expand,
@@ -269,79 +283,60 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     return BBScaffold(
       safeAreaLeft: false,
       safeAreaRight: false,
+      // The pages in each pane handle the keyboard and nav bar themselves; resizing the panes for them would resize
+      // the chat pane's overlay under the composer
+      safeAreaBottom: false,
+      resizeToAvoidBottomInset: false,
       body: TabletModeWrapper(
         initialRatio: 0.4,
         minWidthLeft: kIsDesktop || kIsWeb ? 150 : null,
         minRatio: kIsDesktop || kIsWeb ? 0.1 : 0.33,
         maxRatio: 0.5,
         allowResize: true,
-        left: !showAltLayout
-            ? chatList
-            : LayoutBuilder(builder: (context, constraints) {
-                NavigationSvc.maxWidthLeft = constraints.maxWidth;
-                return PopScope(
-                  canPop: false,
-                  onPopInvokedWithResult: <T>(bool _, T? _) async {
-                    Get.until((route) {
-                      bool id2result = false;
-                      // check if we should pop the left side first
-                      Get.until((route) {
-                        if (route.settings.name != "initial") {
-                          Get.back(id: 2);
-                          id2result = true;
-                        }
-                        if (!(Get.global(2).currentState?.canPop() ?? true)) {
-                          if (ChatsSvc.activeChat != null) {
-                            cvc(ChatsSvc.activeChat!.chat).close();
-                          }
-                        }
-                        return true;
-                      }, id: 2);
-                      if (!id2result) {
-                        if (route.settings.name == "initial") {
-                          SystemNavigator.pop();
-                        } else {
-                          Get.back(id: 1);
-                        }
-                      }
-                      return true;
-                    }, id: 1);
-                  },
-                  child: Navigator(
-                    key: Get.nestedKey(1),
-                    requestFocus: false,
-                    onPopPage: (route, _) {
-                      return false;
-                    },
-                    pages: [
-                      MaterialPage(
-                        name: "initial",
-                        child: chatList,
-                      )
-                    ],
-                  ),
-                );
-              }),
-        right: LayoutBuilder(
-          builder: (context, constraints) {
-            NavigationSvc.maxWidthRight = constraints.maxWidth;
-            return PopScope(
-              canPop: false,
-              onPopInvokedWithResult: <T>(bool _, T? _) async {
-                Get.back(id: 2);
-              },
+        rightOpen: NavigationSvc.chatPaneOpen,
+        left: LayoutBuilder(builder: (context, constraints) {
+          NavigationSvc.maxWidthLeft = constraints.maxWidth;
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: <T>(bool _, T? _) {
+              if (!NavigationSvc.back()) SystemNavigator.pop();
+            },
+            child: SafeArea(
+              top: false,
+              left: false,
+              right: false,
               child: Navigator(
-                key: Get.nestedKey(2),
+                key: Get.nestedKey(1),
+                requestFocus: false,
                 onPopPage: (route, _) {
                   return false;
                 },
                 pages: [
-                  const MaterialPage(
+                  MaterialPage(
                     name: "initial",
-                    child: InitialWidgetRight(),
-                  ),
+                    child: chatList,
+                  )
                 ],
               ),
+            ),
+          );
+        }),
+        right: LayoutBuilder(
+          builder: (context, constraints) {
+            NavigationSvc.maxWidthRight = constraints.maxWidth;
+            // Back is handled by the left pane's PopScope, which pops this navigator first
+            return Navigator(
+              key: Get.nestedKey(2),
+              observers: [NavigationSvc.chatPaneObserver, NavigationSvc.paneRouteObserver],
+              onPopPage: (route, _) {
+                return false;
+              },
+              pages: [
+                const MaterialPage(
+                  name: "initial",
+                  child: InitialWidgetRight(),
+                ),
+              ],
             );
           },
         ),

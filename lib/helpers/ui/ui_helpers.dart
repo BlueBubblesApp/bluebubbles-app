@@ -100,7 +100,7 @@ Widget buildBackButton(BuildContext context,
                   if (Get.isSnackbarOpen) {
                     Get.closeAllSnackbars();
                   }
-                  Navigator.of(context).pop();
+                  NavigationSvc.pop(context);
                 }
               },
         child: IconButton(
@@ -118,7 +118,7 @@ Widget buildBackButton(BuildContext context,
               if (Get.isSnackbarOpen) {
                 Get.closeAllSnackbars();
               }
-              Navigator.of(context).pop();
+              NavigationSvc.pop(context);
             }
           },
         ),

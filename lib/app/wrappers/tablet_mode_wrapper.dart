@@ -18,6 +18,10 @@ class TabletModeWrapper extends StatefulWidget {
   final double? minWidthLeft;
   final double? maxWidthLeft;
 
+  /// When set, the phone layout keeps [right] mounted over [left] and shows it while this is true, so the same pages
+  /// carry over when the layout switches.
+  final RxBool? rightOpen;
+
   const TabletModeWrapper(
       {super.key,
       required this.left,
@@ -28,7 +32,8 @@ class TabletModeWrapper extends StatefulWidget {
       this.minRatio = 0,
       this.maxRatio = 0,
       this.minWidthLeft,
-      this.maxWidthLeft})
+      this.maxWidthLeft,
+      this.rightOpen})
       : assert(initialRatio >= 0),
         assert(initialRatio <= 1);
 
@@ -40,7 +45,6 @@ class _TabletModeWrapperState extends State<TabletModeWrapper> with ThemeHelpers
   //from 0-1
   late final RxDouble _ratio;
   double? _maxWidth;
-  bool? altLayoutCache;
   StreamSubscription? _eventSub;
 
   double get _width1 => max(
@@ -78,14 +82,17 @@ class _TabletModeWrapperState extends State<TabletModeWrapper> with ThemeHelpers
   @override
   Widget build(BuildContext context) {
     if (!showAltLayout) {
-      // this forcefully closes the chat controller if rotating from landscape -> portrait
-      if ((altLayoutCache ?? false) && ChatsSvc.activeChat != null) {
-        altLayoutCache = false;
-        cvc(ChatsSvc.activeChat!.chat).close();
-      }
-      return TitleBarWrapper(child: widget.left);
+      final rightOpen = widget.rightOpen;
+      if (rightOpen == null) return TitleBarWrapper(child: widget.left);
+      return TitleBarWrapper(
+        child: Stack(
+          children: [
+            Obx(() => Offstage(offstage: rightOpen.value, child: widget.left)),
+            Obx(() => IgnorePointer(ignoring: !rightOpen.value, child: widget.right)),
+          ],
+        ),
+      );
     }
-    altLayoutCache = true;
     return LayoutBuilder(
       builder: (context, BoxConstraints constraints) {
         _maxWidth = constraints.maxWidth - widget.dividerWidth;

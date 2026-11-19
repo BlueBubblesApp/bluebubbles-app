@@ -62,6 +62,9 @@ class ChatState {
 
   final RxBool isActive;
   final RxBool isAlive;
+
+  /// Whether a page covers this chat's conversation view, which then doesn't count as being looked at.
+  final RxBool isCovered = false.obs;
   ConversationViewController? controller;
 
   // If true, attachment widgets should be hidden. There is no "fake" attachment
@@ -523,7 +526,7 @@ class ChatState {
   // These are called by ChatsService - do NOT call directly
 
   /// Check if this chat is currently active and alive
-  bool get isChatActive => isActive.value && isAlive.value;
+  bool get isChatActive => isActive.value && isAlive.value && !isCovered.value;
 
   void updateActiveInternal(bool value) {
     if (isActive.value != value) {
@@ -535,6 +538,10 @@ class ChatState {
     if (isAlive.value != value) {
       isAlive.value = value;
     }
+  }
+
+  void updateCoveredInternal(bool value) {
+    if (isCovered.value != value) isCovered.value = value;
   }
 
   void updateActiveAndAliveInternal(bool value) {

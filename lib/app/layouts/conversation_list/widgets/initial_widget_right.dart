@@ -1,4 +1,5 @@
 import 'package:bluebubbles/services/backend/settings/settings_service.dart';
+import 'package:bluebubbles/services/ui/navigator/navigator_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,8 @@ class InitialWidgetRight extends StatefulWidget {
 class _InitialWidgetRightState extends State<InitialWidgetRight> {
   @override
   Widget build(BuildContext context) {
+    // In the phone layout the chat list shows through while a chat slides out
+    if (!NavigationSvc.isTabletMode(context)) return const SizedBox.shrink();
     return Obx(
       () => Scaffold(
         backgroundColor: SettingsSvc.settings.windowEffect.value != WindowEffect.disabled

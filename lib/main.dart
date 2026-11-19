@@ -328,6 +328,9 @@ class Main extends StatelessWidget {
 
   const Main({super.key, required this.lightTheme, required this.darkTheme, this.savedThemeMode});
 
+  Widget _withBackAction(BuildContext context, Widget? navigator) =>
+      Actions(actions: {GoBackIntent: GoBackAction(context)}, child: navigator ?? Container());
+
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
@@ -354,7 +357,7 @@ class Main extends StatelessWidget {
           ),
         ),
         navigatorKey: NavigationSvc.key,
-        navigatorObservers: [routeObserver],
+        navigatorObservers: [NavigationSvc.sectionObserver],
         scrollBehavior: const MaterialScrollBehavior().copyWith(
           // Specifically for GNU/Linux & Android-x86 family, where touch isn't interpreted as a drag device by Flutter apparently.
           dragDevices: Platform.isLinux || Platform.isAndroid ? PointerDeviceKind.values.toSet() : null,
@@ -380,7 +383,9 @@ class Main extends StatelessWidget {
         },
         // A route only reports its own pop state, so a pushed page could tell Android nothing handles back and the
         // gesture left the app. Back always goes through Flutter instead, which still exits when nothing can pop.
-        builder: (context, child) => NotificationListener<NavigationNotification>(
+        // Back is handled above the navigator, so it also reaches pages pushed over Home like Settings and Find My.
+        // GetMaterialApp drops its own actions parameter.
+        builder: (context, navigator) => NotificationListener<NavigationNotification>(
           onNotification: (notification) {
             if (notification.canHandlePop) return false;
             const NavigationNotification(canHandlePop: true).dispatch(context);
@@ -394,7 +399,7 @@ class Main extends StatelessWidget {
           // event, which breaks window close/hide once the app is past setup.
           // Bypass the secure wrapper entirely on Linux.
           child: Platform.isLinux
-              ? TitleBarWrapper(child: child ?? Container())
+              ? TitleBarWrapper(child: _withBackAction(context, navigator))
               : SecureApplication(
                   child: Builder(
                     builder: (context) {
@@ -480,7 +485,7 @@ class Main extends StatelessWidget {
                               ),
                             );
                           },
-                          child: child ?? Container(),
+                          child: _withBackAction(context, navigator),
                         ),
                       );
                     },
@@ -651,6 +656,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       },
       child: Obx(() => BBScaffold(
             backgroundColor: context.theme.colorScheme.surface.themeOpacity(context),
+            // The conversation list's panes handle the keyboard and nav bar themselves
+            resizeToAvoidBottomInset: !SettingsSvc.settings.finishedSetup.value,
+            safeAreaBottom: SettingsSvc.settings.finishedSetup.value ? false : null,
             body: Builder(
               builder: (BuildContext context) {
                 if (SettingsSvc.settings.finishedSetup.value) {
