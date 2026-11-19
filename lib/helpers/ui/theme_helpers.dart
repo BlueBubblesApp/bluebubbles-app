@@ -117,11 +117,10 @@ extension EmojiFontFallback on ThemeData {
   /// name the emoji font explicitly. Apply to every theme handed to a [Theme] widget, including per-chat themes
   /// resolved from [ThemeStruct]. No-op elsewhere.
   ThemeData get withEmojiFallback {
-    final emoji = linuxEmojiFont?.family;
     final fallback = Platform.isWindows
         ? const ["Segoe UI Emoji"]
-        : Platform.isLinux && emoji != null
-            ? [if (linuxSansFamily != null) linuxSansFamily!, emoji]
+        : Platform.isLinux
+            ? linuxFontFallback
             : null;
     if (fallback == null) return this;
     return copyWith(

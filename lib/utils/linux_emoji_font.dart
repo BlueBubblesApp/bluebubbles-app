@@ -8,9 +8,20 @@ import 'package:flutter/services.dart';
 /// The system emoji font fontconfig picks, or null if there isn't one. Listed in the theme's font fallback on Linux.
 final ({String path, String family})? linuxEmojiFont = Platform.isLinux ? _match('emoji', mustHave: 0x1F600) : null;
 
-/// The system UI font fontconfig picks. Listed ahead of the emoji font: with only the emoji font in the fallback, the
-/// engine draws all text with it and letters come out blank.
+/// The system UI font fontconfig picks.
 final String? linuxSansFamily = Platform.isLinux ? _match('sans-serif')?.family : null;
+
+/// The engine's own text fonts on Linux (txt's GetDefaultFontFamilies). It only uses them when none of a style's
+/// families exist, so naming the emoji font would drop them.
+const _engineFamilies = ['Ubuntu', 'Cantarell', 'DejaVu Sans', 'Liberation Sans', 'Arial'];
+
+/// The theme's font fallback on Linux: text fonts ahead of the emoji font, since the engine's font manager may not
+/// fall back per character and letters missing from the emoji font would come out blank.
+List<String>? get linuxFontFallback {
+  final emoji = linuxEmojiFont?.family;
+  if (emoji == null) return null;
+  return [..._engineFamilies, ?linuxSansFamily, emoji];
+}
 
 typedef _NameParse = Pointer<Void> Function(Pointer<Utf8>);
 typedef _Substitute = Int32 Function(Pointer<Void>, Pointer<Void>, Int32);
