@@ -25,19 +25,11 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-/// Drops the settings list's highlight once the right pane is back on its
-/// placeholder route — nothing is open, so nothing should look selected.
-/// Page switches remove routes rather than popping them, so they don't hit this.
-class _SettingsPaneObserver extends NavigatorObserver {
-  @override
-  void didPop(Route route, Route? previousRoute) {
-    if (previousRoute?.settings.name == "initial") NavigationSvc.activeSettingsPage.value = null;
-  }
-}
-
 class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   String searchQuery = "";
-  final _paneObserver = _SettingsPaneObserver();
+
+  /// Its own, so a closed Settings page's routes don't linger in the next one's.
+  late final PaneObserver _paneObserver = PaneObserver(NavigationSvc.settingsPaneOpen);
 
   List<Widget> _getSettingsItemList(BuildContext context) {
     return buildSettingItemList(
@@ -51,6 +43,13 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
       materialSubtitle: materialSubtitle,
       ns: NavigationSvc,
     );
+  }
+
+  @override
+  void dispose() {
+    // Unless a new Settings page has taken the pane over already
+    if (NavigationSvc.openSection.value != AppSection.settings) NavigationSvc.settingsPaneOpen.value = false;
+    super.dispose();
   }
 
   @override
@@ -94,6 +93,7 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                   minRatio: kIsDesktop || kIsWeb ? 0.2 : 0.33,
                   maxRatio: 0.5,
                   allowResize: true,
+                  rightOpen: NavigationSvc.settingsPaneOpen,
                   left: SettingsScaffold(
                     title: "Settings",
                     initialHeader: kIsWeb ? "Server & Message Management" : null,
@@ -235,15 +235,8 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                     NavigationSvc.maxWidthSettings = constraints.maxWidth;
                     return PopScope(
                       canPop: false,
-                      onPopInvokedWithResult: <T>(bool _, T? _) async {
-                        Get.until((route) {
-                          if (route.settings.name == "initial") {
-                            Get.back();
-                          } else {
-                            Get.back(id: 3);
-                          }
-                          return true;
-                        }, id: 3);
+                      onPopInvokedWithResult: (bool didPop, _) {
+                        if (!didPop) NavigationSvc.back();
                       },
                       child: Navigator(
                         key: Get.nestedKey(3),
@@ -252,21 +245,29 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
                           route.didPop(false);
                           return false;
                         },
-                        pages: [
-                          MaterialPage(
-                              name: "initial",
-                              child: BBScaffold(
-                                  backgroundColor: headerColor,
-                                  body: Center(
-                                    child: Text("Select a settings page from the list",
-                                        style: context.theme.textTheme.bodyLarge),
-                                  ))),
-                        ],
+                        pages: const [MaterialPage(name: "initial", child: SettingsPlaceholder())],
                       ),
                     );
                   }),
                 ),
               ))),
+    );
+  }
+}
+
+/// What Settings' right pane shows, in the tablet layout, when no section is open.
+class SettingsPlaceholder extends StatelessWidget {
+  const SettingsPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // In the phone layout the list shows through while a section slides out
+    if (!NavigationSvc.isTabletMode(context)) return const SizedBox.shrink();
+    return Obx(
+      () => BBScaffold(
+        backgroundColor: context.headerColor,
+        body: Center(child: Text("Select a settings page from the list", style: context.theme.textTheme.bodyLarge)),
+      ),
     );
   }
 }
