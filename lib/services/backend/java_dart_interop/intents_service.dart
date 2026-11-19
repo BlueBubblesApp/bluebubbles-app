@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/server/server_management_panel.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/backend/startup_tasks.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 
@@ -212,26 +211,16 @@ class IntentsService {
     } else if (guid == "-1") {
       Logger.debug("Popping all routes...", tag: "IntentsService");
       if (ChatsSvc.activeChat != null) {
-        Navigator.of(Get.context!).popUntil((route) => route.isFirst);
+        NavigationSvc.closeSections();
+        NavigationSvc.closeAllConversationView(Get.context!);
+        await ChatsSvc.setAllInactive();
       }
     } else if (guid == "-2") {
       Logger.debug("Opening server management panel...", tag: "IntentsService");
-      Navigator.of(Get.context!).push(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return ServerManagementPanel();
-          },
-        ),
-      );
+      NavigationSvc.openSettings(initialPage: ServerManagementPanel());
     } else if (guid.contains("scheduled")) {
       Logger.debug("Opening scheduled messages panel...", tag: "IntentsService");
-      Navigator.of(Get.context!).push(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return const ScheduledMessagesPanel();
-          },
-        ),
-      );
+      NavigationSvc.openSettings(initialPage: const ScheduledMessagesPanel());
     } else {
       Logger.debug("Opening existing chat (Attachments: ${attachments.length}; Text: ${text?.shorten(10) ?? 'N/A'})",
           tag: "IntentsService");
@@ -286,6 +275,8 @@ class IntentsService {
         );
       } else {
         Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
+        // It may still be open under Settings or Find My: bring it back into view
+        NavigationSvc.closeSections();
         setPickedAttachments();
       }
     }

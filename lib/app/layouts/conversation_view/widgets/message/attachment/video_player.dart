@@ -5,7 +5,6 @@ import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attach
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/reply/reply_bubble.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/conversation_fullscreen_holder.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -482,17 +481,16 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                     showPlayPauseOverlay.value = true;
                   } else {
                     if (attachment.id == null) return;
-                    await Navigator.of(Get.context!).push(
-                      ThemeSwitcher.buildPageRoute(
-                        builder: (context) => ConversationFullscreenHolder(
-                          currentChat: currentChat,
-                          attachment: attachment,
-                          showInteractions: true,
-                          videoController: videoController,
-                          mute: muted,
-                          galleryAttachments: collection?.media,
-                          onOpenCollectionGallery: collection?.openGallery,
-                        ),
+                    await NavigationSvc.push(
+                      context,
+                      ConversationFullscreenHolder(
+                        currentChat: currentChat,
+                        attachment: attachment,
+                        showInteractions: true,
+                        videoController: videoController,
+                        mute: muted,
+                        galleryAttachments: collection?.media,
+                        onOpenCollectionGallery: collection?.openGallery,
                       ),
                     );
                     // Sync overlay state with actual playing state when returning from fullscreen
@@ -501,17 +499,16 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
                 }
               : () async {
                   if (attachment.id == null) return;
-                  await Navigator.of(Get.context!).push(
-                    ThemeSwitcher.buildPageRoute(
-                      builder: (context) => ConversationFullscreenHolder(
-                        currentChat: currentChat,
-                        attachment: attachment,
-                        showInteractions: true,
-                        mute: muted,
-                        videoController: videoController,
-                        galleryAttachments: collection?.media,
-                        onOpenCollectionGallery: collection?.openGallery,
-                      ),
+                  await NavigationSvc.push(
+                    context,
+                    ConversationFullscreenHolder(
+                      currentChat: currentChat,
+                      attachment: attachment,
+                      showInteractions: true,
+                      mute: muted,
+                      videoController: videoController,
+                      galleryAttachments: collection?.media,
+                      onOpenCollectionGallery: collection?.openGallery,
                     ),
                   );
                   // Sync overlay state with actual playing state when returning from fullscreen
@@ -573,17 +570,16 @@ class _VideoPlayerState extends State<VideoPlayer> with AutomaticKeepAliveClient
           focusColor: hover.value ? Colors.transparent : null,
           onTap: () async {
             if (attachment.id == null) return;
-            await Navigator.of(Get.context!).push(
-              ThemeSwitcher.buildPageRoute(
-                builder: (context) => ConversationFullscreenHolder(
-                  currentChat: currentChat,
-                  attachment: attachment,
-                  showInteractions: true,
-                  mute: muted,
-                  videoController: videoController,
-                  galleryAttachments: collection?.media,
-                  onOpenCollectionGallery: collection?.openGallery,
-                ),
+            await NavigationSvc.push(
+              context,
+              ConversationFullscreenHolder(
+                currentChat: currentChat,
+                attachment: attachment,
+                showInteractions: true,
+                mute: muted,
+                videoController: videoController,
+                galleryAttachments: collection?.media,
+                onOpenCollectionGallery: collection?.openGallery,
               ),
             );
           },
@@ -705,17 +701,16 @@ class FullscreenButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(40),
             onTap: () async {
               if (attachment.id == null) return;
-              await Navigator.of(Get.context!).push(
-                ThemeSwitcher.buildPageRoute(
-                  builder: (context) => ConversationFullscreenHolder(
-                    currentChat: currentChat,
-                    attachment: attachment,
-                    showInteractions: true,
-                    videoController: videoController,
-                    mute: muted,
-                    galleryAttachments: collection?.media,
-                    onOpenCollectionGallery: collection?.openGallery,
-                  ),
+              await NavigationSvc.push(
+                context,
+                ConversationFullscreenHolder(
+                  currentChat: currentChat,
+                  attachment: attachment,
+                  showInteractions: true,
+                  videoController: videoController,
+                  mute: muted,
+                  galleryAttachments: collection?.media,
+                  onOpenCollectionGallery: collection?.openGallery,
                 ),
               );
             },

@@ -126,8 +126,9 @@ class _AboutPanelState extends State<AboutPanel> with ThemeHelpers {
                                   ),
                                 ),
                               ),
-                              backgroundColor: context.theme.colorScheme.surface,
+                              backgroundColor: context.headerColor,
                               appBar: BBAppBar(
+                                backgroundColor: context.headerColor,
                                 toolbarHeight: 50,
                                 leading: buildBackButton(context),
                                 iconTheme: IconThemeData(color: context.theme.colorScheme.primary),

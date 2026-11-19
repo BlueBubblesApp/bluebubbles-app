@@ -10,8 +10,6 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/models/models.dart' show MessageReplyContext;
-import 'package:flutter/cupertino.dart' as cupertino;
-import 'package:flutter/widgets.dart';
 
 void reply(MessagePopupActionContext ctx) {
   ctx.popDetails();
@@ -26,14 +24,7 @@ void reply(MessagePopupActionContext ctx) {
 void openDm(MessagePopupActionContext ctx) {
   if (ctx.dmChat == null) return;
   ctx.popDetails();
-  Navigator.pushReplacement(
-    ctx.context,
-    cupertino.CupertinoPageRoute(
-      builder: (BuildContext context) {
-        return ConversationView(chat: ctx.dmChat!);
-      },
-    ),
-  );
+  NavigationSvc.pushAndRemoveUntil(ctx.context, ConversationView(chat: ctx.dmChat!), (route) => route.isFirst);
 }
 
 void showThread(MessagePopupActionContext ctx) {

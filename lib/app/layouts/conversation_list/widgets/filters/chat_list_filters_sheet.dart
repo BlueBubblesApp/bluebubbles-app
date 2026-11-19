@@ -2,7 +2,6 @@ import 'package:bluebubbles/app/components/bb_chip.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/custom_groups/custom_groups_panel.dart';
-import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -255,13 +254,7 @@ void showChatListFilterSheet(
                                 TextButton(
                                   onPressed: () {
                                     Navigator.of(sheetContext).pop(); // close the sheet
-                                    Navigator.of(pageContext).push(
-                                      ThemeSwitcher.buildPageRoute(
-                                        builder: (BuildContext context) {
-                                          return const SettingsPage(initialPage: CustomGroupsPanel());
-                                        },
-                                      ),
-                                    );
+                                    NavigationSvc.openSettings(initialPage: const CustomGroupsPanel());
                                   },
                                   child: const Text("Create one"),
                                 ),

@@ -1,8 +1,6 @@
 import 'package:bluebubbles/app/layouts/chat_creator/new_chat_creator.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
-import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,29 +18,7 @@ class OpenSettingsAction extends Action<OpenSettingsIntent> {
   @override
   Object? invoke(covariant OpenSettingsIntent intent) async {
     if (SettingsSvc.settings.finishedSetup.value) {
-      final currentChat = ChatsSvc.activeChat?.chat;
-      NavigationSvc.closeAllConversationView(context);
-      await ChatsSvc.setAllInactive();
-      await Navigator.of(Get.context!).push(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return const SettingsPage();
-          },
-        ),
-      );
-      if (currentChat != null) {
-        if (SettingsSvc.settings.tabletMode.value) {
-          NavigationSvc.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              chat: currentChat,
-            ),
-            (route) => route.isFirst,
-          );
-        } else {
-          cvc(currentChat).close();
-        }
-      }
+      NavigationSvc.openSettings();
     }
     return null;
   }

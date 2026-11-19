@@ -3,12 +3,9 @@ import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/search/search_view.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/widgets/filters/chat_list_filters_sheet.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
-import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/profile/profile_panel.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_list/pages/conversation_list.dart';
-import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
@@ -456,32 +453,7 @@ Future<void> goToSearch(BuildContext context) async {
   EventDispatcherSvc.emit("override-split", current);
 }
 
-Future<void> goToFindMy(BuildContext context) async {
-  final currentChat = ChatsSvc.activeChat?.chat;
-  NavigationSvc.closeAllConversationView(context);
-  await ChatsSvc.setAllInactive();
-  await Navigator.of(Get.context!).push(
-    ThemeSwitcher.buildPageRoute(
-      builder: (BuildContext context) {
-        return const FindMyPage();
-      },
-    ),
-  );
-  if (currentChat != null) {
-    await ChatsSvc.setActiveChat(currentChat);
-    if (SettingsSvc.settings.tabletMode.value) {
-      NavigationSvc.pushAndRemoveUntil(
-        context,
-        ConversationView(
-          chat: currentChat,
-        ),
-        (route) => route.isFirst,
-      );
-    } else {
-      cvc(currentChat).close();
-    }
-  }
-}
+void goToFindMy(BuildContext context) => NavigationSvc.openFindMy();
 
 void logout(BuildContext context) {
   showBBDialog(
@@ -574,32 +546,7 @@ void goToUnknownSenders(BuildContext context) {
       ));
 }
 
-Future<void> goToSettings(BuildContext context) async {
-  final currentChat = ChatsSvc.activeChat?.chat;
-  NavigationSvc.closeAllConversationView(context);
-  await ChatsSvc.setAllInactive();
-  await Navigator.of(Get.context!).push(
-    ThemeSwitcher.buildPageRoute(
-      builder: (BuildContext context) {
-        return const SettingsPage();
-      },
-    ),
-  );
-  if (currentChat != null) {
-    await ChatsSvc.setActiveChat(currentChat);
-    if (SettingsSvc.settings.tabletMode.value) {
-      NavigationSvc.pushAndRemoveUntil(
-        context,
-        ConversationView(
-          chat: currentChat,
-        ),
-        (route) => route.isFirst,
-      ).onError((error, stackTrace) => ChatsSvc.setAllInactiveSync());
-    } else {
-      cvc(currentChat).close();
-    }
-  }
-}
+Future<void> goToSettings(BuildContext context) async => NavigationSvc.openSettings();
 
 void goToArchived(BuildContext context) {
   NavigationSvc.pushLeft(

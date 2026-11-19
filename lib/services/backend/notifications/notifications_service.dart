@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/layouts/settings/pages/scheduling/scheduled_messages_panel.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/helpers/ui/facetime_helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
@@ -12,7 +11,6 @@ import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:get/get.dart';
@@ -313,7 +311,7 @@ class NotificationsService {
       // Desktop always notifies for inactive chats; this chat-list suppression is mobile-only.
       if (!kIsDesktop &&
           ChatsSvc.activeChat == null &&
-          Get.rawRoute?.settings.name == "/" &&
+          NavigationSvc.onChatList &&
           !SettingsSvc.settings.notifyOnChatList.value) {
         return;
       }
@@ -760,23 +758,19 @@ class NotificationsService {
           failedToast = null;
           await showAndFocusWindow();
           if (scheduled) {
-            Navigator.of(Get.context!).push(
-              ThemeSwitcher.buildPageRoute(
-                builder: (BuildContext context) {
-                  return const ScheduledMessagesPanel();
-                },
-              ),
-            );
+            NavigationSvc.openSettings(initialPage: const ScheduledMessagesPanel());
           } else {
-            bool chatIsOpen = ChatsSvc.activeChat?.chat.guid == chat.guid;
-            if (!chatIsOpen) {
-            NavigationSvc.pushAndRemoveUntil(
-              Get.context!,
-              ConversationView(
-                chat: chat,
-              ),
-              (route) => route.isFirst,
-            );
+            if (ChatsSvc.activeChat?.chat.guid == chat.guid) {
+              // Still open under Settings or Find My: bring it back into view
+              NavigationSvc.closeSections();
+            } else {
+              NavigationSvc.pushAndRemoveUntil(
+                Get.context!,
+                ConversationView(
+                  chat: chat,
+                ),
+                (route) => route.isFirst,
+              );
             }
           }
         },
