@@ -232,11 +232,13 @@ class ChatApi {
           responseType: ResponseType.bytes,
           receiveTimeout: _svc.dio.options.receiveTimeout! * 12,
           headers: _svc.headers,
+          // The server answers 404 for a chat without an icon
+          validateStatus: (status) => status == 200 || status == 404,
         ),
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
-      return _svc.returnSuccessOrError(response);
+      return response.statusCode == 404 ? response : _svc.returnSuccessOrError(response);
     });
   }
 
