@@ -112,13 +112,33 @@ class Database {
     await initComplete.future;
   }
 
-  static Future<void> _initDatabaseMobile({bool? storeOpenStatus, ByteData? storeReference}) async {
-    if (storeReference != null) {
-      Logger.info("Attaching to existing ObjectBox store via reference");
-      store = Store.fromReference(getObjectBoxModel(), storeReference);
-      return;
-    }
+  static Future<void> _initDatabaseMobile() async {
     Directory objectBoxDirectory = Directory(join(FilesystemSvc.appDocDir.path, 'objectbox'));
+    await _openOrAttachStore(objectBoxDirectory);
+  }
+
+  static Future<void> _initDatabaseDesktop() async {
+    Directory objectBoxDirectory = Directory(join(FilesystemSvc.appDocDir.path, 'objectbox'));
+
+    try {
+      objectBoxDirectory.createSync(recursive: true);
+      final customPath = PrefsSvc.database.getCustomPath();
+      if (PrefsSvc.database.shouldUseCustomPath() && customPath != null) {
+        Directory oldCustom = Directory(join(customPath, 'objectbox'));
+        if (oldCustom.existsSync()) {
+          Logger.info("Detected prior use of custom path option. Migrating...");
+          await copyPath(oldCustom.path, objectBoxDirectory.path);
+        }
+        await PrefsSvc.database.clearCustomPathConfig();
+      }
+    } catch (e, s) {
+      Logger.error("Failed to prepare ObjectBox directory!", error: e, trace: s);
+    }
+
+    await _openOrAttachStore(objectBoxDirectory);
+  }
+
+  static Future<void> _openOrAttachStore(Directory objectBoxDirectory, {bool? storeOpenStatus}) async {
     final isStoreOpen = storeOpenStatus ?? Store.isOpen(objectBoxDirectory.path);
 
     try {
@@ -133,39 +153,9 @@ class Database {
     } catch (e, s) {
       Logger.error("Failed to open ObjectBox store!", error: e, trace: s);
 
-      if (e.toString().contains("another store is still open using the same path")) {
+      if (!isStoreOpen && e.toString().contains("another store is still open using the same path")) {
         Logger.info("Retrying to attach to an existing ObjectBox store");
-        await _initDatabaseMobile(storeOpenStatus: true);
-      }
-    }
-  }
-
-  static Future<void> _initDatabaseDesktop({ByteData? storeReference}) async {
-    if (storeReference != null) {
-      Logger.info("Attaching to existing ObjectBox store via reference");
-      store = Store.fromReference(getObjectBoxModel(), storeReference);
-      return;
-    }
-    Directory objectBoxDirectory = Directory(join(FilesystemSvc.appDocDir.path, 'objectbox'));
-
-    try {
-      objectBoxDirectory.createSync(recursive: true);
-      final customPath = PrefsSvc.database.getCustomPath();
-      if (PrefsSvc.database.shouldUseCustomPath() && customPath != null) {
-        Directory oldCustom = Directory(join(customPath, 'objectbox'));
-        if (oldCustom.existsSync()) {
-          Logger.info("Detected prior use of custom path option. Migrating...");
-          await copyPath(oldCustom.path, objectBoxDirectory.path);
-        }
-        await PrefsSvc.database.clearCustomPathConfig();
-      }
-
-      Logger.info("Opening ObjectBox store from path: ${objectBoxDirectory.path}");
-      store = await openStore(directory: objectBoxDirectory.path);
-    } catch (e) {
-      if (e.toString().contains("another store is still open using the same path")) {
-        Logger.debug("Retrying to attach to an existing ObjectBox store");
-        store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
+        await _openOrAttachStore(objectBoxDirectory, storeOpenStatus: true);
       }
     }
   }
