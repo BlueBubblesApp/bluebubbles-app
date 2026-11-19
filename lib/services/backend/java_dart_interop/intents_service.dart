@@ -258,6 +258,8 @@ class IntentsService {
         );
       } else {
         Logger.debug("Chat is already open, not navigating", tag: "IntentsService");
+        // It may still be open under Settings or Find My: bring it back into view
+        NavigationSvc.closeSections();
         setPickedAttachments();
       }
     }

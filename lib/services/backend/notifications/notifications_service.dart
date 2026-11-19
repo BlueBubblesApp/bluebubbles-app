@@ -742,15 +742,17 @@ class NotificationsService {
           if (scheduled) {
             NavigationSvc.openSettings(initialPage: const ScheduledMessagesPanel());
           } else {
-            bool chatIsOpen = ChatsSvc.activeChat?.chat.guid == chat.guid;
-            if (!chatIsOpen) {
-            NavigationSvc.pushAndRemoveUntil(
-              Get.context!,
-              ConversationView(
-                chat: chat,
-              ),
-              (route) => route.isFirst,
-            );
+            if (ChatsSvc.activeChat?.chat.guid == chat.guid) {
+              // Still open under Settings or Find My: bring it back into view
+              NavigationSvc.closeSections();
+            } else {
+              NavigationSvc.pushAndRemoveUntil(
+                Get.context!,
+                ConversationView(
+                  chat: chat,
+                ),
+                (route) => route.isFirst,
+              );
             }
           }
         },
