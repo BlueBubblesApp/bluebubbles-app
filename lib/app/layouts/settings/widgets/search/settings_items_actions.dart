@@ -132,6 +132,7 @@ class SettingsItemsActions {
       Logger.error("Failed to delete Firebase FCM token", error: e, trace: s);
     }
 
+    if (Platform.isAndroid) await MethodChannelSvc.actions.flushPreferences();
     exit(0);
   }
 }
