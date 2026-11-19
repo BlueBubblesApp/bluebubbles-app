@@ -111,6 +111,7 @@ class MethodChannelActions {
     await service.invokeMethod('flush-preferences');
   }
 
+
   Future<String?> getServerUrl() async {
     return await service.invokeMethod('get-server-url') as String?;
   }
