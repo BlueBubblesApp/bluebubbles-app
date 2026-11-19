@@ -645,6 +645,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
+    // Read here, outside the Obx: tracking it would swap the chat list in under setup's last page the moment setup
+    // finishes, before it offers a backup restore. Setup hands off to the chat list itself.
+    final finishedSetup = SettingsSvc.settings.finishedSetup.value;
     return Actions(
       actions: {
         OpenSettingsIntent: OpenSettingsAction(context),
@@ -657,8 +660,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       child: Obx(() => BBScaffold(
             backgroundColor: context.theme.colorScheme.surface.themeOpacity(context),
             // The conversation list's panes handle the keyboard and nav bar themselves
-            resizeToAvoidBottomInset: !SettingsSvc.settings.finishedSetup.value,
-            safeAreaBottom: SettingsSvc.settings.finishedSetup.value ? false : null,
+            resizeToAvoidBottomInset: !finishedSetup,
+            safeAreaBottom: finishedSetup ? false : null,
             body: Builder(
               builder: (BuildContext context) {
                 if (SettingsSvc.settings.finishedSetup.value) {
