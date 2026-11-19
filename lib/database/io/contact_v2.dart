@@ -210,7 +210,6 @@ class ContactV2 {
   /// uploading to one server would otherwise claim each other's contacts.
   Map<String, dynamic> toServerMap({required String deviceId}) {
     return {
-      // Lets the server match this contact on later uploads instead of by name.
       'externalId': '$deviceId:$nativeContactId',
       'displayName': displayName,
       'firstName': firstName,

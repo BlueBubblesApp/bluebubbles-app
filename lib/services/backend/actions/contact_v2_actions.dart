@@ -797,6 +797,7 @@ class ContactV2Actions {
   }) {
     String nameKey(Map c) => [c['firstName'], c['lastName'], c['displayName']].map((e) => e ?? '').join('\u0000');
 
+    final serverById = {for (final c in server) c['id']: c};
     final byExternalId = <String, dynamic>{};
     final byName = <String, List<dynamic>>{};
     for (final c in server.where((c) => c['sourceType'] == 'db' && c['id'] != null)) {
@@ -814,8 +815,8 @@ class ContactV2Actions {
       final legacy = byName[nameKey(c)];
       final id = byExternalId[c['externalId']] ?? (legacy?.isNotEmpty == true ? legacy!.removeAt(0) : null);
       if (id != null) {
-        updates.add({...c, 'id': id});
         byExternalId.remove(c['externalId']);
+        if (!_sameContact(serverById[id]!, c)) updates.add({...c, 'id': id});
       } else {
         creates.add(c);
       }
@@ -828,6 +829,18 @@ class ContactV2Actions {
               if (e.key.startsWith('$deviceId:')) e.value
           ];
     return (updates: updates, creates: creates, deletes: deletes);
+  }
+
+  /// Addresses compare as sets: the server returns them as `{address}` objects in its own order.
+  static bool _sameContact(Map<String, dynamic> server, Map<String, dynamic> local) {
+    Set<String> addresses(dynamic list) =>
+        {for (final e in list as List<dynamic>? ?? []) (e is Map ? e['address'] : e).toString()};
+    return server['externalId'] == local['externalId'] &&
+        (server['firstName'] ?? '') == (local['firstName'] ?? '') &&
+        (server['lastName'] ?? '') == (local['lastName'] ?? '') &&
+        (server['displayName'] ?? '') == (local['displayName'] ?? '') &&
+        setEquals(addresses(server['phoneNumbers']), addresses(local['phoneNumbers'])) &&
+        setEquals(addresses(server['emails']), addresses(local['emails']));
   }
 
   /// Uploads contacts to the server

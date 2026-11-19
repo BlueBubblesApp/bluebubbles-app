@@ -6,8 +6,7 @@ class ContactApi {
 
   ContactApi(this._svc);
 
-  /// Get all iCloud contacts. The v2 server returns at most 1,000 per request, paged by [limit] and [offset]; 1.x
-  /// servers ignore both and return everything.
+  /// Get all iCloud contacts
   Future<Response> fetchAll({bool withAvatars = false, int? limit, int? offset, CancelToken? cancelToken}) async {
     return _svc.runApiGuarded(() async {
       final response = await _svc.dio.get(
