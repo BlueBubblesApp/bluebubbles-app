@@ -87,7 +87,14 @@ class _TabletModeWrapperState extends State<TabletModeWrapper> with ThemeHelpers
       return TitleBarWrapper(
         child: Stack(
           children: [
-            Obx(() => Offstage(offstage: rightOpen.value, child: widget.left)),
+            // Offstage alone keeps the hidden pane's animations running and its focusables reachable
+            Obx(() => Offstage(
+                  offstage: rightOpen.value,
+                  child: TickerMode(
+                    enabled: !rightOpen.value,
+                    child: ExcludeFocus(excluding: rightOpen.value, child: widget.left),
+                  ),
+                )),
             Obx(() => IgnorePointer(ignoring: !rightOpen.value, child: widget.right)),
           ],
         ),
