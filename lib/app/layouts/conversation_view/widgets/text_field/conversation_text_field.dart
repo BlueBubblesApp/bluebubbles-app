@@ -238,7 +238,7 @@ class ConversationTextFieldState extends CustomState<ConversationTextField, void
     final hasDraft = controller.textController.text.trim().isNotEmpty;
     final draftAttachments = controller.pickedAttachments.where((e) => e.path != null).map((e) => e.path!).toList();
     final draftText = hasDraft ? controller.textController.text : '';
-    final draftRuns = hasDraft ? List.of(controller.textController.runs) : const <Run>[];
+    final draftRuns = hasDraft ? controller.textController.runs : const <Run>[];
     final draftChat = chat;
     // The tree is locked during dispose, and updating ChatState here would rebuild Obx widgets (the chat tile's
     // draft line) mid-finalize, so defer the update until after the frame's teardown.
