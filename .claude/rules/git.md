@@ -32,7 +32,7 @@ wip: sync animation and chat list update timing
 ## Branch & PR Workflow
 
 - Branch off `master`; PRs target `master`.
-- PR checks (`.github/workflows/pr-check.yml`) run analyze and `flutter test`, then unsigned compiles of each platform.
+- PR checks (`.github/workflows/pr-check.yml`) run analyze, then unsigned compiles of each platform.
   They don't exercise UI or platform behavior, so still run the target platform locally. Release builds come from
   `desktop-builds.yml` / `android-builds.yml`; nothing deploys automatically.
 - Squash `wip:` commits before merging.

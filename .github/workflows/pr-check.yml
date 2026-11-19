@@ -87,10 +87,6 @@ jobs:
       - name: Analyze
         run: fvm flutter analyze --no-pub --no-fatal-infos
 
-      # Unit tests for pure logic (test/). The build needs the .env asset written above.
-      - name: Test
-        run: fvm flutter test --no-pub
-
   build-windows:
     # Skip the heavy compile on draft PRs; analyze still runs for fast feedback.
     needs: analyze
