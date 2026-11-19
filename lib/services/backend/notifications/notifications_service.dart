@@ -72,6 +72,15 @@ class NotificationsService {
   static const int maxLines = 4;
   static const int charsPerLineEst = 40;
 
+  /// How long a desktop FaceTime toast can ring before it clears itself. Calls with a UUID are normally cleared by
+  /// the server's `disconnected` status, so this only covers a status event that never arrives.
+  static const Duration faceTimeToastTimeout = Duration(minutes: 2);
+
+  /// Calls without a UUID come from servers with FaceTime calling off, which never report the call being answered
+  /// or ended, so this timeout is the only way the toast closes. Kept short so it stops soon after the call is
+  /// answered elsewhere.
+  static const Duration legacyFaceTimeToastTimeout = Duration(seconds: 30);
+
   /// Windows toast identity. The toast icon is registered under the AUMID but only
   /// resolves when it matches the guid (flutter_local_notifications#2738), so one
   /// value serves as both.
@@ -405,9 +414,10 @@ class NotificationsService {
 
     if (id != null) {
       facetimeNotifications[key] = id;
-      if (callUuid == null) {
-        facetimeTimeouts[key] = Timer(const Duration(seconds: 30), () => clearDesktopFaceTimeNotif(key));
-      }
+      facetimeTimeouts[key] = Timer(
+        callUuid == null ? legacyFaceTimeToastTimeout : faceTimeToastTimeout,
+        () => clearDesktopFaceTimeNotif(key),
+      );
     }
   }
 
