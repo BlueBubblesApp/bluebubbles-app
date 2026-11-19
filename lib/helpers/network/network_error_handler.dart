@@ -70,7 +70,7 @@ Message handleSendError(dynamic error, Message m) {
   }
 
   m.error = clientError.code;
-  m.errorMessage = errorMessageText;
+  m.errorMessage = maskUrlPassword(errorMessageText);
   return m;
 }
 
