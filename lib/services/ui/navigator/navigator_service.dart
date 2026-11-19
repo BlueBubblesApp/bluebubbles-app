@@ -76,6 +76,14 @@ class NavigatorService {
     return context != null && isTabletMode(context);
   }
 
+  /// Nothing is open over the chat list: no section, nothing pushed in either pane, nothing on the root navigator.
+  /// Reads the panes themselves, since GetX's route tracking only sees the root navigator.
+  bool get onChatList =>
+      openSection.value == null &&
+      !(_root?.canPop() ?? false) &&
+      !(_left?.canPop() ?? false) &&
+      !(_right?.canPop() ?? false);
+
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar
   double width(BuildContext context) {

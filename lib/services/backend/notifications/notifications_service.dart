@@ -301,7 +301,7 @@ class NotificationsService {
       // Desktop always notifies for inactive chats; this chat-list suppression is mobile-only.
       if (!kIsDesktop &&
           ChatsSvc.activeChat == null &&
-          Get.rawRoute?.settings.name == "/" &&
+          NavigationSvc.onChatList &&
           !SettingsSvc.settings.notifyOnChatList.value) {
         return;
       }
