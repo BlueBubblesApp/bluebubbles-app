@@ -43,13 +43,22 @@ class StickerApi {
     return (stickers: stickers, reason: reason);
   }
 
-  /// `GET sticker/:id/image`: the full-size image, or the picker thumbnail with [thumbnail]
-  /// (the full-size one when the sticker has no thumbnail).
-  Future<Uint8List> image(String identifier, {bool thumbnail = false, CancelToken? cancelToken}) async {
+  /// The largest [image] `size` the server accepts.
+  static const int maxImageSize = 1024;
+
+  /// `GET sticker/:id/image`. With [size] (pixels, longest edge, at most [maxImageSize]), the server scales the
+  /// smallest stored rendition at least that large down to it: how to ask for a thumbnail, since which renditions a
+  /// sticker has is Apple's to change. Without it, the full-size image.
+  ///
+  /// The server converts to something every platform decodes (PNG, a GIF for an animation, JPEG) unless [original]
+  /// is set, which sends the stored bytes, usually HEIC. Ask for [original] only for bytes that are sent on, never
+  /// for bytes that are drawn: Android's HEIF decoder corrupts the app's memory on some devices.
+  Future<Uint8List> image(String identifier, {int? size, bool original = false, CancelToken? cancelToken}) async {
+    assert(size == null || (size >= 1 && size <= maxImageSize));
     final response = await _svc.runApiGuarded(() async {
       final response = await _svc.dio.get(
         "${_svc.apiRootV2}/sticker/${Uri.encodeComponent(identifier)}/image",
-        queryParameters: _svc.buildQueryParams({if (thumbnail) 'role': 'keyboard'}),
+        queryParameters: _svc.buildQueryParams({'size': ?size, if (original) 'format': 'original'}),
         options: Options(responseType: ResponseType.bytes),
         cancelToken: cancelToken,
       );

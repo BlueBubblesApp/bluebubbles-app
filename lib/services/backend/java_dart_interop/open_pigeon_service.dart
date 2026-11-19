@@ -211,7 +211,7 @@ class OpenPigeon {
     }
     var image = gameImage(game);
     if (image != null && image.length > _maxImageBytes) image = await _shrink(image);
-    final type = image == null ? null : _imageType(image);
+    final type = image == null ? null : imageTypeOf(image);
     if (image != null && (type == null || image.length > _maxImageBytes)) {
       Logger.warn("Not sending a game whose picture the server won't take (${image.length} bytes)",
           tag: 'OpenPigeon');
@@ -248,23 +248,6 @@ class OpenPigeon {
       Logger.warn('Could not shrink a game picture', error: e, tag: 'OpenPigeon');
       return image;
     }
-  }
-
-  /// [bytes]' type, read from the bytes themselves as the server does: JPEG, PNG or HEIC, the three it accepts.
-  static ({String mimeType, String uti, String extension})? _imageType(Uint8List bytes) {
-    bool startsWith(List<int> magic, [int offset = 0]) =>
-        bytes.length >= offset + magic.length && magic.indexed.every((e) => bytes[offset + e.$1] == e.$2);
-    if (startsWith(const [0xFF, 0xD8, 0xFF])) return (mimeType: 'image/jpeg', uti: 'public.jpeg', extension: 'jpg');
-    if (startsWith(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
-      return (mimeType: 'image/png', uti: 'public.png', extension: 'png');
-    }
-    // An ISO base-media `ftyp` box naming a HEIF brand
-    if (bytes.length >= 12 &&
-        startsWith(ascii.encode('ftyp'), 4) &&
-        const ['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1'].contains(String.fromCharCodes(bytes.sublist(8, 12)))) {
-      return (mimeType: 'image/heic', uti: 'public.heic', extension: 'heic');
-    }
-    return null;
   }
 
   /// The message [game] becomes once sent, so it can be drawn the same way before then.

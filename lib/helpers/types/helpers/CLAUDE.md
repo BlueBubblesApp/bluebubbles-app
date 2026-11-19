@@ -11,6 +11,7 @@ Pure functions, no state or service dependencies.
 | `message_helper.dart` | `MessageHelper.bulkAddMessages()` — offloads bulk message insertion to isolate via `MessageInterface`; reports progress via callback |
 | `contact_helpers.dart` | Phone number formatting via `dlibphonenumber`; locale-aware country codes; email detection |
 | `pin_order_helpers.dart` | Pin ordering rules over guids/indexes/dates: `mergePinOrder()` (a reordered visible subset back into the full order), `comparePinOrder()` (sort key used by `ChatsService`), `migratePinIndexes()` (the v11 migration); unit-tested in `test/helpers/pin_order_helpers_test.dart` |
+| `image_type_helpers.dart` | `imageTypeOf(bytes)` — JPEG/PNG/HEIC from the bytes' magic numbers (what the server accepts for game pictures); `isHeif(bytes)` — HEIC bytes must never reach a decoder off Apple platforms (Android's HEIF decoder corrupts memory on some devices); unit-tested in `test/helpers/image_type_helpers_test.dart` |
 | `misc_helpers.dart` | `isNullOrEmpty(dynamic)` — null/blank/empty-collection check; `isNullOrZero()`; `mergeTopLevelDicts()` |
 
 ## Quick Reference

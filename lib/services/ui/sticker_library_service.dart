@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/network/api/sticker_api.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -18,8 +19,13 @@ StickerLibraryService get StickerLibrarySvc => GetIt.I<StickerLibraryService>();
 /// images. On disk, under `<appDocDir>/stickers/`:
 ///
 /// - `library.json`: the last listing, so the library draws instantly on open.
-/// - `thumbnails/<id>`: each sticker's picker thumbnail, fetched only for identifiers not already held.
-/// - `full/<id>`: the full-size image, fetched the first time the sticker is sent.
+/// - `thumbnails-v2/<id>`: each sticker's picker thumbnail, fetched only for identifiers not already held. Asked
+///   for at the size it's drawn ([thumbnailPoints]), so the server converts it to something this platform decodes.
+///   Never HEIC: Windows and Linux can't decode it, and Android's decoder corrupts the app's memory on some devices,
+///   crashing it seconds later. Builds before the server converted cached raw HEIC under `thumbnails/`, which is
+///   deleted on load.
+/// - `full/<id>`: the full-size image as stored (usually HEIC), fetched the first time the sticker is sent. Sent on,
+///   never drawn.
 ///
 /// A sticker's image never changes under its identifier, so nothing is downloaded twice. The listing has no ETag, so
 /// every sync re-reads it. Files for stickers no longer listed are removed on each sync, and so are their entries in
@@ -28,6 +34,16 @@ StickerLibraryService get StickerLibrarySvc => GetIt.I<StickerLibraryService>();
 class StickerLibraryService {
   /// Thumbnails fetched at once
   static const int _parallel = 6;
+
+  /// The largest a thumbnail is drawn, in logical pixels: the drag preview (`StickerLibraryTile.dragSize`). Tiles,
+  /// and the removal and tapback dialogs, draw it smaller.
+  static const double thumbnailPoints = 96;
+
+  /// [thumbnailPoints] in this display's pixels, which is what the server is asked for.
+  static int get _thumbnailPixels {
+    final ratio = PlatformDispatcher.instance.views.firstOrNull?.devicePixelRatio ?? 1;
+    return (thumbnailPoints * ratio).ceil().clamp(1, StickerApi.maxImageSize);
+  }
 
   /// Every sticker in the library, newest first.
   final RxList<LibrarySticker> entries = <LibrarySticker>[].obs;
@@ -52,7 +68,8 @@ class StickerLibraryService {
 
   Directory get _root => Directory(join(FilesystemSvc.appDocDir.path, 'stickers'));
   File get _indexFile => File(join(_root.path, 'library.json'));
-  Directory get _thumbnailDir => Directory(join(_root.path, 'thumbnails'));
+  Directory get _thumbnailDir => Directory(join(_root.path, 'thumbnails-v2'));
+  Directory get _legacyThumbnailDir => Directory(join(_root.path, 'thumbnails'));
   Directory get _fullDir => Directory(join(_root.path, 'full'));
 
   File thumbnailFile(String identifier) => File(join(_thumbnailDir.path, _fileName(identifier)));
@@ -66,6 +83,13 @@ class StickerLibraryService {
 
   Future<void> _load() async {
     if (kIsWeb) return;
+    // Raw HEIC from builds before the server converted: drawing one can crash the app. Its own try, so a failure
+    // here doesn't discard the rest of the cache
+    try {
+      if (await _legacyThumbnailDir.exists()) await _legacyThumbnailDir.delete(recursive: true);
+    } catch (e, s) {
+      Logger.warn("Couldn't remove the old sticker thumbnails", error: e, trace: s, tag: 'StickerLibrary');
+    }
     try {
       if (await _indexFile.exists()) {
         final json = jsonDecode(await _indexFile.readAsString()) as Map<String, dynamic>;
@@ -132,7 +156,13 @@ class StickerLibraryService {
   // One failure leaves a placeholder for that sticker, retried next sync, rather than stopping the rest
   Future<void> _fetchThumbnail(String identifier) async {
     try {
-      final bytes = await HttpSvc.sticker.image(identifier, thumbnail: true);
+      final bytes = await HttpSvc.sticker.image(identifier, size: _thumbnailPixels);
+      // A server from before it converted sends HEIC regardless: a placeholder beats a crash
+      if (isHeif(bytes)) {
+        Logger.warn("Not caching sticker $identifier: the server sent HEIC, which can't be drawn safely here",
+            tag: 'StickerLibrary');
+        return;
+      }
       await thumbnailFile(identifier).writeAsBytes(bytes, flush: true);
       cachedThumbnails.add(identifier);
     } catch (e) {
@@ -160,11 +190,12 @@ class StickerLibraryService {
     );
   }
 
-  /// The full-size image of [sticker], to send. Downloaded once and kept.
+  /// The full-size image of [sticker] as the Mac stores it, to send. Downloaded once and kept. Never draw these
+  /// bytes: they're usually HEIC.
   Future<Uint8List> imageForSending(LibrarySticker sticker) async {
     final file = _fullFile(sticker.identifier);
     if (await file.exists()) return file.readAsBytes();
-    final bytes = await HttpSvc.sticker.image(sticker.identifier);
+    final bytes = await HttpSvc.sticker.image(sticker.identifier, original: true);
     await _fullDir.create(recursive: true);
     await file.writeAsBytes(bytes, flush: true);
     return bytes;
