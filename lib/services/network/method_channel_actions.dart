@@ -91,11 +91,19 @@ class MethodChannelActions {
     return raw.map((key, value) => MapEntry(key.toString(), value is num ? value.toInt() : 0));
   }
 
-  Future<void> deleteNotification({required int notificationId, String? tag, int? readBefore}) async {
+  /// Cancels a notification. With [keepBubble] (for a chat that was read), a notification showing as a bubble is
+  /// hidden from the shade instead, since cancelling it would close the bubble.
+  Future<void> deleteNotification({
+    required int notificationId,
+    String? tag,
+    int? readBefore,
+    bool keepBubble = false,
+  }) async {
     await service.invokeMethod('delete-notification', {
       'notification_id': notificationId,
       'tag': ?tag,
       'read_before': ?readBefore,
+      'keep_bubble': keepBubble,
     });
   }
 
