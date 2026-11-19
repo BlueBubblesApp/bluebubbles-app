@@ -29,8 +29,9 @@ ObjectBox entities are heavy (lazy-loaded relations, DB context required). Re-qu
 | `muteType` / `muteArgs` | `RxnString` | mute settings |
 | `title` / `displayName` / `subtitle` | `RxnString` | contact name changes |
 | `latestMessage` | `Rxn<Message>` | new message received |
-| `textFieldText` / `textFieldAttachments` | reactive | draft persistence; `textFieldRuns` (plain, JSON) holds the draft's mention runs |
+| `textFieldText` / `textFieldAttachments` | reactive | draft persistence; `textFieldRuns` (`RxnString`, JSON) holds the draft's runs: mentions, text styles and effects |
 | `isActive` / `isAlive` | `RxBool` | lifecycle (conversation open) |
+| `isCovered` | `RxBool` | Settings, Find My or an opaque page over the open conversation (`ChatsSvc.setChatCovered`); `isChatActive` is false while it's true |
 
 ## MessageState Observable Fields
 Key observables: `guid`, `text`, `dateDelivered`, `dateRead`, `dateEdited`, `error`, `hasReactions`, `associatedMessages`, `isSending`, `isSent`, `hasError`, `isReaction`.

@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
+import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,47 +21,88 @@ enum ProFeature {
   String get message => "$_needs a BlueBubbles subscription on your server.";
 }
 
-/// Says [feature] needs a subscription on the server, with Learn More when the server says where to get one; or, while
-/// the server can't be reached to ask, that it's offline, with Retry. For a paid feature's entry point when
+/// What a locked feature offers next. The one rule the dialog and [SubscriptionRequiredPanel] share: Learn More once
+/// the server, reachable, has said where to get a subscription; otherwise Retry, since offline there's nothing to buy
+/// until the server says what it has, and online without a page a recheck is all there is.
+enum SubscriptionAction { retry, learnMore }
+
+/// Reads `SubscriptionSvc`'s Rx state: call inside an `Obx` to follow it.
+SubscriptionAction get subscriptionAction =>
+    !SubscriptionSvc.offline && SubscriptionSvc.purchaseUrl.value != null
+        ? SubscriptionAction.learnMore
+        : SubscriptionAction.retry;
+
+/// Says [feature] needs a subscription on the server, with Learn More or Retry by [subscriptionAction]; while the
+/// server can't be reached to ask, it says it's offline. For a paid feature's entry point when
 /// `SubscriptionSvc.locked`: pass [onUnlocked] to open the feature when Retry finds the server back with it.
 Future<void> showSubscriptionRequired(
   BuildContext context, {
   required ProFeature feature,
   VoidCallback? onUnlocked,
 }) async {
-  final url = SubscriptionSvc.purchaseUrl.value;
-  final offline = SubscriptionSvc.offline;
   await showBBDialog(
     context: context,
     // The title is in the content, under the badge
     content: SubscriptionRequiredCard(feature: feature),
     actions: [
       BBDialogAction(text: "Close", onPressed: () => Navigator.of(context, rootNavigator: true).pop()),
-      if (offline)
-        BBDialogAction(
-          text: "Retry",
-          isDefault: true,
-          onPressed: () async {
-            Navigator.of(context, rootNavigator: true).pop();
-            if (await retrySubscriptionCheck()) {
-              onUnlocked?.call();
-            } else if (!SubscriptionSvc.offline && context.mounted) {
-              // Back, and without the subscription: now that's what to say
-              await showSubscriptionRequired(context, feature: feature, onUnlocked: onUnlocked);
-            }
-          },
-        )
-      else if (url != null)
-        BBDialogAction(
-          text: "Learn More",
-          isDefault: true,
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).pop();
-            openSubscriptionPage();
-          },
-        ),
+      switch (subscriptionAction) {
+        SubscriptionAction.retry => BBDialogAction(
+            text: "Retry",
+            isDefault: true,
+            onPressed: () async {
+              Navigator.of(context, rootNavigator: true).pop();
+              if (await retrySubscriptionCheck()) {
+                onUnlocked?.call();
+              } else if (!SubscriptionSvc.offline && context.mounted) {
+                // Back, and without the subscription: now that's what to say
+                await showSubscriptionRequired(context, feature: feature, onUnlocked: onUnlocked);
+              }
+            },
+          ),
+        SubscriptionAction.learnMore => BBDialogAction(
+            text: "Learn More",
+            isDefault: true,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop();
+              openSubscriptionPage();
+            },
+          ),
+      },
     ],
   );
+}
+
+/// A locked feature drawn in place of its content (a library grid or view): [SubscriptionRequiredCard] with the
+/// [subscriptionAction] button under it, following `SubscriptionSvc` as it changes.
+class SubscriptionRequiredPanel extends StatelessWidget {
+  const SubscriptionRequiredPanel({super.key, required this.feature});
+
+  final ProFeature feature;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SubscriptionRequiredCard(feature: feature),
+        const SizedBox(height: 12),
+        Obx(() {
+          final action = subscriptionAction;
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
+            ),
+            onPressed: action == SubscriptionAction.learnMore ? openSubscriptionPage : retrySubscriptionCheck,
+            child: Text(action == SubscriptionAction.learnMore ? "Learn More" : "Retry"),
+          );
+        }),
+      ],
+    );
+  }
 }
 
 /// The feature's badge with a lock, "Subscription Required" and why (or, while the server can't be reached, a cloud and
@@ -133,8 +175,15 @@ Future<bool> retrySubscriptionCheck() async {
   return !SubscriptionSvc.locked;
 }
 
-/// The server's page for getting a subscription, when it gave one.
+/// The server's page for getting a subscription, when it gave one. The address comes from the server, so only an
+/// `https` page is opened: anything else could launch another app or a local file.
 Future<void> openSubscriptionPage() async {
   final url = SubscriptionSvc.purchaseUrl.value;
-  if (url != null) await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  if (url == null) return;
+  final uri = Uri.tryParse(url);
+  if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+    Logger.warn("Ignoring a subscription page that isn't https: $url", tag: "Subscription");
+    return;
+  }
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }

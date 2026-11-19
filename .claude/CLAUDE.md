@@ -38,4 +38,6 @@ Pure logic can have unit tests in `test/` (e.g. `test/collections/`): run `flutt
 file at the repo root (it's a declared asset and gitignored); an empty one is fine for tests.
 
 ## Branches
-Branch off `master`; PRs target `master`. No CI/CD.
+Branch off `master`; PRs target `master`. PR checks (`.github/workflows/pr-check.yml`) run analyze and `flutter test`, then
+unsigned Windows/Linux/Android compiles. Release builds come from `desktop-builds.yml` / `android-builds.yml` (tags or manual
+runs). Nothing deploys automatically.

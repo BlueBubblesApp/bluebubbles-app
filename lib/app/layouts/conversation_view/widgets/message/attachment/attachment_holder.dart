@@ -56,7 +56,9 @@ class _AttachmentHolderState extends State<AttachmentHolder> with ThemeHelpers {
       MessagesSvc(_chatGuid).struct.attachments.firstWhereOrNull((e) => e.id == part.attachments.first.id) ??
       part.attachments.first;
 
-  String? get audioTranscript => getAudioTranscriptsFromAttributedBody(message.attributedBody)[part.part];
+  // Redacted mode hides a voice note's words as it hides message text
+  String? get audioTranscript =>
+      part.shouldRedact ? null : getAudioTranscriptsFromAttributedBody(message.attributedBody)[part.part];
 
   // ── AttachmentState access ─────────────────────────────────────────────────
 

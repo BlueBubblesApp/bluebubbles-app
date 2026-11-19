@@ -39,13 +39,9 @@ enum MessageEventType {
 
 /// Whether [incoming] is Messages resending a group's photo state (`item_type` 3, `group_action_type` 3) that is
 /// already stored as [stored] under the same GUID. Such a row is not a change, so the stored one is kept as it is.
-///
-/// Reads the columns rather than `Message.isGroupPhotoState`, which only the native model declares.
 @visibleForTesting
-bool isGroupPhotoResend({required Message incoming, required Message stored}) {
-  bool isPhotoState(Message m) => m.itemType == 3 && m.groupActionType == 3;
-  return isPhotoState(incoming) && isPhotoState(stored) && incoming.guid != null && incoming.guid == stored.guid;
-}
+bool isGroupPhotoResend({required Message incoming, required Message stored}) =>
+    incoming.isGroupPhotoState && stored.isGroupPhotoState && incoming.guid != null && incoming.guid == stored.guid;
 
 // ─── Payload ─────────────────────────────────────────────────────────────────
 

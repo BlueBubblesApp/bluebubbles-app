@@ -85,10 +85,12 @@ class _GenmojiLibraryPopoverState extends State<_GenmojiLibraryPopover> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       items: [
         PopupMenuItem(value: 'attach', child: Text(attached ? "Remove from Message" : "Attach")),
-        PopupMenuItem(
-          value: 'delete',
-          child: Text("Delete…", style: TextStyle(color: scheme.error)),
-        ),
+        // Deleting needs the server's Private API, as removing a sticker does
+        if (AttachmentActions.canRemoveFromLibrary)
+          PopupMenuItem(
+            value: 'delete',
+            child: Text("Delete…", style: TextStyle(color: scheme.error)),
+          ),
       ],
     );
     if (!mounted) return;

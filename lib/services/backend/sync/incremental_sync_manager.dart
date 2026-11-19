@@ -2,6 +2,7 @@ import 'package:async_task/async_task_extension.dart';
 import 'package:bluebubbles/env.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
+import 'package:bluebubbles/database/database.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/backend/sync/sync_manager_impl.dart';
 import 'package:bluebubbles/services/backend/sync/message_sync_deduplicator.dart';
@@ -359,6 +360,21 @@ class IncrementalSyncManager extends SyncManager {
     }
   }
 
+  /// Which of the GUIDs in [messages] (a server page) are stored locally, in one query rather than one per message.
+  /// Synchronous like the lookup it replaces: this also runs in the GlobalIsolate, where runAsync has no scheduler.
+  Set<String> _storedGuids(List<dynamic> messages) {
+    final guids = messages.map((m) => m['guid']).whereType<String>().toList();
+    if (guids.isEmpty) return const {};
+    return Database.runInTransaction(TxMode.read, () {
+      final query = Database.messages.query(Message_.guid.oneOf(guids)).build();
+      try {
+        return query.property(Message_.guid).find().toSet();
+      } finally {
+        query.close();
+      }
+    });
+  }
+
   Future<void> syncMessages(List<dynamic> messages, int total) async {
     // If we don't get any messages return false (no more messages)
     if (messages.isEmpty) return;
@@ -372,11 +388,16 @@ class IncrementalSyncManager extends SyncManager {
     // changes arrive in the same batch the most-recent one wins.
     final Map<String, ({DateTime? dateCreated, String? groupTitle})> latestNameChangePerChat = {};
 
+    // A historical changes-only replay must not import previously unsynced history
+    final stored = includeNewMessages ? null : _storedGuids(messages);
+    // A GUID replay queries disjoint GUID batches, so no row comes back twice; snapshotting every row would only hold
+    // a copy of the whole replay in memory
+    final dedupe = _syncingV2 && changeMessageGuids == null;
+
     for (var msgData in messages) {
-      // A historical changes-only replay must not import previously unsynced history.
-      if (!includeNewMessages && Message.findOne(guid: msgData['guid'] as String?) == null) continue;
+      if (stored != null && !stored.contains(msgData['guid'])) continue;
       for (var chat in msgData['chats']) {
-        if (_syncingV2 && !_messageDeduplicator.shouldSync(chat['guid'] as String, msgData as Map<String, dynamic>)) {
+        if (dedupe && !_messageDeduplicator.shouldSync(chat['guid'] as String, msgData as Map<String, dynamic>)) {
           continue;
         }
         if (!chatCache.containsKey(chat['guid'])) {

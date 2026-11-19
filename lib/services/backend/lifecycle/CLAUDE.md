@@ -7,7 +7,8 @@
 - Listens to Flutter `AppLifecycleState` changes (resumed, paused, detached, inactive)
 - On **resume**: reconnects socket, triggers incremental sync, refreshes contact sync state
 - On **pause**: records last-active timestamp, optionally disconnects socket (configurable), drains the global isolate (Android), and purges rebuildable caches via `CacheSvc.onAppBackgrounded()` (mobile)
-- On **detached** in a bubble (Android): closes the active chat and pops to the root route, since the bubble's engine is kept for the next bubble (`android/CLAUDE.md`)
+- On **hidden/pause/detached** in a bubble (Android): `closeBubble()` marks the chat dead and disconnects the socket; on pause/detached it also purges caches via `CacheSvc.onAppBackgrounded()`, since the bubble's engine is kept idle for the next bubble (`android/CLAUDE.md`)
+- On **detached** in a bubble (Android): also closes the active chat and pops the chat pane and root navigators back to the chat list, so the next bubble starts clean
 - On **memory pressure** (`didHaveMemoryPressure`): `CacheSvc.onMemoryPressure()` — aggressive purge unless the signal is the echo of an engine purge the cache service requested itself
 - Drives the `isActive` flag on `ChatState` for the currently open conversation
 

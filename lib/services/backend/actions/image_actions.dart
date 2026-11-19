@@ -212,8 +212,9 @@ class ImageActions {
     }
   }
 
-  /// Generates a downsampled, rotation-corrected JPEG preview for fast inline
-  /// display, using the `image` package. Not usable for HEIC sources (the
+  /// Generates a downsampled, rotation-corrected preview for fast inline
+  /// display, using the `image` package: JPEG at 'quality', or PNG when any
+  /// pixel is see-through, since JPEG has no alpha. Not usable for HEIC sources (the
   /// `image` package can't decode HEIC) -- callers should use
   /// `flutter_image_compress` directly for those.
   /// Input: Map with 'path' (source file), 'outputPath' (destination),

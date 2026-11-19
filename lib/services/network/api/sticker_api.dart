@@ -1,6 +1,7 @@
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/models/sticker_placement.dart';
 import 'package:bluebubbles/services/network/api/base_api.dart';
+import 'package:bluebubbles/services/network/server_refusal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -21,24 +22,25 @@ class StickerApi {
   Future<({List<LibrarySticker> stickers, String? reason})> library({CancelToken? cancelToken}) async {
     final stickers = <LibrarySticker>[];
     String? reason;
+    // Counts what the server listed, which can be more than the stickers kept: an entry that can't be read is skipped
+    var offset = 0;
     while (true) {
       final response = await _svc.runApiGuarded(() async {
         final response = await _svc.dio.get(
           "${_svc.apiRootV2}/sticker",
-          queryParameters: _svc.buildQueryParams({'limit': _pageLimit, 'offset': stickers.length}),
+          queryParameters: _svc.buildQueryParams({'limit': _pageLimit, 'offset': offset}),
           cancelToken: cancelToken,
         );
         return _svc.returnSuccessOrError(response);
       });
       final body = response.data as Map;
       final metadata = body['metadata'] is Map ? body['metadata'] as Map : const {};
-      final page = ((body['data'] as List?) ?? const [])
-          .map((e) => LibrarySticker.fromMap((e as Map).cast<String, dynamic>()))
-          .toList();
-      stickers.addAll(page);
+      final page = (body['data'] as List?) ?? const [];
+      offset += page.length;
+      stickers.addAll(page.map(LibrarySticker.tryFromMap).nonNulls);
       reason = metadata['reason']?.toString();
       final total = (metadata['total'] as num?)?.toInt();
-      if (page.length < _pageLimit || (total != null && stickers.length >= total)) break;
+      if (page.length < _pageLimit || (total != null && offset >= total)) break;
     }
     return (stickers: stickers, reason: reason);
   }
@@ -76,8 +78,7 @@ class StickerApi {
       );
       return _svc.returnSuccessOrError(response);
     });
-    final data = response.data['data'];
-    return data is Map && data['identifier'] is String ? LibrarySticker.fromMap(data.cast<String, dynamic>()) : null;
+    return LibrarySticker.tryFromMap(response.data['data']);
   }
 
   /// `DELETE sticker/:id`: removes the sticker with [identifier] (a library listing's) from the Mac's library. Needs
@@ -134,18 +135,6 @@ class StickerApi {
 /// What the server said when it refused a sticker request: its sentence for the user and, for a `402` (the server
 /// lacks the subscription tier), the page to get one. Both null for a failure the server didn't answer.
 ({String? message, String? purchaseUrl}) stickerRefusal(Object? error) {
-  final response = switch (error) {
-    Response() => error,
-    DioException() => error.response,
-    _ => null,
-  };
-  final body = response?.data is Map ? response!.data as Map : const {};
-  final err = body['error'] is Map ? body['error'] as Map : const {};
-  final data = body['data'] is Map
-      ? body['data'] as Map
-      : err['data'] is Map
-      ? err['data'] as Map
-      : const {};
-  final message = (err['message'] ?? body['message'])?.toString();
-  return (message: message == null || message.isEmpty ? null : message, purchaseUrl: data['purchase_url']?.toString());
+  final refusal = ServerRefusal.from(error);
+  return (message: refusal.message, purchaseUrl: refusal.purchaseUrl);
 }

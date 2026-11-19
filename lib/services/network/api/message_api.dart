@@ -286,6 +286,8 @@ class MessageApi {
                 data: formData,
                 onSendProgress: onSendProgress == null ? null : (count, _) => onSendProgress(start + count, total),
                 options: Options(
+                  // A 20 MB slice gets the single upload's allowance, not the base timeout meant for small requests
+                  sendTimeout: _svc.dio.options.sendTimeout! * 12,
                   // The last slice answers once iMessage has sent the file
                   receiveTimeout: isLast ? awaitsIMessageTimeout : null,
                   headers: _svc.headers,

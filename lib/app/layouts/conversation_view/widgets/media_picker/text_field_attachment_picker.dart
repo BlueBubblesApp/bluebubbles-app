@@ -533,7 +533,10 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
             entry: entry,
             controller: controller,
             onTap: () => AttachmentActions.toggleLibraryGenmoji(controller, entry),
-            onLongPress: () => AttachmentActions.deleteGenmoji(context, controller, entry),
+            // Deleting needs the server's Private API, as removing a sticker does
+            onLongPress: AttachmentActions.canRemoveFromLibrary
+                ? () => AttachmentActions.deleteGenmoji(context, controller, entry)
+                : null,
           );
         },
         childCount: leading.length + entries.length,
@@ -559,11 +562,8 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
         }),
       );
 
-  /// A library grid on a server without the subscription: Photos, and the feature's locked badge and reason (as the
-  /// dialog draws them) with Learn More.
+  /// A library grid on a server without the subscription: Photos, and the feature's [SubscriptionRequiredPanel].
   Widget _subscriptionRequired(ProFeature feature) {
-    // Offline, Retry rechecks: there's nothing to buy until the server says what it has
-    final url = SubscriptionSvc.offline ? null : SubscriptionSvc.purchaseUrl.value;
     return SliverMainAxisGroup(
       slivers: [
         _leadingColumn([_BackToPhotosTile(onTap: _backToPhotos)]),
@@ -573,22 +573,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SubscriptionRequiredCard(feature: feature),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        backgroundColor: context.theme.colorScheme.primary,
-                        foregroundColor: context.theme.colorScheme.onPrimary,
-                      ),
-                      onPressed: url != null ? openSubscriptionPage : retrySubscriptionCheck,
-                      child: Text(url != null ? "Learn More" : "Retry"),
-                    ),
-                  ],
-                ),
+                child: SubscriptionRequiredPanel(feature: feature),
               ),
             ),
           ),
@@ -661,7 +646,7 @@ class _AttachmentPickerState extends State<AttachmentPicker> with ThemeHelpers {
       title: svc.unavailableReason.value != null ? "Library Unavailable" : "No Stickers Yet",
       message: svc.unavailableReason.value ?? "Stickers you use or add on your Mac will show up here.",
       buttonLabel: canAdd ? "Add Sticker" : "Refresh",
-      onPressed: canAdd ? pickAndAddSticker : svc.sync,
+      onPressed: canAdd ? AttachmentActions.pickAndAddSticker : svc.sync,
       width: 220,
     );
   }

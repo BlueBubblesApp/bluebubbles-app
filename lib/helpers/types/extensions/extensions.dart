@@ -208,6 +208,14 @@ extension ChatListHelpers on RxList<Chat> {
   }
 }
 
+/// An [RxList] emits on every assignment, even of an equal list, so clearing a list with `value = []` on each keystroke
+/// rebuilds its listeners each time. This only assigns when the items change.
+extension RxListSetIfChanged<T> on RxList<T> {
+  void setIfChanged(List<T> items) {
+    if (!listEquals(this, items)) value = items;
+  }
+}
+
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
     if (SettingsSvc.settings.skin.value == Skins.iOS) {

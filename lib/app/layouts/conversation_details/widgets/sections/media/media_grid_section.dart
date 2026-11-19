@@ -54,8 +54,12 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
   static const int _chunkSize = 24;
   late int _displayCount = widget.fullPage ? _chunkSize : kAttachmentPreviewLimit;
   bool _loadingMore = false;
-  final RxnString _hovered = RxnString();
-  final RxnString _hoveredCircle = RxnString();
+  // One flag per cell, so hovering a cell rebuilds only that cell rather than every cell reading a shared value
+  final Map<String, RxBool> _hovered = {};
+  final Map<String, RxBool> _hoveredCircle = {};
+
+  static RxBool _flag(Map<String, RxBool> flags, Attachment attachment) =>
+      flags.putIfAbsent(attachment.guid!, () => false.obs);
 
   void _toggle(Attachment attachment) {
     if (!widget.selected.remove(attachment.guid)) widget.selected.add(attachment.guid!);
@@ -63,16 +67,15 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
   /// Desktop selects with a corner checkbox instead of long press.
   Widget _selectCircle(BuildContext context, Attachment attachment, bool isSelected) {
-    final hovered = _hoveredCircle.value == attachment.guid;
+    final hoveredFlag = _flag(_hoveredCircle, attachment);
+    final hovered = hoveredFlag.value;
     const motion = M3EMotion.spatialFast;
     return Positioned(
       right: 8,
       bottom: 8,
       child: MouseRegion(
-        onEnter: (_) => _hoveredCircle.value = attachment.guid,
-        onExit: (_) {
-          if (_hoveredCircle.value == attachment.guid) _hoveredCircle.value = null;
-        },
+        onEnter: (_) => hoveredFlag.value = true,
+        onExit: (_) => hoveredFlag.value = false,
         child: GestureDetector(
           onTap: () => _toggle(attachment),
           child: AnimatedScale(
@@ -102,7 +105,10 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
     );
   }
 
-  List<Attachment> get _filteredMedia => applyMediaFilters(
+  List<Attachment>? _cachedFilteredMedia;
+
+  /// Filtered once per widget: every cell reads it, twice
+  List<Attachment> get _filteredMedia => _cachedFilteredMedia ??= applyMediaFilters(
         widget.media,
         typeFilter: widget.mediaFilter,
         senderFilter: widget.senderFilter,
@@ -112,6 +118,8 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
   @override
   void didUpdateWidget(MediaGridSection oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // The media list can change in place, so any rebuild from above refilters
+    _cachedFilteredMedia = null;
     if (oldWidget.media.length != widget.media.length) {
       _displayCount = widget.fullPage ? _chunkSize : kAttachmentPreviewLimit;
     }
@@ -162,7 +170,7 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
 
     return Obx(() {
       final isSelected = widget.selected.contains(attachment.guid);
-      final showCircle = kIsDesktop && (widget.selected.isNotEmpty || _hovered.value == attachment.guid);
+      final showCircle = kIsDesktop && (widget.selected.isNotEmpty || _flag(_hovered, attachment).value);
       const motion = M3EMotion.spatialFast;
       // Only the thumbnail is clipped (with an animated radius), never the cell, so
       // [MediaGridSection.cellOverlayBuilder] content such as tapbacks can overhang the tile.
@@ -212,11 +220,10 @@ class _MediaGridSectionState extends State<MediaGridSection> with ThemeHelpers {
         ),
       );
       if (!kIsDesktop) return cell;
+      final hovered = _flag(_hovered, attachment);
       return MouseRegion(
-        onEnter: (_) => _hovered.value = attachment.guid,
-        onExit: (_) {
-          if (_hovered.value == attachment.guid) _hovered.value = null;
-        },
+        onEnter: (_) => hovered.value = true,
+        onExit: (_) => hovered.value = false,
         child: cell,
       );
     });

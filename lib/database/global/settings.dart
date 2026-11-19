@@ -220,6 +220,7 @@ class Settings {
   final RxBool desktopNotifications = true.obs;
   final RxInt desktopNotificationSoundVolume = 100.obs;
   final RxnString desktopNotificationSoundPath = RxnString();
+  // Also drives the Linux launcher badge. The Windows-only name is kept so existing settings and backups still load.
   final RxBool windowsTaskbarBadge = true.obs;
 
   // Troubleshooting settings

@@ -18,14 +18,17 @@ import 'package:url_launcher/url_launcher.dart';
 class OpenPigeon {
   static const packageName = 'com.openbubbles.openpigeon';
   static const balloonBundleId =
-      'com.apple.messages.MSMessageExtensionBalloonPlugin:EWFNLB79LQ:com.gamerdelights.gamepigeon.ext';
+      'com.apple.messages.${AppSessionTypes.extensionBalloonPlugin}:EWFNLB79LQ${AppSessionTypes.gamePigeonSuffix}';
 
   static const _channel = MethodChannel('com.bluebubbles.messaging/openpigeon');
   static final RxBool installed = false.obs;
 
   /// The server has a subscription; the app-message routes refuse (402) without one.
   static bool get licensed => SubscriptionSvc.hasPro;
+
+  /// Payloads fetched from the server by message guid, least recently used first, capped like [_snapshots].
   static final Map<String, Future<Map<String, dynamic>?>> _payloads = {};
+  static const _maxPayloads = 100;
   static ({String chatGuid, ValueChanged<Map<String, dynamic>> callback})? _keyboard;
 
   /// Platform views OpenPigeon failed to fill, which show our own fallback instead.
@@ -35,8 +38,10 @@ class OpenPigeon {
   // Private API.
   static bool get _onV2 => !kIsWeb && Platform.isAndroid && SettingsSvc.serverDetails.isV2Server;
 
-  /// The server could send games with a subscription, so they're shown, locked if it has none.
-  static bool get offered => _onV2 && SettingsSvc.settings.serverPrivateAPI.value == true;
+  /// The server could send games with a subscription, so they're shown, locked if it has none. Not in a bubble: only
+  /// MainActivity's engine has the OpenPigeon host, so a bubble would always see it as missing and offer the store.
+  static bool get offered =>
+      _onV2 && SettingsSvc.settings.serverPrivateAPI.value == true && !LifecycleSvc.isBubble;
 
   /// The server can send games; OpenPigeon may still need installing.
   static bool get supported => offered && licensed;
@@ -84,9 +89,10 @@ class OpenPigeon {
     return drawing;
   }
 
-  /// Sessions opened in OpenPigeon this run. Bubbles are drawn from the sender's image, so OpenPigeon only hears
-  /// about a game once it's been tapped.
+  /// Sessions opened in OpenPigeon this run, least recently opened first, capped at [_maxOpenedSessions]. Bubbles
+  /// are drawn from the sender's image, so OpenPigeon only hears about a game once it's been tapped.
   static final Set<String> _openedSessions = {};
+  static const _maxOpenedSessions = 100;
 
   static Future<void> init() async {
     _channel.setMethodCallHandler(_handle);
@@ -134,15 +140,25 @@ class OpenPigeon {
       return Future.value(
           _madrid(guid, message.balloonBundleId, app!.url, app.sessionId, app.ldText, app.userInfo?.caption));
     }
-    return _payloads[guid] ??= HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
+    final cached = _payloads.remove(guid);
+    if (cached != null) return _payloads[guid] = cached;
+
+    late final Future<Map<String, dynamic>?> loading;
+    loading = HttpSvc.message.getAppMessage(guid).then<Map<String, dynamic>?>((response) {
       final data = response.data['data'] as Map<String, dynamic>;
       return _madrid(
           guid, message.balloonBundleId, data['url'], data['session_id'], data['summary'], data['caption']);
     }).catchError((Object e) {
       Logger.warn('Could not load OpenPigeon payload for $guid', error: e, tag: 'OpenPigeon');
-      _payloads.remove(guid);
+      // Only this attempt's own entry: it may have been evicted and asked for again since
+      if (identical(_payloads[guid], loading)) _payloads.remove(guid);
       return null;
     });
+    _payloads[guid] = loading;
+    while (_payloads.length > _maxPayloads) {
+      _payloads.remove(_payloads.keys.first);
+    }
+    return loading;
   }
 
   /// Number of people in [chat], counting the user, which OpenPigeon uses to hide games.
@@ -193,7 +209,15 @@ class OpenPigeon {
   static Future<bool> open(Map<String, dynamic> payload, Chat chat) async {
     try {
       await _channel.invokeMethod('open', {...payload, 'chatGuid': chat.guid, 'userCount': userCount(chat)});
-      if (payload['session'] is String) _openedSessions.add(payload['session'] as String);
+      final session = payload['session'];
+      if (session is String) {
+        _openedSessions
+          ..remove(session)
+          ..add(session);
+        while (_openedSessions.length > _maxOpenedSessions) {
+          _openedSessions.remove(_openedSessions.first);
+        }
+      }
       return true;
     } on PlatformException catch (e) {
       Logger.warn('Could not open the game', error: e, tag: 'OpenPigeon');
@@ -286,12 +310,9 @@ class OpenPigeon {
         ]),
       );
 
-  /// The extension's own part of [balloonBundleId], the same whichever developer team id precedes it.
-  static final _extensionSuffix = balloonBundleId.substring(balloonBundleId.lastIndexOf(':'));
-
   /// The balloon id a turn goes out under: the one its game was opened from, so the server threads it into that
   /// session (it matches the id exactly), or GamePigeon's current one for a new game.
-  static String _gameBundleId(Object? id) => id is String && id.endsWith(_extensionSuffix) ? id : balloonBundleId;
+  static String _gameBundleId(Object? id) => id is String && AppSessionTypes.isGamePigeon(id) ? id : balloonBundleId;
 
   /// The picture OpenPigeon drew for [game], if it sent one.
   static Uint8List? gameImage(Map<String, dynamic> game) {

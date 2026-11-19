@@ -4,16 +4,15 @@ import 'dart:math';
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/settings/widgets/settings_widgets.dart';
-import 'package:bluebubbles/app/components/animated_dropdown_menu.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_widget.dart';
-import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/popup/widgets/emoji_tapback_picker.dart';
-import 'package:bluebubbles/services/backend/notifications/toast_button_images.dart';
-import 'package:bluebubbles/services/backend/notifications/windows_toast_theme.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/desktop/widgets/add_notification_action.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/desktop/widgets/grayed_out.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/desktop/widgets/notification_action_button.dart';
+import 'package:bluebubbles/app/layouts/settings/pages/desktop/widgets/toast_preview_theme.dart';
 import 'package:bluebubbles/database/models.dart' hide PlatformFile;
 import 'package:bluebubbles/services/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
@@ -32,7 +31,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
 
   /// Read again when the window regains focus, so the preview picks up Personalization changes made in Windows
   /// Settings. Rx only notifies when the value differs, so an unchanged theme doesn't rebuild the preview.
-  late final Rx<WindowsToastTheme>? _toastTheme = Platform.isWindows ? WindowsToastTheme.read().obs : null;
+  late final Rx<ToastPreviewTheme>? _toastTheme = Platform.isWindows ? ToastPreviewTheme.read().obs : null;
   final Player notificationPlayer = Player();
 
   @override
@@ -44,7 +43,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
   }
 
   @override
-  void onWindowFocus() => _toastTheme?.value = WindowsToastTheme.read();
+  void onWindowFocus() => _toastTheme?.value = ToastPreviewTheme.read();
 
   @override
   Widget build(BuildContext context) {
@@ -401,9 +400,9 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
                                       final blocked = !showReplyField &&
                                           SettingsSvc.settings.actionList.length >=
                                               Settings.maxNotificationActions(false)!;
-                                      return _grayedOut(
-                                        blocked,
-                                        SettingsSwitch(
+                                      return GrayedOut(
+                                        grayed: blocked,
+                                        child: SettingsSwitch(
                                           initialVal: showReplyField,
                                           onChanged: _setReplyField,
                                           leading: const SettingsLeadingIcon(
@@ -424,9 +423,9 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
                                     final actions = SettingsSvc.settings.actionList.toList();
                                     final showReplyField = SettingsSvc.settings.showReplyField.value;
                                     final max = Settings.maxNotificationActions(showReplyField);
-                                    return _AddAction(
+                                    return AddNotificationAction(
                                       actions: actions,
-                                      toast: Platform.isWindows ? _toastTheme!.value : _appToastTheme(context),
+                                      toast: Platform.isWindows ? _toastTheme!.value : ToastPreviewTheme.fromAppTheme(context),
                                       fullMessage: max == null || actions.length < max
                                           ? null
                                           : showReplyField
@@ -442,7 +441,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
                                       child: Obx(() {
                                         final papi = SettingsSvc.settings.enablePrivateAPI.value;
                                         final actions = SettingsSvc.settings.actionList.toList();
-                                        final toast = _appToastTheme(context);
+                                        final toast = ToastPreviewTheme.fromAppTheme(context);
                                         return _hideTooltipsWhileDragging(ReorderableWrap(
                                           needsLongPressDraggable: false,
                                           spacing: 10,
@@ -454,7 +453,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
                                           buildDraggableFeedback: _dragFeedback,
                                           children: [
                                             for (final action in actions)
-                                              _ActionButton(
+                                              NotificationActionButton(
                                                 action,
                                                 key: ValueKey(action),
                                                 toast: toast,
@@ -635,7 +634,7 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
                                                   Padding(
                                                     key: ValueKey(action),
                                                     padding: EdgeInsets.only(left: i == 0 ? 0 : gap),
-                                                    child: _ActionButton(
+                                                    child: NotificationActionButton(
                                                       action,
                                                       toast: toast,
                                                       width: buttonWidth,
@@ -700,11 +699,6 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
   static Widget _dragFeedback(BuildContext context, BoxConstraints constraints, Widget child) =>
       Material(color: Colors.transparent, child: TooltipVisibility(visible: false, child: child));
 
-  static Widget _grayedOut(bool grayed, Widget child) => IgnorePointer(
-        ignoring: grayed,
-        child: AnimatedOpacity(opacity: grayed ? 0.5 : 1, duration: _animation, child: child),
-      );
-
   /// The reply field takes one of the notification's button slots, so turning it on drops an action past the limit
   Future<void> _setReplyField(bool shown) async {
     SettingsSvc.settings.showReplyField.value = shown;
@@ -725,346 +719,4 @@ class _DesktopPanelState extends State<DesktopPanel> with ThemeHelpers, WindowLi
 
     super.dispose();
   }
-}
-
-/// A notification action as its button shows it: the image the Windows notification uses for a tapback or emoji, so
-/// the preview can't drift from it, or the text of "Mark Read"
-class _ActionGlyph extends StatefulWidget {
-  const _ActionGlyph(this.value, {required this.size, this.style});
-  final String value;
-  final double size;
-  final TextStyle? style;
-
-  @override
-  State<_ActionGlyph> createState() => _ActionGlyphState();
-}
-
-class _ActionGlyphState extends State<_ActionGlyph> {
-  Future<String?>? _image;
-
-  bool get _isLabel => widget.value == "Mark Read";
-
-  @override
-  void initState() {
-    super.initState();
-    if (!_isLabel) _image = ToastButtonImages.forAction(widget.value);
-  }
-
-  @override
-  void didUpdateWidget(_ActionGlyph oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) _image = _isLabel ? null : ToastButtonImages.forAction(widget.value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLabel) {
-      return Text(widget.value, style: widget.style?.copyWith(fontSize: widget.size), textAlign: TextAlign.center);
-    }
-    return SizedBox.square(
-      dimension: widget.size,
-      child: FutureBuilder<String?>(
-        future: _image,
-        builder: (context, snapshot) => snapshot.data == null
-            ? const SizedBox.shrink()
-            : Image.file(File(snapshot.data!), filterQuality: FilterQuality.medium),
-      ),
-    );
-  }
-}
-
-/// Colors for the Linux action picker, from the app's theme, so its buttons can be the preview's
-WindowsToastTheme _appToastTheme(BuildContext context) {
-  final scheme = context.theme.colorScheme;
-  return WindowsToastTheme(
-    background: scheme.surfaceContainerHighest,
-    button: Color.alphaBlend(scheme.onSurface.withValues(alpha: 0.065), scheme.surfaceContainerHighest),
-    border: Color.alphaBlend(scheme.onSurface.withValues(alpha: 0.125), scheme.surfaceContainerHighest),
-    text: scheme.onSurface,
-    subtext: scheme.onSurfaceVariant,
-  );
-}
-
-class _ActionButton extends StatefulWidget {
-  const _ActionButton(
-    this.action, {
-    super.key,
-    required this.toast,
-    required this.width,
-    required this.height,
-    required this.glyphSize,
-    required this.padding,
-    required this.sends,
-    required this.onRemove,
-    required this.dragging,
-  });
-  final String action;
-  final WindowsToastTheme toast;
-  final double width;
-  final double height;
-  final double glyphSize;
-
-  /// Inside the button: on the preview it's the notification's own, which is what wraps "Mark Read"
-  final EdgeInsets padding;
-  final bool sends;
-  final VoidCallback onRemove;
-  final ValueListenable<bool> dragging;
-
-  /// The action Add Action just added: only it grows in, not the buttons a drag rebuilds
-  static String? justAdded;
-
-  @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> {
-  late final bool _growIn = widget.action == _ActionButton.justAdded;
-  bool _hovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (_growIn) _ActionButton.justAdded = null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final toast = widget.toast;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: _growIn ? 0 : 1, end: 1),
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutBack,
-      builder: (context, t, child) =>
-          Transform.scale(scale: t, child: Opacity(opacity: t.clamp(0.0, 1.0), child: child)),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: Stack(
-          children: [
-            Tooltip(
-              message: "Drag to reorder",
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: widget.sends ? 1 : 0.4,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  width: widget.width,
-                  height: widget.height,
-                  padding: widget.padding,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: toast.border),
-                    color: _hovered ? toast.border : toast.button,
-                  ),
-                  child: Center(
-                    child: _ActionGlyph(
-                      widget.action,
-                      size: widget.glyphSize,
-                      style: context.textTheme.bodyMedium!.copyWith(color: toast.text),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: ValueListenableBuilder<bool>(
-                valueListenable: widget.dragging,
-                builder: (context, dragging, child) => IgnorePointer(
-                  ignoring: dragging,
-                  child: AnimatedScale(
-                    scale: dragging ? 0 : 1,
-                    duration: const Duration(milliseconds: 150),
-                    curve: Curves.easeOutBack,
-                    child: child,
-                  ),
-                ),
-                child: _RemoveButton(onTap: widget.onRemove),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RemoveButton extends StatefulWidget {
-  const _RemoveButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  State<_RemoveButton> createState() => _RemoveButtonState();
-}
-
-class _RemoveButtonState extends State<_RemoveButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.theme.colorScheme;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: _hovered ? scheme.error : scheme.surfaceContainerHighest,
-            shape: BoxShape.circle,
-            border: Border.all(color: scheme.outline.withValues(alpha: 0.5)),
-          ),
-          child: TweenAnimationBuilder<Color?>(
-            tween: ColorTween(end: _hovered ? scheme.onError : scheme.onSurface),
-            duration: const Duration(milliseconds: 150),
-            builder: (context, color, _) => Icon(Icons.remove_rounded, size: 14, color: color),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The Add Action tile. Opens a panel of the actions it can add, each drawn as the button it would be: the tapbacks
-/// and Mark Read not already chosen, and a custom emoji.
-class _AddAction extends StatelessWidget {
-  const _AddAction({required this.actions, required this.toast, this.fullMessage});
-  final List<String> actions;
-  final WindowsToastTheme toast;
-
-  /// Set once the notification has no room for another action: the tile grays out and this says why
-  final String? fullMessage;
-
-  static const double _padding = 8;
-  static const double _gap = 6;
-  static const int _perRow = 4;
-
-  void _add(String action) {
-    _ActionButton.justAdded = action;
-    SettingsSvc.settings.setNotificationActions([...actions, action]);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final full = fullMessage != null;
-    // The panel's buttons at the preview's size on Windows, and the picker's on Linux
-    final size = min(NavigationSvc.width(context) / 2, 400) - 40;
-    final height = Platform.isWindows ? size * 0.13 : 56.0;
-    final tileWidth = Platform.isWindows ? height * 2.2 : 90.0;
-    final glyphSize = Platform.isWindows ? size * 16 / 364 : 22.0;
-    final textStyle = context.textTheme.bodyMedium!
-        .copyWith(fontSize: Platform.isWindows ? size * 0.037 : 16, color: toast.text);
-    final options = <(Widget, Future<void> Function())>[
-      if (!actions.contains("Mark Read"))
-        (Text("Mark Read", style: textStyle, textAlign: TextAlign.center), () async => _add("Mark Read")),
-      for (final type in ReactionTypes.toList())
-        if (!actions.contains(type)) (_ActionGlyph(type, size: glyphSize), () async => _add(type)),
-      if (SettingsSvc.serverDetails.supportsEmojiTapbacks)
-        (
-          Icon(Icons.add_reaction_outlined, size: glyphSize * 1.15, color: toast.text),
-          () async {
-            final emoji = (await showEmojiTapbackPicker(context) as EmojiTapbackPick?)?.emoji;
-            if (emoji != null && !actions.contains(emoji)) _add(emoji);
-          },
-        ),
-    ];
-    final columns = options.length.clamp(1, _perRow);
-    final menuWidth = columns * tileWidth + (columns - 1) * _gap + 2 * _padding + 2;
-    return AnimatedDropdownMenu(
-      menuWidth: menuWidth,
-      trigger: (context, showMenu) => _DesktopPanelState._grayedOut(
-        full,
-        SettingsTile(
-          title: "Add Action",
-          subtitle: fullMessage ??
-              (SettingsSvc.serverDetails.supportsEmojiTapbacks
-                  ? "A tapback, Mark Read, or an emoji"
-                  : "A tapback or Mark Read"),
-          onTap: options.isEmpty ? null : showMenu,
-          leading: const SettingsLeadingIcon(
-            iosIcon: CupertinoIcons.add,
-            materialIcon: Icons.add,
-            containerColor: Colors.green,
-          ),
-        ),
-      ),
-      menuBuilder: (context, hideMenu) => Material(
-        elevation: 8,
-        color: toast.background,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: menuWidth,
-          padding: const EdgeInsets.all(_padding),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: toast.border),
-          ),
-          child: Wrap(
-            spacing: _gap,
-            runSpacing: _gap,
-            children: [
-              for (final (child, onPick) in options)
-                _PickerTile(
-                  toast: toast,
-                  width: tileWidth,
-                  height: height,
-                  onTap: () async {
-                    await hideMenu();
-                    if (context.mounted) await onPick();
-                  },
-                  child: child,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PickerTile extends StatefulWidget {
-  const _PickerTile({
-    required this.toast,
-    required this.width,
-    required this.height,
-    required this.onTap,
-    required this.child,
-  });
-  final WindowsToastTheme toast;
-  final double width;
-  final double height;
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  State<_PickerTile> createState() => _PickerTileState();
-}
-
-class _PickerTileState extends State<_PickerTile> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) => MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: widget.width,
-            height: widget.height,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              border: Border.all(color: widget.toast.border),
-              color: _hovered ? widget.toast.border : widget.toast.button,
-            ),
-            child: Center(child: widget.child),
-          ),
-        ),
-      );
 }

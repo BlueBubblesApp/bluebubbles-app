@@ -1,7 +1,7 @@
 # windows/ — Windows Native
 
 ## C++ Runner (`runner/`)
-- `main.cpp` — entry point: COM init, `DartProject` setup, 1280×720 `FlutterWindow`, Win32 message loop
+- `main.cpp` — entry point: COM init, `DartProject` setup, 1280×720 `FlutterWindow`, Win32 message loop. UI and platform threads stay merged (no `RunOnSeparateThread`): the tray (`tray_manager` 0.9 / nativeapi FFI) must run on the platform thread, so blocking FFI on the main isolate freezes the window too
 - `flutter_window.cpp/h` — `FlutterViewController` host; plugin registration on `OnCreate`
 - `win32_window.cpp/h` — Win32 window base class (creation, message routing)
 - `utils.cpp/h` — UTF-8 / UTF-16 helpers

@@ -273,7 +273,8 @@ class _MiscPanelState extends State<MiscPanel> with ThemeHelpers {
                       Padding(
                         padding: const EdgeInsets.all(15),
                         child: Obx(() => Text(
-                              "Note: Attachment uploads will timeout after ${SettingsSvc.settings.apiTimeout.value ~/ 1000 * 12} seconds",
+                              "Note: Attachment uploads will timeout after ${SettingsSvc.settings.apiTimeout.value ~/ 1000 * 12} seconds"
+                              " (per 20 MB part for large files on a v2 server)",
                               style: context.theme.textTheme.bodySmall!
                                   .copyWith(color: context.theme.colorScheme.onSurfaceVariant),
                             )),

@@ -2,13 +2,17 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:win32/win32.dart';
 
-/// How a Windows notification looks under the user's Personalization settings, for the desktop settings' preview.
-/// The accent mix and overlays were measured against a real notification on Windows 11 (dark mode, accent on Start
-/// and taskbar); the neutral backgrounds are Windows' acrylic fallback colors.
-class WindowsToastTheme {
-  const WindowsToastTheme({
+/// Colors for the desktop settings' notification preview and action picker.
+///
+/// [read] is how a Windows notification looks under the user's Personalization settings. The accent mix and overlays
+/// were measured against a real notification on Windows 11 (dark mode, accent on Start and taskbar); the neutral
+/// backgrounds are Windows' acrylic fallback colors. [fromAppTheme] is for Linux, whose notifications look different
+/// on every desktop, so its action picker just uses the app's theme.
+class ToastPreviewTheme {
+  const ToastPreviewTheme({
     required this.background,
     required this.button,
     required this.border,
@@ -24,7 +28,7 @@ class WindowsToastTheme {
 
   @override
   bool operator ==(Object other) =>
-      other is WindowsToastTheme &&
+      other is ToastPreviewTheme &&
       other.background == background &&
       other.button == button &&
       other.border == border &&
@@ -34,9 +38,20 @@ class WindowsToastTheme {
   @override
   int get hashCode => Object.hash(background, button, border, text, subtext);
 
+  static ToastPreviewTheme fromAppTheme(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return ToastPreviewTheme(
+      background: scheme.surfaceContainerHighest,
+      button: Color.alphaBlend(scheme.onSurface.withValues(alpha: 0.065), scheme.surfaceContainerHighest),
+      border: Color.alphaBlend(scheme.onSurface.withValues(alpha: 0.125), scheme.surfaceContainerHighest),
+      text: scheme.onSurface,
+      subtext: scheme.onSurfaceVariant,
+    );
+  }
+
   static const String _personalize = r'Software\Microsoft\Windows\CurrentVersion\Themes\Personalize';
 
-  static WindowsToastTheme read() {
+  static ToastPreviewTheme read() {
     final light = _dword(_personalize, 'SystemUsesLightTheme') == 1;
     // Windows only offers the accent on Start and taskbar in dark mode
     final accent = !light && _dword(_personalize, 'ColorPrevalence') == 1 ? _accentShade() : null;
@@ -47,7 +62,7 @@ class WindowsToastTheme {
         ? const Color(0xFFF9F9F9)
         : const Color(0xFF2C2C2C);
     final foreground = light ? Colors.black : Colors.white;
-    return WindowsToastTheme(
+    return ToastPreviewTheme(
       background: background,
       button: Color.alphaBlend(foreground.withValues(alpha: 0.065), background),
       border: Color.alphaBlend(foreground.withValues(alpha: 0.125), background),

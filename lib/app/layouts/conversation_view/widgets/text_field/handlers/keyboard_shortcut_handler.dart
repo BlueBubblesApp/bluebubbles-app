@@ -57,8 +57,7 @@ class KeyboardShortcutHandler {
           if (!isSending) {
             final parts = messageController.parts;
             final part = parts.where((p) => p.text?.isNotEmpty ?? false).lastOrNull;
-            // A Genmoji part can't be edited: its U+FFFC placeholders would go out as plain text
-            if (part != null && !part.hasInlineAttachments) {
+            if (part != null && part.canEditAsPlainText) {
               final FocusNode? node = kIsDesktop || kIsWeb ? FocusNode() : null;
               controller.editing.add(MessageEditEntry(
                 message: message,

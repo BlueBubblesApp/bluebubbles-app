@@ -55,19 +55,21 @@ class SharedPreferencesMessagingActions {
         Logger.warn("Couldn't count tapback emoji $emoji", error: e, trace: s, tag: "TapbackEmoji");
       });
 
-  // Each count reads, changes and rewrites a list, so overlapping ones would lose a use
+  // Each count reads, changes and rewrites a list, so overlapping ones would lose a use. The queue is per engine; the
+  // reads go to the platform so a list another engine (a bubble) rewrote isn't overwritten with this one's stale copy.
   static Future<void> _tapbackEmojiQueue = Future.value();
 
   /// Drops sticker tapbacks whose sticker isn't in [stickerIdentifiers] from every recent tapback list.
   Future<void> pruneStickerTapbacks(Set<String> stickerIdentifiers) =>
       _tapbackEmojiQueue = _tapbackEmojiQueue.then((_) async {
-        final keys = service.i.keys
+        final keys = (await service.platform.getKeys())
             .where((k) => k == _tapbackEmojiUsageKey || k.startsWith('$_tapbackEmojiUsageKey:'))
             .toList();
         for (final key in keys) {
+          final raw = await service.platform.getString(key);
           // Most lists hold no sticker at all: skip decoding those
-          if (!(service.i.getString(key)?.contains(stickerTapbackPrefix) ?? false)) continue;
-          final usage = _tapbackEmojiUsage(key);
+          if (!(raw?.contains(stickerTapbackPrefix) ?? false)) continue;
+          final usage = _decodeTapbackEmojiUsage(raw);
           final kept = usage
               .where((u) =>
                   !u.emoji.startsWith(stickerTapbackPrefix) ||
@@ -107,7 +109,7 @@ class SharedPreferencesMessagingActions {
   String _chatTapbackEmojiKey(String chatGuid) => '$_tapbackEmojiUsageKey:$chatGuid';
 
   Future<void> _countTapbackEmoji(String key, String emoji, int limit) async {
-    final usage = _tapbackEmojiUsage(key);
+    final usage = _decodeTapbackEmojiUsage(await service.platform.getString(key));
     final index = usage.indexWhere((u) => u.emoji == emoji);
     final count = index == -1 ? 1 : usage.removeAt(index).count + 1;
     // The one just used always stays: ranked with the rest, a new emoji (one use) would be the first dropped from a
@@ -122,8 +124,10 @@ class SharedPreferencesMessagingActions {
   static String _encodeTapbackEmojiUsage(List<({String emoji, int count, int lastUsed})> usage) =>
       jsonEncode(usage.map((u) => {'e': u.emoji, 'n': u.count, 't': u.lastUsed}).toList());
 
-  List<({String emoji, int count, int lastUsed})> _tapbackEmojiUsage(String key) {
-    final raw = service.i.getString(key);
+  List<({String emoji, int count, int lastUsed})> _tapbackEmojiUsage(String key) =>
+      _decodeTapbackEmojiUsage(service.i.getString(key));
+
+  static List<({String emoji, int count, int lastUsed})> _decodeTapbackEmojiUsage(String? raw) {
     if (raw == null) return [];
     try {
       final usage = [

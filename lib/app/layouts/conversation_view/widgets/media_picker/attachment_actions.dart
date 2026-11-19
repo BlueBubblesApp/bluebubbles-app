@@ -11,6 +11,8 @@ import 'package:bluebubbles/database/io/klipy.dart';
 import 'package:bluebubbles/database/global/platform_file.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/models/genmoji.dart';
+import 'package:bluebubbles/models/library_sticker.dart';
+import 'package:bluebubbles/services/network/api/sticker_api.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
 import 'package:bluebubbles/utils/share.dart';
@@ -347,46 +349,65 @@ class AttachmentActions {
     return true;
   }
 
+  /// Whether Genmoji and stickers can be removed from the Mac's libraries here: the server's Private API does it.
+  static bool get canRemoveFromLibrary => SettingsSvc.settings.enablePrivateAPI.value && !SubscriptionSvc.locked;
+
+  /// Asks before removing a library item, showing its cached [thumbnail] when there is one. Resolves true only for
+  /// [yesText]; dismissing by tapping outside runs neither button and counts as no.
+  static Future<bool> _confirmLibraryRemoval(
+    BuildContext context, {
+    required String title,
+    required String text,
+    required String yesText,
+    File? thumbnail,
+  }) async {
+    final confirmed = Completer<bool>();
+    void answer(bool yes) {
+      Navigator.of(context, rootNavigator: true).pop();
+      confirmed.complete(yes);
+    }
+
+    await showAreYouSure(
+      context,
+      title: title,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (thumbnail != null) ...[
+            Image.file(thumbnail, width: 88, height: 88),
+            const SizedBox(height: 12),
+          ],
+          Text(text, textAlign: TextAlign.center),
+        ],
+      ),
+      noText: "Cancel",
+      yesText: yesText,
+      yesIsDestructive: true,
+      yesColor: context.theme.colorScheme.error,
+      onNo: () => answer(false),
+      onYes: () => answer(true),
+    );
+    return confirmed.isCompleted && await confirmed.future;
+  }
+
   /// Confirms, then deletes a Genmoji from the Mac's library (and so from every device on the
-  /// account). Also takes it out of the draft if it was attached.
+  /// account). Also takes it out of the draft if it was attached. Offer it only when [canRemoveFromLibrary].
   static Future<void> deleteGenmoji(
     BuildContext context,
     ConversationViewController controller,
     GenmojiLibraryEntry entry,
   ) async {
-    final confirmed = Completer<bool>();
-    await showAreYouSure(
+    final confirmed = await _confirmLibraryRemoval(
       context,
       title: "Delete Genmoji?",
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (GenmojiLibrarySvc.cachedThumbnails.contains(entry.identifier)) ...[
-            Image.file(GenmojiLibrarySvc.thumbnailFile(entry.identifier), width: 88, height: 88),
-            const SizedBox(height: 12),
-          ],
-          Text(
-            "${entry.description.isEmpty ? 'This Genmoji' : '"${entry.description}"'} will be removed from your "
-            "Mac and every device signed in to its iCloud account.",
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-      noText: "Cancel",
+      text: "${entry.description.isEmpty ? 'This Genmoji' : '"${entry.description}"'} will be removed from your "
+          "Mac and every device signed in to its iCloud account.",
       yesText: "Delete",
-      yesIsDestructive: true,
-      yesColor: context.theme.colorScheme.error,
-      onNo: () {
-        Navigator.of(context, rootNavigator: true).pop();
-        confirmed.complete(false);
-      },
-      onYes: () {
-        Navigator.of(context, rootNavigator: true).pop();
-        confirmed.complete(true);
-      },
+      thumbnail: GenmojiLibrarySvc.cachedThumbnails.contains(entry.identifier)
+          ? GenmojiLibrarySvc.thumbnailFile(entry.identifier)
+          : null,
     );
-    // Dismissed by tapping outside: neither button ran.
-    if (!confirmed.isCompleted || !await confirmed.future) return;
+    if (!confirmed) return;
 
     try {
       await GenmojiLibrarySvc.delete(entry);
@@ -396,6 +417,47 @@ class AttachmentActions {
     } catch (e, s) {
       Logger.error("Failed to delete Genmoji", error: e, trace: s, tag: 'Genmoji');
       showSnackbar("Error", "Couldn't reach your server to delete that Genmoji.", type: SnackbarType.error);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Stickers
+  // ---------------------------------------------------------------------------
+
+  /// Picks an image on this device and adds it to the Mac's sticker library, where it lands in Recents. A refusal
+  /// shows the server's reason.
+  static Future<void> pickAndAddSticker() async {
+    final file = await FilePicker.pickFile(type: FileType.image);
+    if (file == null) return;
+    try {
+      await StickerLibrarySvc.add(await file.readAsBytes(), file.name);
+    } catch (e, s) {
+      Logger.warn("Failed to add a sticker to the library", error: e, trace: s, tag: "StickerLibrary");
+      showSnackbar("Error", stickerRefusal(e).message ?? "Couldn't add the sticker", type: SnackbarType.error);
+    }
+  }
+
+  /// Asks, then removes [sticker] from the Mac's library. A refusal shows the server's reason. Offer it only when
+  /// [canRemoveFromLibrary].
+  static Future<void> confirmRemoveSticker(BuildContext context, LibrarySticker sticker) async {
+    final confirmed = await _confirmLibraryRemoval(
+      context,
+      title: "Remove Sticker?",
+      text: "This sticker will be removed from your Mac's stickers.",
+      yesText: "Remove",
+      thumbnail: StickerLibrarySvc.cachedThumbnails.contains(sticker.identifier)
+          ? StickerLibrarySvc.thumbnailFile(sticker.identifier)
+          : null,
+    );
+    if (!confirmed) return;
+    try {
+      await StickerLibrarySvc.delete(sticker);
+    } catch (e, s) {
+      Logger.warn("Failed to remove a sticker from the library", error: e, trace: s, tag: "StickerLibrary");
+      showSnackbar("Couldn't Remove Sticker", stickerRefusal(e).message ?? "Couldn't reach your server to remove it.",
+          type: SnackbarType.error);
+      // The listing may be stale, which can be why it failed
+      unawaited(StickerLibrarySvc.sync());
     }
   }
 }

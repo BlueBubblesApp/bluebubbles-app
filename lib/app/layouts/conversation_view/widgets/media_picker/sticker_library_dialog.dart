@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/app/components/subscription_required.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/composer_popover.dart';
+import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/attachment_actions.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_tile.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -86,25 +87,10 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
           child: Obx(() {
             // The cached library stays on disk for when the subscription comes back
             if (SubscriptionSvc.locked) {
-              return Center(
+              return const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SubscriptionRequiredCard(feature: ProFeature.stickers),
-                      if (SubscriptionSvc.offline)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: TextButton(onPressed: retrySubscriptionCheck, child: const Text("Retry")),
-                        )
-                      else if (SubscriptionSvc.purchaseUrl.value != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: TextButton(onPressed: openSubscriptionPage, child: const Text("Learn More")),
-                        ),
-                    ],
-                  ),
+                  padding: EdgeInsets.all(24),
+                  child: SubscriptionRequiredPanel(feature: ProFeature.stickers),
                 ),
               );
             }
@@ -156,7 +142,7 @@ class _StickerLibraryViewState extends State<StickerLibraryView> {
                     icon: const Icon(Icons.add),
                     tooltip: "Add from this device",
                     color: context.theme.colorScheme.primary,
-                    onPressed: pickAndAddSticker,
+                    onPressed: AttachmentActions.pickAndAddSticker,
                   ),
           ),
         if (widget.onClose != null)

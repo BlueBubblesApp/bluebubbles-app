@@ -51,6 +51,7 @@ bool get isSnap => !kIsWeb && Platform.isLinux && Platform.environment.containsK
 
 bool get isFlatpak => !kIsWeb && Platform.isLinux && Platform.environment.containsKey('FLATPAK_ID');
 
+/// `bluebubbles`, or `bluebubbles_<key>` for a parallel install. snapd writes the `_` as `+` in exported file names.
 String? get snapInstanceName =>
     isSnap ? Platform.environment['SNAP_INSTANCE_NAME'] ?? Platform.environment['SNAP_NAME'] : null;
 

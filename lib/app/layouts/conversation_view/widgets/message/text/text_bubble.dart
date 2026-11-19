@@ -43,7 +43,9 @@ class _TextBubbleState extends State<TextBubble> with SingleTickerProviderStateM
   bool _visibilityCheckScheduled = false;
   bool _wasRunVisible = false;
 
-  bool get _hasRunEffects => !part.shouldRedact && !widget.subjectOnly &&
+  // Inline Genmoji make RenderRunTextEffects paint the text statically, so animating would repaint every frame for
+  // nothing
+  bool get _hasRunEffects => !part.shouldRedact && !widget.subjectOnly && !part.hasInlineAttachments &&
       part.runs.any((run) => RunTextEffects.supports(run.attributes?.textEffect));
 
   void _playRunEffects() {

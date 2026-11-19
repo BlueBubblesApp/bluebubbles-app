@@ -29,6 +29,11 @@ class SharedPreferencesDesktopActions {
 }
 ```
 
+**Read-modify-write across engines:** every engine (the app, a bubble) has its own `service.i` cache, loaded at its
+startup. A value read, changed and written back that another engine may also write (the tapback emoji usage lists)
+must be read from `service.platform` (uncached `SharedPreferencesAsync`) first, then written through `service.i` as
+usual. Don't call `service.i.reloadCache()` for this: it empties the whole cache until the platform answers.
+
 ## Adding a new preference
 1. Add the key constant + getter/setter to the relevant category file here (or create a new category file for a new domain).
 2. Expose it via the category's property on `PrefsSvc` if not already covered by an existing method.

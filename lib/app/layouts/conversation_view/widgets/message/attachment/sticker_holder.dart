@@ -124,9 +124,6 @@ class StickerHolder extends StatefulWidget {
     return EdgeInsets.fromLTRB(left, top, right, bottom);
   }
 
-  /// Size assumed for a sticker image whose dimensions the server didn't send
-  static const double fallbackPixels = 300;
-
   /// Longest side a placed sticker draws at, however large its image or placement scale
   static const double maxPoints = 200;
 

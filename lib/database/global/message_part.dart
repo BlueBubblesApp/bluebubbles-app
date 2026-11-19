@@ -32,6 +32,12 @@ class MessagePart {
   /// Genmoji: attachments sharing a part with text, each drawn at its U+FFFC in [text].
   bool get hasInlineAttachments => attachments.isNotEmpty && (text?.contains(objectReplacementChar) ?? false);
 
+  /// Whether this part can be edited. An edit sends plain text, so it would drop a Genmoji (sent as its U+FFFC
+  /// placeholder), a text style or a text effect; parts with any of those don't offer Edit.
+  bool get canEditAsPlainText =>
+      !hasInlineAttachments &&
+      !runs.any((run) => (run.attributes?.styleNames.isNotEmpty ?? false) || run.attributes?.textEffect != null);
+
   String? subject;
   late final String fakeSubject = faker.lorem.words(subject?.split(" ").length ?? 0).join(" ");
   String? get displaySubject {

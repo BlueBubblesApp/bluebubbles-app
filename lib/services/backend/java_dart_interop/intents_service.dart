@@ -72,6 +72,9 @@ class IntentsService {
         ChatsSvc.setAllInactiveSync();
       }
     }
+    // The chat lives in the chat pane's nested navigator, which popping the root alone leaves in place
+    NavigationSvc.closeSections();
+    if (Get.context != null) NavigationSvc.closeAllConversationView(Get.context!);
     Get.until((route) => route.isFirst);
   }
 

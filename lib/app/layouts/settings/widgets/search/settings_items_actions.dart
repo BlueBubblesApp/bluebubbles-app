@@ -101,7 +101,7 @@ class SettingsItemsActions {
 
   /// Wipes the app back to a fresh-install state: every ObjectBox box (including
   /// theme entries), every on-disk cache directory (attachments, custom avatars,
-  /// custom wallpapers, URL previews, contact avatars), all SharedPreferences-backed
+  /// custom wallpapers, URL previews, contact avatars, sticker and Genmoji libraries), all SharedPreferences-backed
   /// settings, and FCM/Firebase data. Scheduled messages live server-side and aren't
   /// stored locally, so there's nothing to clear for them here.
   ///
@@ -112,6 +112,7 @@ class SettingsItemsActions {
   static Future<void> resetApp() async {
     Database.reset();
     await FilesystemSvc.deleteCacheDirectories();
+    await clearRemoteLibraryCaches();
     SocketSvc.forgetConnection();
 
     await PrefsSvc.admin.clearAll();

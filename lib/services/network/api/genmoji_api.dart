@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:bluebubbles/models/genmoji.dart';
 import 'package:bluebubbles/services/network/api/base_api.dart';
+import 'package:bluebubbles/services/network/server_refusal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -183,32 +182,17 @@ class GenmojiApi {
     } on Response catch (r) {
       throw _refusal(r);
     } on DioException catch (e) {
-      final r = e.response;
-      if (r == null || CancelToken.isCancel(e)) rethrow;
-      if (r.data is List<int>) {
-        try {
-          r.data = jsonDecode(utf8.decode(r.data as List<int>));
-        } on FormatException {
-          // Not the server's envelope; the status code alone still says what happened.
-        }
-      }
-      throw _refusal(r);
+      if (e.response == null || CancelToken.isCancel(e)) rethrow;
+      throw _refusal(e);
     }
   }
 
-  GenmojiException _refusal(Response r) {
-    final body = r.data is Map ? r.data as Map : const {};
-    final error = body['error'] is Map ? body['error'] as Map : const {};
-    final data = body['data'] is Map
-        ? body['data'] as Map
-        : error['data'] is Map
-        ? error['data'] as Map
-        : const {};
-    final message = (error['message'] ?? body['message'])?.toString();
+  GenmojiException _refusal(Object error) {
+    final refusal = ServerRefusal.from(error);
     return GenmojiException(
-      message == null || message.isEmpty ? "The server returned ${r.statusCode}" : message,
-      reason: data['reason']?.toString(),
-      statusCode: r.statusCode,
+      refusal.message ?? "The server returned ${refusal.statusCode}",
+      reason: refusal.reason,
+      statusCode: refusal.statusCode,
     );
   }
 }

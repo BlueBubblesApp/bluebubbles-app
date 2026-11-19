@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:bluebubbles/app/components/bb_emoji_picker.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/media_picker/sticker_library_dialog.dart';
 import 'package:bluebubbles/models/library_sticker.dart';
 import 'package:bluebubbles/services/services.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' hide Emoji;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -33,11 +33,14 @@ Future<TapbackPick?> showEmojiTapbackPicker(BuildContext context, {bool stickers
   return showDialog<TapbackPick>(
     context: context,
     builder: (dialogContext) {
-      final emojiPicker = _emojiPicker(
+      final emojiPicker = buildBBEmojiPicker(
         context,
-        background,
-        stickers ? height - tabBarHeight : height,
-        (emoji) => Navigator.of(dialogContext).pop(EmojiTapbackPick(emoji)),
+        height: stickers ? height - tabBarHeight : height,
+        background: background,
+        columns: 8,
+        // Its picks are tapbacks: they go to the reaction recents, not the typed-emoji ones that tab shows
+        showRecents: false,
+        onPicked: (emoji) => Navigator.of(dialogContext).pop(EmojiTapbackPick(emoji)),
       );
       return Dialog(
         backgroundColor: background,
@@ -82,53 +85,5 @@ Future<TapbackPick?> showEmojiTapbackPicker(BuildContext context, {bool stickers
         ),
       );
     },
-  );
-}
-
-Widget _emojiPicker(BuildContext context, Color background, double height, ValueChanged<String> onPicked) {
-  final colors = context.theme.colorScheme;
-  return EmojiPicker(
-    onEmojiSelected: (_, emoji) => onPicked(emoji.emoji),
-    config: Config(
-      height: height,
-      emojiSet: (_) => emojiSetEnglish,
-      checkPlatformCompatibility: true,
-      emojiViewConfig: EmojiViewConfig(
-        emojiSizeMax: 28,
-        backgroundColor: background,
-        columns: 8,
-        noRecents: Text("No Recents", style: context.textTheme.bodyLarge!.copyWith(color: colors.outline)),
-      ),
-      viewOrderConfig: const ViewOrderConfig(
-        top: EmojiPickerItem.categoryBar,
-        middle: EmojiPickerItem.emojiView,
-        bottom: EmojiPickerItem.searchBar,
-      ),
-      skinToneConfig: const SkinToneConfig(enabled: false),
-      // Its picks are tapbacks: they go to the reaction recents, not the typed-emoji ones this tab shows
-      categoryViewConfig: CategoryViewConfig(
-        recentTabBehavior: RecentTabBehavior.NONE,
-        backgroundColor: background,
-        dividerColor: colors.outline.withValues(alpha: 0.2),
-        indicatorColor: colors.primary,
-        iconColor: colors.outline,
-        iconColorSelected: colors.primary,
-        backspaceColor: colors.outline,
-      ),
-      // Search only: there's no text to backspace
-      bottomActionBarConfig: BottomActionBarConfig(
-        showBackspaceButton: false,
-        backgroundColor: background,
-        buttonColor: background,
-        buttonIconColor: colors.outline,
-      ),
-      searchViewConfig: SearchViewConfig(
-        backgroundColor: background,
-        buttonIconColor: colors.outline,
-        hintText: "Search emoji",
-        hintTextStyle: context.textTheme.bodyLarge!.copyWith(color: colors.outline),
-        inputTextStyle: context.textTheme.bodyLarge!.copyWith(color: colors.onSurface),
-      ),
-    ),
   );
 }

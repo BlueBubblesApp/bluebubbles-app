@@ -501,7 +501,9 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     }
 
     if (insertIndex == 0 && !message.isFromMe! && SettingsSvc.settings.receiveSoundPath.value != null) {
-      if (kIsDesktop && (ChatsSvc.getChatState(chat.guid)?.isActive.value ?? false)) {
+      // Desktop plays it while the window is unfocused (the chat is then active but not alive), never while covered
+      final chatState = ChatsSvc.getChatState(chat.guid);
+      if (kIsDesktop && chatState != null && chatState.isActive.value && !chatState.isCovered.value) {
         Player player = Player();
         player.stream.completed
             .firstWhere((completed) => completed)

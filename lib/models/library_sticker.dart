@@ -39,17 +39,34 @@ class LibrarySticker {
     _ => 'png',
   };
 
+  /// Size assumed for a sticker image whose dimensions the server didn't send
+  static const double fallbackPixels = 300;
+
+  /// Throws only without an identifier; see [tryFromMap]
   factory LibrarySticker.fromMap(Map<String, dynamic> json) {
     final reps = ((json['representations'] as List?) ?? const []).whereType<Map>();
-    final preferred = reps.where((r) => r['is_preferred'] == true).firstOrNull ?? reps.first;
+    final preferred = reps.where((r) => r['is_preferred'] == true).firstOrNull ?? reps.firstOrNull ?? const {};
+    final width = preferred['width'] is num ? preferred['width'] as num : null;
+    final height = preferred['height'] is num ? preferred['height'] as num : null;
+    final longest = width == null || height == null ? width ?? height : max(width, height);
     return LibrarySticker(
       identifier: json['identifier'] as String,
       shelf: json['shelf'] as String? ?? 'recent',
       name: json['name'] as String?,
       accessibilityName: json['accessibility_name'] as String?,
       mimeType: preferred['mime_type'] as String? ?? 'image/png',
-      longestSide: max(preferred['width'] as num, preferred['height'] as num).toDouble(),
+      longestSide: longest == null || longest <= 0 ? fallbackPixels : longest.toDouble(),
     );
+  }
+
+  /// [fromMap], or null for an entry it can't read, so one bad sticker doesn't fail a whole listing
+  static LibrarySticker? tryFromMap(Object? json) {
+    if (json is! Map || json['identifier'] is! String) return null;
+    try {
+      return LibrarySticker.fromMap(json.cast<String, dynamic>());
+    } catch (_) {
+      return null;
+    }
   }
 
   /// The server's shape, trimmed to what [fromMap] reads, for the on-disk cache

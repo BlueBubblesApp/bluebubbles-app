@@ -98,7 +98,11 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> with ThemeHelpe
                     controller: widget.controller,
                     cvController: widget.cvController,
                     serverDetails: MessagePopupServerDetails(
-                        minSierra: minSierra, minBigSur: minBigSur, supportsOriginalDownload: serverDetails.supportsOriginalDownload),
+                      minSierra: minSierra,
+                      minBigSur: minBigSur,
+                      supportsOriginalDownload: serverDetails.supportsOriginalDownload,
+                      supportsStickerTapbacks: serverDetails.supportsStickerTapbacks,
+                    ),
                     sendTapback: sendTapback,
                     widthContext: () => mounted ? context : null,
                     child: widget.child,

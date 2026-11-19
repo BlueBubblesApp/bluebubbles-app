@@ -21,6 +21,8 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 | `genmoji` | `GenmojiApi` | `api/genmoji_api.dart` | `status`, `create`, `library` (ETag → null on 304), `libraryImages` (≤50, ≤320px), `libraryImage`, `deleteFromLibrary` — **v2 only**, gate on `ServerDetails.supportsGenmoji`; UI goes through `GenmojiLibrarySvc` for the library |
 | `sticker` | `StickerApi` | `api/sticker_api.dart` | `library` (all pages), `image` (full size or `thumbnail`), `send` (`message/sticker`, optional `tapback`/`remove`). **v2 only**; sticker tapbacks gate on `ServerDetails.supportsStickerTapbacks` |
 
+**Refusals:** `server_refusal.dart` (`ServerRefusal.from`) reads the server's error envelope (message, reason, `purchase_url`, status) from a `Response`, `DioException` or bare body, bytes included. `stickerRefusal()`, `GenmojiApi`'s `GenmojiException` and `SubscriptionSvc.refused` all use it.
+
 **Core utilities (on `HttpService` directly):**
 - `runApiGuarded()` — wraps every call; handles retries on 502, propagates errors
 - `buildQueryParams(map)` — injects auth GUID; call this on every request
@@ -28,7 +30,12 @@ sub-service instances. Each sub-service lives in `api/` and handles one domain a
 - `dio`, `origin`, `apiRoot`, `apiRootV2`, `headers`, `originOverride` — request infrastructure
 - `apiRootV2` (`/api/v2`) is served only by the Swift server; gate on `ServerDetails.isV2Server` (from `server/info`'s `api_versions`)
 - `downloadFromUrl()`, `downloadAppleEmojiFont()` — utility downloads
-- Timeouts configured globally from settings (`apiTimeout`); don't override per-request
+- Timeouts configured globally from settings (`apiTimeout`); don't override per-request, except where a request
+  can't fit in it:
+  - routes that answer only once iMessage has acted (sends, tapbacks, edits, unsends, `chat/new`) wait
+    `MessageApi.awaitsIMessageTimeout` (5m15s) to receive, via `_awaitsIMessage` in `message_api.dart`
+  - uploads (`sendAttachment`, every `sendAttachmentChunked` slice, `attachment.upload`) take `sendTimeout * 12`;
+    large downloads (attachments, icons, contacts, iCloud) take `receiveTimeout * 12`
 
 **Adding a new endpoint:**
 1. Find the right sub-service in `api/` (or add a new file for a new domain)

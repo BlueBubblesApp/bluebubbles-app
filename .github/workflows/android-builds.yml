@@ -27,7 +27,7 @@ env:
   # Pinned by android/app/build.gradle; the runner image does not always carry it.
   ANDROID_NDK_VERSION: "28.2.13676358"
   # android/app/build.gradle compileSdk.
-  ANDROID_COMPILE_SDK: "36"
+  ANDROID_COMPILE_SDK: "37"
   # android/app/build.gradle compileOptions / kotlinOptions.
   JAVA_VERSION: "21"
 
