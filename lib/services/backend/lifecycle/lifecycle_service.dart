@@ -132,6 +132,9 @@ class LifecycleService with WidgetsBindingObserver {
     } else if (state != AppLifecycleState.inactive) {
       if (isBubble) {
         closeBubble();
+        if (state == AppLifecycleState.detached && GetIt.I.isRegistered<IntentsService>()) {
+          GetIt.I<IntentsService>().leaveBubbleChat();
+        }
       } else {
         unawaited(close(triggerState: state));
       }

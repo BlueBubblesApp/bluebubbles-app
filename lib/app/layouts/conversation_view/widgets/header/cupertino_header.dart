@@ -5,14 +5,12 @@ import 'package:bluebubbles/app/layouts/conversation_details/conversation_detail
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/header/header_widgets.dart';
 import 'package:bluebubbles/app/components/avatars/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/app/state/chat_state_scope.dart';
-import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:flutter/material.dart' hide BackButton;
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -77,83 +75,40 @@ class CupertinoHeader extends StatelessWidget implements PreferredSizeWidget {
                           padding: const EdgeInsets.only(top: 5),
                           child: Align(
                             alignment: Alignment.topLeft,
-                            child: XGestureDetector(
-                              supportTouch: true,
-                              onTap: !kIsDesktop
-                                  ? null
-                                  : (details) {
-                                      if (controller.inSelectMode.value) {
-                                        controller.inSelectMode.value = false;
-                                        controller.selected.clear();
-                                        return;
-                                      }
-                                      if (LifecycleSvc.isBubble) {
-                                        SystemNavigator.pop();
-                                        return;
-                                      }
-                                      controller.close();
-                                      if (Get.isSnackbarOpen) {
-                                        Get.closeAllSnackbars();
-                                      }
-                                      Navigator.of(context).pop();
-                                    },
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: () {
-                                  if (kIsDesktop) return;
-                                  if (controller.inSelectMode.value) {
-                                    controller.inSelectMode.value = false;
-                                    controller.selected.clear();
-                                    return;
-                                  }
-                                  if (LifecycleSvc.isBubble) {
-                                    SystemNavigator.pop();
-                                    return;
-                                  }
-                                  controller.close();
-                                  if (Get.isSnackbarOpen) {
-                                    Get.closeAllSnackbars();
-                                  }
-                                  Navigator.of(context).pop();
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(3.0),
-                                  child: _UnreadIcon(controller: controller),
-                                ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () {
+                                if (controller.inSelectMode.value) {
+                                  controller.inSelectMode.value = false;
+                                  controller.selected.clear();
+                                  return;
+                                }
+                                if (LifecycleSvc.isBubble) {
+                                  SystemNavigator.pop();
+                                  return;
+                                }
+                                controller.close();
+                                if (Get.isSnackbarOpen) {
+                                  Get.closeAllSnackbars();
+                                }
+                                Navigator.of(context).pop();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(3.0),
+                                child: _UnreadIcon(controller: controller),
                               ),
                             ),
                           )),
                       Align(
                         alignment: Alignment.center,
-                        child: XGestureDetector(
-                          supportTouch: true,
-                          onTap: !kIsDesktop
-                              ? null
-                              : (details) {
-                                  Navigator.of(context).push(
-                                    ThemeSwitcher.buildPageRoute(
-                                      builder: (context) => ConversationDetails(
-                                        chat: controller.chat,
-                                      ),
-                                    ),
-                                  );
-                                },
-                          child: InkWell(
-                            onTap: () {
-                              if (kIsDesktop) return;
-                              Navigator.of(context).push(
-                                ThemeSwitcher.buildPageRoute(
-                                  builder: (context) => ConversationDetails(
-                                    chat: controller.chat,
-                                  ),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: _ChatIconAndTitle(parentController: controller),
-                            ),
+                        child: InkWell(
+                          onTap: () {
+                            NavigationSvc.push(context, ConversationDetails(chat: controller.chat));
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: _ChatIconAndTitle(parentController: controller),
                           ),
                         ),
                       ),

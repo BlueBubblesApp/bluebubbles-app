@@ -1,7 +1,11 @@
 package com.bluebubbles.messaging.services.notifications
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
+import android.os.Bundle
+import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.bluebubbles.messaging.Constants
 import com.bluebubbles.messaging.models.MethodCallHandlerImpl
@@ -12,6 +16,10 @@ import io.flutter.plugin.common.MethodChannel
 class DeleteNotificationHandler: MethodCallHandlerImpl() {
     companion object {
         const val tag = "delete-notification"
+
+        // Set on a bubble's notification that was hidden because its chat was read. Its messages are all read, so the
+        // next incoming message starts a new style instead of extending this one.
+        const val readHiddenExtra = "readHidden"
     }
 
     override fun handleMethodCall(
@@ -22,10 +30,11 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
         val notificationId: Int = call.argument("notification_id")!!
         val tag: String? = call.argument("tag")
         val readBefore: Long? = call.argument<Number>("read_before")?.toLong()
+        val keepBubble: Boolean = call.argument("keep_bubble") ?: false
         if (readBefore != null && trimReadMessages(context, notificationId, readBefore)) {
             return result.success(null)
         }
-        val success = deleteNotification(context, notificationId, tag)
+        val success = deleteNotification(context, notificationId, tag, keepBubble)
         if (success) {
             result.success(null)
         } else {
@@ -53,7 +62,7 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
         return true
     }
 
-    fun deleteNotification(context: Context, notificationId: Int, tag: String?): Boolean {
+    fun deleteNotification(context: Context, notificationId: Int, tag: String?, keepBubble: Boolean = false): Boolean {
         PersistentLog.d(context, Constants.logTag, "Attempting to delete notification with ID, $notificationId from tag, $tag")
         val notificationManager = context.getSystemService(NotificationManager::class.java)
 
@@ -65,6 +74,11 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
             // Return true cuz there wasn't technically an issue.
             if (notification == null) {
                 PersistentLog.d(context, Constants.logTag, "Notification with ID $notificationId not found!")
+            } else if (keepBubble && hideBubbledNotification(context, notificationManager, notification)) {
+                // Skip the summary cleanup: an app cancelling a group summary also cancels its bubbled children, which
+                // would take this bubble down too. SystemUI hides a summary whose only children are suppressed bubbles.
+                PersistentLog.d(context, Constants.logTag, "Hid bubbled notification with ID $notificationId instead of cancelling it")
+                return true
             } else {
                 PersistentLog.d(context, Constants.logTag, "Cancelling notification with ID, ${notificationId}")
                 notificationManager.cancel(notification.tag, notificationId)
@@ -94,5 +108,39 @@ class DeleteNotificationHandler: MethodCallHandlerImpl() {
         }
         
         return true
+    }
+
+    // Cancelling a bubble's notification removes the bubble, so take it out of the shade instead.
+    // Returns false when the notification isn't bubbled or can't be reposted, so the caller cancels it as before.
+    private fun hideBubbledNotification(context: Context, notificationManager: NotificationManager, sbn: StatusBarNotification): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+        val current = sbn.notification
+        val bubble = current.bubbleMetadata ?: return false
+        if (current.flags and Notification.FLAG_BUBBLE == 0) return false
+
+        try {
+            val shortcutId = bubble.shortcutId
+            val intent = bubble.intent
+            val icon = bubble.icon
+            val builder = when {
+                shortcutId != null -> Notification.BubbleMetadata.Builder(shortcutId)
+                intent != null && icon != null -> Notification.BubbleMetadata.Builder(intent, icon)
+                else -> return false
+            }
+            if (bubble.desiredHeightResId != 0) builder.setDesiredHeightResId(bubble.desiredHeightResId)
+            else builder.setDesiredHeight(bubble.desiredHeight)
+            builder.setDeleteIntent(bubble.deleteIntent).setSuppressNotification(true)
+
+            val hidden = Notification.Builder.recoverBuilder(context, current)
+                .setBubbleMetadata(builder.build())
+                .setOnlyAlertOnce(true)
+                .addExtras(Bundle().apply { putBoolean(readHiddenExtra, true) })
+                .build()
+            notificationManager.notify(sbn.tag, sbn.id, hidden)
+            return true
+        } catch (exception: Exception) {
+            PersistentLog.w(context, Constants.logTag, "Failed to hide bubbled notification ${sbn.id}, cancelling it instead", exception)
+            return false
+        }
     }
 }

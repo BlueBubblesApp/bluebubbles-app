@@ -392,8 +392,10 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
     // via the SliverAnimatedList API instead of swapping _listKey, which would tear
     // down the whole sliver (and its AutomaticKeepAlive cache of loaded images/url
     // previews), causing them to redecode when scrolling back down.
+    // An empty list needs the setState below anyway: it's what lifts the list's empty-state opacity.
     final addedCount = _messages.length - previousLength;
-    final isSimpleAppend = addedCount > 0 &&
+    final isSimpleAppend = previousLength > 0 &&
+        addedCount > 0 &&
         const ListEquality().equals(_messages.sublist(0, previousLength), previousMessages);
 
     if (isSimpleAppend) {
@@ -653,12 +655,14 @@ class MessagesViewState extends State<MessagesView> with MessagesServiceMixin, T
           child: Stack(
             children: [
               Obx(
-                () => AnimatedOpacity(
-                  opacity: _messages.isEmpty && widget.customService == null
-                      ? 0
-                      : (dropZoneManager.dragging.value ? 0.3 : 1),
+                // Only the drag-over dim animates: an animating opacity paints the whole list, images included,
+                // through an offscreen layer, which is worth it for a drag but not on every chat open
+                () => TweenAnimationBuilder<double>(
+                  tween: Tween(end: dropZoneManager.dragging.value ? 0.3 : 1),
                   duration: const Duration(milliseconds: 150),
                   curve: Curves.easeIn,
+                  builder: (context, dim, child) =>
+                      Opacity(opacity: _messages.isEmpty && widget.customService == null ? 0 : dim, child: child),
                   child: DeferredPointerHandler(
                     child: ScrollbarWrapper(
                       reverse: true,

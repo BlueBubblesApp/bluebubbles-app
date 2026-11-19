@@ -23,6 +23,8 @@
 - Group notifications (grouped by chat on Android)
 - Toast management via `PendingToastItem`
 - FaceTime incoming call with accept/decline actions
+- Desktop FaceTime toasts clear themselves if the call's end never arrives: after `faceTimeToastTimeout` (2 min)
+  for calls with a UUID, `legacyFaceTimeToastTimeout` (30 s) for calls without one (server FaceTime calling off)
 
 ## Triggering Notifications
 Called from `IncomingMessageHandler` when a new message arrives, and from `ScheduledMessage` reminders.

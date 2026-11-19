@@ -15,7 +15,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_timezone
   maps_launcher
   media_kit_libs_linux
-  media_kit_video
   objectbox_flutter_libs
   pasteboard
   printing
@@ -23,6 +22,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   screen_retriever_linux
   sqlite3_flutter_libs
   url_launcher_linux
+  media_kit_video
   window_manager
 )
 

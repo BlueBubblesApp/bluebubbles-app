@@ -98,10 +98,6 @@ dependencies:
   fluttertoast: ^10.0.2
   geocoding: ^5.0.0
   geolocator: ^14.1.2
-  gesture_x_detector: # support touchscreens properly
-    git:
-      url: https://github.com/BlueBubblesApp/xgesture_flutter.git
-      ref: d63342cb17976f60bd94e7c1a822398115d3f83c
   get: ^4.7.2
   gif_view: ^1.0.3
   github: ^9.25.0
@@ -293,17 +289,12 @@ flutter:
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/reactions/dislike-white.svg
-    - assets/reactions/like-white.svg
-    - assets/reactions/emphasize-white.svg
-    - assets/reactions/question-white.svg
-    - assets/reactions/love-white.svg
-    - assets/reactions/dislike-black.svg
-    - assets/reactions/like-black.svg
-    - assets/reactions/emphasize-black.svg
-    - assets/reactions/laugh-black.svg
-    - assets/reactions/question-black.svg
-    - assets/reactions/love-black.svg
+    - assets/reactions/dislike.svg
+    - assets/reactions/like.svg
+    - assets/reactions/emphasize.svg
+    - assets/reactions/laugh.svg
+    - assets/reactions/question.svg
+    - assets/reactions/love.svg
     - assets/icon/moon.svg
     - assets/icon/bb-icon.svg
     - assets/images/google-sign-in.png

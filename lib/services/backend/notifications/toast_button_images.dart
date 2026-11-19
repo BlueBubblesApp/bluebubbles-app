@@ -65,11 +65,10 @@ class ToastButtonImages {
   static Future<Uint8List?> draw(String action, {required bool appleFont}) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final bounds = Offset.zero & const Size.square(_size + 0.0);
     // Named tapbacks are their icons, as on messages, so they don't look like the same emoji
     final named = ReactionTypes.toList().contains(action);
     if (named) {
-      await _paintTapback(canvas, bounds, action);
+      await _paintTapback(canvas, action);
     } else {
       _paintText(canvas, action, appleFont);
     }
@@ -144,26 +143,13 @@ class ToastButtonImages {
     return trimmed;
   }
 
-  static Future<void> _paintTapback(Canvas canvas, Rect bounds, String type) async {
-    final svg = await vg.loadPicture(SvgAssetLoader('assets/reactions/$type-black.svg'), null);
+  static Future<void> _paintTapback(Canvas canvas, String type) async {
+    final svg = await vg.loadPicture(SvgAssetLoader(TapbackIcon.asset(type)), null);
     final scale = _size / svg.size.longestSide;
-    canvas.saveLayer(bounds, Paint());
     canvas.save();
     canvas.translate((_size - svg.size.width * scale) / 2, (_size - svg.size.height * scale) / 2);
     canvas.scale(scale);
     canvas.drawPicture(svg.picture);
-    canvas.restore();
-    // The glyph's own fill is replaced by its gradient, as TapbackIcon does
-    canvas.drawRect(
-      bounds,
-      Paint()
-        ..blendMode = BlendMode.srcIn
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: TapbackIcon.gradients[type]!,
-        ).createShader(bounds),
-    );
     canvas.restore();
     svg.picture.dispose();
   }

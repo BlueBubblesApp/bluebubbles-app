@@ -70,6 +70,8 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     controller.fromChatCreator = widget.fromChatCreator;
     controller.fromSearchResult = widget.initialScrollToGuid != null;
     ChatsSvc.setActiveChatSync(chat);
+    _sectionWorker = ever(NavigationSvc.openSection, (_) => _updateCovered());
+    _updateCovered();
     ChatsSvc.activeChat?.controller = controller;
     Logger.debug("Conversation View initialized for ${chat.guid}");
 
@@ -192,26 +194,35 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route != null) {
-      routeObserver.subscribe(this, route);
-    }
+    if (route != null) NavigationSvc.paneRouteObserver.subscribe(this, route);
   }
+
+  bool _pageOver = false;
+  late final Worker _sectionWorker;
+
+  void _updateCovered() => ChatsSvc.getOrCreateChatState(chat)
+      .updateCoveredInternal(_pageOver || NavigationSvc.openSection.value != null);
 
   @override
   void didPushNext() {
     // A route was pushed on top of the conversation view (e.g. ConversationDetails).
     controller.showingSubRoute = true;
+    _pageOver = true;
+    _updateCovered();
   }
 
   @override
   void didPopNext() {
     // The route above was popped — conversation view is visible again.
     controller.showingSubRoute = false;
+    _pageOver = false;
+    _updateCovered();
   }
 
   @override
   void dispose() {
-    routeObserver.unsubscribe(this);
+    _sectionWorker.dispose();
+    NavigationSvc.paneRouteObserver.unsubscribe(this);
     controller.saveReplyToMessageState(); // P8bda
     // A replacement view may already have taken this controller over; deleting it would dispose the focus nodes
     // and text controllers its composer is using

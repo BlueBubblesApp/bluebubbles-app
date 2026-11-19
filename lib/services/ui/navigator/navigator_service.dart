@@ -1,9 +1,10 @@
+import 'package:bluebubbles/app/layouts/findmy/findmy_page.dart';
+import 'package:bluebubbles/app/layouts/settings/settings_page.dart';
 import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/types/helpers/misc_helpers.dart';
 import 'package:bluebubbles/services/services.dart';
 import 'package:bluebubbles/utils/logger/logger.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,14 +13,38 @@ import 'package:get/get.dart';
 NavigatorService get NavigationSvc =>
     Get.isRegistered<NavigatorService>() ? Get.find<NavigatorService>() : Get.put(NavigatorService());
 
-/// Global route observer — register with GetMaterialApp.navigatorObservers and subscribe
-/// widgets using the RouteAware mixin to receive didPushNext / didPopNext callbacks.
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+enum AppSection { settings, findMy }
 
-/// Handles navigation for the app
+/// The chat list's split is nested navigators 1 (left) and 2 (right). Settings and Find My open over it full-window
+/// with splits of their own, Settings' right pane being navigator 3. The phone layout keeps each split's navigators,
+/// stacking the right pane over the left while it has a page.
 class NavigatorService {
+  NavigatorService() {
+    ever(settingsPaneOpen, (bool open) {
+      if (!open) activeSettingsPage.value = null;
+    });
+  }
+
   final GlobalKey<NavigatorState> key = GlobalKey<NavigatorState>();
   final Rxn listener = Rxn();
+
+  /// In the phone layout the right pane covers the left only while this is true
+  final RxBool chatPaneOpen = false.obs;
+  late final PaneObserver chatPaneObserver = PaneObserver(chatPaneOpen);
+
+  final RxBool settingsPaneOpen = false.obs;
+
+  /// Dialogs and see-through popups, like a message's, don't count as covering
+  final RouteObserver<ModalRoute> paneRouteObserver = _OpaqueRouteObserver();
+
+  late final SectionObserver sectionObserver = SectionObserver(openSection);
+
+  final Rxn<AppSection> openSection = Rxn<AppSection>();
+
+  NavigatorState? get _root => key.currentState;
+  NavigatorState? get _left => Get.keys[1]?.currentState;
+  NavigatorState? get _right => Get.keys[2]?.currentState;
+  NavigatorState? get _settings => Get.keys[3]?.currentState;
 
   /// Runtime type of the settings page open in the split view's right pane —
   /// settings list tiles highlight themselves when it matches their destination.
@@ -46,16 +71,26 @@ class NavigatorService {
       SettingsSvc.settings.tabletMode.value &&
       context.width > 600;
 
+  bool get _tabletLayout {
+    final context = _root?.context ?? Get.context;
+    return context != null && isTabletMode(context);
+  }
+
+  /// Nothing is open over the chat list: no section, nothing pushed in either pane, nothing on the root navigator.
+  /// Reads the panes themselves, since GetX's route tracking only sees the root navigator.
+  bool get onChatList =>
+      openSection.value == null &&
+      !(_root?.canPop() ?? false) &&
+      !(_left?.canPop() ?? false) &&
+      !(_right?.canPop() ?? false);
+
   /// grab the available screen width, returning the split screen width if applicable
   /// this should *always* be used in place of context.width or similar
   double width(BuildContext context) {
-    if (Navigator.of(context).widget.key?.toString().contains("Getx nested key: 1") ?? false) {
-      return _widthChatListLeft ?? context.width;
-    } else if (Navigator.of(context).widget.key?.toString().contains("Getx nested key: 2") ?? false) {
-      return _widthChatListRight ?? context.width;
-    } else if (Navigator.of(context).widget.key?.toString().contains("Getx nested key: 3") ?? false) {
-      return _widthSettings ?? context.width;
-    }
+    final key = Navigator.maybeOf(context)?.widget.key;
+    if (key != null && key == Get.keys[1]) return _widthChatListLeft ?? context.width;
+    if (key != null && key == Get.keys[2]) return _widthChatListRight ?? context.width;
+    if (key != null && key == Get.keys[3]) return _widthSettings ?? context.width;
     return context.width;
   }
 
@@ -64,154 +99,258 @@ class NavigatorService {
   bool isAvatarOnly(BuildContext context) =>
       (kIsDesktop || kIsWeb) && isTabletMode(context) && (_widthChatListLeft ?? context.width) < 300;
 
-  /// Push a new route onto the chat list right side navigator
-  void push(BuildContext context, Widget widget) {
-    if (Get.keys.containsKey(2) && isTabletMode(context)) {
-      Get.to(() => widget, transition: Transition.rightToLeft, id: 2);
-    } else {
-      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+  static PageRoute _instantRoute(Widget widget) => PageRouteBuilder(
+        pageBuilder: (_, _, _) => widget,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      );
+
+  /// Into Settings' right pane while Settings is on top, the chat list's otherwise
+  Future<T?> push<T>(BuildContext context, Widget widget) {
+    final pane = openSection.value == AppSection.settings ? _settings : _right;
+    if (pane == null) {
+      return Navigator.of(context).push<T>(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
     }
+    return pane.push<T>(ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget));
   }
 
-  /// Push a new route onto the chat list left side navigator
   Future<void> pushLeft(BuildContext context, Widget widget) async {
-    if (Get.keys.containsKey(1) && isTabletMode(context)) {
-      await Get.to(() => widget, transition: Transition.leftToRight, id: 1);
-    } else {
+    final left = _left;
+    // The phone layout hides the left pane behind an open chat
+    if (left != null && !_tabletLayout && chatPaneOpen.value) {
+      await push(context, widget);
+      return;
+    }
+    if (left == null) {
       await Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => TitleBarWrapper(child: widget),
       ));
+      return;
+    }
+    await left.push(ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget));
+  }
+
+  void _openSection(AppSection section, Widget page) {
+    closeSections();
+    _root?.push(ThemeSwitcher.buildPageRoute(settings: RouteSettings(name: section.name), builder: (_) => page));
+  }
+
+  /// Already in Settings, this just switches to [initialPage]
+  void openSettings({Widget? initialPage}) {
+    if (openSection.value == AppSection.settings) {
+      if (initialPage != null) pushAndRemoveSettingsUntil(Get.context!, initialPage, (route) => route.isFirst);
+      return;
+    }
+    _openSection(AppSection.settings, SettingsPage(initialPage: initialPage));
+  }
+
+  void openFindMy() {
+    if (openSection.value == AppSection.findMy) return;
+    _openSection(AppSection.findMy, const FindMyPage());
+  }
+
+  void closeSections() {
+    final root = _root;
+    if (root == null) return;
+    for (final route in sectionObserver.routes.toList()) {
+      root.removeRoute(route);
     }
   }
 
-  /// Push a new route onto the settings navigator
   Future<dynamic> pushSettings(BuildContext context, Widget widget, {Bindings? binding}) async {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      return await Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
+    binding?.dependencies();
+    return push(context, widget);
+  }
+
+  /// In the split view [predicate] picks what stays under [widget]; keep the placeholder with `route.isFirst`.
+  /// The phone layout pushes over the current page, as a page opened from the list would be.
+  void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
+      {Bindings? binding}) {
+    final settings = _settings;
+    if (settings == null) {
+      openSettings(initialPage: widget);
+      return;
+    }
+    binding?.dependencies();
+    if (_tabletLayout) {
+      activeSettingsPage.value = widget.runtimeType;
+      settings.pushAndRemoveUntil(_instantRoute(widget), predicate);
     } else {
-      binding?.dependencies();
-      return await Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => TitleBarWrapper(child: widget),
-      ));
+      settings.push(ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget));
     }
   }
 
-  /// Push a new route, popping all previous routes, on the chat list right side navigator
+  /// Pushed with no transition in, like the chat creator turning into the chat it sends to
+  static PageRoute _appearingRoute(Widget widget) =>
+      PageRouteBuilder(pageBuilder: (_, _, _) => widget, transitionDuration: Duration.zero);
+
+  /// Closes Settings and Find My first, so what it opens is in view. The split view always swaps the chat pane
+  /// instantly; elsewhere [animate] false skips the transition in.
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
-      {bool closeActiveChat = true, PageRoute? customRoute}) async {
-    if (Get.keys.containsKey(2) && isTabletMode(context)) {
+      {bool closeActiveChat = true, bool animate = true}) async {
+    final right = _right;
+    if (right == null) {
+      final page = TitleBarWrapper(child: widget);
+      await Navigator.of(context).pushAndRemoveUntil(
+          animate ? ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => page) : _appearingRoute(page),
+          predicate);
+      return;
+    }
+    closeSections();
+    if (_tabletLayout) {
       if (closeActiveChat && ChatsSvc.activeChat != null) {
         Logger.debug("Closing active chat: ${ChatsSvc.activeChat!.chat.guid}", tag: "NavigatorService");
         cvc(ChatsSvc.activeChat!.chat).close();
       }
-
-      await Get.offUntil(
-          GetPageRoute(
-            page: () => widget,
-            transition: Transition.noTransition,
-            transitionDuration: Duration.zero,
-          ),
-          predicate,
-          id: 2);
+      await right.pushAndRemoveUntil(_instantRoute(widget), predicate);
     } else {
-      await Navigator.of(context).pushAndRemoveUntil(
-          customRoute ??
-              ThemeSwitcher.buildPageRoute(
-                builder: (BuildContext context) => TitleBarWrapper(child: widget),
-              ),
+      await right.pushAndRemoveUntil(
+          animate ? ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget) : _appearingRoute(widget),
           predicate);
     }
   }
 
-  /// Push a new route, popping all previous routes, on the settings navigator
-  void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
-      {Bindings? binding}) {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      activeSettingsPage.value = widget.runtimeType;
-      // we only want to offUntil when in landscape, otherwise when the user presses back, the previous page will be the chat list
-      Get.offUntil(
-          GetPageRoute(
-            page: () => widget,
-            binding: binding,
-            transition: Transition.noTransition,
-            transitionDuration: Duration.zero,
-          ),
-          predicate,
-          id: 3);
-    } else {
-      binding?.dependencies();
-      // only push here because we don't want to remove underlying routes when in portrait
-      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
-        builder: (BuildContext context) => TitleBarWrapper(child: widget),
-      ));
+  /// Returns false when there was nothing to go back from
+  bool back() {
+    final root = _root;
+    Route? top;
+    root?.popUntil((route) {
+      top = route;
+      return true;
+    });
+    if (top != null && !top!.isFirst && SectionObserver._section(top) == null) {
+      // Like a message's popup on the iOS skin
+      root!.maybePop();
+      return true;
     }
-  }
-
-  void backConversationView(BuildContext context) {
-    if (Get.keys.containsKey(3) && Get.keys[3]?.currentContext != null && isTabletMode(context)) {
-      Get.until((route) {
-        if (route.settings.name == "initial") {
-          Get.back();
+    switch (openSection.value) {
+      case AppSection.settings:
+        final settings = _settings;
+        if (settings != null && settings.canPop()) {
+          settings.maybePop();
         } else {
-          Get.back(id: 3);
+          // pop, not maybePop: Settings' PopScope sends back here, so maybePop would loop
+          _root?.pop();
         }
         return true;
-      }, id: 3);
-    } else if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && isTabletMode(context)) {
-      if (Get.currentRoute.isEmpty) {
-        Get.back();
-        return;
-      }
-      Get.until((route) {
-        bool id2result = false;
-        // check if we should pop the left side first
-        Get.until((route) {
-          if (route.settings.name != "initial") {
-            Get.back(id: 2);
-            id2result = true;
-          }
-          if (!(Get.global(2).currentState?.canPop() ?? true)) {
-            if (ChatsSvc.activeChat != null) {
-              cvc(ChatsSvc.activeChat!.chat).close();
-            }
-          }
-          return true;
-        }, id: 2);
-        if (!id2result) {
-          if (route.settings.name != "initial") {
-            Get.back(id: 1);
-          }
-        }
+      case AppSection.findMy:
+        _root?.maybePop();
         return true;
-      }, id: 1);
+      case null:
+        break;
     }
+    final left = _left, right = _right;
+    if (left == null || right == null) {
+      Get.back();
+      return true;
+    }
+    if (right.canPop()) {
+      // maybePop, so an open chat closes its pickers before closing itself
+      right.maybePop();
+      return true;
+    }
+    if (left.canPop()) {
+      left.maybePop();
+      return true;
+    }
+    return false;
   }
 
-  void closeSettings(BuildContext context) {
-    if (Get.keys.containsKey(3) && Get.keys[3]?.currentContext != null && isTabletMode(context)) {
-      Get.until((route) => route.isFirst, id: 3);
-      Get.back(closeOverlays: true);
-    } else {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    }
-  }
+  void backConversationView(BuildContext context) => back();
+
+  void pop(BuildContext context, [Object? result]) => Navigator.of(context).pop(result);
 
   /// Remember to call `await ChatsSvc.setAllInactive()` after calling this function
-  void closeAllConversationView(BuildContext context) {
-    if (Get.keys.containsKey(2) && Get.keys[2]?.currentContext != null && NavigationSvc.isTabletMode(context)) {
-      Get.until((route) {
-        return route.settings.name == "initial";
-      }, id: 2);
-    }
+  void closeAllConversationView(BuildContext context) => _right?.popUntil((route) => route.isFirst);
+}
+
+class _OpaqueRouteObserver extends RouteObserver<ModalRoute> {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    if (route is! TransitionRoute || route.opaque) super.didPush(route, previousRoute);
   }
 
-  void backSettings(BuildContext context, {dynamic result, bool closeOverlays = false}) {
-    if (Get.keys.containsKey(3) && isTabletMode(context)) {
-      Get.back(result: result, closeOverlays: closeOverlays, id: 3);
-    } else {
-      Get.back(result: result, closeOverlays: closeOverlays);
-    }
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    if (route is! TransitionRoute || route.opaque) super.didPop(route, previousRoute);
+  }
+}
+
+class PaneObserver extends NavigatorObserver {
+  PaneObserver(this.open);
+
+  final RxBool open;
+
+  final List<Route> routes = [];
+
+  /// For a navigator that went away without popping its pages, like a chat list Reset replaced
+  void reset() {
+    routes.clear();
+    if (open.value) WidgetsBinding.instance.addPostFrameCallback((_) => open.value = routes.isNotEmpty);
+  }
+
+  bool _tracked(Route? route) => route != null && route.settings is! Page;
+
+  // Navigator callbacks run mid-transition, often during a build
+  void _update() => WidgetsBinding.instance.addPostFrameCallback((_) => open.value = routes.isNotEmpty);
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    if (_tracked(route)) routes.add(route);
+    _update();
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    routes.remove(route);
+    _update();
+  }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    routes.remove(route);
+    _update();
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    final index = oldRoute == null ? -1 : routes.indexOf(oldRoute);
+    if (index != -1) routes.removeAt(index);
+    if (_tracked(newRoute)) routes.insert(index == -1 ? routes.length : index, newRoute!);
+    _update();
+  }
+}
+
+class SectionObserver extends NavigatorObserver {
+  SectionObserver(this.open);
+
+  final Rxn<AppSection> open;
+
+  final List<Route> routes = [];
+
+  static AppSection? _section(Route? route) =>
+      AppSection.values.firstWhereOrNull((section) => section.name == route?.settings.name);
+
+  // Updated right away, so a chat opened in the same frame sees the section gone
+  void _update() => open.value = _section(routes.lastOrNull);
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    if (_section(route) != null) routes.add(route);
+    _update();
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    routes.remove(route);
+    _update();
+  }
+
+  @override
+  void didRemove(Route route, Route? previousRoute) {
+    routes.remove(route);
+    _update();
   }
 }

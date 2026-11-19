@@ -562,7 +562,9 @@ class StartupTasks {
             ? GetIt.I<IntentsService>().pendingOpenChatGuid
             : null;
         final redirectingAway = pendingGuid != null && pendingGuid != activeChat.chat.guid;
-        if (!redirectingAway) {
+        // Settings, Find My or a page over the chat hides it, so it isn't being read and its field mustn't take focus
+        final covered = activeChat.isCovered.value;
+        if (!redirectingAway && !covered) {
           ChatsSvc.setChatHasUnread(activeChat.chat, false);
         }
 
@@ -575,7 +577,8 @@ class StartupTasks {
         // conversation view is the active route (not obscured by ConversationDetails etc.).
         ConversationViewController _cvc = cvc(activeChat.chat);
         // The attachment picker closes when the field takes focus, and system pickers it opens resume the app
-        if (!_cvc.showingOverlays &&
+        if (!covered &&
+            !_cvc.showingOverlays &&
             !_cvc.showingSubRoute &&
             _cvc.editing.isEmpty &&
             !_cvc.showAttachmentPicker.value) {

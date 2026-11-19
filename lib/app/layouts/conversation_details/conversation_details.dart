@@ -37,17 +37,8 @@ class _ConversationDetailsState extends State<ConversationDetails> with WidgetsB
   bool isLoadingAttachments = true;
 
   @override
-  void initState() {
-    super.initState();
-    ChatsSvc.setActiveToDead();
-  }
-
-  @override
   void dispose() {
-    if (ChatsSvc.activeChat != null) {
-      ChatsSvc.setActiveToAlive();
-      cvc(ChatsSvc.activeChat!.chat).lastFocusedNode.requestFocus();
-    }
+    if (ChatsSvc.activeChat != null) cvc(ChatsSvc.activeChat!.chat).lastFocusedNode.requestFocus();
     super.dispose();
   }
 

@@ -67,7 +67,12 @@ class CreateIncomingMessageNotification: MethodCallHandlerImpl() {
         }
         
         // this is used to copy the style, since the notification already exists
-        val chatNotification = notificationManager.activeNotifications.lastOrNull { it.notification.extras.getString("chatGuid") == chatGuid && it.notification.extras.getString("channelId") == channelId }
+        // (a bubble's notification hidden on read holds only read messages, so it isn't copied)
+        val chatNotification = notificationManager.activeNotifications.lastOrNull {
+            it.notification.extras.getString("chatGuid") == chatGuid &&
+                it.notification.extras.getString("channelId") == channelId &&
+                !it.notification.extras.getBoolean(DeleteNotificationHandler.readHiddenExtra)
+        }
 
         // build the sender object and push the share target again
         val sender = Person.Builder()

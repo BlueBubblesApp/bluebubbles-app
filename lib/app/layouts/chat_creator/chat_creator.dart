@@ -12,7 +12,6 @@ import 'package:bluebubbles/app/state/chat_state_scope.dart';
 import 'package:bluebubbles/app/wrappers/bb_app_bar.dart';
 import 'package:bluebubbles/app/wrappers/bb_scaffold.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
-import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/app/layouts/conversation_view/pages/messages_view.dart';
 import 'package:bluebubbles/database/database.dart';
@@ -536,16 +535,7 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                                 (route) => route.isFirst,
                                 // don't force close the active chat in tablet mode
                                 closeActiveChat: false,
-                                // only used in non-tablet mode context
-                                customRoute: PageRouteBuilder(
-                                  pageBuilder: (_, _, _) => TitleBarWrapper(
-                                      child: ConversationView(
-                                    chat: existingChat,
-                                    customService: messagesService,
-                                    fromChatCreator: true,
-                                  )),
-                                  transitionDuration: Duration.zero,
-                                ),
+                                animate: false,
                               );
                             } else {
                               if (!(createCompleter?.isCompleted ?? true)) return;
@@ -618,17 +608,9 @@ class ChatCreatorState extends State<ChatCreator> with ThemeHelpers {
                                 if (!mounted) return;
                                 NavigationSvc.pushAndRemoveUntil(
                                   Get.context!,
-                                  ConversationView(chat: newChat),
+                                  ConversationView(chat: newChat, fromChatCreator: true),
                                   (route) => route.isFirst,
-                                  customRoute: PageRouteBuilder(
-                                    pageBuilder: (_, _, _) => TitleBarWrapper(
-                                      child: ConversationView(
-                                        chat: newChat,
-                                        fromChatCreator: true,
-                                      ),
-                                    ),
-                                    transitionDuration: Duration.zero,
-                                  ),
+                                  animate: false,
                                 );
                               }).catchError((error) {
                                 if (createDialogCtx != null) Navigator.of(createDialogCtx!).pop();

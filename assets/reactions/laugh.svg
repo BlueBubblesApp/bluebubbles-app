@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" fill="url(#tapback)"><defs><linearGradient id="tapback" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1000"><stop offset="0" stop-color="#8edcff"/><stop offset="1" stop-color="#2e9cf0"/></linearGradient></defs>
   <defs>
     <!-- <style>
       .cls-1 {

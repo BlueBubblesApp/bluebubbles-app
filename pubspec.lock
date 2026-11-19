@@ -1281,15 +1281,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5"
-  gesture_x_detector:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: d63342cb17976f60bd94e7c1a822398115d3f83c
-      resolved-ref: d63342cb17976f60bd94e7c1a822398115d3f83c
-      url: "https://github.com/BlueBubblesApp/xgesture_flutter.git"
-    source: git
-    version: "1.1.1"
   get:
     dependency: "direct main"
     description:

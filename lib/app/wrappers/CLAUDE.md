@@ -14,7 +14,7 @@ See `.claude/rules/frontend.md` for full controller tagging, `forceDelete`, and 
 ## Scaffold & Layout
 - `bb_scaffold.dart` — use instead of raw `Scaffold`; handles window transparency, system UI overlay, theme defaults
 - `bb_annotated_region.dart` — base page wrapper for status/nav bar color styling
-- `tablet_mode_wrapper.dart` — resizable split-view (left = chat list, right = conversation); configurable min/max pane ratios
+- `tablet_mode_wrapper.dart` — resizable split-view used by the chat list, Settings and Find My; configurable min/max pane ratios. Outside the split layout, passing `rightOpen` stacks the right pane over the left while it's true (the left pane is hidden, its animations paused and its focus excluded)
 - `gradient_background_wrapper.dart` — animated gradient background driven by `ConversationViewController`
 - `titlebar_wrapper.dart` — custom desktop window titlebar (bitsdojo_window / window_manager)
 

@@ -9,7 +9,7 @@ One class per preference category, each wrapping a `SharedPreferencesService` in
 | `shared_preferences_database_actions.dart` | `SharedPreferencesDatabaseActions` | `database` |
 | `shared_preferences_desktop_actions.dart` | `SharedPreferencesDesktopActions` | `desktop` — window dimensions/offsets, window effect, split view ratio |
 | `shared_preferences_firebase_actions.dart` | `SharedPreferencesFirebaseActions` | `firebase` |
-| `shared_preferences_messaging_actions.dart` | `SharedPreferencesMessagingActions` | `messaging` — last opened chat, draft/reply state |
+| `shared_preferences_messaging_actions.dart` | `SharedPreferencesMessagingActions` | `messaging` — last opened chat, draft/reply state, recent tapback emoji and sticker usage (global and per chat) |
 | `shared_preferences_network_actions.dart` | `SharedPreferencesNetworkActions` | `network` |
 | `shared_preferences_server_actions.dart` | `SharedPreferencesServerActions` | `server` — cached server details (OS version, server version) |
 | `shared_preferences_system_actions.dart` | `SharedPreferencesSystemActions` | `system` |

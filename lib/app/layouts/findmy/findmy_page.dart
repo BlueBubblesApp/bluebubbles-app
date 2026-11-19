@@ -9,6 +9,7 @@ import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_friends_tab_view.d
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_items_tab_view.dart';
 import 'package:bluebubbles/app/layouts/findmy/widgets/findmy_map_widget.dart';
 import 'package:bluebubbles/app/wrappers/scrollbar_wrapper.dart';
+import 'package:bluebubbles/app/wrappers/tablet_mode_wrapper.dart';
 import 'package:bluebubbles/app/wrappers/theme_switcher.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -43,81 +44,88 @@ class _FindMyPageState extends State<FindMyPage> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        if (context.isPhone) {
-          return _buildNormalLayout(context);
-        }
-        return _buildTabletLayout(context);
-      },
-    );
+    if (NavigationSvc.isTabletMode(context)) {
+      return TabletModeWrapper(
+        initialRatio: 0.35,
+        minRatio: kIsDesktop ? 0.2 : 0.3,
+        maxRatio: 0.5,
+        allowResize: true,
+        left: _buildScaffold(context, _buildLists(context)),
+        right: _buildScaffold(context, _buildMap(context)),
+      );
+    }
+    return context.isPhone ? _buildNormalLayout(context) : _buildTabletLayout(context);
   }
 
-  Widget _buildTabletLayout(BuildContext context) {
+  Widget _buildScaffold(BuildContext context, Widget body) {
     return Obx(
       () => BBScaffold(
         backgroundColor: context.theme.colorScheme.surface.themeOpacity(context),
         safeAreaLeft: false,
         safeAreaRight: false,
-        body: Stack(
-          children: [
-            Row(
-              children: [
-                ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minWidth: 300, maxWidth: max(300, min(500, NavigationSvc.width(context) / 3))),
-                  child: Container(
-                    width: 500,
-                  ),
-                ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      FindMyMapWidget(controller: controller),
-                      if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: true),
-                      if (kIsDesktop) _buildDesktopTitleBar(context),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            ConstrainedBox(
-              constraints:
-                  BoxConstraints(minWidth: 300, maxWidth: max(300, min(500, NavigationSvc.width(context) / 3))),
-              child: Column(
-                children: [
-                  if (!context.samsung)
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          child: buildBackButton(context),
-                        ),
-                        Expanded(child: Text("Find My", style: context.theme.textTheme.titleLarge)),
-                      ],
-                    ),
-                  if (!context.samsung) _buildDesktopTabBar(),
-                  Expanded(
-                    child: SizedBox(
-                      width: 500,
-                      child: TabBarView(
-                        controller: controller.tabController,
-                        children: [
-                          _buildFriendsTab(context, true),
-                          _buildDevicesTab(context, true),
-                          _buildItemsTab(context, true),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (context.samsung) _buildDesktopTabBar()
-                ],
+        body: body,
+      ),
+    );
+  }
+
+  Widget _buildMap(BuildContext context) {
+    return Obx(
+      () => Stack(
+        children: [
+          FindMyMapWidget(controller: controller),
+          if (!context.samsung && controller.canRefresh.value) _buildRefreshButton(context, isTablet: true),
+          if (kIsDesktop) _buildDesktopTitleBar(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLists(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!context.samsung)
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                child: buildBackButton(context),
               ),
-            ),
-          ],
+              Expanded(child: Text("Find My", style: context.theme.textTheme.titleLarge)),
+            ],
+          ),
+        if (!context.samsung) _buildDesktopTabBar(),
+        Expanded(
+          child: TabBarView(
+            controller: controller.tabController,
+            children: [
+              _buildFriendsTab(context, true),
+              _buildDevicesTab(context, true),
+              _buildItemsTab(context, true),
+            ],
+          ),
         ),
+        if (context.samsung) _buildDesktopTabBar()
+      ],
+    );
+  }
+
+  Widget _buildTabletLayout(BuildContext context) {
+    final listWidth = BoxConstraints(minWidth: 300, maxWidth: max(300, min(500, NavigationSvc.width(context) / 3)));
+    return _buildScaffold(
+      context,
+      Stack(
+        children: [
+          Row(
+            children: [
+              ConstrainedBox(constraints: listWidth, child: const SizedBox(width: 500)),
+              Expanded(child: _buildMap(context)),
+            ],
+          ),
+          ConstrainedBox(constraints: listWidth, child: SizedBox(width: 500, child: _buildLists(context))),
+        ],
       ),
     );
   }
