@@ -861,6 +861,7 @@ class ChatsService {
             MethodChannelSvc.actions.deleteNotification(
               notificationId: id,
               tag: NotificationsService.NEW_MESSAGE_TAG,
+              keepBubble: true,
             );
           }
         }

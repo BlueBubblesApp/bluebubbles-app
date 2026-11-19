@@ -15,7 +15,7 @@ class ChatActions {
     final chatId = data['chatId'] as int;
 
     await MethodChannelSvc.actions.deleteNotification(
-        notificationId: chatId, tag: 'new_message', readBefore: data['readBefore'] as int?);
+        notificationId: chatId, tag: 'new_message', readBefore: data['readBefore'] as int?, keepBubble: true);
   }
 
   static Future<void> markAllChatsRead(dynamic data) async {
