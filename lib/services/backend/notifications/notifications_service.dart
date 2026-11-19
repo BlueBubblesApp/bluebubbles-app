@@ -405,9 +405,6 @@ class NotificationsService {
 
     if (id != null) {
       facetimeNotifications[key] = id;
-      // A call without a UUID came from a server with FaceTime calling off, which never reports that
-      // the call was answered elsewhere or ended. Clear it after 30 seconds, as Android does, instead
-      // of ringing until dismissed by hand.
       if (callUuid == null) {
         facetimeTimeouts[key] = Timer(const Duration(seconds: 30), () => clearDesktopFaceTimeNotif(key));
       }
