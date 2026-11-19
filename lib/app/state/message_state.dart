@@ -535,6 +535,7 @@ class MessageState extends StatefulController {
 
     if (index >= 0) {
       // Update existing reaction
+      _carryAttachments(associatedMessages[index], reaction);
       _carryStickerSize(associatedMessages[index], reaction);
       associatedMessages[index] = reaction;
     } else {
@@ -548,6 +549,7 @@ class MessageState extends StatefulController {
 
       if (tempIndex >= 0) {
         // Replace temp reaction
+        _carryAttachments(associatedMessages[tempIndex], reaction);
         _carryStickerSize(associatedMessages[tempIndex], reaction);
         associatedMessages[tempIndex] = reaction;
       } else {
@@ -559,6 +561,13 @@ class MessageState extends StatefulController {
     // Update underlying message and hasReactions flag
     message.associatedMessages = associatedMessages.toList();
     hasReactions.value = associatedMessages.isNotEmpty;
+  }
+
+  /// A socket event's copy of a message has no linked attachments (they arrive beside it, and are saved to the stored
+  /// row). Replacing the stored copy with it would drop a sticker's image until the stored copy is read back, so it
+  /// keeps the ones already linked, as [Message.merge] does.
+  void _carryAttachments(Message from, Message to) {
+    if (to.dbAttachments.isEmpty && from.dbAttachments.isNotEmpty) to.dbAttachments.addAll(from.dbAttachments);
   }
 
   /// The server's copy of a sent sticker has a new attachment guid and no measured size until its file downloads, so

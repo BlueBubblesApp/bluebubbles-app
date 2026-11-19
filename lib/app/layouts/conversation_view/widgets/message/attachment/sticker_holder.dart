@@ -145,13 +145,14 @@ class _StickerHolderState extends State<StickerHolder> {
   List<Attachment> _stickers = const [];
 
   /// Keys ([_keyOf]) of the stickers whose image is on disk, ready to draw
-  final Set<Object> _ready = {};
+  final Set<int> _ready = {};
 
-  /// Guids being downloaded, so an update doesn't add another callback to the same download
+  /// Guids being downloaded, so an update doesn't add another callback to the same download. Keyed by guid rather
+  /// than [_keyOf], since the guid names the file being fetched.
   final Set<String> _downloading = {};
 
   /// Keys whose image has drawn, so a new provider for the same sticker (its moved file) doesn't pop it in again
-  final Set<Object> _shown = {};
+  final Set<int> _shown = {};
 
   /// Where [_measure] reports each placed sticker's decoded size, for [StickerSpace]
   MessageState? _state;
@@ -185,14 +186,16 @@ class _StickerHolderState extends State<StickerHolder> {
         return byDate != 0 ? byDate : (a.id ?? 0).compareTo(b.id ?? 0);
       });
     // Rebuilt from the current messages each time, so a sticker that left (unsent, or moved to the other holder once
-    // its placement arrived) stops drawing here
-    _stickers = [
+    // its placement arrived) stops drawing here. One per attachment row, in case two copies of a message link the same
+    // one; each key draws one widget.
+    _stickers = <int, Attachment>{
       for (final message in messages)
         for (final attachment in message.dbAttachments)
-          if (attachment.guid != null &&
+          if (attachment.id != null &&
+              attachment.guid != null &&
               (!widget.placed || StickerPlacement.tryParse(attachment.stickerPlacement) != null))
-            attachment,
-    ];
+            attachment.id!: attachment,
+    }.values.toList();
     _ready.retainAll(_stickers.map(_keyOf));
 
     for (final attachment in List.of(_stickers)) {
@@ -217,10 +220,11 @@ class _StickerHolderState extends State<StickerHolder> {
     }
   }
 
-  /// A sent sticker keeps its attachment row when the server's copy replaces it, but not its guid or file
-  Object _keyOf(Attachment attachment) => attachment.id ?? attachment.guid!;
+  /// A sent sticker keeps its attachment row when the server's copy replaces it, but not its guid or file. Every
+  /// sticker here has been saved ([loadStickers] skips any that haven't), so it has a row.
+  int _keyOf(Attachment attachment) => attachment.id!;
 
-  void _markReady(Object key, Attachment attachment) {
+  void _markReady(int key, Attachment attachment) {
     if (!mounted) return;
     setState(() => _ready.add(key));
     _measure(attachment);
