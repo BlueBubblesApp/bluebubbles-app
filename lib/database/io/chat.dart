@@ -608,20 +608,12 @@ class Chat {
     });
   }
 
-  /// Fetch messages asynchronously with progressive loading
-  /// Returns messages with attachments, then loads reactions in background
+  /// Fetches a page of messages with their attachments. Reactions are not loaded; [MessagesService] loads them for
+  /// the messages it shows.
   static Future<List<Message>> getMessagesAsync(Chat chat,
-      {int offset = 0,
-      int limit = 25,
-      bool includeDeleted = false,
-      int? searchAround,
-      Function? onSupplementalDataLoaded}) async {
+      {int offset = 0, int limit = 25, bool includeDeleted = false, int? searchAround}) async {
     if (kIsWeb || chat.id == null) return [];
-
-    final totalStopwatch = Stopwatch()..start();
-
-    // PHASE 1: Query messages with attachments using interface/actions pattern
-    final messages = await ChatInterface.getMessagesAsync(
+    return ChatInterface.getMessagesAsync(
       chatId: chat.id!,
       chatGuid: chat.guid,
       participantsData: chat.handles.map((e) => e.toMap()).toList(),
@@ -630,73 +622,6 @@ class Chat {
       includeDeleted: includeDeleted,
       searchAround: searchAround,
     );
-
-    if (messages.isEmpty) {
-      return messages;
-    }
-
-    // PHASE 2: Load reactions in background (non-blocking)
-    final messageGuids = messages.map((e) => e.guid!).toList();
-
-    // Don't await - let this run in background and call callback when done
-    _loadSupplementalDataAsync(messages, messageGuids, totalStopwatch, onSupplementalDataLoaded);
-
-    totalStopwatch.stop();
-    Logger.debug("[getMessagesAsync] RETURNED (Phase 1 complete): ${totalStopwatch.elapsedMilliseconds}ms");
-
-    // Return messages immediately (reactions/attachments will be added later)
-    return messages;
-  }
-
-  /// Loads [messages]' reactions into them in the background, then calls [onComplete].
-  static void loadReactionsAsync(List<Message> messages, Function? onComplete) => unawaited(
-      _loadSupplementalDataAsync(messages, messages.map((e) => e.guid!).toList(), Stopwatch()..start(), onComplete));
-
-  /// Load reactions in background and append to messages
-  static Future<void> _loadSupplementalDataAsync(
-    List<Message> messages,
-    List<String> messageGuids,
-    Stopwatch totalStopwatch,
-    Function? onComplete,
-  ) async {
-    final supplementalStopwatch = Stopwatch()..start();
-
-    try {
-      var associatedMessages = await ChatInterface.loadSupplementalData(
-        messageGuids: messageGuids,
-      );
-
-      Logger.debug("[getMessagesAsync] Phase 2 - Supplemental query: ${supplementalStopwatch.elapsedMilliseconds}ms");
-
-      // Normalize reactions
-      associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
-
-      // Append reactions to original messages
-      int messagesWithReactions = 0;
-      for (Message m in messages) {
-        final messageReactions = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();
-        m.associatedMessages = messageReactions;
-        if (messageReactions.isNotEmpty) {
-          messagesWithReactions++;
-          Logger.debug("[getMessagesAsync] Phase 2 - Added ${messageReactions.length} reactions to message ${m.guid}",
-              tag: "MessageReactivity");
-        }
-      }
-
-      supplementalStopwatch.stop();
-      Logger.debug(
-          "[getMessagesAsync] Phase 2 - COMPLETE: ${supplementalStopwatch.elapsedMilliseconds}ms (${associatedMessages.length} reactions on $messagesWithReactions messages)");
-
-      // Notify caller that supplemental data has been loaded
-      if (onComplete != null) {
-        Logger.debug("[getMessagesAsync] Phase 2 - Calling onComplete callback", tag: "MessageReactivity");
-        onComplete();
-      } else {
-        Logger.warn("[getMessagesAsync] Phase 2 - No onComplete callback provided!", tag: "MessageReactivity");
-      }
-    } catch (ex, stacktrace) {
-      Logger.error("Failed to load supplemental data for messages", error: ex, trace: stacktrace);
-    }
   }
 
   void webSyncParticipants() {}
