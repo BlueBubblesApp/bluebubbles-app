@@ -126,13 +126,16 @@ class Database {
       if (PrefsSvc.database.shouldUseCustomPath() && customPath != null) {
         Directory oldCustom = Directory(join(customPath, 'objectbox'));
         if (oldCustom.existsSync()) {
-          Logger.info("Detected prior use of custom path option. Migrating...");
+          Logger.info("Detected prior use of custom path option. Migrating...", tag: "Database");
           await copyPath(oldCustom.path, objectBoxDirectory.path);
         }
         await PrefsSvc.database.clearCustomPathConfig();
       }
     } catch (e, s) {
-      Logger.error("Failed to prepare ObjectBox directory!", error: e, trace: s);
+      Logger.error("Failed to prepare ObjectBox directory!", error: e, trace: s, tag: "Database");
+      // Opening here could create an empty store in place of a custom-path copy that failed part way. The custom
+      // path config is only cleared after a successful copy, so the next launch retries it.
+      return;
     }
 
     await _openOrAttachStore(objectBoxDirectory);
@@ -143,18 +146,18 @@ class Database {
 
     try {
       if (isStoreOpen) {
-        Logger.info("Attempting to attach to an existing ObjectBox store...");
+        Logger.info("Attempting to attach to an existing ObjectBox store...", tag: "Database");
         store = Store.attach(getObjectBoxModel(), objectBoxDirectory.path);
-        Logger.info("Successfully attached to an existing ObjectBox store");
+        Logger.info("Successfully attached to an existing ObjectBox store", tag: "Database");
       } else {
-        Logger.info("Opening new ObjectBox store from path: ${objectBoxDirectory.path}");
+        Logger.info("Opening new ObjectBox store from path: ${objectBoxDirectory.path}", tag: "Database");
         store = await openStore(directory: objectBoxDirectory.path);
       }
     } catch (e, s) {
-      Logger.error("Failed to open ObjectBox store!", error: e, trace: s);
+      Logger.error("Failed to open ObjectBox store!", error: e, trace: s, tag: "Database");
 
       if (!isStoreOpen && e.toString().contains("another store is still open using the same path")) {
-        Logger.info("Retrying to attach to an existing ObjectBox store");
+        Logger.info("Retrying to attach to an existing ObjectBox store", tag: "Database");
         await _openOrAttachStore(objectBoxDirectory, storeOpenStatus: true);
       }
     }
