@@ -58,6 +58,25 @@ class SharedPreferencesMessagingActions {
   // Each count reads, changes and rewrites a list, so overlapping ones would lose a use
   static Future<void> _tapbackEmojiQueue = Future.value();
 
+  /// Drops sticker tapbacks whose sticker isn't in [stickerIdentifiers] from every recent tapback list.
+  Future<void> pruneStickerTapbacks(Set<String> stickerIdentifiers) =>
+      _tapbackEmojiQueue = _tapbackEmojiQueue.then((_) async {
+        final keys = service.i.keys
+            .where((k) => k == _tapbackEmojiUsageKey || k.startsWith('$_tapbackEmojiUsageKey:'))
+            .toList();
+        for (final key in keys) {
+          final usage = _tapbackEmojiUsage(key);
+          final kept = usage
+              .where((u) =>
+                  !u.emoji.startsWith(stickerTapbackPrefix) ||
+                  stickerIdentifiers.contains(u.emoji.substring(stickerTapbackPrefix.length)))
+              .toList();
+          if (kept.length != usage.length) await service.i.setString(key, _encodeTapbackEmojiUsage(kept));
+        }
+      }).catchError((Object e, StackTrace s) {
+        Logger.warn("Couldn't prune sticker tapbacks", error: e, trace: s, tag: "TapbackEmoji");
+      });
+
   /// Forgets what's kept for deleted chat [chatGuid] here: its tapback emoji and being the chat to reopen. Its saved
   /// reply lives in the GlobalIsolate's prefs, so it's cleared through PrefsInterface.
   Future<void> clearChat(String chatGuid) async {
@@ -94,9 +113,12 @@ class SharedPreferencesMessagingActions {
     final kept = [
       (emoji: emoji, count: count, lastUsed: DateTime.now().millisecondsSinceEpoch),
       ...usage.take(limit - 1),
-    ].map((u) => {'e': u.emoji, 'n': u.count, 't': u.lastUsed}).toList();
-    await service.i.setString(key, jsonEncode(kept));
+    ];
+    await service.i.setString(key, _encodeTapbackEmojiUsage(kept));
   }
+
+  static String _encodeTapbackEmojiUsage(List<({String emoji, int count, int lastUsed})> usage) =>
+      jsonEncode(usage.map((u) => {'e': u.emoji, 'n': u.count, 't': u.lastUsed}).toList());
 
   List<({String emoji, int count, int lastUsed})> _tapbackEmojiUsage(String key) {
     final raw = service.i.getString(key);

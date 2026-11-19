@@ -104,6 +104,9 @@ class StickerLibraryService {
       unavailableReason.value = stickers.isEmpty ? reason : null;
       syncError.value = null;
       await _writeIndex();
+      if (reason == null || stickers.isNotEmpty) {
+        await PrefsSvc.messaging.pruneStickerTapbacks(stickers.map((e) => e.identifier).toSet());
+      }
       await _fetchMissingThumbnails();
       await _pruneFiles();
     } catch (e, s) {
