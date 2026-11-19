@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/helpers.dart';
+import 'package:bluebubbles/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -74,20 +75,31 @@ void showVersionDialog(BuildContext context) {
                       style: Theme.of(context).textTheme.bodyLarge!
                           .copyWith(color: Theme.of(context).colorScheme.primary)),
                   onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (BuildContext context) => Theme(
-                        data: Theme.of(context),
-                        child: LicensePage(
-                          applicationName: "BlueBubbles",
-                          applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
-                          applicationIcon: Image.asset(
-                            "assets/icon/icon.png",
-                            width: 30,
-                            height: 30,
+                    Navigator.pop(context);
+                    NavigationSvc.push(
+                      context,
+                      // Matches the app's own app bars, which clear the desktop title bar
+                      Builder(
+                        builder: (context) => Theme(
+                          data: Theme.of(context).copyWith(
+                            scaffoldBackgroundColor: context.headerColor,
+                            appBarTheme: Theme.of(context)
+                                .appBarTheme
+                                .copyWith(backgroundColor: context.headerColor, toolbarHeight: kIsDesktop ? 80 : null),
+                            cardColor: context.tileColor,
+                          ),
+                          child: LicensePage(
+                            applicationName: "BlueBubbles",
+                            applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
+                            applicationIcon: Image.asset(
+                              "assets/icon/icon.png",
+                              width: 30,
+                              height: 30,
+                            ),
                           ),
                         ),
                       ),
-                    ));
+                    );
                   },
                 ),
                 TextButton(
