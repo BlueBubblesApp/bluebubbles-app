@@ -4,7 +4,6 @@ import 'package:bluebubbles/app/components/custom_text_editing_controllers.dart'
 import 'package:bluebubbles/app/layouts/chat_creator/chat_creator.dart' show SelectedContact;
 import 'package:bluebubbles/app/layouts/conversation_view/pages/conversation_view.dart';
 import 'package:bluebubbles/app/wrappers/stateful_boilerplate.dart';
-import 'package:bluebubbles/app/wrappers/titlebar_wrapper.dart';
 import 'package:bluebubbles/database/models.dart';
 import 'package:bluebubbles/helpers/helpers.dart';
 import 'package:bluebubbles/services/services.dart';
@@ -707,16 +706,7 @@ class ChatCreatorController extends StatefulController {
       ConversationView(chat: chat, customService: messagesService, fromChatCreator: true),
       (route) => route.isFirst,
       closeActiveChat: false,
-      customRoute: PageRouteBuilder(
-        pageBuilder: (_, __, ___) => TitleBarWrapper(
-          child: ConversationView(
-            chat: chat,
-            customService: messagesService,
-            fromChatCreator: true,
-          ),
-        ),
-        transitionDuration: Duration.zero,
-      ),
+      animate: false,
     );
   }
 

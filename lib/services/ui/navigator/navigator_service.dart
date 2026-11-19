@@ -140,7 +140,7 @@ class NavigatorService {
   /// Already in Settings, this just switches to [initialPage]
   void openSettings({Widget? initialPage}) {
     if (openSection.value == AppSection.settings) {
-      if (initialPage != null) pushAndRemoveSettingsUntil(Get.context!, initialPage, (_) => false);
+      if (initialPage != null) pushAndRemoveSettingsUntil(Get.context!, initialPage, (route) => route.isFirst);
       return;
     }
     _openSection(AppSection.settings, SettingsPage(initialPage: initialPage));
@@ -164,7 +164,8 @@ class NavigatorService {
     return push(context, widget);
   }
 
-  /// [predicate] is ignored: a section replaces everything over the placeholder
+  /// In the split view [predicate] picks what stays under [widget]; keep the placeholder with `route.isFirst`.
+  /// The phone layout pushes over the current page, as a page opened from the list would be.
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {Bindings? binding}) {
     final settings = _settings;
@@ -175,22 +176,25 @@ class NavigatorService {
     binding?.dependencies();
     if (_tabletLayout) {
       activeSettingsPage.value = widget.runtimeType;
-      settings.pushAndRemoveUntil(_instantRoute(widget), (route) => route.isFirst);
+      settings.pushAndRemoveUntil(_instantRoute(widget), predicate);
     } else {
       settings.push(ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget));
     }
   }
 
-  /// Closes Settings and Find My first, so what it opens is in view
+  /// Pushed with no transition in, like the chat creator turning into the chat it sends to
+  static PageRoute _appearingRoute(Widget widget) =>
+      PageRouteBuilder(pageBuilder: (_, _, _) => widget, transitionDuration: Duration.zero);
+
+  /// Closes Settings and Find My first, so what it opens is in view. The split view always swaps the chat pane
+  /// instantly; elsewhere [animate] false skips the transition in.
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
-      {bool closeActiveChat = true, PageRoute? customRoute}) async {
+      {bool closeActiveChat = true, bool animate = true}) async {
     final right = _right;
     if (right == null) {
+      final page = TitleBarWrapper(child: widget);
       await Navigator.of(context).pushAndRemoveUntil(
-          customRoute ??
-              ThemeSwitcher.buildPageRoute(
-                builder: (BuildContext context) => TitleBarWrapper(child: widget),
-              ),
+          animate ? ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => page) : _appearingRoute(page),
           predicate);
       return;
     }
@@ -203,9 +207,7 @@ class NavigatorService {
       await right.pushAndRemoveUntil(_instantRoute(widget), predicate);
     } else {
       await right.pushAndRemoveUntil(
-          customRoute != null
-              ? PageRouteBuilder(pageBuilder: (_, _, _) => widget, transitionDuration: Duration.zero)
-              : ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget),
+          animate ? ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget) : _appearingRoute(widget),
           predicate);
     }
   }
