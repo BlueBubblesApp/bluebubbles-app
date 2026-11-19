@@ -122,10 +122,11 @@ class ContactV2Actions {
       if (kIsDesktop) {
         // Step 1: Fetch contacts from server
         Logger.info('[ContactV2] Starting contact fetch from server...');
-        final serverContacts =
-            await fetchServerContacts(isV2Server: dataMap['isV2Server'] as bool? ?? false, withAvatars: true);
+        final serverContacts = await HttpSvc.contact
+            .fetchAllPages(isV2Server: dataMap['isV2Server'] as bool? ?? false, withAvatars: true);
 
-        sourceRead = true;
+        // As on Android, an empty read is likelier a server that can't reach its contacts than one with none.
+        sourceRead = serverContacts.isNotEmpty;
         if (serverContacts.isNotEmpty) {
           for (final map in serverContacts) {
             final displayName = getDisplayName(map['displayName'], map['firstName'], map['lastName']);
@@ -492,7 +493,9 @@ class ContactV2Actions {
       for (final path in staleAvatarPaths) {
         try {
           File(path).deleteSync();
-        } catch (_) {}
+        } on FileSystemException catch (e) {
+          Logger.warn('Could not delete avatar of removed contact: ${e.message}', tag: 'ContactV2Actions');
+        }
       }
 
       final endTime = DateTime.now().millisecondsSinceEpoch;
@@ -744,48 +747,6 @@ class ContactV2Actions {
     }
   }
 
-  /// Every server contact. Only v2 pages (at 1,000): 1.x ignores paging and returns everything every time.
-  static Future<List<Map<String, dynamic>>> fetchServerContacts({
-    required bool isV2Server,
-    bool withAvatars = false,
-  }) async {
-    const pageSize = 1000;
-    final contacts = <Map<String, dynamic>>[];
-    while (true) {
-      final response = await HttpSvc.contact.fetchAll(
-        withAvatars: withAvatars,
-        limit: isV2Server ? pageSize : null,
-        offset: isV2Server ? contacts.length : null,
-      );
-      final page = (response.data['data'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
-      contacts.addAll(page);
-      if (!isV2Server || page.length < pageSize) return contacts;
-    }
-  }
-
-  /// Uploads [contacts] (from [ContactV2.toServerMap]). Released 1.x servers have no update or delete route, so they
-  /// only get the create, which they merge by name.
-  static Future<void> uploadToServer(
-    List<Map<String, dynamic>> contacts, {
-    required String deviceId,
-    required bool isV2Server,
-    void Function(int, int)? onSendProgress,
-  }) async {
-    if (!isV2Server) {
-      await HttpSvc.contact.create(contacts, onSendProgress: onSendProgress);
-      return;
-    }
-
-    final server = await fetchServerContacts(isV2Server: true);
-    final plan = planContactUpload(server, contacts, deviceId: deviceId);
-
-    if (plan.updates.isNotEmpty) await HttpSvc.contact.update(plan.updates, onSendProgress: onSendProgress);
-    if (plan.creates.isNotEmpty) await HttpSvc.contact.create(plan.creates, onSendProgress: onSendProgress);
-    if (plan.deletes.isNotEmpty) await HttpSvc.contact.delete(plan.deletes);
-    Logger.info('[ContactV2] Uploaded contacts: ${plan.updates.length} updated, ${plan.creates.length} created, '
-        '${plan.deletes.length} deleted');
-  }
-
   /// Matches by `externalId`, or by name for uploads that predate it; `api` contacts are the Mac's own, never ours.
   /// An empty [local] is likelier a failed read than an emptied address book, so it deletes nothing.
   @visibleForTesting
@@ -843,22 +804,35 @@ class ContactV2Actions {
         setEquals(addresses(server['emails']), addresses(local['emails']));
   }
 
-  /// Uploads contacts to the server
+  /// Uploads contacts (from [ContactV2.toServerMap]) to the server. Released 1.x servers have no update or delete
+  /// route, so they only get the create, which they merge by name. Errors are logged and rethrown for the caller.
   static Future<void> uploadContacts(dynamic data) async {
     final contacts = data['contacts'] as List<Map<String, dynamic>>;
+    final deviceId = data['deviceId'] as String;
+    final isV2Server = data['isV2Server'] as bool? ?? false;
 
     try {
-      await uploadToServer(
-        contacts,
-        deviceId: data['deviceId'] as String,
-        isV2Server: data['isV2Server'] as bool? ?? false,
-      );
+      if (!isV2Server) {
+        await HttpSvc.contact.create(contacts);
+        Logger.info('[ContactV2] Uploaded ${contacts.length} contacts');
+        return;
+      }
+
+      final server = await HttpSvc.contact.fetchAllPages(isV2Server: true);
+      final plan = planContactUpload(server, contacts, deviceId: deviceId);
+
+      if (plan.updates.isNotEmpty) await HttpSvc.contact.update(plan.updates);
+      if (plan.creates.isNotEmpty) await HttpSvc.contact.create(plan.creates);
+      if (plan.deletes.isNotEmpty) await HttpSvc.contact.delete(plan.deletes);
+      Logger.info('[ContactV2] Uploaded contacts: ${plan.updates.length} updated, ${plan.creates.length} created, '
+          '${plan.deletes.length} deleted');
     } catch (err, stack) {
       if (err is Response) {
         Logger.error(err.data["error"]["message"].toString(), error: err, trace: stack, tag: 'ContactV2Actions');
       } else {
         Logger.error('Failed to upload contacts!', error: err, trace: stack, tag: 'ContactV2Actions');
       }
+      return Future.error(err, stack);
     }
   }
 

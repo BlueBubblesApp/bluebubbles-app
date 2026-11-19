@@ -27,13 +27,18 @@ class ContactUploadProgress extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          // Without a size there is nothing to count: the bar alone shows the upload is running.
           Obx(
-            () => Text(
-              '${progress.value != null && totalSize.value != null ? (progress.value! * totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${((totalSize.value ?? 0).toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
-              style: context.theme.textTheme.bodyLarge,
-            ),
+            () => totalSize.value == null
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Text(
+                      '${progress.value != null ? (progress.value! * totalSize.value! / 1000).getFriendlySize(withSuffix: false) : ""} / ${(totalSize.value!.toDouble() / 1000).getFriendlySize()} (${((progress.value ?? 0) * 100).floor()}%)',
+                      style: context.theme.textTheme.bodyLarge,
+                    ),
+                  ),
           ),
-          const SizedBox(height: 10.0),
           Obx(
             () => LinearProgressIndicator(
               backgroundColor: context.theme.colorScheme.outline,
