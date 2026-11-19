@@ -22,7 +22,8 @@ StickerLibraryService get StickerLibrarySvc => GetIt.I<StickerLibraryService>();
 /// - `full/<id>`: the full-size image, fetched the first time the sticker is sent.
 ///
 /// A sticker's image never changes under its identifier, so nothing is downloaded twice. The listing has no ETag, so
-/// every sync re-reads it. Files for stickers no longer listed are removed on each sync. v2 servers only: check
+/// every sync re-reads it. Files for stickers no longer listed are removed on each sync, and so are their entries in
+/// the recent tapbacks (unless the library is unavailable). v2 servers only: check
 /// `ServerDetails.supportsStickers` first. Registered lazily.
 class StickerLibraryService {
   /// Thumbnails fetched at once
@@ -104,7 +105,8 @@ class StickerLibraryService {
       unavailableReason.value = stickers.isEmpty ? reason : null;
       syncError.value = null;
       await _writeIndex();
-      if (reason == null || stickers.isNotEmpty) {
+      // An unavailable library says nothing about which stickers are gone
+      if (unavailableReason.value == null) {
         await PrefsSvc.messaging.pruneStickerTapbacks(stickers.map((e) => e.identifier).toSet());
       }
       await _fetchMissingThumbnails();

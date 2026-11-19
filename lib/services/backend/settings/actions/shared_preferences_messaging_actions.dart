@@ -65,6 +65,8 @@ class SharedPreferencesMessagingActions {
             .where((k) => k == _tapbackEmojiUsageKey || k.startsWith('$_tapbackEmojiUsageKey:'))
             .toList();
         for (final key in keys) {
+          // Most lists hold no sticker at all: skip decoding those
+          if (!(service.i.getString(key)?.contains(stickerTapbackPrefix) ?? false)) continue;
           final usage = _tapbackEmojiUsage(key);
           final kept = usage
               .where((u) =>
