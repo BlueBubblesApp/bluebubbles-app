@@ -78,7 +78,6 @@ void showVersionDialog(BuildContext context) {
                     Navigator.pop(context);
                     NavigationSvc.push(
                       context,
-                      // Matches the app's own app bars, which clear the desktop title bar
                       Builder(
                         builder: (context) => Theme(
                           data: Theme.of(context).copyWith(

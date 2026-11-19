@@ -28,7 +28,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   String searchQuery = "";
 
-  /// Its own, so a closed Settings page's routes don't linger in the next one's.
+  /// Per page, so a closed Settings page's routes don't linger in the next one
   late final PaneObserver _paneObserver = PaneObserver(NavigationSvc.settingsPaneOpen);
 
   List<Widget> _getSettingsItemList(BuildContext context) {
@@ -255,13 +255,12 @@ class _SettingsPageState extends State<SettingsPage> with ThemeHelpers {
   }
 }
 
-/// What Settings' right pane shows, in the tablet layout, when no section is open.
 class SettingsPlaceholder extends StatelessWidget {
   const SettingsPlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // In the phone layout the list shows through while a section slides out
+    // The list shows through while a section slides out
     if (!NavigationSvc.isTabletMode(context)) return const SizedBox.shrink();
     return Obx(
       () => BBScaffold(

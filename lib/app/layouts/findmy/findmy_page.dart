@@ -19,8 +19,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sliding_up_panel2/sliding_up_panel2.dart';
 
-/// Find My: its lists and map side by side in a split of its own, or the map with the lists in a sliding panel on a
-/// phone.
 class FindMyPage extends StatefulWidget {
   const FindMyPage({super.key});
 

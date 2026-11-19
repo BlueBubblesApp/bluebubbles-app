@@ -14,7 +14,7 @@ class InitialWidgetRight extends StatefulWidget {
 class _InitialWidgetRightState extends State<InitialWidgetRight> {
   @override
   Widget build(BuildContext context) {
-    // In the phone layout the chat list shows through while a chat slides out
+    // The chat list shows through while a chat slides out
     if (!NavigationSvc.isTabletMode(context)) return const SizedBox.shrink();
     return Obx(
       () => Scaffold(

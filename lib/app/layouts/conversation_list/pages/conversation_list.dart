@@ -139,8 +139,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
   Timer? _initTimer;
   bool? _wasAltLayout;
 
-  /// Folding while Settings or Find My covers the chat closes the chat, so leaving lands on the list as it always has in
-  /// the phone layout. Folding while the chat is in view keeps it open.
+  /// Folding while Settings or Find My covers the chat closes it, so leaving them lands on the list.
   void _closeChatIfFoldedBehindSection(bool altLayout) {
     final folded = _wasAltLayout == true && !altLayout;
     _wasAltLayout = altLayout;
@@ -283,8 +282,7 @@ class _ConversationListState extends CustomState<ConversationList, void, Convers
     return BBScaffold(
       safeAreaLeft: false,
       safeAreaRight: false,
-      // The pages in each pane handle the keyboard and nav bar themselves; resizing the panes for them would resize
-      // the chat pane's overlay under the composer
+      // Resizing the panes for the keyboard would resize the chat pane's overlay under the composer
       safeAreaBottom: false,
       resizeToAvoidBottomInset: false,
       body: TabletModeWrapper(

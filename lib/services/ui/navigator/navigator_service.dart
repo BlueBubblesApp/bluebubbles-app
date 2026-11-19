@@ -15,12 +15,9 @@ NavigatorService get NavigationSvc =>
 
 enum AppSection { settings, findMy }
 
-/// Handles navigation for the app.
-///
-/// The chat list has a split: the left pane (nested navigator 1) holds the chat list and what replaces it (archived,
-/// unknown senders), the right pane (nested navigator 2) every page opened from those. Settings and Find My open over
-/// it as full-window pages with splits of their own; Settings' right pane is nested navigator 3. In the phone layout
-/// each split keeps its navigators, with the right pane stacked over the left while it has a page open.
+/// The chat list's split is nested navigators 1 (left) and 2 (right). Settings and Find My open over it full-window
+/// with splits of their own, Settings' right pane being navigator 3. The phone layout keeps each split's navigators,
+/// stacking the right pane over the left while it has a page.
 class NavigatorService {
   NavigatorService() {
     ever(settingsPaneOpen, (bool open) {
@@ -31,22 +28,17 @@ class NavigatorService {
   final GlobalKey<NavigatorState> key = GlobalKey<NavigatorState>();
   final Rxn listener = Rxn();
 
-  /// Whether the chat list's right pane has a page open over its empty first page. In the phone layout the right pane
-  /// covers the left only while this is true.
+  /// In the phone layout the right pane covers the left only while this is true
   final RxBool chatPaneOpen = false.obs;
   late final PaneObserver chatPaneObserver = PaneObserver(chatPaneOpen);
 
-  /// Whether Settings' right pane has a page open over its placeholder.
   final RxBool settingsPaneOpen = false.obs;
 
-  /// Tells a chat list right pane page when a full page covers it and uncovers it again. Dialogs and see-through
-  /// popups, like a message's, don't count.
+  /// Dialogs and see-through popups, like a message's, don't count as covering
   final RouteObserver<ModalRoute> paneRouteObserver = _OpaqueRouteObserver();
 
-  /// Tracks Settings and Find My on the root navigator.
   late final SectionObserver sectionObserver = SectionObserver(openSection);
 
-  /// The top full-window section, if one is open. The chat list and its open chat are out of view while it is.
   final Rxn<AppSection> openSection = Rxn<AppSection>();
 
   NavigatorState? get _root => key.currentState;
@@ -105,8 +97,7 @@ class NavigatorService {
         reverseTransitionDuration: Duration.zero,
       );
 
-  /// Opens [widget] in the right pane of the split in view: Settings' while Settings is on top, the chat list's
-  /// otherwise.
+  /// Into Settings' right pane while Settings is on top, the chat list's otherwise
   Future<T?> push<T>(BuildContext context, Widget widget) {
     final pane = openSection.value == AppSection.settings ? _settings : _right;
     if (pane == null) {
@@ -117,10 +108,9 @@ class NavigatorService {
     return pane.push<T>(ThemeSwitcher.buildPageRoute(builder: (BuildContext context) => widget));
   }
 
-  /// Replaces the chat list in the left pane with [widget], like the archived chats.
   Future<void> pushLeft(BuildContext context, Widget widget) async {
     final left = _left;
-    // The phone layout hides the left pane behind an open chat, so open over the chat instead, like a shortcut does
+    // The phone layout hides the left pane behind an open chat
     if (left != null && !_tabletLayout && chatPaneOpen.value) {
       await push(context, widget);
       return;
@@ -139,8 +129,7 @@ class NavigatorService {
     _root?.push(ThemeSwitcher.buildPageRoute(settings: RouteSettings(name: section.name), builder: (_) => page));
   }
 
-  /// Opens Settings over the chat list, with [initialPage] in its right pane (in the tablet layout, Server Management
-  /// when none is given). Already in Settings, it just switches to [initialPage].
+  /// Already in Settings, this just switches to [initialPage]
   void openSettings({Widget? initialPage}) {
     if (openSection.value == AppSection.settings) {
       if (initialPage != null) pushAndRemoveSettingsUntil(Get.context!, initialPage, (_) => false);
@@ -149,13 +138,11 @@ class NavigatorService {
     _openSection(AppSection.settings, SettingsPage(initialPage: initialPage));
   }
 
-  /// Opens Find My over the chat list.
   void openFindMy() {
     if (openSection.value == AppSection.findMy) return;
     _openSection(AppSection.findMy, const FindMyPage());
   }
 
-  /// Closes Settings and Find My, uncovering the chat list.
   void closeSections() {
     final root = _root;
     if (root == null) return;
@@ -164,14 +151,12 @@ class NavigatorService {
     }
   }
 
-  /// Opens a page nested inside the current Settings page.
   Future<dynamic> pushSettings(BuildContext context, Widget widget, {Bindings? binding}) async {
     binding?.dependencies();
     return push(context, widget);
   }
 
-  /// Switches the Settings section shown in its right pane to [widget]. [predicate] is ignored: in the tablet layout
-  /// a section replaces everything over the placeholder, in the phone layout it opens over the list.
+  /// [predicate] is ignored: a section replaces everything over the placeholder
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {Bindings? binding}) {
     final settings = _settings;
@@ -188,8 +173,7 @@ class NavigatorService {
     }
   }
 
-  /// Opens [widget] in the chat list's right pane in place of the routes [predicate] rejects, closing Settings and
-  /// Find My first. Opening a chat goes through here.
+  /// Closes Settings and Find My first, so what it opens is in view
   Future<void> pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
       {bool closeActiveChat = true, PageRoute? customRoute}) async {
     final right = _right;
@@ -218,8 +202,7 @@ class NavigatorService {
     }
   }
 
-  /// Goes back one step: a popup over the window first, then in the split in view its right pane, then its left, then
-  /// the split itself for Settings and Find My. Returns false when there was nothing to go back from.
+  /// Returns false when there was nothing to go back from
   bool back() {
     final root = _root;
     Route? top;
@@ -267,10 +250,8 @@ class NavigatorService {
 
   void backConversationView(BuildContext context) => back();
 
-  /// Pops the page [context] is on.
   void pop(BuildContext context, [Object? result]) => Navigator.of(context).pop(result);
 
-  /// Closes the chat and what's open over it in the chat list's right pane.
   /// Remember to call `await ChatsSvc.setAllInactive()` after calling this function
   void closeAllConversationView(BuildContext context) => _right?.popUntil((route) => route.isFirst);
 }
@@ -287,16 +268,14 @@ class _OpaqueRouteObserver extends RouteObserver<ModalRoute> {
   }
 }
 
-/// Tracks the pages pushed over a pane's empty first page.
 class PaneObserver extends NavigatorObserver {
   PaneObserver(this.open);
 
   final RxBool open;
 
-  /// Pages over the first page, bottom to top.
   final List<Route> routes = [];
 
-  /// Forgets the pages of a navigator that went away without popping them, like a chat list that Reset replaced.
+  /// For a navigator that went away without popping its pages, like a chat list Reset replaced
   void reset() {
     routes.clear();
     if (open.value) WidgetsBinding.instance.addPostFrameCallback((_) => open.value = routes.isNotEmpty);
@@ -334,13 +313,11 @@ class PaneObserver extends NavigatorObserver {
   }
 }
 
-/// Tracks the full-window sections on the root navigator.
 class SectionObserver extends NavigatorObserver {
   SectionObserver(this.open);
 
   final Rxn<AppSection> open;
 
-  /// Open sections, bottom to top.
   final List<Route> routes = [];
 
   static AppSection? _section(Route? route) =>

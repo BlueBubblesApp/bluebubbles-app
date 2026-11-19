@@ -63,7 +63,7 @@ class ChatState {
   final RxBool isActive;
   final RxBool isAlive;
 
-  /// Whether a page covers this chat's conversation view, which then doesn't count as being looked at.
+  /// A covered conversation view doesn't count as being looked at
   final RxBool isCovered = false.obs;
   ConversationViewController? controller;
 

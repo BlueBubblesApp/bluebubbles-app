@@ -18,8 +18,8 @@ class TabletModeWrapper extends StatefulWidget {
   final double? minWidthLeft;
   final double? maxWidthLeft;
 
-  /// When set, the phone layout keeps [right] mounted over [left] and shows it while this is true, so the same pages
-  /// carry over when the layout switches.
+  /// When set, the phone layout keeps [right] mounted over [left] and shows it while true, so pages survive a
+  /// layout switch
   final RxBool? rightOpen;
 
   const TabletModeWrapper(

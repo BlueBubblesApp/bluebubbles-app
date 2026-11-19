@@ -197,7 +197,6 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
     if (route != null) NavigationSvc.paneRouteObserver.subscribe(this, route);
   }
 
-  /// Whether a page in the right pane covers this view. Settings and Find My cover the whole chat list instead.
   bool _pageOver = false;
   late final Worker _sectionWorker;
 
@@ -206,7 +205,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
 
   @override
   void didPushNext() {
-    // A page was pushed on top of the conversation view (e.g. ConversationDetails)
+    // A route was pushed on top of the conversation view (e.g. ConversationDetails).
     controller.showingSubRoute = true;
     _pageOver = true;
     _updateCovered();
@@ -214,7 +213,7 @@ class ConversationViewState extends State<ConversationView> with ThemeHelpers<Co
 
   @override
   void didPopNext() {
-    // The page above was popped, so the conversation view is visible again
+    // The route above was popped — conversation view is visible again.
     controller.showingSubRoute = false;
     _pageOver = false;
     _updateCovered();

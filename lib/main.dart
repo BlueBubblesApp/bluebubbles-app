@@ -383,8 +383,7 @@ class Main extends StatelessWidget {
         },
         // A route only reports its own pop state, so a pushed page could tell Android nothing handles back and the
         // gesture left the app. Back always goes through Flutter instead, which still exits when nothing can pop.
-        // Back is handled above the navigator, so it also reaches pages pushed over Home like Settings and Find My.
-        // GetMaterialApp drops its own actions parameter.
+        // Above the navigator so back reaches pages pushed over Home; GetMaterialApp ignores its actions parameter
         builder: (context, navigator) => NotificationListener<NavigationNotification>(
           onNotification: (notification) {
             if (notification.canHandlePop) return false;
@@ -645,8 +644,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   /// Render
   @override
   Widget build(BuildContext context) {
-    // Read here, outside the Obx: tracking it would swap the chat list in under setup's last page the moment setup
-    // finishes, before it offers a backup restore. Setup hands off to the chat list itself.
+    // Not in the Obx: tracking it swaps in the chat list before setup's last page offers a backup restore
     final finishedSetup = SettingsSvc.settings.finishedSetup.value;
     return Actions(
       actions: {
@@ -659,7 +657,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       },
       child: Obx(() => BBScaffold(
             backgroundColor: context.theme.colorScheme.surface.themeOpacity(context),
-            // The conversation list's panes handle the keyboard and nav bar themselves
             resizeToAvoidBottomInset: !finishedSetup,
             safeAreaBottom: finishedSetup ? false : null,
             body: Builder(

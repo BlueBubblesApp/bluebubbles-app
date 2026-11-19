@@ -67,9 +67,7 @@ class TitleBar extends StatelessWidget {
   }
 }
 
-/// Drags the window and double-click maximizes it, like bitsdojo's MoveWindow, but from raw pointer events. MoveWindow
-/// is a GestureDetector over the whole top of the window, so it beat every tap under it in the gesture arena: back
-/// buttons, barriers and Flutter's own app bars there didn't respond.
+/// bitsdojo's MoveWindow, from raw pointer events: its GestureDetector beat every tap under it in the gesture arena
 class _DragStrip extends StatefulWidget {
   const _DragStrip();
 
@@ -82,7 +80,6 @@ class _DragStripState extends State<_DragStrip> {
   Offset? _lastClick;
   Duration? _lastClickTime;
 
-  /// A click on a control under the strip is that control's, so a double-click there doesn't maximize.
   bool _onTapTarget(PointerEvent event) {
     final result = HitTestResult();
     WidgetsBinding.instance.hitTestInView(result, event.position, event.viewId);
