@@ -75,16 +75,12 @@ class Handle {
   String get reactionDisplayName {
     if (address.startsWith("urn:biz")) return "Business";
     if (!kIsWeb && contactsV2.isNotEmpty) {
-      // Prioritize native contacts, but fall back to any contact if no native ones exist (should be rare)
-      final firstNativeContact = contactsV2.where((c) => c.isNative).firstOrNull;
-      final nativeNickname = firstNativeContact?.nickname;
-      if (!isNullOrEmpty(nativeNickname)) return nativeNickname!;
-
-      final nativeFirstName = firstNativeContact?.firstName;
-      if (!isNullOrEmpty(nativeFirstName)) return nativeFirstName!;
-
-      final nativeComputedDisplayName = firstNativeContact?.computedDisplayName;
-      if (!isNullOrEmpty(nativeComputedDisplayName)) return nativeComputedDisplayName!;
+      // The first linked contact's nickname or first name. On Android that's normally the one address book entry; on
+      // desktop the server can send a person twice (the Mac's card and an Android upload), only one with a first name
+      for (final contact in contactsV2) {
+        final shortName = isNullOrEmpty(contact.nickname) ? contact.firstName : contact.nickname;
+        if (!isNullOrEmpty(shortName)) return shortName!;
+      }
 
       final computedDisplayName = contactsV2.first.computedDisplayName;
       if (!isNullOrEmpty(computedDisplayName)) return computedDisplayName;
