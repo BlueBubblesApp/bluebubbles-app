@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bluebubbles/app/layouts/conversation_view/widgets/message/attachment/live_photo_mixin.dart';
 import 'package:bluebubbles/app/layouts/fullscreen_media/dialogs/metadata_dialog.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:photo_view/photo_view.dart';
-import 'dart:io';
 
 class FullscreenImage extends StatefulWidget {
   const FullscreenImage({
@@ -24,6 +24,7 @@ class FullscreenImage extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
     required this.updatePhysics,
+    required this.showOverlay,
     this.onOverlayToggle,
     this.onOpenCollectionGallery,
   });
@@ -32,6 +33,9 @@ class FullscreenImage extends StatefulWidget {
   final Attachment attachment;
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
+
+  /// Shared with the parent gallery/viewer so every page stays in sync.
+  final bool showOverlay;
   final Function(bool)? onOverlayToggle;
   final VoidCallback? onOpenCollectionGallery;
 
@@ -42,10 +46,25 @@ class FullscreenImage extends StatefulWidget {
 class _FullscreenImageState extends State<FullscreenImage>
     with AutomaticKeepAliveClientMixin, LivePhotoMixin, ThemeHelpers {
   final PhotoViewController controller = PhotoViewController();
-  bool showOverlay = true;
   bool hasError = false;
   Uint8List? bytes;
   String? compatiblePath; // For converted HEIC/TIFF files
+
+  /// Pointer-based hold (not LongPressGestureRecognizer) so PhotoView/PageView
+  /// cannot steal the arena. Tiny moves before activation cancel the pending hold.
+  Timer? _livePhotoHoldTimer;
+  int? _livePhotoHoldPointer;
+  Offset? _livePhotoHoldDownPos;
+  bool _livePhotoHolding = false;
+
+  /// Listener is not in the gesture arena, so pointer-up after a hold still
+  /// resolves as a tap on the parent GestureDetector — swallow that one.
+  bool _suppressOverlayTapAfterHold = false;
+
+  /// Locks PhotoView zoom/pan without setState (setState would rebuild the hold Listener).
+  final RxBool _livePhotoLockPhotoView = false.obs;
+  static const Duration _livePhotoHoldDelay = Duration(milliseconds: 400);
+  static const double _livePhotoHoldMoveSlop = 18;
 
   PlatformFile get file => widget.file;
   Attachment get attachment => widget.attachment;
@@ -60,6 +79,11 @@ class _FullscreenImageState extends State<FullscreenImage>
     super.initState();
     _setFullscreen(true);
     initBytes();
+    // Pre-mount the Video texture before any hold — Android cancels the active
+    // pointer when a platform view is inserted mid-gesture.
+    if (attachment.hasLivePhoto) {
+      prepareLivePhotoSurface();
+    }
   }
 
   void _setFullscreen(bool fullscreen) {
@@ -90,9 +114,64 @@ class _FullscreenImageState extends State<FullscreenImage>
 
   @override
   void dispose() {
+    _livePhotoHoldTimer?.cancel();
     _setFullscreen(false);
     controller.dispose();
     super.dispose();
+  }
+
+  void _setPhotoViewLocked(bool locked) {
+    _livePhotoLockPhotoView.value = locked;
+    // Also stop PageView from stealing tiny horizontal jitter during hold.
+    if (locked) {
+      widget.updatePhysics(const NeverScrollableScrollPhysics());
+    } else if (controller.scale == null || controller.scale! <= 1.0) {
+      widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
+    }
+  }
+
+  void _onLivePhotoPointerDown(PointerDownEvent event) {
+    if (!attachment.hasLivePhoto) return;
+    _livePhotoHoldPointer = event.pointer;
+    _livePhotoHoldDownPos = event.position;
+    _livePhotoHoldTimer?.cancel();
+    _livePhotoHoldTimer = Timer(_livePhotoHoldDelay, () {
+      if (!mounted || _livePhotoHoldPointer != event.pointer) return;
+      _livePhotoHolding = true;
+      _setPhotoViewLocked(true);
+      HapticFeedback.lightImpact();
+      startLivePhotoHold();
+    });
+  }
+
+  void _onLivePhotoPointerMove(PointerMoveEvent event) {
+    if (_livePhotoHoldPointer != event.pointer) return;
+    if (_livePhotoHolding) return;
+    final down = _livePhotoHoldDownPos;
+    if (down == null) return;
+    if ((event.position - down).distance > _livePhotoHoldMoveSlop) {
+      _livePhotoHoldTimer?.cancel();
+      _livePhotoHoldTimer = null;
+      _livePhotoHoldPointer = null;
+      _livePhotoHoldDownPos = null;
+    }
+  }
+
+  void _onLivePhotoPointerUpOrCancel(PointerEvent event) {
+    if (_livePhotoHoldPointer != event.pointer) return;
+    _livePhotoHoldTimer?.cancel();
+    _livePhotoHoldTimer = null;
+    _livePhotoHoldPointer = null;
+    _livePhotoHoldDownPos = null;
+    if (_livePhotoHolding) {
+      _livePhotoHolding = false;
+      // Pointer-up after a hold still resolves as a tap; cancel does not.
+      if (event is PointerUpEvent) {
+        _suppressOverlayTapAfterHold = true;
+      }
+      _setPhotoViewLocked(false);
+      endLivePhotoHold();
+    }
   }
 
   void refreshAttachment() {
@@ -130,30 +209,35 @@ class _FullscreenImageState extends State<FullscreenImage>
     // No orientation handling here: the decoder applies EXIF orientation
     // itself, so the provider's reported size is already display-space and
     // PhotoViewComputedScale.contained reads it correctly.
-    return PhotoView(
-      gaplessPlayback: true,
-      minScale: PhotoViewComputedScale.contained,
-      maxScale: PhotoViewComputedScale.contained * 10,
-      controller: controller,
-      imageProvider: bytes != null
-          ? MemoryImage(bytes!) as ImageProvider
-          : FileImage(File(compatiblePath ?? file.path!)),
-      loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
-        return Center(child: buildProgressIndicator(context));
-      },
-      scaleStateChangedCallback: (scale) {
-        if (scale == PhotoViewScaleState.zoomedIn ||
-            scale == PhotoViewScaleState.covering ||
-            scale == PhotoViewScaleState.originalSize) {
-          widget.updatePhysics(const NeverScrollableScrollPhysics());
-        } else {
-          widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
-        }
-      },
-      errorBuilder: (context, object, stacktrace) =>
-          Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
-      filterQuality: FilterQuality.high,
-    );
+    return Obx(() {
+      final lockGestures = _livePhotoLockPhotoView.value;
+      return PhotoView(
+        gaplessPlayback: true,
+        minScale: PhotoViewComputedScale.contained,
+        maxScale: PhotoViewComputedScale.contained * 10,
+        controller: controller,
+        // Lock zoom/pan while holding so tiny jitter is not treated as a resize.
+        disableGestures: lockGestures,
+        imageProvider: bytes != null
+            ? MemoryImage(bytes!) as ImageProvider
+            : FileImage(File(compatiblePath ?? file.path!)),
+        loadingBuilder: (BuildContext context, ImageChunkEvent? ev) {
+          return Center(child: buildProgressIndicator(context));
+        },
+        scaleStateChangedCallback: (scale) {
+          if (scale == PhotoViewScaleState.zoomedIn ||
+              scale == PhotoViewScaleState.covering ||
+              scale == PhotoViewScaleState.originalSize) {
+            widget.updatePhysics(const NeverScrollableScrollPhysics());
+          } else {
+            widget.updatePhysics(ThemeSwitcher.getScrollPhysics());
+          }
+        },
+        errorBuilder: (context, object, stacktrace) =>
+            Center(child: Text("Failed to display image", style: context.theme.textTheme.bodyLarge)),
+        filterQuality: FilterQuality.high,
+      );
+    });
   }
 
   @override
@@ -163,31 +247,32 @@ class _FullscreenImageState extends State<FullscreenImage>
       color: Colors.black,
       child: GestureDetector(
         onTap: () {
+          if (_suppressOverlayTapAfterHold) {
+            _suppressOverlayTapAfterHold = false;
+            return;
+          }
           if (!widget.showInteractions) return;
-          bool newVal = !showOverlay;
-          setState(() {
-            showOverlay = newVal;
-          });
-
-          if (widget.onOverlayToggle != null) {
-            widget.onOverlayToggle!(newVal);
-          }
-
-          // eventDispatcher.emit('overlay-toggle', newVal);
-        },
-        onLongPress: () {
-          if (attachment.hasLivePhoto && !isDownloadingLivePhoto.value) {
-            handleLivePhotoTap();
-          }
+          widget.onOverlayToggle?.call(!widget.showOverlay);
         },
         child: Stack(
           children: [
             _buildPhotoView(context),
-            // Live photo video overlay
             if (attachment.hasLivePhoto) buildLivePhotoOverlay(),
+            // Pointer hold catcher — no gesture arena, so PhotoView cannot abort it.
+            if (attachment.hasLivePhoto)
+              Positioned.fill(
+                child: Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: _onLivePhotoPointerDown,
+                  onPointerMove: _onLivePhotoPointerMove,
+                  onPointerUp: _onLivePhotoPointerUpOrCancel,
+                  onPointerCancel: _onLivePhotoPointerUpOrCancel,
+                  child: const SizedBox.expand(),
+                ),
+              ),
             if (!iOS)
               AnimatedOpacity(
-                opacity: showOverlay ? 1.0 : 0.0,
+                opacity: widget.showOverlay ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 125),
                 child: Container(
                   height: kIsDesktop ? 80 : 100.0,
@@ -297,7 +382,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                 right: 0,
                 bottom: 0,
                 child: AnimatedOpacity(
-                  opacity: showOverlay ? 1.0 : 0.0,
+                  opacity: widget.showOverlay ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 200),
                   child: SafeArea(
                     top: false,
@@ -356,7 +441,7 @@ class _FullscreenImageState extends State<FullscreenImage>
                 left: 16,
                 bottom: 16,
                 child: AnimatedOpacity(
-                  opacity: showOverlay ? 1.0 : 0.0,
+                  opacity: widget.showOverlay ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 200),
                   child: SafeArea(
                     top: false,

@@ -22,11 +22,11 @@ Navigator.push(context, MaterialPageRoute(
 SingleAttachmentFullscreenViewer(file: file, attachment: attachment, showInteractions: false);
 ```
 
-Both dispatch on the attachment's mime type and render `FullscreenImage` or `FullscreenVideo` as the child, and both drive a "Done"/close button off the child's `onOverlayToggle` callback — `ConversationFullscreenHolder` tracks it against a paged attachment list, `SingleAttachmentFullscreenViewer` tracks it directly with no intermediate state.
+Both dispatch on the attachment's mime type and render `FullscreenImage` or `FullscreenVideo` as the child, and both drive a "Done"/close button off the child's `onOverlayToggle` callback — `ConversationFullscreenHolder` owns one shared overlay visibility for the whole gallery (so swipe keeps chrome in sync across pages), `SingleAttachmentFullscreenViewer` tracks it directly with no intermediate list/page-index state.
 
 ## Key Behaviors
 - Pinch-to-zoom (in `ConversationFullscreenHolder`) and standard image gestures — child widgets do not need to implement it themselves
-- Tap to toggle the overlay/system UI (hide/show status bar, navigation, and action bars) — handled inside `FullscreenImage`/`FullscreenVideo`, independent of `showInteractions`
+- Tap to toggle the overlay/system UI (hide/show status bar, navigation, and action bars) — owned by the holder and passed into `FullscreenImage` so every gallery page shares one toggle; `FullscreenVideo` still manages its own play/controls chrome and reports up via `onOverlayToggle`
 - `showInteractions` gates which action buttons are relevant (download/reply/share/etc.), not whether the overlay can be shown/hidden
 - Video player is disposed when the route is popped
 - Shares/saves to gallery are triggered from within the action bar
