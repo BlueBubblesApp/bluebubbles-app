@@ -43,6 +43,9 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   static const Duration _livePhotoFadeDuration = Duration(milliseconds: 450);
   static const Duration _livePhotoFirstFrameGrace = Duration(milliseconds: 80);
 
+  /// Slight crop while the motion plays so the fade back to the still feels like a settle.
+  static const double _livePhotoPlayScale = 1.06;
+
   // Must be implemented by the using class
   Attachment get livePhotoAttachment;
 
@@ -479,6 +482,22 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
+  /// Size of a [aspectRatio] rect contained in [bounds] (same framing as BoxFit.contain).
+  Size _containedMediaSize(Size bounds, double aspectRatio) {
+    if (!bounds.width.isFinite || !bounds.height.isFinite || bounds.isEmpty || aspectRatio <= 0) {
+      return bounds;
+    }
+    final boundsAspect = bounds.width / bounds.height;
+    if (boundsAspect > aspectRatio) {
+      // Pillarbox: height-limited.
+      final height = bounds.height;
+      return Size(height * aspectRatio, height);
+    }
+    // Letterbox: width-limited.
+    final width = bounds.width;
+    return Size(width, width / aspectRatio);
+  }
+
   /// Build the live photo video overlay.
   /// Mounts whenever the surface is ready (including opacity 0 pre-warm) so hold
   /// playback never inserts a new platform view under an active pointer.
@@ -492,19 +511,46 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
 
       return Positioned.fill(
         child: IgnorePointer(
-          child: Obx(
-            () => AnimatedOpacity(
-              opacity: livePhotoOpacity.value,
+          child: Obx(() {
+            final opacity = livePhotoOpacity.value;
+            // Lock zoom to the same tween as opacity: scale up on reveal, settle on hide
+            // (hold release or tap-mode end).
+            final scale = 1.0 + (_livePhotoPlayScale - 1.0) * opacity;
+            return AnimatedOpacity(
+              opacity: opacity,
               duration: _livePhotoFadeDuration,
               curve: Curves.easeInOut,
-              child: Video(
-                controller: livePhotoController!,
-                fit: BoxFit.contain,
-                fill: Colors.transparent,
-                controls: null,
+              // Zoom only inside the still's contained media rect so letterboxing
+              // (black bars) stays identical to the snapshot underneath.
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final mediaSize = _containedMediaSize(
+                    Size(constraints.maxWidth, constraints.maxHeight),
+                    livePhotoAttachment.aspectRatio,
+                  );
+                  return Center(
+                    child: SizedBox(
+                      width: mediaSize.width,
+                      height: mediaSize.height,
+                      child: ClipRect(
+                        child: AnimatedScale(
+                          scale: scale,
+                          duration: _livePhotoFadeDuration,
+                          curve: Curves.easeInOut,
+                          child: Video(
+                            controller: livePhotoController!,
+                            fit: BoxFit.cover,
+                            fill: Colors.transparent,
+                            controls: null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
+            );
+          }),
         ),
       );
     });
