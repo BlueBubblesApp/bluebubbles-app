@@ -40,6 +40,10 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
   /// When true, stop keeps the player/surface for the next hold.
   bool _livePhotoKeepSurface = false;
 
+  /// True while tap-mode [_playLivePhoto] is starting (before [isPlayingLivePhoto]).
+  /// Prevents a second badge tap from cancelling an in-flight start.
+  bool _livePhotoStartInFlight = false;
+
   static const Duration _livePhotoFadeDuration = Duration(milliseconds: 450);
   static const Duration _livePhotoFirstFrameGrace = Duration(milliseconds: 80);
 
@@ -64,8 +68,15 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     final player = livePhotoPlayer;
     livePhotoPlayer = null;
     livePhotoController = null;
+    // Drop the Video overlay before dispose — media_kit's dispose awaits
+    // waitForVideoControllerInitializationIfAttached and can hang forever if the
+    // Video widget is still mounted (opacity-0 surface left after playback).
     isLivePhotoSurfaceReady.value = false;
     if (player == null) return;
+    if (mounted) {
+      await WidgetsBinding.instance.endOfFrame;
+      await WidgetsBinding.instance.endOfFrame;
+    }
     try {
       await player.dispose();
     } catch (_) {
@@ -91,20 +102,38 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     isPlayingLivePhoto.value = true;
     isLivePhotoSurfaceReady.value = true;
 
+    void clearPlayingIfStale() {
+      if (!_isLivePhotoPlayActive(generation) && isPlayingLivePhoto.value) {
+        isPlayingLivePhoto.value = false;
+      }
+    }
+
     final controller = livePhotoController;
-    if (controller == null) return;
+    if (controller == null) {
+      clearPlayingIfStale();
+      return;
+    }
 
     await controller.waitUntilFirstFrameRendered;
-    if (!_isLivePhotoPlayActive(generation)) return;
+    if (!_isLivePhotoPlayActive(generation)) {
+      clearPlayingIfStale();
+      return;
+    }
 
     // media_kit completes waitUntilFirstFrameRendered on geometry, not surface present.
     await Future.delayed(_livePhotoFirstFrameGrace);
-    if (!_isLivePhotoPlayActive(generation)) return;
+    if (!_isLivePhotoPlayActive(generation)) {
+      clearPlayingIfStale();
+      return;
+    }
 
     // Commit at least one opacity-0 frame so AnimatedOpacity tweens instead of jumping.
     await WidgetsBinding.instance.endOfFrame;
     await WidgetsBinding.instance.endOfFrame;
-    if (!_isLivePhotoPlayActive(generation)) return;
+    if (!_isLivePhotoPlayActive(generation)) {
+      clearPlayingIfStale();
+      return;
+    }
 
     livePhotoOpacity.value = 1.0;
   }
@@ -322,9 +351,15 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       }
       return;
     }
+    if (_livePhotoStartInFlight) return;
 
     _livePhotoHoldActive = false;
-    await _playLivePhoto(holdMode: false);
+    _livePhotoStartInFlight = true;
+    try {
+      await _playLivePhoto(holdMode: false);
+    } finally {
+      _livePhotoStartInFlight = false;
+    }
   }
 
   /// Begin press-and-hold playback (fullscreen). Plays only while held.
@@ -382,18 +417,16 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       }
     }
 
-    // Prefer the pre-mounted fullscreen surface (no new platform view mid-gesture).
-    if (holdMode && livePhotoPlayer != null && livePhotoController != null) {
+    // Reuse an existing player when possible (tap replay + fullscreen hold). Avoids
+    // dispose+recreate, which can hang in media_kit under rapid replay.
+    if (livePhotoPlayer != null && livePhotoController != null) {
       final ok = await playExistingSurface(livePhotoPlayer!);
-      if (ok || !_isLivePhotoPlayActive(generation) || !_livePhotoHoldActive) return;
-      await _disposeLivePhotoPlayer();
-      if (!_isLivePhotoPlayActive(generation) || !_livePhotoHoldActive) return;
-    }
-
-    // Tap mode (or hold fallback): open a fresh player.
-    if (!holdMode) {
+      if (ok) return;
+      if (!_isLivePhotoPlayActive(generation)) return;
+      if (holdMode && !_livePhotoHoldActive) return;
       await _disposeLivePhotoPlayer();
       if (!_isLivePhotoPlayActive(generation)) return;
+      if (holdMode && !_livePhotoHoldActive) return;
     }
 
     final prepareGeneration = _livePhotoPrepareGeneration;
