@@ -33,6 +33,7 @@ class FullscreenImage extends StatefulWidget {
   final Attachment attachment;
   final bool showInteractions;
   final Function(ScrollPhysics) updatePhysics;
+
   /// Shared with the parent gallery/viewer so every page stays in sync.
   final bool showOverlay;
   final Function(bool)? onOverlayToggle;
@@ -55,9 +56,11 @@ class _FullscreenImageState extends State<FullscreenImage>
   int? _livePhotoHoldPointer;
   Offset? _livePhotoHoldDownPos;
   bool _livePhotoHolding = false;
+
   /// Listener is not in the gesture arena, so pointer-up after a hold still
   /// resolves as a tap on the parent GestureDetector — swallow that one.
   bool _suppressOverlayTapAfterHold = false;
+
   /// Locks PhotoView zoom/pan without setState (setState would rebuild the hold Listener).
   final RxBool _livePhotoLockPhotoView = false.obs;
   static const Duration _livePhotoHoldDelay = Duration(milliseconds: 400);

@@ -201,18 +201,20 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     }
 
     var wasCompleted = player.state.completed;
-    _livePhotoSubscriptions.add(player.stream.completed.listen((completed) {
-      if (!_isLivePhotoPlayActive(generation)) return;
-      final risingEdge = completed && !wasCompleted;
-      wasCompleted = completed;
-      if (!risingEdge) return;
+    _livePhotoSubscriptions.add(
+      player.stream.completed.listen((completed) {
+        if (!_isLivePhotoPlayActive(generation)) return;
+        final risingEdge = completed && !wasCompleted;
+        wasCompleted = completed;
+        if (!risingEdge) return;
 
-      if (holdMode) {
-        livePhotoPlayer?.pause();
-      } else {
-        _hideLivePhotoOverlay(generation);
-      }
-    }));
+        if (holdMode) {
+          livePhotoPlayer?.pause();
+        } else {
+          _hideLivePhotoOverlay(generation);
+        }
+      }),
+    );
   }
 
   @override
@@ -243,11 +245,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
     if (await livePhotoFileOnDisk.exists()) {
       if (!mounted || prepareGeneration != _livePhotoPrepareGeneration) return null;
       final fileInfo = await livePhotoFileOnDisk.stat();
-      livePhotoFile = PlatformFile(
-        name: p.basename(livePhotoPath),
-        size: fileInfo.size,
-        path: livePhotoPath,
-      );
+      livePhotoFile = PlatformFile(name: p.basename(livePhotoPath), size: fileInfo.size, path: livePhotoPath);
       return livePhotoPath;
     }
 
@@ -278,11 +276,7 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
         return null;
       }
 
-      livePhotoFile = PlatformFile(
-        name: p.basename(livePhotoPath),
-        size: response.data.length,
-        path: livePhotoPath,
-      );
+      livePhotoFile = PlatformFile(name: p.basename(livePhotoPath), size: response.data.length, path: livePhotoPath);
       isDownloadingLivePhoto.value = false;
       return livePhotoPath;
     } catch (ex, st) {
@@ -479,38 +473,29 @@ mixin LivePhotoMixin<T extends StatefulWidget> on State<T> {
       child: Container(
         width: 28,
         height: 28,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Obx(() => Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isDownloadingLivePhoto.value)
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      value: livePhotoProgress.value,
-                      strokeWidth: 2,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                      backgroundColor: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  )
-                else if (isPlayingLivePhoto.value)
-                  const Icon(
-                    CupertinoIcons.pause_fill,
-                    color: Colors.white,
-                    size: 16,
-                  )
-                else
-                  const Icon(
-                    CupertinoIcons.smallcircle_circle,
-                    color: Colors.white,
-                    size: 20,
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(14)),
+        child: Obx(
+          () => Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isDownloadingLivePhoto.value)
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    value: livePhotoProgress.value,
+                    strokeWidth: 2,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    backgroundColor: Colors.white.withValues(alpha: 0.3),
                   ),
-              ],
-            )),
+                )
+              else if (isPlayingLivePhoto.value)
+                const Icon(CupertinoIcons.pause_fill, color: Colors.white, size: 16)
+              else
+                const Icon(CupertinoIcons.smallcircle_circle, color: Colors.white, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

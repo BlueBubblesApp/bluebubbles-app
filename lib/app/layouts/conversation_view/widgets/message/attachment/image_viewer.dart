@@ -217,10 +217,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
               ),
             );
             if (widget.fill) return _wrapForFill(gifStack);
-            return ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
-              child: gifStack,
-            );
+            return ConstrainedBox(constraints: const BoxConstraints(minHeight: 40, minWidth: 100), child: gifStack);
           },
         );
       });
@@ -500,10 +497,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     if (widget.fill) return _wrapForFill(stack);
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 40, minWidth: 100),
-      child: stack,
-    );
+    return ConstrainedBox(constraints: const BoxConstraints(minHeight: 40, minWidth: 100), child: stack);
   }
 
   Widget _buildImageError(BuildContext context, double width, double height, Object error, StackTrace? stacktrace) {

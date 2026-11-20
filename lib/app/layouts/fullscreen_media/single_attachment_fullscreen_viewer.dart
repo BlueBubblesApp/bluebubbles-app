@@ -46,9 +46,7 @@ class _SingleAttachmentFullscreenViewerState extends State<SingleAttachmentFulls
   Widget build(BuildContext context) {
     return TitleBarWrapper(
       child: Actions(
-        actions: {
-          GoBackIntent: GoBackAction(context),
-        },
+        actions: {GoBackIntent: GoBackAction(context)},
         child: BBScaffold(
           safeAreaLeft: false,
           safeAreaRight: false,
@@ -61,16 +59,19 @@ class _SingleAttachmentFullscreenViewerState extends State<SingleAttachmentFulls
               ? null
               : BBAppBar(
                   leading: TextButton(
-                    child: Text("Done",
-                        style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary)),
+                    child: Text(
+                      "Done",
+                      style: context.theme.textTheme.bodyLarge!.copyWith(color: context.theme.colorScheme.primary),
+                    ),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
                   ),
                   leadingWidth: 75,
                   titleText: "Media",
-                  titleStyle:
-                      context.theme.textTheme.titleLarge!.copyWith(color: context.theme.colorScheme.onSurfaceVariant),
+                  titleStyle: context.theme.textTheme.titleLarge!.copyWith(
+                    color: context.theme.colorScheme.onSurfaceVariant,
+                  ),
                   iconTheme: IconThemeData(color: context.theme.colorScheme.primary),
                   backgroundColor: context.theme.colorScheme.surfaceContainerHighest,
                 ),
